@@ -15,7 +15,9 @@
       "Bash(git stash:*)",
       "Bash(tasklist)",
       "Bash(cmd /c:*)",
-      "Bash(set PORT=5001)"
+      "Bash(set PORT=5001)",
+      "Bash(mkdir:*)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []

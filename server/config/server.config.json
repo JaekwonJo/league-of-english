@@ -1,0 +1,40 @@
+{
+  "server": {
+    "port": 5000,
+    "corsOptions": {
+      "origin": "*",
+      "credentials": true
+    },
+    "jsonLimit": "50mb",
+    "uploadDir": "uploads"
+  },
+  "database": {
+    "filename": "database.db",
+    "verbose": true
+  },
+  "auth": {
+    "saltRounds": 10,
+    "tokenExpiry": "7d",
+    "secretKey": "leagueOfEnglish2025SuperSecretKey!@#$"
+  },
+  "upload": {
+    "maxFileSize": 10485760,
+    "allowedMimeTypes": ["application/pdf", "text/plain"],
+    "allowedExtensions": [".pdf", ".txt"]
+  },
+  "openai": {
+    "model": "gpt-4-turbo-preview",
+    "maxTokens": 2000,
+    "temperature": 0.7
+  },
+  "admin": {
+    "defaultUsername": "admin",
+    "defaultPassword": "admin123",
+    "defaultEmail": "admin@loe.com"
+  },
+  "problemGeneration": {
+    "maxRetries": 3,
+    "cacheThreshold": 100,
+    "batchSize": 5
+  }
+}
