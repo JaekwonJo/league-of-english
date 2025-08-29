@@ -1,0 +1,63 @@
+{
+  "routes": [
+    {
+      "path": "/",
+      "name": "Home",
+      "icon": "Home",
+      "component": "HomePage",
+      "requiresAuth": true,
+      "roles": ["student", "teacher", "admin"]
+    },
+    {
+      "path": "/study",
+      "name": "Study",
+      "icon": "BookOpen",
+      "component": "StudyPage",
+      "requiresAuth": true,
+      "roles": ["student", "teacher", "admin"]
+    },
+    {
+      "path": "/vocabulary",
+      "name": "Vocabulary",
+      "icon": "Languages",
+      "component": "VocabularyPage",
+      "requiresAuth": true,
+      "roles": ["student", "teacher", "admin"]
+    },
+    {
+      "path": "/stats",
+      "name": "Stats",
+      "icon": "TrendingUp",
+      "component": "StatsPage",
+      "requiresAuth": true,
+      "roles": ["student", "teacher", "admin"]
+    },
+    {
+      "path": "/ranking",
+      "name": "Ranking",
+      "icon": "Trophy",
+      "component": "RankingPage",
+      "requiresAuth": true,
+      "roles": ["student", "teacher", "admin"]
+    },
+    {
+      "path": "/profile",
+      "name": "Profile",
+      "icon": "User",
+      "component": "ProfilePage",
+      "requiresAuth": true,
+      "roles": ["student", "teacher", "admin"]
+    },
+    {
+      "path": "/admin",
+      "name": "Admin",
+      "icon": "Settings",
+      "component": "AdminPage",
+      "requiresAuth": true,
+      "roles": ["admin", "teacher"]
+    }
+  ],
+  "defaultRoute": "/",
+  "loginRoute": "/login",
+  "unauthorizedRoute": "/unauthorized"
+}
