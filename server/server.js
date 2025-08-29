@@ -288,14 +288,21 @@ app.post('/api/upload-document', authenticateToken, upload.single('file'), async
     }
     
     // 한글 제거 (영어 지문만 추출)
+    console.log('📄 원본 텍스트 길이:', content.length);
+    console.log('📄 원본 텍스트 미리보기:', content.substring(0, 200));
+    
     content = removeKoreanText(content);
     
-    if (!content || content.length < 100) {
+    console.log('✅ 처리 후 텍스트 길이:', content.length);
+    console.log('✅ 처리 후 텍스트 미리보기:', content.substring(0, 200));
+    
+    if (!content || content.length < 30) {  // 100 → 30으로 완화
       // 파일 삭제 후 에러 반환
       if (fs.existsSync(file.path)) {
         fs.unlinkSync(file.path);
       }
-      return res.status(400).json({ error: '유효한 영어 텍스트를 찾을 수 없습니다.' });
+      console.error('❌ 추출된 텍스트가 너무 짧습니다:', content.length, '자');
+      return res.status(400).json({ error: '유효한 영어 텍스트를 찾을 수 없습니다. (추출된 텍스트: ' + content.length + '자)' });
     }
     
     // 현재 사용자 정보 가져오기
@@ -531,8 +538,19 @@ function cleanPDFText(text) {
 function removeKoreanText(text) {
   console.log('📚 PDF 문서 파싱 시작...');
   
-  // 1단계: 문서 제목 추출 (더 유연하게)
-  const lines = text.split('\n');
+  // 0단계: 한 줄로 붙어있는 텍스트를 문제 번호 기준으로 분리
+  console.log('🔧 텍스트 전처리: 한 줄 텍스트를 문제 번호로 분리');
+  
+  // 문제 번호 패턴으로 분리 (숫자. p숫자-no.숫자)
+  const processedText = text
+    .replace(/(\d{1,2}\.\s*p\d+-no\.\d+)/g, '\n$1')  // 문제 번호 앞에 줄바꿈 추가
+    .replace(/([.!?])\s+([A-Z])/g, '$1\n$2')  // 문장 끝 후 대문자로 시작하는 새 문장
+    .replace(/([가-힣]{10,})\s*([A-Z])/g, '$1\n$2');  // 긴 한글 텍스트 후 영어
+  
+  console.log('✅ 전처리 후 텍스트 길이:', processedText.length);
+  
+  // 1단계: 문서 제목 추출 (더 유연하게)  
+  const lines = processedText.split('\n');
   let documentTitle = '';
   
   // 제목 패턴 확장 - 더 많은 패턴 지원
@@ -551,30 +569,47 @@ function removeKoreanText(text) {
   const englishSections = [];
   let currentProblemNumber = 0;
   
+  console.log('🔍 문제 번호 패턴 검색 시작...');
+  console.log(`📝 총 라인 수: ${lines.length}개`);
+  
   // 문제 번호 패턴 찾기 (더 포괄적으로 개선)
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
     
+    // 각 라인 디버깅 (처음 20줄만)
+    if (i < 20) {
+      console.log(`Line ${i}: "${line}"`);
+    }
+    
     // 다양한 문제 번호 패턴 감지
     let problemMatch = null;
     
-    // 패턴 1: "18번", "19번" 
-    problemMatch = line.match(/^(\d{1,2})\s*번/);
-    if (!problemMatch) {
-      // 패턴 2: "18.", "19."
-      problemMatch = line.match(/^(\d{1,2})\.\s*/);
+    // 패턴 1: 워크시트메이커 "1. p2-no.20", "2. p3-no.21"
+    const worksheetMatch = line.match(/^(\d{1,2})\.\s*p\d+-no\.(\d{1,2})/);
+    if (worksheetMatch) {
+      // 워크시트메이커에서는 실제 문제 번호(no.20)를 사용
+      problemMatch = [worksheetMatch[0], worksheetMatch[2]]; // [전체매치, 실제문제번호]
+      console.log(`📝 워크시트메이커 패턴 감지: "${line}" → 문제 ${worksheetMatch[2]}번`);
     }
-    if (!problemMatch) {
-      // 패턴 3: "18 ", "19 " (숫자 뒤 공백)
-      problemMatch = line.match(/^(\d{1,2})\s+/);
-    }
-    if (!problemMatch) {
-      // 패턴 4: 라인이 숫자로만 구성 (18, 19)
-      problemMatch = line.match(/^(\d{1,2})$/);
-    }
-    if (!problemMatch && line.length <= 3) {
-      // 패턴 5: 매우 짧은 라인에서 숫자 찾기
-      problemMatch = line.match(/(\d{1,2})/);
+    else {
+      // 패턴 2: "18번", "19번" 
+      problemMatch = line.match(/^(\d{1,2})\s*번/);
+      if (!problemMatch) {
+        // 패턴 3: "18.", "19."
+        problemMatch = line.match(/^(\d{1,2})\.\s*/);
+      }
+      if (!problemMatch) {
+        // 패턴 4: "18 ", "19 " (숫자 뒤 공백)
+        problemMatch = line.match(/^(\d{1,2})\s+/);
+      }
+      if (!problemMatch) {
+        // 패턴 5: 라인이 숫자로만 구성 (18, 19)
+        problemMatch = line.match(/^(\d{1,2})$/);
+      }
+      if (!problemMatch && line.length <= 3) {
+        // 패턴 6: 매우 짧은 라인에서 숫자 찾기
+        problemMatch = line.match(/(\d{1,2})/);
+      }
     }
     
     if (problemMatch) {
@@ -609,7 +644,11 @@ function removeKoreanText(text) {
     const allEnglishLines = [];
     for (const line of lines) {
       if (isAdvancedEnglishLine(line)) {
-        allEnglishLines.push(line);
+        // 한글이 섞인 라인에서 영어 부분만 추출
+        const englishOnly = extractEnglishFromMixedLine(line);
+        if (englishOnly.length > 10) {
+          allEnglishLines.push(englishOnly);
+        }
       }
     }
     
@@ -652,59 +691,88 @@ function extractEnglishFromProblem(lines, startIndex, problemNumber) {
   const englishLines = [];
   let nextProblemIndex = -1;
   
-  // 다음 문제 번호 찾기
+  // 다음 문제 번호 찾기 (워크시트메이커 패턴 포함)
   for (let i = startIndex + 1; i < lines.length; i++) {
     const line = lines[i].trim();
-    const nextProblemMatch = line.match(/^(\d{1,2})(?:번?|\.|\s)/);
-    if (nextProblemMatch && nextProblemMatch[1] != problemNumber) {
-      nextProblemIndex = i;
-      break;
+    let nextProblemMatch = null;
+    
+    // 워크시트메이커 패턴: "2. p3-no.21"
+    nextProblemMatch = line.match(/^(\d{1,2})\.\s*p\d+-no\.(\d{1,2})/);
+    if (nextProblemMatch) {
+      const nextProblemNum = nextProblemMatch[2];
+      if (nextProblemNum != problemNumber) {
+        nextProblemIndex = i;
+        break;
+      }
+    }
+    
+    // 일반적인 패턴: "18번", "19.", "20 "
+    if (!nextProblemMatch) {
+      nextProblemMatch = line.match(/^(\d{1,2})(?:번?|\.|\s)/);
+      if (nextProblemMatch && nextProblemMatch[1] != problemNumber) {
+        nextProblemIndex = i;
+        break;
+      }
     }
   }
   
-  // 문제 범위 내에서 영어 라인 추출
+  // 문제 범위 내에서 영어 라인 추출 (한글 제거)
   const endIndex = nextProblemIndex > 0 ? nextProblemIndex : lines.length;
   for (let i = startIndex + 1; i < endIndex; i++) {
     const line = lines[i].trim();
     if (isAdvancedEnglishLine(line)) {
-      englishLines.push(line);
+      // 한글이 섞인 라인에서 영어 부분만 추출
+      const englishOnly = extractEnglishFromMixedLine(line);
+      if (englishOnly.length > 10) {  // 최소 길이 조건
+        englishLines.push(englishOnly);
+      }
     }
   }
   
   return englishLines.join(' ').trim();
 }
 
-// 🔍 극도로 강화된 영어 라인 감지 (인천시 PDF 전용)
+// 🔍 영어 부분만 추출하는 함수 (한글 해석지용)
+function extractEnglishFromMixedLine(line) {
+  const trimmed = line.trim();
+  
+  // 영어 부분만 추출 (한글, 한글 부호 제거)
+  const englishOnly = trimmed
+    .replace(/[가-힣ㄱ-ㅎㅏ-ㅣ]/g, ' ')  // 한글 → 공백
+    .replace(/[""''「」『』〈〉《》【】]/g, ' ')  // 한글 부호 → 공백
+    .replace(/\s+/g, ' ')  // 연속 공백 → 단일 공백
+    .trim();
+  
+  return englishOnly;
+}
+
+// 🔍 극도로 강화된 영어 라인 감지 (수정된 버전)
 function isAdvancedEnglishLine(line) {
   const trimmed = line.trim();
   
-  // 1차: 기본 조건 - 더 관대하게
-  if (trimmed.length < 8) return false;  // 15 → 8로 완화
+  // 1차: 기본 조건
+  if (trimmed.length < 5) return false;
   
-  // 2차: 한글 체크 - 완전 제거
-  if (/[가-힣ㄱ-ㅎㅏ-ㅣ]/.test(trimmed)) return false;
+  // 2차: 영어 부분만 추출
+  const englishPart = extractEnglishFromMixedLine(trimmed);
+  if (englishPart.length < 5) return false;
   
   // 3차: PDF 메타데이터 제거 - 더 포괄적으로
   if (/^[\d\s\-=_+*~`!@#$%^&|\\;:'"<>,.?\/\(\)\[\]【】「」『』〈〉《》\{\}]+$/.test(trimmed)) return false;
   if (/^Page\s+\d+|^\d+\s*\/\s*\d+|^\d{4}-\d{2}-\d{2}|^Date:|^Time:|^고\d|^문제|^번호/i.test(trimmed)) return false;
   
-  // 4차: 영어 단어 개수 체크 - 더 관대하게
-  const englishWords = (trimmed.match(/\b[a-zA-Z]{2,}\b/g) || []);
-  if (englishWords.length < 3) return false;  // 5 → 3으로 완화
+  // 3차: 영어 단어 개수 체크 (영어 부분에서)
+  const englishWords = (englishPart.match(/\b[a-zA-Z]{2,}\b/g) || []);
+  if (englishWords.length < 2) return false;
   
-  // 5차: 영어 비율 체크 - 더 관대하게
-  const englishChars = (trimmed.match(/[a-zA-Z]/g) || []).length;
-  const totalValidChars = trimmed.replace(/[\s\d\-=_+*~`!@#$%^&|\\;:'"<>,.?\/\(\)\[\]【】「」『』〈〉《》\{\}]/g, '').length;
-  const englishRatio = totalValidChars > 0 ? englishChars / totalValidChars : 0;
+  // 4차: 기본 영어 단어 포함 여부
+  const hasBasicWords = /\b(the|and|or|but|in|on|at|to|for|of|with|by|from|a|an|this|that|these|those|is|are|was|were|have|has|had|will|would|can|could|may|might|should|must|do|does|did|get|got|make|made|take|took|come|came|go|went|see|saw|know|knew|think|thought|say|said|tell|told|give|gave|one|two|three|first|second|third|people|person|time|work|life|way|day|man|woman|child|world|school|place|hand|part|case|fact|group|number|point|government|company)\b/i.test(englishPart);
   
-  // 6차: 최종 검증 - 더 포용적으로
-  const hasBasicWords = /\b(the|and|or|but|in|on|at|to|for|of|with|by|from|a|an|this|that|these|those|is|are|was|were|have|has|had|will|would|can|could|may|might|should|must|do|does|did|get|got|make|made|take|took|come|came|go|went|see|saw|know|knew|think|thought|say|said|tell|told|give|gave|one|two|three|first|second|third|people|person|time|work|life|way|day|man|woman|child|world|school|place|hand|part|case|fact|group|number|point|government|company)\b/i.test(trimmed);
+  // 5차: 숫자로만 이루어진 라인 제외
+  if (/^\d+[\s\d\-.,]*$/.test(englishPart)) return false;
   
-  // 숫자로만 이루어진 라인 제외
-  if (/^\d+[\s\d\-.,]*$/.test(trimmed)) return false;
-  
-  // 최종 판단: 영어 비율이 60% 이상이고 기본 영어 단어가 포함되어 있으면 OK
-  return englishRatio >= 0.6 && (hasBasicWords || englishWords.length >= 4);
+  // 최종 판단: 영어 단어가 있고, 기본 단어가 포함되어 있거나 충분한 길이
+  return (hasBasicWords || englishWords.length >= 3 || englishPart.length >= 20);
 }
 
 // 📝 연속된 영어 라인들을 그룹화하는 함수
