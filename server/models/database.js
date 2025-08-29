@@ -60,7 +60,7 @@ class Database {
           title VARCHAR(255) NOT NULL,
           content TEXT NOT NULL,
           type VARCHAR(20) NOT NULL,
-          category_id INTEGER,
+          category VARCHAR(50) DEFAULT '기타',
           school VARCHAR(100) DEFAULT '전체',
           grade INTEGER,
           difficulty VARCHAR(20) DEFAULT 'medium',
@@ -141,8 +141,8 @@ class Database {
           const hashedPassword = await bcrypt.hash(config.admin.defaultPassword, config.auth.saltRounds);
           
           const insertQuery = `
-            INSERT INTO users (username, password_hash, email, name, school, grade, role)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO users (username, password, email, name, school, grade, role, membership, tier, points)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           `;
           
           this.db.run(insertQuery, [
@@ -152,7 +152,10 @@ class Database {
             '관리자',
             'League of English',
             1,
-            'admin'
+            'admin',
+            'premium',
+            'Bronze',
+            0
           ], (err) => {
             if (err) {
               console.error('관리자 계정 생성 실패:', err);

@@ -22,7 +22,7 @@ const LoginPage = () => {
     setError('');
     setLoading(true);
 
-    const endpoint = isLogin ? '/api/login' : '/api/register';
+    const endpoint = isLogin ? '/login' : '/register';
     const payload = isLogin 
       ? { username: formData.username, password: formData.password }
       : formData;

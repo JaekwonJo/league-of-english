@@ -48,7 +48,7 @@ router.post('/upload-document',
       return res.status(400).json({ message: '파일이 없습니다.' });
     }
 
-    const { title, type = 'worksheet', school = '전체', grade, worksheetType } = req.body;
+    const { title, type = 'worksheet', category = '기타', school = '전체', grade, worksheetType } = req.body;
 
     try {
       let content = '';
@@ -72,9 +72,9 @@ router.post('/upload-document',
 
       // DB에 저장
       const result = await database.run(
-        `INSERT INTO documents (title, content, type, school, grade, worksheet_type, created_by)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [title, content, type, school, grade, worksheetType, req.user.id]
+        `INSERT INTO documents (title, content, type, category, school, grade, worksheet_type, created_by)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [title, content, type, category, school, grade, worksheetType, req.user.id]
       );
 
       // 임시 파일 삭제
@@ -101,7 +101,7 @@ router.post('/upload-document',
  */
 router.get('/documents', verifyToken, async (req, res) => {
   try {
-    let query = 'SELECT id, title, type, school, grade, created_at FROM documents WHERE is_active = 1';
+    let query = 'SELECT id, title, type, category, school, grade, created_at FROM documents WHERE is_active = 1';
     const params = [];
 
     // 학생은 자신의 학교 문서만 조회
@@ -139,6 +139,39 @@ router.get('/documents/:id', verifyToken, async (req, res) => {
     res.json(document);
   } catch (error) {
     console.error('문서 조회 오류:', error);
+    res.status(500).json({ message: '서버 오류가 발생했습니다.' });
+  }
+});
+
+/**
+ * DELETE /api/documents/:id
+ * 문서 삭제
+ */
+router.delete('/documents/:id', verifyToken, requireTeacherOrAdmin, async (req, res) => {
+  try {
+    const document = await database.get(
+      'SELECT * FROM documents WHERE id = ?',
+      [req.params.id]
+    );
+
+    if (!document) {
+      return res.status(404).json({ message: '문서를 찾을 수 없습니다.' });
+    }
+
+    // 관리자가 아닌 경우 본인이 업로드한 문서만 삭제 가능
+    if (req.user.role !== 'admin' && document.created_by !== req.user.id) {
+      return res.status(403).json({ message: '권한이 없습니다.' });
+    }
+
+    // is_active를 false로 변경 (soft delete)
+    await database.run(
+      'UPDATE documents SET is_active = 0 WHERE id = ?',
+      [req.params.id]
+    );
+
+    res.json({ message: '문서가 삭제되었습니다.' });
+  } catch (error) {
+    console.error('문서 삭제 오류:', error);
     res.status(500).json({ message: '서버 오류가 발생했습니다.' });
   }
 });

@@ -19,7 +19,9 @@
       "Bash(mkdir:*)",
       "Bash(curl:*)",
       "Bash(set PORT=3001)",
-      "Bash(npx:*)"
+      "Bash(npx:*)",
+      "Bash(sqlite3:*)",
+      "Bash(del database.db)"
     ],
     "deny": [],
     "ask": []
