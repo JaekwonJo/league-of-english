@@ -34,6 +34,40 @@ console.log('JWT_SECRET:', process.env.JWT_SECRET ? '✅ 설정됨' : '❌ 없�
 console.log('OPENAI_API_KEY:', process.env.OPENAI_API_KEY ? '✅ 설정됨' : '❌ 없음');
 console.log('PORT:', PORT);
 
+// 임시 로그인 라우트 (디버깅용) - 라우터보다 먼저 등록
+app.post('/api/login', async (req, res) => {
+  const { username, password } = req.body;
+  
+  // 관리자 계정 하드코딩 (임시)
+  if (username === 'admin' && password === 'admin123') {
+    const jwt = require('jsonwebtoken');
+    const token = jwt.sign(
+      { id: 1, username: 'admin', role: 'admin' },
+      process.env.JWT_SECRET || 'leagueOfEnglish2025SuperSecretKey!@#$',
+      { expiresIn: '7d' }
+    );
+    
+    return res.json({
+      message: '로그인 성공',
+      token: token,
+      user: {
+        id: 1,
+        username: 'admin',
+        email: 'admin@loe.com',
+        name: '관리자',
+        school: 'League of English',
+        grade: 1,
+        role: 'admin',
+        membership: 'premium',
+        points: 0,
+        tier: 'Bronze'
+      }
+    });
+  }
+  
+  res.status(401).json({ message: '아이디 또는 비밀번호가 일치하지 않습니다.' });
+});
+
 // 라우터 연결
 app.use('/api', authRoutes);
 app.use('/api', documentRoutes);
