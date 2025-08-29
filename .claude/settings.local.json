@@ -8,7 +8,10 @@
       "Bash(PORT=5001 node server.js)",
       "Bash(PORT=3001 npm start)",
       "Bash(git add:*)",
-      "Bash(del nul)"
+      "Bash(del nul)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git rm:*)"
     ],
     "deny": [],
     "ask": []
