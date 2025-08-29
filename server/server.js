@@ -8,10 +8,16 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
 const pdfParse = require('pdf-parse');
-require('dotenv').config();
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// 환경변수 디버깅
+console.log('🔍 환경변수 확인:');
+console.log('JWT_SECRET:', process.env.JWT_SECRET ? '✅ 설정됨' : '❌ 없음');
+console.log('OPENAI_API_KEY:', process.env.OPENAI_API_KEY ? '✅ 설정됨' : '❌ 없음');
+console.log('PORT:', process.env.PORT || 5000);
 
 // OpenAI 설정 (API 키가 있을 때만)
 let openai = null;
@@ -272,6 +278,55 @@ app.post('/api/upload-document', authenticateToken, upload.single('file'), async
       return res.status(400).json({ error: '파일이 없습니다.' });
     }
     
+    // 🔥 파일명 형식 검증: 학년_책제목_범위.pdf
+    const originalName = file.originalname;
+    
+    // 🔧 한글 인코딩 문제 해결 - Buffer를 올바른 UTF-8로 디코딩
+    let decodedName;
+    try {
+      // Buffer.from을 사용해 올바른 UTF-8 디코딩 시도
+      const buffer = Buffer.from(originalName, 'latin1');
+      decodedName = buffer.toString('utf8');
+      console.log(`🔧 디코딩 시도: ${originalName} -> ${decodedName}`);
+    } catch (error) {
+      decodedName = originalName;
+      console.log(`⚠️ 디코딩 실패, 원본 사용: ${originalName}`);
+    }
+    
+    const nameWithoutExt = decodedName.replace(/\.(pdf|txt)$/i, '');
+    const nameParts = nameWithoutExt.split('_');
+    
+    console.log(`🔍 [파일명 검증] 원본 파일명: ${originalName}`);
+    console.log(`🔍 [파일명 검증] 디코딩된 파일명: ${decodedName}`);
+    console.log(`🔍 [파일명 검증] 분리된 부분: ${nameParts.join(' | ')}`);
+    
+    if (nameParts.length !== 3) {
+      return res.status(400).json({ 
+        error: '파일명 형식이 잘못되었습니다. 올바른 형식: "학년_책제목_범위.pdf"\n예시: "고1_올림포스2_2학기중간고사.pdf"' 
+      });
+    }
+    
+    const [grade, bookTitle, range] = nameParts;
+    
+    // 학년 검증 (고1, 고2, 고3) - 인코딩 문제 고려
+    const isValidGrade = grade.includes('1') || grade.includes('2') || grade.includes('3');
+    const hasGradePattern = grade.includes('고') || grade.includes('ê³');
+    
+    if (!isValidGrade || !hasGradePattern) {
+      return res.status(400).json({ 
+        error: '학년은 "고1", "고2", "고3" 형식이어야 합니다.\n현재: ' + grade + '\n디코딩된 이름: ' + decodedName
+      });
+    }
+    
+    // 책제목과 범위가 비어있지 않은지 검증
+    if (!bookTitle.trim() || !range.trim()) {
+      return res.status(400).json({ 
+        error: '책제목과 범위는 비어있을 수 없습니다.\n책제목: ' + bookTitle + ', 범위: ' + range 
+      });
+    }
+    
+    console.log(`✅ 파일명 검증 통과: ${grade} | ${bookTitle} | ${range}`);
+    
     if (!title || !category || !source) {
       return res.status(400).json({ error: '제목, 카테고리, 출처를 모두 입력해주세요.' });
     }
@@ -367,7 +422,37 @@ app.get('/api/documents', authenticateToken, (req, res) => {
       if (err) {
         return res.status(500).json({ error: err.message });
       }
-      res.json(documents);
+      res.json({ documents: documents || [] });
+    });
+  });
+});
+
+// 문서 삭제 (관리자만)
+app.delete('/api/documents/:id', authenticateToken, (req, res) => {
+  // 관리자 권한 확인
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: '관리자 권한이 필요합니다.' });
+  }
+
+  const docId = req.params.id;
+  
+  // 먼저 문서 존재 확인
+  db.get('SELECT * FROM documents WHERE id = ?', [docId], (err, doc) => {
+    if (err) {
+      return res.status(500).json({ error: '문서 조회 실패' });
+    }
+    if (!doc) {
+      return res.status(404).json({ error: '문서를 찾을 수 없습니다.' });
+    }
+    
+    // 문서 삭제
+    db.run('DELETE FROM documents WHERE id = ?', [docId], function(err) {
+      if (err) {
+        return res.status(500).json({ error: '문서 삭제 실패' });
+      }
+      
+      console.log(`✅ 문서 삭제 완료: ID ${docId}, 제목: ${doc.title}`);
+      res.json({ success: true, message: '문서가 삭제되었습니다.' });
     });
   });
 });
@@ -393,6 +478,22 @@ app.post('/api/get-smart-problems', authenticateToken, async (req, res) => {
         
         const problems = [];
         const passages = parsePassages(document.content, document.source);
+        
+        // 🔥 DEBUG: parsePassages 결과 확인
+        console.log(`🔍 [DEBUG] parsePassages 결과:`);
+        console.log(`   - passages.length: ${passages ? passages.length : 'undefined'}`);
+        console.log(`   - passages 타입: ${typeof passages}`);
+        console.log(`   - passages 내용:`, passages);
+        
+        // 지문이 없으면 오류 반환
+        if (!passages || passages.length === 0) {
+          console.error('❌ 지문 파싱 실패: 사용 가능한 지문이 없습니다.');
+          return res.status(400).json({ 
+            error: '이 문서에서 영어 지문을 추출할 수 없습니다. 문서 형식을 확인해주세요.' 
+          });
+        }
+        
+        console.log(`✅ 총 ${passages.length}개 지문으로 문제 생성 시작`);
         
         // 각 유형별로 문제 생성 (중복 방지)
         let passageIndex = 0;
@@ -882,59 +983,182 @@ function isEnglishLine(line) {
 
 // 🚀 워크시트메이커 지문 파싱 (정형화된 형식)
 function parsePassages(content, source) {
-  console.log('📖 지문 파싱 시작...');
+  console.log('📖 [DEBUG] parsePassages 함수 호출됨 - 올림포스 PDF 지문 파싱 시작...');
+  console.log('📖 [DEBUG] content 길이:', content.length);
+  console.log('📖 [DEBUG] source:', source);
   const passages = [];
   
-  // [출처: ...] 패턴으로 분리된 지문들 찾기
-  const sections = content.split(/\[출처:[^\]]+\]/);
+  // 1. p.XX 패턴으로 분리 (p.32 수능 ANALYSIS, p.34 no.01 등)
+  console.log('🔍 p.숫자 패턴 검색 중...');
   
-  sections.forEach((section, index) => {
-    const cleanSection = section.trim();
-    
-    // 빈 섹션 제거
-    if (cleanSection.length < 100) return;
-    
-    // 출처 정보 추출
-    const sourceMatch = content.match(new RegExp(`\\[출처:([^\\]]+)\\]\\s*${escapeRegExp(cleanSection.substring(0, 50))}`));
-    const extractedSource = sourceMatch ? sourceMatch[1].trim() : (source || '출처 미상');
-    
-    // 최종 검증
-    const wordCount = (cleanSection.match(/\b[a-zA-Z]+\b/g) || []).length;
-    
-    if (wordCount >= 15) {
-      passages.push({
-        text: cleanSection,
-        source: extractedSource,
-        number: passages.length + 1
+  // 🔧 다양한 형식 모두 지원: 
+  // - "Day 11 1. p54~56-no.1" (하루6개1등급 형식)
+  // - "1. p2-no.20" (24년9월모의고사 형식)  
+  // - "1. p32-수능 대비 ANALYSIS" (올림포스 형식)
+  // 더 간단하고 포괄적인 패턴 사용
+  const pageMatches = [...content.matchAll(/(\d+)\.\s*p([\d\~\-]+)(?:-no\.(\d+)|[-\s]*([^\n]+))?/gim)];
+  console.log(`📋 발견된 페이지 패턴: ${pageMatches.length}개`);
+  
+  // 디버깅용: 처음 500자 확인 (줄바꿈 포함)
+  console.log(`🔍 Content 처음 500자:`, content.substring(0, 500));
+  console.log(`🔍 줄바꿈 확인:`, content.substring(0, 200).includes('\n') ? '줄바꿈 있음' : '줄바꿈 없음');
+  
+  // 실제 줄별로 보기 (처음 5줄)
+  const lines = content.split('\n');
+  console.log(`🔍 전체 줄 수: ${lines.length}`);
+  console.log(`🔍 처음 5줄:`, lines.slice(0, 5));
+  
+  if (pageMatches.length > 0) {
+    pageMatches.forEach((match, idx) => {
+      console.log(`  매치 ${idx + 1}: "${match[0]}" -> ${match[1] || 'Day'} p.${match[2]} ${match[3]}`);
+    });
+  }
+  
+  if (pageMatches.length > 0) {
+    // Single match일 때도 처리하기 위해 조건 변경
+    for (let i = 0; i < pageMatches.length; i++) {
+      const currentMatch = pageMatches[i];
+      const problemNum = currentMatch[1];       // 1, 2, 3, etc.
+      const pageInfo = currentMatch[2];         // 페이지 번호 (54~56, 2, 32 등)
+      const noNumber = currentMatch[3] || '';   // no.뒤의 번호 (있으면)
+      const additionalInfo = (currentMatch[4] || '').trim(); // 추가 정보 (수능 대비 ANALYSIS 등)
+      
+      // 🔧 출처 정보를 간결하게 생성 (중복 제거)
+      let simpleSource = `p${pageInfo}`;
+      if (noNumber) {
+        simpleSource += `-no.${noNumber}`;
+      } else if (additionalInfo && !additionalInfo.startsWith('-')) {
+        // 추가 정보가 있고 '-'로 시작하지 않을 때만 추가
+        const cleanInfo = additionalInfo.replace(/^[-\s]+/, '').trim();
+        if (cleanInfo) {
+          simpleSource += `-${cleanInfo}`;
+        }
+      }
+      
+      console.log(`🔧 [DEBUG] 파싱 중 - problemNum: ${problemNum}, pageInfo: "${pageInfo}", simpleSource: "${simpleSource}"`);
+      
+      // 현재 페이지부터 다음 페이지까지의 내용 추출
+      const startIndex = currentMatch.index;
+      const endIndex = i < pageMatches.length - 1 
+        ? pageMatches[i + 1].index 
+        : content.length;
+      
+      let pageContent = content.substring(startIndex, endIndex);
+      
+      // 첫 줄(페이지 정보) 제거
+      pageContent = pageContent.replace(currentMatch[0], '').trim();
+      
+      // 영어 지문만 추출 (한글 제거)
+      const englishLines = pageContent.split('\n').filter(line => {
+        const cleaned = line.trim();
+        // 영어 비율이 70% 이상인 라인만 선택
+        if (cleaned.length < 10) return false;
+        const englishCount = (cleaned.match(/[a-zA-Z]/g) || []).length;
+        const englishRatio = englishCount / cleaned.length;
+        return englishRatio > 0.7 && !/[가-힣]/.test(cleaned);
       });
       
-      console.log(`✅ 지문 파싱 완료: ${extractedSource}`);
-      console.log(`   단어 수: ${wordCount}개`);
-      console.log(`   내용: ${cleanSection.substring(0, 100)}...`);
-    } else {
-      console.log(`❌ 영어 단어 부족으로 제외 (${wordCount}개): ${cleanSection.substring(0, 50)}...`);
-    }
-  });
-  
-  // 만약 [출처:] 형식이 없다면 기본 방식으로 파싱
-  if (passages.length === 0) {
-    console.log('⚠️ 출처 형식이 없어서 기본 파싱 방식 사용');
-    const basicSections = content.split(/\n\n+/);
-    
-    basicSections.forEach((section, index) => {
-      const cleanSection = section.trim();
-      const wordCount = (cleanSection.match(/\b[a-zA-Z]+\b/g) || []).length;
+      const englishContent = englishLines.join(' ').trim();
+      const wordCount = (englishContent.match(/\b[a-zA-Z]+\b/g) || []).length;
       
-      if (cleanSection.length >= 100 && wordCount >= 15) {
-        // 한글 체크
-        if (!/[가-힣ㄱ-ㅎㅏ-ㅣ]/.test(cleanSection)) {
+      if (englishContent.length >= 100 && wordCount >= 30) {
+        passages.push({
+          text: englishContent,
+          source: simpleSource, // 간결한 형태: "p54~56-no.1"
+          sourceInfo: simpleSource,
+          number: passages.length + 1,
+          pageInfo: pageInfo,
+          problemNumber: problemNum
+        });
+        
+        console.log(`✅ 지문 ${passages.length}: ${simpleSource}`);
+        console.log(`   단어 수: ${wordCount}개, 길이: ${englishContent.length}자`);
+        console.log(`   미리보기: ${englishContent.substring(0, 80)}...`);
+      } else {
+        console.log(`❌ 지문 제외: ${simpleSource} (단어 ${wordCount}개, 길이 ${englishContent.length}자)`);
+      }
+    }
+  }
+  
+  // 2. 숫자. 패턴으로 추가 분리 시도
+  if (passages.length < 5) {
+    console.log('🔍 숫자. 패턴으로 추가 검색 중...');
+    
+    const numberMatches = [...content.matchAll(/^\s*(\d{1,2})\.\s*([^\n]*)/gm)];
+    console.log(`📋 발견된 숫자 패턴: ${numberMatches.length}개`);
+    
+    for (let i = 0; i < numberMatches.length; i++) {
+      const currentMatch = numberMatches[i];
+      const problemNum = currentMatch[1];
+      const description = currentMatch[2].trim();
+      
+      const startIndex = currentMatch.index;
+      const endIndex = i < numberMatches.length - 1 
+        ? numberMatches[i + 1].index 
+        : content.length;
+      
+      let problemContent = content.substring(startIndex, endIndex);
+      problemContent = problemContent.replace(currentMatch[0], '').trim();
+      
+      // 영어 지문만 추출
+      const englishLines = problemContent.split('\n').filter(line => {
+        const cleaned = line.trim();
+        if (cleaned.length < 10) return false;
+        const englishCount = (cleaned.match(/[a-zA-Z]/g) || []).length;
+        const englishRatio = englishCount / cleaned.length;
+        return englishRatio > 0.7 && !/[가-힣]/.test(cleaned);
+      });
+      
+      const englishContent = englishLines.join(' ').trim();
+      const wordCount = (englishContent.match(/\b[a-zA-Z]+\b/g) || []).length;
+      
+      if (englishContent.length >= 100 && wordCount >= 30) {
+        // 중복 방지
+        const isDuplicate = passages.some(p => 
+          p.text.substring(0, 100) === englishContent.substring(0, 100)
+        );
+        
+        if (!isDuplicate) {
           passages.push({
-            text: cleanSection,
-            source: source || '출처 미상',
+            text: englishContent,
+            source: `문제 ${problemNum}번 - ${description}`,
+            sourceInfo: `${problemNum}번 문제 - ${description}`,
+            number: passages.length + 1,
+            problemNumber: problemNum,
+            description: description
+          });
+          
+          console.log(`✅ 추가 지문 ${passages.length}: 문제 ${problemNum}번`);
+        }
+      }
+    }
+  }
+  
+  // 3. 마지막 수단: 큰 영어 블록으로 분리
+  if (passages.length < 3) {
+    console.log('🔍 큰 영어 블록으로 분리 시도...');
+    
+    const bigBlocks = content.split(/\n\s*\n/);
+    bigBlocks.forEach((block, index) => {
+      const cleaned = block.trim();
+      const englishCount = (cleaned.match(/[a-zA-Z]/g) || []).length;
+      const englishRatio = englishCount / cleaned.length;
+      const wordCount = (cleaned.match(/\b[a-zA-Z]+\b/g) || []).length;
+      
+      if (cleaned.length >= 200 && wordCount >= 50 && englishRatio > 0.8 && !/[가-힣]/.test(cleaned)) {
+        const isDuplicate = passages.some(p => 
+          p.text.substring(0, 100) === cleaned.substring(0, 100)
+        );
+        
+        if (!isDuplicate) {
+          passages.push({
+            text: cleaned,
+            source: `지문 ${passages.length + 1}`,
+            sourceInfo: `지문 ${passages.length + 1}`,
             number: passages.length + 1
           });
           
-          console.log(`✅ 기본 파싱으로 지문 추가 (${wordCount}개 단어)`);
+          console.log(`✅ 블록 지문 ${passages.length}: ${wordCount}개 단어`);
         }
       }
     });
@@ -951,9 +1175,22 @@ function escapeRegExp(string) {
 
 // 🚀 수능 형식 문제 생성 (순서배열, 문장삽입)
 function generateRuleBasedProblem(type, passage, difficulty, problemId = null) {
+  // 🔥 DEBUG: passage 검증
+  console.log(`🔍 [DEBUG] generateRuleBasedProblem 호출됨:`);
+  console.log(`   - type: ${type}`);
+  console.log(`   - passage:`, passage);
+  console.log(`   - passage.text 존재: ${passage && passage.text ? 'YES' : 'NO'}`);
+  
+  // passage 또는 passage.text가 없는 경우 에러 처리
+  if (!passage || !passage.text) {
+    console.error('❌ generateRuleBasedProblem: passage 또는 passage.text가 없습니다.');
+    console.error('   - passage:', passage);
+    return null;
+  }
+  
   const allSentences = passage.text.match(/[^.!?]+[.!?]+/g) || [];
   
-  // 🔥 한글이 포함된 문장은 완전히 제외하고 문장 정제
+  // 🔥 한글이 포함된 문장은 완전히 제외하고 문장 정제 (더 관대한 조건으로 변경)
   const sentences = allSentences
     .filter(sentence => {
       const cleanSent = sentence.trim();
@@ -961,17 +1198,16 @@ function generateRuleBasedProblem(type, passage, difficulty, problemId = null) {
       // 한글 체크
       if (/[가-힣ㄱ-ㅎㅏ-ㅣ]/.test(cleanSent)) return false;
       
-      // 영어 단어 최소 8개 체크 (더 긴 완전한 문장만)
+      // 영어 단어 최소 5개 체크 (조건 완화)
       const wordCount = (cleanSent.match(/\b[a-zA-Z]+\b/g) || []).length;
-      if (wordCount < 8) return false;
+      if (wordCount < 5) return false;
       
-      // 문장 길이 체크 (최소 40자 이상)
-      if (cleanSent.length < 40) return false;
+      // 문장 길이 체크 (최소 25자 이상, 조건 완화)
+      if (cleanSent.length < 25) return false;
       
       return true;
     })
-    .map(s => s.trim())
-    .slice(0, 8); // 최대 8개 문장만 사용
+    .map(s => s.trim()); // slice 제거: 모든 문장 사용!
   
   console.log(`📝 문제 생성용 문장: 전체 ${allSentences.length}개 → 필터링 후 ${sentences.length}개`);
   
@@ -981,58 +1217,96 @@ function generateRuleBasedProblem(type, passage, difficulty, problemId = null) {
   }
   
   if (type === 'order') {
-    // 🎯 수능 순서배열 문제 형식 (난이도별 개수 정확히 조정)
-    let arrangeSentenceCount;  // 배열할 문장 개수
+    // 🎯 수능 순서배열 문제 형식 - 전체 원문 사용!!
+    console.log(`📚 순서배열 문제 생성 시작 - 난이도: ${difficulty}`);
+    console.log(`📝 전체 문장 수: ${sentences.length}개`);
     
+    // 난이도별 배열 문장 개수 설정
+    let arrangeSentenceCount;
     if (difficulty === 'basic') {
-      arrangeSentenceCount = 2;  // 기본: A, B (2개 배열)
+      arrangeSentenceCount = 3;  // 기본: A, B, C
     } else if (difficulty === 'medium') {
-      arrangeSentenceCount = 3;  // 중급: A, B, C (3개 배열)  
-    } else { // advanced
-      arrangeSentenceCount = 4;  // 고급: A, B, C, D (4개 배열)
+      arrangeSentenceCount = 4;  // 중급: A, B, C, D
+    } else {
+      arrangeSentenceCount = 5;  // 고급: A, B, C, D, E
     }
     
-    // 전체 문장 개수 = 주어진 문장 1개 + 배열할 문장들
-    const totalSentenceCount = arrangeSentenceCount + 1;
-    const problemSentences = sentences.slice(0, totalSentenceCount);
+    // 전체 문장이 부족한 경우 조정
+    if (sentences.length < arrangeSentenceCount + 1) {
+      arrangeSentenceCount = Math.max(2, sentences.length - 1);
+      console.log(`⚠️ 문장 부족으로 ${arrangeSentenceCount}개로 조정`);
+    }
     
-    console.log(`🎯 순서배열 문제 생성: 난이도 ${difficulty}, 배열할 문장 ${arrangeSentenceCount}개 (${String.fromCharCode(65, 65 + arrangeSentenceCount - 1)})`);
+    console.log(`✅ 최종 설정: ${arrangeSentenceCount}개 문장 배열 (${String.fromCharCode(65, 65+1, 65+2, arrangeSentenceCount >= 4 ? 65+3 : null, arrangeSentenceCount >= 5 ? 65+4 : null).replace(/,null/g, '')})`);
     
-    // 첫 번째 문장은 주어진 문장으로 고정
-    const givenSentence = problemSentences[0];
-    const shuffleSentences = problemSentences.slice(1);  // 배열할 문장들
+    // 🔥 핵심: 전체 문장 사용!!!
+    const givenSentence = sentences[0];  // 첫 문장은 주어진 문장
+    const remainingSentences = sentences.slice(1);  // 나머지 전체 문장
+    
+    // 배열할 문장 선택 (나머지 전체에서 필요한 개수만큼)
+    let sentencesToArrange;
+    if (remainingSentences.length <= arrangeSentenceCount) {
+      // 남은 문장이 배열 개수보다 적거나 같으면 전체 사용
+      sentencesToArrange = remainingSentences;
+      arrangeSentenceCount = sentencesToArrange.length;  // 실제 개수로 조정
+    } else {
+      // 남은 문장이 많으면 앞에서부터 필요한 개수만큼 선택
+      sentencesToArrange = remainingSentences.slice(0, arrangeSentenceCount);
+    }
+    
+    console.log(`📖 사용 문장: 주어진 1개 + 배열 ${sentencesToArrange.length}개 = 총 ${1 + sentencesToArrange.length}개`);
+    console.log(`📄 전체 원문 ${sentences.length}개 문장 중 ${1 + sentencesToArrange.length}개 사용`);
+    
+    // 문장들을 섞기 위한 랜덤 함수
+    const random = () => Math.random();
     
     // 배열할 문장들을 섞기
-    const shuffled = [...shuffleSentences].sort(() => Math.random() - 0.5);
+    const shuffled = [...sentencesToArrange];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
     
-    // 라벨 생성 (A, B, C, D...)
+    // 라벨 생성 (A, B, C, D, E...)
     const labels = [];
-    for (let i = 0; i < arrangeSentenceCount; i++) {
+    for (let i = 0; i < sentencesToArrange.length; i++) {
       labels.push(`(${String.fromCharCode(65 + i)})`); 
     }
     
     console.log(`📝 생성된 라벨: ${labels.join(', ')}`);
+    console.log(`🔀 섞인 순서로 배치된 문장들:`);
+    shuffled.forEach((s, i) => {
+      console.log(`   ${labels[i]} "${s.substring(0, 50)}..."`);
+    });
     
-    // 정답 순서 생성 (원래 순서로 복원)
-    const correctOrder = shuffleSentences.map((originalSent) => {
+    // 정답 순서 생성 (원래 순서대로 복원하는 순서)
+    const correctOrder = sentencesToArrange.map((originalSent) => {
       const shuffledIndex = shuffled.indexOf(originalSent);
       return String.fromCharCode(65 + shuffledIndex);
     }).join(' - ');
     
+    console.log(`✅ 정답 순서: ${correctOrder}`);
+    
+    // 전체 지문 구성 (출처 + 전체 텍스트)
+    const fullPassage = passage.text.replace(/\s+/g, ' ').trim();
+    const sourceInfo = passage.source || '출처 미상';
+    
+    // 출처에서 p32-수능 대비 ANALYSIS 같은 정보 추출
+    const unitInfo = extractDetailedUnitInfo(sourceInfo);
+    
     return {
       type: 'order',
-      question: `주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?`,
+      question: `다음 글에서 주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?`,
+      sourceInfo: passage.source, // 🔧 간결한 출처 정보 (예: p32-수능대비ANALYSIS)
       givenSentence: givenSentence,
       passage: shuffled.map((s, i) => `${labels[i]} ${s.trim()}`).join('\n\n'),
-      options: generateOrderOptions(arrangeSentenceCount, difficulty),
+      options: generateOrderOptions(sentencesToArrange.length, difficulty),
       answer: '①', // 첫 번째 옵션을 정답으로 설정
       explanation: `문장들의 논리적 흐름과 연결성을 고려한 순서입니다. 정답: ${correctOrder}`,
       source: passage.source || '출처 미상',
-      unit: extractUnitFromSource(passage.source),
-      problemNumber: extractProblemNumberFromSource(passage.source),
       difficulty: difficulty,
-      sentenceCount: arrangeSentenceCount,  // 디버깅용
-      labels: labels  // 디버깅용
+      sentenceCount: actualArrangeCount,  // 실제 사용된 문장 수
+      correctOrder: correctOrder // 디버깅용
     };
     
   } else if (type === 'insertion') {
@@ -1106,14 +1380,8 @@ function generateOrderOptions(arrangeSentenceCount, difficulty) {
   
   console.log(`🔧 순서 옵션 생성: ${arrangeSentenceCount}개 문장 배열 (${labels.join(', ')})`);
   
-  if (arrangeSentenceCount === 2) {
-    // 기본: 2개 문장 배열 (A, B)
-    return [
-      '① (A) - (B)',
-      '② (B) - (A)'
-    ];
-  } else if (arrangeSentenceCount === 3) {
-    // 중급: 3개 문장 배열 (A, B, C)
+  if (arrangeSentenceCount === 3) {
+    // 기본: 3개 문장 배열 (A, B, C)
     return [
       '① (A) - (B) - (C)',
       '② (A) - (C) - (B)',
@@ -1122,7 +1390,7 @@ function generateOrderOptions(arrangeSentenceCount, difficulty) {
       '⑤ (C) - (A) - (B)'
     ];
   } else if (arrangeSentenceCount === 4) {
-    // 고급: 4개 문장 배열 (A, B, C, D)
+    // 중급: 4개 문장 배열 (A, B, C, D)
     return [
       '① (A) - (B) - (C) - (D)',
       '② (A) - (C) - (B) - (D)',
@@ -1130,8 +1398,17 @@ function generateOrderOptions(arrangeSentenceCount, difficulty) {
       '④ (B) - (C) - (A) - (D)',
       '⑤ (C) - (A) - (B) - (D)'
     ];
+  } else if (arrangeSentenceCount === 5) {
+    // 고급: 5개 문장 배열 (A, B, C, D, E)
+    return [
+      '① (A) - (B) - (C) - (D) - (E)',
+      '② (A) - (C) - (B) - (D) - (E)',
+      '③ (B) - (A) - (C) - (D) - (E)',
+      '④ (B) - (C) - (A) - (D) - (E)',
+      '⑤ (C) - (A) - (B) - (D) - (E)'
+    ];
   } else {
-    // 폴백: 동적 생성 (5개 이상인 경우)
+    // 폴백: 동적 생성
     const shuffledOptions = [];
     const optionLabels = ['①', '②', '③', '④', '⑤'];
     
@@ -1237,6 +1514,33 @@ async function generateAIProblem(type, passage, difficulty, problemId = null) {
     // 폴백: 규칙 기반 문제 반환
     return generateRuleBasedProblem('order', passage, difficulty);
   }
+}
+
+// 📖 상세한 출처 정보 추출 함수 (p32-수능 대비 ANALYSIS 등)
+function extractDetailedUnitInfo(source) {
+  if (!source) return '출처 미상';
+  
+  // 패턴 1: "p32-수능 대비 ANALYSIS" 형식
+  const pagePattern = source.match(/p(\d+)[-\s]*([^-\n]+)/i);
+  if (pagePattern) {
+    const pageNum = pagePattern[1];
+    const description = pagePattern[2].trim();
+    return `${pageNum}페이지 - ${description}`;
+  }
+  
+  // 패턴 2: "문제 X번" 형식  
+  const problemPattern = source.match(/문제\s*(\d+)번/);
+  if (problemPattern) {
+    return `${problemPattern[1]}번 문제`;
+  }
+  
+  // 패턴 3: 기본 제목에서 추출
+  const titlePattern = source.match(/올림포스2.*?[-–]\s*(.+)/);
+  if (titlePattern) {
+    return titlePattern[1].trim();
+  }
+  
+  return source;
 }
 
 // 서버 시작

@@ -11,7 +11,11 @@
       "Bash(del nul)",
       "Bash(git commit:*)",
       "Bash(git push:*)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(git stash:*)",
+      "Bash(tasklist)",
+      "Bash(cmd /c:*)",
+      "Bash(set PORT=5001)"
     ],
     "deny": [],
     "ask": []
