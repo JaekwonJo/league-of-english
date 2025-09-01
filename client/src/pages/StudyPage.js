@@ -52,7 +52,8 @@ const StudyPage = () => {
       // 문제 가져오기
       const response = await api.problems.getSmartProblems({
         documentId: studyConfig.documentId,
-        types: studyConfig.types
+        types: studyConfig.types,
+        orderDifficulty: studyConfig.orderDifficulty || 'basic'
       });
 
       if (!response.problems || response.problems.length === 0) {

@@ -12,9 +12,12 @@ const StudyConfig = ({ onStart }) => {
   const [documents, setDocuments] = useState([]);
   const [config, setConfig] = useState({
     mode: 'curriculum',
-    difficulty: 'basic',
     documentId: null,
-    types: problemTypes.defaultCounts.basic
+    types: Object.keys(problemTypes.problemTypes).reduce((acc, type) => {
+      acc[type] = 0;
+      return acc;
+    }, {}),
+    orderDifficulty: 'basic'
   });
   const [loading, setLoading] = useState(false);
 
@@ -55,7 +58,10 @@ const StudyConfig = ({ onStart }) => {
   const resetTypes = () => {
     setConfig(prev => ({
       ...prev,
-      types: problemTypes.defaultCounts[config.difficulty]
+      types: Object.keys(problemTypes.problemTypes).reduce((acc, type) => {
+        acc[type] = 0;
+        return acc;
+      }, {})
     }));
   };
 
@@ -99,30 +105,7 @@ const StudyConfig = ({ onStart }) => {
         </select>
       </div>
 
-      {/* 난이도 선택 */}
-      <div style={styles.section}>
-        <h3 style={styles.sectionTitle}>🎯 난이도</h3>
-        <div style={styles.difficultyGrid}>
-          {['basic', 'medium', 'advanced'].map(level => (
-            <label key={level} style={styles.radioLabel}>
-              <input
-                type="radio"
-                name="difficulty"
-                value={level}
-                checked={config.difficulty === level}
-                onChange={(e) => {
-                  setConfig(prev => ({
-                    ...prev,
-                    difficulty: e.target.value,
-                    types: problemTypes.defaultCounts[e.target.value]
-                  }));
-                }}
-              />
-              <span>{level === 'basic' ? '기본' : level === 'medium' ? '중급' : '고급'}</span>
-            </label>
-          ))}
-        </div>
-      </div>
+
 
       {/* 문제 유형 설정 */}
       <div style={styles.section}>
@@ -130,7 +113,7 @@ const StudyConfig = ({ onStart }) => {
           📝 문제 유형 (총 {getTotalProblems()}문제)
         </h3>
         <button onClick={resetTypes} style={styles.resetButton}>
-          초기화
+          🔄
         </button>
 
         <div style={styles.typeGrid}>
@@ -140,6 +123,33 @@ const StudyConfig = ({ onStart }) => {
                 <span style={styles.typeIcon}>{info.icon}</span>
                 <span style={styles.typeName}>{info.name}</span>
               </div>
+              
+              {/* 순서배열 타입에만 난이도 선택기 추가 */}
+              {type === 'order' && (
+                <div style={styles.compactDifficultySelector}>
+                  <div
+                    style={{
+                      ...styles.compactDifficultyOption,
+                      ...(config.orderDifficulty === 'basic' ? styles.compactDifficultyOptionActive : {})
+                    }}
+                    onClick={() => setConfig(prev => ({ ...prev, orderDifficulty: 'basic' }))}
+                  >
+                    <div style={styles.compactDifficultyIcon}>🥉</div>
+                    <div style={styles.compactDifficultyText}>기본 (A~C)</div>
+                  </div>
+                  <div
+                    style={{
+                      ...styles.compactDifficultyOption,
+                      ...(config.orderDifficulty === 'advanced' ? styles.compactDifficultyOptionActive : {})
+                    }}
+                    onClick={() => setConfig(prev => ({ ...prev, orderDifficulty: 'advanced' }))}
+                  >
+                    <div style={styles.compactDifficultyIcon}>🏆</div>
+                    <div style={styles.compactDifficultyText}>고급 (A~E)</div>
+                  </div>
+                </div>
+              )}
+              
               <div style={styles.typeControls}>
                 <button
                   style={styles.controlButton}
@@ -170,11 +180,36 @@ const StudyConfig = ({ onStart }) => {
       {/* 시작 버튼 */}
       <div style={styles.actions}>
         <button
-          style={styles.startButton}
+          style={{
+            ...styles.startButton,
+            ...((!config.documentId || getTotalProblems() === 0) ? styles.startButtonDisabled : {})
+          }}
           onClick={handleStart}
           disabled={!config.documentId || getTotalProblems() === 0}
+          onMouseEnter={(e) => {
+            if (!e.target.disabled) {
+              e.target.style.transform = 'translateY(-3px) scale(1.05)';
+              e.target.style.boxShadow = '0 15px 35px rgba(5, 150, 105, 0.6)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!e.target.disabled) {
+              e.target.style.transform = 'translateY(0) scale(1)';
+              e.target.style.boxShadow = '0 10px 25px rgba(5, 150, 105, 0.4)';
+            }
+          }}
+          onMouseDown={(e) => {
+            if (!e.target.disabled) {
+              e.target.style.transform = 'translateY(-1px) scale(1.02)';
+            }
+          }}
+          onMouseUp={(e) => {
+            if (!e.target.disabled) {
+              e.target.style.transform = 'translateY(-3px) scale(1.05)';
+            }
+          }}
         >
-          학습 시작 ({getTotalProblems()}문제)
+          🚀 학습 시작 ({getTotalProblems()}문제)
         </button>
       </div>
     </div>
@@ -183,115 +218,193 @@ const StudyConfig = ({ onStart }) => {
 
 const styles = {
   container: {
-    maxWidth: '800px',
+    maxWidth: '900px',
     margin: '0 auto',
-    padding: '20px'
+    padding: '30px',
+    background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
+    minHeight: '100vh',
+    color: '#F8FAFC'
   },
   title: {
-    fontSize: '28px',
-    marginBottom: '30px',
-    textAlign: 'center'
+    fontSize: '36px',
+    marginBottom: '40px',
+    textAlign: 'center',
+    background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    fontWeight: 'bold',
+    letterSpacing: '1px'
   },
   section: {
-    background: 'white',
-    borderRadius: '15px',
-    padding: '20px',
-    marginBottom: '20px',
-    boxShadow: '0 5px 15px rgba(0, 0, 0, 0.08)'
+    background: 'rgba(30, 41, 59, 0.8)',
+    borderRadius: '20px',
+    padding: '30px',
+    marginBottom: '30px',
+    boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)',
+    border: '1px solid rgba(248, 250, 252, 0.1)',
+    backdropFilter: 'blur(10px)'
   },
   sectionTitle: {
-    fontSize: '18px',
-    marginBottom: '15px',
-    color: '#111827'
+    fontSize: '22px',
+    marginBottom: '20px',
+    color: '#F8FAFC',
+    fontWeight: 'bold',
+    position: 'relative'
   },
   select: {
     width: '100%',
-    padding: '12px',
-    borderRadius: '10px',
-    border: '1px solid #E5E7EB',
-    fontSize: '16px'
-  },
-  difficultyGrid: {
-    display: 'flex',
-    gap: '15px'
-  },
-  radioLabel: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '10px 20px',
-    background: '#F3F4F6',
-    borderRadius: '10px',
-    cursor: 'pointer'
+    padding: '16px',
+    borderRadius: '12px',
+    border: '2px solid rgba(248, 250, 252, 0.2)',
+    fontSize: '16px',
+    background: 'rgba(30, 41, 59, 0.9)',
+    color: '#F8FAFC',
+    outline: 'none',
+    transition: 'all 0.3s ease'
   },
   resetButton: {
-    float: 'right',
-    padding: '8px 16px',
-    background: '#F3F4F6',
+    position: 'absolute',
+    right: '30px',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    width: '35px',
+    height: '35px',
+    padding: '0',
+    background: 'linear-gradient(135deg, #DC2626 0%, #B91C1C 100%)',
+    color: 'white',
     border: 'none',
-    borderRadius: '8px',
+    borderRadius: '50%',
     cursor: 'pointer',
-    fontSize: '14px'
+    fontSize: '14px',
+    fontWeight: 'bold',
+    transition: 'all 0.3s ease',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    ':hover': {
+      transform: 'translateY(-50%) scale(1.1)',
+      boxShadow: '0 10px 20px rgba(220, 38, 38, 0.3)'
+    }
   },
   typeGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-    gap: '15px',
-    marginTop: '20px'
+    gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
+    gap: '20px',
+    marginTop: '25px'
   },
   typeCard: {
-    padding: '15px',
-    background: '#F9FAFB',
-    borderRadius: '10px'
+    padding: '20px',
+    background: 'rgba(51, 65, 85, 0.8)',
+    borderRadius: '15px',
+    border: '1px solid rgba(248, 250, 252, 0.1)',
+    transition: 'all 0.3s ease',
+    transform: 'translateY(0)'
   },
   typeHeader: {
     display: 'flex',
     alignItems: 'center',
-    gap: '10px',
-    marginBottom: '10px'
+    gap: '12px',
+    marginBottom: '15px'
   },
   typeIcon: {
-    fontSize: '20px'
+    fontSize: '24px'
   },
   typeName: {
-    fontSize: '14px',
-    fontWeight: 'bold'
+    fontSize: '16px',
+    fontWeight: 'bold',
+    color: '#F8FAFC'
   },
   typeControls: {
     display: 'flex',
     alignItems: 'center',
-    gap: '10px'
+    gap: '12px',
+    justifyContent: 'center'
   },
   controlButton: {
-    width: '30px',
-    height: '30px',
-    border: '1px solid #E5E7EB',
-    background: 'white',
-    borderRadius: '5px',
+    width: '40px',
+    height: '40px',
+    border: '2px solid rgba(248, 250, 252, 0.3)',
+    background: 'rgba(30, 41, 59, 0.9)',
+    borderRadius: '8px',
     cursor: 'pointer',
-    fontSize: '18px'
+    fontSize: '20px',
+    fontWeight: 'bold',
+    color: '#F8FAFC',
+    transition: 'all 0.3s ease',
+    ':hover': {
+      background: 'rgba(59, 130, 246, 0.8)',
+      borderColor: '#3B82F6',
+      transform: 'scale(1.1)'
+    }
   },
   numberInput: {
-    width: '50px',
-    padding: '5px',
+    width: '60px',
+    padding: '8px',
     textAlign: 'center',
-    border: '1px solid #E5E7EB',
-    borderRadius: '5px'
+    border: '2px solid rgba(248, 250, 252, 0.3)',
+    borderRadius: '8px',
+    background: 'rgba(30, 41, 59, 0.9)',
+    color: '#F8FAFC',
+    fontSize: '16px',
+    fontWeight: 'bold',
+    outline: 'none'
   },
   actions: {
     textAlign: 'center',
-    marginTop: '30px'
+    marginTop: '50px'
   },
   startButton: {
-    padding: '15px 40px',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    padding: '20px 60px',
+    background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
     color: 'white',
     border: 'none',
-    borderRadius: '10px',
-    fontSize: '18px',
+    borderRadius: '15px',
+    fontSize: '22px',
     fontWeight: 'bold',
-    cursor: 'pointer'
-  }
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    transform: 'translateY(0)',
+    boxShadow: '0 10px 25px rgba(5, 150, 105, 0.4)',
+    position: 'relative',
+    overflow: 'hidden'
+  },
+  startButtonDisabled: {
+    background: 'linear-gradient(135deg, #64748B 0%, #475569 100%)',
+    cursor: 'not-allowed',
+    boxShadow: 'none'
+  },
+  // 컴팩트 난이도 선택기 스타일 (카드 내부용)
+  compactDifficultySelector: {
+    display: 'flex',
+    gap: '8px',
+    marginBottom: '12px',
+    justifyContent: 'center'
+  },
+  compactDifficultyOption: {
+    display: 'flex',
+    alignItems: 'center',
+    padding: '8px 12px',
+    background: 'rgba(30, 41, 59, 0.6)',
+    borderRadius: '8px',
+    border: '1px solid rgba(248, 250, 252, 0.1)',
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    flex: 1
+  },
+  compactDifficultyOptionActive: {
+    background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.4) 0%, rgba(124, 58, 237, 0.4) 100%)',
+    borderColor: '#8B5CF6',
+    boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)'
+  },
+  compactDifficultyIcon: {
+    fontSize: '16px',
+    marginRight: '6px'
+  },
+  compactDifficultyText: {
+    fontSize: '11px',
+    fontWeight: '600',
+    color: '#F8FAFC'
+  },
 };
 
 export default StudyConfig;

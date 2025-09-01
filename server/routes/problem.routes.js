@@ -12,7 +12,7 @@ router.post('/get-smart-problems',
   verifyToken, 
   checkDailyLimit,
   async (req, res) => {
-    const { documentId, types } = req.body;
+    const { documentId, types, orderDifficulty } = req.body;
     const userId = req.user.id;
 
     if (!documentId || !types) {
@@ -24,11 +24,25 @@ router.post('/get-smart-problems',
       const problems = await problemService.getSmartProblems(
         userId,
         documentId,
-        types
+        types,
+        10, // count
+        { orderDifficulty } // options
       );
 
       // 사용량 업데이트
       await updateUsage(userId, problems.length);
+
+      // 순서배열 문제의 데이터 구조 확인
+      problems.forEach((problem, index) => {
+        if (problem.type === 'order') {
+          console.log(`🔍 순서배열 문제 ${index + 1} API 응답 확인:`, {
+            type: problem.type,
+            mainText: problem.mainText,
+            sentences: problem.sentences,
+            hasMetadata: !!problem.metadata
+          });
+        }
+      });
 
       res.json({
         problems: problems,

@@ -1,0 +1,5 @@
+This is a test English text file for uploading to the League of English system. 
+This file contains more than 100 characters of English text to pass the validation.
+The system should extract only English content from uploaded files.
+This is additional text to meet the minimum character requirement for successful upload.
+More English text content goes here to ensure proper testing of the upload functionality.

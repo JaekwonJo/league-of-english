@@ -26,7 +26,7 @@ router.post('/register', async (req, res) => {
     
     // 사용자 생성
     const result = await database.run(
-      `INSERT INTO users (username, password, email, name, school, grade, role)
+      `INSERT INTO users (username, password_hash, email, name, school, grade, role)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [username, hashedPassword, email, name, school, grade, role]
     );
@@ -51,7 +51,7 @@ router.post('/login', async (req, res) => {
   try {
     // 사용자 조회 (password 컬럼 사용)
     const user = await database.get(
-      'SELECT *, password as password_hash FROM users WHERE username = ?',
+      'SELECT * FROM users WHERE username = ?',
       [username]
     );
     
@@ -71,7 +71,7 @@ router.post('/login', async (req, res) => {
         // 비밀번호를 해싱하여 업데이트
         const hashedPassword = await hashPassword(password);
         await database.run(
-          'UPDATE users SET password = ? WHERE id = ?',
+          'UPDATE users SET password_hash = ? WHERE id = ?',
           [hashedPassword, user.id]
         );
         console.log('비밀번호 해싱 업데이트 완료:', username);

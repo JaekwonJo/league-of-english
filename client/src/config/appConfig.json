@@ -3,7 +3,7 @@
     "name": "League of English",
     "version": "2.0.0",
     "slogan": "AI가 만드는 무한 영어 문제",
-    "apiUrl": "http://localhost:5002/api"
+    "apiUrl": "http://localhost:5000/api"
   },
   "membership": {
     "free": {

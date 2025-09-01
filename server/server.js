@@ -23,10 +23,13 @@ const problemRoutes = require('./routes/problem.routes');
 const app = express();
 const PORT = process.env.PORT || config.server.port;
 
+// UTF-8 인코딩 설정
+process.env.NODE_ENV = process.env.NODE_ENV || 'development';
+
 // 미들웨어 설정
 app.use(cors(config.server.corsOptions));
 app.use(express.json({ limit: config.server.jsonLimit }));
-app.use(express.urlencoded({ extended: true, limit: config.server.jsonLimit }));
+app.use(express.urlencoded({ extended: true, limit: config.server.jsonLimit, charset: 'utf8' }));
 
 // 환경변수 체크
 console.log('🔍 환경변수 확인:');

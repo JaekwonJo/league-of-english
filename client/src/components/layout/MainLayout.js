@@ -13,6 +13,16 @@ const MainLayout = ({ children, currentPath }) => {
   const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
+  // 사용자 역할 한글 변환
+  const getRoleInKorean = (role) => {
+    const roleMap = {
+      'student': '학생',
+      'teacher': '교사',
+      'admin': '관리자'
+    };
+    return roleMap[role] || role;
+  };
+
   const handleLogout = () => {
     if (window.confirm('로그아웃 하시겠습니까?')) {
       logout();
@@ -70,7 +80,7 @@ const MainLayout = ({ children, currentPath }) => {
             {sidebarOpen && (
               <div>
                 <p style={styles.userName}>{user?.name}</p>
-                <p style={styles.userRole}>{user?.role}</p>
+                <p style={styles.userRole}>{getRoleInKorean(user?.role)}</p>
               </div>
             )}
           </div>

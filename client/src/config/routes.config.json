@@ -2,7 +2,7 @@
   "routes": [
     {
       "path": "/",
-      "name": "Home",
+      "name": "홈",
       "icon": "Home",
       "component": "HomePage",
       "requiresAuth": true,
@@ -10,7 +10,7 @@
     },
     {
       "path": "/study",
-      "name": "Study",
+      "name": "문제 풀기",
       "icon": "BookOpen",
       "component": "StudyPage",
       "requiresAuth": true,
@@ -18,7 +18,7 @@
     },
     {
       "path": "/vocabulary",
-      "name": "Vocabulary",
+      "name": "단어 시험",
       "icon": "Languages",
       "component": "VocabularyPage",
       "requiresAuth": true,
@@ -26,7 +26,7 @@
     },
     {
       "path": "/stats",
-      "name": "Stats",
+      "name": "학습 통계",
       "icon": "TrendingUp",
       "component": "StatsPage",
       "requiresAuth": true,
@@ -34,7 +34,7 @@
     },
     {
       "path": "/ranking",
-      "name": "Ranking",
+      "name": "랭킹",
       "icon": "Trophy",
       "component": "RankingPage",
       "requiresAuth": true,
@@ -42,7 +42,7 @@
     },
     {
       "path": "/profile",
-      "name": "Profile",
+      "name": "프로필",
       "icon": "User",
       "component": "ProfilePage",
       "requiresAuth": true,
@@ -50,7 +50,7 @@
     },
     {
       "path": "/admin",
-      "name": "Admin",
+      "name": "관리자",
       "icon": "Settings",
       "component": "AdminPage",
       "requiresAuth": true,

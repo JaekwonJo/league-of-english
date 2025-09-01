@@ -26,6 +26,7 @@ class Database {
 
   async initialize() {
     await this.createTables();
+    await this.updateSchema();
     await this.createDefaultAdmin();
   }
 
@@ -130,6 +131,46 @@ class Database {
     });
   }
 
+  async updateSchema() {
+    return new Promise((resolve, reject) => {
+      // 순서배열 문제용 컬럼 추가
+      const alterQueries = [
+        `ALTER TABLE problems ADD COLUMN main_text TEXT`,
+        `ALTER TABLE problems ADD COLUMN sentences TEXT`,
+        `ALTER TABLE problems ADD COLUMN metadata TEXT`
+      ];
+
+      let completed = 0;
+      let errors = 0;
+
+      alterQueries.forEach((query) => {
+        this.db.run(query, (err) => {
+          if (err) {
+            // 컬럼이 이미 존재하는 경우는 무시
+            if (err.message.includes('duplicate column name')) {
+              console.log('✅ 컬럼이 이미 존재함:', query.split(' ADD COLUMN ')[1].split(' ')[0]);
+            } else {
+              console.error('스키마 업데이트 실패:', err);
+              errors++;
+            }
+          } else {
+            console.log('✅ 컬럼 추가 완료:', query.split(' ADD COLUMN ')[1].split(' ')[0]);
+          }
+          
+          completed++;
+          if (completed === alterQueries.length) {
+            if (errors === 0) {
+              console.log('✅ 스키마 업데이트 완료');
+            } else {
+              console.log(`⚠️ 스키마 업데이트 완료 (${errors}개 오류)`);
+            }
+            resolve();
+          }
+        });
+      });
+    });
+  }
+
   async createDefaultAdmin() {
     return new Promise((resolve, reject) => {
       const checkQuery = 'SELECT * FROM users WHERE username = ?';
@@ -141,7 +182,7 @@ class Database {
           const hashedPassword = await bcrypt.hash(config.admin.defaultPassword, config.auth.saltRounds);
           
           const insertQuery = `
-            INSERT INTO users (username, password, email, name, school, grade, role, membership, tier, points)
+            INSERT INTO users (username, password_hash, email, name, school, grade, role, membership, tier, points)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           `;
           

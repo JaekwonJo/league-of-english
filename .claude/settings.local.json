@@ -21,7 +21,16 @@
       "Bash(set PORT=3001)",
       "Bash(npx:*)",
       "Bash(sqlite3:*)",
-      "Bash(del database.db)"
+      "Bash(del database.db)",
+      "Read(c:\\Users\\jaekw\\Documents\\웹앱/**)",
+      "Bash(node:*)",
+      "Read(C:\\Users\\jaekw\\Pictures\\Screenshots/**)",
+      "Read(C:\\Users\\jaekw\\Pictures\\Screenshots/**)",
+      "Read(C:\\Users\\jaekw\\Pictures\\Screenshots/**)",
+      "Read(C:\\Users\\jaekw\\Pictures\\Screenshots/**)",
+      "Read(c:\\Users\\jaekw\\Documents\\웹앱/**)",
+      "Bash(del serverdatabase.db)",
+      "Bash(git pull:*)"
     ],
     "deny": [],
     "ask": []

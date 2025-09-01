@@ -7,6 +7,7 @@ const pdfParse = require('pdf-parse');
 const database = require('../models/database');
 const { verifyToken, requireTeacherOrAdmin } = require('../middleware/auth');
 const config = require('../config/server.config.json');
+const MiniPdfParser = require('../utils/miniPdfParser');
 
 // Multer 설정
 const storage = multer.diskStorage({
@@ -51,31 +52,79 @@ router.post('/upload-document',
     const { title, type = 'worksheet', category = '기타', school = '전체', grade, worksheetType } = req.body;
 
     try {
-      let content = '';
+      let rawText = '';
+      let parsedData = null;
 
       // 파일 읽기
       if (req.file.mimetype === 'application/pdf') {
         const dataBuffer = fs.readFileSync(req.file.path);
         const pdfData = await pdfParse(dataBuffer);
-        content = cleanPDFText(pdfData.text);
+        rawText = cleanPDFText(pdfData.text);
+        
+        // Mini PDF 파싱
+        const parser = new MiniPdfParser();
+        parsedData = parser.parse(rawText);
+        console.log('📄 PDF 파싱 결과:', {
+          title: parsedData.title,
+          sources: parsedData.sources,
+          passageCount: parsedData.passages.length
+        });
       } else {
-        content = fs.readFileSync(req.file.path, 'utf-8');
+        rawText = fs.readFileSync(req.file.path, 'utf-8');
+        // 일반 텍스트 파일은 기존 방식으로 처리
+        rawText = extractEnglishOnly(rawText);
       }
 
-      // 영어만 추출
-      content = extractEnglishOnly(content);
+      // 최종 콘텐츠 결정
+      let finalTitle = title;
+      let finalContent = '';
+      let sources = [];
 
-      if (content.length < 100) {
+      if (parsedData && parsedData.passages.length > 0) {
+        // PDF에서 파싱된 데이터 사용
+        finalTitle = title === 'Auto Extract' ? parsedData.title : title;
+        finalContent = parsedData.passages.map(p => p.passage).join('\n\n---\n\n');
+        sources = parsedData.sources;
+        
+        console.log('🎯 추출된 영어 지문:', {
+          title: finalTitle,
+          sources: sources,
+          contentLength: finalContent.length,
+          passageCount: parsedData.passages.length
+        });
+      } else {
+        // 기존 방식 폴백
+        finalContent = extractEnglishOnly(rawText);
+      }
+
+      if (finalContent.length < 100) {
         fs.unlinkSync(req.file.path);
-        return res.status(400).json({ message: '유효한 영어 텍스트를 찾을 수 없습니다.' });
+        return res.status(400).json({ 
+          message: '유효한 영어 텍스트를 찾을 수 없습니다.',
+          debug: {
+            rawLength: rawText.length,
+            finalLength: finalContent.length,
+            parsedPassages: parsedData ? parsedData.passages.length : 0
+          }
+        });
       }
 
-      // DB에 저장
+      // DB에 저장 (JSON 구조로 저장)
+      const documentData = {
+        content: finalContent,
+        sources: sources,
+        metadata: parsedData ? parsedData.metadata : null,
+        originalTitle: parsedData ? parsedData.title : null
+      };
+
       const result = await database.run(
         `INSERT INTO documents (title, content, type, category, school, grade, worksheet_type, created_by)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [title, content, type, category, school, grade, worksheetType, req.user.id]
+        [finalTitle, finalContent, type, category, school, grade, worksheetType, req.user.id]
       );
+
+      // JSON 메타데이터를 별도 컬럼이나 파일로 저장할 수도 있지만, 
+      // 지금은 일단 기본 텍스트로 저장해서 호환성 확보
 
       // 임시 파일 삭제
       fs.unlinkSync(req.file.path);
@@ -83,7 +132,10 @@ router.post('/upload-document',
       res.json({
         message: '문서가 성공적으로 업로드되었습니다.',
         documentId: result.id,
-        textLength: content.length
+        title: finalTitle,
+        sources: sources,
+        passageCount: parsedData ? parsedData.passages.length : 1,
+        textLength: finalContent.length
       });
     } catch (error) {
       console.error('문서 업로드 오류:', error);
@@ -107,7 +159,7 @@ router.get('/documents', verifyToken, async (req, res) => {
     // 학생은 자신의 학교 문서만 조회
     if (req.user.role === 'student') {
       const user = await database.get('SELECT school FROM users WHERE id = ?', [req.user.id]);
-      query += ' AND (school = ? OR school = "전체")';
+      query += ' AND (school = ? OR school = "전체" OR school = "all")';
       params.push(user.school);
     }
 
@@ -134,6 +186,25 @@ router.get('/documents/:id', verifyToken, async (req, res) => {
 
     if (!document) {
       return res.status(404).json({ message: '문서를 찾을 수 없습니다.' });
+    }
+
+    // JSON 구조로 저장된 content 파싱
+    try {
+      const parsedContent = JSON.parse(document.content);
+      if (parsedContent.content) {
+        document.parsedContent = parsedContent;
+        document.content = parsedContent.content; // 호환성을 위해 기존 필드도 유지
+        // 추가 메타데이터도 포함
+        if (parsedContent.sources) {
+          document.sources = parsedContent.sources;
+        }
+        if (parsedContent.metadata) {
+          document.metadata = parsedContent.metadata;
+        }
+      }
+    } catch (parseError) {
+      // JSON이 아닌 경우 기존 방식으로 처리
+      console.log('기존 텍스트 형식 문서:', document.id);
     }
 
     res.json(document);
@@ -184,9 +255,17 @@ function cleanPDFText(text) {
     .replace(/Page \d+/g, '')
     .replace(/워크시트메이커/g, '')
     .replace(/Day \d+/g, (match) => '\n' + match + '\n')
-    .replace(/(\d+)\.\s*p/g, '\n$1. p')
-    .replace(/\s+/g, ' ')
-    .replace(/\n{3,}/g, '\n\n');
+    // 문제 번호 앞에 줄바꿈 추가
+    .replace(/(\d+)\.\s*p/g, '\n\n$1. p')
+    // 영어 문장 끝에 줄바꿈 추가 
+    .replace(/([.!?])\s+([A-Z])/g, '$1\n$2')
+    // 한국어 문장 끝에 줄바꿈 추가
+    .replace(/([.!?])\s+([가-힣])/g, '$1\n$2')
+    // 연속 공백을 하나로
+    .replace(/[ \t]+/g, ' ')
+    // 연속 줄바꿈 정리
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
 /**

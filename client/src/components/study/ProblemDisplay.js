@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import OrderProblemDisplay from './OrderProblemDisplay';
+import { problemDisplayStyles, orderStyles } from './problemDisplayStyles';
 
 const ProblemDisplay = ({
   problem,
@@ -30,51 +32,131 @@ const ProblemDisplay = ({
 
   if (!problem) return null;
 
+  // 디버깅용 로그 및 순서배열 문제 파싱
+  let parsedOrderData = null;
+  if (problem.type === 'order') {
+    console.log('🔍 Order Problem Data:', problem);
+    console.log('📊 mainText:', problem.mainText);
+    console.log('📊 sentences:', problem.sentences);
+    console.log('📊 metadata:', problem.metadata);
+    
+    // 구조화되지 않은 텍스트인 경우 파싱
+    if (problem.question && !problem.metadata) {
+      const text = problem.question;
+      const titleMatch = text.match(/📚 제목: (.+)/);
+      const numberMatch = text.match(/📄 문제번호: (.+)/);
+      const sourceMatch = text.match(/📍 출처: (.+)/);
+      const givenMatch = text.match(/🎯 \[주어진 문장\]\s*\n\s*(.+?)(?=\n\n📝|\n📝)/s);
+      const choicesMatch = text.match(/📝 \[선택지\]\s*\n([\s\S]+?)(?=\n\n|$)/);
+      
+      console.log('🔍 Parsing matches:');
+      console.log('titleMatch:', titleMatch);
+      console.log('numberMatch:', numberMatch);
+      console.log('sourceMatch:', sourceMatch);
+      console.log('givenMatch:', givenMatch);
+      console.log('choicesMatch:', choicesMatch);
+      
+      if (titleMatch && numberMatch && sourceMatch && givenMatch && choicesMatch) {
+        const choiceLines = choicesMatch[1].split('\n').filter(line => line.trim());
+        console.log('📝 Choice lines:', choiceLines);
+        
+        const sentences = choiceLines.map(line => {
+          const match = line.match(/^\s*([A-E])\.\s*(.+)$/);
+          return match ? { label: match[1], text: match[2].trim() } : null;
+        }).filter(Boolean);
+        
+        parsedOrderData = {
+          metadata: {
+            originalTitle: titleMatch[1].trim(),
+            passageNumber: numberMatch[1].trim(),
+            source: sourceMatch[1].trim()
+          },
+          mainText: givenMatch[1].trim(),
+          sentences: sentences
+        };
+        
+        console.log('🔧 Parsed Order Data:', parsedOrderData);
+      } else {
+        console.log('❌ 파싱 실패 - 일부 매칭이 실패했습니다');
+      }
+    }
+  }
+
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <div style={styles.progress}>
+    <div style={problemDisplayStyles.container}>
+      <div style={problemDisplayStyles.header}>
+        <div style={problemDisplayStyles.progress}>
           문제 {currentIndex + 1} / {totalProblems}
         </div>
-        <div style={styles.timer}>
+        <div style={problemDisplayStyles.timer}>
           ⏱️ {formatTime(timeElapsed)}
         </div>
       </div>
 
-      <div style={styles.problemCard}>
-        <div style={styles.instruction}>
-          {problem.instruction || problem.question}
-        </div>
-
-        {problem.mainText && (
-          <div style={styles.mainText}>{problem.mainText}</div>
+      <div style={{
+        ...problemDisplayStyles.problemCard,
+        ...(problem.type === 'order' ? orderStyles.orderProblemCard : {})
+      }}>
+        {/* 순서배열 문제 */}
+        {problem.type === 'order' && (
+          <OrderProblemDisplay problem={problem} parsedOrderData={parsedOrderData} />
         )}
+        
+        {/* 일반 문제 */}
+        {problem.type !== 'order' && (
+          <>
+            <div style={problemDisplayStyles.instruction}>
+              {problem.instruction || problem.question}
+            </div>
 
-        {problem.sentenceToInsert && (
-          <div style={styles.insertText}>
-            [삽입할 문장] {problem.sentenceToInsert}
-          </div>
-        )}
+            {problem.mainText && (
+              <div style={problemDisplayStyles.mainText}>{problem.mainText}</div>
+            )}
 
-        {problem.sentences && (
-          <div style={styles.sentences}>
-            {problem.sentences.map((sent, idx) => (
-              <div key={idx} style={styles.sentence}>
-                <strong>{sent.label}</strong> {sent.text}
+            {problem.sentenceToInsert && (
+              <div style={problemDisplayStyles.insertText}>
+                [삽입할 문장] {problem.sentenceToInsert}
               </div>
-            ))}
-          </div>
+            )}
+
+            {problem.sentences && (
+              <div style={problemDisplayStyles.sentences}>
+                <div style={orderStyles.sentencesLabel}>📝 [선택지]</div>
+                {problem.sentences.map((sent, idx) => (
+                  <div key={idx} style={problemDisplayStyles.sentence}>
+                    <strong>{sent.label}.</strong> {sent.text}
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
 
-        <div style={styles.options}>
+        <div style={problemDisplayStyles.options}>
           {(problem.options || []).map((option, idx) => (
             <button
               key={idx}
               style={{
-                ...styles.optionButton,
-                ...(selectedAnswer === (idx + 1).toString() ? styles.selected : {})
+                ...problemDisplayStyles.optionButton,
+                ...(problem.type === 'order' ? orderStyles.orderOptionButton : {}),
+                ...(selectedAnswer === (idx + 1).toString() ? {
+                  ...problemDisplayStyles.selected,
+                  ...(problem.type === 'order' ? orderStyles.orderSelected : {})
+                } : {})
               }}
               onClick={() => handleSelect((idx + 1).toString())}
+              onMouseEnter={(e) => {
+                if (problem.type === 'order' && selectedAnswer !== (idx + 1).toString()) {
+                  e.target.style.transform = 'translateY(-2px) scale(1.02)';
+                  e.target.style.boxShadow = '0 8px 25px rgba(139, 92, 246, 0.3)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (problem.type === 'order' && selectedAnswer !== (idx + 1).toString()) {
+                  e.target.style.transform = 'translateY(0) scale(1)';
+                  e.target.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.1)';
+                }
+              }}
             >
               {option}
             </button>
@@ -82,9 +164,9 @@ const ProblemDisplay = ({
         </div>
       </div>
 
-      <div style={styles.navigation}>
+      <div style={problemDisplayStyles.navigation}>
         <button
-          style={styles.navButton}
+          style={problemDisplayStyles.navButton}
           onClick={onPrev}
           disabled={currentIndex === 0}
         >
@@ -93,7 +175,7 @@ const ProblemDisplay = ({
         
         {currentIndex === totalProblems - 1 ? (
           <button
-            style={styles.finishButton}
+            style={problemDisplayStyles.finishButton}
             onClick={onFinish}
             disabled={!selectedAnswer}
           >
@@ -101,7 +183,7 @@ const ProblemDisplay = ({
           </button>
         ) : (
           <button
-            style={styles.nextButton}
+            style={problemDisplayStyles.nextButton}
             onClick={onNext}
             disabled={!selectedAnswer}
           >
@@ -113,114 +195,5 @@ const ProblemDisplay = ({
   );
 };
 
-const styles = {
-  container: {
-    maxWidth: '800px',
-    margin: '0 auto',
-    padding: '20px'
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '20px'
-  },
-  progress: {
-    fontSize: '18px',
-    fontWeight: 'bold'
-  },
-  timer: {
-    fontSize: '18px',
-    color: '#667eea'
-  },
-  problemCard: {
-    background: 'white',
-    borderRadius: '20px',
-    padding: '30px',
-    marginBottom: '20px',
-    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)'
-  },
-  instruction: {
-    fontSize: '16px',
-    fontWeight: 'bold',
-    marginBottom: '20px',
-    color: '#111827'
-  },
-  mainText: {
-    fontSize: '15px',
-    lineHeight: '1.8',
-    marginBottom: '20px',
-    padding: '20px',
-    background: '#F9FAFB',
-    borderRadius: '10px'
-  },
-  insertText: {
-    fontSize: '15px',
-    padding: '15px',
-    background: '#FEF3C7',
-    borderRadius: '10px',
-    marginBottom: '20px'
-  },
-  sentences: {
-    marginBottom: '20px'
-  },
-  sentence: {
-    fontSize: '15px',
-    lineHeight: '1.8',
-    marginBottom: '10px'
-  },
-  options: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '10px'
-  },
-  optionButton: {
-    padding: '15px',
-    background: 'white',
-    border: '2px solid #E5E7EB',
-    borderRadius: '10px',
-    fontSize: '15px',
-    cursor: 'pointer',
-    textAlign: 'left',
-    transition: 'all 0.3s'
-  },
-  selected: {
-    background: '#EBF5FF',
-    borderColor: '#3B82F6'
-  },
-  navigation: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    gap: '10px'
-  },
-  navButton: {
-    padding: '12px 24px',
-    background: '#F3F4F6',
-    border: 'none',
-    borderRadius: '10px',
-    fontSize: '16px',
-    cursor: 'pointer'
-  },
-  nextButton: {
-    padding: '12px 24px',
-    background: '#3B82F6',
-    color: 'white',
-    border: 'none',
-    borderRadius: '10px',
-    fontSize: '16px',
-    fontWeight: 'bold',
-    cursor: 'pointer'
-  },
-  finishButton: {
-    padding: '12px 24px',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    color: 'white',
-    border: 'none',
-    borderRadius: '10px',
-    fontSize: '16px',
-    fontWeight: 'bold',
-    cursor: 'pointer'
-  }
-};
 
 export default ProblemDisplay;
