@@ -71,7 +71,7 @@ const checkDailyLimit = async (req, res, next) => {
   try {
     // 사용자 정보 조회
     const user = await database.get(
-      'SELECT daily_limit, used_today, last_reset_date, membership FROM users WHERE id = ?',
+      'SELECT daily_limit, used_today, last_reset_date, membership, role FROM users WHERE id = ?',
       [userId]
     );
     
@@ -89,8 +89,16 @@ const checkDailyLimit = async (req, res, next) => {
       user.used_today = 0;
     }
     
-    // 프리미엄 회원은 제한 없음
-    if (user.membership === 'premium') {
+    // 프리미엄 회원 및 관리자는 제한 없음
+    console.log(`🔍 일일 제한 확인 - 사용자 ${userId}: role=${user.role}, membership=${user.membership}, used=${user.used_today}/${user.daily_limit}`);
+    
+    if (user.membership === 'premium' || user.role === 'admin') {
+      console.log(`✅ 무제한 사용자 확인됨: ${user.role === 'admin' ? '관리자' : '프리미엄 회원'}`);
+      req.dailyLimit = {
+        limit: -1, // 무제한
+        used: user.used_today,
+        remaining: -1 // 무제한
+      };
       next();
       return;
     }

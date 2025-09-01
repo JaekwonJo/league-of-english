@@ -30,7 +30,14 @@
       "Read(C:\\Users\\jaekw\\Pictures\\Screenshots/**)",
       "Read(c:\\Users\\jaekw\\Documents\\웹앱/**)",
       "Bash(del serverdatabase.db)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(PORT=5003 node server.js)",
+      "Read(C:\\Users\\jaekw\\Pictures\\Screenshots/**)",
+      "Read(C:\\Users\\jaekw\\Desktop/**)",
+      "Bash(PORT=5004 node server.js)",
+      "Bash(PORT=3002 npm start)",
+      "Bash(PORT=3010 npm start)"
     ],
     "deny": [],
     "ask": []

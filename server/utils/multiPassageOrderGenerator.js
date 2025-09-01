@@ -22,35 +22,73 @@ const byWords = (t, k) => {
   return Array.from({length: k}, (_, i) => w.slice(i * n, (i + 1) * n).join(''));
 };
 
-const cut = (full, k) => {
-  const fst = split(full)[0]; 
-  if (!fst) throw Error('문장 부족'); 
-  const given = fst.tx.trim(); 
-  let rem = full.slice(fst.e).trim();
-  const ss = split(rem); 
-  let parts = [];
+const cutRandomly = (full, k, originalFirstSentence = null) => {
+  const allSentences = split(full);
+  if (allSentences.length < k + 1) throw Error(`문장 부족: ${allSentences.length}개 (최소 ${k + 1}개 필요)`);
   
-  console.log(`🔍 분할 요청: ${k}개, 사용 가능한 문장: ${ss.length}개`);
+  // 원래 첫 문장이 제공되면 그것을 사용, 아니면 현재 첫 문장 사용
+  let given = originalFirstSentence || allSentences[0].tx.trim();
   
-  if (ss.length >= k) {
-    const base = Math.floor(ss.length / k);
-    const r = ss.length % k; 
-    let i = 0; 
-    for (let j = 0; j < k; j++) {
-      const take = base + (j < r ? 1 : 0); 
-      const s = ss[i].s;
-      const e = ss[i + take - 1].e; 
-      parts.push(rem.slice(s, e)); 
-      i += take;
+  // 주어진 문장이 너무 짧거나 의미 없는 경우 검증
+  if (given.length < 10 || /^[A-Z]\.$/.test(given.trim())) {
+    console.log(`⚠️ 부적절한 주어진 문장: "${given}" - 더 긴 문장 사용`);
+    const completeSentence = full.match(/[^.!?]{10,}[.!?]/)?.[0]?.trim();
+    if (completeSentence) {
+      given = completeSentence;
+      console.log(`✅ 대체 문장 사용: "${given}"`);
     }
-    console.log(`✅ 문장 기반 분할 완료: ${parts.length}개 부분`);
-  } else {
-    parts = byWords(rem, k);
-    console.log(`⚡ 단어 기반 분할로 대체: ${parts.length}개 부분`);
   }
   
-  if (nz(parts.join('')) !== nz(rem)) throw Error('[오류] 지문 병합 불일치(분할 실패)');
-  return {given, parts};
+  console.log(`🔍 전체 문장 수: ${allSentences.length}개, 분할 요청: ${k}개`);
+  
+  // 🎯 핵심 개선: 전체 지문을 무작위 지점들로 분할
+  // 첫 번째 문장 다음부터 마지막 문장까지의 범위에서 무작위 분할점 선택
+  const availableRange = allSentences.slice(1); // 첫 문장 제외
+  const totalSentences = availableRange.length;
+  
+  if (totalSentences < k) {
+    throw Error(`분할 가능한 문장 부족: ${totalSentences}개 (${k}개 필요)`);
+  }
+  
+  // 무작위 분할점들 생성 (중복 없이)
+  const breakPoints = new Set();
+  while (breakPoints.size < k - 1) {
+    const randomPoint = Math.floor(Math.random() * (totalSentences - 1)) + 1;
+    breakPoints.add(randomPoint);
+  }
+  
+  // 분할점들을 정렬하여 순서대로 분할
+  const sortedBreakPoints = [0, ...Array.from(breakPoints).sort((a, b) => a - b), totalSentences];
+  console.log(`🎲 무작위 분할점들: [${sortedBreakPoints.join(', ')}]`);
+  
+  const parts = [];
+  for (let i = 0; i < sortedBreakPoints.length - 1; i++) {
+    const start = sortedBreakPoints[i];
+    const end = sortedBreakPoints[i + 1];
+    
+    // 해당 범위의 문장들을 결합
+    const sentencesInRange = availableRange.slice(start, end);
+    const partText = sentencesInRange.map(s => s.tx).join('').trim();
+    
+    if (partText.length > 0) {
+      parts.push(partText);
+      console.log(`📝 Part ${i + 1}: ${sentencesInRange.length}개 문장, ${partText.length}자`);
+    }
+  }
+  
+  // 전체 내용이 보존되었는지 검증
+  const originalContent = availableRange.map(s => s.tx).join('').trim();
+  const reconstructedContent = parts.join('').trim();
+  
+  if (nz(originalContent) !== nz(reconstructedContent)) {
+    console.error('⚠️ 내용 불일치 감지:');
+    console.error('원본 길이:', originalContent.length);
+    console.error('재구성 길이:', reconstructedContent.length);
+    throw Error('[오류] 무작위 분할 후 내용 불일치');
+  }
+  
+  console.log(`✅ 무작위 분할 완료: ${parts.length}개 부분, 전체 내용 보존 확인`);
+  return { given, parts };
 };
 
 /**
@@ -77,21 +115,58 @@ const separatePassages = (document) => {
   const refinedPassages = [];
   passages.forEach((passage, index) => {
     const sentences = passage.match(/[^.!?]+[.!?]+/g) || [];
+    console.log(`📄 지문 ${index + 1}: ${sentences.length}개 문장`);
     
-    if (sentences.length >= 10) {
-      // 매우 긴 지문은 여러 개로 분할
-      const midPoint = Math.floor(sentences.length / 2);
-      const part1 = sentences.slice(0, midPoint + 1).join(' ').trim();
-      const part2 = sentences.slice(midPoint - 1).join(' ').trim(); // 약간의 중복으로 연결성 확보
+    if (sentences.length >= 15) {
+      // 🎯 매우 긴 지문: 무작위 구간들로 여러 개 생성
+      const minSentencesPerPart = 6; // 최소 6개 문장 필요
+      const maxParts = Math.floor(sentences.length / minSentencesPerPart);
+      const numParts = Math.min(maxParts, 4); // 최대 4개 부분으로 제한
       
-      // 각 부분이 충분한 문장을 가지는지 확인
-      const part1Sentences = part1.match(/[^.!?]+[.!?]+/g) || [];
-      const part2Sentences = part2.match(/[^.!?]+[.!?]+/g) || [];
+      console.log(`🎲 긴 지문을 ${numParts}개 무작위 구간으로 분할`);
       
-      if (part1.length > 200 && part1Sentences.length >= 6) refinedPassages.push(part1);
-      if (part2.length > 200 && part2Sentences.length >= 6) refinedPassages.push(part2);
+      for (let partIndex = 0; partIndex < numParts; partIndex++) {
+        // 무작위 시작점 선택 (첫 문장은 제외하고)
+        const maxStart = sentences.length - minSentencesPerPart;
+        const randomStart = Math.floor(Math.random() * Math.max(1, maxStart));
+        
+        // 무작위 길이 선택 (최소 6개, 최대 남은 문장 수)
+        const remainingSentences = sentences.length - randomStart;
+        const partLength = Math.min(
+          minSentencesPerPart + Math.floor(Math.random() * 4), // 6~9개 문장
+          remainingSentences
+        );
+        
+        const randomEnd = randomStart + partLength;
+        const partSentences = sentences.slice(randomStart, randomEnd);
+        const partText = partSentences.join(' ').trim();
+        
+        if (partText.length > 200 && partSentences.length >= minSentencesPerPart) {
+          refinedPassages.push(partText);
+          console.log(`📝 무작위 구간 ${partIndex + 1}: 문장 ${randomStart + 1}~${randomEnd}, ${partSentences.length}개 문장`);
+        }
+      }
+    } else if (sentences.length >= 10) {
+      // 중간 길이 지문: 2개 무작위 구간으로 분할
+      const part1Start = 0;
+      const part1End = Math.floor(sentences.length * (0.4 + Math.random() * 0.2)); // 40-60% 지점
+      const part2Start = Math.max(part1End - 1, Math.floor(sentences.length * 0.3));
+      const part2End = sentences.length;
+      
+      const part1 = sentences.slice(part1Start, part1End).join(' ').trim();
+      const part2 = sentences.slice(part2Start, part2End).join(' ').trim();
+      
+      if (part1.length > 200 && part1.split(/[.!?]+/).length >= 6) {
+        refinedPassages.push(part1);
+        console.log(`📝 무작위 전반부: 문장 1~${part1End}`);
+      }
+      if (part2.length > 200 && part2.split(/[.!?]+/).length >= 6) {
+        refinedPassages.push(part2);
+        console.log(`📝 무작위 후반부: 문장 ${part2Start + 1}~${part2End}`);
+      }
     } else if (sentences.length >= 6) {
       refinedPassages.push(passage);
+      console.log(`📝 전체 지문 사용: ${sentences.length}개 문장`);
     }
   });
   
@@ -108,10 +183,10 @@ const separatePassages = (document) => {
 /**
  * 순서배열 문제 생성 (개선된 버전)
  */
-const makeOrderProblem = (passageObj, choiceCount = 3) => {
+const makeOrderProblem = (passageObj, choiceCount = 3, documentFirstSentence = null) => {
   try {
     const L = 'ABCDE'.slice(0, choiceCount).split(''); 
-    const {given, parts} = cut(passageObj.p, choiceCount);
+    const {given, parts} = cutRandomly(passageObj.p, choiceCount, documentFirstSentence);
     
     // 무작위로 배열된 문장들을 A, B, C, D, E 라벨과 매칭
     const shuffledParts = [...parts].sort(() => Math.random() - 0.5);
@@ -144,6 +219,15 @@ const generateRandomOrderProblems = (document, count = 1, options = {}) => {
     throw new Error('처리 가능한 지문이 없습니다.');
   }
   
+  // 전체 문서의 실제 첫 문장 추출
+  const fullText = document.content || '';
+  const documentFirstSentence = (fullText.match(/[^.!?]+[.!?]+/) || [])[0]?.trim();
+  console.log(`📌 전체 문서의 첫 문장: "${documentFirstSentence}"`);
+  
+  if (!documentFirstSentence) {
+    throw new Error('문서에서 첫 문장을 찾을 수 없습니다.');
+  }
+  
   // 성공할 때까지 최대 passages.length * 2번 시도
   const maxAttempts = Math.min(passages.length * 2, 50);
   let attempts = 0;
@@ -162,7 +246,7 @@ const generateRandomOrderProblems = (document, count = 1, options = {}) => {
     
     try {
       console.log(`🎯 선택지 개수: ${choiceCount}개 (${options.orderDifficulty})`);
-      const problem = makeOrderProblem(selectedPassage, choiceCount);
+      const problem = makeOrderProblem(selectedPassage, choiceCount, documentFirstSentence);
       if (problem) {
         console.log(`📝 생성된 문제 선택지: ${problem.items.length}개`);
         problems.push(problem);

@@ -49,14 +49,18 @@ class ApiService {
   /**
    * 에러 처리
    */
-  handleError(error, context = '') {
+  async handleError(error, context = '') {
     console.error(`API Error [${context}]:`, error);
     
-    if (error.response) {
-      // 서버 응답 에러
-      const message = error.response.data?.message || '서버 오류가 발생했습니다.';
-      throw new Error(message);
-    } else if (error.request) {
+    if (error instanceof Response) {
+      // fetch API Response 객체
+      try {
+        const errorData = await error.json();
+        throw new Error(errorData.message || `서버 오류 (${error.status})`);
+      } catch (jsonError) {
+        throw new Error(`서버 오류 (${error.status}): ${error.statusText}`);
+      }
+    } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
       // 네트워크 에러
       throw new Error('서버와 연결할 수 없습니다.');
     } else {
@@ -72,10 +76,17 @@ class ApiService {
     try {
       const queryString = new URLSearchParams(params).toString();
       const url = `${this.baseURL}${endpoint}${queryString ? '?' + queryString : ''}`;
+      const headers = this.getHeaders();
+      
+      console.log('🔍 API GET Request:', {
+        url,
+        headers,
+        token: this.getToken() ? 'EXISTS' : 'MISSING'
+      });
       
       const response = await fetch(url, {
         method: 'GET',
-        headers: this.getHeaders()
+        headers: headers
       });
 
       if (!response.ok) {
@@ -84,7 +95,7 @@ class ApiService {
 
       return await response.json();
     } catch (error) {
-      this.handleError(error, `GET ${endpoint}`);
+      await this.handleError(error, `GET ${endpoint}`);
     }
   }
 
@@ -106,7 +117,7 @@ class ApiService {
 
       return await response.json();
     } catch (error) {
-      this.handleError(error, `POST ${endpoint}`);
+      await this.handleError(error, `POST ${endpoint}`);
     }
   }
 
@@ -127,7 +138,7 @@ class ApiService {
 
       return await response.json();
     } catch (error) {
-      this.handleError(error, `PUT ${endpoint}`);
+      await this.handleError(error, `PUT ${endpoint}`);
     }
   }
 
@@ -147,7 +158,7 @@ class ApiService {
 
       return await response.json();
     } catch (error) {
-      this.handleError(error, `DELETE ${endpoint}`);
+      await this.handleError(error, `DELETE ${endpoint}`);
     }
   }
 
@@ -177,7 +188,7 @@ class ApiService {
 
       return await response.json();
     } catch (error) {
-      this.handleError(error, `UPLOAD ${endpoint}`);
+      await this.handleError(error, `UPLOAD ${endpoint}`);
     }
   }
 }

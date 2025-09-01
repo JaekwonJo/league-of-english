@@ -1,0 +1,7 @@
+This is a test document for document upload functionality.
+
+The document contains sample English text that can be used to generate problems. Students need to practice various types of questions including vocabulary, grammar, reading comprehension, and sentence ordering.
+
+Modern technology has revolutionized the way we learn languages. Online platforms provide interactive lessons that adapt to individual learning styles. These systems use artificial intelligence to track progress and suggest personalized study plans.
+
+Education is becoming more accessible through digital transformation. Students can now access high-quality content from anywhere in the world. This democratization of knowledge opens new opportunities for learners regardless of their geographical location.

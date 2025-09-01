@@ -221,5 +221,39 @@ export const orderStyles = {
     border: '2px solid #4B5563',
     boxShadow: '0 8px 20px rgba(0, 0, 0, 0.2)',
     textAlign: 'left'
+  },
+  multipleChoice: {
+    background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+    color: 'white',
+    padding: '12px 20px',
+    borderRadius: '8px',
+    marginBottom: '8px',
+    border: '2px solid #10B981',
+    boxShadow: '0 6px 15px rgba(16, 185, 129, 0.3)',
+    textAlign: 'left',
+    fontSize: '16px',
+    fontWeight: 'bold'
+  },
+  multipleChoiceButton: {
+    width: '100%',
+    background: 'linear-gradient(135deg, #374151 0%, #1F2937 100%)',
+    color: '#E5E7EB',
+    padding: '12px 20px',
+    borderRadius: '8px',
+    marginBottom: '8px',
+    border: '2px solid #4B5563',
+    boxShadow: '0 6px 15px rgba(0, 0, 0, 0.2)',
+    textAlign: 'left',
+    fontSize: '16px',
+    fontWeight: 'bold',
+    cursor: 'pointer',
+    transition: 'all 0.3s ease'
+  },
+  multipleChoiceSelected: {
+    background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+    borderColor: '#10B981',
+    color: 'white',
+    transform: 'translateY(-2px)',
+    boxShadow: '0 8px 20px rgba(16, 185, 129, 0.4)'
   }
 };

@@ -5,20 +5,17 @@
 import React from 'react';
 import { orderStyles } from './problemDisplayStyles';
 
-const OrderProblemDisplay = ({ problem, parsedOrderData }) => {
+const OrderProblemDisplay = ({ problem, parsedOrderData, onAnswer, userAnswer }) => {
   return (
     <>
-      {/* 순서배열 문제용 특별 헤더 - 분리된 섹션들 */}
+      {/* 순서배열 문제용 특별 헤더 - 통합된 섹션들 */}
       {(problem.metadata || parsedOrderData?.metadata) && (
         <>
           <div style={orderStyles.orderTitleSection}>
-            📚 제목: {(problem.metadata?.originalTitle || parsedOrderData?.metadata.originalTitle)}
+            📚 제목: {(problem.metadata?.originalTitle || parsedOrderData?.metadata.originalTitle || '문서')}
           </div>
           <div style={orderStyles.orderNumberSection}>
-            📄 문제번호: {(problem.metadata?.passageNumber || parsedOrderData?.metadata.passageNumber)}
-          </div>
-          <div style={orderStyles.orderSourceSection}>
-            📍 출처: {(problem.metadata?.source || parsedOrderData?.metadata.source)}
+            📄 {(problem.metadata?.problemNumber || parsedOrderData?.metadata.problemNumber || '문제번호')}
           </div>
         </>
       )}
@@ -50,6 +47,25 @@ const OrderProblemDisplay = ({ problem, parsedOrderData }) => {
           </div>
         ))}
       </div>
+
+      {/* 객관식 선택지 */}
+      {(problem.multipleChoices || parsedOrderData?.multipleChoices) && (
+        <div style={{ marginBottom: '20px' }}>
+          <div style={orderStyles.sentencesLabel}>📝 [정답을 선택하세요]</div>
+          {(problem.multipleChoices || parsedOrderData?.multipleChoices).map((choice, idx) => (
+            <button
+              key={idx}
+              style={{
+                ...orderStyles.multipleChoiceButton,
+                ...(userAnswer === choice.number ? orderStyles.multipleChoiceSelected : {})
+              }}
+              onClick={() => onAnswer(choice.number)}
+            >
+              <strong>{choice.symbol}</strong> {choice.value}
+            </button>
+          ))}
+        </div>
+      )}
     </>
   );
 };

@@ -181,10 +181,14 @@ const registerDefaultHandlers = () => {
 
 // 기본 검증기 등록
 const registerDefaultValidators = () => {
-  // 순서 배열 검증
+  // 순서 배열 검증 (객관식 번호 비교)
   registry.registerValidator('order', (answer, correct) => {
-    const normalize = (str) => str.replace(/[^A-E-]/g, '');
-    return normalize(answer) === normalize(correct);
+    // answer: 사용자가 선택한 객관식 번호 (1,2,3,4,5)
+    // correct: 서버에서 계산한 정답 번호 (1,2,3,4,5)
+    const userChoice = parseInt(answer);
+    const correctChoice = parseInt(correct);
+    console.log('🔍 순서배열 검증:', { userChoice, correctChoice, result: userChoice === correctChoice });
+    return userChoice === correctChoice;
   });
 
   // 문장 삽입 검증

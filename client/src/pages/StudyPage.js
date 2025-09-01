@@ -49,11 +49,23 @@ const StudyPage = () => {
       setError(null);
       logger.info('Starting study with config:', studyConfig);
 
+      // types 객체를 배열로 변환 (0보다 큰 값을 가진 키들만)
+      const selectedTypes = Object.keys(studyConfig.types).filter(
+        type => studyConfig.types[type] > 0
+      );
+      
+      logger.info('Selected types:', selectedTypes);
+
+      // 총 문제 개수 계산
+      const totalCount = Object.values(studyConfig.types).reduce((sum, count) => sum + count, 0);
+      
       // 문제 가져오기
       const response = await api.problems.getSmartProblems({
         documentId: studyConfig.documentId,
-        types: studyConfig.types,
-        orderDifficulty: studyConfig.orderDifficulty || 'basic'
+        types: selectedTypes,
+        count: totalCount,
+        orderDifficulty: studyConfig.orderDifficulty || 'basic',
+        insertionDifficulty: studyConfig.insertionDifficulty || 'basic'
       });
 
       if (!response.problems || response.problems.length === 0) {

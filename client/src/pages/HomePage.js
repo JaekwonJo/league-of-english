@@ -73,35 +73,57 @@ const HomePage = () => {
       <h1 style={styles.title}>안녕하세요, {user?.name}님! 👋</h1>
       
       {/* 티어 카드 */}
-      <div style={styles.tierCard}>
-        <div style={styles.tierHeader}>
-          <span style={styles.tierIcon}>{tierInfo.icon}</span>
-          <div>
-            <h2 style={{ ...styles.tierName, color: tierInfo.color }}>
-              {tierInfo.name}
-            </h2>
-            <p style={styles.points}>{user?.points || 0} LP</p>
+      {tierInfo.id === 'challenger' ? (
+        <div className="challenger-master-container">
+          <div className="challenger-legendary-badge">LEGENDARY</div>
+          <div className="challenger-particles">
+            <div className="challenger-particle"></div>
+            <div className="challenger-particle"></div>
+            <div className="challenger-particle"></div>
+            <div className="challenger-particle"></div>
+            <div className="challenger-particle"></div>
+          </div>
+          <div className="challenger-content">
+            <div style={{textAlign: 'center', marginBottom: '20px'}}>
+              <div className="challenger-crown">👑</div>
+              <h1 className="challenger-title">CHALLENGER</h1>
+            </div>
+            <div className="challenger-points">
+              {user?.points?.toLocaleString() || 0} LP
+            </div>
           </div>
         </div>
-        
-        {nextTier && (
-          <div style={styles.progressSection}>
-            <div style={styles.progressInfo}>
-              <span>다음 티어: {nextTier.name}</span>
-              <span>{nextTier.minLP - user?.points} LP 필요</span>
-            </div>
-            <div style={styles.progressBar}>
-              <div 
-                style={{ 
-                  ...styles.progressFill, 
-                  width: `${progress}%`,
-                  background: tierInfo.color 
-                }}
-              />
+      ) : (
+        <div style={styles.tierCard}>
+          <div style={styles.tierHeader}>
+            <span style={styles.tierIcon}>{tierInfo.icon}</span>
+            <div>
+              <h2 style={{ ...styles.tierName, color: tierInfo.color }}>
+                {tierInfo.name}
+              </h2>
+              <p style={styles.points}>{user?.points || 0} LP</p>
             </div>
           </div>
-        )}
-      </div>
+        
+          {nextTier && (
+            <div style={styles.progressSection}>
+              <div style={styles.progressInfo}>
+                <span>다음 티어: {nextTier.name}</span>
+                <span>{nextTier.minLP - user?.points} LP 필요</span>
+              </div>
+              <div style={styles.progressBar}>
+                <div 
+                  style={{ 
+                    ...styles.progressFill, 
+                    width: `${progress}%`,
+                    background: tierInfo.color 
+                  }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* 통계 카드들 */}
       <div style={styles.statsGrid}>

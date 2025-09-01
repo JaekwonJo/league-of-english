@@ -3,6 +3,7 @@ const templates = require('../config/problem-templates.json');
 const config = require('../config/server.config.json');
 const { make: makeOrderProblem } = require('../utils/seq_strict_final');
 const { generateRandomOrderProblems, printProblemWithEffects } = require('../utils/multiPassageOrderGenerator');
+const SimpleOrderGenerator = require('../utils/simpleOrderGenerator');
 
 class ProblemService {
   constructor() {
@@ -212,65 +213,66 @@ class ProblemService {
   }
 
   /**
-   * 순서 배열 문제 생성 (다중 지문 랜덤 선택)
+   * 순서 배열 문제 생성 (새로운 간단한 방식)
    */
   generateOrderProblem(document, options = {}) {
     try {
-      console.log('🚀 다중 지문 순서배열 문제 생성 시작...');
-      console.log('📊 전달받은 옵션:', JSON.stringify(options, null, 2));
+      console.log('🎯 간단한 순서배열 문제 생성 시작...');
+      console.log('📊 옵션:', JSON.stringify(options, null, 2));
       
-      // 다중 지문에서 랜덤 선택하여 문제 생성
-      const problems = generateRandomOrderProblems(document, 1, options);
+      // 새 파서 결과 확인 (parsedContent가 있는지)
+      let passages = [];
+      
+      if (document.parsedContent && document.parsedContent.passages) {
+        passages = document.parsedContent.passages;
+        console.log('✅ 새 파서 결과 사용:', passages.length, '개 지문');
+      } else if (typeof document.content === 'string') {
+        // 기존 방식으로 지문 분리 시도
+        passages = document.content.split('\n\n---\n\n').filter(p => p.trim().length > 50);
+        console.log('📄 기존 방식으로 지문 분리:', passages.length, '개');
+      } else {
+        throw new Error('사용 가능한 지문 데이터가 없습니다.');
+      }
+
+      if (passages.length === 0) {
+        throw new Error('추출된 지문이 없습니다.');
+      }
+
+      // 간단한 생성기 사용
+      const generator = new SimpleOrderGenerator();
+      const difficulty = options.orderDifficulty || 'basic';
+      const problems = generator.generateOrderProblems(passages, difficulty, 1);
       
       if (problems.length === 0) {
-        throw new Error('문제 생성 실패: 처리 가능한 지문이 없습니다.');
+        throw new Error('문제 생성 실패');
       }
-      
-      const generated = problems[0];
-      
-      // 감성적인 출력 (서버 로그용)
-      printProblemWithEffects(generated);
-      
-      // 선택지 생성 (A-B-C 또는 A-B-C-D-E 형태)
-      const choiceCount = options.orderDifficulty === 'advanced' ? 5 : 3;
-      console.log(`🎯 실제 생성된 문장 개수: ${generated.items.length}, 난이도: ${options.orderDifficulty}, 예상 개수: ${choiceCount}`);
-      const choices = this.generateOrderChoices(generated.ans, choiceCount);
-      
+
+      const problem = problems[0];
+
+      // API 응답 형식에 맞게 변환
       const orderProblem = {
         type: 'order',
-        instruction: '✨ Q. 주어진 글 다음에 이어질 글의 순서로 가장 적절한 것을 고르시오.',
-        mainText: generated.given, // 주어진 문장
-        sentences: generated.items.map(item => ({
-          label: item.l,
-          text: item.x.trim()
-        })), // 선택지 문장들
-        options: choices,
-        answer: this.findCorrectAnswerIndex(generated.ans, choices).toString(),
-        explanation: `🔑 올바른 순서는 ${generated.ans}입니다.\n📍 출처: ${generated.source}`,
+        instruction: 'Q. 주어진 글 다음에 이어질 글의 순서로 가장 적절한 것을 고르시오.',
+        mainText: problem.mainText,
+        sentences: problem.sentences,
+        answer: problem.correctAnswer.split('-').join(''), // A-B-C -> ABC
+        explanation: `올바른 순서는 ${problem.correctAnswer}입니다.`,
         is_ai_generated: false,
-        metadata: {
-          source: generated.source,
-          passageNumber: generated.number,
-          originalTitle: generated.title
-        }
+        metadata: problem.metadata
       };
-      
-      console.log('📤 서버에서 클라이언트로 전송하는 데이터:', {
+
+      console.log('✅ 간단한 순서배열 문제 생성 완료');
+      console.log('📤 전송 데이터:', {
         mainText: orderProblem.mainText,
-        sentences: orderProblem.sentences,
-        metadata: orderProblem.metadata
+        sentences: orderProblem.sentences.length + '개 선택지',
+        answer: orderProblem.answer
       });
-      
+
       return orderProblem;
+
     } catch (error) {
-      console.error('🚨 다중 지문 순서배열 생성 실패:', error);
-      // 폴백: seq_strict_final 시도
-      try {
-        return this.generateOrderProblemFallback(document, options);
-      } catch (fallbackError) {
-        console.error('🚨 폴백도 실패:', fallbackError);
-        return this.generateFallbackOrderProblem(document.content);
-      }
+      console.error('🚨 간단한 순서배열 생성 실패:', error);
+      throw error; // 폴백 없이 바로 실패 처리
     }
   }
 

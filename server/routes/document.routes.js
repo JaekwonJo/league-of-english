@@ -8,6 +8,7 @@ const database = require('../models/database');
 const { verifyToken, requireTeacherOrAdmin } = require('../middleware/auth');
 const config = require('../config/server.config.json');
 const MiniPdfParser = require('../utils/miniPdfParser');
+const NewPDFParser = require('../utils/newPdfParser');
 
 // Multer 설정
 const storage = multer.diskStorage({
@@ -49,7 +50,7 @@ router.post('/upload-document',
       return res.status(400).json({ message: '파일이 없습니다.' });
     }
 
-    const { title, type = 'worksheet', category = '기타', school = '전체', grade, worksheetType } = req.body;
+    const { title, type = 'worksheet', category = '기타', school = '전체', grade } = req.body;
 
     try {
       let rawText = '';
@@ -61,13 +62,14 @@ router.post('/upload-document',
         const pdfData = await pdfParse(dataBuffer);
         rawText = cleanPDFText(pdfData.text);
         
-        // Mini PDF 파싱
-        const parser = new MiniPdfParser();
-        parsedData = parser.parse(rawText);
-        console.log('📄 PDF 파싱 결과:', {
+        console.log('🔄 새로운 PDF 파서 사용...');
+        // 새로운 PDF 파서 사용
+        const newParser = new NewPDFParser();
+        parsedData = await newParser.parse(rawText);
+        console.log('📄 새 파서 결과:', {
           title: parsedData.title,
           sources: parsedData.sources,
-          passageCount: parsedData.passages.length
+          passageCount: parsedData.totalPassages
         });
       } else {
         rawText = fs.readFileSync(req.file.path, 'utf-8');
@@ -80,21 +82,22 @@ router.post('/upload-document',
       let finalContent = '';
       let sources = [];
 
-      if (parsedData && parsedData.passages.length > 0) {
-        // PDF에서 파싱된 데이터 사용
+      if (parsedData && parsedData.passages && parsedData.passages.length > 0) {
+        // 새 PDF 파서 결과 사용
         finalTitle = title === 'Auto Extract' ? parsedData.title : title;
-        finalContent = parsedData.passages.map(p => p.passage).join('\n\n---\n\n');
+        finalContent = parsedData.totalContent; // 이미 연결된 전체 내용 사용
         sources = parsedData.sources;
         
-        console.log('🎯 추출된 영어 지문:', {
+        console.log('🎯 새 파서로 추출된 영어 지문:', {
           title: finalTitle,
           sources: sources,
           contentLength: finalContent.length,
-          passageCount: parsedData.passages.length
+          passageCount: parsedData.totalPassages
         });
       } else {
         // 기존 방식 폴백
         finalContent = extractEnglishOnly(rawText);
+        console.log('⚠️ 새 파서 실패, 기존 방식 사용');
       }
 
       if (finalContent.length < 100) {
@@ -109,18 +112,26 @@ router.post('/upload-document',
         });
       }
 
-      // DB에 저장 (JSON 구조로 저장)
-      const documentData = {
-        content: finalContent,
-        sources: sources,
-        metadata: parsedData ? parsedData.metadata : null,
-        originalTitle: parsedData ? parsedData.title : null
-      };
+      // DB에 저장 (전체 parsedData를 JSON으로 저장)
+      let contentToStore;
+      if (parsedData && parsedData.passages) {
+        // 새 파서 결과를 JSON으로 저장
+        contentToStore = JSON.stringify({
+          content: finalContent,
+          passages: parsedData.passages,
+          sources: sources,
+          title: parsedData.title,
+          metadata: parsedData.metadata
+        });
+      } else {
+        // 기존 방식으로 텍스트만 저장
+        contentToStore = finalContent;
+      }
 
       const result = await database.run(
-        `INSERT INTO documents (title, content, type, category, school, grade, worksheet_type, created_by)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [finalTitle, finalContent, type, category, school, grade, worksheetType, req.user.id]
+        `INSERT INTO documents (title, content, type, category, school, grade, created_by)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [finalTitle, contentToStore, type, category, school, grade, req.user.id]
       );
 
       // JSON 메타데이터를 별도 컬럼이나 파일로 저장할 수도 있지만, 
@@ -134,7 +145,7 @@ router.post('/upload-document',
         documentId: result.id,
         title: finalTitle,
         sources: sources,
-        passageCount: parsedData ? parsedData.passages.length : 1,
+        passageCount: parsedData ? parsedData.totalPassages : 1,
         textLength: finalContent.length
       });
     } catch (error) {
@@ -153,7 +164,7 @@ router.post('/upload-document',
  */
 router.get('/documents', verifyToken, async (req, res) => {
   try {
-    let query = 'SELECT id, title, type, category, school, grade, created_at FROM documents WHERE is_active = 1';
+    let query = 'SELECT id, title, type, category, school, grade, created_at FROM documents';
     const params = [];
 
     // 학생은 자신의 학교 문서만 조회
@@ -180,7 +191,7 @@ router.get('/documents', verifyToken, async (req, res) => {
 router.get('/documents/:id', verifyToken, async (req, res) => {
   try {
     const document = await database.get(
-      'SELECT * FROM documents WHERE id = ? AND is_active = 1',
+      'SELECT * FROM documents WHERE id = ?',
       [req.params.id]
     );
 
@@ -234,9 +245,9 @@ router.delete('/documents/:id', verifyToken, requireTeacherOrAdmin, async (req, 
       return res.status(403).json({ message: '권한이 없습니다.' });
     }
 
-    // is_active를 false로 변경 (soft delete)
+    // 문서 삭제 (hard delete)
     await database.run(
-      'UPDATE documents SET is_active = 0 WHERE id = ?',
+      'DELETE FROM documents WHERE id = ?',
       [req.params.id]
     );
 

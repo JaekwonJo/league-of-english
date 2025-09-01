@@ -1,66 +1,226 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import tierConfig from '../../config/tierConfig.json';
 
 const StudyResult = ({ results, onRestart, onHome }) => {
-  const getGrade = (accuracy) => {
-    if (accuracy >= 90) return { grade: 'A+', color: '#10B981' };
-    if (accuracy >= 80) return { grade: 'A', color: '#3B82F6' };
-    if (accuracy >= 70) return { grade: 'B', color: '#8B5CF6' };
-    if (accuracy >= 60) return { grade: 'C', color: '#F59E0B' };
-    return { grade: 'D', color: '#EF4444' };
+  const { user } = useAuth();
+  const [showAnimation, setShowAnimation] = useState(false);
+  const [currentLpCount, setCurrentLpCount] = useState(0);
+  
+  useEffect(() => {
+    setShowAnimation(true);
+    // LP 카운팅 애니메이션
+    const lpIncrement = Math.max(1, Math.floor(results.earnedPoints / 50));
+    const interval = setInterval(() => {
+      setCurrentLpCount(prev => {
+        if (prev >= results.earnedPoints) {
+          clearInterval(interval);
+          return results.earnedPoints;
+        }
+        return Math.min(prev + lpIncrement, results.earnedPoints);
+      });
+    }, 30);
+    return () => clearInterval(interval);
+  }, [results.earnedPoints]);
+
+  const getTierInfo = () => {
+    const points = user?.points || 0;
+    return tierConfig.tiers.find(tier => 
+      points >= tier.minLP && (tier.maxLP === -1 || points <= tier.maxLP)
+    ) || tierConfig.tiers[0];
   };
 
-  const gradeInfo = getGrade(parseFloat(results.accuracy));
+  const getResultInfo = (accuracy) => {
+    const acc = parseFloat(accuracy);
+    if (acc >= 90) return {
+      grade: 'A+',
+      color: '#10B981',
+      bgColor: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+      message: '🎉 축하합니다! 완벽한 성과입니다!',
+      effect: 'celebration',
+      emoji: '🎊✨🏆'
+    };
+    if (acc >= 80) return {
+      grade: 'A',
+      color: '#3B82F6',
+      bgColor: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+      message: '👏 잘했어요! 훌륭한 실력입니다!',
+      effect: 'good',
+      emoji: '👍🌟💪'
+    };
+    if (acc >= 50) return {
+      grade: 'B',
+      color: '#F59E0B',
+      bgColor: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+      message: '📈 좋아요! 조금만 더 노력하면 완벽해요!',
+      effect: 'encourage',
+      emoji: '💪📚🎯'
+    };
+    return {
+      grade: 'C',
+      color: '#EF4444',
+      bgColor: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
+      message: '🤗 괜찮아요! 다시 도전해서 실력을 늘려보아요!',
+      effect: 'comfort',
+      emoji: '🤗💝🌈'
+    };
+  };
+
+  const resultInfo = getResultInfo(results.accuracy);
+  const tierInfo = getTierInfo();
 
   return (
     <div style={styles.container}>
-      <div style={styles.resultCard}>
-        <h1 style={styles.title}>학습 완료! 🎉</h1>
-        
-        <div style={styles.gradeSection}>
-          <div style={{ ...styles.grade, color: gradeInfo.color }}>
-            {gradeInfo.grade}
-          </div>
-          <div style={styles.accuracy}>{results.accuracy}%</div>
-        </div>
-
-        <div style={styles.statsGrid}>
-          <div style={styles.statItem}>
-            <span style={styles.statLabel}>맞춘 문제</span>
-            <span style={styles.statValue}>
-              {results.totalCorrect} / {results.totalProblems}
+      {/* 이펙트 배경 */}
+      <div style={{
+        ...styles.effectBackground,
+        ...(resultInfo.effect === 'celebration' ? styles.celebrationBg : {}),
+        ...(resultInfo.effect === 'good' ? styles.goodBg : {}),
+        ...(resultInfo.effect === 'encourage' ? styles.encourageBg : {}),
+        ...(resultInfo.effect === 'comfort' ? styles.comfortBg : {})
+      }}>
+        <div style={styles.effectEmojis}>
+          {resultInfo.emoji.split('').map((emoji, idx) => (
+            <span 
+              key={idx} 
+              style={{
+                ...styles.emoji,
+                animationDelay: `${idx * 0.2}s`
+              }}
+            >
+              {emoji}
             </span>
-          </div>
-          <div style={styles.statItem}>
-            <span style={styles.statLabel}>소요 시간</span>
-            <span style={styles.statValue}>{results.totalTime}초</span>
-          </div>
-          <div style={styles.statItem}>
-            <span style={styles.statLabel}>획득 포인트</span>
-            <span style={styles.statValue}>+{results.earnedPoints} LP</span>
-          </div>
-        </div>
-
-        <div style={styles.problemList}>
-          <h3 style={styles.listTitle}>문제별 결과</h3>
-          {results.problems.map((problem, idx) => (
-            <div key={idx} style={styles.problemItem}>
-              <span style={styles.problemNumber}>#{idx + 1}</span>
-              <span style={styles.problemType}>{problem.type}</span>
-              {problem.isCorrect ? (
-                <span style={styles.correct}>✅ 정답</span>
-              ) : (
-                <span style={styles.wrong}>❌ 오답</span>
-              )}
-            </div>
           ))}
         </div>
+      </div>
 
+      <div style={{
+        ...styles.resultCard,
+        ...(showAnimation ? styles.cardAnimation : {})
+      }}>
+        {/* 메인 결과 */}
+        <div style={styles.mainResult}>
+          <div style={{
+            ...styles.gradeCircle,
+            background: resultInfo.bgColor
+          }}>
+            <div style={styles.grade}>{resultInfo.grade}</div>
+            <div style={styles.accuracy}>{results.accuracy}%</div>
+          </div>
+          <div style={styles.message}>{resultInfo.message}</div>
+        </div>
+
+        {/* 티어 정보 */}
+        <div style={styles.tierSection}>
+          {tierInfo.id === 'challenger' ? (
+            <div className="challenger-result-container" style={styles.challengerContainer}>
+              <div className="challenger-legendary-badge" style={styles.challengerBadge}>LEGENDARY</div>
+              <div className="challenger-particles" style={styles.challengerParticles}>
+                <div className="challenger-particle" style={{...styles.challengerParticle, left: '20%'}}></div>
+                <div className="challenger-particle" style={{...styles.challengerParticle, left: '40%'}}></div>
+                <div className="challenger-particle" style={{...styles.challengerParticle, left: '60%'}}></div>
+                <div className="challenger-particle" style={{...styles.challengerParticle, left: '80%'}}></div>
+              </div>
+              <div style={styles.challengerContent}>
+                <div className="challenger-crown" style={styles.challengerCrown}>👑</div>
+                <h2 className="challenger-title" style={styles.challengerTitle}>CHALLENGER</h2>
+                <div style={styles.challengerPoints}>{user?.points?.toLocaleString() || 0} LP</div>
+              </div>
+            </div>
+          ) : (
+            <div style={{
+              ...styles.tierCard,
+              borderColor: tierInfo.color,
+              boxShadow: `0 0 30px ${tierInfo.color}40`
+            }}>
+              <div style={styles.tierHeader}>
+                <span style={{...styles.tierIcon, filter: `drop-shadow(0 0 10px ${tierInfo.color})`}}>
+                  {tierInfo.icon}
+                </span>
+                <div>
+                  <h3 style={{...styles.tierName, color: tierInfo.color}}>
+                    {tierInfo.nameKr}
+                  </h3>
+                  <div style={styles.tierPoints}>
+                    {user?.points?.toLocaleString() || 0} LP
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 상세 통계 */}
+        <div style={styles.detailStats}>
+          <div style={styles.statBox}>
+            <div style={styles.statIcon}>✅</div>
+            <div style={styles.statLabel}>정답</div>
+            <div style={styles.statValue}>{results.totalCorrect}개</div>
+          </div>
+          <div style={styles.statBox}>
+            <div style={styles.statIcon}>❌</div>
+            <div style={styles.statLabel}>오답</div>
+            <div style={styles.statValue}>{results.totalProblems - results.totalCorrect}개</div>
+          </div>
+          <div style={styles.statBox}>
+            <div style={styles.statIcon}>⏱️</div>
+            <div style={styles.statLabel}>시간</div>
+            <div style={styles.statValue}>{Math.floor(results.totalTime / 60)}분 {results.totalTime % 60}초</div>
+          </div>
+          <div style={styles.statBox}>
+            <div style={styles.statIcon}>💎</div>
+            <div style={styles.statLabel}>LP 획득</div>
+            <div style={styles.statValue}>+{currentLpCount}</div>
+          </div>
+        </div>
+
+        {/* 문제별 상세 결과 */}
+        <div style={styles.problemResults}>
+          <h3 style={styles.sectionTitle}>📋 문제별 상세 결과</h3>
+          <div style={styles.problemGrid}>
+            {results.problems.map((problem, idx) => (
+              <div key={idx} style={{
+                ...styles.problemCard,
+                ...(problem.isCorrect ? styles.correctCard : styles.wrongCard)
+              }}>
+                <div style={styles.problemHeader}>
+                  <span style={styles.problemNum}>#{idx + 1}</span>
+                  <span style={problem.isCorrect ? styles.correctBadge : styles.wrongBadge}>
+                    {problem.isCorrect ? '정답' : '오답'}
+                  </span>
+                </div>
+                <div style={styles.problemDetails}>
+                  <div style={styles.problemLabel}>내 답안:</div>
+                  <div style={styles.problemAnswer}>{problem.userAnswer || '무응답'}</div>
+                  {!problem.isCorrect && (
+                    <>
+                      <div style={styles.problemLabel}>정답:</div>
+                      <div style={styles.correctAnswer}>{problem.correctAnswer}</div>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 액션 버튼 */}
         <div style={styles.actions}>
-          <button style={styles.restartButton} onClick={onRestart}>
-            다시 풀기
+          <button 
+            style={styles.restartButton} 
+            onClick={onRestart}
+            onMouseOver={(e) => e.target.style.transform = 'translateY(-2px)'}
+            onMouseOut={(e) => e.target.style.transform = 'translateY(0)'}
+          >
+            🔄 다시 풀기
           </button>
-          <button style={styles.homeButton} onClick={onHome}>
-            홈으로
+          <button 
+            style={styles.homeButton} 
+            onClick={onHome}
+            onMouseOver={(e) => e.target.style.transform = 'translateY(-2px)'}
+            onMouseOut={(e) => e.target.style.transform = 'translateY(0)'}
+          >
+            🏠 홈으로
           </button>
         </div>
       </div>
@@ -70,108 +230,353 @@ const StudyResult = ({ results, onRestart, onHome }) => {
 
 const styles = {
   container: {
-    maxWidth: '600px',
-    margin: '0 auto',
-    padding: '20px'
+    position: 'relative',
+    minHeight: '100vh',
+    background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
+    padding: '20px',
+    overflow: 'hidden'
+  },
+  effectBackground: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    pointerEvents: 'none',
+    zIndex: 1
+  },
+  celebrationBg: {
+    background: 'radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%)',
+    animation: 'pulse 2s infinite'
+  },
+  goodBg: {
+    background: 'radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%)'
+  },
+  encourageBg: {
+    background: 'radial-gradient(circle, rgba(245, 158, 11, 0.1) 0%, transparent 70%)'
+  },
+  comfortBg: {
+    background: 'radial-gradient(circle, rgba(239, 68, 68, 0.1) 0%, transparent 70%)'
+  },
+  effectEmojis: {
+    position: 'absolute',
+    top: '20%',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    display: 'flex',
+    gap: '20px'
+  },
+  emoji: {
+    fontSize: '2rem',
+    animation: 'bounce 2s infinite'
   },
   resultCard: {
-    background: 'white',
-    borderRadius: '20px',
+    position: 'relative',
+    zIndex: 10,
+    maxWidth: '900px',
+    margin: '0 auto',
+    background: 'rgba(30, 41, 59, 0.95)',
+    backdropFilter: 'blur(20px)',
+    borderRadius: '25px',
     padding: '40px',
-    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.1)'
+    boxShadow: '0 25px 50px rgba(0, 0, 0, 0.3)',
+    border: '1px solid rgba(248, 250, 252, 0.1)',
+    opacity: 0,
+    transform: 'translateY(50px)'
   },
-  title: {
-    fontSize: '28px',
-    textAlign: 'center',
-    marginBottom: '30px'
+  cardAnimation: {
+    opacity: 1,
+    transform: 'translateY(0)',
+    transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
   },
-  gradeSection: {
+  mainResult: {
     textAlign: 'center',
-    marginBottom: '30px'
+    marginBottom: '40px'
+  },
+  gradeCircle: {
+    width: '200px',
+    height: '200px',
+    borderRadius: '50%',
+    margin: '0 auto 30px',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)'
   },
   grade: {
-    fontSize: '72px',
+    fontSize: '4rem',
     fontWeight: 'bold',
-    marginBottom: '10px'
+    color: 'white',
+    textShadow: '0 4px 8px rgba(0, 0, 0, 0.3)'
   },
   accuracy: {
-    fontSize: '24px',
-    color: '#6B7280'
+    fontSize: '1.5rem',
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontWeight: 'bold'
   },
-  statsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(3, 1fr)',
-    gap: '20px',
-    marginBottom: '30px'
-  },
-  statItem: {
+  message: {
+    fontSize: '1.5rem',
+    color: '#F8FAFC',
+    fontWeight: 'bold',
     textAlign: 'center',
-    padding: '15px',
-    background: '#F9FAFB',
-    borderRadius: '10px'
+    textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
+  },
+  detailStats: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(4, 1fr)',
+    gap: '20px',
+    marginBottom: '40px'
+  },
+  statBox: {
+    background: 'rgba(51, 65, 85, 0.8)',
+    borderRadius: '15px',
+    padding: '20px',
+    textAlign: 'center',
+    border: '1px solid rgba(248, 250, 252, 0.1)',
+    backdropFilter: 'blur(10px)'
+  },
+  statIcon: {
+    fontSize: '2rem',
+    marginBottom: '10px'
   },
   statLabel: {
-    display: 'block',
-    fontSize: '12px',
-    color: '#6B7280',
+    color: '#94A3B8',
+    fontSize: '0.9rem',
     marginBottom: '5px'
   },
   statValue: {
-    display: 'block',
-    fontSize: '20px',
+    color: '#F8FAFC',
+    fontSize: '1.5rem',
     fontWeight: 'bold'
   },
-  problemList: {
-    marginBottom: '30px'
+  problemResults: {
+    marginBottom: '40px'
   },
-  listTitle: {
-    fontSize: '16px',
+  sectionTitle: {
+    color: '#F8FAFC',
+    fontSize: '1.5rem',
+    marginBottom: '25px',
+    textAlign: 'center'
+  },
+  problemGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+    gap: '20px'
+  },
+  problemCard: {
+    background: 'rgba(51, 65, 85, 0.8)',
+    borderRadius: '15px',
+    padding: '20px',
+    border: '1px solid rgba(248, 250, 252, 0.1)',
+    backdropFilter: 'blur(10px)'
+  },
+  correctCard: {
+    borderLeftColor: '#10B981',
+    borderLeftWidth: '4px'
+  },
+  wrongCard: {
+    borderLeftColor: '#EF4444',
+    borderLeftWidth: '4px'
+  },
+  problemHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: '15px'
   },
-  problemItem: {
-    display: 'flex',
-    alignItems: 'center',
-    padding: '10px',
-    borderBottom: '1px solid #E5E7EB'
-  },
-  problemNumber: {
+  problemNum: {
+    color: '#F8FAFC',
     fontWeight: 'bold',
-    marginRight: '10px'
+    fontSize: '1.1rem'
   },
-  problemType: {
-    flex: 1,
-    color: '#6B7280'
+  correctBadge: {
+    background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+    color: 'white',
+    padding: '5px 12px',
+    borderRadius: '15px',
+    fontSize: '0.8rem',
+    fontWeight: 'bold'
   },
-  correct: {
-    color: '#10B981'
+  wrongBadge: {
+    background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
+    color: 'white',
+    padding: '5px 12px',
+    borderRadius: '15px',
+    fontSize: '0.8rem',
+    fontWeight: 'bold'
   },
-  wrong: {
-    color: '#EF4444'
+  problemDetails: {
+    fontSize: '0.9rem'
+  },
+  problemLabel: {
+    color: '#94A3B8',
+    marginBottom: '5px'
+  },
+  problemAnswer: {
+    color: '#F8FAFC',
+    fontWeight: 'bold',
+    marginBottom: '10px',
+    padding: '8px 12px',
+    background: 'rgba(30, 41, 59, 0.6)',
+    borderRadius: '8px'
+  },
+  correctAnswer: {
+    color: '#10B981',
+    fontWeight: 'bold',
+    padding: '8px 12px',
+    background: 'rgba(16, 185, 129, 0.1)',
+    borderRadius: '8px',
+    border: '1px solid rgba(16, 185, 129, 0.3)'
   },
   actions: {
     display: 'flex',
-    gap: '10px'
+    gap: '20px',
+    justifyContent: 'center'
   },
   restartButton: {
-    flex: 1,
-    padding: '15px',
-    background: '#F3F4F6',
+    padding: '15px 30px',
+    background: 'linear-gradient(135deg, #374151 0%, #1F2937 100%)',
+    color: '#F8FAFC',
     border: 'none',
-    borderRadius: '10px',
-    fontSize: '16px',
+    borderRadius: '15px',
+    fontSize: '1.1rem',
     fontWeight: 'bold',
-    cursor: 'pointer'
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    boxShadow: '0 8px 20px rgba(0, 0, 0, 0.3)'
   },
   homeButton: {
-    flex: 1,
-    padding: '15px',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    padding: '15px 30px',
+    background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
     color: 'white',
     border: 'none',
-    borderRadius: '10px',
-    fontSize: '16px',
+    borderRadius: '15px',
+    fontSize: '1.1rem',
     fontWeight: 'bold',
-    cursor: 'pointer'
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    boxShadow: '0 8px 20px rgba(5, 150, 105, 0.4)'
+  },
+  // 티어 관련 스타일
+  tierSection: {
+    marginBottom: '40px',
+    textAlign: 'center'
+  },
+  challengerContainer: {
+    position: 'relative',
+    background: 'linear-gradient(135deg, rgba(25, 25, 25, 0.95) 0%, rgba(40, 25, 10, 0.9) 25%, rgba(25, 25, 25, 0.95) 50%, rgba(40, 25, 10, 0.9) 75%, rgba(25, 25, 25, 0.95) 100%)',
+    border: '3px solid transparent',
+    borderRadius: '20px',
+    padding: '30px',
+    overflow: 'hidden',
+    boxShadow: '0 0 5px rgba(255, 215, 0, 0.3), 0 0 20px rgba(255, 215, 0, 0.4), 0 0 35px rgba(255, 215, 0, 0.3), 0 0 50px rgba(255, 123, 0, 0.2), inset 0 0 30px rgba(255, 215, 0, 0.1)',
+    animation: 'challengerMasterGlow 3s ease-in-out infinite'
+  },
+  challengerBadge: {
+    position: 'absolute',
+    top: '15px',
+    right: '15px',
+    background: 'linear-gradient(45deg, #8B0000, #FF0000, #FF4500, #FFD700)',
+    color: 'white',
+    padding: '8px 16px',
+    borderRadius: '20px',
+    fontSize: '11px',
+    fontWeight: '900',
+    letterSpacing: '1px',
+    textShadow: '0 1px 3px rgba(0, 0, 0, 0.8)',
+    boxShadow: '0 0 15px rgba(255, 215, 0, 0.6), 0 0 30px rgba(255, 69, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+    animation: 'challengerCrownPulse 1.8s ease-in-out infinite',
+    zIndex: 15
+  },
+  challengerParticles: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    overflow: 'hidden',
+    pointerEvents: 'none',
+    zIndex: 5,
+    top: 0,
+    left: 0
+  },
+  challengerParticle: {
+    position: 'absolute',
+    width: '4px',
+    height: '4px',
+    background: 'radial-gradient(circle, #FFD700, transparent)',
+    borderRadius: '50%',
+    animation: 'challengerParticles 3s ease-in-out infinite',
+    top: '80%'
+  },
+  challengerContent: {
+    position: 'relative',
+    zIndex: 10
+  },
+  challengerCrown: {
+    fontSize: '32px',
+    display: 'inline-block',
+    animation: 'challengerCrownPulse 2s ease-in-out infinite',
+    position: 'relative',
+    marginBottom: '10px'
+  },
+  challengerTitle: {
+    fontSize: '24px',
+    fontWeight: '900',
+    fontFamily: 'Cinzel, Times New Roman, serif',
+    letterSpacing: '2px',
+    textTransform: 'uppercase',
+    color: '#FFD700',
+    textShadow: '0 0 5px rgba(255, 215, 0, 0.8), 0 0 15px rgba(255, 215, 0, 0.6), 0 0 25px rgba(255, 215, 0, 0.4)',
+    animation: 'challengerTextGlow 2.5s ease-in-out infinite',
+    margin: '0 0 15px 0',
+    filter: 'brightness(1.2)'
+  },
+  challengerPoints: {
+    fontSize: '18px',
+    fontWeight: 'bold',
+    background: 'linear-gradient(90deg, #FFD700, #FF7B00, #FFD700)',
+    backgroundClip: 'text',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    textShadow: '0 0 20px rgba(255, 215, 0, 0.6)',
+    animation: 'challengerTextGlow 3s ease-in-out infinite'
+  },
+  tierCard: {
+    background: 'rgba(51, 65, 85, 0.8)',
+    backdropFilter: 'blur(20px)',
+    borderRadius: '20px',
+    padding: '25px',
+    border: '3px solid',
+    borderColor: '#3B82F6',
+    position: 'relative',
+    overflow: 'hidden',
+    transition: 'all 0.5s ease'
+  },
+  tierHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '20px',
+    justifyContent: 'center'
+  },
+  tierIcon: {
+    fontSize: '40px',
+    filter: 'drop-shadow(0 0 15px currentColor)'
+  },
+  tierName: {
+    fontSize: '24px',
+    fontWeight: '900',
+    margin: '0 0 8px 0',
+    textShadow: '0 0 15px currentColor'
+  },
+  tierPoints: {
+    fontSize: '16px',
+    fontWeight: '700',
+    background: 'linear-gradient(135deg, #F59E0B 0%, #EF4444 100%)',
+    backgroundClip: 'text',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    textShadow: '0 0 15px rgba(245, 158, 11, 0.5)'
   }
 };
 

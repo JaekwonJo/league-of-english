@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import OrderProblemDisplay from './OrderProblemDisplay';
+import InsertionProblemDisplay from './InsertionProblemDisplay';
 import { problemDisplayStyles, orderStyles } from './problemDisplayStyles';
 
 const ProblemDisplay = ({
@@ -99,11 +100,25 @@ const ProblemDisplay = ({
       }}>
         {/* 순서배열 문제 */}
         {problem.type === 'order' && (
-          <OrderProblemDisplay problem={problem} parsedOrderData={parsedOrderData} />
+          <OrderProblemDisplay 
+            problem={problem} 
+            parsedOrderData={parsedOrderData}
+            onAnswer={handleSelect}
+            userAnswer={selectedAnswer}
+          />
+        )}
+
+        {/* 문장삽입 문제 */}
+        {problem.type === 'insertion' && (
+          <InsertionProblemDisplay 
+            problem={problem}
+            onAnswer={handleSelect}
+            userAnswer={selectedAnswer}
+          />
         )}
         
         {/* 일반 문제 */}
-        {problem.type !== 'order' && (
+        {problem.type !== 'order' && problem.type !== 'insertion' && (
           <>
             <div style={problemDisplayStyles.instruction}>
               {problem.instruction || problem.question}

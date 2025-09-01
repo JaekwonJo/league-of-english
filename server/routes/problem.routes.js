@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const database = require('../models/database');
 const problemService = require('../services/problemService');
+const UltraSimpleProblemService = require('../services/ultraSimpleProblemService');
 const { verifyToken, checkDailyLimit, updateUsage } = require('../middleware/auth');
 
 /**
@@ -12,21 +13,24 @@ router.post('/get-smart-problems',
   verifyToken, 
   checkDailyLimit,
   async (req, res) => {
-    const { documentId, types, orderDifficulty } = req.body;
+    const { documentId, types, count, orderDifficulty, insertionDifficulty } = req.body;
     const userId = req.user.id;
 
-    if (!documentId || !types) {
+    if (!documentId || !types || !count) {
       return res.status(400).json({ message: '필수 파라미터가 누락되었습니다.' });
     }
 
     try {
-      // 문제 가져오기 (캐싱 + 생성)
-      const problems = await problemService.getSmartProblems(
+      console.log(`🔄 울트라심플 서비스 사용 - ${count}개 문제 요청`);
+      
+      // 울트라 간단한 문제 생성 서비스 사용
+      const ultraService = new UltraSimpleProblemService();
+      const problems = await ultraService.getSmartProblems(
         userId,
         documentId,
         types,
-        10, // count
-        { orderDifficulty } // options
+        count, // 클라이언트에서 요청한 count 사용
+        { orderDifficulty, insertionDifficulty } // options
       );
 
       // 사용량 업데이트

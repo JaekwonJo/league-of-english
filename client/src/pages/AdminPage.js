@@ -30,11 +30,16 @@ const AdminPage = () => {
   const fetchDocuments = async () => {
     try {
       setLoading(true);
+      console.log('📋 문서 목록 요청 시작...');
+      console.log('🔐 저장된 토큰:', localStorage.getItem('token') ? 'EXISTS' : 'MISSING');
+      
       const response = await api.documents.list();
+      console.log('✅ 문서 목록 응답:', response);
+      
       // API가 배열을 직접 반환함
       setDocuments(Array.isArray(response) ? response : []);
     } catch (error) {
-      console.error('문서 목록 조회 실패:', error);
+      console.error('❌ 문서 목록 조회 실패:', error);
       alert('문서 목록을 불러오는데 실패했습니다.');
     } finally {
       setLoading(false);
