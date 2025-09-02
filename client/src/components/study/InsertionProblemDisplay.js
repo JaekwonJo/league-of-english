@@ -26,7 +26,7 @@ const InsertionProblemDisplay = ({ problem, userAnswer, onAnswer }) => {
       
       {/* 문장삽입 문제 지시문 */}
       <div style={orderStyles.orderInstruction}>
-        ✨ Q. 다음 글의 빈 곳에 들어갈 문장으로 가장 적절한 것을 고르시오.
+        ✨ Q. 글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳을 고르시오.
       </div>
 
       {/* 주어진 문장 - 순서배열과 동일한 디자인 */}

@@ -164,19 +164,23 @@ router.post('/upload-document',
  */
 router.get('/documents', verifyToken, async (req, res) => {
   try {
-    let query = 'SELECT id, title, type, category, school, grade, created_at FROM documents';
-    const params = [];
-
-    // 학생은 자신의 학교 문서만 조회
-    if (req.user.role === 'student') {
+    // 관리자는 모든 문서 조회, 학생/교사는 필터링된 문서 조회
+    let query, params;
+    
+    if (req.user.role === 'admin') {
+      query = 'SELECT id, title, type, category, school, grade, created_at FROM documents ORDER BY created_at DESC';
+      params = [];
+    } else {
+      // 학생/교사는 학교별 필터링
       const user = await database.get('SELECT school FROM users WHERE id = ?', [req.user.id]);
-      query += ' AND (school = ? OR school = "전체" OR school = "all")';
-      params.push(user.school);
+      query = `SELECT id, title, type, category, school, grade, created_at FROM documents 
+               WHERE (school = ? OR school = '전체' OR school = 'all' OR school = '' OR school IS NULL) 
+               ORDER BY created_at DESC`;
+      params = [user.school || ''];
     }
 
-    query += ' ORDER BY created_at DESC';
-
     const documents = await database.all(query, params);
+    console.log(`문서 조회 결과: ${documents.length}개 (사용자: ${req.user.username}, 역할: ${req.user.role})`);
     res.json(documents);
   } catch (error) {
     console.error('문서 목록 조회 오류:', error);

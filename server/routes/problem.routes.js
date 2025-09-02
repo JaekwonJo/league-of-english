@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const database = require('../models/database');
-const problemService = require('../services/problemService');
+// const problemService = require('../services/problemService'); // 제거됨
 const UltraSimpleProblemService = require('../services/ultraSimpleProblemService');
 const { verifyToken, checkDailyLimit, updateUsage } = require('../middleware/auth');
 

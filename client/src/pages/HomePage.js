@@ -262,7 +262,8 @@ const styles = {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
     gap: '20px',
-    marginBottom: '30px'
+    marginBottom: '30px',
+    marginTop: '40px'
   },
   statCard: {
     background: 'white',

@@ -13,10 +13,7 @@ const StudyConfig = ({ onStart }) => {
   const [config, setConfig] = useState({
     mode: 'curriculum',
     documentId: null,
-    types: Object.keys(problemTypes.problemTypes).reduce((acc, type) => {
-      acc[type] = 0;
-      return acc;
-    }, {}),
+    types: {},
     orderDifficulty: 'basic',
     insertionDifficulty: 'basic'
   });
@@ -24,7 +21,58 @@ const StudyConfig = ({ onStart }) => {
 
   useEffect(() => {
     loadDocuments();
+    loadSavedConfig();
   }, []);
+
+  // 저장된 설정 불러오기
+  const loadSavedConfig = () => {
+    try {
+      const saved = localStorage.getItem('studyConfig');
+      if (saved) {
+        const parsedConfig = JSON.parse(saved);
+        console.log('💾 저장된 설정 불러오기:', parsedConfig);
+        setConfig(prev => ({
+          ...prev,
+          types: parsedConfig.types || {},
+          orderDifficulty: parsedConfig.orderDifficulty || 'basic',
+          insertionDifficulty: parsedConfig.insertionDifficulty || 'basic'
+        }));
+      } else {
+        // 처음 사용자는 모든 타입을 0으로 초기화
+        setConfig(prev => ({
+          ...prev,
+          types: Object.keys(problemTypes.problemTypes).reduce((acc, type) => {
+            acc[type] = 0;
+            return acc;
+          }, {})
+        }));
+      }
+    } catch (error) {
+      console.error('설정 불러오기 오류:', error);
+      // 오류 시 0으로 초기화
+      setConfig(prev => ({
+        ...prev,
+        types: Object.keys(problemTypes.problemTypes).reduce((acc, type) => {
+          acc[type] = 0;
+          return acc;
+        }, {})
+      }));
+    }
+  };
+
+  // 설정 저장
+  const saveConfig = (newConfig) => {
+    try {
+      localStorage.setItem('studyConfig', JSON.stringify({
+        types: newConfig.types,
+        orderDifficulty: newConfig.orderDifficulty,
+        insertionDifficulty: newConfig.insertionDifficulty
+      }));
+      console.log('💾 설정 저장 완료:', newConfig.types);
+    } catch (error) {
+      console.error('설정 저장 오류:', error);
+    }
+  };
 
   const loadDocuments = async () => {
     try {
@@ -43,13 +91,15 @@ const StudyConfig = ({ onStart }) => {
 
   const handleTypeChange = (type, value) => {
     const newValue = Math.max(0, Math.min(10, parseInt(value) || 0));
-    setConfig(prev => ({
-      ...prev,
+    const newConfig = {
+      ...config,
       types: {
-        ...prev.types,
+        ...config.types,
         [type]: newValue
       }
-    }));
+    };
+    setConfig(newConfig);
+    saveConfig(newConfig); // 변경사항 즉시 저장
   };
 
   const getTotalProblems = () => {
@@ -57,13 +107,16 @@ const StudyConfig = ({ onStart }) => {
   };
 
   const resetTypes = () => {
-    setConfig(prev => ({
-      ...prev,
+    const newConfig = {
+      ...config,
       types: Object.keys(problemTypes.problemTypes).reduce((acc, type) => {
         acc[type] = 0;
         return acc;
       }, {})
-    }));
+    };
+    setConfig(newConfig);
+    saveConfig(newConfig);
+    console.log('🔄 모든 문제 개수 초기화 완룼');
   };
 
   const handleStart = () => {
@@ -113,9 +166,6 @@ const StudyConfig = ({ onStart }) => {
         <h3 style={styles.sectionTitle}>
           📝 문제 유형 (총 {getTotalProblems()}문제)
         </h3>
-        <button onClick={resetTypes} style={styles.resetButton}>
-          🔄
-        </button>
 
         <div style={styles.typeGrid}>
           {Object.entries(problemTypes.problemTypes).map(([type, info]) => (
@@ -133,7 +183,11 @@ const StudyConfig = ({ onStart }) => {
                       ...styles.compactDifficultyOption,
                       ...(config.orderDifficulty === 'basic' ? styles.compactDifficultyOptionActive : {})
                     }}
-                    onClick={() => setConfig(prev => ({ ...prev, orderDifficulty: 'basic' }))}
+                    onClick={() => {
+                      const newConfig = { ...config, orderDifficulty: 'basic' };
+                      setConfig(newConfig);
+                      saveConfig(newConfig);
+                    }}
                   >
                     <div style={styles.compactDifficultyIcon}>🥉</div>
                     <div style={styles.compactDifficultyText}>기본 (A~C)</div>
@@ -143,7 +197,11 @@ const StudyConfig = ({ onStart }) => {
                       ...styles.compactDifficultyOption,
                       ...(config.orderDifficulty === 'advanced' ? styles.compactDifficultyOptionActive : {})
                     }}
-                    onClick={() => setConfig(prev => ({ ...prev, orderDifficulty: 'advanced' }))}
+                    onClick={() => {
+                      const newConfig = { ...config, orderDifficulty: 'advanced' };
+                      setConfig(newConfig);
+                      saveConfig(newConfig);
+                    }}
                   >
                     <div style={styles.compactDifficultyIcon}>🏆</div>
                     <div style={styles.compactDifficultyText}>고급 (A~E)</div>
@@ -182,6 +240,15 @@ const StudyConfig = ({ onStart }) => {
 
       {/* 시작 버튼 */}
       <div style={styles.actions}>
+        {/* 초기화 버튼 - 시작 버튼 오른쪽에 배치 */}
+        <button
+          style={styles.resetMainButton}
+          onClick={resetTypes}
+          title="모든 문제 개수를 0으로 초기화"
+        >
+          🔄 초기화
+        </button>
+        
         <button
           style={{
             ...styles.startButton,
@@ -353,8 +420,29 @@ const styles = {
     outline: 'none'
   },
   actions: {
+    position: 'relative',
     textAlign: 'center',
     marginTop: '50px'
+  },
+  resetMainButton: {
+    position: 'absolute',
+    right: '0',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    padding: '15px 25px',
+    background: 'linear-gradient(135deg, #DC2626 0%, #B91C1C 100%)',
+    color: 'white',
+    border: 'none',
+    borderRadius: '12px',
+    fontSize: '16px',
+    fontWeight: 'bold',
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    boxShadow: '0 8px 20px rgba(220, 38, 38, 0.3)',
+    ':hover': {
+      transform: 'translateY(-50%) scale(1.05)',
+      boxShadow: '0 12px 25px rgba(220, 38, 38, 0.4)'
+    }
   },
   startButton: {
     padding: '20px 60px',
