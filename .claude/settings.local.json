@@ -40,7 +40,8 @@
       "Bash(PORT=3010 npm start)",
       "Bash(REACT_APP_API_URL=http://localhost:5001 npm start)",
       "Bash(set PORT=3002)",
-      "Bash(set REACT_APP_API_URL=http://localhost:5001)"
+      "Bash(set REACT_APP_API_URL=http://localhost:5001)",
+      "Bash(git merge:*)"
     ],
     "deny": [],
     "ask": []
