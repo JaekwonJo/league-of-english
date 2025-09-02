@@ -274,74 +274,81 @@ class UltraSimpleProblemService {
    */
   generateInsertionProblems(passages, count, options, document, parsedContent) {
     const problems = [];
-    const difficulty = options.insertionDifficulty === 'advanced' ? 'advanced' : 'basic';
-    const maxChoices = difficulty === 'advanced' ? 7 : 5;
+    // 문장삽입은 기본 레벨만 제공 (고급 레벨 비활성화)
+    const difficulty = 'basic';
+    const maxChoices = 5;
 
     console.log(`📄 총 ${passages.length}개 지문 중 ${count}개 문장삽입 문제 생성`);
 
-    // 🎯 마구잡이 순서로 지문 선택 (랜덤화)
+    // 🎯 요청한 개수만큼 생성될 때까지 재시도
     const shuffledIndexes = this.shuffleArray([...Array(passages.length).keys()]);
-    const selectedIndexes = shuffledIndexes.slice(0, Math.min(count, passages.length));
+    let attemptCount = 0;
+    let passageIndex = 0;
     
-    console.log(`🎲 랜덤 선택된 페이지: [${selectedIndexes.map(i => i + 1).join(', ')}]`);
+    console.log(`🎲 랜덤 선택된 페이지 순서: [${shuffledIndexes.map(i => i + 1).join(', ')}]`);
 
-    // 선택된 지문에서 1문제씩 생성
-    for (let i = 0; i < selectedIndexes.length; i++) {
-      const passageIndex = selectedIndexes[i];
-      const passage = passages[passageIndex];
-      console.log(`🎯 문장삽입 문제 ${i + 1}: 원문 페이지 ${passageIndex + 1} 사용 (${passage.length}자)`);
+    // 요청한 개수만큼 생성될 때까지 반복
+    while (problems.length < count && attemptCount < passages.length * 2) {
+      const currentIndex = shuffledIndexes[passageIndex % shuffledIndexes.length];
+      const passage = passages[currentIndex];
       
-      const problem = this.createInsertionProblem(passage, maxChoices, i + 1, passageIndex + 1, document, parsedContent);
+      console.log(`🎯 문장삽입 문제 ${problems.length + 1}: 원문 페이지 ${currentIndex + 1} 사용 (${passage.length}자)`);
+      
+      const problem = this.createInsertionProblem(passage, maxChoices, problems.length + 1, currentIndex + 1, document, parsedContent);
       if (problem) {
         problems.push(problem);
-        console.log(`✅ 문장삽입 문제 ${i + 1} 생성 완료 (원문 페이지 ${passageIndex + 1})`);
+        console.log(`✅ 문장삽입 문제 ${problems.length} 생성 완료 (원문 페이지 ${currentIndex + 1})`);
       } else {
-        console.log(`❌ 문장삽입 문제 ${i + 1} 생성 실패 (원문 페이지 ${passageIndex + 1})`);
+        console.log(`❌ 문장삽입 문제 ${problems.length + 1} 생성 실패 (원문 페이지 ${currentIndex + 1})`);
       }
+      
+      passageIndex++;
+      attemptCount++;
     }
 
+    console.log(`✅ ${problems.length}개 문제 생성 완료`);
     return problems;
   }
 
   /**
-   * 한 지문에서 문장삽입 문제 생성
+   * 한 지문에서 문장삽입 문제 생성 - 완전히 새로운 간단한 로직
    */
   createInsertionProblem(passage, maxChoices, problemNumber, originalPageNumber, document, parsedContent) {
-    // 1. 문장을 단순하게 마침표로 분리
-    const rawSentences = passage.split('.');
+    console.log(`🎯 문장삽입 문제 생성 시작 (위치 ${maxChoices}개)`);
     
-    // 2. 완전한 영어 문장만 필터링
+    // 1. 문장 분리 및 정리
+    const rawSentences = passage.split('.');
     const sentences = rawSentences
       .map(s => s.trim())
-      .filter(s => s.length > 30) // 최소 길이
-      .filter(s => /[a-zA-Z]/.test(s)) // 영어 포함
-      .filter(s => !/^[가-힣]/.test(s)) // 한글로 시작하지 않음
-      .map(s => s + '.'); // 마침표 다시 추가
+      .filter(s => s.length > 20)
+      .filter(s => /[a-zA-Z]/.test(s))
+      .filter(s => !/^[가-힣]/.test(s))
+      .map(s => s + '.');
 
-    console.log(`📝 ${rawSentences.length}개 → ${sentences.length}개 유효 문장 추출`);
+    console.log(`📝 원본 ${rawSentences.length}개 → 유효 ${sentences.length}개 문장`);
 
-    if (sentences.length < maxChoices + 1) {
-      console.log(`⚠️ 문장 부족: ${sentences.length}개 < ${maxChoices + 1}개 필요`);
+    if (sentences.length < maxChoices) {
+      console.log(`⚠️ 문장 부족: ${sentences.length}개 < ${maxChoices}개 필요`);
       return null;
     }
 
-    // 3. 랜덤하게 한 문장을 [주어진 문장]으로 선택
-    const randomIndex = Math.floor(Math.random() * sentences.length);
-    const givenSentence = sentences[randomIndex];
+    // 2. 정확히 maxChoices개 문장만 사용
+    const selectedSentences = sentences.slice(0, maxChoices);
     
-    // 4. 나머지 문장들로 지문 구성 (주어진 문장 제외)
-    const remainingSentences = sentences.filter((_, index) => index !== randomIndex);
+    // 3. 이 중 하나를 랜덤 선택하여 "주어진 문장"으로 빼냄
+    const randomIndex = Math.floor(Math.random() * maxChoices);
+    const givenSentence = selectedSentences[randomIndex];
     
-    // 5. 지문에 ①②③④⑤ 위치 표시 삽입 (maxChoices개)
-    const textWithChoices = this.insertChoiceMarkers(remainingSentences, maxChoices);
+    // 4. 지문 생성 (빠진 자리에 빈 공간 표시)
+    const textWithGap = this.createTextWithGap(selectedSentences, randomIndex, maxChoices);
     
-    // 6. 정답 위치 계산 - 원문에서 주어진 문장이 들어갈 위치
-    const correctPosition = randomIndex + 1; // 1부터 시작하는 위치
+    // 5. 정답은 빠진 위치 (1부터 시작)
+    const correctPosition = randomIndex + 1;
 
-    // 6. 객관식 선택지 생성 (①②③④⑤ 또는 ①~⑦)
+    // 6. 객관식 선택지 (①②③④⑤)
     const multipleChoices = this.generateInsertionChoices(maxChoices);
     
-    console.log(`🎯 문장삽입 문제 ${problemNumber}: 주어진 문장 "${givenSentence.substring(0, 50)}..." | 정답: ${correctPosition}번`);
+    console.log(`✅ 문장삽입 문제: "${givenSentence.substring(0, 40)}..." → 정답 ${correctPosition}번`);
 
     // 제목과 출처 정보 설정
     const documentTitle = document ? document.title : '문서';
@@ -350,7 +357,7 @@ class UltraSimpleProblemService {
     return {
       type: 'insertion',
       givenSentence: givenSentence,
-      mainText: textWithChoices,
+      mainText: textWithGap,
       multipleChoices: multipleChoices,
       answer: correctPosition.toString(), // 정답 위치 (1-maxChoices)
       explanation: `주어진 문장은 원문에서 ${correctPosition}번 위치에 들어가야 합니다.`,
@@ -367,29 +374,36 @@ class UltraSimpleProblemService {
   }
 
   /**
-   * 지문에 ①②③④⑤ 선택지 마커 삽입
+   * 간단하고 명확한 지문 생성 (빈 공간 포함)
    */
-  insertChoiceMarkers(sentences, maxChoices) {
-    const markers = ['①', '②', '③', '④', '⑤', '⑥', '⑦'];
-    const result = [];
+  createTextWithGap(selectedSentences, gapIndex, maxChoices = 5) {
+    const markers = ['①', '②', '③', '④', '⑤'];
+    let result = '';
     
-    // 첫 번째 마커부터 시작
-    result.push(markers[0]);
+    console.log(`🔧 지문 생성: ${maxChoices}개 위치, ${gapIndex + 1}번 위치가 빈 공간`);
     
-    // 각 문장 사이에 마커 삽입
-    for (let i = 0; i < sentences.length; i++) {
-      result.push(sentences[i]);
-      if (i + 1 < maxChoices - 1) { // 마지막 마커는 끝에
-        result.push(markers[i + 1]);
+    for (let i = 0; i < maxChoices; i++) {
+      // 위치 마커
+      result += markers[i] + ' ';
+      
+      if (i === gapIndex) {
+        // 빈 공간
+        result += '( __________ )';
+        console.log(`📍 ${i + 1}번: [빈 공간]`);
+      } else {
+        // 문장
+        result += selectedSentences[i];
+        console.log(`📍 ${i + 1}번: "${selectedSentences[i].substring(0, 30)}..."`);
+      }
+      
+      // 마지막이 아니면 공백
+      if (i < maxChoices - 1) {
+        result += ' ';
       }
     }
     
-    // 마지막 마커 추가
-    if (maxChoices > sentences.length + 1) {
-      result.push(markers[maxChoices - 1]);
-    }
-    
-    return result.join(' ');
+    console.log(`✅ 지문 완성: "${result.substring(0, 100)}..."`);
+    return result.trim();
   }
 
   /**

@@ -3,6 +3,7 @@
  */
 
 import React from 'react';
+import { orderStyles } from './problemDisplayStyles';
 
 const InsertionProblemDisplay = ({ problem, userAnswer, onAnswer }) => {
   const handleChoiceClick = (choiceNumber) => {
@@ -10,34 +11,45 @@ const InsertionProblemDisplay = ({ problem, userAnswer, onAnswer }) => {
   };
 
   return (
-    <div style={insertionStyles.container}>
-      <div style={insertionStyles.questionHeader}>
-        <h3 style={insertionStyles.questionTitle}>
-          Q. 다음 글의 빈 곳에 들어갈 문장으로 가장 적절한 것을 고르시오.
-        </h3>
+    <>
+      {/* 문장삽입 문제용 헤더 - 순서배열과 동일한 디자인 */}
+      {problem.metadata && (
+        <>
+          <div style={orderStyles.orderTitleSection}>
+            📚 제목: {problem.metadata.originalTitle || '문서'}
+          </div>
+          <div style={orderStyles.orderNumberSection}>
+            📄 {problem.metadata.problemNumber || '문제번호'}
+          </div>
+        </>
+      )}
+      
+      {/* 문장삽입 문제 지시문 */}
+      <div style={orderStyles.orderInstruction}>
+        ✨ Q. 다음 글의 빈 곳에 들어갈 문장으로 가장 적절한 것을 고르시오.
       </div>
 
-      {/* 주어진 문장 */}
-      <div style={insertionStyles.givenSentenceSection}>
-        <div style={insertionStyles.givenSentenceLabel}>
-          [주어진 문장]
-        </div>
-        <div style={insertionStyles.givenSentence}>
-          {problem.givenSentence}
+      {/* 주어진 문장 - 순서배열과 동일한 디자인 */}
+      <div style={orderStyles.orderGivenContainer}>
+        <div style={orderStyles.givenLabel}>🎯 [주어진 문장]</div>
+        <div style={orderStyles.orderGivenText}>
+          {problem.givenSentence || '주어진 문장 데이터 없음'}
         </div>
       </div>
 
-      {/* 지문 (선택지 마커 포함) */}
-      <div style={insertionStyles.mainTextSection}>
-        <div style={insertionStyles.mainText}>
-          {problem.mainText}
+      {/* 지문 (선택지 마커 포함) - 순서배열과 동일한 디자인 */}
+      <div style={{ marginBottom: '20px' }}>
+        <div style={orderStyles.sentencesLabel}>📝 [지문]</div>
+        <div style={orderStyles.orderSentence}>
+          {problem.mainText || '지문 데이터 없음'}
         </div>
       </div>
 
       {/* 객관식 선택지 */}
       <div style={insertionStyles.choicesSection}>
+        <div style={orderStyles.sentencesLabel}>🎲 [선택지]</div>
         <div style={insertionStyles.choicesGrid}>
-          {problem.multipleChoices.map((choice, idx) => (
+          {(problem.multipleChoices || []).map((choice, idx) => (
             <button
               key={idx}
               style={{
@@ -51,22 +63,7 @@ const InsertionProblemDisplay = ({ problem, userAnswer, onAnswer }) => {
           ))}
         </div>
       </div>
-
-      {/* 메타데이터 */}
-      {problem.metadata && (
-        <div style={insertionStyles.metadata}>
-          <span style={insertionStyles.metadataItem}>
-            📚 {problem.metadata.originalTitle}
-          </span>
-          <span style={insertionStyles.metadataItem}>
-            📄 {problem.metadata.problemNumber}
-          </span>
-          <span style={insertionStyles.metadataItem}>
-            🎯 {problem.metadata.difficulty === 'basic' ? '기본' : '고급'}
-          </span>
-        </div>
-      )}
-    </div>
+    </>
   );
 };
 

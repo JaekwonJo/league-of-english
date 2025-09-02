@@ -4,10 +4,12 @@ const config = require('../config/server.config.json');
 const { make: makeOrderProblem } = require('../utils/seq_strict_final');
 const { generateRandomOrderProblems, printProblemWithEffects } = require('../utils/multiPassageOrderGenerator');
 const SimpleOrderGenerator = require('../utils/simpleOrderGenerator');
+const InsertionProblemGenerator = require('../utils/insertionProblemGenerator');
 
 class ProblemService {
   constructor() {
     this.openai = null;
+    this.insertionGenerator = new InsertionProblemGenerator();
     this.initOpenAI();
   }
 
@@ -206,7 +208,7 @@ class ProblemService {
     if (type === 'order') {
       return this.generateOrderProblem(document, options);
     } else if (type === 'insertion') {
-      return this.generateInsertionProblem(document.content);
+      return this.generateInsertionProblem(document, options);
     }
     
     return null;
@@ -375,33 +377,70 @@ class ProblemService {
   }
 
   /**
-   * 문장 삽입 문제 생성
+   * 문장 삽입 문제 생성 (새로운 방식)
    */
-  generateInsertionProblem(text) {
-    const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
-    if (sentences.length < 5) return null;
-    
-    const template = templates.ruleBasedTemplates.insertion;
-    const insertIndex = Math.floor(Math.random() * 3) + 1;
-    const sentenceToInsert = sentences[insertIndex].trim();
-    
-    // 해당 문장 제거
-    const withoutSentence = sentences.filter((_, idx) => idx !== insertIndex);
-    
-    // 위치 표시 추가
-    const markedText = withoutSentence.map((sent, idx) => {
-      if (idx === 0) return sent.trim();
-      return `${template.markers[idx - 1]} ${sent.trim()}`;
-    }).join(' ');
-    
-    return {
-      type: 'insertion',
-      question: `${template.instructions[0]}\n\n[삽입할 문장]\n${sentenceToInsert}\n\n${markedText}`,
-      options: template.options,
-      answer: insertIndex.toString(),
-      explanation: `문장은 ${template.options[insertIndex - 1]} 위치에 들어가야 합니다.`,
-      is_ai_generated: false
-    };
+  generateInsertionProblem(document, options = {}) {
+    try {
+      console.log('🎯 새로운 문장삽입 문제 생성 시작...');
+      console.log('📊 옵션:', JSON.stringify(options, null, 2));
+      
+      // 새 파서 결과 확인 (parsedContent가 있는지)
+      let passages = [];
+      
+      if (document.parsedContent && document.parsedContent.passages) {
+        passages = document.parsedContent.passages;
+        console.log('✅ 새 파서 결과 사용:', passages.length, '개 지문');
+      } else if (typeof document.content === 'string') {
+        // 기존 방식으로 지문 분리 시도
+        passages = document.content.split('\n\n---\n\n').filter(p => p.trim().length > 50);
+        console.log('📄 기존 방식으로 지문 분리:', passages.length, '개');
+      } else {
+        throw new Error('사용 가능한 지문 데이터가 없습니다.');
+      }
+
+      if (passages.length === 0) {
+        throw new Error('추출된 지문이 없습니다.');
+      }
+
+      // 난이도 설정
+      const difficulty = options.insertionDifficulty || 'basic';
+      
+      // 새로운 생성기 사용
+      const problems = this.insertionGenerator.generateInsertionProblems(passages, difficulty, 1);
+      
+      if (problems.length === 0) {
+        throw new Error('문제 생성 실패');
+      }
+
+      const problem = problems[0];
+
+      // API 응답 형식에 맞게 변환
+      const insertionProblem = {
+        type: 'insertion',
+        instruction: problem.instruction,
+        givenSentence: problem.givenSentence,
+        mainText: problem.mainText,
+        multipleChoices: problem.multipleChoices,
+        answer: problem.correctAnswer.toString(),
+        explanation: problem.explanation,
+        is_ai_generated: false,
+        metadata: problem.metadata
+      };
+
+      console.log('✅ 새로운 문장삽입 문제 생성 완료');
+      console.log('📤 전송 데이터:', {
+        givenSentence: insertionProblem.givenSentence.substring(0, 50) + '...',
+        mainText: insertionProblem.mainText.substring(0, 100) + '...',
+        choiceCount: insertionProblem.multipleChoices.length + '개 선택지',
+        answer: insertionProblem.answer
+      });
+
+      return insertionProblem;
+
+    } catch (error) {
+      console.error('🚨 새로운 문장삽입 생성 실패:', error);
+      throw error; // 폴백 없이 바로 실패 처리
+    }
   }
 
   /**

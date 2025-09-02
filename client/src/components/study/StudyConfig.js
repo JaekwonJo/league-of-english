@@ -151,31 +151,7 @@ const StudyConfig = ({ onStart }) => {
                 </div>
               )}
 
-              {/* 문장삽입 타입에만 난이도 선택기 추가 */}
-              {type === 'insertion' && (
-                <div style={styles.compactDifficultySelector}>
-                  <div
-                    style={{
-                      ...styles.compactDifficultyOption,
-                      ...(config.insertionDifficulty === 'basic' ? styles.compactDifficultyOptionActive : {})
-                    }}
-                    onClick={() => setConfig(prev => ({ ...prev, insertionDifficulty: 'basic' }))}
-                  >
-                    <div style={styles.compactDifficultyIcon}>🥉</div>
-                    <div style={styles.compactDifficultyText}>기본 (①~⑤)</div>
-                  </div>
-                  <div
-                    style={{
-                      ...styles.compactDifficultyOption,
-                      ...(config.insertionDifficulty === 'advanced' ? styles.compactDifficultyOptionActive : {})
-                    }}
-                    onClick={() => setConfig(prev => ({ ...prev, insertionDifficulty: 'advanced' }))}
-                  >
-                    <div style={styles.compactDifficultyIcon}>🏆</div>
-                    <div style={styles.compactDifficultyText}>고급 (①~⑦)</div>
-                  </div>
-                </div>
-              )}
+              {/* 문장삽입은 기본 레벨로 고정 (난이도 선택기 제거) */}
               
               <div style={styles.typeControls}>
                 <button
