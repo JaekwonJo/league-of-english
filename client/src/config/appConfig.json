@@ -2,8 +2,8 @@
   "app": {
     "name": "League of English",
     "version": "2.0.0",
-    "slogan": "AI가 만드는 무한 영어 문제",
-    "apiUrl": "http://localhost:5001/api"
+    "slogan": "✨ 영어를 완벽하게 정복하다 ✨",
+    "apiUrl": "http://localhost:5003/api"
   },
   "membership": {
     "free": {

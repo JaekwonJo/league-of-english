@@ -231,8 +231,9 @@ export const api = {
 
   // 랭킹
   ranking: {
-    global: (params) => apiService.get('/ranking/global', params),
-    school: (params) => apiService.get('/ranking/school', params)
+    leaderboard: (params) => apiService.get('/ranking/leaderboard', params),
+    myRank: () => apiService.get('/ranking/my-rank'),
+    tierDistribution: () => apiService.get('/ranking/tier-distribution')
   }
 };
 

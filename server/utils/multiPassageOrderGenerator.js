@@ -3,15 +3,18 @@
  * 원본 문서에서 모든 지문을 랜덤 선택하여 문제 생성
  */
 
-// 기존 seq_strict_final의 핵심 로직 재사용
+// 기존 seq_strict_final의 핵심 로직 재사용 (개선된 문장 패턴)
 const nz = s => String(s).replace(/\s+/g, ''); 
-const SENT = /[^.!?]*[.!?](?:\s+|$)/g;
+// 개선된 문장 패턴: 공백을 매치에 포함하지 않음
+const SENT = /[^.!?]*[.!?](?=\s+[A-Z]|\s*$)/g;
 
 const split = t => {
   let m, arr = [];
   SENT.lastIndex = 0;
   while (m = SENT.exec(t)) {
-    arr.push({s: m.index, e: SENT.lastIndex, tx: t.slice(m.index, SENT.lastIndex)});
+    // 텍스트를 추출할 때 공백 제거하여 원본 문장만 가져오기
+    const cleanText = t.slice(m.index, m.index + m[0].length).trim();
+    arr.push({s: m.index, e: m.index + m[0].length, tx: cleanText});
   }
   return arr;
 };
@@ -29,15 +32,58 @@ const cutRandomly = (full, k, originalFirstSentence = null) => {
   // 원래 첫 문장이 제공되면 그것을 사용, 아니면 현재 첫 문장 사용
   let given = originalFirstSentence || allSentences[0].tx.trim();
   
-  // 주어진 문장이 너무 짧거나 의미 없는 경우 검증
-  if (given.length < 10 || /^[A-Z]\.$/.test(given.trim())) {
-    console.log(`⚠️ 부적절한 주어진 문장: "${given}" - 더 긴 문장 사용`);
-    const completeSentence = full.match(/[^.!?]{10,}[.!?]/)?.[0]?.trim();
-    if (completeSentence) {
-      given = completeSentence;
-      console.log(`✅ 대체 문장 사용: "${given}"`);
+  // 🔧 주어진 문장 길이 제한 및 검증 강화
+  const validateAndFixGivenSentence = (sentence) => {
+    let cleaned = sentence.trim();
+    
+    // 1. 너무 긴 문장 처리 (150자 초과)
+    if (cleaned.length > 150) {
+      console.log(`⚠️ 주어진 문장이 너무 김 (${cleaned.length}자): "${cleaned.substring(0, 50)}..."`);
+      
+      // 첫 번째 완전한 문장만 사용
+      const firstSentence = cleaned.match(/[^.!?]*[.!?]/)?.[0]?.trim();
+      if (firstSentence && firstSentence.length <= 150 && firstSentence.length >= 15) {
+        cleaned = firstSentence;
+        console.log(`✅ 첫 번째 문장만 사용: "${cleaned}"`);
+      } else {
+        // 적절한 지점에서 자르기
+        const cutPoint = cleaned.lastIndexOf(' ', 150);
+        if (cutPoint > 50) {
+          cleaned = cleaned.substring(0, cutPoint) + '.';
+          console.log(`✅ 적절한 지점에서 자름: "${cleaned}"`);
+        }
+      }
     }
-  }
+    
+    // 2. 너무 짧거나 의미 없는 문장 처리
+    if (cleaned.length < 15 || /^[A-Z]\.$/.test(cleaned)) {
+      console.log(`⚠️ 부적절한 주어진 문장: "${cleaned}" - 더 긴 문장 사용`);
+      
+      // 전체 텍스트에서 적절한 길이의 완전한 문장 찾기
+      const goodSentences = full.match(/[^.!?]{15,150}[.!?]/g);
+      if (goodSentences && goodSentences.length > 0) {
+        cleaned = goodSentences[0].trim();
+        console.log(`✅ 대체 문장 사용: "${cleaned}"`);
+      }
+    }
+    
+    // 3. 여러 문장이 합쳐진 경우 처리
+    const sentenceCount = (cleaned.match(/[.!?]/g) || []).length;
+    if (sentenceCount > 1) {
+      console.log(`⚠️ 여러 문장이 합쳐짐 (${sentenceCount}개): "${cleaned.substring(0, 100)}..."`);
+      
+      // 첫 번째 완전한 문장만 추출
+      const firstSentence = cleaned.match(/[^.!?]*[.!?]/)?.[0]?.trim();
+      if (firstSentence && firstSentence.length >= 15) {
+        cleaned = firstSentence;
+        console.log(`✅ 첫 번째 문장만 추출: "${cleaned}"`);
+      }
+    }
+    
+    return cleaned;
+  };
+  
+  given = validateAndFixGivenSentence(given);
   
   console.log(`🔍 전체 문장 수: ${allSentences.length}개, 분할 요청: ${k}개`);
   

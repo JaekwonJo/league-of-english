@@ -36,7 +36,6 @@ const OrderProblemDisplay = ({ problem, parsedOrderData, onAnswer, userAnswer })
 
       {/* 순서배열 선택지 */}
       <div style={{ marginBottom: '20px' }}>
-        <div style={orderStyles.sentencesLabel}>📝 [선택지]</div>
         {(problem.sentences || parsedOrderData?.sentences || [
           {label: 'A', text: '데이터 없음 A'},
           {label: 'B', text: '데이터 없음 B'},
