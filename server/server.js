@@ -18,6 +18,7 @@ const database = require('./models/database');
 const authRoutes = require('./routes/auth.routes');
 const documentRoutes = require('./routes/document.routes');
 const problemRoutes = require('./routes/problem.routes');
+const rankingRoutes = require('./routes/ranking.routes');
 
 // Express 앱 초기화
 const app = express();
@@ -41,6 +42,7 @@ console.log('PORT:', PORT);
 app.use('/api', authRoutes);
 app.use('/api', documentRoutes);
 app.use('/api', problemRoutes);
+app.use('/api/ranking', rankingRoutes);
 
 // 헬스체크
 app.get('/health', (req, res) => {

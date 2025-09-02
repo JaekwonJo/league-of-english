@@ -1,0 +1,188 @@
+{
+  "tiers": [
+    {
+      "id": "iron",
+      "name": "Iron",
+      "nameKr": "아이언",
+      "minLP": 0,
+      "maxLP": 999,
+      "color": "#71717A",
+      "icon": "⚔️",
+      "badge": "/badges/iron.svg",
+      "features": {
+        "profileBadge": false,
+        "borderEffect": false,
+        "specialEffect": false
+      },
+      "rewards": {
+        "bonusPoints": 1.0,
+        "dailyBonus": 0
+      }
+    },
+    {
+      "id": "bronze",
+      "name": "Bronze",
+      "nameKr": "브론즈",
+      "minLP": 1000,
+      "maxLP": 1999,
+      "color": "#92400E",
+      "icon": "🛡️",
+      "badge": "/badges/bronze.svg",
+      "features": {
+        "profileBadge": true,
+        "borderEffect": false,
+        "specialEffect": false
+      },
+      "rewards": {
+        "bonusPoints": 1.1,
+        "dailyBonus": 5
+      }
+    },
+    {
+      "id": "silver",
+      "name": "Silver",
+      "nameKr": "실버",
+      "minLP": 2000,
+      "maxLP": 2999,
+      "color": "#6B7280",
+      "icon": "⚔️",
+      "badge": "/badges/silver.svg",
+      "features": {
+        "profileBadge": true,
+        "borderEffect": true,
+        "borderColor": "#C0C0C0",
+        "specialEffect": false
+      },
+      "rewards": {
+        "bonusPoints": 1.2,
+        "dailyBonus": 10
+      }
+    },
+    {
+      "id": "gold",
+      "name": "Gold",
+      "nameKr": "골드",
+      "minLP": 3000,
+      "maxLP": 4999,
+      "color": "#EAB308",
+      "icon": "👑",
+      "badge": "/badges/gold.svg",
+      "features": {
+        "profileBadge": true,
+        "borderEffect": true,
+        "borderColor": "#FFD700",
+        "specialEffect": false
+      },
+      "rewards": {
+        "bonusPoints": 1.3,
+        "dailyBonus": 15
+      }
+    },
+    {
+      "id": "platinum",
+      "name": "Platinum",
+      "nameKr": "플래티넘",
+      "minLP": 5000,
+      "maxLP": 9999,
+      "color": "#14B8A6",
+      "icon": "💎",
+      "badge": "/badges/platinum.svg",
+      "features": {
+        "profileBadge": true,
+        "borderEffect": true,
+        "borderColor": "#14B8A6",
+        "specialEffect": true,
+        "effectType": "glow"
+      },
+      "rewards": {
+        "bonusPoints": 1.4,
+        "dailyBonus": 20
+      }
+    },
+    {
+      "id": "diamond",
+      "name": "Diamond",
+      "nameKr": "다이아몬드",
+      "minLP": 10000,
+      "maxLP": 29999,
+      "color": "#60A5FA",
+      "icon": "💠",
+      "badge": "/badges/diamond.svg",
+      "features": {
+        "profileBadge": true,
+        "borderEffect": true,
+        "borderColor": "#60A5FA",
+        "specialEffect": true,
+        "effectType": "sparkle"
+      },
+      "rewards": {
+        "bonusPoints": 1.5,
+        "dailyBonus": 25
+      }
+    },
+    {
+      "id": "master",
+      "name": "Master",
+      "nameKr": "마스터",
+      "minLP": 30000,
+      "maxLP": 99999,
+      "color": "#A855F7",
+      "icon": "🏆",
+      "badge": "/badges/master.svg",
+      "features": {
+        "profileBadge": true,
+        "borderEffect": true,
+        "borderColor": "#A855F7",
+        "specialEffect": true,
+        "effectType": "rainbow"
+      },
+      "rewards": {
+        "bonusPoints": 1.75,
+        "dailyBonus": 30
+      }
+    },
+    {
+      "id": "challenger",
+      "name": "Challenger",
+      "nameKr": "챌린저",
+      "minLP": 100000,
+      "maxLP": -1,
+      "color": "#EF4444",
+      "icon": "🔥",
+      "badge": "/badges/challenger.svg",
+      "features": {
+        "profileBadge": true,
+        "borderEffect": true,
+        "borderColor": "#EF4444",
+        "specialEffect": true,
+        "effectType": "fire"
+      },
+      "rewards": {
+        "bonusPoints": 2.0,
+        "dailyBonus": 50
+      }
+    }
+  ],
+  "promotions": {
+    "animationDuration": 3000,
+    "sounds": {
+      "enabled": true,
+      "promotionSound": "/sounds/levelup.mp3",
+      "demotionSound": "/sounds/leveldown.mp3"
+    },
+    "effects": {
+      "confetti": true,
+      "screenFlash": true,
+      "notification": true
+    }
+  },
+  "ranking": {
+    "updateInterval": 300000,
+    "displayLimit": 100,
+    "seasons": {
+      "duration": 2592000000,
+      "resetLP": true,
+      "rewards": true
+    }
+  }
+}
