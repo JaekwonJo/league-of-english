@@ -96,6 +96,16 @@ export const adminStyles = {
     display: 'flex',
     gap: '5px'
   },
+  analyzeButton: {
+    background: '#3b82f6',
+    border: 'none',
+    borderRadius: '8px',
+    padding: '6px 8px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    color: 'white',
+    transition: 'all 0.3s'
+  },
   editButton: {
     background: '#fbbf24',
     border: 'none',

@@ -222,7 +222,10 @@ router.get('/documents/:id', verifyToken, async (req, res) => {
       console.log('기존 텍스트 형식 문서:', document.id);
     }
 
-    res.json(document);
+    res.json({
+      success: true,
+      data: document
+    });
   } catch (error) {
     console.error('문서 조회 오류:', error);
     res.status(500).json({ message: '서버 오류가 발생했습니다.' });

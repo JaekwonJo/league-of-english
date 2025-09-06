@@ -15,7 +15,8 @@ const StudyConfig = ({ onStart }) => {
     documentId: null,
     types: {},
     orderDifficulty: 'basic',
-    insertionDifficulty: 'basic'
+    insertionDifficulty: 'basic',
+    grammarDifficulty: 'basic'  // 어법 난이도 추가
   });
   const [loading, setLoading] = useState(false);
 
@@ -35,7 +36,8 @@ const StudyConfig = ({ onStart }) => {
           ...prev,
           types: parsedConfig.types || {},
           orderDifficulty: parsedConfig.orderDifficulty || 'basic',
-          insertionDifficulty: parsedConfig.insertionDifficulty || 'basic'
+          insertionDifficulty: parsedConfig.insertionDifficulty || 'basic',
+          grammarDifficulty: parsedConfig.grammarDifficulty || 'basic'
         }));
       } else {
         // 처음 사용자는 모든 타입을 0으로 초기화
@@ -205,6 +207,40 @@ const StudyConfig = ({ onStart }) => {
                   >
                     <div style={styles.compactDifficultyIcon}>🏆</div>
                     <div style={styles.compactDifficultyText}>고급 (A~E)</div>
+                  </div>
+                </div>
+              )}
+
+              {/* 어법 타입에도 난이도 선택기 추가 */}
+              {type === 'grammar' && (
+                <div style={styles.compactDifficultySelector}>
+                  <div
+                    style={{
+                      ...styles.compactDifficultyOption,
+                      ...(config.grammarDifficulty === 'basic' ? styles.compactDifficultyOptionActive : {})
+                    }}
+                    onClick={() => {
+                      const newConfig = { ...config, grammarDifficulty: 'basic' };
+                      setConfig(newConfig);
+                      saveConfig(newConfig);
+                    }}
+                  >
+                    <div style={styles.compactDifficultyIcon}>📝</div>
+                    <div style={styles.compactDifficultyText}>기본 (1개)</div>
+                  </div>
+                  <div
+                    style={{
+                      ...styles.compactDifficultyOption,
+                      ...(config.grammarDifficulty === 'advanced' ? styles.compactDifficultyOptionActive : {})
+                    }}
+                    onClick={() => {
+                      const newConfig = { ...config, grammarDifficulty: 'advanced' };
+                      setConfig(newConfig);
+                      saveConfig(newConfig);
+                    }}
+                  >
+                    <div style={styles.compactDifficultyIcon}>🔥</div>
+                    <div style={styles.compactDifficultyText}>고급 (개수)</div>
                   </div>
                 </div>
               )}

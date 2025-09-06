@@ -1,0 +1,51 @@
+{
+  "api": {
+    "endpoints": {
+      "list": "/analysis/list",
+      "analyze": "/analysis/:documentId",
+      "passages": "/analysis/:documentId/passages",
+      "analyzePassage": "/analysis/:documentId/analyze-passage",
+      "getPassage": "/analysis/:documentId/passage/:passageNumber"
+    }
+  },
+  "ui": {
+    "maxPassagesPerRow": 10,
+    "animationDuration": "0.2s",
+    "colors": {
+      "selected": "#3b82f6",
+      "analyzed": "#10b981",
+      "pending": "#f1f5f9",
+      "error": "#ef4444",
+      "warning": "#fbbf24"
+    }
+  },
+  "analysis": {
+    "sections": [
+      {
+        "id": "sentenceAnalysis",
+        "title": "📝 문장별 분석",
+        "icon": "📝"
+      },
+      {
+        "id": "deepAnalysis",
+        "title": "🔍 의미/분석/해설",
+        "icon": "🔍"
+      },
+      {
+        "id": "keyExpressions",
+        "title": "💡 핵심표현 & 동의어/반의어",
+        "icon": "💡"
+      },
+      {
+        "id": "examplesAndBackground",
+        "title": "📚 예시/배경지식",
+        "icon": "📚"
+      },
+      {
+        "id": "comprehensive",
+        "title": "📖 종합 정리",
+        "icon": "📖"
+      }
+    ]
+  }
+}

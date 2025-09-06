@@ -18,6 +18,7 @@ const pageComponents = {
   RankingPage: lazy(() => import('../pages/RankingPage')),
   ProfilePage: lazy(() => import('../pages/ProfilePage')),
   AdminPage: lazy(() => import('../pages/AdminPage')),
+  AnalysisPage: lazy(() => import('../pages/AnalysisPage')),
   LoginPage: lazy(() => import('../pages/LoginPage'))
 };
 

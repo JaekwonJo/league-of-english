@@ -5,6 +5,8 @@ import DocumentList from '../components/admin/DocumentList';
 import UploadModal from '../components/admin/UploadModal';
 import EditModal from '../components/admin/EditModal';
 import CategoryModal from '../components/admin/CategoryModal';
+import DocumentAnalysis from '../components/admin/DocumentAnalysis';
+import PassageAnalysis from '../components/admin/PassageAnalysisRefactored';
 
 const AdminPage = () => {
   const [documents, setDocuments] = useState([]);
@@ -13,7 +15,11 @@ const AdminPage = () => {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showAnalysisModal, setShowAnalysisModal] = useState(false);
+  const [showPassageAnalysisModal, setShowPassageAnalysisModal] = useState(false);
   const [editingDocument, setEditingDocument] = useState(null);
+  const [analyzingDocument, setAnalyzingDocument] = useState(null);
+  const [passageAnalyzingDocument, setPassageAnalyzingDocument] = useState(null);
   const [newCategory, setNewCategory] = useState('');
   const [uploadForm, setUploadForm] = useState({
     title: '',
@@ -101,6 +107,11 @@ const AdminPage = () => {
     setShowEditModal(true);
   };
 
+  const handleDocumentAnalyze = (doc) => {
+    setAnalyzingDocument(doc);
+    setShowAnalysisModal(true);
+  };
+
   const handleEditingDocumentChange = (field, value) => {
     setEditingDocument({ ...editingDocument, [field]: value });
   };
@@ -130,6 +141,11 @@ const AdminPage = () => {
     alert('카테고리가 추가되었습니다.');
   };
 
+  const handlePassageAnalyze = (document) => {
+    setPassageAnalyzingDocument(document);
+    setShowPassageAnalysisModal(true);
+  };
+
   return (
     <div style={adminStyles.container}>
       <div style={adminStyles.header}>
@@ -155,6 +171,8 @@ const AdminPage = () => {
         loading={loading}
         onEdit={handleDocumentEdit}
         onDelete={handleDelete}
+        onAnalyze={handleDocumentAnalyze}
+        onPassageAnalyze={handlePassageAnalyze}
       />
 
       <UploadModal
@@ -189,6 +207,26 @@ const AdminPage = () => {
         onAddCategory={handleAddCategory}
         onNewCategoryChange={setNewCategory}
       />
+
+      {showAnalysisModal && analyzingDocument && (
+        <DocumentAnalysis
+          document={analyzingDocument}
+          onClose={() => {
+            setShowAnalysisModal(false);
+            setAnalyzingDocument(null);
+          }}
+        />
+      )}
+
+      {showPassageAnalysisModal && passageAnalyzingDocument && (
+        <PassageAnalysis
+          document={passageAnalyzingDocument}
+          onClose={() => {
+            setShowPassageAnalysisModal(false);
+            setPassageAnalyzingDocument(null);
+          }}
+        />
+      )}
     </div>
   );
 };

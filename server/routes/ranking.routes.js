@@ -27,7 +27,6 @@ router.get('/leaderboard', verifyToken, async (req, res) => {
         grade,
         role,
         created_at,
-        last_activity,
         ROW_NUMBER() OVER (ORDER BY points DESC) as rank
       FROM users 
       WHERE points > 0

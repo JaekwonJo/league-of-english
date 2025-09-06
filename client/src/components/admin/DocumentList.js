@@ -5,7 +5,9 @@ const DocumentList = ({
   documents, 
   loading, 
   onEdit, 
-  onDelete 
+  onDelete,
+  onAnalyze,
+  onPassageAnalyze 
 }) => {
   if (loading) {
     return (
@@ -32,6 +34,8 @@ const DocumentList = ({
               document={doc}
               onEdit={onEdit}
               onDelete={onDelete}
+              onAnalyze={onAnalyze}
+              onPassageAnalyze={onPassageAnalyze}
             />
           ))
         )}
@@ -40,12 +44,28 @@ const DocumentList = ({
   );
 };
 
-const DocumentCard = ({ document: doc, onEdit, onDelete }) => {
+const DocumentCard = ({ document: doc, onEdit, onDelete, onAnalyze, onPassageAnalyze }) => {
   return (
     <div style={adminStyles.documentCard}>
       <div style={adminStyles.documentHeader}>
         <h3 style={adminStyles.documentTitle}>{doc.title}</h3>
         <div style={adminStyles.documentActions}>
+          <button 
+            style={adminStyles.analyzeButton}
+            onClick={() => onAnalyze(doc)}
+            title="종합 분석"
+          >
+            📊
+          </button>
+          {onPassageAnalyze && (
+            <button 
+              style={{...adminStyles.analyzeButton, background: '#10b981'}}
+              onClick={() => onPassageAnalyze(doc)}
+              title="개별 지문 분석"
+            >
+              📝
+            </button>
+          )}
           <button 
             style={adminStyles.editButton}
             onClick={() => onEdit(doc)}

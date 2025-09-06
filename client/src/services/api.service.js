@@ -200,10 +200,10 @@ const apiService = new ApiService();
 export const api = {
   // 인증
   auth: {
-    login: (credentials) => apiService.post('/login', credentials),
-    register: (userData) => apiService.post('/register', userData),
-    logout: () => apiService.post('/logout'),
-    refresh: () => apiService.post('/refresh')
+    login: (credentials) => apiService.post('/auth/login', credentials),
+    register: (userData) => apiService.post('/auth/register', userData),
+    logout: () => apiService.post('/auth/logout'),
+    refresh: () => apiService.post('/auth/refresh')
   },
 
   // 문서
@@ -234,6 +234,14 @@ export const api = {
     leaderboard: (params) => apiService.get('/ranking/leaderboard', params),
     myRank: () => apiService.get('/ranking/my-rank'),
     tierDistribution: () => apiService.get('/ranking/tier-distribution')
+  },
+
+  // 문서 분석
+  analysis: {
+    list: () => apiService.get('/analysis/list'),
+    get: (documentId) => apiService.get(`/analysis/${documentId}`),
+    status: (documentId) => apiService.get(`/analysis/status/${documentId}`),
+    delete: (documentId) => apiService.delete(`/analysis/${documentId}`)
   }
 };
 

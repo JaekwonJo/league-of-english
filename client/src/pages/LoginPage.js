@@ -22,7 +22,7 @@ const LoginPage = () => {
     setError('');
     setLoading(true);
 
-    const endpoint = isLogin ? '/login' : '/register';
+    const endpoint = isLogin ? '/auth/login' : '/auth/register';
     const payload = isLogin 
       ? { username: formData.username, password: formData.password }
       : formData;

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import OrderProblemDisplay from './OrderProblemDisplay';
 import InsertionProblemDisplay from './InsertionProblemDisplay';
+import GrammarProblemDisplay from './GrammarProblemDisplay';
 import { problemDisplayStyles, orderStyles } from './problemDisplayStyles';
 
 const ProblemDisplay = ({
@@ -116,9 +117,19 @@ const ProblemDisplay = ({
             userAnswer={selectedAnswer}
           />
         )}
+
+        {/* 어법 문제 */}
+        {problem.type === 'grammar' && (
+          <GrammarProblemDisplay
+            problem={problem}
+            onAnswer={handleSelect}
+            userAnswer={selectedAnswer}
+            showResult={false}
+          />
+        )}
         
         {/* 일반 문제 */}
-        {problem.type !== 'order' && problem.type !== 'insertion' && (
+        {problem.type !== 'order' && problem.type !== 'insertion' && problem.type !== 'grammar' && (
           <>
             <div style={problemDisplayStyles.instruction}>
               {problem.instruction || problem.question}

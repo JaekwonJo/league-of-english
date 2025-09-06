@@ -58,7 +58,22 @@
       "Bash(del services/simpleProblemService.js services/problemService.js)",
       "Bash(del \"C:\\Users\\jaekw\\Desktop\\league-of-english\\server\\check-db.js\")",
       "Bash(dir:*)",
-      "Bash(del:*)"
+      "Bash(del:*)",
+      "Read(c:\\Users\\jaekw\\Documents\\웹앱/**)",
+      "Read(c:\\Users\\jaekw\\Documents\\웹앱\\문서샘플/**)",
+      "WebFetch(domain:chatgpt.com)",
+      "Read(C:\\Users\\jaekw\\Pictures\\Screenshots/**)",
+      "Bash(curl:*)",
+      "Bash(taskkill:*)",
+      "Bash(node server.js)",
+      "Bash(npm start)",
+      "Bash(set PORT=3001)",
+      "Bash(cmd /c:*)",
+      "Read(//c/Users/jaekw/Pictures/Screenshots/**)",
+      "Bash(node check-document-format.js)",
+      "Bash(node:*)",
+      "Bash(sqlite3:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

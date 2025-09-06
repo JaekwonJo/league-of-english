@@ -110,6 +110,40 @@ class Database {
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (user_id) REFERENCES users(id),
           FOREIGN KEY (document_id) REFERENCES documents(id)
+        )`,
+
+        // document_analyses 테이블 (문서 분석 저장)
+        `CREATE TABLE IF NOT EXISTS document_analyses (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          document_id INTEGER NOT NULL,
+          analysis_type VARCHAR(50) DEFAULT 'comprehensive',
+          summary TEXT,
+          key_points TEXT,
+          vocabulary TEXT,
+          grammar_points TEXT,
+          study_guide TEXT,
+          comprehension_questions TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (document_id) REFERENCES documents(id)
+        )`,
+
+        // passage_analyses 테이블 (개별 지문 분석 저장)
+        `CREATE TABLE IF NOT EXISTS passage_analyses (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          document_id INTEGER NOT NULL,
+          passage_number INTEGER NOT NULL,
+          original_passage TEXT NOT NULL,
+          summary TEXT,
+          key_points TEXT,
+          vocabulary TEXT,
+          grammar_points TEXT,
+          study_guide TEXT,
+          comprehension_questions TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (document_id) REFERENCES documents(id),
+          UNIQUE(document_id, passage_number)
         )`
       ];
 

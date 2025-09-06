@@ -19,6 +19,7 @@ const authRoutes = require('./routes/auth.routes');
 const documentRoutes = require('./routes/document.routes');
 const problemRoutes = require('./routes/problem.routes');
 const rankingRoutes = require('./routes/ranking.routes');
+const analysisRoutes = require('./routes/analysis');
 
 // Express 앱 초기화
 const app = express();
@@ -39,10 +40,11 @@ console.log('OPENAI_API_KEY:', process.env.OPENAI_API_KEY ? '✅ 설정됨' : '�
 console.log('PORT:', PORT);
 
 // 라우터 연결
-app.use('/api', authRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/api', documentRoutes);
 app.use('/api', problemRoutes);
 app.use('/api/ranking', rankingRoutes);
+app.use('/api/analysis', analysisRoutes);
 
 // 헬스체크
 app.get('/health', (req, res) => {

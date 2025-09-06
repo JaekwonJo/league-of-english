@@ -164,6 +164,12 @@ const HomePage = () => {
           </button>
           <button 
             style={styles.quickButton}
+            onClick={() => window.location.href = '/analysis'}
+          >
+            📊 분석 자료
+          </button>
+          <button 
+            style={styles.quickButton}
             onClick={() => window.location.href = '/vocabulary'}
           >
             📖 단어 시험

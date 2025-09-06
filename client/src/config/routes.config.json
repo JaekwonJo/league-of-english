@@ -41,6 +41,14 @@
       "roles": ["student", "teacher", "admin"]
     },
     {
+      "path": "/analysis",
+      "name": "분석 자료",
+      "icon": "BarChart",
+      "component": "AnalysisPage",
+      "requiresAuth": true,
+      "roles": ["student", "teacher", "admin"]
+    },
+    {
       "path": "/profile",
       "name": "프로필",
       "icon": "User",
