@@ -7,14 +7,14 @@ const { verifyToken, checkDailyLimit, updateUsage } = require('../middleware/aut
 
 /**
  * POST /api/get-smart-problems
- * 스마트 문제 가져오기 (안전한 fallback 포함)
+ * ?�마??문제 가?�오�?(?�전??fallback ?�함)
  */
 router.post('/get-smart-problems', verifyToken, checkDailyLimit, async (req, res) => {
   const { documentId, types, count, orderDifficulty, insertionDifficulty, grammarDifficulty } = req.body;
   const userId = req.user.id;
 
   if (!documentId || !types || !count) {
-    return res.status(400).json({ message: '필수 파라미터가 누락되었습니다.' });
+    return res.status(400).json({ message: '?�수 ?�라미터가 ?�락?�었?�니??' });
   }
 
   try {
@@ -51,14 +51,14 @@ router.post('/get-smart-problems', verifyToken, checkDailyLimit, async (req, res
     await updateUsage(userId, problems.length);
     res.json({ problems, count: problems.length, dailyLimit: req.dailyLimit });
   } catch (error) {
-    console.error('문제 가져오기 오류:', error);
-    res.status(500).json({ message: '문제 가져오는데 실패했습니다.' });
+    console.error('문제 가?�오�??�류:', error);
+    res.status(500).json({ message: '문제 가?�오?�데 ?�패?�습?�다.' });
   }
 });
 
 /**
  * POST /api/problems/submit
- * 정답 제출 및 채점
+ * ?�답 ?�출 �?채점
  */
 router.post('/problems/submit', verifyToken, async (req, res) => {
   const { problemId, userAnswer, timeSpent } = req.body;
@@ -66,7 +66,7 @@ router.post('/problems/submit', verifyToken, async (req, res) => {
 
   try {
     const problem = await database.get('SELECT * FROM problems WHERE id = ?', [problemId]);
-    if (!problem) return res.status(404).json({ message: '문제를 찾을 수 없습니다.' });
+    if (!problem) return res.status(404).json({ message: '문제�?찾을 ???�습?�다.' });
 
     const isCorrect = problem.answer === userAnswer.toString();
     await database.run(
@@ -80,8 +80,8 @@ router.post('/problems/submit', verifyToken, async (req, res) => {
 
     res.json({ correct: isCorrect, correctAnswer: problem.answer, explanation: problem.explanation, pointChange });
   } catch (error) {
-    console.error('정답 제출 오류:', error);
-    res.status(500).json({ message: '정답 처리 중 오류가 발생했습니다.' });
+    console.error('?�답 ?�출 ?�류:', error);
+    res.status(500).json({ message: '?�답 처리 �??�류가 발생?�습?�다.' });
   }
 });
 
@@ -103,8 +103,8 @@ router.get('/problems/history', verifyToken, async (req, res) => {
     );
     res.json(history);
   } catch (error) {
-    console.error('기록 조회 오류:', error);
-    res.status(500).json({ message: '기록 조회 중 오류가 발생했습니다.' });
+    console.error('기록 조회 ?�류:', error);
+    res.status(500).json({ message: '기록 조회 �??�류가 발생?�습?�다.' });
   }
 });
 
@@ -142,8 +142,8 @@ router.get('/problems/stats', verifyToken, async (req, res) => {
       recent
     });
   } catch (error) {
-    console.error('통계 조회 오류:', error);
-    res.status(500).json({ message: '통계 조회 중 오류가 발생했습니다.' });
+    console.error('?�계 조회 ?�류:', error);
+    res.status(500).json({ message: '?�계 조회 �??�류가 발생?�습?�다.' });
   }
 });
 
@@ -153,66 +153,66 @@ router.get('/problems/stats', verifyToken, async (req, res) => {
 router.post('/generate/blank', verifyToken, checkDailyLimit, async (req, res) => {
   try {
     const { documentId, count = 5 } = req.body;
-    if (!documentId) return res.status(400).json({ message: 'documentId가 필요합니다' });
+    if (!documentId) return res.status(400).json({ message: 'documentId가 ?�요?�니?? });
     const cached = await AIProblemService.countCached(documentId, 'blank');
     let out;
     if (cached >= 100) out = await AIProblemService.fetchCached(documentId, 'blank', count);
     else { out = await AIProblemService.generateBlank(documentId, count); await AIProblemService.saveProblems(documentId, 'blank', out); }
     await updateUsage(req.user.id, out.length);
     res.json({ problems: out, count: out.length, dailyLimit: req.dailyLimit });
-  } catch (e) { console.error('blank 생성 오류:', e); res.status(500).json({ message: 'blank 문제 생성 중 오류' }); }
+  } catch (e) { console.error('blank ?�성 ?�류:', e); res.status(500).json({ message: 'blank 문제 ?�성 �??�류' }); }
 });
 
 router.post('/generate/vocab', verifyToken, checkDailyLimit, async (req, res) => {
   try {
     const { documentId, count = 5 } = req.body;
-    if (!documentId) return res.status(400).json({ message: 'documentId가 필요합니다' });
-    const cached = await AIProblemService.countCached(documentId, 'vocab');
+    if (!documentId) return res.status(400).json({ message: 'documentId가 ?�요?�니?? });
+    const cached = await AIProblemService.countCached(documentId, 'vocabulary');
     let out;
-    if (cached >= 100) out = await AIProblemService.fetchCached(documentId, 'vocab', count);
-    else { out = await AIProblemService.generateVocab(documentId, count); await AIProblemService.saveProblems(documentId, 'vocab', out); }
+    if (cached >= 100) out = await AIProblemService.fetchCached(documentId, 'vocabulary', count);
+    else { out = await AIProblemService.generateVocab(documentId, count); await AIProblemService.saveProblems(documentId, 'vocabulary', out); }
     await updateUsage(req.user.id, out.length);
     res.json({ problems: out, count: out.length, dailyLimit: req.dailyLimit });
-  } catch (e) { console.error('vocab 생성 오류:', e); res.status(500).json({ message: 'vocab 문제 생성 중 오류' }); }
+  } catch (e) { console.error('vocab ?�성 ?�류:', e); res.status(500).json({ message: 'vocab 문제 ?�성 �??�류' }); }
 });
 
 router.post('/generate/title', verifyToken, checkDailyLimit, async (req, res) => {
   try {
     const { documentId, count = 5 } = req.body;
-    if (!documentId) return res.status(400).json({ message: 'documentId가 필요합니다' });
+    if (!documentId) return res.status(400).json({ message: 'documentId가 ?�요?�니?? });
     const cached = await AIProblemService.countCached(documentId, 'title');
     let out;
     if (cached >= 100) out = await AIProblemService.fetchCached(documentId, 'title', count);
     else { out = await AIProblemService.generateTitle(documentId, count); await AIProblemService.saveProblems(documentId, 'title', out); }
     await updateUsage(req.user.id, out.length);
     res.json({ problems: out, count: out.length, dailyLimit: req.dailyLimit });
-  } catch (e) { console.error('title 생성 오류:', e); res.status(500).json({ message: 'title 문제 생성 중 오류' }); }
+  } catch (e) { console.error('title ?�성 ?�류:', e); res.status(500).json({ message: 'title 문제 ?�성 �??�류' }); }
 });
 
 router.post('/generate/topic', verifyToken, checkDailyLimit, async (req, res) => {
   try {
     const { documentId, count = 5 } = req.body;
-    if (!documentId) return res.status(400).json({ message: 'documentId가 필요합니다' });
-    const cached = await AIProblemService.countCached(documentId, 'topic');
+    if (!documentId) return res.status(400).json({ message: 'documentId가 ?�요?�니?? });
+    const cached = await AIProblemService.countCached(documentId, 'theme');
     let out;
-    if (cached >= 100) out = await AIProblemService.fetchCached(documentId, 'topic', count);
-    else { out = await AIProblemService.generateTopic(documentId, count); await AIProblemService.saveProblems(documentId, 'topic', out); }
+    if (cached >= 100) out = await AIProblemService.fetchCached(documentId, 'theme', count);
+    else { out = await AIProblemService.generateTopic(documentId, count); await AIProblemService.saveProblems(documentId, 'theme', out); }
     await updateUsage(req.user.id, out.length);
     res.json({ problems: out, count: out.length, dailyLimit: req.dailyLimit });
-  } catch (e) { console.error('topic 생성 오류:', e); res.status(500).json({ message: 'topic 문제 생성 중 오류' }); }
+  } catch (e) { console.error('topic ?�성 ?�류:', e); res.status(500).json({ message: 'topic 문제 ?�성 �??�류' }); }
 });
 
 router.post('/generate/summary', verifyToken, checkDailyLimit, async (req, res) => {
   try {
     const { documentId, count = 5 } = req.body;
-    if (!documentId) return res.status(400).json({ message: 'documentId가 필요합니다' });
+    if (!documentId) return res.status(400).json({ message: 'documentId가 ?�요?�니?? });
     const cached = await AIProblemService.countCached(documentId, 'summary');
     let out;
     if (cached >= 100) out = await AIProblemService.fetchCached(documentId, 'summary', count);
     else { out = await AIProblemService.generateSummary(documentId, count); await AIProblemService.saveProblems(documentId, 'summary', out); }
     await updateUsage(req.user.id, out.length);
     res.json({ problems: out, count: out.length, dailyLimit: req.dailyLimit });
-  } catch (e) { console.error('summary 생성 오류:', e); res.status(500).json({ message: 'summary 문제 생성 중 오류' }); }
+  } catch (e) { console.error('summary ?�성 ?�류:', e); res.status(500).json({ message: 'summary 문제 ?�성 �??�류' }); }
 });
 
 module.exports = router;

@@ -140,10 +140,28 @@ class Database {
           grammar_points TEXT,
           study_guide TEXT,
           comprehension_questions TEXT,
+          published BOOLEAN DEFAULT 0,
+          visibility_scope TEXT DEFAULT 'public',
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (document_id) REFERENCES documents(id),
           UNIQUE(document_id, passage_number)
+        )`,
+
+        // user_groups (for group-based visibility if extended later)
+        `CREATE TABLE IF NOT EXISTS user_groups (
+          user_id INTEGER NOT NULL,
+          group_name TEXT NOT NULL,
+          PRIMARY KEY (user_id, group_name),
+          FOREIGN KEY (user_id) REFERENCES users(id)
+        )`,
+
+        // analysis_group_permissions (link published analysis to allowed groups)
+        `CREATE TABLE IF NOT EXISTS analysis_group_permissions (
+          analysis_id INTEGER NOT NULL,
+          group_name TEXT NOT NULL,
+          PRIMARY KEY (analysis_id, group_name),
+          FOREIGN KEY (analysis_id) REFERENCES passage_analyses(id)
         )`
       ];
 
@@ -171,7 +189,9 @@ class Database {
       const alterQueries = [
         `ALTER TABLE problems ADD COLUMN main_text TEXT`,
         `ALTER TABLE problems ADD COLUMN sentences TEXT`,
-        `ALTER TABLE problems ADD COLUMN metadata TEXT`
+        `ALTER TABLE problems ADD COLUMN metadata TEXT`,
+        `ALTER TABLE passage_analyses ADD COLUMN published BOOLEAN DEFAULT 0`,
+        `ALTER TABLE passage_analyses ADD COLUMN visibility_scope TEXT DEFAULT 'public'`
       ];
 
       let completed = 0;

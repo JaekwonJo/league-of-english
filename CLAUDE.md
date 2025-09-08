@@ -7,6 +7,53 @@
 학생은 게임처럼 풀고(타이머/점수/랭크), 선생님은 문서 업로드로 바로 과제/시험 생성! 학생 점수 확인해서 공부시키기!
 ---
 
+## 변경 사항 요약 (2025-09-08)
+
+- 서버
+  - 어법(고급) 생성기 안정화: `server/utils/csatGrammarGenerator.js` 정리, `<u>…</u>` 밑줄 표기 도입
+  - PDF 자동 추출 복구: `pdf-parse` + `utils/newPdfParser.js` 경로로 passages JSON 저장
+  - 새 문제 API 스캐폴딩(5종): `POST /api/generate/blank|vocab|title|topic|summary`
+  - 스마트 캐싱: 각 타입별 동일 문서에서 100문제 이상 시 DB 랜덤 반환, 미만 시 생성 후 저장
+  - OpenAI 연동 서비스: `server/services/aiProblemService.js` (키 존재 시 AI 우선, 없으면 규칙 기반)
+  - 인증 스키마 마이그레이션 스크립트
+    - `npm run migrate-users` → `password_hash` 채움/추가
+    - `npm run migrate-users-drop-legacy` → legacy `password` 컬럼 제거(테이블 재작성)
+  - 인코딩 정규화 스크립트: `npm run encoding:report` / `npm run encoding:apply-basic`
+
+- 클라이언트(React)
+  - 문법 문제 렌더러가 `<u>` 태그를 안전하게 렌더링하도록 수정: `client/src/components/study/GrammarProblemDisplay.js`
+
+- 실행/테스트
+  - 서버: `npm start` (PowerShell 실행 정책 이슈 해결)
+  - 관리자: `admin / admin123`
+  - PDF 업로드: `POST /api/upload-document` (title=Auto Extract 시 추출 제목 사용)
+
+### 새 API 간단 예시
+
+1) 로그인 → 토큰
+- POST `/api/auth/login` body: `{ "username":"admin","password":"admin123" }`
+
+2) 빈칸/어휘/제목/주제/요약 생성(공통)
+- Header: `Authorization: Bearer <token>`
+- Body: `{ "documentId": <숫자>, "count": 5 }`
+- Endpoints:
+  - `/api/generate/blank`
+  - `/api/generate/vocab`
+  - `/api/generate/title`
+  - `/api/generate/topic`
+  - `/api/generate/summary`
+
+3) 스마트 문제(기존)
+- POST `/api/get-smart-problems`
+- Body 예: `{ "documentId": 44, "types": ["grammar"], "count": 2, "grammarDifficulty": "advanced" }`
+
+### 마이그레이션/정리
+- DB 정렬: `npm run migrate-users` → 이후 필요 시 `npm run migrate-users-drop-legacy`
+- 인코딩 리포트/간단 치유:
+  - `npm run encoding:report`
+  - `npm run encoding:apply-basic` (백업 후 사용 권장)
+
+
 ## 🧱 기술 & 폴더 구조(최소)
 ## ⚙️ 설치 & 실행 (복붙만)
 

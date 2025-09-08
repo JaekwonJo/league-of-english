@@ -8,7 +8,11 @@
     "dev": "nodemon server/server.js",
     "client": "cd client && npm start",
     "install-all": "npm install && cd client && npm install && cd ..",
-    "build": "cd client && npm run build"
+    "build": "cd client && npm run build",
+    "migrate-users": "node server/scripts/migrate-users-password-hash.js",
+    "migrate-users-drop-legacy": "node server/scripts/migrate-users-drop-legacy.js",
+    "encoding:report": "node server/scripts/encoding-cleanup.js --report",
+    "encoding:apply-basic": "node server/scripts/encoding-cleanup.js --apply-basic"
   },
   "dependencies": {
     "express": "^4.18.2",

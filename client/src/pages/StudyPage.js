@@ -1,6 +1,6 @@
-ï»¿/**
- * StudyPage ì»´í¬?ï¿½íŠ¸
- * ë¬¸ì œ ?ï¿½???ï¿½ì´ì§€ (500ï¿½??ï¿½í•˜)
+/**
+ * StudyPage ÄÄÆ÷??Æ®
+ * ¹®Á¦ ??????ÀÌÁö (500????ÇÏ)
  */
 
 import React, { useState, useEffect } from 'react';
@@ -15,7 +15,7 @@ import logger from '../utils/logger';
 const StudyPage = () => {
   const { user } = useAuth();
   
-  // ?ï¿½íƒœ ê´€ï¿½?
+  // ??ÅÂ °ü??
   const [mode, setMode] = useState('config'); // config, study, result
   const [config, setConfig] = useState(null);
   const [problems, setProblems] = useState([]);
@@ -26,7 +26,7 @@ const StudyPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // ?ï¿½?ï¿½ë¨¸
+  // ????¸Ó
   const [startTime, setStartTime] = useState(null);
   const [currentTime, setCurrentTime] = useState(null);
 
@@ -41,7 +41,7 @@ const StudyPage = () => {
   }, [mode, startTime]);
 
   /**
-   * ?ï¿½ìŠµ ?ï¿½ì‘
+   * ??½À ??ÀÛ
    */
   const startStudy = async (studyConfig) => {
     try {
@@ -49,17 +49,17 @@ const StudyPage = () => {
       setError(null);
       logger.info('Starting study with config:', studyConfig);
 
-      // types ê°ì²´ï¿½?ë°°ì—´ï¿½?ë³€??(0ë³´ë‹¤ ??ê°’ì„ ê°€ï¿½??ï¿½ë“¤ï¿½?
+      // types °´Ã¼??¹è¿­??º¯??(0º¸´Ù ??°ªÀ» °¡????µé??
       const selectedTypes = Object.keys(studyConfig.types).filter(
         type => studyConfig.types[type] > 0
       );
       
       logger.info('Selected types:', selectedTypes);
 
-      // ï¿½?ë¬¸ì œ ê°œìˆ˜ ê³„ì‚°
+      // ??¹®Á¦ °³¼ö °è»ê
       const totalCount = Object.values(studyConfig.types).reduce((sum, count) => sum + count, 0);
       
-      // ë¬¸ì œ ê°€?ï¿½ì˜¤ï¿½?
+      // ¹®Á¦ °¡??¿À??
       const response = await api.problems.getSmartProblems({
         documentId: studyConfig.documentId,
         types: studyConfig.types,
@@ -70,10 +70,10 @@ const StudyPage = () => {
       });
 
       if (!response.problems || response.problems.length === 0) {
-        throw new Error('ë¬¸ì œï¿½?ê°€?ï¿½ì˜¬ ???ï¿½ìŠµ?ï¿½ë‹¤.');
+        throw new Error('¹®Á¦??°¡??¿Ã ????½À??´Ù.');
       }
 
-      // ë¬¸ì œ ì²˜ë¦¬ (?ï¿½ï¿½??ï¿½íŠ¸ï¿½??ï¿½ìš©)
+      // ¹®Á¦ Ã³¸® (??????Æ®????¿ë)
       const processedProblems = response.problems.map(problem => 
         problemRegistry.executeHandler(problem.type, problem)
       );
@@ -87,7 +87,7 @@ const StudyPage = () => {
     } catch (err) {
       logger.error('Failed to start study:', err);
       const msg = (err && err.message) ? err.message : '';
-      const clean = /ë¬¸ì œ|ë¶ˆëŸ¬ì˜¬|ê°€ì ¸ì˜¤/.test(msg) ? 'ë¬¸ì œë¥¼ ë¶ˆëŸ¬ì˜¬ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.' : 'ì•Œ ìˆ˜ ì—†ëŠ” ì˜¤ë¥˜ê°€ ë°œìƒí–ˆìŠµë‹ˆë‹¤.';
+      const clean = /¹®Á¦|ºÒ·¯¿Ã|°¡Á®¿À/.test(msg) ? '¹®Á¦¸¦ ºÒ·¯¿Ã ¼ö ¾ø½À´Ï´Ù.' : '¾Ë ¼ö ¾ø´Â ¿À·ù°¡ ¹ß»ıÇß½À´Ï´Ù.';
       setError(clean);
     } finally {
       setLoading(false);
@@ -95,7 +95,7 @@ const StudyPage = () => {
   };
 
   /**
-   * ?ï¿½ì•ˆ ?ï¿½ì¶œ
+   * ??¾È ??Ãâ
    */
   const handleAnswer = (answer) => {
     const problem = problems[currentIndex];
@@ -115,7 +115,7 @@ const StudyPage = () => {
   };
 
   /**
-   * ?ï¿½ìŒ ë¬¸ì œ
+   * ??À½ ¹®Á¦
    */
   const nextProblem = () => {
     if (currentIndex < problems.length - 1) {
@@ -126,7 +126,7 @@ const StudyPage = () => {
   };
 
   /**
-   * ?ï¿½ì „ ë¬¸ì œ
+   * ??Àü ¹®Á¦
    */
   const prevProblem = () => {
     if (currentIndex > 0) {
@@ -135,20 +135,20 @@ const StudyPage = () => {
   };
 
   /**
-   * ?ï¿½ìŠµ ?ï¿½ë£Œ
+   * ??½À ??·á
    */
   const finishStudy = async () => {
     try {
       setLoading(true);
       const studyResults = [];
 
-      // ï¿½?ë¬¸ì œ ì±„ì 
+      // ??¹®Á¦ Ã¤Á¡
       for (let i = 0; i < problems.length; i++) {
         const problem = problems[i];
         const userAnswer = answers[i];
         const time = timeSpent[i] || 0;
 
-        // ?ï¿½ï¿½??ï¿½íŠ¸ë¦¬ì˜ ê²€ì¦ê¸° ?ï¿½ìš©
+        // ??????Æ®¸®ÀÇ °ËÁõ±â ??¿ë
         const isCorrect = problemRegistry.validate(
           problem.type,
           userAnswer,
@@ -165,7 +165,7 @@ const StudyPage = () => {
           timeSpent: Math.round(time / 1000)
         });
 
-        // ?ï¿½ë²„??ê²°ê³¼ ?ï¿½ì†¡
+        // ??¹ö??°á°ú ??¼Û
         if (problem.id) {
           await api.problems.submit({
             problemId: problem.id,
@@ -175,7 +175,7 @@ const StudyPage = () => {
         }
       }
 
-      // ?ï¿½ê³„ ê³„ì‚°
+      // ??°è °è»ê
       const totalCorrect = studyResults.filter(r => r.isCorrect).length;
       const accuracy = (totalCorrect / studyResults.length * 100).toFixed(1);
       const totalTime = Object.values(timeSpent).reduce((a, b) => a + b, 0);
@@ -200,7 +200,7 @@ const StudyPage = () => {
   };
 
   /**
-   * ?ï¿½ì‹œ??
+   * ??½Ã??
    */
   const restart = () => {
     setMode('config');
@@ -213,12 +213,12 @@ const StudyPage = () => {
     setCurrentTime(null);
   };
 
-  // ?ï¿½ë”ï¿½?
+  // ??´õ??
   if (loading) {
     return (
       <div style={styles.loading}>
         <div style={styles.spinner}></div>
-        <p>ì²˜ë¦¬ ï¿½?..</p>
+        <p>Ã³¸® ??..</p>
       </div>
     );
   }
@@ -226,16 +226,16 @@ const StudyPage = () => {
   if (error) {
     return (
       <div style={styles.error}>
-        <h2>?ï¿½ë¥˜ ë°œìƒ</h2>
+        <h2>??·ù ¹ß»ı</h2>
         <p>{error}</p>
         <button onClick={restart} style={styles.button}>
-          ?ï¿½ì‹œ ?ï¿½ì‘
+          ??½Ã ??ÀÛ
         </button>
       </div>
     );
   }
 
-  // ëª¨ë“œï¿½??ï¿½ë”ï¿½?
+  // ¸ğµå????´õ??
   switch (mode) {
     case 'config':
       return <StudyConfig onStart={startStudy} />;
@@ -308,4 +308,5 @@ const styles = {
 };
 
 export default StudyPage;
+
 

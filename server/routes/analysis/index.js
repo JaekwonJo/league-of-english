@@ -1,6 +1,6 @@
 /**
- * 분석 라우트 메인 인덱스
- * 모든 분석 관련 라우트를 통합 관리
+ * Analysis routes index
+ * Aggregates analysis-related subroutes
  */
 
 const express = require('express');
@@ -8,12 +8,14 @@ const router = express.Router();
 const documentRoutes = require('./documentRoutes');
 const passageRoutes = require('./passageRoutes');
 
-console.log('🔄 analysis routes 로드됨');
+// Load marker for analysis routes
+console.log('[analysis] routes loaded');
 
-// 문서 관련 라우트
+// Document-level analysis routes
 router.use('/', documentRoutes);
 
-// 지문 관련 라우트 (documentId 파라미터 포함)
+// Passage-level analysis routes (requires :documentId)
 router.use('/:documentId', passageRoutes);
 
 module.exports = router;
+

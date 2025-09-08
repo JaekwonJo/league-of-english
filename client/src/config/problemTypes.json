@@ -1,35 +1,27 @@
-{
+﻿{
   "problemTypes": {
     "blank": {
       "id": "blank",
       "name": "빈칸 채우기",
-      "description": "문맥상 적절한 어구 선택",
+      "description": "문맥에 가장 적절한 어구 선택",
       "points": 3,
-      "difficulty": {
-        "basic": 2,
-        "medium": 3,
-        "advanced": 3
-      },
+      "difficulty": { "basic": 2, "medium": 3, "advanced": 3 },
       "aiGenerated": true,
-      "icon": "📝",
+      "icon": "🧩",
       "color": "#3B82F6",
-      "instruction": "다음 글의 빈 칸에 들어갈 말로 가장 적절한 것은?"
+      "instruction": "다음 글의 빈칸에 들어갈 말로 가장 적절한 것을 고르세요."
     },
     "order": {
       "id": "order",
       "name": "순서 배열",
-      "description": "문단의 논리적 순서 정하기",
+      "description": "문단 논리 순서 파악",
       "points": 2,
-      "difficulty": {
-        "basic": 2,
-        "medium": 2,
-        "advanced": 3
-      },
+      "difficulty": { "basic": 2, "medium": 2, "advanced": 3 },
       "aiGenerated": false,
       "ruleGenerated": true,
-      "icon": "🔢",
+      "icon": "🔀",
       "color": "#8B5CF6",
-      "instruction": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?",
+      "instruction": "주어진 문장들의 올바른 순서를 고르세요.",
       "options": {
         "basic": ["(A)-(B)-(C)", "(A)-(C)-(B)", "(B)-(A)-(C)", "(B)-(C)-(A)", "(C)-(A)-(B)", "(C)-(B)-(A)"],
         "advanced": ["(A)-(B)-(C)-(D)-(E)", "(A)-(C)-(B)-(E)-(D)", "(B)-(A)-(D)-(C)-(E)", "(C)-(D)-(A)-(E)-(B)", "(D)-(E)-(B)-(A)-(C)"]
@@ -40,117 +32,72 @@
       "name": "문장 삽입",
       "description": "주어진 문장의 적절한 위치 찾기",
       "points": 2,
-      "difficulty": {
-        "basic": 2,
-        "medium": 2,
-        "advanced": 3
-      },
+      "difficulty": { "basic": 2, "medium": 2, "advanced": 3 },
       "aiGenerated": false,
       "ruleGenerated": true,
-      "icon": "➕",
+      "icon": "🧱",
       "color": "#10B981",
-      "instruction": "글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은?"
+      "instruction": "글의 흐름에 따라 주어진 문장이 들어가기에 가장 적절한 위치를 고르세요."
     },
     "grammar": {
       "id": "grammar",
       "name": "어법/문법",
-      "description": "밑줄 친 부분 중 틀린 것 찾기",
+      "description": "밑줄 친 부분의 오류 찾기",
       "points": 2,
-      "difficulty": {
-        "basic": 2,
-        "medium": 2,
-        "advanced": 2
-      },
+      "difficulty": { "basic": 2, "medium": 2, "advanced": 2 },
       "aiGenerated": true,
-      "icon": "✏️",
+      "icon": "📝",
       "color": "#F59E0B",
-      "instruction": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?"
+      "instruction": "다음 글의 밑줄 친 부분 중 문법 오류가 있는 문장을 고르세요."
     },
     "vocabulary": {
       "id": "vocabulary",
       "name": "어휘",
-      "description": "문맥상 적절한 어휘 선택",
+      "description": "문맥상 알맞은 어휘 선택",
       "points": 2,
-      "difficulty": {
-        "basic": 2,
-        "medium": 2,
-        "advanced": 2
-      },
+      "difficulty": { "basic": 2, "medium": 2, "advanced": 2 },
       "aiGenerated": true,
-      "icon": "📖",
+      "icon": "📚",
       "color": "#EF4444",
-      "instruction": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?"
+      "instruction": "다음 글의 밑줄 친 단어와 가장 가까운 의미를 고르세요."
     },
     "title": {
       "id": "title",
       "name": "제목",
       "description": "글의 제목 찾기",
       "points": 2,
-      "difficulty": {
-        "basic": 2,
-        "medium": 2,
-        "advanced": 2
-      },
+      "difficulty": { "basic": 2, "medium": 2, "advanced": 2 },
       "aiGenerated": true,
       "icon": "🏷️",
       "color": "#14B8A6",
-      "instruction": "다음 글의 제목으로 가장 적절한 것은?"
+      "instruction": "다음 글의 제목으로 가장 적절한 것을 고르세요."
     },
     "theme": {
       "id": "theme",
       "name": "주제",
       "description": "글의 주제 찾기",
       "points": 2,
-      "difficulty": {
-        "basic": 2,
-        "medium": 2,
-        "advanced": 2
-      },
+      "difficulty": { "basic": 2, "medium": 2, "advanced": 2 },
       "aiGenerated": true,
-      "icon": "🎯",
+      "icon": "🗝️",
       "color": "#EC4899",
-      "instruction": "다음 글의 주제로 가장 적절한 것은?"
+      "instruction": "다음 글의 주제로 가장 적절한 것을 고르세요."
     },
     "summary": {
       "id": "summary",
       "name": "요약",
-      "description": "글의 내용 요약하기",
+      "description": "글의 핵심 내용 요약하기",
       "points": 3,
-      "difficulty": {
-        "basic": 2,
-        "medium": 3,
-        "advanced": 3
-      },
+      "difficulty": { "basic": 2, "medium": 3, "advanced": 3 },
       "aiGenerated": true,
-      "icon": "📄",
+      "icon": "🧠",
       "color": "#6366F1",
-      "instruction": "다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 (A), (B)에 들어갈 말로 가장 적절한 것은?"
+      "instruction": "다음 글의 내용과 가장 유사한 요약을 고르세요."
     }
   },
   "defaultCounts": {
-    "basic": {
-      "blank": 3,
-      "order": 2,
-      "insertion": 2,
-      "grammar": 2,
-      "vocabulary": 2,
-      "title": 1,
-      "theme": 1,
-      "summary": 0
-    },
-    "advanced": {
-      "blank": 4,
-      "order": 3,
-      "insertion": 3,
-      "grammar": 2,
-      "vocabulary": 2,
-      "title": 2,
-      "theme": 2,
-      "summary": 2
-    }
+    "basic": { "blank": 3, "order": 2, "insertion": 2, "grammar": 2, "vocabulary": 2, "title": 1, "theme": 1, "summary": 0 },
+    "advanced": { "blank": 4, "order": 3, "insertion": 3, "grammar": 2, "vocabulary": 2, "title": 2, "theme": 2, "summary": 2 }
   },
-  "timeLimit": {
-    "basic": 120,
-    "advanced": 60
-  }
+  "timeLimit": { "basic": 120, "advanced": 60 }
 }

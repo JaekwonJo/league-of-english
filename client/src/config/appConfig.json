@@ -1,8 +1,8 @@
-{
+﻿{
   "app": {
     "name": "League of English",
     "version": "2.0.0",
-    "slogan": "✨ 영어를 완벽하게 정복하다 ✨",
+    "slogan": "영어를 더 쉽고 재밌게!",
     "apiUrl": "http://localhost:5000/api"
   },
   "membership": {
@@ -38,15 +38,15 @@
     "modes": {
       "curriculum": {
         "id": "curriculum",
-        "name": "내신 대비",
-        "description": "학교별 기출 중심",
-        "icon": "📚"
+        "name": "자신 학습",
+        "description": "학교/내신 중심",
+        "icon": "📘"
       },
       "sat": {
         "id": "sat",
-        "name": "수능 대비",
-        "description": "평가원/수능 기출",
-        "icon": "🎯"
+        "name": "수능 학습",
+        "description": "수능/모의고사 중심",
+        "icon": "📗"
       },
       "comprehensive": {
         "id": "comprehensive",
@@ -56,27 +56,9 @@
       }
     },
     "difficulty": {
-      "basic": {
-        "id": "basic",
-        "name": "기본",
-        "timePerProblem": 120,
-        "wordLevel": 2000,
-        "description": "고1 수준"
-      },
-      "medium": {
-        "id": "medium",
-        "name": "중급",
-        "timePerProblem": 90,
-        "wordLevel": 3500,
-        "description": "고2 수준"
-      },
-      "advanced": {
-        "id": "advanced",
-        "name": "고급",
-        "timePerProblem": 60,
-        "wordLevel": 5000,
-        "description": "고3 수준"
-      }
+      "basic": { "id": "basic", "name": "기본", "timePerProblem": 120, "wordLevel": 2000, "description": "입문 난이도" },
+      "medium": { "id": "medium", "name": "중급", "timePerProblem": 90, "wordLevel": 3500, "description": "중간 난이도" },
+      "advanced": { "id": "advanced", "name": "고급", "timePerProblem": 60, "wordLevel": 5000, "description": "상급 난이도" }
     }
   },
   "points": {
@@ -88,14 +70,6 @@
     "timeout": -3,
     "giveup": -10
   },
-  "cache": {
-    "problemThreshold": 100,
-    "refreshThreshold": 200
-  },
-  "limits": {
-    "maxFileSize": 10485760,
-    "allowedFileTypes": ["application/pdf", "text/plain"],
-    "maxProblemsPerSession": 50,
-    "sessionTimeout": 3600000
-  }
+  "cache": { "problemThreshold": 100, "refreshThreshold": 200 },
+  "limits": { "maxFileSize": 10485760, "allowedFileTypes": ["application/pdf", "text/plain"], "maxProblemsPerSession": 50, "sessionTimeout": 3600000 }
 }

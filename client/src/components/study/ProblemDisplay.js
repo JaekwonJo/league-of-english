@@ -34,56 +34,7 @@ const ProblemDisplay = ({
 
   if (!problem) return null;
 
-  // 디버깅용 로그 및 순서배열 문제 파싱
   let parsedOrderData = null;
-  if (problem.type === 'order') {
-    console.log('🔍 Order Problem Data:', problem);
-    console.log('📊 mainText:', problem.mainText);
-    console.log('📊 sentences:', problem.sentences);
-    console.log('📊 metadata:', problem.metadata);
-    
-    // 구조화되지 않은 텍스트인 경우 파싱
-    if (problem.question && !problem.metadata) {
-      const text = problem.question;
-      const titleMatch = text.match(/📚 제목: (.+)/);
-      const numberMatch = text.match(/📄 문제번호: (.+)/);
-      const sourceMatch = text.match(/📍 출처: (.+)/);
-      const givenMatch = text.match(/🎯 \[주어진 문장\]\s*\n\s*(.+?)(?=\n\n📝|\n📝)/s);
-      const choicesMatch = text.match(/📝 \[선택지\]\s*\n([\s\S]+?)(?=\n\n|$)/);
-      
-      console.log('🔍 Parsing matches:');
-      console.log('titleMatch:', titleMatch);
-      console.log('numberMatch:', numberMatch);
-      console.log('sourceMatch:', sourceMatch);
-      console.log('givenMatch:', givenMatch);
-      console.log('choicesMatch:', choicesMatch);
-      
-      if (titleMatch && numberMatch && sourceMatch && givenMatch && choicesMatch) {
-        const choiceLines = choicesMatch[1].split('\n').filter(line => line.trim());
-        console.log('📝 Choice lines:', choiceLines);
-        
-        const sentences = choiceLines.map(line => {
-          const match = line.match(/^\s*([A-E])\.\s*(.+)$/);
-          return match ? { label: match[1], text: match[2].trim() } : null;
-        }).filter(Boolean);
-        
-        parsedOrderData = {
-          metadata: {
-            originalTitle: titleMatch[1].trim(),
-            passageNumber: numberMatch[1].trim(),
-            source: sourceMatch[1].trim()
-          },
-          mainText: givenMatch[1].trim(),
-          sentences: sentences
-        };
-        
-        console.log('🔧 Parsed Order Data:', parsedOrderData);
-      } else {
-        console.log('❌ 파싱 실패 - 일부 매칭이 실패했습니다');
-      }
-    }
-  }
-
   return (
     <div style={problemDisplayStyles.container}>
       <div style={problemDisplayStyles.header}>
@@ -101,25 +52,25 @@ const ProblemDisplay = ({
       }}>
         {/* 순서배열 문제 */}
         {problem.type === 'order' && (
-          <OrderProblemDisplay 
-            problem={problem} 
+          <OrderProblemDisplay
+            problem={problem}
             parsedOrderData={parsedOrderData}
             onAnswer={handleSelect}
             userAnswer={selectedAnswer}
           />
         )}
 
-        {/* 문장삽입 문제 */}
+        {/* 문장 삽입 문제 */}
         {problem.type === 'insertion' && (
-          <InsertionProblemDisplay 
+          <InsertionProblemDisplay
             problem={problem}
             onAnswer={handleSelect}
             userAnswer={selectedAnswer}
           />
         )}
 
-        {/* 어법 문제 */}
-        {problem.type === 'grammar' && (
+        {/* 문법 문제 */}
+        {(problem.type === 'grammar' || problem.type === 'grammar_count') && (
           <GrammarProblemDisplay
             problem={problem}
             onAnswer={handleSelect}
@@ -127,7 +78,7 @@ const ProblemDisplay = ({
             showResult={false}
           />
         )}
-        
+
         {/* 일반 문제 */}
         {problem.type !== 'order' && problem.type !== 'insertion' && problem.type !== 'grammar' && (
           <>
@@ -147,7 +98,7 @@ const ProblemDisplay = ({
 
             {problem.sentences && (
               <div style={problemDisplayStyles.sentences}>
-                <div style={orderStyles.sentencesLabel}>📝 [선택지]</div>
+                <div style={orderStyles.sentencesLabel}>아래 [선택지]</div>
                 {problem.sentences.map((sent, idx) => (
                   <div key={idx} style={problemDisplayStyles.sentence}>
                     <strong>{sent.label}.</strong> {sent.text}
@@ -198,7 +149,7 @@ const ProblemDisplay = ({
         >
           이전
         </button>
-        
+
         {currentIndex === totalProblems - 1 ? (
           <button
             style={problemDisplayStyles.finishButton}
@@ -221,5 +172,5 @@ const ProblemDisplay = ({
   );
 };
 
-
 export default ProblemDisplay;
+

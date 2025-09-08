@@ -1,6 +1,7 @@
-const OrderProblemGenerator = require('../utils/orderProblemGenerator');
+﻿const OrderProblemGenerator = require('../utils/orderProblemGenerator');
 const InsertionProblemGenerator = require('../utils/insertionProblemGenerator2');
 const { generateCSATGrammarProblem, generateAdvancedGrammarProblem } = require('../utils/csatGrammarGenerator');
+const AI = require('./aiProblemService');
 
 class UltraSimpleProblemService {
   async getSmartProblems(userId, documentId, types, count, options = {}) {
@@ -34,7 +35,7 @@ class UltraSimpleProblemService {
     if (!Array.isArray(passages) || passages.length === 0) throw new Error('지문이 비어 있습니다.');
 
     // 유형별 개수 계산
-    let countsByType = {};
+    const countsByType = {};
     if (Array.isArray(types)) {
       const total = Math.max(0, parseInt(count) || 0);
       const k = types.length || 1;
@@ -48,8 +49,9 @@ class UltraSimpleProblemService {
     }
 
     const out = [];
-    for (const [t, c] of Object.entries(countsByType)) {
+    for (const [tRaw, c] of Object.entries(countsByType)) {
       if (!c || c <= 0) continue;
+      const t = String(tRaw);
       if (t === 'order') {
         out.push(...OrderProblemGenerator.generateOrderProblems(passages, c, options, document, parsedContent));
       } else if (t === 'insertion') {
@@ -61,10 +63,25 @@ class UltraSimpleProblemService {
           options: p.choices || p.options || []
         }));
         out.push(...arr);
+      } else if (t === 'blank') {
+        const arr = await AI.generateBlank(documentId, c);
+        out.push(...arr);
+      } else if (t === 'vocabulary' || t === 'vocab') {
+        const arr = await AI.generateVocab(documentId, c);
+        out.push(...arr.map(p => ({ ...p, type: 'vocabulary' })));
+      } else if (t === 'title') {
+        const arr = await AI.generateTitle(documentId, c);
+        out.push(...arr);
+      } else if (t === 'theme' || t === 'topic') {
+        const arr = await AI.generateTopic(documentId, c);
+        out.push(...arr.map(p => ({ ...p, type: 'theme' })));
+      } else if (t === 'summary') {
+        const arr = await AI.generateSummary(documentId, c);
+        out.push(...arr);
       }
     }
 
-    // Fallback: if grammar requested but none generated, create at least one safe problem
+    // 마지막 안전장치
     if ((!out || out.length === 0) && (countsByType['grammar'] || countsByType['grammar_count'])) {
       try {
         const fallback = generateCSATGrammarProblem(String(passages[0] || 'This is a sample sentence.'));
@@ -131,4 +148,3 @@ class UltraSimpleProblemService {
 }
 
 module.exports = UltraSimpleProblemService;
-
