@@ -1,6 +1,6 @@
-/**
- * StudyPage ÄÄÆ÷??Æ®
- * ¹®Á¦ ??????ÀÌÁö (500????ÇÏ)
+ï»¿/**
+ * StudyPage ì»´í¬??íŠ¸
+ * ë¬¸ì œ ??????ì´ì§€ (500????í•˜)
  */
 
 import React, { useState, useEffect } from 'react';
@@ -9,13 +9,14 @@ import { api } from '../services/api.service';
 import problemRegistry from '../services/problemRegistry';
 import StudyConfig from '../components/study/StudyConfig';
 import ProblemDisplay from '../components/study/ProblemDisplay';
+import ScoreHUD from '../components/study/ScoreHUD';
 import StudyResult from '../components/study/StudyResult';
 import logger from '../utils/logger';
 
 const StudyPage = () => {
   const { user } = useAuth();
   
-  // ??ÅÂ °ü??
+  // ??íƒœ ê´€??
   const [mode, setMode] = useState('config'); // config, study, result
   const [config, setConfig] = useState(null);
   const [problems, setProblems] = useState([]);
@@ -26,7 +27,7 @@ const StudyPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // ????¸Ó
+  // ????ë¨¸
   const [startTime, setStartTime] = useState(null);
   const [currentTime, setCurrentTime] = useState(null);
 
@@ -41,7 +42,7 @@ const StudyPage = () => {
   }, [mode, startTime]);
 
   /**
-   * ??½À ??ÀÛ
+   * ??ìŠµ ??ì‘
    */
   const startStudy = async (studyConfig) => {
     try {
@@ -49,17 +50,17 @@ const StudyPage = () => {
       setError(null);
       logger.info('Starting study with config:', studyConfig);
 
-      // types °´Ã¼??¹è¿­??º¯??(0º¸´Ù ??°ªÀ» °¡????µé??
+      // types ê°ì²´??ë°°ì—´??ë³€??(0ë³´ë‹¤ ??ê°’ì„ ê°€????ë“¤??
       const selectedTypes = Object.keys(studyConfig.types).filter(
         type => studyConfig.types[type] > 0
       );
       
       logger.info('Selected types:', selectedTypes);
 
-      // ??¹®Á¦ °³¼ö °è»ê
+      // ??ë¬¸ì œ ê°œìˆ˜ ê³„ì‚°
       const totalCount = Object.values(studyConfig.types).reduce((sum, count) => sum + count, 0);
       
-      // ¹®Á¦ °¡??¿À??
+      // ë¬¸ì œ ê°€??ì˜¤??
       const response = await api.problems.getSmartProblems({
         documentId: studyConfig.documentId,
         types: studyConfig.types,
@@ -70,10 +71,10 @@ const StudyPage = () => {
       });
 
       if (!response.problems || response.problems.length === 0) {
-        throw new Error('¹®Á¦??°¡??¿Ã ????½À??´Ù.');
+        throw new Error('ë¬¸ì œ??ê°€??ì˜¬ ????ìŠµ??ë‹¤.');
       }
 
-      // ¹®Á¦ Ã³¸® (??????Æ®????¿ë)
+      // ë¬¸ì œ ì²˜ë¦¬ (??????íŠ¸????ìš©)
       const processedProblems = response.problems.map(problem => 
         problemRegistry.executeHandler(problem.type, problem)
       );
@@ -87,7 +88,7 @@ const StudyPage = () => {
     } catch (err) {
       logger.error('Failed to start study:', err);
       const msg = (err && err.message) ? err.message : '';
-      const clean = /¹®Á¦|ºÒ·¯¿Ã|°¡Á®¿À/.test(msg) ? '¹®Á¦¸¦ ºÒ·¯¿Ã ¼ö ¾ø½À´Ï´Ù.' : '¾Ë ¼ö ¾ø´Â ¿À·ù°¡ ¹ß»ıÇß½À´Ï´Ù.';
+      const clean = /ë¬¸ì œ|ë¶ˆëŸ¬ì˜¬|ê°€ì ¸ì˜¤/.test(msg) ? 'ë¬¸ì œë¥¼ ë¶ˆëŸ¬ì˜¬ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.' : 'ì•Œ ìˆ˜ ì—†ëŠ” ì˜¤ë¥˜ê°€ ë°œìƒí–ˆìŠµë‹ˆë‹¤.';
       setError(clean);
     } finally {
       setLoading(false);
@@ -95,7 +96,7 @@ const StudyPage = () => {
   };
 
   /**
-   * ??¾È ??Ãâ
+   * ??ì•ˆ ??ì¶œ
    */
   const handleAnswer = (answer) => {
     const problem = problems[currentIndex];
@@ -115,7 +116,7 @@ const StudyPage = () => {
   };
 
   /**
-   * ??À½ ¹®Á¦
+   * ??ìŒ ë¬¸ì œ
    */
   const nextProblem = () => {
     if (currentIndex < problems.length - 1) {
@@ -126,7 +127,7 @@ const StudyPage = () => {
   };
 
   /**
-   * ??Àü ¹®Á¦
+   * ??ì „ ë¬¸ì œ
    */
   const prevProblem = () => {
     if (currentIndex > 0) {
@@ -135,20 +136,20 @@ const StudyPage = () => {
   };
 
   /**
-   * ??½À ??·á
+   * ??ìŠµ ??ë£Œ
    */
   const finishStudy = async () => {
     try {
       setLoading(true);
       const studyResults = [];
 
-      // ??¹®Á¦ Ã¤Á¡
+      // ??ë¬¸ì œ ì±„ì 
       for (let i = 0; i < problems.length; i++) {
         const problem = problems[i];
         const userAnswer = answers[i];
         const time = timeSpent[i] || 0;
 
-        // ??????Æ®¸®ÀÇ °ËÁõ±â ??¿ë
+        // ??????íŠ¸ë¦¬ì˜ ê²€ì¦ê¸° ??ìš©
         const isCorrect = problemRegistry.validate(
           problem.type,
           userAnswer,
@@ -165,7 +166,7 @@ const StudyPage = () => {
           timeSpent: Math.round(time / 1000)
         });
 
-        // ??¹ö??°á°ú ??¼Û
+        // ??ë²„??ê²°ê³¼ ??ì†¡
         if (problem.id) {
           await api.problems.submit({
             problemId: problem.id,
@@ -175,7 +176,7 @@ const StudyPage = () => {
         }
       }
 
-      // ??°è °è»ê
+      // ??ê³„ ê³„ì‚°
       const totalCorrect = studyResults.filter(r => r.isCorrect).length;
       const accuracy = (totalCorrect / studyResults.length * 100).toFixed(1);
       const totalTime = Object.values(timeSpent).reduce((a, b) => a + b, 0);
@@ -200,7 +201,7 @@ const StudyPage = () => {
   };
 
   /**
-   * ??½Ã??
+   * ??ì‹œ??
    */
   const restart = () => {
     setMode('config');
@@ -213,12 +214,12 @@ const StudyPage = () => {
     setCurrentTime(null);
   };
 
-  // ??´õ??
+  // ??ë”??
   if (loading) {
     return (
       <div style={styles.loading}>
         <div style={styles.spinner}></div>
-        <p>Ã³¸® ??..</p>
+        <p>ì²˜ë¦¬ ??..</p>
       </div>
     );
   }
@@ -226,23 +227,25 @@ const StudyPage = () => {
   if (error) {
     return (
       <div style={styles.error}>
-        <h2>??·ù ¹ß»ı</h2>
+        <h2>??ë¥˜ ë°œìƒ</h2>
         <p>{error}</p>
         <button onClick={restart} style={styles.button}>
-          ??½Ã ??ÀÛ
+          ??ì‹œ ??ì‘
         </button>
       </div>
     );
   }
 
-  // ¸ğµå????´õ??
+  // ëª¨ë“œ????ë”??
   switch (mode) {
     case 'config':
       return <StudyConfig onStart={startStudy} />;
 
     case 'study':
       return (
-        <ProblemDisplay
+        <div style={{ maxWidth: 900, margin: '0 auto', padding: '16px' }}>
+                  <ScoreHUD timeElapsed={currentTime ? Math.round((currentTime - startTime) / 1000) : 0} />
+          <ProblemDisplay
           problem={problems[currentIndex]}
           currentIndex={currentIndex}
           totalProblems={problems.length}
@@ -253,6 +256,7 @@ const StudyPage = () => {
           onFinish={finishStudy}
           timeElapsed={currentTime ? Math.round((currentTime - startTime) / 1000) : 0}
         />
+        </div>
       );
 
     case 'result':
@@ -262,6 +266,7 @@ const StudyPage = () => {
           onRestart={restart}
           onHome={() => window.location.href = '/'}
         />
+        </div>
       );
 
     default:
