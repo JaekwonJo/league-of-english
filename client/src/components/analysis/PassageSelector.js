@@ -25,7 +25,7 @@ const PassageSelector = ({
               onClick={() => onPassageSelect(passageNum)}
             >
               {passageNum}
-              {isAnalyzed && <span style={styles.checkMark}>✓</span>}
+              {isAnalyzed && <span style={styles.checkMark}>?</span>}
             </button>
           );
         })}

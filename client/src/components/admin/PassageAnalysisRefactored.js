@@ -13,31 +13,40 @@ const PassageAnalysis = ({ document, onClose }) => {
   const [analyzedPassages, setAnalyzedPassages] = useState(new Set());
 
   useEffect(() => {
-    if (document) {
-      initializeDocument();
-    }
+    if (document) initializeDocument();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [document]);
 
   const initializeDocument = async () => {
     try {
-      console.log('🔍 문서 정보 조회 시작:', document.id);
-      
-      // 문서의 전체 내용을 가져와서 passages 개수 확인
       const response = await apiService.get(`/api/documents/${document.id}`);
-      console.log('📄 문서 조회 응답:', response);
-      
       if (response && response.success && response.data) {
-        const parsedContent = JSON.parse(response.data.content);
-        const passages = parsedContent.passages || [];
-        console.log(`✅ 문서 파싱 성공: ${passages.length}개 지문`);
-        setTotalPassages(passages.length);
-        checkAnalyzedPassages();
+        let passagesCount = 0;
+        if (response.data.parsedContent && Array.isArray(response.data.parsedContent.passages)) {
+          passagesCount = response.data.parsedContent.passages.length;
+        } else {
+          try {
+            const parsed = JSON.parse(response.data.content || '{}');
+            passagesCount = Array.isArray(parsed.passages) ? parsed.passages.length : 0;
+          } catch {
+            const text = String(response.data.content || '');
+            const blocks = text.split(/\n{2,}/).map(s => s.trim()).filter(s => s.length > 40);
+            passagesCount = blocks.length || (text.length ? 1 : 0);
+          }
+        }
+
+        setTotalPassages(passagesCount);
+        setCurrentPassage(prev => {
+          if (passagesCount <= 0) return 1;
+          if (prev < 1) return 1;
+          if (prev > passagesCount) return passagesCount;
+          return prev;
+        });
+        await checkAnalyzedPassages();
       } else {
-        console.error('❌ 문서 조회 실패:', response);
         setError('문서를 불러올 수 없습니다.');
       }
     } catch (e) {
-      console.error('❌ 문서 파싱 오류:', e);
       setError('문서 형식이 올바르지 않습니다.');
     }
   };
@@ -50,36 +59,32 @@ const PassageAnalysis = ({ document, onClose }) => {
         const analyzed = new Set(response.data.map(p => p.passageNumber));
         setAnalyzedPassages(analyzed);
       }
-    } catch (err) {
-      console.error('분석된 지문 확인 실패:', err);
+    } catch {
+      // ignore
     }
   };
 
   const analyzePassage = async (passageNumber) => {
     try {
-      console.log(`🔍 지문 ${passageNumber} 분석 시작`);
       setLoading(true);
       setError(null);
       setAnalysis(null);
-      
+
+      const clamped = !Number.isInteger(passageNumber) ? 1 : (totalPassages > 0 ? Math.max(1, Math.min(totalPassages, passageNumber)) : Math.max(1, passageNumber));
+      if (clamped !== passageNumber) {
+        setError(`유효한 지문 번호가 아닙니다. (1-${totalPassages || '?'})`);
+        return;
+      }
+
       const endpoint = analysisConfig.api.endpoints.analyzePassage.replace(':documentId', document.id);
-      console.log('📡 분석 API 호출:', endpoint);
-      
-      const response = await apiService.post(endpoint, { passageNumber });
-      console.log('📄 분석 응답:', response);
-      
+      const response = await apiService.post(endpoint, { passageNumber: clamped });
       if (response && response.success) {
         setAnalysis(response.data);
-        if (!response.data.cached) {
-          setAnalyzedPassages(prev => new Set([...prev, passageNumber]));
-        }
-        console.log('✅ 분석 성공');
+        if (!response.data.cached) setAnalyzedPassages(prev => new Set([...prev, clamped]));
       } else {
-        console.error('❌ 분석 실패:', response);
         setError(response?.message || '분석 실패');
       }
     } catch (err) {
-      console.error('❌ 지문 분석 오류:', err);
       setError(err.message || '분석 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
@@ -90,19 +95,13 @@ const PassageAnalysis = ({ document, onClose }) => {
     try {
       setLoading(true);
       setError(null);
-      
       const endpoint = analysisConfig.api.endpoints.getPassage
         .replace(':documentId', document.id)
         .replace(':passageNumber', passageNumber);
       const response = await apiService.get(endpoint);
-      
-      if (response.success) {
-        setAnalysis(response.data);
-      } else {
-        setError(response.message);
-      }
+      if (response.success) setAnalysis(response.data);
+      else setError(response.message);
     } catch (err) {
-      console.error('분석 조회 실패:', err);
       setError('분석 결과를 불러오는 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
@@ -110,12 +109,10 @@ const PassageAnalysis = ({ document, onClose }) => {
   };
 
   const handlePassageSelect = (passageNumber) => {
-    setCurrentPassage(passageNumber);
-    if (analyzedPassages.has(passageNumber)) {
-      viewPassageAnalysis(passageNumber);
-    } else {
-      setAnalysis(null);
-    }
+    const clamped = Math.max(1, Math.min(totalPassages || 1, passageNumber));
+    setCurrentPassage(clamped);
+    if (analyzedPassages.has(clamped)) viewPassageAnalysis(clamped);
+    else setAnalysis(null);
   };
 
   if (!document) return null;
@@ -123,12 +120,16 @@ const PassageAnalysis = ({ document, onClose }) => {
   return (
     <div style={styles.modal}>
       <div style={styles.modalContent}>
-        <ModalHeader 
-          onClose={onClose}
-          document={document}
-          totalPassages={totalPassages}
-          analyzedCount={analyzedPassages.size}
-        />
+        <div style={styles.header}>
+          <div>
+            <h2 style={styles.title}>📊 개별 지문 분석 · No.{currentPassage}</h2>
+            <div style={styles.documentInfo}>
+              <div style={styles.documentTitle}>{document.title}</div>
+              <div style={styles.documentMeta}>총 {totalPassages}개 지문 | 분석 완료: {analyzedPassages.size}개</div>
+            </div>
+          </div>
+          <button style={styles.closeButton} onClick={onClose}>닫기</button>
+        </div>
 
         <PassageSelector
           totalPassages={totalPassages}
@@ -137,250 +138,80 @@ const PassageAnalysis = ({ document, onClose }) => {
           onPassageSelect={handlePassageSelect}
         />
 
-        <PassageContent
-          currentPassage={currentPassage}
-          isAnalyzed={analyzedPassages.has(currentPassage)}
-          loading={loading}
-          error={error}
-          analysis={analysis}
-          onAnalyze={() => analyzePassage(currentPassage)}
-        />
+        <div style={styles.content}>
+          <div style={styles.passageHeader}>
+            <h3>지문 {currentPassage}</h3>
+            {!analyzedPassages.has(currentPassage) && (
+              <button style={styles.analyzeButton} onClick={() => analyzePassage(currentPassage)} disabled={loading}>
+                {loading ? '분석 중…' : '분석하기'}
+              </button>
+            )}
+          </div>
 
-        <PassageNavigation
-          currentPassage={currentPassage}
-          totalPassages={totalPassages}
-          onNavigate={handlePassageSelect}
-        />
+          {error && <div style={styles.error}>{error}</div>}
+          {!error && loading && (
+            <div style={styles.loading}>
+              <div style={styles.spinner}></div>
+              <div>분석 중…</div>
+            </div>
+          )}
+          {!loading && analysis && <AnalysisDisplay analysis={analysis} />}
+          {!loading && !analysis && !analyzedPassages.has(currentPassage) && (
+            <div style={styles.info}>분석 결과가 없습니다. [분석하기]를 눌러 생성하세요.</div>
+          )}
+        </div>
+
+        <div style={styles.footer}>
+          <button
+            style={styles.prevButton}
+            onClick={() => handlePassageSelect(Math.max(1, (currentPassage || 1) - 1))}
+            disabled={currentPassage === 1}
+          >
+            이전 지문
+          </button>
+          <span style={styles.pageInfo}>{currentPassage} / {totalPassages}</span>
+          <button
+            style={styles.nextButton}
+            onClick={() => handlePassageSelect(Math.min(totalPassages || (currentPassage || 1), (currentPassage || 1) + 1))}
+            disabled={totalPassages > 0 ? (currentPassage === totalPassages) : false}
+          >
+            다음 지문
+          </button>
+        </div>
       </div>
     </div>
   );
 };
 
-const ModalHeader = ({ onClose, document, totalPassages, analyzedCount }) => (
-  <div style={styles.header}>
-    <div>
-      <h2 style={styles.title}>📊 개별 지문 분석</h2>
-      <div style={styles.documentInfo}>
-        <h3 style={styles.documentTitle}>{document.title}</h3>
-        <p style={styles.documentMeta}>
-          총 {totalPassages}개 지문 | 분석 완료: {analyzedCount}개
-        </p>
-      </div>
-    </div>
-    <button style={styles.closeButton} onClick={onClose}>✕</button>
-  </div>
-);
-
-const PassageContent = ({ currentPassage, isAnalyzed, loading, error, analysis, onAnalyze }) => (
-  <div style={styles.content}>
-    <div style={styles.passageHeader}>
-      <h3>지문 {currentPassage}</h3>
-      {!isAnalyzed && (
-        <button
-          style={styles.analyzeButton}
-          onClick={onAnalyze}
-          disabled={loading}
-        >
-          {loading ? '분석 중...' : '이 지문 분석하기'}
-        </button>
-      )}
-    </div>
-
-    {loading && <LoadingSpinner />}
-    {error && <ErrorDisplay error={error} />}
-    {analysis && !loading && <AnalysisDisplay analysis={analysis} />}
-    {!analysis && !loading && isAnalyzed && (
-      <div style={styles.info}>
-        <p>분석 결과를 불러오려면 다시 클릭해주세요.</p>
-      </div>
-    )}
-  </div>
-);
-
-const PassageNavigation = ({ currentPassage, totalPassages, onNavigate }) => (
-  <div style={styles.footer}>
-    <button
-      style={styles.prevButton}
-      onClick={() => onNavigate(Math.max(1, currentPassage - 1))}
-      disabled={currentPassage === 1}
-    >
-      ← 이전 지문
-    </button>
-    
-    <span style={styles.pageInfo}>
-      {currentPassage} / {totalPassages}
-    </span>
-    
-    <button
-      style={styles.nextButton}
-      onClick={() => onNavigate(Math.min(totalPassages, currentPassage + 1))}
-      disabled={currentPassage === totalPassages}
-    >
-      다음 지문 →
-    </button>
-  </div>
-);
-
-const LoadingSpinner = () => (
-  <div style={styles.loading}>
-    <div style={styles.spinner}></div>
-    <p>AI가 지문을 분석중입니다...</p>
-  </div>
-);
-
-const ErrorDisplay = ({ error }) => (
-  <div style={styles.error}>
-    <p>❌ {error}</p>
-  </div>
-);
-
 const styles = {
-  modal: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: 'rgba(0, 0, 0, 0.5)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1000
-  },
-  modalContent: {
-    background: 'white',
-    borderRadius: '20px',
-    width: '90%',
-    maxWidth: '1200px',
-    height: '90vh',
-    display: 'flex',
-    flexDirection: 'column',
-    overflow: 'hidden'
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    padding: '20px 30px',
-    borderBottom: '1px solid #e2e8f0'
-  },
-  title: {
-    color: '#1f2937',
-    margin: '0 0 10px 0',
-    fontSize: '1.5rem'
-  },
-  closeButton: {
-    background: 'none',
-    border: 'none',
-    fontSize: '20px',
-    cursor: 'pointer',
-    color: '#6b7280',
-    padding: '5px'
-  },
-  documentInfo: {
-    marginTop: '10px'
-  },
-  documentTitle: {
-    color: '#1f2937',
-    margin: '0 0 5px 0',
-    fontSize: '1.1rem'
-  },
-  documentMeta: {
-    color: '#6b7280',
-    margin: 0,
-    fontSize: '14px'
-  },
-  content: {
-    flex: 1,
-    padding: '20px 30px',
-    overflow: 'auto'
-  },
-  passageHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '20px'
-  },
-  analyzeButton: {
-    background: '#3b82f6',
-    color: 'white',
-    border: 'none',
-    borderRadius: '10px',
-    padding: '10px 20px',
-    cursor: 'pointer',
-    fontSize: '14px'
-  },
-  loading: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '60px 30px',
-    color: '#6b7280'
-  },
-  spinner: {
-    width: '40px',
-    height: '40px',
-    border: '4px solid #e2e8f0',
-    borderTop: '4px solid #3b82f6',
-    borderRadius: '50%',
-    animation: 'spin 1s linear infinite',
-    marginBottom: '20px'
-  },
-  error: {
-    padding: '30px',
-    textAlign: 'center',
-    color: '#ef4444'
-  },
-  info: {
-    padding: '30px',
-    textAlign: 'center',
-    color: '#6b7280'
-  },
-  footer: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '20px 30px',
-    borderTop: '1px solid #e2e8f0'
-  },
-  prevButton: {
-    background: '#6b7280',
-    color: 'white',
-    border: 'none',
-    borderRadius: '10px',
-    padding: '10px 20px',
-    cursor: 'pointer'
-  },
-  nextButton: {
-    background: '#3b82f6',
-    color: 'white',
-    border: 'none',
-    borderRadius: '10px',
-    padding: '10px 20px',
-    cursor: 'pointer'
-  },
-  pageInfo: {
-    color: '#6b7280',
-    fontSize: '14px'
-  }
+  modal: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 },
+  modalContent: { background: 'white', borderRadius: 20, width: '90%', maxWidth: 1200, height: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' },
+  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 30px', borderBottom: '1px solid #e2e8f0' },
+  title: { color: '#1f2937', margin: 0, fontSize: '1.5rem' },
+  closeButton: { background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: '#6b7280', padding: 5 },
+  documentInfo: { marginTop: 8 },
+  documentTitle: { color: '#1f2937', margin: '0 0 4px 0', fontSize: '1.1rem' },
+  documentMeta: { color: '#6b7280', margin: 0, fontSize: 14 },
+  content: { flex: 1, padding: '20px 30px', overflow: 'auto' },
+  passageHeader: { display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 },
+  analyzeButton: { background: '#3b82f6', color: 'white', border: 'none', borderRadius: 10, padding: '10px 20px', cursor: 'pointer', fontSize: 14 },
+  loading: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 30px', color: '#6b7280' },
+  spinner: { width: 40, height: 40, border: '4px solid #e2e8f0', borderTop: '4px solid #3b82f6', borderRadius: '50%', animation: 'spin 1s linear infinite', marginBottom: 20 },
+  error: { padding: 30, textAlign: 'center', color: '#ef4444' },
+  info: { padding: 30, textAlign: 'center', color: '#6b7280' },
+  footer: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 30px', borderTop: '1px solid #e2e8f0' },
+  prevButton: { background: '#6b7280', color: 'white', border: 'none', borderRadius: 10, padding: '10px 20px', cursor: 'pointer' },
+  nextButton: { background: '#3b82f6', color: 'white', border: 'none', borderRadius: 10, padding: '10px 20px', cursor: 'pointer' },
+  pageInfo: { color: '#6b7280', fontSize: 14 }
 };
 
-// CSS 애니메이션
-const initAnimation = () => {
-  const styleTag = document.createElement('style');
-  styleTag.textContent = `
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-  `;
-  if (!document.head.querySelector('style[data-passage-analysis]')) {
-    styleTag.setAttribute('data-passage-analysis', 'true');
-    document.head.appendChild(styleTag);
-  }
-};
-
-initAnimation();
+// inject keyframes once
+const styleTag = document.createElement('style');
+styleTag.textContent = `@keyframes spin { 0%{transform:rotate(0)} 100%{transform:rotate(360deg)} }`;
+if (!document.head.querySelector('style[data-passage-analysis]')) {
+  styleTag.setAttribute('data-passage-analysis', 'true');
+  document.head.appendChild(styleTag);
+}
 
 export default PassageAnalysis;
+
