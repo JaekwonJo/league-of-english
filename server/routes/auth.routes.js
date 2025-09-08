@@ -5,106 +5,109 @@ const { generateToken, hashPassword, verifyPassword } = require('../middleware/a
 
 /**
  * POST /api/register
- * 회원가입
+ * ?�원가??
  */
 router.post('/register', async (req, res) => {
   const { username, password, email, name, school, grade, role = 'student' } = req.body;
   
   try {
-    // 중복 확인
+    // 중복 ?�인
     const existing = await database.get(
       'SELECT id FROM users WHERE username = ? OR email = ?',
       [username, email]
     );
     
     if (existing) {
-      return res.status(400).json({ message: '이미 존재하는 아이디 또는 이메일입니다.' });
+      return res.status(400).json({ message: '?��? 존재?�는 ?�이???�는 ?�메?�입?�다.' });
     }
     
-    // 비밀번호 해싱
+    // 비�?번호 ?�싱
     const hashedPassword = await hashPassword(password);
     
-    // 사용자 생성
+    // ?�용???�성
     const result = await database.run(
-      `INSERT INTO users (username, password, email, name, school, grade, role)
+      `INSERT INTO users (username, password_hash, email, name, school, grade, role)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [username, hashedPassword, email, name, school, grade, role]
     );
     
     res.status(201).json({
-      message: '회원가입이 완료되었습니다.',
+      message: '?�원가?�이 ?�료?�었?�니??',
       userId: result.id
     });
   } catch (error) {
-    console.error('회원가입 오류:', error);
-    res.status(500).json({ message: '서버 오류가 발생했습니다.' });
+    console.error('?�원가???�류:', error);
+    res.status(500).json({ message: '?�버 ?�류가 발생?�습?�다.' });
   }
 });
 
 /**
  * POST /api/login
- * 로그인
+ * 로그??
  */
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
   
   try {
-    // 사용자 조회 (password 컬럼 사용)
+    // ?�용??조회 (password 컬럼 ?�용)
     const user = await database.get(
       'SELECT * FROM users WHERE username = ?',
       [username]
     );
     
     if (!user) {
-      return res.status(401).json({ message: '아이디 또는 비밀번호가 일치하지 않습니다.' });
+      return res.status(401).json({ message: '?�이???�는 비�?번호가 ?�치?��? ?�습?�다.' });
     }
     
-    // 비밀번호 확인
+    // 비�?번호 ?�인
     let isValid = false;
     try {
-      isValid = await verifyPassword(password, user.password);
+      isValid = await verifyPassword(password, user.password_hash);
     } catch (bcryptError) {
-      console.error('비밀번호 검증 오류:', bcryptError);
-      // 해시되지 않은 비밀번호일 수 있으므로 직접 비교
+      console.error('비�?번호 검�??�류:', bcryptError);
+      // ?�시?��? ?��? 비�?번호?????�으므�?직접 비교
       if (password === user.password) {
         isValid = true;
-        // 비밀번호를 해싱하여 업데이트
+        // 비�?번호�??�싱?�여 ?�데?�트
         const hashedPassword = await hashPassword(password);
         await database.run(
           'UPDATE users SET password = ? WHERE id = ?',
           [hashedPassword, user.id]
         );
-        console.log('비밀번호 해싱 업데이트 완료:', username);
+        console.log('비�?번호 ?�싱 ?�데?�트 ?�료:', username);
       }
     }
     
     if (!isValid) {
-      return res.status(401).json({ message: '아이디 또는 비밀번호가 일치하지 않습니다.' });
+      return res.status(401).json({ message: '?�이???�는 비�?번호가 ?�치?��? ?�습?�다.' });
     }
     
-    // 토큰 생성
+    // ?�큰 ?�성
     const token = generateToken(user);
     
-    // 비밀번호 제거
-    delete user.password;
+    // 비�?번호 ?�거
+    delete user.password_hash;
     
     res.json({
-      message: '로그인 성공',
+      message: '로그???�공',
       token: token,
       user: user
     });
   } catch (error) {
-    console.error('로그인 오류 상세:', error.message, error.stack);
-    res.status(500).json({ message: '서버 오류가 발생했습니다.' });
+    console.error('로그???�류 ?�세:', error.message, error.stack);
+    res.status(500).json({ message: '?�버 ?�류가 발생?�습?�다.' });
   }
 });
 
 /**
  * POST /api/logout
- * 로그아웃 (클라이언트에서 토큰 삭제)
+ * 로그?�웃 (?�라?�언?�에???�큰 ??��)
  */
 router.post('/logout', (req, res) => {
-  res.json({ message: '로그아웃 되었습니다.' });
+  res.json({ message: '로그?�웃 ?�었?�니??' });
 });
 
 module.exports = router;
+
+
+
