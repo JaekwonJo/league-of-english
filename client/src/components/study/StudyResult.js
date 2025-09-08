@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { api } from '../../services/api.service';
 import tierConfig from '../../config/tierConfig.json';
 
 const StudyResult = ({ results, onRestart, onHome }) => {
@@ -68,6 +69,21 @@ const StudyResult = ({ results, onRestart, onHome }) => {
 
   const resultInfo = getResultInfo(results.accuracy);
   const tierInfo = getTierInfo();
+  const [myRank, setMyRank] = useState(null);
+  const [nearby, setNearby] = useState([]);
+  const [rankError, setRankError] = useState(null);
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const data = await api.ranking.myRank();
+        setMyRank(data?.myRank || null);
+        setNearby(data?.nearbyUsers || []);
+      } catch (e) {
+        setRankError('랭킹 정보를 불러오는 중 오류가 발생했습니다.');
+      }
+    };
+    load();
+  }, []);
 
   return (
     <div style={styles.container}>
@@ -91,6 +107,48 @@ const StudyResult = ({ results, onRestart, onHome }) => {
               {emoji}
             </span>
           ))}
+        </div>
+
+        {/* 랭킹 섹션 */}
+        <div style={{ marginBottom: '32px' }}>
+          <div style={styles.sectionTitle}>🏆 랭킹</div>
+          {rankError && <div style={{ color: '#ef4444', textAlign: 'center' }}>{rankError}</div>}
+          {!rankError && (
+            <div style={styles.rankPanel}>
+              <div style={styles.myRankBox}>
+                <div style={{ fontSize: '14px', color: '#94A3B8' }}>내 랭킹</div>
+                <div style={{ fontSize: '22px', color: '#F8FAFC', fontWeight: 800 }}>
+                  {myRank?.rank ? `#${myRank.rank}` : '-'} · {(myRank?.points || 0).toLocaleString()} LP
+                </div>
+                <div style={{ fontSize: '13px', color: '#94A3B8' }}>
+                  티어: {myRank?.tier?.nameKr || myRank?.tier?.name || '-'}
+                  {myRank?.nextTier && (
+                    <>
+                      {' · '}다음 티어까지 {Math.max(0, 100 - Math.round(myRank.progressToNext || 0))}%
+                    </>
+                  )}
+                </div>
+              </div>
+              <div style={styles.nearbyBox}>
+                <div style={{ fontSize: '14px', color: '#94A3B8', marginBottom: 6 }}>주변 랭킹</div>
+                {nearby.length === 0 ? (
+                  <div style={{ color: '#94A3B8' }}>데이터 없음</div>
+                ) : (
+                  <div>
+                    {nearby.map(u => (
+                      <div key={u.id} style={styles.nearbyRow}>
+                        <div style={{ width: 60, color: '#CBD5E1' }}>#{u.rank}</div>
+                        <div style={{ flex: 1, color: u.isMe ? '#22C55E' : '#E2E8F0', fontWeight: u.isMe ? 700 : 500 }}>
+                          {u.isMe ? '나' : (u.name || u.id)}
+                        </div>
+                        <div style={{ minWidth: 90, textAlign: 'right', color: '#E2E8F0' }}>{(u.points || 0).toLocaleString()} LP</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -360,6 +418,10 @@ const styles = {
     marginBottom: '25px',
     textAlign: 'center'
   },
+  rankPanel: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 },
+  myRankBox: { background: 'rgba(51, 65, 85, 0.8)', borderRadius: 12, padding: 16, border: '1px solid rgba(248, 250, 252, 0.1)' },
+  nearbyBox: { background: 'rgba(51, 65, 85, 0.8)', borderRadius: 12, padding: 16, border: '1px solid rgba(248, 250, 252, 0.1)' },
+  nearbyRow: { display: 'flex', alignItems: 'center', padding: '6px 0', borderBottom: '1px dashed rgba(148,163,184,0.2)' },
   problemGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
