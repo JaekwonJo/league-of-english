@@ -208,6 +208,14 @@ const registerDefaultValidators = () => {
     if (!answer || !correct) return false;
     return answer.A === correct.A && answer.B === correct.B;
   });
+  
+  // 고급 문법(개수) 검증기
+  registry.registerValidator('grammar_count', (answer, correct) => {
+    const a = parseInt(answer);
+    const c = parseInt(correct);
+    if (Number.isNaN(a) || Number.isNaN(c)) return false;
+    return a === c;
+  });
 };
 
 // 초기화

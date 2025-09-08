@@ -1,6 +1,6 @@
-/**
- * StudyPage 컴포넌트
- * 문제 풀이 페이지 (500줄 이하)
+﻿/**
+ * StudyPage 컴포?�트
+ * 문제 ?�???�이지 (500�??�하)
  */
 
 import React, { useState, useEffect } from 'react';
@@ -15,7 +15,7 @@ import logger from '../utils/logger';
 const StudyPage = () => {
   const { user } = useAuth();
   
-  // 상태 관리
+  // ?�태 관�?
   const [mode, setMode] = useState('config'); // config, study, result
   const [config, setConfig] = useState(null);
   const [problems, setProblems] = useState([]);
@@ -26,7 +26,7 @@ const StudyPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // 타이머
+  // ?�?�머
   const [startTime, setStartTime] = useState(null);
   const [currentTime, setCurrentTime] = useState(null);
 
@@ -41,7 +41,7 @@ const StudyPage = () => {
   }, [mode, startTime]);
 
   /**
-   * 학습 시작
+   * ?�습 ?�작
    */
   const startStudy = async (studyConfig) => {
     try {
@@ -49,30 +49,31 @@ const StudyPage = () => {
       setError(null);
       logger.info('Starting study with config:', studyConfig);
 
-      // types 객체를 배열로 변환 (0보다 큰 값을 가진 키들만)
+      // types 객체�?배열�?변??(0보다 ??값을 가�??�들�?
       const selectedTypes = Object.keys(studyConfig.types).filter(
         type => studyConfig.types[type] > 0
       );
       
       logger.info('Selected types:', selectedTypes);
 
-      // 총 문제 개수 계산
+      // �?문제 개수 계산
       const totalCount = Object.values(studyConfig.types).reduce((sum, count) => sum + count, 0);
       
-      // 문제 가져오기
+      // 문제 가?�오�?
       const response = await api.problems.getSmartProblems({
         documentId: studyConfig.documentId,
-        types: selectedTypes,
+        types: studyConfig.types,
         count: totalCount,
         orderDifficulty: studyConfig.orderDifficulty || 'basic',
-        insertionDifficulty: studyConfig.insertionDifficulty || 'basic'
+        insertionDifficulty: studyConfig.insertionDifficulty || 'basic',
+        grammarDifficulty: studyConfig.grammarDifficulty || 'basic'
       });
 
       if (!response.problems || response.problems.length === 0) {
-        throw new Error('문제를 가져올 수 없습니다.');
+        throw new Error('문제�?가?�올 ???�습?�다.');
       }
 
-      // 문제 처리 (레지스트리 사용)
+      // 문제 처리 (?��??�트�??�용)
       const processedProblems = response.problems.map(problem => 
         problemRegistry.executeHandler(problem.type, problem)
       );
@@ -85,14 +86,16 @@ const StudyPage = () => {
       logger.info(`Loaded ${processedProblems.length} problems`);
     } catch (err) {
       logger.error('Failed to start study:', err);
-      setError(err.message);
+      const msg = (err && err.message) ? err.message : '';
+      const clean = /문제|불러올|가져오/.test(msg) ? '문제를 불러올 수 없습니다.' : '알 수 없는 오류가 발생했습니다.';
+      setError(clean);
     } finally {
       setLoading(false);
     }
   };
 
   /**
-   * 답안 제출
+   * ?�안 ?�출
    */
   const handleAnswer = (answer) => {
     const problem = problems[currentIndex];
@@ -112,7 +115,7 @@ const StudyPage = () => {
   };
 
   /**
-   * 다음 문제
+   * ?�음 문제
    */
   const nextProblem = () => {
     if (currentIndex < problems.length - 1) {
@@ -123,7 +126,7 @@ const StudyPage = () => {
   };
 
   /**
-   * 이전 문제
+   * ?�전 문제
    */
   const prevProblem = () => {
     if (currentIndex > 0) {
@@ -132,20 +135,20 @@ const StudyPage = () => {
   };
 
   /**
-   * 학습 완료
+   * ?�습 ?�료
    */
   const finishStudy = async () => {
     try {
       setLoading(true);
       const studyResults = [];
 
-      // 각 문제 채점
+      // �?문제 채점
       for (let i = 0; i < problems.length; i++) {
         const problem = problems[i];
         const userAnswer = answers[i];
         const time = timeSpent[i] || 0;
 
-        // 레지스트리의 검증기 사용
+        // ?��??�트리의 검증기 ?�용
         const isCorrect = problemRegistry.validate(
           problem.type,
           userAnswer,
@@ -162,7 +165,7 @@ const StudyPage = () => {
           timeSpent: Math.round(time / 1000)
         });
 
-        // 서버에 결과 전송
+        // ?�버??결과 ?�송
         if (problem.id) {
           await api.problems.submit({
             problemId: problem.id,
@@ -172,7 +175,7 @@ const StudyPage = () => {
         }
       }
 
-      // 통계 계산
+      // ?�계 계산
       const totalCorrect = studyResults.filter(r => r.isCorrect).length;
       const accuracy = (totalCorrect / studyResults.length * 100).toFixed(1);
       const totalTime = Object.values(timeSpent).reduce((a, b) => a + b, 0);
@@ -197,7 +200,7 @@ const StudyPage = () => {
   };
 
   /**
-   * 재시작
+   * ?�시??
    */
   const restart = () => {
     setMode('config');
@@ -210,12 +213,12 @@ const StudyPage = () => {
     setCurrentTime(null);
   };
 
-  // 렌더링
+  // ?�더�?
   if (loading) {
     return (
       <div style={styles.loading}>
         <div style={styles.spinner}></div>
-        <p>처리 중...</p>
+        <p>처리 �?..</p>
       </div>
     );
   }
@@ -223,16 +226,16 @@ const StudyPage = () => {
   if (error) {
     return (
       <div style={styles.error}>
-        <h2>오류 발생</h2>
+        <h2>?�류 발생</h2>
         <p>{error}</p>
         <button onClick={restart} style={styles.button}>
-          다시 시작
+          ?�시 ?�작
         </button>
       </div>
     );
   }
 
-  // 모드별 렌더링
+  // 모드�??�더�?
   switch (mode) {
     case 'config':
       return <StudyConfig onStart={startStudy} />;
@@ -305,3 +308,4 @@ const styles = {
 };
 
 export default StudyPage;
+
