@@ -7,7 +7,7 @@ Quick, minimal steps to go live.
 - OPENAI_API_KEY ready
 
 ## 1) Server on Render
-1. Go to Render → New → Blueprint → select this repo.
+1. Go to Render ??New ??Blueprint ??select this repo.
 2. Ensure `render.yaml` is detected (root). It provisions a Node web service.
 3. Set environment variables:
    - OPENAI_API_KEY: your key
@@ -31,7 +31,7 @@ Notes
 ## 3) Test Flow
 - Visit the Vercel URL.
 - Login: `admin / admin123`
-- Study → select a document → pick 3–5 items → Start → Submit.
+- Study ??select a document ??pick 3?? items ??Start ??Submit.
 - Expect: results page with points/tier.
 
 ## 4) Optional
@@ -42,3 +42,27 @@ Notes
 - 503 on generation: retry once; AI-only policy may need a second call.
 - 404 on submit: ensure server deployed with latest routes (problem.routes.js includes /problems/submit).
 - CORS errors: set `CORS_ORIGIN` on server to the Vercel domain, redeploy.
+
+
+## Free vs Starter on Render
+- Free tier: no persistent disk. Use DB_FILE=/tmp/loe.db (already set in render.yaml). Data resets on redeploy/instance recycle; fine for demos.
+- Starter tier: supports persistent disk. If you upgrade plan, set DB_FILE=/var/data/loe.db and add disk block:
+
+``yaml
+services:
+  - type: web
+    name: loe-server
+    env: node
+    plan: starter
+    buildCommand: npm install
+    startCommand: node server/server.js
+    envVars:
+      - key: DB_FILE
+        value: /var/data/loe.db
+    disk:
+      name: data
+      mountPath: /var/data
+      sizeGB: 1
+``
+
+Adjust CORS_ORIGIN to your Vercel domain for production. 
