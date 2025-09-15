@@ -3,7 +3,7 @@ services:
     name: loe-server
     env: node
     plan: free
-    buildCommand: npm ci --omit=dev
+    buildCommand: bash -c "npm ci --omit=dev && npm rebuild sqlite3 --update-binary"
     startCommand: node server/server.js
     autoDeploy: true
     envVars:
@@ -17,5 +17,3 @@ services:
         value: /tmp/loe.db
       - key: NODE_VERSION
         value: 18
-      - key: NPM_CONFIG_IGNORE_SCRIPTS
-        value: "true"
