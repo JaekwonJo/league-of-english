@@ -1,29 +1,30 @@
-﻿const sqlite3 = require('sqlite3').verbose();
+const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const config = require('../config/server.config.json');
+const initSqlJs = require('sql.js');
 
 class Database {
   constructor() {
-    this.db = null;
+    this.db = null; // sql.js Database
+    this.SQL = null; // sql.js module
+    this.dbPath = null; // persistence path
+    this._dirty = false;
+    this._flushTimer = null;
   }
 
-  connect() {
-    return new Promise((resolve, reject) => {
-      const envDb = process.env.DB_FILE || process.env.DB_PATH;
-      const isAbs = envDb && require('path').isAbsolute(envDb);
-      const dbPath = envDb ? (isAbs ? envDb : path.join(__dirname, '..', envDb)) : path.join(__dirname, '..', config.database.filename);
-      console.log('[db] path:', dbPath);
-      this.db = new sqlite3.Database(dbPath, (err) => {
-        if (err) {
-          console.error('???곗씠?곕쿋?댁뒪 ?곌껐 ?ㅽ뙣:', err);
-          reject(err);
-        } else {
-          console.log('???곗씠?곕쿋?댁뒪 ?곌껐 ?깃났');
-          this.initialize().then(resolve).catch(reject);
-        }
-      });
-    });
+  async connect() {
+    const envDb = process.env.DB_FILE || process.env.DB_PATH;
+    const isAbs = envDb && path.isAbsolute(envDb);
+    this.dbPath = envDb ? (isAbs ? envDb : path.join(__dirname, '..', envDb)) : path.join(__dirname, '..', config.database.filename);
+    console.log('[db] path:', this.dbPath);
+
+    const locateFile = (file) => path.join(__dirname, '..', '..', 'node_modules', 'sql.js', 'dist', file);
+    this.SQL = await initSqlJs({ locateFile });
+    let data = null;
+    try { if (fs.existsSync(this.dbPath)) data = fs.readFileSync(this.dbPath); } catch {}
+    this.db = data ? new this.SQL.Database(new Uint8Array(data)) : new this.SQL.Database();
+    await this.initialize();
   }
 
   async initialize() {
@@ -42,7 +43,7 @@ class Database {
           created_by INTEGER,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`,
-        // users ?뚯씠釉?
+        // users
         `CREATE TABLE IF NOT EXISTS users (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           username VARCHAR(50) UNIQUE NOT NULL,
@@ -61,27 +62,27 @@ class Database {
           points INTEGER DEFAULT 0,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          is_active BOOLEAN DEFAULT true
+          is_active BOOLEAN DEFAULT 1
         )`,
 
-        // documents ?뚯씠釉?
+        // documents
         `CREATE TABLE IF NOT EXISTS documents (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           title VARCHAR(255) NOT NULL,
           content TEXT NOT NULL,
           type VARCHAR(20) NOT NULL,
-          category VARCHAR(50) DEFAULT '湲고?',
-          school VARCHAR(100) DEFAULT '?꾩껜',
+          category VARCHAR(50) DEFAULT '기본',
+          school VARCHAR(100) DEFAULT '전체',
           grade INTEGER,
           difficulty VARCHAR(20) DEFAULT 'medium',
           worksheet_type VARCHAR(20),
           created_by INTEGER NOT NULL,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          is_active BOOLEAN DEFAULT true,
+          is_active BOOLEAN DEFAULT 1,
           FOREIGN KEY (created_by) REFERENCES users(id)
         )`,
 
-        // problems ?뚯씠釉?
+        // problems
         `CREATE TABLE IF NOT EXISTS problems (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           document_id INTEGER,
@@ -92,12 +93,15 @@ class Database {
           explanation TEXT,
           difficulty VARCHAR(20) DEFAULT 'medium',
           points INTEGER DEFAULT 10,
-          is_ai_generated BOOLEAN DEFAULT false,
+          is_ai_generated BOOLEAN DEFAULT 0,
+          main_text TEXT,
+          sentences TEXT,
+          metadata TEXT,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (document_id) REFERENCES documents(id)
         )`,
 
-        // study_records ?뚯씠釉?
+        // study_records
         `CREATE TABLE IF NOT EXISTS study_records (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           user_id INTEGER NOT NULL,
@@ -110,7 +114,7 @@ class Database {
           FOREIGN KEY (problem_id) REFERENCES problems(id)
         )`,
 
-        // problem_generations ?뚯씠釉?
+        // problem_generations
         `CREATE TABLE IF NOT EXISTS problem_generations (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           user_id INTEGER NOT NULL,
@@ -121,58 +125,16 @@ class Database {
           FOREIGN KEY (document_id) REFERENCES documents(id)
         )`,
 
-        // Vocabulary wordbook documents
+        // vocabulary_documents
         `CREATE TABLE IF NOT EXISTS vocabulary_documents (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           title TEXT NOT NULL,
           original_filename TEXT,
           uploaded_by INTEGER,
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (uploaded_by) REFERENCES users(id)
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`,
 
-        // Vocabulary entries extracted from documents
-        `CREATE TABLE IF NOT EXISTS vocabulary_entries (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          doc_id INTEGER NOT NULL,
-          word TEXT NOT NULL,
-          meaning TEXT NOT NULL,
-          pos TEXT,
-          extra TEXT,
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (doc_id) REFERENCES vocabulary_documents(id)
-        )`,
-
-        // user_badges: earned badges per user
-        `CREATE TABLE IF NOT EXISTS user_badges (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          user_id INTEGER NOT NULL,
-          key VARCHAR(64) NOT NULL,
-          label VARCHAR(100) NOT NULL,
-          emoji VARCHAR(16) NOT NULL,
-          earned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          UNIQUE(user_id, key),
-          FOREIGN KEY (user_id) REFERENCES users(id)
-        )`,
-
-        // document_analyses ?뚯씠釉?(臾몄꽌 遺꾩꽍 ???
-        `CREATE TABLE IF NOT EXISTS document_analyses (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          document_id INTEGER NOT NULL,
-          analysis_type VARCHAR(50) DEFAULT 'comprehensive',
-          summary TEXT,
-          key_points TEXT,
-          vocabulary TEXT,
-          grammar_points TEXT,
-          study_guide TEXT,
-          comprehension_questions TEXT,
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (document_id) REFERENCES documents(id)
-        )`,
-
-        // passage_analyses ?뚯씠釉?(媛쒕퀎 吏臾?遺꾩꽍 ???
+        // passage_analyses
         `CREATE TABLE IF NOT EXISTS passage_analyses (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           document_id INTEGER NOT NULL,
@@ -192,7 +154,7 @@ class Database {
           UNIQUE(document_id, passage_number)
         )`,
 
-        // user_groups (for group-based visibility if extended later)
+        // user_groups
         `CREATE TABLE IF NOT EXISTS user_groups (
           user_id INTEGER NOT NULL,
           group_name TEXT NOT NULL,
@@ -200,7 +162,7 @@ class Database {
           FOREIGN KEY (user_id) REFERENCES users(id)
         )`,
 
-        // analysis_group_permissions (link published analysis to allowed groups)
+        // analysis_group_permissions
         `CREATE TABLE IF NOT EXISTS analysis_group_permissions (
           analysis_id INTEGER NOT NULL,
           group_name TEXT NOT NULL,
@@ -208,7 +170,7 @@ class Database {
           FOREIGN KEY (analysis_id) REFERENCES passage_analyses(id)
         )`,
 
-        // view_logs (who/when viewed which analysis)
+        // view_logs
         `CREATE TABLE IF NOT EXISTS view_logs (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           user_id INTEGER,
@@ -222,27 +184,19 @@ class Database {
         )`
       ];
 
-      let completed = 0;
-      queries.forEach(query => {
-        this.db.run(query, (err) => {
-          if (err) {
-            console.error('?뚯씠釉??앹꽦 ?ㅽ뙣:', err);
-            reject(err);
-          } else {
-            completed++;
-            if (completed === queries.length) {
-              console.log('??紐⑤뱺 ?뚯씠釉??앹꽦 ?꾨즺');
-              resolve();
-            }
-          }
-        });
-      });
+      try {
+        this._execBatch(queries);
+        console.log('모든 테이블 생성 완료');
+        resolve();
+      } catch (e) {
+        console.error('테이블 생성 실패:', e);
+        reject(e);
+      }
     });
   }
 
   async updateSchema() {
-    return new Promise((resolve, reject) => {
-      // ?쒖꽌諛곗뿴 臾몄젣??而щ읆 異붽?
+    return new Promise((resolve) => {
       const alterQueries = [
         `ALTER TABLE problems ADD COLUMN main_text TEXT`,
         `ALTER TABLE problems ADD COLUMN sentences TEXT`,
@@ -251,123 +205,146 @@ class Database {
         `ALTER TABLE passage_analyses ADD COLUMN visibility_scope TEXT DEFAULT 'public'`
       ];
 
-      let completed = 0;
       let errors = 0;
-
-      alterQueries.forEach((query) => {
-        this.db.run(query, (err) => {
-          if (err) {
-            // 而щ읆???대? 議댁옱?섎뒗 寃쎌슦??臾댁떆
-            if (err.message.includes('duplicate column name')) {
-              console.log('??而щ읆???대? 議댁옱??', query.split(' ADD COLUMN ')[1].split(' ')[0]);
-            } else {
-              console.error('?ㅽ궎留??낅뜲?댄듃 ?ㅽ뙣:', err);
-              errors++;
-            }
+      for (const q of alterQueries) {
+        try {
+          this._exec(q);
+          const col = q.split(' ADD COLUMN ')[1]?.split(' ')[0];
+          if (col) console.log('컬럼 추가 완료:', col);
+        } catch (err) {
+          if (String(err?.message || '').includes('duplicate column name')) {
+            const col = q.split(' ADD COLUMN ')[1]?.split(' ')[0];
+            console.log('이미 존재하는 컬럼:', col);
           } else {
-            console.log('??而щ읆 異붽? ?꾨즺:', query.split(' ADD COLUMN ')[1].split(' ')[0]);
+            console.warn('스키마 업데이트 경고:', err.message || err);
+            errors++;
           }
-          
-          completed++;
-          if (completed === alterQueries.length) {
-            if (errors === 0) {
-              console.log('???ㅽ궎留??낅뜲?댄듃 ?꾨즺');
-            } else {
-              console.log(`?좑툘 ?ㅽ궎留??낅뜲?댄듃 ?꾨즺 (${errors}媛??ㅻ쪟)`);
-            }
-            resolve();
-          }
-        });
-      });
+        }
+      }
+      if (errors === 0) console.log('스키마 업데이트 완료');
+      resolve();
     });
   }
 
   async createDefaultAdmin() {
     return new Promise((resolve, reject) => {
       const checkQuery = 'SELECT * FROM users WHERE username = ?';
-      
-      this.db.get(checkQuery, [config.admin.defaultUsername], async (err, row) => {
-        if (err) {
-          reject(err);
-        } else if (!row) {
-          const hashedPassword = await bcrypt.hash(config.admin.defaultPassword, config.auth.saltRounds);
-          
-          const insertQuery = `
-            INSERT INTO users (username, password_hash, email, name, school, grade, role, membership, tier, points)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-          `;
-          
-          this.db.run(insertQuery, [
-            config.admin.defaultUsername,
-            hashedPassword,
-            config.admin.defaultEmail,
-            '愿由ъ옄',
-            'League of English',
-            1,
-            'admin',
-            'premium',
-            'Bronze',
-            0
-          ], (err) => {
-            if (err) {
-              console.error('愿由ъ옄 怨꾩젙 ?앹꽦 ?ㅽ뙣:', err);
-              reject(err);
-            } else {
-              console.log('??湲곕낯 愿由ъ옄 怨꾩젙 ?앹꽦 ?꾨즺');
-              resolve();
-            }
-          });
-        } else {
-          resolve();
-        }
-      });
+      let row = null;
+      try {
+        row = this.getSync(checkQuery, [config.admin.defaultUsername]);
+      } catch (e) { /* ignore */ }
+
+      if (!row) {
+        (async () => {
+          try {
+            const hashedPassword = await bcrypt.hash(config.admin.defaultPassword, config.auth.saltRounds);
+            const insertQuery = `
+              INSERT INTO users (username, password_hash, email, name, school, grade, role, membership, tier, points)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `;
+            await this.run(insertQuery, [
+              config.admin.defaultUsername,
+              hashedPassword,
+              config.admin.defaultEmail,
+              '관리자',
+              'League of English',
+              1,
+              'admin',
+              'premium',
+              'Bronze',
+              0
+            ]);
+            console.log('기본 관리자 계정 생성 완료');
+            resolve();
+          } catch (err) {
+            console.error('관리자 계정 생성 실패:', err);
+            reject(err);
+          }
+        })();
+      } else {
+        resolve();
+      }
     });
   }
 
-  // 荑쇰━ ?ㅽ뻾 ?ы띁 硫붿꽌??
+  // Helpers for sync get during boot
+  getSync(query, params = []) {
+    const stmt = this.db.prepare(query);
+    stmt.bind(this._normalizeParams(params));
+    const row = stmt.step() ? stmt.getAsObject() : null;
+    stmt.free();
+    return row;
+  }
+
+  // Public query helpers
   run(query, params = []) {
     return new Promise((resolve, reject) => {
-      this.db.run(query, params, function(err) {
-        if (err) reject(err);
-        else resolve({ id: this.lastID, changes: this.changes });
-      });
+      try {
+        const stmt = this.db.prepare(query);
+        stmt.bind(this._normalizeParams(params));
+        stmt.step();
+        stmt.free();
+        this._markDirty();
+        resolve({ id: undefined, changes: undefined });
+      } catch (e) { reject(e); }
     });
   }
 
   get(query, params = []) {
     return new Promise((resolve, reject) => {
-      this.db.get(query, params, (err, row) => {
-        if (err) reject(err);
-        else resolve(row);
-      });
+      try {
+        const stmt = this.db.prepare(query);
+        stmt.bind(this._normalizeParams(params));
+        const row = stmt.step() ? stmt.getAsObject() : null;
+        stmt.free();
+        resolve(row);
+      } catch (e) { reject(e); }
     });
   }
 
   all(query, params = []) {
     return new Promise((resolve, reject) => {
-      this.db.all(query, params, (err, rows) => {
-        if (err) reject(err);
-        else resolve(rows);
-      });
+      try {
+        const stmt = this.db.prepare(query);
+        stmt.bind(this._normalizeParams(params));
+        const rows = [];
+        while (stmt.step()) rows.push(stmt.getAsObject());
+        stmt.free();
+        resolve(rows);
+      } catch (e) { reject(e); }
     });
   }
 
   close() {
-    return new Promise((resolve, reject) => {
-      this.db.close((err) => {
-        if (err) reject(err);
-        else {
-          console.log('?뱤 ?곗씠?곕쿋?댁뒪 ?곌껐 醫낅즺');
-          resolve();
-        }
-      });
+    return new Promise((resolve) => {
+      try { this._flushSync(); } catch {}
+      console.log('데이터베이스 연결 종료');
+      resolve();
     });
+  }
+
+  // Internal utils
+  _normalizeParams(params) { return (params || []).map(v => v === undefined ? null : v); }
+  _exec(sql) { this.db.run(sql); this._markDirty(); }
+  _execBatch(queries) {
+    this.db.run('BEGIN');
+    try { for (const q of queries) this.db.run(q); this.db.run('COMMIT'); this._markDirty(); }
+    catch (e) { try { this.db.run('ROLLBACK'); } catch {} throw e; }
+  }
+  _markDirty() {
+    this._dirty = true;
+    clearTimeout(this._flushTimer);
+    this._flushTimer = setTimeout(()=>{ try { this._flushSync(); } catch {} }, 300);
+  }
+  _flushSync() {
+    if (!this._dirty || !this.dbPath) return;
+    const data = this.db.export();
+    fs.mkdirSync(path.dirname(this.dbPath), { recursive: true });
+    fs.writeFileSync(this.dbPath, Buffer.from(data));
+    this._dirty = false;
   }
 }
 
-// ?깃????⑦꽩
 const database = new Database();
 module.exports = database;
-
-
 
