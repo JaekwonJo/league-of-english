@@ -27,7 +27,7 @@
     "doctor:client": "node scripts/doctor-client.js"
   },
   "engines": {
-    "node": ">=18 <19"
+    "node": ">=18"
   },
   "dependencies": {
     "express": "^4.18.2",
