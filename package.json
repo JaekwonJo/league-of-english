@@ -1,18 +1,33 @@
 {
   "name": "league-of-english",
   "version": "1.0.0",
-  "description": "AI 기반 영어 학습 플랫폼",
+  "description": "AI-based English learning app",
   "main": "server/server.js",
   "scripts": {
     "start": "node server/server.js",
     "dev": "nodemon server/server.js",
+    "dev:all": "concurrently \"npm run dev\" \"npm run client\"",
     "client": "cd client && npm start",
+    "client:alt": "cd client && set PORT=3001 && npm start",
     "install-all": "npm install && cd client && npm install && cd ..",
     "build": "cd client && npm run build",
+    "client:build": "cd client && npm run build",
     "migrate-users": "node server/scripts/migrate-users-password-hash.js",
     "migrate-users-drop-legacy": "node server/scripts/migrate-users-drop-legacy.js",
+    "seed:sample": "node server/scripts/seed-sample-pdf.js",
     "encoding:report": "node server/scripts/encoding-cleanup.js --report",
-    "encoding:apply-basic": "node server/scripts/encoding-cleanup.js --apply-basic"
+    "encoding:apply-basic": "node server/scripts/encoding-cleanup.js --apply-basic",
+    "encoding:check": "node scripts/scan-mojibake.js --fail",
+    "lint": "eslint \"server/**/*.js\"",
+    "format": "prettier --write .",
+    "prepare": "husky install",
+    "session:summary": "node scripts/auto-session-summary.js",
+    "session:auto": "node scripts/auto-session-daemon.js",
+    "session:auto:5m": "node scripts/auto-session-daemon.js 300000",
+    "doctor:client": "node scripts/doctor-client.js"
+  },
+  "engines": {
+    "node": ">=18 <19"
   },
   "dependencies": {
     "express": "^4.18.2",
@@ -26,6 +41,20 @@
     "openai": "^4.20.0"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1"
+    "concurrently": "^9.0.1",
+    "nodemon": "^3.0.1",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.7",
+    "prettier": "^3.3.3"
+  },
+  "lint-staged": {
+    "*.{js,jsx,json,md}": [
+      "prettier --write"
+    ],
+    "server/**/*.js": [
+      "eslint --fix"
+    ]
   }
 }

@@ -5,6 +5,16 @@
 
 import problemTypes from '../config/problemTypes.json';
 
+// Helper: strip leading "Q." (or variants) so UI can prefix consistently
+const stripLeadingQ = (s) => {
+  try {
+    const str = String(s || '');
+    return str.replace(/^\s*[Qq]\s*\.?\s*/,'');
+  } catch (_) {
+    return s;
+  }
+};
+
 class ProblemRegistry {
   constructor() {
     this.handlers = new Map();
@@ -150,9 +160,17 @@ const registerDefaultHandlers = () => {
     highlightErrors: true
   }));
 
+  // 문법(밑줄 5개 선택식)
+  registry.registerHandler('grammar_span', (data) => ({
+    ...data,
+    displayType: 'underline-span',
+    highlightErrors: true
+  }));
+
   // 어휘
   registry.registerHandler('vocabulary', (data) => ({
     ...data,
+    question: stripLeadingQ(data.question),
     displayType: 'vocabulary',
     showContext: true
   }));
@@ -160,6 +178,7 @@ const registerDefaultHandlers = () => {
   // 제목
   registry.registerHandler('title', (data) => ({
     ...data,
+    question: stripLeadingQ(data.question),
     displayType: 'choice',
     showFullText: true
   }));
@@ -167,6 +186,7 @@ const registerDefaultHandlers = () => {
   // 주제
   registry.registerHandler('theme', (data) => ({
     ...data,
+    question: stripLeadingQ(data.question),
     displayType: 'choice',
     showFullText: true
   }));
@@ -174,8 +194,25 @@ const registerDefaultHandlers = () => {
   // 요약
   registry.registerHandler('summary', (data) => ({
     ...data,
+    question: stripLeadingQ(data.question),
     displayType: 'summary',
     showBlanks: true
+  }));
+
+  // 무관한 문장(문맥상 적절하지 않은 문장)
+  registry.registerHandler('irrelevant', (data) => ({
+    ...data,
+    question: stripLeadingQ(data.question),
+    displayType: 'choice',
+    showSentences: true
+  }));
+
+  // 함축 의미(밑줄 의미)
+  registry.registerHandler('implicit', (data) => ({
+    ...data,
+    question: stripLeadingQ(data.question),
+    displayType: 'choice',
+    showFullText: true
   }));
 };
 
@@ -197,7 +234,7 @@ const registerDefaultValidators = () => {
   });
 
   // 기본 검증 (나머지)
-  ['blank', 'grammar', 'vocabulary', 'title', 'theme'].forEach(type => {
+  ['blank', 'grammar', 'grammar_span', 'vocabulary', 'title', 'theme', 'irrelevant', 'implicit'].forEach(type => {
     registry.registerValidator(type, (answer, correct) => {
       return answer?.toString() === correct?.toString();
     });

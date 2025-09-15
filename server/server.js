@@ -19,7 +19,11 @@ const authRoutes = require('./routes/auth.routes.fixed');
 const documentRoutes = require('./routes/document.routes');
 const problemRoutes = require('./routes/problem.routes');
 const rankingRoutes = require('./routes/ranking.routes');
+const badgeRoutes = require('./routes/badge.routes');
 const analysisRoutes = require('./routes/analysis');
+const inquiryRoutes = require('./routes/inquiry.routes');
+const adminRoutes = require('./routes/admin.routes');
+const vocabRoutes = require('./routes/vocab.routes');
 
 // App init
 const app = express();
@@ -27,7 +31,24 @@ const PORT = process.env.PORT || config.server.port;
 process.env.NODE_ENV = process.env.NODE_ENV || 'development';
 
 // Middleware
-app.use(cors(config.server.corsOptions));
+// Optional: ASCII-only console to avoid mojibake on Windows consoles
+if (String(process.env.LOE_ASCII_LOG || '').toLowerCase() === '1') {
+  const wrap = (fn) => (...args) => fn(...args.map(a => typeof a === 'string' ? a.replace(/[^\x20-\x7E]/g, '?') : a));
+  console.log = wrap(console.log.bind(console));
+  console.info = wrap(console.info.bind(console));
+  console.warn = wrap(console.warn.bind(console));
+  console.error = wrap(console.error.bind(console));
+}
+
+// CORS: allow dynamic override via CORS_ORIGIN (comma-separated)
+const dynamicCors = (() => {
+  const origins = process.env.CORS_ORIGIN;
+  if (origins && origins.trim().length) {
+    return { origin: origins.split(',').map(s => s.trim()), credentials: true };
+  }
+  return config.server.corsOptions || {};
+})();
+app.use(cors(dynamicCors));
 app.use(express.json({ limit: config.server.jsonLimit }));
 app.use(express.urlencoded({ extended: true, limit: config.server.jsonLimit }));
 
@@ -43,7 +64,11 @@ app.use('/api/auth', authRoutes);
 app.use('/api', documentRoutes);
 app.use('/api', problemRoutes);
 app.use('/api/ranking', rankingRoutes);
+app.use('/api/badges', badgeRoutes);
 app.use('/api/analysis', analysisRoutes);
+app.use('/api/inquiries', inquiryRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api', vocabRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
@@ -67,6 +92,18 @@ app.use((err, req, res, next) => {
 async function startServer() {
   try {
     await database.connect();
+    // Ensure teacher_codes table exists
+    try {
+      await database.run(`CREATE TABLE IF NOT EXISTS teacher_codes (
+        code TEXT PRIMARY KEY,
+        issued_by INTEGER,
+        used_by INTEGER,
+        used_at DATETIME,
+        expires_at DATETIME,
+        active BOOLEAN DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`);
+    } catch(e) { console.warn('[init] teacher_codes table ensure failed:', e?.message || e); }
     app.listen(PORT, () => {
       console.log('========================================');
       console.log('  League of English Server v2.0');

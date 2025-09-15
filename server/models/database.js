@@ -1,4 +1,4 @@
-const sqlite3 = require('sqlite3').verbose();
+﻿const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const config = require('../config/server.config.json');
@@ -10,14 +10,16 @@ class Database {
 
   connect() {
     return new Promise((resolve, reject) => {
-      const dbPath = path.join(__dirname, '..', config.database.filename);
-      
+      const envDb = process.env.DB_FILE || process.env.DB_PATH;
+      const isAbs = envDb && require('path').isAbsolute(envDb);
+      const dbPath = envDb ? (isAbs ? envDb : path.join(__dirname, '..', envDb)) : path.join(__dirname, '..', config.database.filename);
+      console.log('[db] path:', dbPath);
       this.db = new sqlite3.Database(dbPath, (err) => {
         if (err) {
-          console.error('❌ 데이터베이스 연결 실패:', err);
+          console.error('???곗씠?곕쿋?댁뒪 ?곌껐 ?ㅽ뙣:', err);
           reject(err);
         } else {
-          console.log('✅ 데이터베이스 연결 성공');
+          console.log('???곗씠?곕쿋?댁뒪 ?곌껐 ?깃났');
           this.initialize().then(resolve).catch(reject);
         }
       });
@@ -33,7 +35,14 @@ class Database {
   createTables() {
     return new Promise((resolve, reject) => {
       const queries = [
-        // users 테이블
+        // groups table (for admin-managed groups)
+        `CREATE TABLE IF NOT EXISTS groups (
+          name TEXT PRIMARY KEY,
+          description TEXT,
+          created_by INTEGER,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`,
+        // users ?뚯씠釉?
         `CREATE TABLE IF NOT EXISTS users (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           username VARCHAR(50) UNIQUE NOT NULL,
@@ -55,14 +64,14 @@ class Database {
           is_active BOOLEAN DEFAULT true
         )`,
 
-        // documents 테이블
+        // documents ?뚯씠釉?
         `CREATE TABLE IF NOT EXISTS documents (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           title VARCHAR(255) NOT NULL,
           content TEXT NOT NULL,
           type VARCHAR(20) NOT NULL,
-          category VARCHAR(50) DEFAULT '기타',
-          school VARCHAR(100) DEFAULT '전체',
+          category VARCHAR(50) DEFAULT '湲고?',
+          school VARCHAR(100) DEFAULT '?꾩껜',
           grade INTEGER,
           difficulty VARCHAR(20) DEFAULT 'medium',
           worksheet_type VARCHAR(20),
@@ -72,7 +81,7 @@ class Database {
           FOREIGN KEY (created_by) REFERENCES users(id)
         )`,
 
-        // problems 테이블
+        // problems ?뚯씠釉?
         `CREATE TABLE IF NOT EXISTS problems (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           document_id INTEGER,
@@ -88,7 +97,7 @@ class Database {
           FOREIGN KEY (document_id) REFERENCES documents(id)
         )`,
 
-        // study_records 테이블
+        // study_records ?뚯씠釉?
         `CREATE TABLE IF NOT EXISTS study_records (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           user_id INTEGER NOT NULL,
@@ -101,7 +110,7 @@ class Database {
           FOREIGN KEY (problem_id) REFERENCES problems(id)
         )`,
 
-        // problem_generations 테이블
+        // problem_generations ?뚯씠釉?
         `CREATE TABLE IF NOT EXISTS problem_generations (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           user_id INTEGER NOT NULL,
@@ -112,7 +121,42 @@ class Database {
           FOREIGN KEY (document_id) REFERENCES documents(id)
         )`,
 
-        // document_analyses 테이블 (문서 분석 저장)
+        // Vocabulary wordbook documents
+        `CREATE TABLE IF NOT EXISTS vocabulary_documents (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          title TEXT NOT NULL,
+          original_filename TEXT,
+          uploaded_by INTEGER,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (uploaded_by) REFERENCES users(id)
+        )`,
+
+        // Vocabulary entries extracted from documents
+        `CREATE TABLE IF NOT EXISTS vocabulary_entries (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          doc_id INTEGER NOT NULL,
+          word TEXT NOT NULL,
+          meaning TEXT NOT NULL,
+          pos TEXT,
+          extra TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (doc_id) REFERENCES vocabulary_documents(id)
+        )`,
+
+        // user_badges: earned badges per user
+        `CREATE TABLE IF NOT EXISTS user_badges (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL,
+          key VARCHAR(64) NOT NULL,
+          label VARCHAR(100) NOT NULL,
+          emoji VARCHAR(16) NOT NULL,
+          earned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(user_id, key),
+          FOREIGN KEY (user_id) REFERENCES users(id)
+        )`,
+
+        // document_analyses ?뚯씠釉?(臾몄꽌 遺꾩꽍 ???
         `CREATE TABLE IF NOT EXISTS document_analyses (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           document_id INTEGER NOT NULL,
@@ -128,7 +172,7 @@ class Database {
           FOREIGN KEY (document_id) REFERENCES documents(id)
         )`,
 
-        // passage_analyses 테이블 (개별 지문 분석 저장)
+        // passage_analyses ?뚯씠釉?(媛쒕퀎 吏臾?遺꾩꽍 ???
         `CREATE TABLE IF NOT EXISTS passage_analyses (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           document_id INTEGER NOT NULL,
@@ -162,6 +206,19 @@ class Database {
           group_name TEXT NOT NULL,
           PRIMARY KEY (analysis_id, group_name),
           FOREIGN KEY (analysis_id) REFERENCES passage_analyses(id)
+        )`,
+
+        // view_logs (who/when viewed which analysis)
+        `CREATE TABLE IF NOT EXISTS view_logs (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER,
+          resource_type TEXT,
+          resource_id INTEGER,
+          document_id INTEGER,
+          passage_number INTEGER,
+          action TEXT DEFAULT 'view',
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id)
         )`
       ];
 
@@ -169,12 +226,12 @@ class Database {
       queries.forEach(query => {
         this.db.run(query, (err) => {
           if (err) {
-            console.error('테이블 생성 실패:', err);
+            console.error('?뚯씠釉??앹꽦 ?ㅽ뙣:', err);
             reject(err);
           } else {
             completed++;
             if (completed === queries.length) {
-              console.log('✅ 모든 테이블 생성 완료');
+              console.log('??紐⑤뱺 ?뚯씠釉??앹꽦 ?꾨즺');
               resolve();
             }
           }
@@ -185,7 +242,7 @@ class Database {
 
   async updateSchema() {
     return new Promise((resolve, reject) => {
-      // 순서배열 문제용 컬럼 추가
+      // ?쒖꽌諛곗뿴 臾몄젣??而щ읆 異붽?
       const alterQueries = [
         `ALTER TABLE problems ADD COLUMN main_text TEXT`,
         `ALTER TABLE problems ADD COLUMN sentences TEXT`,
@@ -200,23 +257,23 @@ class Database {
       alterQueries.forEach((query) => {
         this.db.run(query, (err) => {
           if (err) {
-            // 컬럼이 이미 존재하는 경우는 무시
+            // 而щ읆???대? 議댁옱?섎뒗 寃쎌슦??臾댁떆
             if (err.message.includes('duplicate column name')) {
-              console.log('✅ 컬럼이 이미 존재함:', query.split(' ADD COLUMN ')[1].split(' ')[0]);
+              console.log('??而щ읆???대? 議댁옱??', query.split(' ADD COLUMN ')[1].split(' ')[0]);
             } else {
-              console.error('스키마 업데이트 실패:', err);
+              console.error('?ㅽ궎留??낅뜲?댄듃 ?ㅽ뙣:', err);
               errors++;
             }
           } else {
-            console.log('✅ 컬럼 추가 완료:', query.split(' ADD COLUMN ')[1].split(' ')[0]);
+            console.log('??而щ읆 異붽? ?꾨즺:', query.split(' ADD COLUMN ')[1].split(' ')[0]);
           }
           
           completed++;
           if (completed === alterQueries.length) {
             if (errors === 0) {
-              console.log('✅ 스키마 업데이트 완료');
+              console.log('???ㅽ궎留??낅뜲?댄듃 ?꾨즺');
             } else {
-              console.log(`⚠️ 스키마 업데이트 완료 (${errors}개 오류)`);
+              console.log(`?좑툘 ?ㅽ궎留??낅뜲?댄듃 ?꾨즺 (${errors}媛??ㅻ쪟)`);
             }
             resolve();
           }
@@ -244,7 +301,7 @@ class Database {
             config.admin.defaultUsername,
             hashedPassword,
             config.admin.defaultEmail,
-            '관리자',
+            '愿由ъ옄',
             'League of English',
             1,
             'admin',
@@ -253,10 +310,10 @@ class Database {
             0
           ], (err) => {
             if (err) {
-              console.error('관리자 계정 생성 실패:', err);
+              console.error('愿由ъ옄 怨꾩젙 ?앹꽦 ?ㅽ뙣:', err);
               reject(err);
             } else {
-              console.log('✅ 기본 관리자 계정 생성 완료');
+              console.log('??湲곕낯 愿由ъ옄 怨꾩젙 ?앹꽦 ?꾨즺');
               resolve();
             }
           });
@@ -267,7 +324,7 @@ class Database {
     });
   }
 
-  // 쿼리 실행 헬퍼 메서드
+  // 荑쇰━ ?ㅽ뻾 ?ы띁 硫붿꽌??
   run(query, params = []) {
     return new Promise((resolve, reject) => {
       this.db.run(query, params, function(err) {
@@ -300,7 +357,7 @@ class Database {
       this.db.close((err) => {
         if (err) reject(err);
         else {
-          console.log('📊 데이터베이스 연결 종료');
+          console.log('?뱤 ?곗씠?곕쿋?댁뒪 ?곌껐 醫낅즺');
           resolve();
         }
       });
@@ -308,6 +365,9 @@ class Database {
   }
 }
 
-// 싱글톤 패턴
+// ?깃????⑦꽩
 const database = new Database();
 module.exports = database;
+
+
+

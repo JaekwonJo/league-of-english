@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: loe-server
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server/server.js
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DB_FILE
+        value: /var/data/loe.db
+    disk:
+      name: data
+      mountPath: /var/data
+      sizeGB: 1
