@@ -241,33 +241,39 @@ const StudyPage = () => {
     case 'config':
       return <StudyConfig onStart={startStudy} />;
 
-    case 'study':
+        case 'study':
       return (
         <div style={{ maxWidth: 900, margin: '0 auto', padding: '16px' }}>
-                  <ScoreHUD timeElapsed={currentTime ? Math.round((currentTime - startTime) / 1000) : 0} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <button
+              className="no-print"
+              onClick={() => {
+                if (window.confirm('이 화면을 종료하고 설정 단계로 돌아가시겠습니까?')) setMode('config');
+              }}
+              style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer' }}
+            >
+              돌아가기
+            </button>
+            <ScoreHUD timeElapsed={currentTime ? Math.round((currentTime - startTime) / 1000) : 0} />
+          </div>
           <ProblemDisplay
-          problem={problems[currentIndex]}
-          currentIndex={currentIndex}
-          totalProblems={problems.length}
-          userAnswer={answers[currentIndex]}
-          onAnswer={handleAnswer}
-          onNext={nextProblem}
-          onPrev={prevProblem}
-          onFinish={finishStudy}
-          timeElapsed={currentTime ? Math.round((currentTime - startTime) / 1000) : 0}
-        />
+            problem={problems[currentIndex]}
+            currentIndex={currentIndex}
+            totalProblems={problems.length}
+            userAnswer={answers[currentIndex]}
+            onAnswer={handleAnswer}
+            onNext={nextProblem}
+            onPrev={prevProblem}
+            onFinish={finishStudy}
+            timeElapsed={currentTime ? Math.round((currentTime - startTime) / 1000) : 0}
+            timeLeft={timeLeft}
+          />
         </div>
       );
 
     case 'result':
-      return (
-        <StudyResult
-          results={results}
-          onRestart={restart}
-          onHome={() => window.location.href = '/'}
-        />
-        </div>
-      );
+      return <StudyResult results={results} onRestart={restart} onHome={() => (window.location.href = '/')} />;
+
 
     default:
       return null;
