@@ -270,21 +270,21 @@
       padding: '40px',                                                                    
       background: 'white',                                                                
       borderRadius: '20px',                                                               
-      maxWidth: '500px',                                                                  
-      margin: '50px auto',                                                                
-      boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)'                                         
-    },                                                                                    
-    button: {                                                                             
-      padding: '12px 24px',                                                               
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',                    
-      color: 'white',                                                                     
-      border: 'none',                                                                     
-      borderRadius: '10px',                                                               
-      fontSize: '16px',                                                                   
-      fontWeight: 'bold',                                                                 
-      cursor: 'pointer',                                                                  
-      marginTop: '20px'                                                                   
-    }                                                                                     
-  };                                                                                      
-                                                                                          
+      maxWidth: '500px',
+      margin: '50px auto',
+      boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)'
+    },
+    button: {
+      padding: '12px 24px',
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      color: 'white',
+      border: 'none',
+      borderRadius: '10px',
+      fontSize: '16px',
+      fontWeight: 'bold',
+      cursor: 'pointer',
+      marginTop: '20px'
+    }
+  };
+
   export default StudyPage;
