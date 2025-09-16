@@ -1,6 +1,4 @@
- /**                                                                                      
-   * StudyPage: 학습/채점/결과 화면을 조정하는 컨테이너                                    
-   */                                                                                      
+                                                                                     
                                                                                            
   import React, { useState, useEffect } from 'react';                                      
   import { useAuth } from '../contexts/AuthContext';                                       
