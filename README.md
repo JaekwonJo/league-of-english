@@ -2,6 +2,10 @@
 
 ?숈깮쨌援먯궗瑜??꾪븳 ?곸뼱 ?숈뒿/臾명빆 ?앹꽦 ?뚮옯?쇱엯?덈떎. PDF/TXT ?낅줈????遺꾩꽍/?뚰겕?쒗듃/?숈뒿源뚯? ??踰덉뿉 吏꾪뻾?⑸땲?? CSAT ?ㅽ???5吏?좊떎/臾몄젣 臾멸뎄 ?듭씪/利앷굅 ?쇱씤) 洹쒖튃??吏?ㅻ뒗 寃껋쓣 ?듭떖 紐⑺몴濡??⑸땲??
 
+## 기여 안내
+- 처음 참여하는 분은 [AGENTS.md](AGENTS.md) 문서에서 작업 순서와 규칙을 확인하세요.
+
+
 ## ?듭떖 湲곕뒫
 - ?낅줈?? PDF/TXT ?낅줈?????뚯꽌媛 passage/?뚯뒪 留??앹꽦
 - ?숈뒿: `POST /api/generate/csat-set` 湲곕컲 ?명듃 ?앹꽦 ???????寃곌낵(Gamified)
@@ -104,6 +108,11 @@ pm run encoding:check)
 - Server: Render blueprint ready (Node 20). DB uses sql.js (no native bindings).
 - DB file path: DB_FILE=/tmp/loe.db on free tier (ephemeral). Use Starter+disk for persistence.
 - Client: Deploy to Vercel with REACT_APP_API_URL pointing to Render URL + /api.
+
+## Production (Persistent DB)
+- Want data to persist across restarts? Use Render Starter + disk.
+- Quick guide: `docs/DEPLOY_PRODUCTION_CHECKLIST.md`
+- Or use `render.starter.yaml` blueprint (plan: starter, disk at `/var/data`).
 
 ## What Changed (Today)
 - Removed sqlite3 native module; added sql.js; rewrote DB wrapper with same API.

@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: loe-server
+    env: node
+    plan: starter
+    buildCommand: npm ci --omit=dev
+    startCommand: node server/server.js
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DB_FILE
+        value: /var/data/loe.db
+      - key: NODE_VERSION
+        value: 20
+      # Optional: lock down CORS to your Vercel domain (comma-separated if multiple)
+      # - key: CORS_ORIGIN
+      #   value: https://your-app.vercel.app
+    disk:
+      name: data
+      mountPath: /var/data
+      sizeGB: 1
+
