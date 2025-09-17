@@ -1,4 +1,4 @@
-const express = require('express');
+﻿const express = require('express');
 const router = express.Router();
 const database = require('../models/database');
 const { verifyToken, checkDailyLimit, updateUsage } = require('../middleware/auth');
@@ -157,27 +157,27 @@ router.post('/get-smart-problems', verifyToken, checkDailyLimit, async (req, res
       } else if (t === 'blank') {
         if (aiService?.generateBlank) out.push(...await aiService.generateBlank(parseInt(documentId), c));
         else {
-          for (let i=0;i<c;i++){ const p=passages[i%passages.length]; const words=(p.match(/\b[A-Za-z]{6,}\b/g)||[]).slice(0,200); if(words.length<4) continue; const target=words[Math.floor(Math.random()*words.length)]; const pool=words.filter(w=>w!==target); const opts=[target,...pool.sort(()=>Math.random()-0.5).slice(0,3)]; const options=opts.sort(()=>Math.random()-0.5); const correct=options.findIndex(o=>o===target)+1; out.push({ type:'blank', question:'빈칸에 들어갈 말로 가장 적절한 것은?', text:p.replace(target,'_____'), options, answer:String(correct), explanation:'문맥/어휘', difficulty:'basic' }); }
+          for (let i=0;i<c;i++){ const p=passages[i%passages.length]; const words=(p.match(/\b[A-Za-z]{6,}\b/g)||[]).slice(0,200); if(words.length<4) continue; const target=words[Math.floor(Math.random()*words.length)]; const pool=words.filter(w=>w!==target); const opts=[target,...pool.sort(()=>Math.random()-0.5).slice(0,3)]; const options=opts.sort(()=>Math.random()-0.5); const correct=options.findIndex(o=>o===target)+1; out.push({ type:'blank', question:'鍮덉뭏???ㅼ뼱媛?留먮줈 媛???곸젅??寃껋??', text:p.replace(target,'_____'), options, answer:String(correct), explanation:'臾몃㎘/?댄쐶', difficulty:'basic' }); }
         }
       } else if (t === 'vocabulary' || t === 'vocab') {
         if (aiService?.generateVocab) out.push(...await aiService.generateVocab(parseInt(documentId), c));
         else {
-          for (let i=0;i<c;i++){ const p=passages[i%passages.length]; const words=(p.match(/\b[A-Za-z]{6,}\b/g)||[]).slice(0,200); if(words.length<4) continue; const target=words[Math.floor(Math.random()*words.length)]; const pool=words.filter(w=>w!==target); const opts=[target,...pool.sort(()=>Math.random()-0.5).slice(0,3)]; const options=opts.sort(()=>Math.random()-0.5); const correct=options.findIndex(o=>o===target)+1; out.push({ type:'vocabulary', question:`문맥상 '${target}'에 가장 가까운 의미는?`, options, answer:String(correct), explanation:'문맥/어휘', difficulty:'basic' }); }
+          for (let i=0;i<c;i++){ const p=passages[i%passages.length]; const words=(p.match(/\b[A-Za-z]{6,}\b/g)||[]).slice(0,200); if(words.length<4) continue; const target=words[Math.floor(Math.random()*words.length)]; const pool=words.filter(w=>w!==target); const opts=[target,...pool.sort(()=>Math.random()-0.5).slice(0,3)]; const options=opts.sort(()=>Math.random()-0.5); const correct=options.findIndex(o=>o===target)+1; out.push({ type:'vocabulary', question:`臾몃㎘??'${target}'??媛??媛源뚯슫 ?섎???`, options, answer:String(correct), explanation:'臾몃㎘/?댄쐶', difficulty:'basic' }); }
         }
       } else if (t === 'title') {
         if (aiService?.generateTitle) out.push(...await aiService.generateTitle(parseInt(documentId), c));
         else {
-          for (let i=0;i<c;i++){ const p=passages[i%passages.length]; const first=(p.split(/(?<=[.!?])\s+/)[0]||'').trim().slice(0,60); const base=first.replace(/[^A-Za-z ]/g,'').split(' ').filter(Boolean).slice(0,5).join(' '); const candidates=[`${base}`||'Main Idea','A Letter to the Principal','Preparing for Exams','Library Hours Extension']; const options=candidates.sort(()=>Math.random()-0.5).slice(0,4); out.push({ type:'title', mainText:p, question:'다음 글의 제목으로 가장 적절한 것은?', options, answer:'1', explanation:'문맥/요지', difficulty:'basic' }); }
+          for (let i=0;i<c;i++){ const p=passages[i%passages.length]; const first=(p.split(/(?<=[.!?])\s+/)[0]||'').trim().slice(0,60); const base=first.replace(/[^A-Za-z ]/g,'').split(' ').filter(Boolean).slice(0,5).join(' '); const candidates=[`${base}`||'Main Idea','A Letter to the Principal','Preparing for Exams','Library Hours Extension']; const options=candidates.sort(()=>Math.random()-0.5).slice(0,4); out.push({ type:'title', mainText:p, question:'?ㅼ쓬 湲???쒕ぉ?쇰줈 媛???곸젅??寃껋??', options, answer:'1', explanation:'臾몃㎘/?붿?', difficulty:'basic' }); }
         }
       } else if (t === 'theme' || t === 'topic') {
         if (aiService?.generateTopic) out.push(...await aiService.generateTopic(parseInt(documentId), c));
         else {
-          for (let i=0;i<c;i++){ const p=passages[i%passages.length]; const candidates=['Environment protection','School policy','Exam preparation','Library use']; const options=candidates.sort(()=>Math.random()-0.5).slice(0,4); out.push({ type:'theme', mainText:p, question:'글의 주제로 가장 적절한 것은?', options, answer:'1', explanation:'문맥/요지', difficulty:'basic' }); }
+          for (let i=0;i<c;i++){ const p=passages[i%passages.length]; const candidates=['Environment protection','School policy','Exam preparation','Library use']; const options=candidates.sort(()=>Math.random()-0.5).slice(0,4); out.push({ type:'theme', mainText:p, question:'湲??二쇱젣濡?媛???곸젅??寃껋??', options, answer:'1', explanation:'臾몃㎘/?붿?', difficulty:'basic' }); }
         }
       } else if (t === 'summary') {
         if (aiService?.generateSummary) out.push(...await aiService.generateSummary(parseInt(documentId), c));
         else {
-          for (let i=0;i<c;i++){ const p=passages[i%passages.length]; const options=['요지를 가장 잘 요약','부분 정보 과장','문맥 벗어난 주장','세부 사실 나열']; const shuffled=options.sort(()=>Math.random()-0.5); out.push({ type:'summary', mainText:p, question:'다음 글의 내용으로 가장 적절한 것은?', options:shuffled, answer:'1', explanation:'문맥/요지', difficulty:'basic' }); }
+          for (let i=0;i<c;i++){ const p=passages[i%passages.length]; const options=['?붿?瑜?媛?????붿빟','遺遺??뺣낫 怨쇱옣','臾몃㎘ 踰쀬뼱??二쇱옣','?몃? ?ъ떎 ?섏뿴']; const shuffled=options.sort(()=>Math.random()-0.5); out.push({ type:'summary', mainText:p, question:'?ㅼ쓬 湲???댁슜?쇰줈 媛???곸젅??寃껋??', options:shuffled, answer:'1', explanation:'臾몃㎘/?붿?', difficulty:'basic' }); }
         }
       }
     }
@@ -501,7 +501,7 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
           const p = passages[n%passages.length];
           const g = generateGrammarSpanProblem(p);
           if(g && g.text){
-            out.push({ id:`grammar_${Date.now()}_${n}`, type:'grammar_span', question:g.question, text:g.text, correctAnswer:String(g.correctAnswer||g.answer), explanation:g.explanation||'', difficulty:'basic', documentTitle: document.title||'', passageNumber:(n%passages.length)+1, metadata:{ originalTitle: document.title||'', problemNumber: `p${(n%passages.length)+1}-no.${n+1}` } });
+            out.push({ id:`grammar_${Date.now()}_${n}`, type:'grammar_span', question:g.question, text:g.text, choices: g.choices || [''①'',''②'',''③'',''④'',''⑤''], correctAnswer:String(g.correctAnswer||g.answer), explanation:g.explanation||'', difficulty:'basic', documentTitle: document.title||'', passageNumber:(n%passages.length)+1, metadata:{ originalTitle: document.title||'', problemNumber: `p${(n%passages.length)+1}-no.${n+1}` } });
             n++;
           }
           i++;
@@ -509,27 +509,27 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
       } else if (t === 'blank') {
         if (aiService?.generateBlank) out.push(...await aiService.generateBlank(parseInt(documentId), c));
         else {
-          for (let i=0;i<c;i++){ const p=passages[i%passages.length]; const words=(p.match(/\b[A-Za-z]{6,}\b/g)||[]).slice(0,200); if(words.length<4) continue; const target=words[Math.floor(Math.random()*words.length)]; const pool=words.filter(w=>w!==target); const opts=[target,...pool.sort(()=>Math.random()-0.5).slice(0,3)]; const options=opts.sort(()=>Math.random()-0.5); const correct=options.findIndex(o=>o===target)+1; out.push({ type:'blank', question:'다음 글의 밑줄에 들어갈 말로 가장 적절한 것은?', text:p.replace(target,'_____'), options, answer:String(correct), explanation:'문맥/어휘', difficulty:'basic' }); }
+          for (let i=0;i<c;i++){ const p=passages[i%passages.length]; const words=(p.match(/\b[A-Za-z]{6,}\b/g)||[]).slice(0,200); if(words.length<4) continue; const target=words[Math.floor(Math.random()*words.length)]; const pool=words.filter(w=>w!==target); const opts=[target,...pool.sort(()=>Math.random()-0.5).slice(0,3)]; const options=opts.sort(()=>Math.random()-0.5); const correct=options.findIndex(o=>o===target)+1; out.push({ type:'blank', question:'?ㅼ쓬 湲??諛묒쨪???ㅼ뼱媛?留먮줈 媛???곸젅??寃껋??', text:p.replace(target,'_____'), options, answer:String(correct), explanation:'臾몃㎘/?댄쐶', difficulty:'basic' }); }
         }
       } else if (t === 'vocabulary') {
         if (aiService?.generateVocab) out.push(...await aiService.generateVocab(parseInt(documentId), c));
         else {
-          for (let i=0;i<c;i++){ const p=passages[i%passages.length]; const words=(p.match(/\b[A-Za-z]{6,}\b/g)||[]).slice(0,200); if(words.length<4) continue; const target=words[Math.floor(Math.random()*words.length)]; const pool=words.filter(w=>w!==target); const opts=[target,...pool.sort(()=>Math.random()-0.5).slice(0,3)]; const options=opts.sort(()=>Math.random()-0.5); const correct=options.findIndex(o=>o===target)+1; out.push({ type:'vocabulary', question:`문맥상 '${target}'에 가장 가까운 의미는?`, options, answer:String(correct), explanation:'문맥/어휘', difficulty:'basic' }); }
+          for (let i=0;i<c;i++){ const p=passages[i%passages.length]; const words=(p.match(/\b[A-Za-z]{6,}\b/g)||[]).slice(0,200); if(words.length<4) continue; const target=words[Math.floor(Math.random()*words.length)]; const pool=words.filter(w=>w!==target); const opts=[target,...pool.sort(()=>Math.random()-0.5).slice(0,3)]; const options=opts.sort(()=>Math.random()-0.5); const correct=options.findIndex(o=>o===target)+1; out.push({ type:'vocabulary', question:`臾몃㎘??'${target}'??媛??媛源뚯슫 ?섎???`, options, answer:String(correct), explanation:'臾몃㎘/?댄쐶', difficulty:'basic' }); }
         }
       } else if (t === 'title') {
         if (aiService?.generateTitle) out.push(...await aiService.generateTitle(parseInt(documentId), c));
         else {
-          for (let i=0;i<c;i++){ const p=passages[i%passages.length]; const first=(p.split(/(?<=[.!?])\s+/)[0]||'').trim().slice(0,60); const base=first.replace(/[^A-Za-z ]/g,'').split(' ').filter(Boolean).slice(0,5).join(' '); const candidates=[`${base}`||'Main Idea','A Letter to the Principal','Preparing for Exams','Library Hours Extension']; const options=candidates.sort(()=>Math.random()-0.5).slice(0,4); out.push({ type:'title', mainText:p, question:'다음 글의 제목으로 가장 적절한 것은?', options, answer:'1', explanation:'문맥/요지', difficulty:'basic' }); }
+          for (let i=0;i<c;i++){ const p=passages[i%passages.length]; const first=(p.split(/(?<=[.!?])\s+/)[0]||'').trim().slice(0,60); const base=first.replace(/[^A-Za-z ]/g,'').split(' ').filter(Boolean).slice(0,5).join(' '); const candidates=[`${base}`||'Main Idea','A Letter to the Principal','Preparing for Exams','Library Hours Extension']; const options=candidates.sort(()=>Math.random()-0.5).slice(0,4); out.push({ type:'title', mainText:p, question:'?ㅼ쓬 湲???쒕ぉ?쇰줈 媛???곸젅??寃껋??', options, answer:'1', explanation:'臾몃㎘/?붿?', difficulty:'basic' }); }
         }
       } else if (t === 'theme') {
         if (aiService?.generateTopic) out.push(...await aiService.generateTopic(parseInt(documentId), c));
         else {
-          for (let i=0;i<c;i++){ const p=passages[i%passages.length]; const candidates=['Environment protection','School policy','Exam preparation','Library use']; const options=candidates.sort(()=>Math.random()-0.5).slice(0,4); out.push({ type:'theme', mainText:p, question:'다음 글의 주제로 가장 적절한 것은?', options, answer:'1', explanation:'문맥/요지', difficulty:'basic' }); }
+          for (let i=0;i<c;i++){ const p=passages[i%passages.length]; const candidates=['Environment protection','School policy','Exam preparation','Library use']; const options=candidates.sort(()=>Math.random()-0.5).slice(0,4); out.push({ type:'theme', mainText:p, question:'?ㅼ쓬 湲??二쇱젣濡?媛???곸젅??寃껋??', options, answer:'1', explanation:'臾몃㎘/?붿?', difficulty:'basic' }); }
         }
       } else if (t === 'summary') {
         if (aiService?.generateSummary) out.push(...await aiService.generateSummary(parseInt(documentId), c));
         else {
-          for (let i=0;i<c;i++){ const p=passages[i%passages.length]; const options=['요지를 가장 잘 요약','부분 정보 과장','문맥 벗어난 주장','세부 사실 나열']; const shuffled=options.sort(()=>Math.random()-0.5); out.push({ type:'summary', mainText:p, question:'다음 글의 내용으로 가장 적절한 것은?', options:shuffled, answer:'1', explanation:'문맥/요지', difficulty:'basic' }); }
+          for (let i=0;i<c;i++){ const p=passages[i%passages.length]; const options=['?붿?瑜?媛?????붿빟','遺遺??뺣낫 怨쇱옣','臾몃㎘ 踰쀬뼱??二쇱옣','?몃? ?ъ떎 ?섏뿴']; const shuffled=options.sort(()=>Math.random()-0.5); out.push({ type:'summary', mainText:p, question:'?ㅼ쓬 湲???댁슜?쇰줈 媛???곸젅??寃껋??', options:shuffled, answer:'1', explanation:'臾몃㎘/?붿?', difficulty:'basic' }); }
         }
       }
     }
