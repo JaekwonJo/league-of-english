@@ -21,3 +21,23 @@ Rationale
 Impact
 - Server deploy succeeds on Render Free/Starter.
 - Client consumes `choices` safely; no reliance on unicode glyphs.
+34) Auth Event Logging
+- Added `auth_logs` table plus `auditLogService` to capture register/login events (user id, IP, UA, metadata).
+- Auth routes now call logger after successful register/login so analytics can track usage.
+
+35) PDF Parser Marker Segmentation
+- Rebuilt `newPdfParser` to segment passages via `N. pX-no.Y(~Z)` markers with ordered fallback.
+- Merges short textbook lines and keeps `Unknown N` placeholders when a passage/source is missing.
+
+36) Render Starter Defaults
+- Updated `render.yaml` to plan starter + `/var/data` disk so persistence is default.
+- Deployment playbook refreshed to highlight Starter flow first.
+37) CSAT Normalizer Coverage
+- Problem: order/insertion problems lost their options during normalizeAll so Study API returned 0 items.
+- Decision: map multipleChoices, sentences, givenSentence -> options/metadata and add fallback prompts for deterministic question text.
+- Impact: order/insertion survive normalization; CSAT set route returns balanced mix again.
+
+38) Study API Client Fix
+- Problem: StudyPage called pi.post which is undefined after refactor to export nested api categories.
+- Decision: import default piService and call piService.post('/generate/csat-set', ...).
+- Impact: front-end can start study sessions without TypeError.

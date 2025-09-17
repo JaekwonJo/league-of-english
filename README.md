@@ -104,6 +104,17 @@ pm run encoding:check)
 ### ETA to “stable use”
 - 2?3 days to stable usage (then 1?2 days QA/bugfix)
 
+## Latest (2025-09-18)
+- Render Starter deploy + Vercel client live; `REACT_APP_API_URL` points to https://loe-server.onrender.com/api.
+- Fixed missing route modules (badge/inquiry/admin/vocab) so Render boot succeeds.
+- Normalizer keeps order/insertion data; StudyPage uses apiService.post → 순서배열/문장삽입 문제 복구.
+- README/TODO/DECISIONS refreshed; `auth_logs` captures register/login events.
+
+## Current Focus
+1. Smoke-test production order/insertion flow with 학생 계정.
+2. Continue Phase 2 PDF parser work (marker-first segmentation 등).
+3. Prepare auth log dashboards/reporting for 운영.
+
 ## Deployment Status (2025-09-17)
 - Server: Render blueprint ready (Node 20). DB uses sql.js (no native bindings).
 - Lockfile synced (sqlite3 → sql.js) so `npm ci --omit=dev` is stable on Render.
@@ -127,9 +138,9 @@ pm run encoding:check)
 - Client pending: set Root=`client`, Build=`npm run build`, Output=`build`, and `REACT_APP_API_URL` before redeploy.
 
 ## Next 3 Steps
-1) Render: switch to Starter + attach Disk; set `DB_FILE=/var/data/loe.db`.
-2) Vercel: confirm Root=`client`, Build=`npm run build`, Output=`build`; set `REACT_APP_API_URL` and redeploy latest commit.
-3) Parser Phase 2 tasks (markers/sources/merge) + begin CSAT normalizers.
+1) Vercel: confirm Root=`client`, Build=`npm run build`, Output=`build`; set `REACT_APP_API_URL` and redeploy latest commit.
+2) Auth analytics: surface insights from `auth_logs` (daily register/login counts).
+3) Parser Phase 2: enforce marker/source parity + add regression tests.
 
 ## What Changed (Today)
 - Removed sqlite3 native module; added sql.js; rewrote DB wrapper with same API.
@@ -142,6 +153,8 @@ pm run encoding:check)
 - No more deploy errors → removed native binaries; Render-friendly now.
 
 ## Next 3 Steps
-1) Vercel: set REACT_APP_API_URL = https://<your-render>/api and deploy.
-2) (Option A) Keep free tier (demo): understand data resets on restart; or (Option B) enable persistence: upgrade Render plan, set DB_FILE=/var/data/loe.db and attach disk.
-3) Compact student mode + i18n cleanup (hide admin menus, fix mojibake labels).
+1) Set Vercel `REACT_APP_API_URL` to production Render URL and redeploy latest client.
+2) Build auth log dashboards/reporting on top of `auth_logs`.
+3) Continue Parser Phase 2 polish (source fill + merging tests).
+
+

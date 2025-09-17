@@ -22,9 +22,9 @@ Next (Phase 4)
 - [ ] UI unify for all types; safe inline `<u>` rendering
 
 Deploy
-- [ ] Render Starter + Disk; `DB_FILE=/var/data/loe.db` (persistence)
-- [ ] Vercel: Root=`client`, Build=`npm run build`, Output=`build`
-- [ ] Env (client): `REACT_APP_API_URL = https://<render>/api`
+- [x] Render Starter + Disk; `DB_FILE=/var/data/loe.db` (persistence)
+- [x] Vercel: Root=`client`, Build=`npm run build`, Output=`build`
+- [x] Env (client): `REACT_APP_API_URL = https://<render>/api`
 
 Later
 - [ ] Full set generation script + dashboard check
