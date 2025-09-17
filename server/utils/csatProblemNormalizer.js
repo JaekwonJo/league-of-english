@@ -7,22 +7,53 @@ function toCleanString(value) {
   return String(value).trim();
 }
 
-function toOptionArray(value) {
-  if (!value) return [];
-  if (Array.isArray(value)) {
-    return value
-      .map((item) => toCleanString(item))
-      .filter((item) => item.length > 0);
+function mapMultipleChoices(choices = []) {
+  if (!Array.isArray(choices)) return [];
+  return choices
+    .map((choice) => {
+      if (choice && typeof choice === 'object') {
+        const symbol = toCleanString(choice.symbol || choice.label || '');
+        const value = toCleanString(choice.value || choice.text || choice.order || '');
+        if (!symbol && !value) return null;
+        return `${symbol ? `${symbol} ` : ''}${value}`.trim();
+      }
+      return toCleanString(choice);
+    })
+    .filter((item) => item.length > 0);
+}
+
+function toOptionArray(value, fallbackChoices = []) {
+  if (!value || (Array.isArray(value) && value.length === 0)) {
+    return mapMultipleChoices(fallbackChoices);
   }
+
+  if (Array.isArray(value)) {
+    const mapped = value
+      .map((item) => {
+        if (item && typeof item === 'object') {
+          if ('value' in item || 'text' in item) {
+            return toCleanString(item.value || item.text || item.label || '');
+          }
+        }
+        return toCleanString(item);
+      })
+      .filter((item) => item.length > 0);
+    return mapped.length ? mapped : mapMultipleChoices(fallbackChoices);
+  }
+
   if (typeof value === 'string') {
-    const trimmed = value
+    const lines = value
       .split(/\r?\n/)
       .map((line) => toCleanString(line))
       .filter((line) => line.length > 0);
-    if (trimmed.length > 1) return trimmed;
-    return toCleanString(value) ? [toCleanString(value)] : [];
+    if (lines.length > 1) return lines;
+    const single = toCleanString(value);
+    if (single) return [single];
   }
-  return [toCleanString(value)].filter((item) => item.length > 0);
+
+  const single = toCleanString(value);
+  if (single) return [single];
+  return mapMultipleChoices(fallbackChoices);
 }
 
 function resolveAnswer(problem, options) {
@@ -116,16 +147,18 @@ function normaliseProblem(problem, index) {
   if (!problem || typeof problem !== 'object') return null;
 
   const type = toCleanString(problem.type || problem.problemType || 'generic');
-  const question = toCleanString(problem.question || problem.prompt || FALLBACK_QUESTION);
-  const options = toOptionArray(problem.options || problem.choices || problem.answers);
-
-  if (options.length === 0 && Array.isArray(problem.choices)) {
-    options.push(...toOptionArray(problem.choices));
+  let question = toCleanString(problem.question || problem.prompt || '');
+  if (!question) {
+    if (type === 'order') question = '다음 문장들의 순서를 올바르게 배열한 것은?';
+    else if (type === 'insertion') question = '빈칸에 들어갈 문장의 위치로 가장 적절한 것은?';
+    else question = FALLBACK_QUESTION;
   }
 
+  const fallbackChoices = Array.isArray(problem.multipleChoices) ? problem.multipleChoices : undefined;
+  const options = toOptionArray(problem.options || problem.choices || problem.answers, fallbackChoices);
   const answer = options.length > 0 ? resolveAnswer(problem, options) : null;
 
-  if (options.length > 0 && !answer) return null;
+  if (options.length > 0 && !answer && typeof problem.answer === 'undefined') return null;
   if (!question) return null;
 
   const normalized = {
@@ -133,7 +166,7 @@ function normaliseProblem(problem, index) {
     type,
     question,
     options: options.length ? options : undefined,
-    answer: options.length ? answer : undefined,
+    answer: options.length ? (answer || normaliseAnswerValue(problem.answer, options, 'answer')) : undefined,
     explanation: toCleanString(problem.explanation || problem.reason || ''),
     difficulty: toCleanString(problem.difficulty || DEFAULT_DIFFICULTY) || DEFAULT_DIFFICULTY,
     mainText: toCleanString(problem.mainText || problem.passage || ''),
@@ -147,6 +180,36 @@ function normaliseProblem(problem, index) {
   if (!normalized.metadata) delete normalized.metadata;
 
   if (problem.text) normalized.text = toCleanString(problem.text);
+  if (Array.isArray(problem.multipleChoices)) {
+    normalized.multipleChoices = problem.multipleChoices.map((choice) => ({
+      number: choice.number || parseInt(choice.value || choice.text || choice.label || choice.symbol, 10) || undefined,
+      symbol: toCleanString(choice.symbol || choice.label || ''),
+      value: toCleanString(choice.value || choice.text || choice.order || ''),
+    }));
+    if (!normalized.options || normalized.options.length === 0) {
+      const derived = normalized.multipleChoices.map((choice) => choice.value).filter((v) => v.length > 0);
+      if (derived.length === normalized.multipleChoices.length) {
+        normalized.options = derived;
+        const fallbackAnswer = normaliseAnswerValue(problem.answer, normalized.options, 'answer');
+        if (fallbackAnswer) normalized.answer = fallbackAnswer;
+      }
+    }
+  }
+
+  if (Array.isArray(problem.sentences)) {
+    normalized.sentences = problem.sentences.map((item) => {
+      if (item && typeof item === 'object') {
+        return {
+          label: toCleanString(item.label || item.symbol || ''),
+          text: toCleanString(item.text || item.value || ''),
+        };
+      }
+      return { label: '', text: toCleanString(item) };
+    });
+  }
+  if (problem.givenSentence) normalized.givenSentence = toCleanString(problem.givenSentence);
+  if (problem.correctOrder) normalized.correctOrder = toCleanString(problem.correctOrder);
+
   if (problem.choices && normalized.options) normalized.choices = [...normalized.options];
   if (problem.sequence) normalized.sequence = problem.sequence;
   if (problem.id) normalized.originalId = problem.id;
