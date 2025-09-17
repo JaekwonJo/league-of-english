@@ -143,6 +143,7 @@ router.post('/get-smart-problems', verifyToken, checkDailyLimit, async (req, res
               type:'grammar_span',
               question: g.question,
               text: g.text,
+              choices: g.choices,
               correctAnswer: String(g.correctAnswer || g.answer),
               explanation: g.explanation || '',
               difficulty:'basic',
@@ -501,7 +502,7 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
           const p = passages[n%passages.length];
           const g = generateGrammarSpanProblem(p);
           if(g && g.text){
-            out.push({ id:`grammar_${Date.now()}_${n}`, type:'grammar_span', question:g.question, text:g.text, choices: g.choices || [''①'',''②'',''③'',''④'',''⑤''], correctAnswer:String(g.correctAnswer||g.answer), explanation:g.explanation||'', difficulty:'basic', documentTitle: document.title||'', passageNumber:(n%passages.length)+1, metadata:{ originalTitle: document.title||'', problemNumber: `p${(n%passages.length)+1}-no.${n+1}` } });
+            out.push({ id:`grammar_${Date.now()}_${n}`, type:'grammar_span', question:g.question, text:g.text, choices: g.choices, correctAnswer:String(g.correctAnswer||g.answer), explanation:g.explanation||'', difficulty:'basic', documentTitle: document.title||'', passageNumber:(n%passages.length)+1, metadata:{ originalTitle: document.title||'', problemNumber: `p${(n%passages.length)+1}-no.${n+1}` } });
             n++;
           }
           i++;
