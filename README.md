@@ -104,15 +104,32 @@ pm run encoding:check)
 ### ETA to “stable use”
 - 2?3 days to stable usage (then 1?2 days QA/bugfix)
 
-## Deployment Status (2025-09-16)
+## Deployment Status (2025-09-17)
 - Server: Render blueprint ready (Node 20). DB uses sql.js (no native bindings).
-- DB file path: DB_FILE=/tmp/loe.db on free tier (ephemeral). Use Starter+disk for persistence.
-- Client: Deploy to Vercel with REACT_APP_API_URL pointing to Render URL + /api.
+- Lockfile synced (sqlite3 → sql.js) so `npm ci --omit=dev` is stable on Render.
+- Added grammar span generator util; routes now include `choices` for `grammar_span` items.
+- Removed unicode fallback in routes to avoid parse errors.
+- DB file path: `DB_FILE=/tmp/loe.db` on free tier (ephemeral). Use Starter+disk for persistence.
+- Client: Deploy to Vercel with `REACT_APP_API_URL` pointing to Render URL + `/api`.
 
 ## Production (Persistent DB)
 - Want data to persist across restarts? Use Render Starter + disk.
 - Quick guide: `docs/DEPLOY_PRODUCTION_CHECKLIST.md`
 - Or use `render.starter.yaml` blueprint (plan: starter, disk at `/var/data`).
+
+## Today’s Changes (2025-09-17)
+- Fix: Render build error (`npm ci` mismatch) by syncing `package-lock.json`.
+- Fix: Runtime crash (MODULE_NOT_FOUND) by adding `server/utils/grammarSpanGenerator.js`.
+- Fix: SyntaxError from unicode fallback; now using generator-provided `choices` only.
+
+## Where We Are (Phase)
+- Server up with sql.js; grammar routes stable.
+- Client pending: set Root=`client`, Build=`npm run build`, Output=`build`, and `REACT_APP_API_URL` before redeploy.
+
+## Next 3 Steps
+1) Render: switch to Starter + attach Disk; set `DB_FILE=/var/data/loe.db`.
+2) Vercel: confirm Root=`client`, Build=`npm run build`, Output=`build`; set `REACT_APP_API_URL` and redeploy latest commit.
+3) Parser Phase 2 tasks (markers/sources/merge) + begin CSAT normalizers.
 
 ## What Changed (Today)
 - Removed sqlite3 native module; added sql.js; rewrote DB wrapper with same API.
