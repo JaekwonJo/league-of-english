@@ -1,6 +1,11 @@
-# TODO (Working Plan) — 2025-09-17
+# TODO (Working Plan) — 2025-09-18
 
 Now
+- Local Dev Access Recovery
+  - [x] Verified Windows PowerShell `npm run dev:all` brings up the client (HTTP 200 on /).
+  - [x] Documented PowerShell vs WSL guidance in README 2025-09-18 summary.
+  - [ ] Install Node 20 inside WSL (nvm or NodeSource) and retest tmux-based dev flow.
+
 - Render Deploy Stability
   - [x] Sync package-lock with package.json (sqlite3 → sql.js) to satisfy `npm ci`
   - [x] Add `server/utils/grammarSpanGenerator.js` and include `choices` in `grammar_span` routes

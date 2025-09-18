@@ -2,6 +2,14 @@
 
 ?숈깮쨌援먯궗瑜??꾪븳 ?곸뼱 ?숈뒿/臾명빆 ?앹꽦 ?뚮옯?쇱엯?덈떎. PDF/TXT ?낅줈????遺꾩꽍/?뚰겕?쒗듃/?숈뒿源뚯? ??踰덉뿉 吏꾪뻾?⑸땲?? CSAT ?ㅽ???5吏?좊떎/臾몄젣 臾멸뎄 ?듭씪/利앷굅 ?쇱씤) 洹쒖튃??吏?ㅻ뒗 寃껋쓣 ?듭떖 紐⑺몴濡??⑸땲??
 
+
+## 2025-09-18 Quick Summary
+- Current stage: local dev environment stabilization so the login page opens reliably.
+- Today's work: restarted dev servers from Windows PowerShell, confirmed HTTP 200 from http://localhost:3000, documented the WSL Node gap, and cleared the port 5000 conflict.
+- Requests covered: guided the localhost access fix, explained the PowerShell choice, and captured the steps in README/TODO.
+- Prevent repeat: keep dev commands in Windows until Node LTS lives in WSL (or install via nvm), release port 5000 before reruns, and follow the quick restart checklist.
+- Next three steps: (1) Install Node 20 inside WSL and retry `npm run dev:all`. (2) Script a `npm run dev:check` that pings ports 3000/5000. (3) Resume PDF parser Phase 2 once the environment stays green.
+
 ## 기여 안내
 - 처음 참여하는 분은 [AGENTS.md](AGENTS.md) 문서에서 작업 순서와 규칙을 확인하세요.
 
