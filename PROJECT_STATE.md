@@ -1,4 +1,4 @@
-# PROJECT_STATE.md
+ï»¿# PROJECT_STATE.md
 
 ## What we're building
 - League of English React SPA (problem authoring, solving, analysis, teacher/admin tools)
@@ -11,33 +11,35 @@
 ## Decisions (key)
 - API base URL comes from `client/.env` `REACT_APP_API_URL` (defaults to `http://localhost:5000/api`).
 - Auth API: `/api/auth/login`, `/api/auth/register` store tokens and profile info in `localStorage`.
-- Grammar span problems return both `<u>...</u>` markup and `choices/options` arrays.
-- PDF ¡æ manual refresh is standardised through `node scripts/update-problem-manuals.js` so the AI always reads the latest writer guidance.
-- Sentence-insertion generator outputs full passages with circled markers (¨ç~¨ë) and balanced choice windows (2025-09-22).
+- Grammar generators now ship single-answer (`grammar`) and multi-answer (`grammar_multi`) items with cached `<u>...</u>` spans so the study app can underline targets reliably.
+- Problem manuals stay in sync via `node scripts/update-problem-manuals.js`; AI prompts always reference the latest guidance PDFs.
+- Sentence-insertion generator outputs full passages with circled markers (â‘ ~â‘¤) and balanced choice windows (2025-09-22).
 
 ## Current Stage
-- Core content pipelines are aligned (manual sync + insertion generator). Focus now is wiring complete study flow: generation ¡æ practise ¡æ scoring ¡æ analytics.
+- Core pipelines (PDF â†’ manuals â†’ API) are aligned; we just wired grammar basic/advanced items into caching and the study UI. Next focus: broaden the other AI question types and connect scoring/analytics.
 
 ## Next 3 (priority)
-1) (P1) End-to-end smoke test of circled-marker insertion problems in teacher preview & study UI, capturing screenshots for sign-off (ensures new format renders correctly).
-2) (P1) Draft the scoring + ranking contract (API + DB schema) so student attempts can be persisted and tier logic designed before UI wiring.
-3) (P2) Document contributor FAQ covering manual sync, problem generation scripts, and new insertion behaviour to reduce onboarding overhead.
+1) (P1) QA grammar-basic/advanced flows end-to-end (API cache â†’ study UI multi-select) and capture regression scenarios for automated tests.
+2) (P1) Port the remaining AI question types (blank/vocab/summary/title/theme) onto the same cached-problem contract so the study loop is consistent.
+3) (P1) Draft the scoring & ranking schema/API so attempt storage, tier updates, and leaderboard math can move forward.
 
 ## Roadmap (high level)
-1. ¹®Á¦ ÀúÀÛ ÀÚµ¿È­: PDF ¾÷·Îµå ¡æ ¹®Á¦ ÀÚµ¿ »ý¼º ÆÄÀÌÇÁ¶óÀÎ °íµµÈ­ ¹× Å×½ºÆ® ÀÚµ¿È­.
-2. ÇÐ½À/Ç®ÀÌ °æÇè: ÇÐ»ý ´ë½Ãº¸µå, Å¸ÀÌ¸Ó, Áï½Ã Ã¤Á¡, ¿À´ä/¸®ºä Èå¸§ ±¸Ãà.
-3. Á¡¼ö ÀúÀå ¹× ºÐ¼®: Supabase/PostgreSQL ±â¹Ý Á¡¼ö ÀúÀå, API ¼³°è, °³ÀÎ¡¤ÇÐ±Þ Åë°è ÆäÀÌÁö ±¸Ãà.
-4. ·©Å©/Æ¼¾î ½Ã½ºÅÛ: ½ÃÁðº° Elo/±¸°£ ¼³°è, ÇÁ·ÎÇÊ/·©Å· ÆäÀÌÁö(UX, ¾ÆÀÌÄÜ, º¸»ó) ±¸Çö.
-5. ºÐ¼®º» & ÇÐ½À °¡ÀÌµå: ¹®Ç×º° AI ÇØ¼³/¸®ºä Á¦°ø, ±³»ç¿ë ºÐ¼® ¸®Æ÷Æ® ÀÚµ¿ »ý¼º.
-6. ¿î¿µ ¹× ¹èÆ÷: Render(backend) + Vercel(frontend) + Supabase(DB) CI/CD ÆÄÀÌÇÁ¶óÀÎ ±¸¼º, ¸ð´ÏÅÍ¸µ/¾Ë¸² ¼¼ÆÃ.
+1. Automate problem generation from PDFs/manuals with deterministic QA steps.
+2. Build complete study loop: author â†’ practise â†’ scoring â†’ review/analysis.
+3. Persist attempts and analytics (Supabase/PostgreSQL + API contracts).
+4. Stand up tier/ranking service, UX, and notification hooks.
+5. Layer in AI explainers/analysis tooling for teachers and students.
+6. Production ops: Render (backend) + Vercel (frontend) + Supabase (DB) CI/CD, monitoring, incident playbooks.
 
 ## Known issues
-- Full end-to-end verification of the new insertion output in the React UI is still pending (needs manual QA and snapshots).
-- Scoring persistence & ranking DB schema not implemented yet; API contracts must be defined before wiring Study flow.
-- Automated tests around problem generators and manual sync are minimal; regression risk remains high until coverage improves.
+- ESLint config is still missing; `npm run lint` fails. Need a shared config (or update scripts) before enforcing linting in CI.
+- Manual QA for insertion problems is still pending (screenshots + acceptance); same needs to happen for the new grammar multi-select flow.
+- Automated regression coverage for generators remains thin; failures depend on console smoke tests.
+- Scoring persistence & ranking APIs are blocked until the contract in "Next 3" is drafted.
 
 ## Resolved (recent)
 - 2025-09-22: Refactored `InsertionProblemGenerator2` so passages remain intact and markers render as circled numerals with balanced windows.
 - Introduced `scripts/update-problem-manuals.js` so manuals stay in lockstep with the source PDFs.
 - Synced README/BUILDLOG/PROJECT_STATE to document the refresh workflow for future contributors.
-- Earlier fixes (PowerShell dev loop + grammar_span UI alignment) remain stable after today¡¯s changes.
+- 2025-09-23: Implemented grammar-basic/multi API caching, added `/generate/grammar`, and upgraded the study UI with multi-answer support and answer normalization.
+- Earlier fixes (PowerShell dev loop + grammar-span UI alignment) remain stable after todayâ€™s changes.

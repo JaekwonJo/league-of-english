@@ -132,65 +132,72 @@ router.post('/get-smart-problems', verifyToken, checkDailyLimit, async (req, res
         if (aiService?.generateImplicit) out.push(...await aiService.generateImplicit(parseInt(documentId), c));
       }
       else if (t === 'grammar') {
-        const isAdvanced = (grammarDifficulty || 'basic').toLowerCase() === 'advanced';
-        let produced = 0;
+        const mode = (grammarDifficulty || 'basic').toLowerCase() === 'advanced' ? 'advanced' : 'basic';
+        const typeKey = mode === 'advanced' ? 'grammar_multi' : 'grammar';
+        const produced = [];
 
-        if (isAdvanced && aiService?.generateGrammarSpanAI) {
+        try {
+          const cached = await fetchCachedExcludingRecent(documentId, typeKey, req.user.id, c);
+          if (Array.isArray(cached) && cached.length) {
+            produced.push(...cached);
+          }
+        } catch (err) {
+          console.warn('[grammar] cache fetch failed:', err?.message || err);
+        }
+
+        if (produced.length < c && aiService?.generateGrammar) {
           try {
-            const advancedProblems = await aiService.generateGrammarSpanAI(parseInt(documentId), c);
-            if (Array.isArray(advancedProblems) && advancedProblems.length) {
-              const limited = advancedProblems.slice(0, c);
-              out.push(...limited.map((item, index) => ({
-                id: item.id || `grammar_ai_${Date.now()}_${index}`,
-                type: item.type || 'grammar_span',
-                question: item.question || '다음 글의 밑줄 친 부분 중 문법상 옳지 않은 것을 고르세요.',
-                text: item.text || item.mainText || '',
-                mainText: item.mainText || item.text || '',
-                choices: item.choices || [],
-                options: item.choices || [],
-                correctAnswer: String(item.correctAnswer ?? item.answer ?? ''),
-                explanation: item.explanation || '',
-                difficulty: 'advanced',
-                documentTitle: document.title || '',
-                passageNumber: item.passageNumber || ((index % passages.length) + 1),
-                metadata: { originalTitle: document.title || '', ...(item.metadata || {}) }
-              })));
-              produced = limited.length;
+            const generated = await aiService.generateGrammar(parseInt(documentId), c - produced.length, { difficulty: mode });
+            const normalizedGenerated = (generated || []).map((item, index) => ({
+              id: item.id || ('grammar_ai_' + Date.now() + '_' + index),
+              type: typeKey,
+              question: item.question || '다음 중 밑줄 친 부분에서 문법상 옳지 않은 문장을 고르시오.',
+              options: item.options || item.choices || [],
+              answer: String(item.answer ?? item.correctAnswer ?? ''),
+              explanation: item.explanation || '',
+              difficulty: item.difficulty || mode,
+              mainText: item.mainText || item.text || '',
+              metadata: item.metadata || { docTitle: document.title || '' }
+            }));
+            produced.push(...normalizedGenerated);
+            if (normalizedGenerated.length) {
+              try {
+                await aiService.saveProblems(parseInt(documentId), typeKey, normalizedGenerated);
+              } catch (saveErr) {
+                console.warn('[grammar] cache save failed:', saveErr?.message || saveErr);
+              }
             }
           } catch (err) {
-            console.warn('[grammar][advanced] generation failed:', err?.message || err);
+            console.warn('[grammar] AI generation failed:', err?.message || err);
           }
         }
 
-        const remaining = Math.max(0, c - produced);
-        if (remaining > 0) {
-          let n = 0;
-          let i = 0;
-          while (n < remaining && i < passages.length * 3) {
-            const passageIndex = (produced + n) % passages.length;
+        if (produced.length < c) {
+          let fallbackCount = 0;
+          let attempt = 0;
+          while (produced.length < c && attempt < passages.length * 3) {
+            const passageIndex = produced.length % passages.length;
             const p = passages[passageIndex];
             const g = generateGrammarSpanProblem(p);
             if (g && g.text) {
-              out.push({
-                id: `grammar_${Date.now()}_${produced + n}`,
+              produced.push({
+                id: 'grammar_' + Date.now() + '_' + fallbackCount,
                 type: 'grammar_span',
                 question: g.question,
-                text: g.text,
-                mainText: g.text,
-                choices: g.choices,
                 options: g.choices,
-                correctAnswer: String(g.correctAnswer || g.answer || ''),
+                answer: String(g.correctAnswer || g.answer || ''),
                 explanation: g.explanation || '',
                 difficulty: 'basic',
-                documentTitle: document.title || '',
-                passageNumber: passageIndex + 1,
-                metadata: { originalTitle: document.title || '', problemNumber: `p${passageIndex + 1}-no.${produced + n + 1}` }
+                mainText: g.text,
+                metadata: { originalTitle: document.title || '', passageNumber: passageIndex + 1 }
               });
-              n++;
+              fallbackCount += 1;
             }
-            i++;
+            attempt += 1;
           }
         }
+
+        out.push(...produced.slice(0, c));
       } else if (t === 'blank') {
         if (aiService?.generateBlank) out.push(...await aiService.generateBlank(parseInt(documentId), c));
         else {
@@ -236,6 +243,63 @@ router.post('/get-smart-problems', verifyToken, checkDailyLimit, async (req, res
 });
 
 // AI problem generation endpoints (title/topic/summary/vocab/blank)
+router.post('/generate/grammar', verifyToken, checkDailyLimit, async (req, res) => {
+  try {
+    const { documentId, count = 5, difficulty = 'basic' } = req.body || {};
+    if (!documentId) return res.status(400).json({ message: 'documentId is required' });
+    const mode = String(difficulty || 'basic').toLowerCase() === 'advanced' ? 'advanced' : 'basic';
+    const typeKey = mode === 'advanced' ? 'grammar_multi' : 'grammar';
+
+    let produced = [];
+    try {
+      produced = await fetchCachedExcludingRecent(documentId, typeKey, req.user.id, count);
+    } catch (err) {
+      console.warn('[generate/grammar] cache fetch failed:', err?.message || err);
+    }
+
+    if (produced.length < count) {
+      if (!aiService?.generateGrammar) {
+        return res.status(503).json({ message: 'AI generator unavailable for grammar. Try again later.' });
+      }
+      try {
+        const generated = await aiService.generateGrammar(parseInt(documentId), count - produced.length, { difficulty: mode });
+        const normalizedGenerated = (generated || []).map((item, index) => ({
+          id: item.id || ('grammar_ai_' + Date.now() + '_' + index),
+          type: typeKey,
+          question: item.question || '다음 중 밑줄 친 부분에서 문법상 옳지 않은 문장을 고르시오.',
+          options: item.options || item.choices || [],
+          answer: String(item.answer ?? item.correctAnswer ?? ''),
+          explanation: item.explanation || '',
+          difficulty: item.difficulty || mode,
+          mainText: item.mainText || item.text || '',
+          metadata: item.metadata || {}
+        }));
+        produced.push(...normalizedGenerated);
+        if (normalizedGenerated.length) {
+          try {
+            await aiService.saveProblems(parseInt(documentId), typeKey, normalizedGenerated);
+          } catch (saveErr) {
+            console.warn('[generate/grammar] cache save failed:', saveErr?.message || saveErr);
+          }
+        }
+      } catch (err) {
+        console.error('[generate/grammar] AI generation failed:', err?.message || err);
+      }
+    }
+
+    if (produced.length === 0) {
+      return res.status(503).json({ message: 'Grammar generator unavailable. Please retry later.' });
+    }
+
+    const finalProblems = produced.slice(0, count);
+    await updateUsage(req.user.id, finalProblems.length);
+    res.json({ problems: finalProblems, count: finalProblems.length });
+  } catch (e) {
+    console.error('[generate/grammar] error:', e);
+    res.status(500).json({ message: 'Grammar generation failed.' });
+  }
+});
+
 router.post('/generate/blank', verifyToken, checkDailyLimit, async (req, res) => {
   try {
     const { documentId, count = 5 } = req.body || {};
@@ -533,16 +597,72 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
         if (aiService?.generateImplicit) out.push(...await aiService.generateImplicit(parseInt(documentId), c));
       }
       else if (t === 'grammar') {
-        let n=0,i=0;
-        while(n<c && i<passages.length*3){
-          const p = passages[n%passages.length];
-          const g = generateGrammarSpanProblem(p);
-          if(g && g.text){
-            out.push({ id:`grammar_${Date.now()}_${n}`, type:'grammar_span', question:g.question, text:g.text, choices: g.choices, correctAnswer:String(g.correctAnswer||g.answer), explanation:g.explanation||'', difficulty:'basic', documentTitle: document.title||'', passageNumber:(n%passages.length)+1, metadata:{ originalTitle: document.title||'', problemNumber: `p${(n%passages.length)+1}-no.${n+1}` } });
-            n++;
+        const mode = (grammarDifficulty || 'basic').toLowerCase() === 'advanced' ? 'advanced' : 'basic';
+        const typeKey = mode === 'advanced' ? 'grammar_multi' : 'grammar';
+        const produced = [];
+
+        try {
+          const cached = await fetchCachedExcludingRecent(documentId, typeKey, req.user.id, c);
+          if (Array.isArray(cached) && cached.length) {
+            produced.push(...cached);
           }
-          i++;
+        } catch (err) {
+          console.warn('[grammar] cache fetch failed:', err?.message || err);
         }
+
+        if (produced.length < c && aiService?.generateGrammar) {
+          try {
+            const generated = await aiService.generateGrammar(parseInt(documentId), c - produced.length, { difficulty: mode });
+            const normalizedGenerated = (generated || []).map((item, index) => ({
+              id: item.id || ('grammar_ai_' + Date.now() + '_' + index),
+              type: typeKey,
+              question: item.question || '다음 중 밑줄 친 부분에서 문법상 옳지 않은 문장을 고르시오.',
+              options: item.options || item.choices || [],
+              answer: String(item.answer ?? item.correctAnswer ?? ''),
+              explanation: item.explanation || '',
+              difficulty: item.difficulty || mode,
+              mainText: item.mainText || item.text || '',
+              metadata: item.metadata || { docTitle: document.title || '' }
+            }));
+            produced.push(...normalizedGenerated);
+            if (normalizedGenerated.length) {
+              try {
+                await aiService.saveProblems(parseInt(documentId), typeKey, normalizedGenerated);
+              } catch (saveErr) {
+                console.warn('[grammar] cache save failed:', saveErr?.message || saveErr);
+              }
+            }
+          } catch (err) {
+            console.warn('[grammar] AI generation failed:', err?.message || err);
+          }
+        }
+
+        if (produced.length < c) {
+          let fallbackCount = 0;
+          let attempt = 0;
+          while (produced.length < c && attempt < passages.length * 3) {
+            const passageIndex = produced.length % passages.length;
+            const p = passages[passageIndex];
+            const g = generateGrammarSpanProblem(p);
+            if (g && g.text) {
+              produced.push({
+                id: 'grammar_' + Date.now() + '_' + fallbackCount,
+                type: 'grammar_span',
+                question: g.question,
+                options: g.choices,
+                answer: String(g.correctAnswer || g.answer || ''),
+                explanation: g.explanation || '',
+                difficulty: 'basic',
+                mainText: g.text,
+                metadata: { originalTitle: document.title || '', passageNumber: passageIndex + 1 }
+              });
+              fallbackCount += 1;
+            }
+            attempt += 1;
+          }
+        }
+
+        out.push(...produced.slice(0, c));
       } else if (t === 'blank') {
         if (aiService?.generateBlank) out.push(...await aiService.generateBlank(parseInt(documentId), c));
         else {

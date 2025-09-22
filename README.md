@@ -4,6 +4,7 @@ League of English is a web application that helps students and teachers generate
 
 ## Main Features
 - Upload English passages (PDF/TXT) and generate CSAT problem sets (order, insertion, grammar, vocab, etc.).
+- Generate grammar questions in basic (single-error) and advanced (multi-answer) modes with cached AI outputs.
 - Solve problems with timers, automatic scoring, and result dashboards.
 - Analyse passages sentence-by-sentence with AI-generated explanations.
 - Admin tools for document management, ranking, and vocab exercises.

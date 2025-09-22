@@ -59,19 +59,35 @@ const StudyPage = () => {
       let totalCorrect = 0;
       let totalTime = 0;
 
+      const normalizeAnswerArray = (value) => {
+        if (value === null || value === undefined) return [];
+        return String(value)
+          .replace(/[\[\]{}]/g, '')
+          .split(/[\s,]+/)
+          .filter(Boolean)
+          .map((token) => parseInt(token, 10))
+          .filter((num) => !Number.isNaN(num))
+          .sort((a, b) => a - b);
+      };
+
       for (let i = 0; i < problems.length; i++) {
         const problem = problems[i];
         const userAnswer = answers[i];
         const spent = timeSpent[i] || 0;
-        const isCorrect = String(problem.answer) === String(userAnswer);
+        const expectedArray = normalizeAnswerArray(problem.answer);
+        const actualArray = normalizeAnswerArray(userAnswer);
+        const fallbackCompare = String(problem.answer) === String(userAnswer);
+        const isCorrect = expectedArray.length > 0
+          ? (actualArray.length === expectedArray.length && expectedArray.every((value, idx) => value === actualArray[idx]))
+          : fallbackCompare;
         if (isCorrect) totalCorrect += 1;
         totalTime += spent;
         studyResults.push({
           problem,
           problemType: problem.type,
           question: problem.question || problem.instruction || '',
-          userAnswer: userAnswer !== undefined ? String(userAnswer) : '',
-          correctAnswer: problem.answer !== undefined ? String(problem.answer) : '',
+          userAnswer: actualArray.length ? actualArray.join(',') : (userAnswer !== undefined ? String(userAnswer) : ''),
+          correctAnswer: expectedArray.length ? expectedArray.join(',') : (problem.answer !== undefined ? String(problem.answer) : ''),
           isCorrect,
           timeSpent: Math.round(spent / 1000),
         });

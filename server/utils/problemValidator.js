@@ -18,9 +18,21 @@ function hasValidOptions(problem) {
 function hasValidAnswer(problem) {
   if (!isNonEmptyString(problem.answer)) return false;
   if (!Array.isArray(problem.options) || problem.options.length === 0) return false;
-  if (!/^\d+$/.test(problem.answer.trim())) return false;
-  const idx = parseInt(problem.answer.trim(), 10);
-  return idx >= 1 && idx <= problem.options.length;
+
+  const tokens = String(problem.answer)
+    .replace(/[\[\]{}]/g, '')
+    .split(/[\s,]+/)
+    .filter(Boolean);
+  if (tokens.length === 0) return false;
+
+  const numbers = [];
+  for (const token of tokens) {
+    if (!/^\d+$/.test(token)) return false;
+    const idx = parseInt(token, 10);
+    if (Number.isNaN(idx) || idx < 1 || idx > problem.options.length) return false;
+    numbers.push(idx);
+  }
+  return new Set(numbers).size === numbers.length;
 }
 
 function isValid(problem) {

@@ -73,7 +73,7 @@ const ProblemDisplay = ({
 
   const isOrder = problem.type === 'order';
   const isInsertion = problem.type === 'insertion';
-  const isGrammar = ['grammar', 'grammar_count', 'grammar_span'].includes(problem.type);
+  const isGrammar = ['grammar', 'grammar_count', 'grammar_span', 'grammar_multi'].includes(problem.type);
   const isGeneral = !isOrder && !isInsertion && !isGrammar;
 
   const cardStyle = {

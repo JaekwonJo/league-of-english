@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { orderStyles } from './problemDisplayStyles';
 
 const underlineStyle = {
@@ -12,30 +12,54 @@ const underlineStyle = {
   color: 'inherit'
 };
 
+const parseAnswerValue = (value) => {
+  if (value === null || value === undefined) return [];
+  return String(value)
+    .replace(/[\[\]{}]/g, '')
+    .split(/[\s,]+/)
+    .filter(Boolean)
+    .map((token) => parseInt(token, 10))
+    .filter((num) => !Number.isNaN(num));
+};
+
 const GrammarProblemDisplay = ({ problem, onAnswer, userAnswer, showResult }) => {
-  const [selectedAnswer, setSelectedAnswer] = useState(userAnswer || null);
   const isCountType = problem.type === 'grammar_count';
   const isSpanType = problem.type === 'grammar_span';
+  const isMultiSelect = problem.type === 'grammar_multi' || problem?.metadata?.selectionMode === 'multi';
+
+  const [selected, setSelected] = useState(() => parseAnswerValue(userAnswer));
 
   useEffect(() => {
-    setSelectedAnswer(userAnswer || null);
+    setSelected(parseAnswerValue(userAnswer));
   }, [userAnswer]);
 
-  const normalizedCorrect = Number(problem.correctAnswer ?? problem.answer ?? 0);
+  const correctAnswers = parseAnswerValue(problem.correctAnswer ?? problem.answer);
+  const selectedSet = new Set(selected);
+  const correctSet = new Set(correctAnswers);
 
   const handleSelect = (choiceNumber) => {
     if (showResult) return;
-    const value = Number(choiceNumber);
-    setSelectedAnswer(value);
-    onAnswer(String(value));
+
+    if (isMultiSelect) {
+      setSelected((prev) => {
+        const exists = prev.includes(choiceNumber);
+        const next = exists ? prev.filter((value) => value !== choiceNumber) : [...prev, choiceNumber];
+        next.sort((a, b) => a - b);
+        const answerValue = next.length ? next.join(',') : '';
+        onAnswer(answerValue);
+        return next;
+      });
+    } else {
+      setSelected([choiceNumber]);
+      onAnswer(String(choiceNumber));
+    }
   };
 
   const getChoiceStyle = (choiceNumber) => {
     const baseStyle = { ...orderStyles.multipleChoiceButton, width: '100%' };
-    const selected = Number(selectedAnswer);
 
     if (showResult) {
-      if (choiceNumber === normalizedCorrect) {
+      if (correctSet.has(choiceNumber)) {
         return {
           ...baseStyle,
           background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
@@ -43,7 +67,7 @@ const GrammarProblemDisplay = ({ problem, onAnswer, userAnswer, showResult }) =>
           color: 'white'
         };
       }
-      if (choiceNumber === selected && choiceNumber !== normalizedCorrect) {
+      if (selectedSet.has(choiceNumber) && !correctSet.has(choiceNumber)) {
         return {
           ...baseStyle,
           background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
@@ -51,7 +75,10 @@ const GrammarProblemDisplay = ({ problem, onAnswer, userAnswer, showResult }) =>
           color: 'white'
         };
       }
-    } else if (choiceNumber === selected) {
+      return baseStyle;
+    }
+
+    if (selectedSet.has(choiceNumber)) {
       return { ...baseStyle, ...orderStyles.multipleChoiceSelected };
     }
 
@@ -62,7 +89,6 @@ const GrammarProblemDisplay = ({ problem, onAnswer, userAnswer, showResult }) =>
     if (!input) return null;
     let str = String(input);
 
-    // Normalize custom markers like <<1>>text<</1>> to <u>text</u>
     str = str.replace(/<<\s*(\d+)\s*>>/g, '<u>').replace(/<\/\s*(\d+)\s*>>/g, '</u>');
 
     const tokens = str.split(/(<\/?u>)/i);
@@ -116,6 +142,16 @@ const GrammarProblemDisplay = ({ problem, onAnswer, userAnswer, showResult }) =>
       })
     : [];
 
+  const selectionLabel = isMultiSelect
+    ? '아래에서 정답을 모두 선택하세요'
+    : '아래에서 정답을 선택하세요';
+  const answerString = selected.length ? selected.join(',') : '';
+  const correctString = correctAnswers.length ? correctAnswers.join(',') : '';
+  const isCorrectSelection =
+    selected.length > 0 &&
+    selected.length === correctAnswers.length &&
+    selected.every((value, idx) => value === correctAnswers[idx]);
+
   return (
     <>
       {problem.source && (
@@ -125,7 +161,7 @@ const GrammarProblemDisplay = ({ problem, onAnswer, userAnswer, showResult }) =>
       )}
 
       <div style={orderStyles.orderInstruction}>
-        Q. {problem.question || '다음 글의 밑줄 친 부분에 문법 오류가 있는 것은?'}
+        Q. {problem.question || '다음 문장에서 문법 오류를 찾아 선택하세요.'}
       </div>
 
       {(isCountType || isSpanType) && (problem.text || problem.mainText) && (
@@ -135,9 +171,7 @@ const GrammarProblemDisplay = ({ problem, onAnswer, userAnswer, showResult }) =>
       )}
 
       <div style={{ marginBottom: '20px' }}>
-        <div style={orderStyles.sentencesLabel}>
-          {isCountType ? '아래에서 [오류 개수]를 선택하세요' : '아래에서 [정답]을 선택하세요'}
-        </div>
+        <div style={orderStyles.sentencesLabel}>{selectionLabel}</div>
         {choiceList.length === 0 ? (
           <div style={{ color: '#dc2626', padding: '12px 0' }}>
             선택지가 준비되지 않았어요. 관리자에게 문의해주세요.
@@ -163,18 +197,17 @@ const GrammarProblemDisplay = ({ problem, onAnswer, userAnswer, showResult }) =>
           <div
             style={{
               ...orderStyles.orderGivenText,
-              background:
-                Number(selectedAnswer) === normalizedCorrect
-                  ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-                  : 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
+              background: isCorrectSelection
+                ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+                : 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
               color: 'white'
             }}
           >
             <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '10px' }}>
-              {Number(selectedAnswer) === normalizedCorrect ? '정답입니다!' : '아쉽습니다!'}
+              {isCorrectSelection ? '정답입니다!' : '다시 확인해보세요'}
             </div>
             <div style={{ fontSize: '14px', marginBottom: '12px' }}>
-              정답: {normalizedCorrect || '정보 없음'}
+              정답: {correctString || '정보 없음'}
             </div>
             {problem.explanation && (
               <div style={{ fontSize: '14px', lineHeight: '1.6' }}>

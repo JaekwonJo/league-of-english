@@ -5,9 +5,7 @@ const ZERO_BASED_KEYS = new Set(['correctanswer', 'correct_index', 'correctindex
 function toCleanString(value) {
   if (value === null || value === undefined) return '';
   return String(value).trim();
-}
-
-function mapMultipleChoices(choices = []) {
+}\n\nfunction parseAnswerTokens(value, optionCount, zeroBased = false) {\n  if (value === null || value === undefined) return [];\n  const normalized = Array.isArray(value)\n    ? value.flatMap((item) => (typeof item === 'string' ? item.split(/[\\,\\s]+/) : [item]))\n    : String(value).replace(/[\\[\\]{}]/g, '').split(/[\\,\\s]+/);\n  const numbers = [];\n  for (const token of normalized) {\n    if (token === null || token === undefined) continue;\n    const str = String(token).trim();\n    if (!str || !/^-?\\d+$/.test(str)) continue;\n    let num = parseInt(str, 10);\n    if (Number.isNaN(num)) continue;\n    if (zeroBased) num += 1;\n    numbers.push(num);\n  }\n  return [...new Set(numbers)].filter((n) => n >= 1 && (!optionCount || n <= optionCount)).sort((a, b) => a - b);\n}\n\nfunction mapMultipleChoices(choices = []) {
   if (!Array.isArray(choices)) return [];
   return choices
     .map((choice) => {
@@ -60,6 +58,8 @@ function resolveAnswer(problem, options) {
   const keys = [
     'answer',
     'correctAnswer',
+    'correctAnswers',
+    'answers',
     'correct',
     'solution',
     'correctIndex',
@@ -89,36 +89,47 @@ function resolveAnswer(problem, options) {
 }
 
 function normaliseAnswerValue(value, options, key) {
+  const optionCount = options.length;
   const token = typeof key === 'string' ? key.toLowerCase() : '';
   const zeroBased = ZERO_BASED_KEYS.has(token);
 
   if (value === null || value === undefined) return null;
 
+  const looksLikeMulti = Array.isArray(value) || (typeof value === 'string' && /[,\s]/.test(String(value).replace(/[\[\]{}]/g, '')));
+  if (looksLikeMulti) {
+    const answers = parseAnswerTokens(value, optionCount, zeroBased);
+    if (!answers.length) return null;
+    if (answers.length === 1) return String(answers[0]);
+    return answers.join(',');
+  }
+
   if (typeof value === 'number') {
     const index = Math.trunc(value);
-    if (zeroBased && index >= 0 && index < options.length) return String(index + 1);
-    if (index >= 1 && index <= options.length) return String(index);
-    if (!zeroBased && index >= 0 && index < options.length) return String(index + 1);
+    if (zeroBased && index >= 0 && index < optionCount) return String(index + 1);
+    if (!zeroBased && index >= 1 && index <= optionCount) return String(index);
+    if (!zeroBased && index >= 0 && index < optionCount) return String(index + 1);
     return null;
   }
 
-  if (Array.isArray(value)) {
-    if (value.length === 0) return null;
-    return normaliseAnswerValue(value[0], options, key);
-  }
-
-  const clean = toCleanString(value);
-  if (!clean) return null;
+  const cleanOriginal = toCleanString(value);
+  if (!cleanOriginal) return null;
+  const clean = cleanOriginal.replace(/[\[\]{}]/g, '');
 
   if (/^\d+$/.test(clean)) {
     const index = parseInt(clean, 10);
     if (zeroBased) {
-      if (index >= 0 && index < options.length) return String(index + 1);
+      if (index >= 0 && index < optionCount) return String(index + 1);
       return null;
     }
-    if (index >= 1 && index <= options.length) return String(index);
-    if (index >= 0 && index < options.length) return String(index + 1);
+    if (index >= 1 && index <= optionCount) return String(index);
+    if (index >= 0 && index < optionCount) return String(index + 1);
     return null;
+  }
+
+  const multiParsed = parseAnswerTokens(clean, optionCount, zeroBased);
+  if (multiParsed.length) {
+    if (multiParsed.length === 1) return String(multiParsed[0]);
+    return multiParsed.join(',');
   }
 
   const idx = options.findIndex((option) => option.toLowerCase() === clean.toLowerCase());

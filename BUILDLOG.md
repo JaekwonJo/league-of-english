@@ -1,11 +1,17 @@
+ï»¿## 2025-09-23
+- Issue: Grammar API only produced single-error fallback items and the study UI could not handle multi-answer grammar questions.
+- Root cause: `aiProblemService` lacked a dedicated grammar generator/prompt, no caching for grammar types, and the React component assumed single numeric answers.
+- Fix: Added OpenAI-backed grammar basic/advanced generator with DB caching, created `/generate/grammar`, and rebuilt the study grammar component to support multi-select + answer normalization.
+- Files touched: `server/services/aiProblemService.js`, `server/routes/problem.routes.js`, `server/utils/csatProblemNormalizer.js`, `server/utils/problemValidator.js`, `client/src/components/study/GrammarProblemDisplay.js`, `client/src/pages/StudyPage.js`, `client/src/components/study/ProblemDisplay.js`.
+- Verification: Generated sample grammar problems via Node smoke script, manually toggled multi-select answers in the React study flow, noted lint failure due to missing config (documented in Known issues).
 # BUILDLOG.md
 
 ## 2025-09-20
-- Issue: »ç¶÷ ¼ÕÀ¸·Î ¼öÁ¤ÇÑ `problem manual/*.md`°¡ PDF ÃÖ½Åº»°ú ¾î±ß³ª AI Ãâ·ÂÀÌ Èçµé·È¾î¿ä.
-- Root cause: ¸Å´º¾ó °»½Å ÀıÂ÷°¡ ¹®¼­È­µÇÁö ¾Ê¾Æ PDF º¯°æÀÌ Áï½Ã ¹İ¿µµÇÁö ¾Ê¾Ò½À´Ï´Ù.
-- Fix: `scripts/update-problem-manuals.js`¸¦ Ãß°¡ÇØ PDF¡æ¸Å´º¾ó º¯È¯À» ÀÚµ¿È­ÇÏ°í °ü·Ã ¹®¼­¸¦ µ¿±âÈ­Çß½À´Ï´Ù.
+- Issue: ì‚¬ëŒ ì†ìœ¼ë¡œ ìˆ˜ì •í•œ `problem manual/*.md`ê°€ PDF ìµœì‹ ë³¸ê³¼ ì–´ê¸‹ë‚˜ AI ì¶œë ¥ì´ í”ë“¤ë ¸ì–´ìš”.
+- Root cause: ë§¤ë‰´ì–¼ ê°±ì‹  ì ˆì°¨ê°€ ë¬¸ì„œí™”ë˜ì§€ ì•Šì•„ PDF ë³€ê²½ì´ ì¦‰ì‹œ ë°˜ì˜ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤.
+- Fix: `scripts/update-problem-manuals.js`ë¥¼ ì¶”ê°€í•´ PDFâ†’ë§¤ë‰´ì–¼ ë³€í™˜ì„ ìë™í™”í•˜ê³  ê´€ë ¨ ë¬¸ì„œë¥¼ ë™ê¸°í™”í–ˆìŠµë‹ˆë‹¤.
 - Files touched: `scripts/update-problem-manuals.js`, `PROJECT_STATE.md`, `README.md`.
-- Verification: `node scripts/update-problem-manuals.js` ½ÇÇà ÈÄ Ãâ·ÂµÈ ¸Å´º¾óÀ» »ùÇÃ Á¡°ËÇÏ°í ´ÙÀ½ AI È£Ãâ¿¡ ÀÔ·ÂÇß½À´Ï´Ù.
+- Verification: `node scripts/update-problem-manuals.js` ì‹¤í–‰ í›„ ì¶œë ¥ëœ ë§¤ë‰´ì–¼ì„ ìƒ˜í”Œ ì ê²€í•˜ê³  ë‹¤ìŒ AI í˜¸ì¶œì— ì…ë ¥í–ˆìŠµë‹ˆë‹¤.
 
 ## 2025-09-18
 - Change summary: consolidated the dev workflow around PowerShell `npm run dev:all`, reinforced grammar_span fallbacks, and refreshed problem API options handling.
@@ -15,15 +21,16 @@
 - Verification: `npm run dev:all`, then `curl http://localhost:5000/health`, followed by manual grammar problem checks in the React UI.
 
 ## 2025-09-19
-- Change summary: ??????µÈ ??·Ò??Æ®/±ÔÄ¢ ±â¹İ??·Î ¸ğµç MCQ ??Çü????ÀÏ??JSON ??Å°¸¶?? Ãâ·Â??µµ??°³Æí??°í, ??´É????Å© ??¸¶ Ä«µå UI??¹®Á¦ ??ÀÌ??¿ô????ÀÏ??´Ù.
-- Cause: ±âÁ¸ API Ãâ·Â????Çü¸¶´Ù ??¶ô ??µå°¡ ??¸£?? UI????¹è°æ/???? ??ÅÃÁö ??À¸????Á¦ ??Çè ??¸§????¶ú??
-- Decision: ¸Å´º??`problem manual/*.md`)????·Ò??Æ®??ÁÖÀÔ, ??ÆĞ ????¹é ·ÎÁ÷??±¸Ãà??°í `generateGrammarSpanProblem`??±ÔÄ¢ ±â¹İ??·Î ??ÀÛ??Çß??
-- Impact scope: server/services/aiProblemService.js, server/utils/grammarSpanGenerator.js, client/study ¹®Á¦ Ä«µå ??¹İ.
-- Verification: Node ??À§ ??½º??·Î grammar span ±ÔÄ¢ º¯??À» ??ÀÎ??°í, ÁÖ¿ä ??Çü????µ¿ ??Çà??`source`/`mainText`/`options`°¡ ¸ğµÎ Ã¤¿öÁö???? °ËÁõÇß??
+- Change summary: ??????ëœ ??ë¡¬??íŠ¸/ê·œì¹™ ê¸°ë°˜??ë¡œ ëª¨ë“  MCQ ??í˜•????ì¼??JSON ??í‚¤ë§ˆ?? ì¶œë ¥??ë„??ê°œí¸??ê³ , ??ëŠ¥????í¬ ??ë§ˆ ì¹´ë“œ UI??ë¬¸ì œ ??ì´??ì›ƒ????ì¼??ë‹¤.
+- Cause: ê¸°ì¡´ API ì¶œë ¥????í˜•ë§ˆë‹¤ ??ë½ ??ë“œê°€ ??ë¥´?? UI????ë°°ê²½/???? ??íƒì§€ ??ìœ¼????ì œ ??í—˜ ??ë¦„????ë??
+- Decision: ë§¤ë‰´??`problem manual/*.md`)????ë¡¬??íŠ¸??ì£¼ì…, ??íŒ¨ ????ë°± ë¡œì§??êµ¬ì¶•??ê³  `generateGrammarSpanProblem`??ê·œì¹™ ê¸°ë°˜??ë¡œ ??ì‘??í–ˆ??
+- Impact scope: server/services/aiProblemService.js, server/utils/grammarSpanGenerator.js, client/study ë¬¸ì œ ì¹´ë“œ ??ë°˜.
+- Verification: Node ??ìœ„ ??ìŠ¤??ë¡œ grammar span ê·œì¹™ ë³€??ì„ ??ì¸??ê³ , ì£¼ìš” ??í˜•????ë™ ??í–‰??`source`/`mainText`/`options`ê°€ ëª¨ë‘ ì±„ì›Œì§€???? ê²€ì¦í–ˆ??
 
 ## 2025-09-22
 - Error: insertion problems truncated sentences and revealed ASCII markers instead of exam-style numerals.
 - Cause: legacy window builder trimmed target sentences and reused them when formatting the gap.
-- Fix: refactored `InsertionProblemGenerator2` to render full passages then convert markers and choices to circled numbers (¨ç~¨ë).
+- Fix: refactored `InsertionProblemGenerator2` to render full passages then convert markers and choices to circled numbers (â‘ ~â‘¤).
 - Files: `server/utils/insertionProblemGenerator2.js`, regenerated `generated_insertion_problems.json`, docs (`PROJECT_STATE.md`, `README.md`).
-- Verification: ran `node generate_insertion_problems.js`, reviewed problems 5¡¤19¡¤21 in study preview for correct layout and numbering.
+- Verification: ran `node generate_insertion_problems.js`, reviewed problems 5Â·19Â·21 in study preview for correct layout and numbering.
+
