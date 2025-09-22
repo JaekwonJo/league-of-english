@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import appConfig from '../config/appConfig.json';
+import apiService, { api } from '../services/api.service';
 
 const LoginPage = () => {
   const { login } = useAuth();
@@ -22,33 +23,27 @@ const LoginPage = () => {
     setError('');
     setLoading(true);
 
-    const endpoint = isLogin ? '/auth/login' : '/auth/register';
-    const payload = isLogin 
-      ? { username: formData.username, password: formData.password }
-      : formData;
-
     try {
-      const response = await fetch(`${appConfig.app.apiUrl}${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+      if (isLogin) {
+        const data = await api.auth.login({
+          username: formData.username,
+          password: formData.password
+        });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        if (isLogin) {
+        if (data?.user && data?.token) {
+          apiService.setToken(data.token);
           login(data.user, data.token);
         } else {
-          setIsLogin(true);
-          setFormData({ ...formData, username: '', password: '' });
-          alert('회원가입이 완료되었습니다. 로그인해주세요.');
+          setError('로그인 응답이 올바르지 않습니다.');
         }
       } else {
-        setError(data.message || '오류가 발생했습니다.');
+        await api.auth.register(formData);
+        setIsLogin(true);
+        setFormData({ ...formData, username: '', password: '' });
+        alert('회원가입이 완료되었습니다. 로그인해주세요.');
       }
     } catch (err) {
-      setError('서버 연결에 실패했습니다.');
+      setError(err.message || '서버 연결에 실패했습니다.');
     } finally {
       setLoading(false);
     }

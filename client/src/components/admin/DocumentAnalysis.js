@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { adminStyles } from '../../styles/adminStyles';
+import React, { useState, useEffect, useCallback } from 'react';
 import { api as API } from '../../services/api.service';
 
 const DocumentAnalysis = ({ document, onClose }) => {
@@ -7,17 +6,12 @@ const DocumentAnalysis = ({ document, onClose }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    if (document) {
-      fetchAnalysis();
-    }
-  }, [document]);
-
-  const fetchAnalysis = async () => {
+  const fetchAnalysis = useCallback(async () => {
+    if (!document?.id) return;
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await API.analysis.get(document.id);
       if (response.success) {
         setAnalysis(response.data);
@@ -30,7 +24,14 @@ const DocumentAnalysis = ({ document, onClose }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [document?.id]);
+
+  useEffect(() => {
+    if (document) {
+      fetchAnalysis();
+    }
+  }, [document, fetchAnalysis]);
+
 
   if (!document) return null;
 

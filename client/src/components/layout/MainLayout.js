@@ -1,8 +1,3 @@
-/**
- * MainLayout 컴포넌트
- * 사이드바와 메인 컨텐츠 레이아웃
- */
-
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import * as LucideIcons from 'lucide-react';
@@ -13,18 +8,17 @@ const MainLayout = ({ children, currentPath }) => {
   const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  // 사용자 역할 한글 변환
-  const getRoleInKorean = (role) => {
+  const getRoleLabel = (role) => {
     const roleMap = {
-      'student': '학생',
-      'teacher': '교사',
-      'admin': '관리자'
+      student: '학생',
+      teacher: '교사',
+      admin: '관리자'
     };
     return roleMap[role] || role;
   };
 
   const handleLogout = () => {
-    if (window.confirm('로그아웃 하시겠습니까?')) {
+    if (window.confirm('로그아웃 하시겠어요?')) {
       logout();
       window.location.href = '/login';
     }
@@ -34,28 +28,28 @@ const MainLayout = ({ children, currentPath }) => {
     window.location.href = path;
   };
 
-  // 사용자 권한에 맞는 라우트만 필터링
-  const visibleRoutes = routesConfig.routes.filter(route => 
+  const visibleRoutes = routesConfig.routes.filter((route) =>
     route.roles && route.roles.includes(user?.role || 'student')
   );
 
   return (
     <div style={styles.container}>
-      {/* 사이드바 */}
-      <aside style={{
-        ...styles.sidebar,
-        width: sidebarOpen ? uiConfig.layout.sidebar.width : uiConfig.layout.sidebar.collapsedWidth
-      }}>
+      <aside
+        style={{
+          ...styles.sidebar,
+          width: sidebarOpen ? uiConfig.layout.sidebar.width : uiConfig.layout.sidebar.collapsedWidth
+        }}
+      >
         <div style={styles.logo}>
-          <span style={styles.logoIcon}>🎮</span>
+          <span style={styles.logoIcon}>🦉</span>
           {sidebarOpen && <span style={styles.logoText}>League of English</span>}
         </div>
 
         <nav style={styles.nav}>
-          {visibleRoutes.map(route => {
+          {visibleRoutes.map((route) => {
             const Icon = LucideIcons[route.icon] || LucideIcons.Circle;
             const isActive = currentPath === route.path;
-            
+
             return (
               <button
                 key={route.path}
@@ -74,37 +68,36 @@ const MainLayout = ({ children, currentPath }) => {
 
         <div style={styles.userSection}>
           <div style={styles.userInfo}>
-            <div style={styles.avatar}>
-              {user?.name?.charAt(0).toUpperCase()}
-            </div>
+            <div style={styles.avatar}>{user?.name?.charAt(0)?.toUpperCase()}</div>
             {sidebarOpen && (
               <div>
                 <p style={styles.userName}>{user?.name}</p>
-                <p style={styles.userRole}>{getRoleInKorean(user?.role)}</p>
+                <p style={styles.userRole}>{getRoleLabel(user?.role)}</p>
               </div>
             )}
           </div>
-          
+
           <button style={styles.logoutButton} onClick={handleLogout}>
             <LucideIcons.LogOut size={20} />
             {sidebarOpen && <span>로그아웃</span>}
           </button>
         </div>
 
-        {/* 사이드바 토글 */}
         <button
           style={styles.toggleButton}
           onClick={() => setSidebarOpen(!sidebarOpen)}
+          aria-label="사이드바 접기/펼치기"
         >
           {sidebarOpen ? <LucideIcons.ChevronLeft /> : <LucideIcons.ChevronRight />}
         </button>
       </aside>
 
-      {/* 메인 컨텐츠 */}
-      <main style={{
-        ...styles.main,
-        marginLeft: sidebarOpen ? uiConfig.layout.sidebar.width : uiConfig.layout.sidebar.collapsedWidth
-      }}>
+      <main
+        style={{
+          ...styles.main,
+          marginLeft: sidebarOpen ? uiConfig.layout.sidebar.width : uiConfig.layout.sidebar.collapsedWidth
+        }}
+      >
         {children}
       </main>
     </div>

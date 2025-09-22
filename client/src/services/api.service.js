@@ -245,4 +245,11 @@ export const api = {
   }
 };
 
+// Legacy compatibility for older bundles that call api.post(...) directly
+['get', 'post', 'put', 'delete', 'uploadFile'].forEach((method) => {
+  if (typeof apiService[method] === 'function') {
+    api[method] = (...args) => apiService[method](...args);
+  }
+});
+
 export default apiService;

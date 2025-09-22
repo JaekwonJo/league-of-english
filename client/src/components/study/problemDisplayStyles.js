@@ -1,259 +1,199 @@
-/**
- * ProblemDisplay 컴포넌트 스타일
+﻿/**
+ * Study problem display shared styles
  */
 
 export const problemDisplayStyles = {
   container: {
-    maxWidth: '800px',
+    maxWidth: '860px',
     margin: '0 auto',
-    padding: '20px'
+    padding: '24px',
+    color: '#E2E8F0'
   },
   header: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '20px'
+    marginBottom: '20px',
+    color: '#94A3B8'
   },
   progress: {
     fontSize: '18px',
-    fontWeight: 'bold'
+    fontWeight: 700
   },
   timer: {
-    fontSize: '18px',
-    color: '#667eea'
+    fontSize: '16px',
+    fontWeight: 600
   },
   problemCard: {
-    background: 'white',
+    background: 'linear-gradient(135deg, #111827 0%, #0f172a 100%)',
+    color: '#E5E7EB',
     borderRadius: '20px',
-    padding: '30px',
+    padding: '32px',
     marginBottom: '20px',
-    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)'
-  },
-  instruction: {
-    fontSize: '16px',
-    fontWeight: 'bold',
-    marginBottom: '20px',
-    color: '#111827'
-  },
-  mainText: {
-    fontSize: '15px',
-    lineHeight: '1.8',
-    marginBottom: '20px',
-    padding: '20px',
-    background: '#F9FAFB',
-    borderRadius: '10px'
-  },
-  insertText: {
-    fontSize: '15px',
-    padding: '15px',
-    background: '#FEF3C7',
-    borderRadius: '10px',
-    marginBottom: '20px'
-  },
-  sentences: {
-    marginBottom: '20px'
-  },
-  sentence: {
-    fontSize: '15px',
-    lineHeight: '1.8',
-    marginBottom: '10px'
-  },
-  options: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '10px'
-  },
-  optionButton: {
-    padding: '15px',
-    background: 'white',
-    border: '2px solid #E5E7EB',
-    borderRadius: '10px',
-    fontSize: '15px',
-    cursor: 'pointer',
-    textAlign: 'left',
-    transition: 'all 0.3s'
-  },
-  selected: {
-    background: '#EBF5FF',
-    borderColor: '#3B82F6'
+    border: '1px solid rgba(148, 163, 184, 0.2)',
+    boxShadow: '0 25px 50px rgba(15, 23, 42, 0.4)'
   },
   navigation: {
     display: 'flex',
     justifyContent: 'space-between',
-    gap: '10px'
+    gap: '12px'
   },
   navButton: {
     padding: '12px 24px',
-    background: '#F3F4F6',
-    border: 'none',
+    background: '#1F2937',
+    color: '#CBD5F5',
+    border: '1px solid #334155',
     borderRadius: '10px',
     fontSize: '16px',
-    cursor: 'pointer'
+    fontWeight: 600,
+    cursor: 'pointer',
+    transition: 'all 0.2s ease'
   },
   nextButton: {
-    padding: '12px 24px',
-    background: '#3B82F6',
-    color: 'white',
-    border: 'none',
-    borderRadius: '10px',
-    fontSize: '16px',
-    fontWeight: 'bold',
-    cursor: 'pointer'
-  },
-  finishButton: {
-    padding: '15px 35px',
-    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-    color: 'white',
+    padding: '12px 28px',
+    background: 'linear-gradient(135deg, #6366F1 0%, #7C3AED 100%)',
+    color: '#FFFFFF',
     border: 'none',
     borderRadius: '12px',
-    fontSize: '18px',
-    fontWeight: 'bold',
+    fontSize: '16px',
+    fontWeight: 700,
     cursor: 'pointer',
-    transition: 'all 0.3s ease',
-    boxShadow: '0 10px 25px rgba(16, 185, 129, 0.4)',
-    transform: 'translateY(0)'
+    boxShadow: '0 15px 35px rgba(99, 102, 241, 0.4)'
+  },
+  finishButton: {
+    padding: '14px 32px',
+    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+    color: '#FFFFFF',
+    border: 'none',
+    borderRadius: '12px',
+    fontSize: '17px',
+    fontWeight: 700,
+    cursor: 'pointer',
+    boxShadow: '0 20px 40px rgba(16, 185, 129, 0.45)'
+  },
+  missingOptions: {
+    padding: '12px 0',
+    color: '#F87171',
+    fontSize: '14px'
+  },
+  underlineSpan: {
+    textDecoration: 'underline',
+    textDecorationColor: '#fbbf24',
+    textDecorationThickness: '3px',
+    fontWeight: 'bold',
+    backgroundColor: 'rgba(251, 191, 36, 0.2)',
+    padding: '2px 4px',
+    borderRadius: '4px',
+    color: '#F8FAFC'
   }
 };
 
 export const orderStyles = {
-  // 순서배열 전용 스타일
   orderProblemCard: {
-    background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%)',
-    border: '2px solid rgba(139, 92, 246, 0.2)',
-    boxShadow: '0 25px 50px rgba(139, 92, 246, 0.2)'
+    background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(59, 130, 246, 0.08) 100%)',
+    border: '1px solid rgba(99, 102, 241, 0.2)',
+    boxShadow: '0 30px 50px rgba(30, 64, 175, 0.25)'
   },
-  // 분리된 헤더 섹션들
   orderTitleSection: {
     background: 'linear-gradient(135deg, #1F2937 0%, #111827 100%)',
     color: '#E5E7EB',
-    padding: '15px 20px',
-    borderRadius: '10px',
+    padding: '14px 20px',
+    borderRadius: '12px',
     marginBottom: '10px',
-    fontSize: '16px',
-    fontWeight: 'bold',
-    border: '2px solid #374151',
-    textAlign: 'left'
+    fontSize: '15px',
+    fontWeight: 600,
+    border: '1px solid #334155'
   },
   orderNumberSection: {
-    background: 'linear-gradient(135deg, #374151 0%, #1F2937 100%)',
+    background: 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)',
     color: '#CBD5E1',
     padding: '12px 20px',
     borderRadius: '10px',
     marginBottom: '10px',
     fontSize: '14px',
-    fontWeight: '600',
-    border: '2px solid #4B5563',
-    textAlign: 'left'
+    fontWeight: 600,
+    border: '1px solid #475569'
   },
   orderSourceSection: {
-    background: 'linear-gradient(135deg, #4B5563 0%, #374151 100%)',
+    background: 'linear-gradient(135deg, #334155 0%, #1E293B 100%)',
     color: '#94A3B8',
     padding: '12px 20px',
     borderRadius: '10px',
-    marginBottom: '20px',
+    marginBottom: '16px',
     fontSize: '14px',
-    fontWeight: '600',
-    border: '2px solid #6B7280',
-    textAlign: 'left'
+    fontWeight: 600,
+    border: '1px solid #475569'
   },
   orderInstruction: {
-    background: 'linear-gradient(135deg, #1F2937 0%, #111827 100%)',
-    color: '#E5E7EB',
+    background: 'linear-gradient(135deg, #0F172A 0%, #111827 100%)',
+    color: '#F8FAFC',
     padding: '20px',
-    borderRadius: '15px',
+    borderRadius: '16px',
     fontSize: '18px',
-    fontWeight: 'bold',
+    fontWeight: 700,
     textAlign: 'left',
-    marginBottom: '25px',
-    boxShadow: '0 10px 25px rgba(0, 0, 0, 0.3)',
-    border: '2px solid #374151'
+    marginBottom: '24px',
+    border: '1px solid rgba(148, 163, 184, 0.25)'
   },
-  orderOptionButton: {
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    color: 'white',
-    border: '2px solid transparent',
-    fontWeight: 'bold',
-    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
-    transform: 'translateY(0) scale(1)',
-    transition: 'all 0.3s ease',
-    textAlign: 'left'
-  },
-  orderSelected: {
-    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-    borderColor: '#10b981',
-    transform: 'translateY(-2px) scale(1.02)',
-    boxShadow: '0 8px 25px rgba(16, 185, 129, 0.4)'
-  },
-  // 순서배열 전용 텍스트 박스 스타일
   orderGivenContainer: {
-    marginBottom: '25px'
+    marginBottom: '24px'
   },
   orderGivenText: {
-    background: 'linear-gradient(135deg, #1F2937 0%, #111827 100%)',
-    color: '#E5E7EB',
-    border: '2px solid #374151',
-    boxShadow: '0 10px 25px rgba(0, 0, 0, 0.3)',
-    padding: '20px',
-    borderRadius: '10px',
+    background: 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)',
+    color: '#E2E8F0',
+    border: '1px solid rgba(71, 85, 105, 0.6)',
+    boxShadow: '0 15px 30px rgba(15, 23, 42, 0.35)',
+    padding: '22px',
+    borderRadius: '12px',
     fontSize: '15px',
-    lineHeight: '1.8',
+    lineHeight: 1.8,
     textAlign: 'left'
   },
   givenLabel: {
-    fontSize: '16px',
-    fontWeight: 'bold',
-    marginBottom: '10px',
-    color: '#6B7280'
+    fontSize: '15px',
+    fontWeight: 600,
+    marginBottom: '12px',
+    color: '#94A3B8'
   },
   sentencesLabel: {
     fontSize: '16px',
-    fontWeight: 'bold',
-    marginBottom: '15px',
-    color: '#6B7280',
+    fontWeight: 600,
+    marginBottom: '14px',
+    color: '#94A3B8',
     textAlign: 'left'
   },
   orderSentence: {
-    background: 'linear-gradient(135deg, #374151 0%, #1F2937 100%)',
-    color: '#E5E7EB',
-    padding: '15px',
+    background: 'linear-gradient(135deg, #334155 0%, #1E293B 100%)',
+    color: '#E2E8F0',
+    padding: '16px',
     borderRadius: '10px',
-    marginBottom: '10px',
-    border: '2px solid #4B5563',
-    boxShadow: '0 8px 20px rgba(0, 0, 0, 0.2)',
-    textAlign: 'left'
-  },
-  multipleChoice: {
-    background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-    color: 'white',
-    padding: '12px 20px',
-    borderRadius: '8px',
-    marginBottom: '8px',
-    border: '2px solid #10B981',
-    boxShadow: '0 6px 15px rgba(16, 185, 129, 0.3)',
+    marginBottom: '12px',
+    border: '1px solid #475569',
+    boxShadow: '0 12px 24px rgba(15, 23, 42, 0.3)',
     textAlign: 'left',
-    fontSize: '16px',
-    fontWeight: 'bold'
+    whiteSpace: 'pre-line'
   },
   multipleChoiceButton: {
     width: '100%',
-    background: 'linear-gradient(135deg, #374151 0%, #1F2937 100%)',
-    color: '#E5E7EB',
-    padding: '12px 20px',
-    borderRadius: '8px',
-    marginBottom: '8px',
-    border: '2px solid #4B5563',
-    boxShadow: '0 6px 15px rgba(0, 0, 0, 0.2)',
+    background: 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)',
+    color: '#E2E8F0',
+    padding: '14px 20px',
+    borderRadius: '10px',
+    marginBottom: '10px',
+    border: '1px solid rgba(148, 163, 184, 0.2)',
+    boxShadow: '0 10px 20px rgba(15, 23, 42, 0.25)',
     textAlign: 'left',
     fontSize: '16px',
-    fontWeight: 'bold',
+    fontWeight: 600,
     cursor: 'pointer',
-    transition: 'all 0.3s ease'
+    transition: 'all 0.25s ease'
   },
   multipleChoiceSelected: {
-    background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-    borderColor: '#10B981',
-    color: 'white',
+    background: 'linear-gradient(135deg, #6366F1 0%, #7C3AED 100%)',
+    borderColor: '#6366F1',
+    color: '#FFFFFF',
     transform: 'translateY(-2px)',
-    boxShadow: '0 8px 20px rgba(16, 185, 129, 0.4)'
+    boxShadow: '0 16px 30px rgba(99, 102, 241, 0.45)'
   }
 };
+

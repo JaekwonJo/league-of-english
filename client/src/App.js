@@ -3,7 +3,7 @@
  * 리팩토링 v2.0 - 모듈러 아키텍처
  */
 
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense } from 'react';
 import { AuthProvider } from './contexts/AuthContext';
 import ErrorBoundary from './middleware/errorBoundary';
 import AppRouter from './routes/AppRouter';

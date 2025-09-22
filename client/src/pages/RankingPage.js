@@ -3,7 +3,7 @@
  * 랭킹 및 리더보드 페이지
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import tierConfig from '../config/tierConfig.json';
 import logger from '../utils/logger';
@@ -16,11 +16,18 @@ const RankingPage = () => {
   const [loading, setLoading] = useState(true);
   const [selectedTab, setSelectedTab] = useState('leaderboard');
 
-  useEffect(() => {
-    loadRankingData();
+  const getTierInfo = useCallback((points) => {
+    return tierConfig.tiers.find(tier => 
+      points >= tier.minLP && (tier.maxLP === -1 || points <= tier.maxLP)
+    ) || tierConfig.tiers[0];
   }, []);
 
-  const loadRankingData = async () => {
+  const getNextTier = useCallback((currentTier) => {
+    const currentIndex = tierConfig.tiers.findIndex(t => t.id === currentTier.id);
+    return tierConfig.tiers[currentIndex + 1] || null;
+  }, []);
+
+  const loadRankingData = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -62,22 +69,13 @@ const RankingPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [getTierInfo, getNextTier, user?.name, user?.points]);
 
-  const getTierInfo = (points) => {
-    return tierConfig.tiers.find(tier => 
-      points >= tier.minLP && (tier.maxLP === -1 || points <= tier.maxLP)
-    ) || tierConfig.tiers[0];
-  };
+  useEffect(() => {
+    loadRankingData();
+  }, [loadRankingData]);
 
-  const getNextTier = (currentTier) => {
-    const currentIndex = tierConfig.tiers.findIndex(t => t.id === currentTier.id);
-    return tierConfig.tiers[currentIndex + 1] || null;
-  };
-
-  const formatPoints = (points) => {
-    return points.toLocaleString();
-  };
+  const formatPoints = useCallback((points) => points.toLocaleString(), []);
 
   const getRankDisplay = (rank) => {
     if (rank <= 3) {

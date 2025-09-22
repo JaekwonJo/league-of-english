@@ -1,204 +1,390 @@
-/**
- * 새로운 PDF 파서 - 완전히 새로 작성
- * 고1_2024_09월(인천시)-읽기영역(1845번)_본문해석지_문제지.pdf 형식에 최적화
- */
+const HANGUL_REGEX = /[\u3131-\uD79D]/;
+const BANNER_REGEXES = [
+  /^고\d.+/i,
+  /^Q\./i,
+  /^본문해석지/i,
+  /읽기영역/,
+  /^Reading\s+(?:Passage|Comprehension)/i,
+  /^\d+\s*page$/i,
+  /^-\s*\d+\s*-$/
+];
+
+const PROBLEM_HEADING_REGEX = /^\d+\.\s*p[\w~-]+(?:-?no\.?\d+)?/i;
+const DAY_REGEX = /^Day\s+\d+/i;
+const WINDOW_SIZE = 5;
+const MIN_SENTENCES_REQUIRED = 5;
+const CONNECTOR_WORDS = [
+  'and',
+  'but',
+  'because',
+  'however',
+  'therefore',
+  'nonetheless',
+  'nevertheless',
+  'furthermore',
+  'moreover',
+  'additionally',
+  'yet',
+  'so',
+  'still',
+  'then',
+  'thus',
+  'this',
+  'these',
+  'those'
+];
+
+const PRIORITY_WORDS = [
+  'thus',
+  'therefore',
+  'because',
+  'this',
+  'these',
+  'those',
+  'however',
+  'but',
+  'and',
+  'so',
+  'yet',
+  'still',
+  'then',
+  'furthermore',
+  'moreover',
+  'additionally',
+  'nonetheless',
+  'nevertheless'
+];
 
 class NewPDFParser {
   constructor() {
-    this.debugMode = true;
+    this.debugMode = false;
   }
 
-  /**
-   * 메인 파싱 함수
-   */
+  normalize(rawText) {
+    if (!rawText) return '';
+    return String(rawText)
+      .replace(/\r\n?/g, '\n')
+      .replace(/\u00a0/g, ' ')
+      .replace(/-\n(?=[a-z])/gi, '')
+      .replace(/[\t ]+/g, (match) => (match.includes('\n') ? match : ' '))
+      .trim();
+  }
+
+  parseStructured(lines) {
+    const passages = [];
+    const sources = [];
+    const sentenceMap = [];
+
+    let currentHeading = null;
+    let currentLines = [];
+
+    const flushCurrent = () => {
+      if (!currentHeading || !currentLines.length) {
+        currentHeading = null;
+        currentLines = [];
+        return;
+      }
+
+      const passageText = currentLines.join(' ').replace(/\s+/g, ' ').trim();
+      if (passageText) {
+        passages.push(passageText);
+        sources.push(currentHeading);
+        sentenceMap.push(this.splitSentences(passageText));
+      }
+
+      currentHeading = null;
+      currentLines = [];
+    };
+
+    for (const rawLine of lines) {
+      const line = rawLine.replace(/\f/g, '').trim();
+
+      if (!line) {
+        continue;
+      }
+
+      if (PROBLEM_HEADING_REGEX.test(line)) {
+        flushCurrent();
+        currentHeading = line;
+        continue;
+      }
+
+      if (!currentHeading) continue;
+
+      const cleaned = rawLine.replace(/\s+/g, ' ').trim();
+      if (cleaned) currentLines.push(cleaned);
+    }
+
+    flushCurrent();
+
+    return { passages, sources, sentenceMap };
+  }
+
+  parseUnstructured(lines) {
+    const passages = [];
+    const sources = [];
+
+    let currentDay = null;
+    let current = null;
+
+    const flushCurrent = () => {
+      if (!current || !current.lines.length) return;
+      const text = this.buildPassageText(current.lines);
+      if (!text) return;
+      passages.push(text);
+      const labelParts = [];
+      if (current.day) labelParts.push(current.day);
+      if (current.heading) labelParts.push(current.heading);
+      const label = labelParts.join(' - ') || current.heading || `Passage ${passages.length}`;
+      sources.push(label);
+    };
+
+    for (const rawLine of lines) {
+      const line = rawLine.trim();
+      if (!line) continue;
+
+      if (this.isDayHeader(line)) {
+        flushCurrent();
+        currentDay = line;
+        continue;
+      }
+
+      if (this.isHeading(line)) {
+        flushCurrent();
+        current = {
+          day: currentDay,
+          heading: line,
+          lines: []
+        };
+        continue;
+      }
+
+      if (this.shouldSkipLine(line)) continue;
+
+      if (!current) {
+        current = {
+          day: currentDay,
+          heading: null,
+          lines: []
+        };
+      }
+
+      current.lines.push(line);
+    }
+
+    flushCurrent();
+
+    return { passages, sources };
+  }
+
+  isDayHeader(line) {
+    return DAY_REGEX.test(line);
+  }
+
+  isHeading(line) {
+    return PROBLEM_HEADING_REGEX.test(line);
+  }
+
+  shouldSkipLine(line) {
+    if (!line) return true;
+    if (BANNER_REGEXES.some((regex) => regex.test(line))) return true;
+    if (HANGUL_REGEX.test(line)) return true;
+    return false;
+  }
+
+  buildPassageText(lines) {
+    if (!lines.length) return '';
+    let text = lines
+      .join(' ')
+      .replace(/\s{2,}/g, ' ')
+      .replace(/\s+([,.;!?])/g, '$1')
+      .replace(/([\(\[])\s+/g, '$1')
+      .replace(/\s+([)\]])/g, '$1')
+      .replace(/\s+'\s+/g, " '");
+    return text.trim();
+  }
+
+  extractTitleFromSources(sources, passages) {
+    if (sources && sources.length) {
+      const candidate = sources[0];
+      if (candidate) return candidate.slice(0, 120);
+    }
+    if (passages && passages.length) {
+      return passages[0].slice(0, 120) || 'Document';
+    }
+    return 'Document';
+  }
+
+  splitSentences(text) {
+    if (!text) return [];
+    return text
+      .split(/(?<=[.!?])\s+/)
+      .map((sentence) => sentence.trim())
+      .filter(Boolean);
+  }
+
+  fallbackBlocks(normalized) {
+    return normalized
+      .split(/\n{2,}/)
+      .map((block) => block.replace(/\s+/g, ' ').trim())
+      .filter((block) => block.length > 0 && !HANGUL_REGEX.test(block));
+  }
+
+  static startsWithConnector(sentence) {
+    return CONNECTOR_WORDS.some((word) => sentence.startsWith(`${word} `) || sentence.startsWith(`${word},`));
+  }
+
+  static getPriorityScore(sentence) {
+    for (let i = 0; i < PRIORITY_WORDS.length; i++) {
+      if (sentence.startsWith(`${PRIORITY_WORDS[i]} `) || sentence.startsWith(`${PRIORITY_WORDS[i]},`)) {
+        return PRIORITY_WORDS.length - i;
+      }
+    }
+    return 0;
+  }
+
+  selectGapIndex(sentences) {
+    const total = sentences.length;
+    const candidates = sentences
+      .map((sentence, index) => ({ sentence: sentence.trim().toLowerCase(), index }))
+      .filter(({ sentence, index }) => index > 0 && index < total - 1 && NewPDFParser.startsWithConnector(sentence))
+      .map(({ index }) => index);
+
+    if (candidates.length) {
+      const bestCandidate = candidates.reduce((best, index) => {
+        const sentence = sentences[index].trim().toLowerCase();
+        const priority = NewPDFParser.getPriorityScore(sentence);
+        const distance = Math.min(index, total - 1 - index);
+        const score = priority * 100 + distance;
+
+        if (!best || score > best.score) {
+          return { index, score };
+        }
+        return best;
+      }, null);
+      return bestCandidate ? bestCandidate.index : candidates[0];
+    }
+
+    if (total <= MIN_SENTENCES_REQUIRED) {
+      return null;
+    }
+
+    const minIndex = 1;
+    const maxIndex = total - 2;
+    return Math.floor(Math.random() * (maxIndex - minIndex + 1)) + minIndex;
+  }
+
+  buildWindow(sentences, gapIndex, windowSize) {
+    const total = sentences.length;
+    let start = gapIndex - 2;
+    let end = gapIndex + 2;
+
+    if (start < 0) {
+      end += -start;
+      start = 0;
+    }
+    if (end > total - 1) {
+      start -= end - (total - 1);
+      end = total - 1;
+      if (start < 0) start = 0;
+    }
+
+    let segments = sentences.slice(start, end + 1);
+    let gapWithin = gapIndex - start;
+
+    while (segments.length < windowSize) {
+      if (end < total - 1) {
+        end += 1;
+        segments.push(sentences[end]);
+      } else if (start > 0) {
+        start -= 1;
+        segments.unshift(sentences[start]);
+        gapWithin += 1;
+      } else {
+        segments.push('');
+      }
+    }
+
+    if (segments.length > windowSize) {
+      const overflow = segments.splice(windowSize);
+      segments[windowSize - 1] += ' ' + overflow.join(' ');
+    }
+
+    if (segments.length < windowSize) {
+      return null;
+    }
+
+    return { segments, gapWithin };
+  }
+
+  createTextWithGap(segments, gapIndex) {
+    let result = '';
+    segments.forEach((sentence, index) => {
+      const marker = String.fromCharCode(9312 + index);
+      const line = index === gapIndex ? marker : `${marker} ${sentence}`;
+      result += index === 0 ? line : `\n${line}`;
+    });
+    return result;
+  }
+
   async parse(rawText) {
-    if (this.debugMode) {
-      console.log('📄 새로운 PDF 파서 시작');
-      console.log('📝 원본 텍스트 길이:', rawText.length);
-      console.log('📝 첫 1000자 미리보기:');
-      console.log(rawText.substring(0, 1000));
-      console.log('=' .repeat(50));
+    const normalized = this.normalize(rawText);
+    const lines = normalized.split('\n');
+
+    let passages = [];
+    let sources = [];
+    let sentenceMap = [];
+
+    const structuredCount = lines.filter((line) => PROBLEM_HEADING_REGEX.test(line.trim())).length;
+
+    if (structuredCount > 0) {
+      const structured = this.parseStructured(lines);
+      if (structured.passages.length) {
+        passages = structured.passages;
+        sources = structured.sources;
+        sentenceMap = structured.sentenceMap;
+      }
     }
 
-    // 1. 텍스트를 줄 단위로 분리
-    const lines = rawText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-    
-    if (this.debugMode) {
-      console.log('📄 전체 줄 수:', lines.length);
-      console.log('📝 처음 20줄 확인:');
-      lines.slice(0, 20).forEach((line, index) => {
-        console.log(`${index + 1}: ${line}`);
-      });
+    if (!passages.length) {
+      const unstructured = this.parseUnstructured(lines);
+      passages = unstructured.passages;
+      sources = unstructured.sources;
     }
 
-    // 2. 제목 추출
-    const title = this.extractTitle(lines);
-    
-    // 3. 영어 지문 추출
-    const passages = this.extractEnglishPassages(lines);
-    
-    // 4. 출처 추출
-    const sources = this.extractSources(lines);
+    if (!passages.length) {
+      const fallback = this.fallbackBlocks(normalized);
+      if (fallback.length) {
+        passages.push(...fallback);
+        fallback.forEach((_, idx) => sources.push(`Passage ${idx + 1}`));
+      }
+    }
 
-    const result = {
-      title: title,
-      passages: passages,
-      sources: sources,
+    if (!passages.length) {
+      const single = normalized.replace(/\s+/g, ' ').trim();
+      if (single) {
+        passages.push(single);
+        sources.push('Passage 1');
+      }
+    }
+
+    const title = this.extractTitleFromSources(sources, passages);
+
+    return {
+      title,
+      passages,
+      sources,
       totalContent: passages.join('\n\n'),
       totalPassages: passages.length,
       totalSources: sources.length,
       metadata: {
         totalPassages: passages.length,
         totalSources: sources.length,
+        headings: sources,
+        sentenceMap,
         extractedAt: new Date().toISOString()
       }
     };
-
-    if (this.debugMode) {
-      console.log('✅ 파싱 결과:');
-      console.log('📚 제목:', result.title);
-      console.log('📄 지문 수:', result.totalPassages);
-      console.log('📍 출처 수:', result.totalSources);
-      console.log('📝 전체 내용 길이:', result.totalContent.length);
-    }
-
-    return result;
-  }
-
-  /**
-   * 제목 추출 - 파일명에서 추출하거나 첫 줄에서 찾기
-   */
-  extractTitle(lines) {
-    // 고1_2024_09월(인천시)-읽기영역(1845번) 형식 찾기
-    for (let i = 0; i < Math.min(10, lines.length); i++) {
-      const line = lines[i];
-      
-      // 고1, 고2, 고3 패턴
-      if (line.match(/고[1-3].*\d{4}.*월/)) {
-        return line.replace(/[_-]/g, ' ').replace(/\s+/g, ' ').trim();
-      }
-      
-      // 년도가 포함된 패턴
-      if (line.match(/\d{4}년?.*월/)) {
-        return line.replace(/[_-]/g, ' ').replace(/\s+/g, ' ').trim();
-      }
-    }
-    
-    // 기본값
-    return `문서_${new Date().toISOString().substring(0, 10)}`;
-  }
-
-  /**
-   * 영어 지문 추출 - 페이지별 완전한 지문 생성
-   */
-  extractEnglishPassages(lines) {
-    const passages = [];
-    let currentPassage = [];
-    let currentPageNumber = null;
-    
-    if (this.debugMode) {
-      console.log('🔍 페이지별 영어 지문 추출 시작...');
-    }
-
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      
-      // 페이지 시작 패턴 감지 (예: "1. p2-no.20")
-      const pageMatch = line.match(/^(\d+)\.\s*p\d+/);
-      if (pageMatch) {
-        // 이전 페이지 지문 저장
-        if (currentPassage.length > 0) {
-          const passage = currentPassage.join(' ').trim();
-          if (passage.length > 100) { // 최소 길이 체크
-            passages.push(passage);
-            if (this.debugMode) {
-              console.log(`📄 페이지 ${currentPageNumber} 지문 완성 (${passage.length}자): ${passage.substring(0, 100)}...`);
-            }
-          }
-        }
-        
-        // 새 페이지 시작
-        currentPageNumber = pageMatch[1];
-        currentPassage = [];
-        
-        if (this.debugMode) {
-          console.log(`🆕 페이지 ${currentPageNumber} 시작: ${line}`);
-        }
-        continue;
-      }
-
-      // 영어 문장인지 확인
-      if (this.isEnglishSentence(line)) {
-        currentPassage.push(line);
-        if (this.debugMode && currentPassage.length <= 3) {
-          console.log(`📝 페이지 ${currentPageNumber}: 영어 문장 추가 "${line}"`);
-        }
-      }
-    }
-
-    // 마지막 페이지 처리
-    if (currentPassage.length > 0) {
-      const passage = currentPassage.join(' ').trim();
-      if (passage.length > 100) {
-        passages.push(passage);
-        if (this.debugMode) {
-          console.log(`📄 마지막 페이지 ${currentPageNumber} 지문 완성 (${passage.length}자)`);
-        }
-      }
-    }
-
-    if (this.debugMode) {
-      console.log(`✅ 총 ${passages.length}개 페이지별 완전한 지문 추출 완료`);
-    }
-
-    return passages;
-  }
-
-  /**
-   * 영어 문장인지 판단
-   */
-  isEnglishSentence(line) {
-    // 비어있거나 너무 짧으면 제외
-    if (!line || line.length < 10) return false;
-    
-    // 한글이 포함되어 있으면 제외
-    if (/[가-힣]/.test(line)) return false;
-    
-    // 숫자로만 시작하는 줄 제외 (문제 번호 등)
-    if (/^\d+\.?\s*$/.test(line)) return false;
-    
-    // 특수 기호만 있는 줄 제외
-    if (/^[^\w\s]+$/.test(line)) return false;
-    
-    // 영어 알파벳이 포함되어 있어야 함
-    if (!/[a-zA-Z]/.test(line)) return false;
-    
-    // 영어 단어가 3개 이상 포함되어 있어야 함
-    const words = line.split(/\s+/).filter(word => /[a-zA-Z]/.test(word));
-    if (words.length < 3) return false;
-    
-    return true;
-  }
-
-  /**
-   * 출처 정보 추출
-   */
-  extractSources(lines) {
-    const sources = [];
-    
-    for (const line of lines) {
-      // "숫자. p숫자-" 형식 찾기
-      const match = line.match(/^\d+\.\s*(p\d+.*?)$/);
-      if (match) {
-        sources.push(match[1].trim());
-      }
-    }
-    
-    if (this.debugMode) {
-      console.log('📍 추출된 출처:', sources);
-    }
-    
-    return sources;
   }
 }
 

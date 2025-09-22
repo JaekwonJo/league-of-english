@@ -1,16 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import tierConfig from '../config/tierConfig.json';
 
 const ProfilePage = () => {
   const { user } = useAuth();
-  const [showStats, setShowStats] = useState(false);
-  
-  useEffect(() => {
-    // 페이지 로드 시 애니메이션 트리거
-    setTimeout(() => setShowStats(true), 500);
-  }, []);
-
   const getTierInfo = () => {
     const points = user?.points || 0;
     return tierConfig.tiers.find(tier => 

@@ -1,4 +1,4 @@
-{
+﻿{
   "routes": [
     {
       "path": "/",
@@ -10,7 +10,7 @@
     },
     {
       "path": "/study",
-      "name": "문제 풀기",
+      "name": "문제 학습",
       "icon": "BookOpen",
       "component": "StudyPage",
       "requiresAuth": true,
@@ -18,7 +18,7 @@
     },
     {
       "path": "/vocabulary",
-      "name": "단어 시험",
+      "name": "어휘 훈련",
       "icon": "Languages",
       "component": "VocabularyPage",
       "requiresAuth": true,

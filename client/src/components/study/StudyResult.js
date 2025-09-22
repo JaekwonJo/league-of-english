@@ -69,6 +69,12 @@ const StudyResult = ({ results, onRestart, onHome }) => {
 
   const resultInfo = getResultInfo(results.accuracy);
   const tierInfo = getTierInfo();
+  const detailResults = (results?.studyResults || results?.problems || []).map((item) => ({
+    userAnswer: item.userAnswer ?? item.answer ?? '',
+    correctAnswer: item.correctAnswer ?? item.problem?.answer ?? '',
+    isCorrect: typeof item.isCorrect === 'boolean' ? item.isCorrect : (item.correct ?? false),
+    timeSpent: item.timeSpent ?? item.elapsed ?? 0
+  }));
   const [myRank, setMyRank] = useState(null);
   const [nearby, setNearby] = useState([]);
   const [rankError, setRankError] = useState(null);
@@ -236,24 +242,24 @@ const StudyResult = ({ results, onRestart, onHome }) => {
         <div style={styles.problemResults}>
           <h3 style={styles.sectionTitle}>📋 문제별 상세 결과</h3>
           <div style={styles.problemGrid}>
-            {results.problems.map((problem, idx) => (
+            {detailResults.map((detail, idx) => (
               <div key={idx} style={{
                 ...styles.problemCard,
-                ...(problem.isCorrect ? styles.correctCard : styles.wrongCard)
+                ...(detail.isCorrect ? styles.correctCard : styles.wrongCard)
               }}>
                 <div style={styles.problemHeader}>
                   <span style={styles.problemNum}>#{idx + 1}</span>
-                  <span style={problem.isCorrect ? styles.correctBadge : styles.wrongBadge}>
-                    {problem.isCorrect ? '정답' : '오답'}
+                  <span style={detail.isCorrect ? styles.correctBadge : styles.wrongBadge}>
+                    {detail.isCorrect ? '정답' : '오답'}
                   </span>
                 </div>
                 <div style={styles.problemDetails}>
                   <div style={styles.problemLabel}>내 답안:</div>
-                  <div style={styles.problemAnswer}>{problem.userAnswer || '무응답'}</div>
-                  {!problem.isCorrect && (
+                  <div style={styles.problemAnswer}>{detail.userAnswer || '무응답'}</div>
+                  {!detail.isCorrect && (
                     <>
                       <div style={styles.problemLabel}>정답:</div>
-                      <div style={styles.correctAnswer}>{problem.correctAnswer}</div>
+                      <div style={styles.correctAnswer}>{detail.correctAnswer || '-'}</div>
                     </>
                   )}
                 </div>

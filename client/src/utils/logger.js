@@ -102,7 +102,10 @@ class Logger {
         userAgent: navigator.userAgent,
         url: window.location.href
       };
-      
+
+      if (process.env.NODE_ENV !== 'production') {
+        console.debug('Error payload prepared:', errorPayload);
+      }
       // fetch('/api/logs', { ... })
     } catch (err) {
       // 로깅 실패 시 콘솔에만 출력

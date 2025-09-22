@@ -1,0 +1,1150 @@
+{
+  "documentTitle": "1. p2-no.18",
+  "generatedAt": "2025-09-22T00:35:05.499Z",
+  "counts": {
+    "grammar": 21,
+    "vocabulary": 21,
+    "summary": 21
+  },
+  "grammar": [
+    {
+      "type": "grammar",
+      "question": "다음 중 밑줄 친 부분에 문법 오류가 있는 문장은?",
+      "choices": [
+        "1. As student council president, I am reaching out to discuss an important matter regarding our school library's current operating hours.",
+        "2. This change would greatly benefit students by providing additional time to focus on their academic goals.",
+        "3. I hope you will consider this proposal as a step toward improving our academic environment and better supporting our needs.",
+        "4. This is particularly challenging for those <u>preparing</u> for college entrance exams or working on academic projects that demand a quiet and resourceful environment.",
+        "5. At present, the library closes at 5 p.m., which many students feel limits their ability to fully use its resources for study and research after regular class hours."
+      ],
+      "correctAnswer": 4,
+      "explanation": "문법 오류 탐지",
+      "difficulty": "basic",
+      "metadata": {
+        "pattern": "basic",
+        "source": "1. p2-no.18",
+        "passageIndex": 1
+      }
+    },
+    {
+      "type": "grammar",
+      "question": "다음 중 밑줄 친 부분에 문법 오류가 있는 문장은?",
+      "choices": [
+        "1. That meant the casting director would call very soon with the results of my first audition for a musical part in The Wizard of Oz.",
+        "2. That meant the <u>casting</u> director would call very soon with the results of my first audition for a musical part in The Wizard of Oz.",
+        "3. I got a little rush of excitement, knowing I was in ─ that whatever happened I could be involved in one of the productions.",
+        "4. I got a little rush of excitement, knowing I was in ─ that whatever happened I could be involved in one of the productions.",
+        "5. I'll let her know...\" As I got to the bottom of the stairs, he was just putting the phone down."
+      ],
+      "correctAnswer": 2,
+      "explanation": "문법 오류 탐지",
+      "difficulty": "basic",
+      "metadata": {
+        "pattern": "basic",
+        "source": "2. p2-no.19",
+        "passageIndex": 2
+      }
+    },
+    {
+      "type": "grammar",
+      "question": "다음 중 밑줄 친 부분에 문법 오류가 있는 문장은?",
+      "choices": [
+        "1. Often, if students are quiet enough and if there are many pressing demands on a teacher's time at that moment, more than ten minutes can disappear before class starts.",
+        "2. You can use the first ten minutes to get your class off to a great start, or you can choose to waste this time.",
+        "3. <u>The</u> first minutes set the tone for the rest of the class.",
+        "4. In summary, you should establish an opening routine to develop your class with an effective start.",
+        "5. It's no wonder that students are late for class; they have little reason to be on time."
+      ],
+      "correctAnswer": 3,
+      "explanation": "문법 오류 탐지",
+      "difficulty": "basic",
+      "metadata": {
+        "pattern": "basic",
+        "source": "3. p2-no.20",
+        "passageIndex": 3
+      }
+    },
+    {
+      "type": "grammar",
+      "question": "다음 중 밑줄 친 부분에 문법 오류가 있는 문장은?",
+      "choices": [
+        "1. You don't \"own\" the atoms that make up your body; you borrow them.",
+        "2. We all share from the same atom pool because atoms forever travel around, within, and among us.",
+        "3. Atoms cycle from person to person as we breathe and as our sweat is evaporated.",
+        "4. There are atoms in your body that have existed since the first moments of time, circulating throughout the universe among limitless forms, both <u>living</u> and nonliving.",
+        "5. The origin of the lightest atoms goes back to the origin of the universe, and most heavier atoms are older than the Sun and Earth."
+      ],
+      "correctAnswer": 4,
+      "explanation": "문법 오류 탐지",
+      "difficulty": "basic",
+      "metadata": {
+        "pattern": "basic",
+        "source": "4. p3-no.21",
+        "passageIndex": 4
+      }
+    },
+    {
+      "type": "grammar",
+      "question": "다음 중 밑줄 친 부분에 문법 오류가 있는 문장은?",
+      "choices": [
+        "1. Studies have shown that spending time in nature, even in a small garden, can elevate mood, improve cognition, and lessen depression symptoms.",
+        "2. It involves a range of motions, from digging and planting to watering and harvesting.",
+        "3. Tending to plants can be incredibly calming and meditative.",
+        "4. You might not realize it, but small tasks like weeding or <u>turning</u> compost can burn many calories.",
+        "5. The repetitive tasks involved in gardening can induce a state of mindfulness, similar to meditation."
+      ],
+      "correctAnswer": 4,
+      "explanation": "문법 오류 탐지",
+      "difficulty": "basic",
+      "metadata": {
+        "pattern": "basic",
+        "source": "5. p3-no.22",
+        "passageIndex": 5
+      }
+    },
+    {
+      "type": "grammar",
+      "question": "다음 중 밑줄 친 부분에 문법 오류가 있는 문장은?",
+      "choices": [
+        "1. Alternatively, some instruments measure properties for which we have no sensory capacity at all and change them into that which we can observe.",
+        "2. Some of these take the form of expanding the reach of our current senses, such as creating visible images based on the ultraviolet spectrum of light or changing sounds that are normally outside the range of what human ears can hear into audible signals.",
+        "3. In some cases, this consists of simply amplifying signals <u>that</u> feed into our normal sensory inputs (e.g., telescopes can bring into clear view that which is too far away for our eyes to perceive on their own).",
+        "4. For many centuries, humans have taken advantage of tools that translate and bring into our perception natural phenomena that we can't perceive with our senses.",
+        "5. Other instruments turn signals that we cannot perceive into ones that we can observe."
+      ],
+      "correctAnswer": 3,
+      "explanation": "문법 오류 탐지",
+      "difficulty": "basic",
+      "metadata": {
+        "pattern": "basic",
+        "source": "6. p3-no.23",
+        "passageIndex": 6
+      }
+    },
+    {
+      "type": "grammar",
+      "question": "다음 중 밑줄 친 부분에 문법 오류가 있는 문장은?",
+      "choices": [
+        "1. Since the law prescribes that all new drugs, prosthetic devices, and surgical techniques be tried on animals before they are used in humans, we will subsequently find that all medical advances are correlated with prior experimentation on animals.",
+        "2. Moreover, several influential physicians h a v e o f f e r e d h i s t o r i c a l e v i d e n c e t h a t a n i m a l experimentation has not been as responsible for biomedical discovery as defenders suggest.",
+        "3. Defenders of research have claimed <u>that</u> since there is a strong correlation between the practice of animal experimentation and medical advancement, the former caused the latter.",
+        "4. After all, we have independent reasons to expect these phenomena to be correlated.",
+        "5. C o n s e q u e n t l y , t h e c o r r e l a t i o n b e t w e e n a n i m a l experimentation and medical discovery is the result of legal necessity, not evidence that animal experimentation led to medical advances."
+      ],
+      "correctAnswer": 3,
+      "explanation": "문법 오류 탐지",
+      "difficulty": "basic",
+      "metadata": {
+        "pattern": "basic",
+        "source": "7. p3-no.24",
+        "passageIndex": 7
+      }
+    },
+    {
+      "type": "grammar",
+      "question": "다음 중 밑줄 친 부분에 문법 오류가 있는 문장은?",
+      "choices": [
+        "1. Naturally, the nervous species are difficult to keep in captivity.",
+        "2. Big mammalian herbivore species react to danger from predators or humans in different ways.",
+        "3. But no gazelle species has ever been <u>domesticated</u>.",
+        "4. Just imagine trying to herd an animal that runs away, blindly hits itself against walls, can leap up to nearly 30 feet, and can run at a speed of 50 miles per hour!",
+        "5. There is no mammal species that the first settled peoples of that area had more opportunity to domesticate than gazelles."
+      ],
+      "correctAnswer": 3,
+      "explanation": "문법 오류 탐지",
+      "difficulty": "basic",
+      "metadata": {
+        "pattern": "basic",
+        "source": "8. p5-no.29",
+        "passageIndex": 8
+      }
+    },
+    {
+      "type": "grammar",
+      "question": "다음 중 밑줄 친 부분에 문법 오류가 있는 문장은?",
+      "choices": [
+        "1. It's not just because they are nice people; it's because their survival depends on sharing, for they know that they may be the travelers in need of food and shelter another day.",
+        "2. Our desire for <u>more</u>, combined with our decreased physical interaction with the \"common folk,\" starts to create a disconnection or blindness to reality.",
+        "3. Certain nomadic tribes don't have much, yet they are happy to share because it is in their interest to do so.",
+        "4. If you happen upon them in your travels, they will open up their homes and give you their food and hospitality.",
+        "5. For a species born in a time when resources were limited and dangers were great, our natural tendency to share and cooperate is complicated when resources are plenty and outside dangers are few."
+      ],
+      "correctAnswer": 2,
+      "explanation": "문법 오류 탐지",
+      "difficulty": "basic",
+      "metadata": {
+        "pattern": "basic",
+        "source": "9. p5-no.30",
+        "passageIndex": 9
+      }
+    },
+    {
+      "type": "grammar",
+      "question": "다음 중 밑줄 친 부분에 문법 오류가 있는 문장은?",
+      "choices": [
+        "1. As humans, we adjust ─ to new information and events both good and bad ─ and return to our personal default level of well-being.",
+        "2. Whether we feel happy or sad, content or discontent, is not <u>determined</u> merely by each individual successive moment of life experience ─ a good thing happens and I'm happy, a bad thing happens and I'm sad.",
+        "3. While our experiences affect our mood, we are not blown in a completely new direction by each gust of wind.",
+        "4. The euphoria of first love fades, and so does the despair of a break-up.",
+        "5. And for the first few minutes of the rest of their lives, they are."
+      ],
+      "correctAnswer": 2,
+      "explanation": "문법 오류 탐지",
+      "difficulty": "basic",
+      "metadata": {
+        "pattern": "basic",
+        "source": "10. p5-no.31",
+        "passageIndex": 10
+      }
+    },
+    {
+      "type": "grammar",
+      "question": "다음 중 밑줄 친 부분에 문법 오류가 있는 문장은?",
+      "choices": [
+        "1. Eventually, a lack of sleep catches up with you.",
+        "2. Although you may put off going to sleep in order to squeeze more activities into your day, eventually your need for sleep becomes overwhelming and you are forced to get some sleep.",
+        "3. This daily drive for sleep appears to be due, in part, <u>to a</u> compound known as adenosine.",
+        "4. An accumulation of adenosine and other factors might explain why, after several nights of less than optimal amounts of sleep, you build up a sleep debt that you must make up by sleeping longer than normal.",
+        "5. This natural chemical builds up in your blood as time awake increases."
+      ],
+      "correctAnswer": 3,
+      "explanation": "문법 오류 탐지",
+      "difficulty": "basic",
+      "metadata": {
+        "pattern": "basic",
+        "source": "11. p5-no.32",
+        "passageIndex": 11
+      }
+    },
+    {
+      "type": "grammar",
+      "question": "다음 중 밑줄 친 부분에 문법 오류가 있는 문장은?",
+      "choices": [
+        "1. Take, for example, the distance between Earth and the sun: 1.49597 x 10 km, as measured at one point during the year.",
+        "2. Whether or not the quoted number is \"precise\" therefore depends on what I'm intending to do with it.",
+        "3. If I care only about what minute the sun will rise tomorrow, then the number quoted here is fine.",
+        "4. However, if the next digit is uncertain, that means the uncertainty in <u>knowing</u> the precise Earth-sun distance is larger than the distance between New York and Chicago!",
+        "5. If I want to send a satellite to orbit just above the sun, however, then I would need to know distances more accurately."
+      ],
+      "correctAnswer": 4,
+      "explanation": "문법 오류 탐지",
+      "difficulty": "basic",
+      "metadata": {
+        "pattern": "basic",
+        "source": "12. p6-no.33",
+        "passageIndex": 12
+      }
+    },
+    {
+      "type": "grammar",
+      "question": "다음 중 밑줄 친 부분에 문법 오류가 있는 문장은?",
+      "choices": [
+        "1. In addition to solar panels and wind turbines, we have to build an alternative transport infrastructure, farming procedures and industrial processes.",
+        "2. This is not only expensive, but also an undermining factor for our efforts <u>to cut</u> global emissions.",
+        "3. For instance, production of concrete structures and steel elements require amounts of energy that is only possible to produce with fossil energy.",
+        "4. Heinberg remarks that the cost of building this new energy infrastructure is seldom counted in transition proposals, which tend to focus just on energy supply requirements.",
+        "5. Thus, the harder we push towards a renewable energy system, the faster we have to use fossil energy for the construction process."
+      ],
+      "correctAnswer": 2,
+      "explanation": "문법 오류 탐지",
+      "difficulty": "basic",
+      "metadata": {
+        "pattern": "basic",
+        "source": "13. p6-no.34",
+        "passageIndex": 13
+      }
+    },
+    {
+      "type": "grammar",
+      "question": "다음 중 밑줄 친 부분에 문법 오류가 있는 문장은?",
+      "choices": [
+        "1. A few years later, MIT professor John McCarthy coined \"artificial intelligence,\" replacing the previously used expression \"automata studies.\" Since then, artificial intelligence has become the study and practice of \"<u>making</u> intelligent machines\" that are programmed to think like humans ─ endowed by their creators with reasoning and learning.",
+        "2. Humans for centuries have dreamed of machines that could become intelligent and make human-like decisions.",
+        "3. In 1950, British mathematician Alan Turing asked whether machines could think and reason like humans and then developed the Turing test to measure a machine's intelligence and whether the machines can think autonomously.",
+        "4. There have been myths about robots, automatons, and artificial beings since ancient Greece (e.g., the myth of Pandora, who released ills upon the world).",
+        "5. Likewise, literature throughout history has dreamed of creating human-like creatures and thinking machines (e.g., Mary Shelley's Frankenstein)."
+      ],
+      "correctAnswer": 1,
+      "explanation": "문법 오류 탐지",
+      "difficulty": "basic",
+      "metadata": {
+        "pattern": "basic",
+        "source": "14. p6-no.35",
+        "passageIndex": 14
+      }
+    },
+    {
+      "type": "grammar",
+      "question": "다음 중 밑줄 친 부분에 문법 오류가 있는 문장은?",
+      "choices": [
+        "1. But to stay <u>supplied</u> with water through its extended hibernation, the reptile relies on something else ─ its highly sophisticated bladder.",
+        "2. The desert tortoise has a simple solution for coping with Death Valley's extreme heat: It avoids it.",
+        "3. And because its bladder is so important to a tortoise's survival, park rangers often remind visitors not to stop and help the slow-movers across the road.",
+        "4. Unlike most animals, the tortoise's bladder acts as a holding tank, allowing it to reabsorb water back into its body.",
+        "5. The slow-moving creature hibernates during the winter and stays in its tunnel for much of the summer, meaning that it spends more than 90 percent of its life immobile."
+      ],
+      "correctAnswer": 1,
+      "explanation": "문법 오류 탐지",
+      "difficulty": "basic",
+      "metadata": {
+        "pattern": "basic",
+        "source": "15. p6-no.36",
+        "passageIndex": 15
+      }
+    },
+    {
+      "type": "grammar",
+      "question": "다음 중 밑줄 친 부분에 문법 오류가 있는 문장은?",
+      "choices": [
+        "1. Because the brakes change your movement, making you slow down <u>more</u> suddenly, they must be exerting a force on the bicycle and you, as they grip and rub on the wheel-rims.",
+        "2. This is the force called friction, which tends to slow down moving things by acting in the direction opposite to movement, that is backwards.",
+        "3. One of these is friction in the wheels rubbing on the axles.",
+        "4. Imagine you are pedalling your bicycle on a level road.",
+        "5. Another is air resistance, which you can feel, pushing you backwards as you and the bicycle move forwards."
+      ],
+      "correctAnswer": 1,
+      "explanation": "문법 오류 탐지",
+      "difficulty": "basic",
+      "metadata": {
+        "pattern": "basic",
+        "source": "16. p7-no.37",
+        "passageIndex": 16
+      }
+    },
+    {
+      "type": "grammar",
+      "question": "다음 중 밑줄 친 부분에 문법 오류가 있는 문장은?",
+      "choices": [
+        "1. Nonlinear editing, on the other hand, is like using a word processing program.",
+        "2. If a mistake is made, it is easily deleted and fixed with a few keystrokes, and new information can be added easily.",
+        "3. Another highlight of a digital nonlinear system is its random access process that makes it easy for an editor <u>to find</u> desired shots or scenes without having to spend time fast forwarding or rewinding videotape.",
+        "4. Linear editing was like composing a paper on a typewriter.",
+        "5. All editing systems are now nonlinear computer-based systems that allow random access to any video shot or scene without having to fast forward or fast reverse to find it."
+      ],
+      "correctAnswer": 3,
+      "explanation": "문법 오류 탐지",
+      "difficulty": "basic",
+      "metadata": {
+        "pattern": "basic",
+        "source": "17. p7-no.38",
+        "passageIndex": 17
+      }
+    },
+    {
+      "type": "grammar",
+      "question": "다음 중 밑줄 친 부분에 문법 오류가 있는 문장은?",
+      "choices": [
+        "1. A person who always tries to prevent harm but never does, is not generally thought of as morally good.",
+        "2. In judging a person not only her actions but also her intentions and motives are relevant.",
+        "3. Although this kind of situation generally occurs only in slapstick movies, it is worth mentioning to avoid the false impression that it is the actual consequences of a person's actions that count toward her being judged morally good or bad.",
+        "4. A morally good person is one who does morally bad actions significantly <u>less</u> often than most and does morally good ones significantly more often than most.",
+        "5. Of such a person, it may be said that she means well; but, contrary to Kant, some results are necessary before she is regarded as morally good."
+      ],
+      "correctAnswer": 4,
+      "explanation": "문법 오류 탐지",
+      "difficulty": "basic",
+      "metadata": {
+        "pattern": "basic",
+        "source": "18. p7-no.39",
+        "passageIndex": 18
+      }
+    },
+    {
+      "type": "grammar",
+      "question": "다음 중 밑줄 친 부분에 문법 오류가 있는 문장은?",
+      "choices": [
+        "1. ─> Our visual perception is shaped by an established hierarchy based on functional relationships, which interrupts our ability to see objects as they truly are, unlike the objective perspective of a camera.",
+        "2. And because of their flatness, photographs often contain areas that appear as unrecognizable colors and shapes.",
+        "3. When we look at them carefully, photographs are often surprising because they don't interpret confusing details but simply serve them up <u>to us</u> with a mechanical indifference.",
+        "4. In viewing a scene, we establish unconscious hierarchies that reflect our functional relationship to objects and our momentary priorities.",
+        "5. It documents the world impartially through a lens that is similar to the eye."
+      ],
+      "correctAnswer": 3,
+      "explanation": "문법 오류 탐지",
+      "difficulty": "basic",
+      "metadata": {
+        "pattern": "basic",
+        "source": "19. p7-no.40",
+        "passageIndex": 19
+      }
+    },
+    {
+      "type": "grammar",
+      "question": "다음 중 밑줄 친 부분에 문법 오류가 있는 문장은?",
+      "choices": [
+        "1. \"No, thank you\" is usually the immediate response, even if the customer is actually in <u>need</u> of assistance.",
+        "2. \"May I help you?\" are the worst four words that a retail salesperson can utter because they don't encourage the customer to talk and put them on the defensive.",
+        "3. The subconscious thought by the customer is often \"I'm smart enough to figure out what I want, and I don't need your help!\" If customers feel pressured or cornered, then salespeople won't make any sales.",
+        "4. This almost always puts the customer on the defense.",
+        "5. In situations where customers really do want to look around on their own, salespeople should give customers their business cards and keep themselves accessible in case customers have questions or concerns."
+      ],
+      "correctAnswer": 1,
+      "explanation": "문법 오류 탐지",
+      "difficulty": "basic",
+      "metadata": {
+        "pattern": "basic",
+        "source": "20. p8-no.41~42",
+        "passageIndex": 20
+      }
+    },
+    {
+      "type": "grammar",
+      "question": "다음 중 밑줄 친 부분에 문법 오류가 있는 문장은?",
+      "choices": [
+        "1. Then the two walked off in different directions.",
+        "2. As I walked away from my lunch table that day, I looked at Dave.",
+        "3. Just then a popular senior boy stood up from his seat, and <u>walked</u> over to the boy.",
+        "4. He started shaking, and tears began to form in his eyes.",
+        "5. We sat near yet away from him, fixing our hair and worrying about the test next period we hadn't studied for."
+      ],
+      "correctAnswer": 3,
+      "explanation": "문법 오류 탐지",
+      "difficulty": "basic",
+      "metadata": {
+        "pattern": "basic",
+        "source": "21. p8-no.43~45",
+        "passageIndex": 21
+      }
+    }
+  ],
+  "vocabulary": [
+    {
+      "type": "vocabulary",
+      "question": "���ƻ� ���� ģ �ܾ�� �ǹ̰� ���� ����� ����?",
+      "text": "Dear Principal Jones, I hope this message finds you well. As student council president, I am reaching out to discuss an important matter regarding our school library's current operating hours. At present, the library closes at 5 p.m., which many students feel limits their ability to fully use its resources for study and research after regular class hours. This is particularly challenging for those preparing for college entrance exams or working on academic projects that demand a quiet and resourceful environment. Therefore, I'd like to ask you to <u>extend</u> the library's operating hours to 7 p.m. This change would greatly benefit students by providing additional time to focus on their academic goals. I hope you will consider this proposal as a step toward improving our academic environment and better supporting our needs. Sincerely, Eric Park Student Council President",
+      "options": [
+        "��� �ø���",
+        "�Ѹ���� �ٹ̴�",
+        "��� ���ߴ�",
+        "��� ������"
+      ],
+      "answer": "1",
+      "explanation": "\"extend\"�� �ð��� �ø��ų� ��� �ϴٶ�� ���Դϴ�.",
+      "metadata": {
+        "word": "extend",
+        "source": "1. p2-no.18",
+        "passageIndex": 1
+      }
+    },
+    {
+      "type": "vocabulary",
+      "question": "���ƻ� ���� ģ �ܾ�� �ǹ̰� ���� ����� ����?",
+      "text": "I glanced at the clock on the wall. 10:00. That meant the casting director would call very soon with the results of my first <u>audition</u> for a musical part in The Wizard of Oz. I felt shaky all over, chewing my thumbnail and jiggling my feet. Finally, the telephone rang. While I was coming round, Dad answered. I heard him say, \"Ahh, thank you. I'll let her know...\" As I got to the bottom of the stairs, he was just putting the phone down. \"That was The Wizard of Oz. You're second senior munchkin,\" he announced. I got a little rush of excitement, knowing I was in ─ that whatever happened I could be involved in one of the productions.",
+      "options": [
+        "��쳪 ������ �̱� ���� ����",
+        "�ϼ��� ����",
+        "������ �ڼ�",
+        "���� ��ġ"
+      ],
+      "answer": "1",
+      "explanation": "\"audition\"�� ������ ��� ���� ���� ������ �ǹ��մϴ�.",
+      "metadata": {
+        "word": "audition",
+        "source": "2. p2-no.19",
+        "passageIndex": 2
+      }
+    },
+    {
+      "type": "vocabulary",
+      "question": "���ƻ� ���� ģ �ܾ�� �ǹ̰� ���� ����� ����?",
+      "text": "Inefficient teachers overlook the potential power of the opening minutes of class. Often, if students are quiet enough and if there are many pressing demands on a teacher's time at that moment, more than ten minutes can disappear before class starts. It's no wonder that students are late for class; they have little reason to be on time. You can use the first ten minutes to get your class off to a great start, or you can choose to waste this time. The first minutes set the tone for the rest of the class. If you are prepared for class and have taught your students an opening <u>routine</u>, they can use this brief time to make mental and emotional transitions from the last class or subject and prepare to focus on learning new material. In summary, you should establish an opening routine to develop your class with an effective start.",
+      "options": [
+        "�� �ݺ��ϴ� ������ ����",
+        "���۽����� ���",
+        "Ư���� ����",
+        "�ұ�Ģ�� �Ǽ�"
+      ],
+      "answer": "1",
+      "explanation": "\"routine\"�� ����ó�� �ݺ��Ǵ� �����Դϴ�.",
+      "metadata": {
+        "word": "routine",
+        "source": "3. p2-no.20",
+        "passageIndex": 3
+      }
+    },
+    {
+      "type": "vocabulary",
+      "question": "���ƻ� ���� ģ �ܾ�� �ǹ̰� ���� ����� ����?",
+      "text": "Many atoms in your body are nearly as old as the universe itself. When you breathe, for example, only some of the atoms that you inhale are exhaled in your next breath. The remaining atoms are taken into your body to become part of you, and they later leave your body by various means. You don't \"own\" the atoms that make up your body; you <u>borrow</u> them. We all share from the same atom pool because atoms forever travel around, within, and among us. Atoms cycle from person to person as we breathe and as our sweat is evaporated. We recycle atoms on a grand scale. The origin of the lightest atoms goes back to the origin of the universe, and most heavier atoms are older than the Sun and Earth. There are atoms in your body that have existed since the first moments of time, circulating throughout the universe among limitless forms, both living and nonliving. You're the present caretaker of the atoms in your body. There will be many who will follow you.",
+      "options": [
+        "������ ��� ����",
+        "���� ����",
+        "������ �����ϴ�",
+        "���� �����"
+      ],
+      "answer": "1",
+      "explanation": "\"borrow\"�� ���� ���� ���� ��� ������ �ǹ��Դϴ�.",
+      "metadata": {
+        "word": "borrow",
+        "source": "4. p3-no.21",
+        "passageIndex": 4
+      }
+    },
+    {
+      "type": "vocabulary",
+      "question": "���ƻ� ���� ģ �ܾ�� �ǹ̰� ���� ����� ����?",
+      "text": "The act of gardening itself is a fantastic form of physical activity. It involves a range of motions, from digging and planting to watering and harvesting. These activities help improve strength, flexibility, and endurance. You might not realize it, but small tasks like weeding or turning compost can burn many calories. Gardening is particularly beneficial for those who find traditional exercise challenging. It's a low-impact way to stay active and fit, making it accessible for people of all ages and physical abilities. Besides physical health, gardening has profound mental health benefits. Tending to plants can be incredibly calming and <u>meditative</u>. It allows you to focus on the present moment, reducing stress and anxiety. The repetitive tasks involved in gardening can induce a state of mindfulness, similar to meditation. Studies have shown that spending time in nature, even in a small garden, can elevate mood, improve cognition, and lessen depression symptoms. The sense of accomplishment from watching your plants grow and thrive can also boost self-esteem and overall well-being.",
+      "options": [
+        "������ �����ϰ� �ϴ�",
+        "�ò����� ȥ��������",
+        "���θ���",
+        "������ �θ���"
+      ],
+      "answer": "1",
+      "explanation": "\"meditative\"�� �����ϵ� ������ �����ϰ� ����� ���¸� ����ŵ�ϴ�.",
+      "metadata": {
+        "word": "meditative",
+        "source": "5. p3-no.22",
+        "passageIndex": 5
+      }
+    },
+    {
+      "type": "vocabulary",
+      "question": "���ƻ� ���� ģ �ܾ�� �ǹ̰� ���� ����� ����?",
+      "text": "For many centuries, humans have taken advantage of tools that translate and bring into our perception natural <u>phenomena</u> that we can't perceive with our senses. In some cases, this consists of simply amplifying signals that feed into our normal sensory inputs (e.g., telescopes can bring into clear view that which is too far away for our eyes to perceive on their own). Other instruments turn signals that we cannot perceive into ones that we can observe. Some of these take the form of expanding the reach of our current senses, such as creating visible images based on the ultraviolet spectrum of light or changing sounds that are normally outside the range of what human ears can hear into audible signals. Alternatively, some instruments measure properties for which we have no sensory capacity at all and change them into that which we can observe.",
+      "options": [
+        "�Ͼ�� ���� ���� ����",
+        "������� ���",
+        "�쿬�� �Ǽ�",
+        "���� �ҹ�"
+      ],
+      "answer": "1",
+      "explanation": "\"phenomena\"�� �����Ǵ� ���� �ڿ�����ȸ ������ ���մϴ�.",
+      "metadata": {
+        "word": "phenomena",
+        "source": "6. p3-no.23",
+        "passageIndex": 6
+      }
+    },
+    {
+      "type": "vocabulary",
+      "question": "���ƻ� ���� ģ �ܾ�� �ǹ̰� ���� ����� ����?",
+      "text": "Many opponents of animal experimentation argue that not only is modern medicine not the only cause for the decline in mortality, many medical advances that did contribute to h u m a n h e a l t h w e r e n o t t h e r e s u l t o f a n i m a l experimentation. Defenders of research have claimed that since there is a strong <u>correlation</u> between the practice of animal experimentation and medical advancement, the former caused the latter. Opponents of research reject this inference. After all, we have independent reasons to expect these phenomena to be correlated. Since the law prescribes that all new drugs, prosthetic devices, and surgical techniques be tried on animals before they are used in humans, we will subsequently find that all medical advances are correlated with prior experimentation on animals. C o n s e q u e n t l y , t h e c o r r e l a t i o n b e t w e e n a n i m a l experimentation and medical discovery is the result of legal necessity, not evidence that animal experimentation led to medical advances. Moreover, several influential physicians h a v e o f f e r e d h i s t o r i c a l e v i d e n c e t h a t a n i m a l experimentation has not been as responsible for biomedical discovery as defenders suggest. They claim that clinical discoveries played a more substantial role than animal researchers have led us to believe.",
+      "options": [
+        "���� ���õǾ� �Բ� ����",
+        "������ �и���",
+        "������ ����",
+        "���� ����"
+      ],
+      "answer": "1",
+      "explanation": "\"correlation\"�� �� ��Ұ� ���� ����Ǿ� �ִٴ� �ǹ��Դϴ�.",
+      "metadata": {
+        "word": "correlation",
+        "source": "7. p3-no.24",
+        "passageIndex": 7
+      }
+    },
+    {
+      "type": "vocabulary",
+      "question": "���ƻ� ���� ģ �ܾ�� �ǹ̰� ���� ����� ����?",
+      "text": "Big mammalian herbivore species react to danger from predators or humans in different ways. Some species are nervous, fast, and programmed for instant flight when they perceive a threat. Other species are slower, less nervous, seek protection in herds, stand their ground when threatened, and don't run until necessary. Naturally, the nervous species are difficult to keep in captivity. If put into an enclosure, they are likely to panic, and either die of shock or hit themselves repeatedly to death against the fence in their attempts to escape. That's true, for example, of gazelles, which for thousands of years were the most frequently hunted game species in some parts of the Fertile Crescent. There is no mammal species that the first settled peoples of that area had more opportunity to domesticate than gazelles. But no gazelle species has ever been <u>domesticated</u>. Just imagine trying to herd an animal that runs away, blindly hits itself against walls, can leap up to nearly 30 feet, and can run at a speed of 50 miles per hour!",
+      "options": [
+        "��鿩�� ����� �⸣�� ����",
+        "�߻����� �ǵ��ư�",
+        "���ڱ� �����",
+        "����"
+      ],
+      "answer": "1",
+      "explanation": "\"domesticated\"�� ������ ��鿩�� ������ �⸦ �� ������ ���մϴ�.",
+      "metadata": {
+        "word": "domesticated",
+        "source": "8. p5-no.29",
+        "passageIndex": 8
+      }
+    },
+    {
+      "type": "vocabulary",
+      "question": "���ƻ� ���� ģ �ܾ�� �ǹ̰� ���� ����� ����?",
+      "text": "For a species born in a time when resources were limited and dangers were great, our natural tendency to share and cooperate is complicated when resources are plenty and outside dangers are few. When we have less, we tend to be more open to sharing what we have. Certain nomadic tribes don't have much, yet they are happy to share because it is in their interest to do so. If you happen upon them in your travels, they will open up their homes and give you their food and <u>hospitality</u>. It's not just because they are nice people; it's because their survival depends on sharing, for they know that they may be the travelers in need of food and shelter another day. Ironically, the more we have, the bigger our fences, the more sophisticated our security to keep people away and the less we want to share. Our desire for more, combined with our decreased physical interaction with the \"common folk,\" starts to create a disconnection or blindness to reality.",
+      "options": [
+        "�����ϰ� �����ϰ� ������",
+        "������ ��Ģ",
+        "��ģ ����",
+        "������ ����"
+      ],
+      "answer": "1",
+      "explanation": "\"hospitality\"�� �մ��� ģ���� �����ϴ� �µ��Դϴ�.",
+      "metadata": {
+        "word": "hospitality",
+        "source": "9. p5-no.30",
+        "passageIndex": 9
+      }
+    },
+    {
+      "type": "vocabulary",
+      "question": "���ƻ� ���� ģ �ܾ�� �ǹ̰� ���� ����� ����?",
+      "text": "Whether we feel happy or sad, content or discontent, is not determined merely by each individual successive moment of life experience ─ a good thing happens and I'm happy, a bad thing happens and I'm sad. While our experiences affect our mood, we are not blown in a completely new direction by each gust of wind. As humans, we adjust ─ to new information and events both good and bad ─ and return to our personal default level of well-being. There will be highs and lows, but over time, like water seeking its own level, we are pulled toward our baseline ─ back up after bad news and back down after good. The <u>euphoria</u> of first love fades, and so does the despair of a break-up. This tendency is best seen with little kids and their toy joy: When they get what they've longed for, they believe they will be happy for the rest of their lives. And for the first few minutes of the rest of their lives, they are. But then the kids ─ like adults ─ adapt.",
+      "options": [
+        "ū ��ݰ� ȲȦ��",
+        "���� �Ƿ�",
+        "������",
+        "���������� �Ҿ�"
+      ],
+      "answer": "1",
+      "explanation": "\"euphoria\"�� �ſ� ū ��ݰ� ��� ������ ���մϴ�.",
+      "metadata": {
+        "word": "euphoria",
+        "source": "10. p5-no.31",
+        "passageIndex": 10
+      }
+    },
+    {
+      "type": "vocabulary",
+      "question": "���ƻ� ���� ģ �ܾ�� �ǹ̰� ���� ����� ����?",
+      "text": "Although you may put off going to sleep in order to squeeze more activities into your day, eventually your need for sleep becomes overwhelming and you are forced to get some sleep. This daily drive for sleep appears to be due, in part, to a compound known as adenosine. This natural chemical builds up in your blood as time awake increases. While you sleep, your body breaks down the adenosine. Thus, this molecule may be what your body uses to keep track of lost sleep and to trigger sleep when needed. An <u>accumulation</u> of adenosine and other factors might explain why, after several nights of less than optimal amounts of sleep, you build up a sleep debt that you must make up by sleeping longer than normal. Because of such built-in molecular feedback, you can't become accustomed to getting less sleep than your body needs. Eventually, a lack of sleep catches up with you.",
+      "options": [
+        "�������� ����",
+        "���۽����� ����",
+        "���� ����",
+        "�ﰢ���� �ߴ�"
+      ],
+      "answer": "1",
+      "explanation": "\"accumulation\"�� � ���� ���� �׿� ���� ���� �ǹ��մϴ�.",
+      "metadata": {
+        "word": "accumulation",
+        "source": "11. p5-no.32",
+        "passageIndex": 11
+      }
+    },
+    {
+      "type": "vocabulary",
+      "question": "���ƻ� ���� ģ �ܾ�� �ǹ̰� ���� ����� ����?",
+      "text": "One of the things that makes uncertainty difficult for members of the public to appreciate is that the significance of uncertainty is relative. Take, for example, the distance between Earth and the sun: 1.49597 x 10 km, as measured at one point during the year. This seems relatively <u>precise</u>; after all, using six significant digits means I know the distance to an accuracy of one part in a million or so. However, if the next digit is uncertain, that means the uncertainty in knowing the precise Earth-sun distance is larger than the distance between New York and Chicago! Whether or not the quoted number is \"precise\" therefore depends on what I'm intending to do with it. If I care only about what minute the sun will rise tomorrow, then the number quoted here is fine. If I want to send a satellite to orbit just above the sun, however, then I would need to know distances more accurately.",
+      "options": [
+        "���� ��Ȯ��",
+        "�����ϰ� Ʋ��",
+        "������ ������",
+        "������ �鸮��"
+      ],
+      "answer": "1",
+      "explanation": "\"precise\"�� �ſ� ��Ȯ�ϰ� ������ ���¸� ���մϴ�.",
+      "metadata": {
+        "word": "precise",
+        "source": "12. p6-no.33",
+        "passageIndex": 12
+      }
+    },
+    {
+      "type": "vocabulary",
+      "question": "���ƻ� ���� ģ �ܾ�� �ǹ̰� ���� ����� ����?",
+      "text": "Richard Heinberg, an American journalist, argues that in building the renewable energy <u>infrastructure</u> to stop global warming, we are actually involved in one of the greatest change projects in human history. In addition to solar panels and wind turbines, we have to build an alternative transport infrastructure, farming procedures and industrial processes. This transformation cannot happen without fossil fuels. For instance, production of concrete structures and steel elements require amounts of energy that is only possible to produce with fossil energy. Production of solar panels requires scarce and expensive minerals which must be excavated, again requiring the use of fossil fuels. Thus, the harder we push towards a renewable energy system, the faster we have to use fossil energy for the construction process. This is not only expensive, but also an undermining factor for our efforts to cut global emissions. Heinberg remarks that the cost of building this new energy infrastructure is seldom counted in transition proposals, which tend to focus just on energy supply requirements.",
+      "options": [
+        "����� �Ǵ� �ü��� ��ġ",
+        "����� �Ǽ�",
+        "���� ���",
+        "���ʿ��� ���"
+      ],
+      "answer": "1",
+      "explanation": "\"infrastructure\"�� ��ȸ�� �����ϴ� �⺻ �ü��� ���մϴ�.",
+      "metadata": {
+        "word": "infrastructure",
+        "source": "13. p6-no.34",
+        "passageIndex": 13
+      }
+    },
+    {
+      "type": "vocabulary",
+      "question": "���ƻ� ���� ģ �ܾ�� �ǹ̰� ���� ����� ����?",
+      "text": "Humans for centuries have dreamed of machines that could become intelligent and make human-like decisions. There have been myths about robots, automatons, and artificial beings since ancient Greece (e.g., the myth of Pandora, who released ills upon the world). Likewise, literature throughout history has dreamed of creating human-like creatures and thinking machines (e.g., Mary Shelley's Frankenstein). In 1950, British mathematician Alan Turing asked whether machines could think and reason like humans and then developed the Turing test to measure a machine's intelligence and whether the machines can think <u>autonomously</u>. A few years later, MIT professor John McCarthy coined \"artificial intelligence,\" replacing the previously used expression \"automata studies.\" Since then, artificial intelligence has become the study and practice of \"making intelligent machines\" that are programmed to think like humans ─ endowed by their creators with reasoning and learning.",
+      "options": [
+        "������ �Ǵ��Ͽ�",
+        "���� ��Ű�� ��θ�",
+        "������ ���缭",
+        "��������"
+      ],
+      "answer": "1",
+      "explanation": "\"autonomously\"�� �ٸ� ��� ���� ���� ������ �Ǵ����� ���մϴ�.",
+      "metadata": {
+        "word": "autonomously",
+        "source": "14. p6-no.35",
+        "passageIndex": 14
+      }
+    },
+    {
+      "type": "vocabulary",
+      "question": "���ƻ� ���� ģ �ܾ�� �ǹ̰� ���� ����� ����?",
+      "text": "The desert tortoise has a simple solution for coping with Death Valley's extreme heat: It avoids it. The slow-moving creature hibernates during the winter and stays in its tunnel for much of the summer, meaning that it spends more than 90 percent of its life <u>immobile</u>. In fact, the tortoise usually only surfaces after a good rain. Then, it gets to work. The tortoise stocks up on water by eating plants and digging holes to collect rain. But to stay supplied with water through its extended hibernation, the reptile relies on something else ─ its highly sophisticated bladder. Unlike most animals, the tortoise's bladder acts as a holding tank, allowing it to reabsorb water back into its body. Incredibly, a desert tortoise can go a full year without taking in any freshwater at all. And because its bladder is so important to a tortoise's survival, park rangers often remind visitors not to stop and help the slow-movers across the road. Tortoises become so terrified when people pick them up that they empty their bladders, losing their precious water reserves.",
+      "options": [
+        "���� �������� �ʴ�",
+        "������ �ڶ��",
+        "�Ҹ��� ũ�� ����",
+        "��� ������"
+      ],
+      "answer": "1",
+      "explanation": "\"immobile\"�� �������� �ʰ� ������ �ִ� �����Դϴ�.",
+      "metadata": {
+        "word": "immobile",
+        "source": "15. p6-no.36",
+        "passageIndex": 15
+      }
+    },
+    {
+      "type": "vocabulary",
+      "question": "���ƻ� ���� ģ �ܾ�� �ǹ̰� ���� ����� ����?",
+      "text": "Imagine you are pedalling your bicycle on a level road. You stop pedalling: no force is now acting to move you forward. What happens? You gradually slow down. How could you slow down more suddenly, in a shorter distance? By putting the brakes on. Because the brakes change your movement, making you slow down more suddenly, they must be exerting a force on the bicycle and you, as they grip and rub on the wheel-rims. This is the force called <u>friction</u>, which tends to slow down moving things by acting in the direction opposite to movement, that is backwards. Even without the brakes on, there are other friction forces acting on you and your bicycle, which also slow you down. One of these is friction in the wheels rubbing on the axles. Another is air resistance, which you can feel, pushing you backwards as you and the bicycle move forwards. When you apply these ideas to something around you, like a cart, you can see what could be generating friction: mainly the axles rubbing on the body as they rotate.",
+      "options": [
+        "���� ���� �������� ���� ��",
+        "���� ���� ������",
+        "�Ҹ��� Ű��� ��ġ",
+        "���⸦ �����ϴ� ��"
+      ],
+      "answer": "1",
+      "explanation": "\"friction\"�� ��ü���� �������� �������� �����ϴ� ���Դϴ�.",
+      "metadata": {
+        "word": "friction",
+        "source": "16. p7-no.37",
+        "passageIndex": 16
+      }
+    },
+    {
+      "type": "vocabulary",
+      "question": "���ƻ� ���� ģ �ܾ�� �ǹ̰� ���� ����� ����?",
+      "text": "All editing systems are now <u>nonlinear</u> computer-based systems that allow random access to any video shot or scene without having to fast forward or fast reverse to find it. Nonlinear systems can create a range of special effects, such as slow motion, wipes and dissolves. Another highlight of a digital nonlinear system is its random access process that makes it easy for an editor to find desired shots or scenes without having to spend time fast forwarding or rewinding videotape. With nonlinear editing, shots and scenes can be easily added or removed anywhere in the program, and the computer adjusts the program length automatically. Linear editing was like composing a paper on a typewriter. If a mistake was made or new information needed to be added the whole piece had to be retyped. Nonlinear editing, on the other hand, is like using a word processing program. If a mistake is made, it is easily deleted and fixed with a few keystrokes, and new information can be added easily.",
+      "options": [
+        "������� �� �ٷ� ������� �ʴ�",
+        "�׻� ���� �ӵ��� �����̴�",
+        "���� �̿���",
+        "�ڿ������� ���̴�"
+      ],
+      "answer": "1",
+      "explanation": "\"nonlinear\"�� ������ ������� �̾����� �ʴ� ����� �ǹ��մϴ�.",
+      "metadata": {
+        "word": "nonlinear",
+        "source": "17. p7-no.38",
+        "passageIndex": 17
+      }
+    },
+    {
+      "type": "vocabulary",
+      "question": "���ƻ� ���� ģ �ܾ�� �ǹ̰� ���� ����� ����?",
+      "text": "A morally good person is one who does morally bad actions significantly less often than most and does morally good ones significantly more often than most. In judging a person not only her actions but also her intentions and motives are relevant. A morally good person must intend to do morally good actions and intend to avoid morally bad ones. A person who unintentionally prevents harm to others and does not harm them simply because things do not turn out as she intends is not morally good. Although this kind of situation generally occurs only in slapstick movies, it is worth mentioning to avoid the false impression that it is the actual <u>consequences</u> of a person's actions that count toward her being judged morally good or bad. But actual consequences are important. A person who always tries to prevent harm but never does, is not generally thought of as morally good. Of such a person, it may be said that she means well; but, contrary to Kant, some results are necessary before she is regarded as morally good.",
+      "options": [
+        "� �ൿ �ڿ� ������� ���",
+        "������ ���� ��ȹ",
+        "�Ͻ����� ���",
+        "���ǹ��� ����"
+      ],
+      "answer": "1",
+      "explanation": "\"consequences\"�� � �ൿ���� ���� ����� ����Դϴ�.",
+      "metadata": {
+        "word": "consequences",
+        "source": "18. p7-no.39",
+        "passageIndex": 18
+      }
+    },
+    {
+      "type": "vocabulary",
+      "question": "���ƻ� ���� ģ �ܾ�� �ǹ̰� ���� ����� ����?",
+      "text": "Vision is influenced by our <u>preconceptions</u> about reality. In viewing a scene, we establish unconscious hierarchies that reflect our functional relationship to objects and our momentary priorities. For example, when visualizing a hammer in our mind's eye, we tend to \"see\" it in profile or at some other 'ready for use' angle. One would probably not visualize a hammer as seen from the top so that the handle is hidden by the hammer's head. The functional relationship we have with objects creates visual expectations that interfere with our ability to see \"like a camera.\" The camera, like the human eye, sees only shapes and colors. It documents the world impartially through a lens that is similar to the eye. When we look at them carefully, photographs are often surprising because they don't interpret confusing details but simply serve them up to us with a mechanical indifference. And because of their flatness, photographs often contain areas that appear as unrecognizable colors and shapes. ─> Our visual perception is shaped by an established hierarchy based on functional relationships, which interrupts our ability to see objects as they truly are, unlike the objective perspective of a camera.",
+      "options": [
+        "�̸� ���� �ִ� �����̳� ���԰�",
+        "���ο� �߸�ǰ",
+        "�ڿ� ǳ��",
+        "��Ȯ�� ������"
+      ],
+      "answer": "1",
+      "explanation": "\"preconceptions\"�� �����ϱ� ���� �̸� ǰ�� ���԰��� ���մϴ�.",
+      "metadata": {
+        "word": "preconceptions",
+        "source": "19. p7-no.40",
+        "passageIndex": 19
+      }
+    },
+    {
+      "type": "vocabulary",
+      "question": "���ƻ� ���� ģ �ܾ�� �ǹ̰� ���� ����� ����?",
+      "text": "\"May I help you?\" are the worst four words that a retail salesperson can utter because they don't encourage the customer to talk and put them on the <u>defensive</u>. The four words usually draw out a negative response that stops cold a sales transaction. Examples of better questions to use when approaching customers are \"Is there anything in particular that you are looking for?\" and \"Are you shopping for a gift?\" If a fashion salesperson approached you with \"May I help you?\" chances are you would feel the salesperson didn't care. This line is a rote approach that is so overused by untrained and uninterested salespeople. In fact, most of us shudder in horror on hearing these words. The very meaning of the question \"May I help you?\" implies that the customer is in trouble of some sort and needs rescuing. This almost always puts the customer on the defense. \"No, thank you\" is usually the immediate response, even if the customer is actually in need of assistance. The subconscious thought by the customer is often \"I'm smart enough to figure out what I want, and I don't need your help!\" If customers feel pressured or cornered, then salespeople won't make any sales. The approach has to promote a comfortable environment that makes customers feel there is no rush. Furthermore, if customers just want to look around, they should feel that it is all right to do so. In situations where customers really do want to look around on their own, salespeople should give customers their business cards and keep themselves accessible in case customers have questions or concerns.",
+      "options": [
+        "�����θ� ��Ű���� �µ�",
+        "��� ������ ǥ����",
+        "���� ���� �ݷ���",
+        "�����ϰ� ���� ���"
+      ],
+      "answer": "1",
+      "explanation": "\"defensive\"�� �����θ� ��ȣ�Ϸ��� �µ��� ���մϴ�.",
+      "metadata": {
+        "word": "defensive",
+        "source": "20. p8-no.41~42",
+        "passageIndex": 20
+      }
+    },
+    {
+      "type": "vocabulary",
+      "question": "���ƻ� ���� ģ �ܾ�� �ǹ̰� ���� ����� ����?",
+      "text": "While the cafeteria was full of high school students on that afternoon, Dave was thirsty. We sat near yet away from him, fixing our hair and worrying about the test next period we hadn't studied for. He was far away from our world, yet forced to be a part of it. He stood at the drink machine with purpose, fumbling through his fake leather wallet for some change. He came up with a wrinkled dollar bill, and nervously glanced back at his table where other students in his class were sitting. Dave tried to make the machine accept his money. After he failed a few times, some students began to laugh at him. He started shaking, and tears began to form in his eyes. I saw him turn to sit down, looking like he had given up. But for some reason, he decided against it. He wasn't leaving until he got a drink. With a <u>determined</u> expression, he kept aimlessly pushing the dollar bill into the machine. Just then a popular senior boy stood up from his seat, and walked over to the boy. He calmly explained how the machine often had trouble accepting dollar bills. After that, he pulled some coins from his pocket and put them into the machine. Dave gave him his dollar and chose a flavor of fruit juice. Then the two walked off in different directions. Although it was clear that they were from very different worlds, for one moment, they'd shared a real understanding. As I walked away from my lunch table that day, I looked at Dave. I thought he and the dollar were very much alike. They both weren't accepted where the world said they were supposed to be. But just as the dollar had found a place in a warm-hearted senior's pocket, I was sure he would eventually find his, too.",
+      "options": [
+        "���� ������ ����",
+        "�쿬�� ��������",
+        "�̿� ����",
+        "���� �����ϴ�"
+      ],
+      "answer": "1",
+      "explanation": "\"determined\"�� �ؾ߰ڴٰ� ���� �������� �����Դϴ�.",
+      "metadata": {
+        "word": "determined",
+        "source": "21. p8-no.43~45",
+        "passageIndex": 21
+      }
+    }
+  ],
+  "summary": [
+    {
+      "type": "summary",
+      "question": "���� ���� ������ ���� ������ ����?",
+      "mainText": "Dear Principal Jones, I hope this message finds you well. As student council president, I am reaching out to discuss an important matter regarding our school library's current operating hours. At present, the library closes at 5 p.m., which many students feel limits their ability to fully use its resources for study and research after regular class hours. This is particularly challenging for those preparing for college entrance exams or working on academic projects that demand a quiet and resourceful environment. Therefore, I'd like to ask you to extend the library's operating hours to 7 p.m. This change would greatly benefit students by providing additional time to focus on their academic goals. I hope you will consider this proposal as a step toward improving our academic environment and better supporting our needs. Sincerely, Eric Park Student Council President",
+      "options": [
+        "�л�ȸ���� ������ � �ð��� �÷� �޶�� ������ �����Ѵ�.",
+        "�������� ����ؾ� �Ѵٰ� �����Ѵ�.",
+        "�б� �޽� �޴��� �ٲ��ڴ� �����̴�.",
+        "�л�ȸ ���� ������ ȫ���ϴ� ���̴�."
+      ],
+      "answer": "1",
+      "explanation": "������ ������ � �ð��� ���� 7�ñ��� ������ �޶�� ��û�̴�.",
+      "metadata": {
+        "source": "1. p2-no.18",
+        "passageIndex": 1
+      }
+    },
+    {
+      "type": "summary",
+      "question": "���� ���� ������ ���� ������ ����?",
+      "mainText": "I glanced at the clock on the wall. 10:00. That meant the casting director would call very soon with the results of my first audition for a musical part in The Wizard of Oz. I felt shaky all over, chewing my thumbnail and jiggling my feet. Finally, the telephone rang. While I was coming round, Dad answered. I heard him say, \"Ahh, thank you. I'll let her know...\" As I got to the bottom of the stairs, he was just putting the phone down. \"That was The Wizard of Oz. You're second senior munchkin,\" he announced. I got a little rush of excitement, knowing I was in ─ that whatever happened I could be involved in one of the productions.",
+      "options": [
+        "ù ����� ����� �����ϰ� ��ٸ��� ���� ���ҿ� �հ��ϴ� �̾߱��.",
+        "���뿡�� �Ǽ��Ͽ� Ż���ϴ� ����̴�.",
+        "ģ���� ������ �ذ��ϴ� ��ȭ�̴�.",
+        "���ο� ������ ���� �����ϴ� �̾߱��."
+      ],
+      "answer": "1",
+      "explanation": "��ȭ�� ����� ����� ��� ���� ���ҿ� �հ��ϴ� �̾߱��.",
+      "metadata": {
+        "source": "2. p2-no.19",
+        "passageIndex": 2
+      }
+    },
+    {
+      "type": "summary",
+      "question": "���� ���� ������ ���� ������ ����?",
+      "mainText": "Inefficient teachers overlook the potential power of the opening minutes of class. Often, if students are quiet enough and if there are many pressing demands on a teacher's time at that moment, more than ten minutes can disappear before class starts. It's no wonder that students are late for class; they have little reason to be on time. You can use the first ten minutes to get your class off to a great start, or you can choose to waste this time. The first minutes set the tone for the rest of the class. If you are prepared for class and have taught your students an opening routine, they can use this brief time to make mental and emotional transitions from the last class or subject and prepare to focus on learning new material. In summary, you should establish an opening routine to develop your class with an effective start.",
+      "options": [
+        "���� ���� 10�� ��ƾ�� ���� �����⸦ �����Ѵٴ� �����̴�.",
+        "�л����� ������ ������ �������ؾ� �Ѵٴ� �����̴�.",
+        "ü���� ���� ȿ���� �����Ѵ�.",
+        "������ �ٿ��� �Ѵٴ� ���� ������."
+      ],
+      "answer": "1",
+      "explanation": "ù �� ���� �غ� ��ƾ�� ���� ���ߵ��� ���δٰ� �����Ѵ�.",
+      "metadata": {
+        "source": "3. p2-no.20",
+        "passageIndex": 3
+      }
+    },
+    {
+      "type": "summary",
+      "question": "���� ���� ������ ���� ������ ����?",
+      "mainText": "Many atoms in your body are nearly as old as the universe itself. When you breathe, for example, only some of the atoms that you inhale are exhaled in your next breath. The remaining atoms are taken into your body to become part of you, and they later leave your body by various means. You don't \"own\" the atoms that make up your body; you borrow them. We all share from the same atom pool because atoms forever travel around, within, and among us. Atoms cycle from person to person as we breathe and as our sweat is evaporated. We recycle atoms on a grand scale. The origin of the lightest atoms goes back to the origin of the universe, and most heavier atoms are older than the Sun and Earth. There are atoms in your body that have existed since the first moments of time, circulating throughout the universe among limitless forms, both living and nonliving. You're the present caretaker of the atoms in your body. There will be many who will follow you.",
+      "options": [
+        "�츮 ���� ���ڴ� ���ָ�ŭ �����Ǿ� ���� ���� ���� �ִٰ� �����Ѵ�.",
+        "���ڴ� �� �� ���� ������ٰ� �����Ѵ�.",
+        "�ΰ��� ������ ���ڸ� ����� ���ٰ� ���Ѵ�.",
+        "���� ���̰� �ֱٿ����� �������ٰ� �����Ѵ�."
+      ],
+      "answer": "1",
+      "explanation": "���ڴ� ���� ���� ��ΰ� �Բ� ���� ���� �ڿ��̶�� �����Ѵ�.",
+      "metadata": {
+        "source": "4. p3-no.21",
+        "passageIndex": 4
+      }
+    },
+    {
+      "type": "summary",
+      "question": "���� ���� ������ ���� ������ ����?",
+      "mainText": "The act of gardening itself is a fantastic form of physical activity. It involves a range of motions, from digging and planting to watering and harvesting. These activities help improve strength, flexibility, and endurance. You might not realize it, but small tasks like weeding or turning compost can burn many calories. Gardening is particularly beneficial for those who find traditional exercise challenging. It's a low-impact way to stay active and fit, making it accessible for people of all ages and physical abilities. Besides physical health, gardening has profound mental health benefits. Tending to plants can be incredibly calming and meditative. It allows you to focus on the present moment, reducing stress and anxiety. The repetitive tasks involved in gardening can induce a state of mindfulness, similar to meditation. Studies have shown that spending time in nature, even in a small garden, can elevate mood, improve cognition, and lessen depression symptoms. The sense of accomplishment from watching your plants grow and thrive can also boost self-esteem and overall well-being.",
+      "options": [
+        "���� ���ٱⰡ ��ü �ǰ��� ���� �ǰ� ��ο� ������ �ȴٰ� ���Ѵ�.",
+        "���� ���ٱ�� �ð� �����̴� ���� ���ƾ� �Ѵٰ� ���Ѵ�.",
+        "���� ���ٱ�� �������� �� �� �ִٰ� �����Ѵ�.",
+        "���� ���ٱ�� ������ �Ҿ��� Ű��ٰ� �����Ѵ�."
+      ],
+      "answer": "1",
+      "explanation": "���� ���ٱⰡ ��� �ǰ� ������ ������Ų�ٰ� �Ұ��Ѵ�.",
+      "metadata": {
+        "source": "5. p3-no.22",
+        "passageIndex": 5
+      }
+    },
+    {
+      "type": "summary",
+      "question": "���� ���� ������ ���� ������ ����?",
+      "mainText": "For many centuries, humans have taken advantage of tools that translate and bring into our perception natural phenomena that we can't perceive with our senses. In some cases, this consists of simply amplifying signals that feed into our normal sensory inputs (e.g., telescopes can bring into clear view that which is too far away for our eyes to perceive on their own). Other instruments turn signals that we cannot perceive into ones that we can observe. Some of these take the form of expanding the reach of our current senses, such as creating visible images based on the ultraviolet spectrum of light or changing sounds that are normally outside the range of what human ears can hear into audible signals. Alternatively, some instruments measure properties for which we have no sensory capacity at all and change them into that which we can observe.",
+      "options": [
+        "�ΰ��� �������� ������ ���ϴ� ������ ������ ������ ������ �����Ѵ�.",
+        "������ ���� �ʾƾ� �� �� ��� �� �ִٰ� �����Ѵ�.",
+        "���� ������ �ΰ��� ȥ�������� ����ٰ� ����Ѵ�.",
+        "���� ����� �ڿ� ������ �ְ��Ѵٰ� �����Ѵ�."
+      ],
+      "answer": "1",
+      "explanation": "������ ������ Ȯ���� ������ �ʴ� ������ ���� �� �شٰ� �����Ѵ�.",
+      "metadata": {
+        "source": "6. p3-no.23",
+        "passageIndex": 6
+      }
+    },
+    {
+      "type": "summary",
+      "question": "���� ���� ������ ���� ������ ����?",
+      "mainText": "Many opponents of animal experimentation argue that not only is modern medicine not the only cause for the decline in mortality, many medical advances that did contribute to h u m a n h e a l t h w e r e n o t t h e r e s u l t o f a n i m a l experimentation. Defenders of research have claimed that since there is a strong correlation between the practice of animal experimentation and medical advancement, the former caused the latter. Opponents of research reject this inference. After all, we have independent reasons to expect these phenomena to be correlated. Since the law prescribes that all new drugs, prosthetic devices, and surgical techniques be tried on animals before they are used in humans, we will subsequently find that all medical advances are correlated with prior experimentation on animals. C o n s e q u e n t l y , t h e c o r r e l a t i o n b e t w e e n a n i m a l experimentation and medical discovery is the result of legal necessity, not evidence that animal experimentation led to medical advances. Moreover, several influential physicians h a v e o f f e r e d h i s t o r i c a l e v i d e n c e t h a t a n i m a l experimentation has not been as responsible for biomedical discovery as defenders suggest. They claim that clinical discoveries played a more substantial role than animal researchers have led us to believe.",
+      "options": [
+        "��������� ���� ������ ������谡 ���� �䱸 ������ ��Ÿ�� ���̶�� �����Ѵ�.",
+        "���������� ��� ���� ������ ������ �����̶�� �����Ѵ�.",
+        "�ǻ���� ���������� ������ �ߴ��ؾ� �Ѵٰ� �����Ѵ�.",
+        "���������� �ֱ� ��� ���Ӱ� ���۵Ǿ��ٰ� �Ұ��Ѵ�."
+      ],
+      "answer": "1",
+      "explanation": "�� ������ ������ ����Ǿ��� �� �ΰ����� ���Ŵ� �ƴ϶�� �ݹ��Ѵ�.",
+      "metadata": {
+        "source": "7. p3-no.24",
+        "passageIndex": 7
+      }
+    },
+    {
+      "type": "summary",
+      "question": "���� ���� ������ ���� ������ ����?",
+      "mainText": "Big mammalian herbivore species react to danger from predators or humans in different ways. Some species are nervous, fast, and programmed for instant flight when they perceive a threat. Other species are slower, less nervous, seek protection in herds, stand their ground when threatened, and don't run until necessary. Naturally, the nervous species are difficult to keep in captivity. If put into an enclosure, they are likely to panic, and either die of shock or hit themselves repeatedly to death against the fence in their attempts to escape. That's true, for example, of gazelles, which for thousands of years were the most frequently hunted game species in some parts of the Fertile Crescent. There is no mammal species that the first settled peoples of that area had more opportunity to domesticate than gazelles. But no gazelle species has ever been domesticated. Just imagine trying to herd an animal that runs away, blindly hits itself against walls, can leap up to nearly 30 feet, and can run at a speed of 50 miles per hour!",
+      "options": [
+        "����ó�� �� ���� ������ �ʹ� �����ؼ� �������� ����̱� ��ƴٰ� �����Ѵ�.",
+        "��� �ʽĵ����� ���� ��鿩���ٰ� ���Ѵ�.",
+        "�ΰ��� ������ ����̴� �� �����ߴٰ� �����Ѵ�.",
+        "���ĵ����� �ʽĵ����� ���� �شٴ� �̾߱��."
+      ],
+      "answer": "1",
+      "explanation": "���� ���� ���� ���� ������ �дп� ���� ����ȭ�� ��ƴٰ� �����Ѵ�.",
+      "metadata": {
+        "source": "8. p5-no.29",
+        "passageIndex": 8
+      }
+    },
+    {
+      "type": "summary",
+      "question": "���� ���� ������ ���� ������ ����?",
+      "mainText": "For a species born in a time when resources were limited and dangers were great, our natural tendency to share and cooperate is complicated when resources are plenty and outside dangers are few. When we have less, we tend to be more open to sharing what we have. Certain nomadic tribes don't have much, yet they are happy to share because it is in their interest to do so. If you happen upon them in your travels, they will open up their homes and give you their food and hospitality. It's not just because they are nice people; it's because their survival depends on sharing, for they know that they may be the travelers in need of food and shelter another day. Ironically, the more we have, the bigger our fences, the more sophisticated our security to keep people away and the less we want to share. Our desire for more, combined with our decreased physical interaction with the \"common folk,\" starts to create a disconnection or blindness to reality.",
+      "options": [
+        "ǳ�������� �������� ������ �پ��� ���谡 �־����ٰ� �����Ѵ�.",
+        "���ڰ� �Ǹ� ��� �� ���� ��Ǯ�� �ȴٰ� ���Ѵ�.",
+        "�����Ҽ��� �̱���� Ŀ���ٰ� �����Ѵ�.",
+        "������� ���� �̸� �����Ѵٰ� �����Ѵ�."
+      ],
+      "answer": "1",
+      "explanation": "������ �� ������ �ʿ������� ǳ���ϸ� ������ ���� ����ٰ� ���Ѵ�.",
+      "metadata": {
+        "source": "9. p5-no.30",
+        "passageIndex": 9
+      }
+    },
+    {
+      "type": "summary",
+      "question": "���� ���� ������ ���� ������ ����?",
+      "mainText": "Whether we feel happy or sad, content or discontent, is not determined merely by each individual successive moment of life experience ─ a good thing happens and I'm happy, a bad thing happens and I'm sad. While our experiences affect our mood, we are not blown in a completely new direction by each gust of wind. As humans, we adjust ─ to new information and events both good and bad ─ and return to our personal default level of well-being. There will be highs and lows, but over time, like water seeking its own level, we are pulled toward our baseline ─ back up after bad news and back down after good. The euphoria of first love fades, and so does the despair of a break-up. This tendency is best seen with little kids and their toy joy: When they get what they've longed for, they believe they will be happy for the rest of their lives. And for the first few minutes of the rest of their lives, they are. But then the kids ─ like adults ─ adapt.",
+      "options": [
+        "����� ���� �ϰ� ���� �Ͽ� �����ϸ� �ٽ� ����� ������� ���ƿ´ٰ� ���Ѵ�.",
+        "����� �� �� ������ ������ �����ȴٰ� �����Ѵ�.",
+        "������ �ð��� ������ ���� ������� �ʴ´ٰ� �����Ѵ�.",
+        "������ �ֺ� ������� ���� ������ ���� �ʴ´ٰ� ���Ѵ�."
+      ],
+      "answer": "1",
+      "explanation": "�ູ�� ���� ��� �ð��� ������ �⺻ �������� �ǵ��ư��ٰ� �����Ѵ�.",
+      "metadata": {
+        "source": "10. p5-no.31",
+        "passageIndex": 10
+      }
+    },
+    {
+      "type": "summary",
+      "question": "���� ���� ������ ���� ������ ����?",
+      "mainText": "Although you may put off going to sleep in order to squeeze more activities into your day, eventually your need for sleep becomes overwhelming and you are forced to get some sleep. This daily drive for sleep appears to be due, in part, to a compound known as adenosine. This natural chemical builds up in your blood as time awake increases. While you sleep, your body breaks down the adenosine. Thus, this molecule may be what your body uses to keep track of lost sleep and to trigger sleep when needed. An accumulation of adenosine and other factors might explain why, after several nights of less than optimal amounts of sleep, you build up a sleep debt that you must make up by sleeping longer than normal. Because of such built-in molecular feedback, you can't become accustomed to getting less sleep than your body needs. Eventually, a lack of sleep catches up with you.",
+      "options": [
+        "�Ƶ������ ���̸� ���� �����ϴٴ� ��ȣ�� ���� ���� �ڰ� ����ٰ� �����Ѵ�.",
+        "���� �����Ա⿡ ���� ������ ���� �� �ִٰ� ���Ѵ�.",
+        "ī������ ���� �ʿ伺�� ������ ���شٰ� �����Ѵ�.",
+        "���� ���̸� ���� �ڵ����� �����Ѵٰ� ���Ѵ�."
+      ],
+      "answer": "1",
+      "explanation": "�Ƶ���� �������� ���� �� ������ ä��� �Ѵٰ� �Ұ��Ѵ�.",
+      "metadata": {
+        "source": "11. p5-no.32",
+        "passageIndex": 11
+      }
+    },
+    {
+      "type": "summary",
+      "question": "���� ���� ������ ���� ������ ����?",
+      "mainText": "One of the things that makes uncertainty difficult for members of the public to appreciate is that the significance of uncertainty is relative. Take, for example, the distance between Earth and the sun: 1.49597 x 10 km, as measured at one point during the year. This seems relatively precise; after all, using six significant digits means I know the distance to an accuracy of one part in a million or so. However, if the next digit is uncertain, that means the uncertainty in knowing the precise Earth-sun distance is larger than the distance between New York and Chicago! Whether or not the quoted number is \"precise\" therefore depends on what I'm intending to do with it. If I care only about what minute the sun will rise tomorrow, then the number quoted here is fine. If I want to send a satellite to orbit just above the sun, however, then I would need to know distances more accurately.",
+      "options": [
+        "��ġ�� ��Ȯ���� ��� ������ ���� �ٸ��� �������ٰ� �����Ѵ�.",
+        "�¾������ �Ÿ��� ��Ȯ�� �����Ǿ��ٰ� �ڶ��Ѵ�.",
+        "��Ȯ�Ǽ��� ���̷��� ���ڸ� ������ �Ѵٰ� �����Ѵ�.",
+        "���� ���� �Ÿ��� �߿����� �ʴٰ� ���Ѵ�."
+      ],
+      "answer": "1",
+      "explanation": "���е��� Ȱ�� ������ ���� �ٸ��� �޾Ƶ鿩���ٰ� �����Ѵ�.",
+      "metadata": {
+        "source": "12. p6-no.33",
+        "passageIndex": 12
+      }
+    },
+    {
+      "type": "summary",
+      "question": "���� ���� ������ ���� ������ ����?",
+      "mainText": "Richard Heinberg, an American journalist, argues that in building the renewable energy infrastructure to stop global warming, we are actually involved in one of the greatest change projects in human history. In addition to solar panels and wind turbines, we have to build an alternative transport infrastructure, farming procedures and industrial processes. This transformation cannot happen without fossil fuels. For instance, production of concrete structures and steel elements require amounts of energy that is only possible to produce with fossil energy. Production of solar panels requires scarce and expensive minerals which must be excavated, again requiring the use of fossil fuels. Thus, the harder we push towards a renewable energy system, the faster we have to use fossil energy for the construction process. This is not only expensive, but also an undermining factor for our efforts to cut global emissions. Heinberg remarks that the cost of building this new energy infrastructure is seldom counted in transition proposals, which tend to focus just on energy supply requirements.",
+      "options": [
+        "����������� ��ȯ�Ϸ��� ���� ��� �ü��� ���� ���� ȭ�����Ḧ �� ��� �Ѵٰ� �����Ѵ�.",
+        "����������� ���� ���� ���� �ʴ´ٰ� �����Ѵ�.",
+        "ȭ������ ����� �̹� ������ �ߴܵǾ��ٰ� �Ұ��Ѵ�.",
+        "��������� ����� ������ �ڶ󳭴ٰ� �����Ѵ�."
+      ],
+      "answer": "1",
+      "explanation": "��ȯ ���翡 ��� �������� ����� �Բ� ����ؾ� �Ѵٰ� ����Ѵ�.",
+      "metadata": {
+        "source": "13. p6-no.34",
+        "passageIndex": 13
+      }
+    },
+    {
+      "type": "summary",
+      "question": "���� ���� ������ ���� ������ ����?",
+      "mainText": "Humans for centuries have dreamed of machines that could become intelligent and make human-like decisions. There have been myths about robots, automatons, and artificial beings since ancient Greece (e.g., the myth of Pandora, who released ills upon the world). Likewise, literature throughout history has dreamed of creating human-like creatures and thinking machines (e.g., Mary Shelley's Frankenstein). In 1950, British mathematician Alan Turing asked whether machines could think and reason like humans and then developed the Turing test to measure a machine's intelligence and whether the machines can think autonomously. A few years later, MIT professor John McCarthy coined \"artificial intelligence,\" replacing the previously used expression \"automata studies.\" Since then, artificial intelligence has become the study and practice of \"making intelligent machines\" that are programmed to think like humans ─ endowed by their creators with reasoning and learning.",
+      "options": [
+        "���������� �ΰ��� ���ó�� �����ϴ� ��踦 �޲� �Դٰ� �Ұ��Ѵ�.",
+        "�κ��� �ֱٿ����� ó�� ���Ǿ��ٰ� ���Ѵ�.",
+        "Ʃ���� ��谡 ������ �� ���ٰ� �����ߴٰ� ���Ѵ�.",
+        "�ΰ������� �ΰ��� ������ ���ִ� ����̶�� �����Ѵ�."
+      ],
+      "answer": "1",
+      "explanation": "�� ��ȭ���� ���� �������� �ΰ��� ������ ��踦 ����� �Դٰ� �����Ѵ�.",
+      "metadata": {
+        "source": "14. p6-no.35",
+        "passageIndex": 14
+      }
+    },
+    {
+      "type": "summary",
+      "question": "���� ���� ������ ���� ������ ����?",
+      "mainText": "The desert tortoise has a simple solution for coping with Death Valley's extreme heat: It avoids it. The slow-moving creature hibernates during the winter and stays in its tunnel for much of the summer, meaning that it spends more than 90 percent of its life immobile. In fact, the tortoise usually only surfaces after a good rain. Then, it gets to work. The tortoise stocks up on water by eating plants and digging holes to collect rain. But to stay supplied with water through its extended hibernation, the reptile relies on something else ─ its highly sophisticated bladder. Unlike most animals, the tortoise's bladder acts as a holding tank, allowing it to reabsorb water back into its body. Incredibly, a desert tortoise can go a full year without taking in any freshwater at all. And because its bladder is so important to a tortoise's survival, park rangers often remind visitors not to stop and help the slow-movers across the road. Tortoises become so terrified when people pick them up that they empty their bladders, losing their precious water reserves.",
+      "options": [
+        "�縷 �ź��̴� ���� �����ϴ� �汤 ���п� �������� ��ƾ�ٰ� �����Ѵ�.",
+        "�縷 �ź��̴� ������ ���� ������ �����Ѵٰ� ���Ѵ�.",
+        "�ź��̴� ��� ���� ���̴� �� ���� �� ���ٰ� �����Ѵ�.",
+        "�ź��̴� �������� ���� ���� �ʴ´ٰ� �Ұ��Ѵ�."
+      ],
+      "answer": "1",
+      "explanation": "�ź��̴� �汤�� ���� �����ϹǷ� �Ժη� ��� �ø��� �� �ȴٰ� ����Ѵ�.",
+      "metadata": {
+        "source": "15. p6-no.36",
+        "passageIndex": 15
+      }
+    },
+    {
+      "type": "summary",
+      "question": "���� ���� ������ ���� ������ ����?",
+      "mainText": "Imagine you are pedalling your bicycle on a level road. You stop pedalling: no force is now acting to move you forward. What happens? You gradually slow down. How could you slow down more suddenly, in a shorter distance? By putting the brakes on. Because the brakes change your movement, making you slow down more suddenly, they must be exerting a force on the bicycle and you, as they grip and rub on the wheel-rims. This is the force called friction, which tends to slow down moving things by acting in the direction opposite to movement, that is backwards. Even without the brakes on, there are other friction forces acting on you and your bicycle, which also slow you down. One of these is friction in the wheels rubbing on the axles. Another is air resistance, which you can feel, pushing you backwards as you and the bicycle move forwards. When you apply these ideas to something around you, like a cart, you can see what could be generating friction: mainly the axles rubbing on the body as they rotate.",
+      "options": [
+        "�����Ű� ������ ���ߴ� ������ ���������� ���� �����Ѵ�.",
+        "�����Ŵ� ���� ��� �׻� ���� �ӵ��� �޸��ٰ� ���Ѵ�.",
+        "�ٶ��� �����Ÿ� ���� �� �������� �Ѵٰ� �����Ѵ�.",
+        "�극��ũ�� ���⸦ ������ ���� ��ġ��� �����Ѵ�."
+      ],
+      "answer": "1",
+      "explanation": "�극��ũ�� ���� ���� �� �������� �ӵ��� ���δٰ� �����Ѵ�.",
+      "metadata": {
+        "source": "16. p7-no.37",
+        "passageIndex": 16
+      }
+    },
+    {
+      "type": "summary",
+      "question": "���� ���� ������ ���� ������ ����?",
+      "mainText": "All editing systems are now nonlinear computer-based systems that allow random access to any video shot or scene without having to fast forward or fast reverse to find it. Nonlinear systems can create a range of special effects, such as slow motion, wipes and dissolves. Another highlight of a digital nonlinear system is its random access process that makes it easy for an editor to find desired shots or scenes without having to spend time fast forwarding or rewinding videotape. With nonlinear editing, shots and scenes can be easily added or removed anywhere in the program, and the computer adjusts the program length automatically. Linear editing was like composing a paper on a typewriter. If a mistake was made or new information needed to be added the whole piece had to be retyped. Nonlinear editing, on the other hand, is like using a word processing program. If a mistake is made, it is easily deleted and fixed with a few keystrokes, and new information can be added easily.",
+      "options": [
+        "���� ���� �ý����� ���ϴ� ����� �ٷ� ã�� ��ĥ �� �ִٰ� �����Ѵ�.",
+        "���� ������ �ʸ��� �ݵ�� ó������ ������ �ٽ� ���� �Ѵٰ� ���Ѵ�.",
+        "������ ������ ���̺��� �����ٰ� �����Ѵ�.",
+        "���� ������ ȿ���� ���� ���� �� ���ٰ� �����Ѵ�."
+      ],
+      "answer": "1",
+      "explanation": "���� ������ ���� ���ٰ� ������ ������ �����ϴٰ� �Ұ��Ѵ�.",
+      "metadata": {
+        "source": "17. p7-no.38",
+        "passageIndex": 17
+      }
+    },
+    {
+      "type": "summary",
+      "question": "���� ���� ������ ���� ������ ����?",
+      "mainText": "A morally good person is one who does morally bad actions significantly less often than most and does morally good ones significantly more often than most. In judging a person not only her actions but also her intentions and motives are relevant. A morally good person must intend to do morally good actions and intend to avoid morally bad ones. A person who unintentionally prevents harm to others and does not harm them simply because things do not turn out as she intends is not morally good. Although this kind of situation generally occurs only in slapstick movies, it is worth mentioning to avoid the false impression that it is the actual consequences of a person's actions that count toward her being judged morally good or bad. But actual consequences are important. A person who always tries to prevent harm but never does, is not generally thought of as morally good. Of such a person, it may be said that she means well; but, contrary to Kant, some results are necessary before she is regarded as morally good.",
+      "options": [
+        "���������� ���� ����� �ǵ��� ��� ��ο��� ������ �� ���ؾ� �Ѵٰ� �����Ѵ�.",
+        "���� ������ ������ �ൿ�� �߿����� �ʴٰ� ���Ѵ�.",
+        "�Ǽ��� ���� ����� ������ ���������� ���ϴٰ� ���Ѵ�.",
+        "����� ������ �ǵ��� ���� ������ٰ� �����Ѵ�."
+      ],
+      "answer": "1",
+      "explanation": "���� �ǵ��� ���� �ൿ ����� ��� �ʿ��ϴٰ� �̾߱��Ѵ�.",
+      "metadata": {
+        "source": "18. p7-no.39",
+        "passageIndex": 18
+      }
+    },
+    {
+      "type": "summary",
+      "question": "���� ���� ������ ���� ������ ����?",
+      "mainText": "Vision is influenced by our preconceptions about reality. In viewing a scene, we establish unconscious hierarchies that reflect our functional relationship to objects and our momentary priorities. For example, when visualizing a hammer in our mind's eye, we tend to \"see\" it in profile or at some other 'ready for use' angle. One would probably not visualize a hammer as seen from the top so that the handle is hidden by the hammer's head. The functional relationship we have with objects creates visual expectations that interfere with our ability to see \"like a camera.\" The camera, like the human eye, sees only shapes and colors. It documents the world impartially through a lens that is similar to the eye. When we look at them carefully, photographs are often surprising because they don't interpret confusing details but simply serve them up to us with a mechanical indifference. And because of their flatness, photographs often contain areas that appear as unrecognizable colors and shapes. ─> Our visual perception is shaped by an established hierarchy based on functional relationships, which interrupts our ability to see objects as they truly are, unlike the objective perspective of a camera.",
+      "options": [
+        "�츮�� ���ǰ��� ����� ���� ������ ���԰��� ���� ���ٰ� �����Ѵ�.",
+        "������ ������� �� �ְ��Ѵٰ� �����Ѵ�.",
+        "����� ���� �׻� ī�޶�� �Ȱ��� ���ٰ� ���Ѵ�.",
+        "����� � ��ü�� �̸� ���ø��� ���Ѵٰ� ���Ѵ�."
+      ],
+      "answer": "1",
+      "explanation": "���԰��� �þ߸� ������ ī�޶�ó�� ���������� ���� ��ƴٰ� ���Ѵ�.",
+      "metadata": {
+        "source": "19. p7-no.40",
+        "passageIndex": 19
+      }
+    },
+    {
+      "type": "summary",
+      "question": "���� ���� ������ ���� ������ ����?",
+      "mainText": "\"May I help you?\" are the worst four words that a retail salesperson can utter because they don't encourage the customer to talk and put them on the defensive. The four words usually draw out a negative response that stops cold a sales transaction. Examples of better questions to use when approaching customers are \"Is there anything in particular that you are looking for?\" and \"Are you shopping for a gift?\" If a fashion salesperson approached you with \"May I help you?\" chances are you would feel the salesperson didn't care. This line is a rote approach that is so overused by untrained and uninterested salespeople. In fact, most of us shudder in horror on hearing these words. The very meaning of the question \"May I help you?\" implies that the customer is in trouble of some sort and needs rescuing. This almost always puts the customer on the defense. \"No, thank you\" is usually the immediate response, even if the customer is actually in need of assistance. The subconscious thought by the customer is often \"I'm smart enough to figure out what I want, and I don't need your help!\" If customers feel pressured or cornered, then salespeople won't make any sales. The approach has to promote a comfortable environment that makes customers feel there is no rush. Furthermore, if customers just want to look around, they should feel that it is all right to do so. In situations where customers really do want to look around on their own, salespeople should give customers their business cards and keep themselves accessible in case customers have questions or concerns.",
+      "options": [
+        "��May I help you?����� ������ ������ ��������� ����� �ǸŸ� ���� �� �ִٰ� �����Ѵ�.",
+        "��May I help you?���� ������ ���� �ູ�ϰ� ����ٰ� �����Ѵ�.",
+        "�Ǹſ��� ���� �Ƴ��� ���� �ּ��̶�� ���Ѵ�.",
+        "��� ������ ������ �ޱ� �Ⱦ��Ѵٰ� �����Ѵ�."
+      ],
+      "answer": "1",
+      "explanation": "�������� �λ纸�� ���� ������ ������ �����ϰ� �Ѵٰ� �����Ѵ�.",
+      "metadata": {
+        "source": "20. p8-no.41~42",
+        "passageIndex": 20
+      }
+    },
+    {
+      "type": "summary",
+      "question": "���� ���� ������ ���� ������ ����?",
+      "mainText": "While the cafeteria was full of high school students on that afternoon, Dave was thirsty. We sat near yet away from him, fixing our hair and worrying about the test next period we hadn't studied for. He was far away from our world, yet forced to be a part of it. He stood at the drink machine with purpose, fumbling through his fake leather wallet for some change. He came up with a wrinkled dollar bill, and nervously glanced back at his table where other students in his class were sitting. Dave tried to make the machine accept his money. After he failed a few times, some students began to laugh at him. He started shaking, and tears began to form in his eyes. I saw him turn to sit down, looking like he had given up. But for some reason, he decided against it. He wasn't leaving until he got a drink. With a determined expression, he kept aimlessly pushing the dollar bill into the machine. Just then a popular senior boy stood up from his seat, and walked over to the boy. He calmly explained how the machine often had trouble accepting dollar bills. After that, he pulled some coins from his pocket and put them into the machine. Dave gave him his dollar and chose a flavor of fruit juice. Then the two walked off in different directions. Although it was clear that they were from very different worlds, for one moment, they'd shared a real understanding. As I walked away from my lunch table that day, I looked at Dave. I thought he and the dollar were very much alike. They both weren't accepted where the world said they were supposed to be. But just as the dollar had found a place in a warm-hearted senior's pocket, I was sure he would eventually find his, too.",
+      "options": [
+        "�ڽ��� ����� ��Ȳ������ ������ �������� ���� �ҳ�� �׸� ���� ������ �������� ���Ѵ�.",
+        "���� �Ҿ���� �л��� ������ �Ű��ϴ� ����̴�.",
+        "�������� ���� �л����� ���� �޴� �̾߱��.",
+        "���簡 �л����� ������ ���ִ� ����̴�."
+      ],
+      "answer": "1",
+      "explanation": "�������� �ʴ� ������ ���� ģ���� �ִ� ���θ� ���� �̾߱��.",
+      "metadata": {
+        "source": "21. p8-no.43~45",
+        "passageIndex": 21
+      }
+    }
+  ],
+  "failures": []
+}

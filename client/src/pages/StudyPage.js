@@ -1,10 +1,10 @@
-﻿/**
- * StudyPage: ?????/???????β뼯援????????거?쭛??????곗뒭??????棺堉?댆洹ⓦ럹???????????
+/**
+ * StudyPage: 학습 문제를 구성하고 풀이하는 메인 페이지
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import apiService, { api } from "../services/api.service";
+import apiService from "../services/api.service";
 import problemRegistry from "../services/problemRegistry";
 import StudyConfig from "../components/study/StudyConfig";
 import ProblemDisplay from "../components/study/ProblemDisplay";
@@ -16,7 +16,6 @@ const StudyPage = () => {
   const { user } = useAuth();
 
   const [mode, setMode] = useState("config"); // config | study | result
-  const [config, setConfig] = useState(null);
   const [problems, setProblems] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState({});
@@ -37,21 +36,68 @@ const StudyPage = () => {
     }
   }, [mode, startTime]);
 
-  const getTierStep = () => {
+  const getTierStep = useCallback(() => {
     const order = ["Iron", "Bronze", "Silver", "Gold", "Platinum", "Diamond", "Master", "Challenger"];
     const tierName = String(user?.tier?.name || user?.tier || "").toLowerCase();
     const idx = order.findIndex((label) => label.toLowerCase() === tierName);
     return Math.max(0, idx);
-  };
+  }, [user]);
 
-  const getBaseTimePerProblem = () => {
+  const getBaseTimePerProblem = useCallback(() => {
     const reduction = getTierStep() * 5;
     return Math.max(60, 120 - reduction);
-  };
+  }, [getTierStep]);
 
   useEffect(() => {
     if (mode === "study") setTimeLeft(getBaseTimePerProblem());
-  }, [mode, currentIndex]);
+  }, [mode, currentIndex, getBaseTimePerProblem]);
+
+  const finishStudy = useCallback(async () => {
+    try {
+      setLoading(true);
+      const studyResults = [];
+      let totalCorrect = 0;
+      let totalTime = 0;
+
+      for (let i = 0; i < problems.length; i++) {
+        const problem = problems[i];
+        const userAnswer = answers[i];
+        const spent = timeSpent[i] || 0;
+        const isCorrect = String(problem.answer) === String(userAnswer);
+        if (isCorrect) totalCorrect += 1;
+        totalTime += spent;
+        studyResults.push({
+          problem,
+          problemType: problem.type,
+          question: problem.question || problem.instruction || '',
+          userAnswer: userAnswer !== undefined ? String(userAnswer) : '',
+          correctAnswer: problem.answer !== undefined ? String(problem.answer) : '',
+          isCorrect,
+          timeSpent: Math.round(spent / 1000),
+        });
+      }
+
+      const accuracy = problems.length ? Math.round((totalCorrect / problems.length) * 100) : 0;
+
+      setResults({
+        studyResults,
+        problems: studyResults,
+        totalProblems: problems.length,
+        totalCorrect,
+        accuracy,
+        totalTime: Math.round(totalTime / 1000),
+        earnedPoints: totalCorrect * 10 - (studyResults.length - totalCorrect) * 5,
+      });
+
+      setMode("result");
+      logger.info("Study completed:", { totalCorrect, accuracy });
+    } catch (err) {
+      logger.error("Failed to finish study:", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [answers, problems, timeSpent]);
 
   useEffect(() => {
     if (mode !== "study") return undefined;
@@ -65,7 +111,7 @@ const StudyPage = () => {
     }
     const timer = setTimeout(() => setTimeLeft((prev) => prev - 1), 1000);
     return () => clearTimeout(timer);
-  }, [mode, timeLeft, currentIndex, problems.length]);
+  }, [mode, timeLeft, currentIndex, problems.length, finishStudy]);
 
   const startStudy = async (studyConfig) => {
     try {
@@ -87,11 +133,10 @@ const StudyPage = () => {
       const processed = (response.problems || []).map((problem) => problemRegistry.executeHandler(problem.type, problem));
 
       if (!processed.length) {
-        throw new Error("???筌???鶯ㅺ동??筌믡룓愿????怨쀫뎐????? ?轅붽틓??彛?臾믪뮏?鶯??????");
+        throw new Error("문제 세트를 만들지 못했습니다. 잠시 후 다시 시도하거나 관리자에게 문의해주세요.");
       }
 
       setProblems(processed);
-      setConfig(studyConfig);
       setMode("study");
       setStartTime(Date.now());
       logger.info(`Loaded ${processed.length} problems`);
@@ -99,10 +144,10 @@ const StudyPage = () => {
       logger.error("Failed to start study:", err);
       const msg = err?.message || "";
       let clean;
-      if (/404/.test(msg)) clean = "???筌?????쑩??낆땡??轅붽틓?????????????욱룏???????낆젵. ?????ㅻ쿋??????節떷???????용츧????ロ뒌??";
-      else if (/503/.test(msg)) clean = "??癲ル슢캉???쭍??μ떝?띄몭?吏녶젆?빧???μ떝?띄몭??袁㏉떋???????낆젵. ??????뷂┼????????ㅻ쿋????癲ル슢?????????용츧????ロ뒌??";
-      else if (/401/.test(msg) || /token|auth/i.test(msg)) clean = '?β돦裕??筌뤾쑴逾??熬곣뫗???紐껊퉵?? ???곕뻣 ?β돦裕?????怨삵룖?筌뤾쑴??';
-      else clean = "????거????轅붽틓??影?뽧걤?????????⑤챷逾???ル봿?? ??ш끽維뽳쭩?좊쐪筌먲퐢?????????????낆젵. ?????ㅻ쿋????癲ル슢?????????용츧????ロ뒌??";
+      if (/404/.test(msg)) clean = "문서를 찾을 수 없어요. 업로드 상태를 확인한 뒤 다시 시도해주세요.";
+      else if (/503/.test(msg)) clean = "문제 생성 서버가 잠시 바쁩니다. 잠깐 기다렸다가 다시 실행해주세요.";
+      else if (/401/.test(msg) || /token|auth/i.test(msg)) clean = '로그인 시간이 만료되었습니다. 다시 로그인해 주세요.';
+      else clean = "알 수 없는 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
       setError(clean);
     } finally {
       setLoading(false);
@@ -130,49 +175,6 @@ const StudyPage = () => {
     }
   };
 
-  const finishStudy = async () => {
-    try {
-      setLoading(true);
-      const studyResults = [];
-      let totalCorrect = 0;
-      let totalTime = 0;
-
-      for (let i = 0; i < problems.length; i++) {
-        const problem = problems[i];
-        const userAnswer = answers[i];
-        const spent = timeSpent[i] || 0;
-        const isCorrect = String(problem.answer) === String(userAnswer);
-        if (isCorrect) totalCorrect += 1;
-        totalTime += spent;
-        studyResults.push({
-          problem,
-          userAnswer,
-          correct: isCorrect,
-          timeSpent: Math.round(spent / 1000),
-        });
-      }
-
-      const accuracy = problems.length ? Math.round((totalCorrect / problems.length) * 100) : 0;
-
-      setResults({
-        studyResults,
-        totalProblems: problems.length,
-        totalCorrect,
-        accuracy,
-        totalTime: Math.round(totalTime / 1000),
-        earnedPoints: totalCorrect * 10 - (studyResults.length - totalCorrect) * 5,
-      });
-
-      setMode("result");
-      logger.info("Study completed:", { totalCorrect, accuracy });
-    } catch (err) {
-      logger.error("Failed to finish study:", err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const restart = () => {
     setMode("config");
     setProblems([]);
@@ -188,21 +190,21 @@ const StudyPage = () => {
     return (
       <div style={styles.loading}>
         <div style={styles.spinner}></div>
-        <p>?轅붽틓??影?뽧걤????..</p>
+        <p>문제를 불러오는 중이에요...</p>
       </div>
     );
+  }
 
   if (error) {
     return (
       <div style={styles.error}>
-        <h2>??살첒 獄쏆뮇源?/h2>
+        <h2>오류가 났어요</h2>
         <p>{error}</p>
         <button onClick={restart} style={styles.button}>
-          ??쇰뻻 ??뺣즲
+          다시 시작
         </button>
       </div>
     );
-  }
   }
 
   switch (mode) {
@@ -216,11 +218,11 @@ const StudyPage = () => {
             <button
               className="no-print"
               onClick={() => {
-                if (window.confirm("??????거?쭛????????살꺎?????롪퍓肉?????濚밸Ŧ?????鶯ㅺ동??????????????沃섃뫗쨘????쎛????????????몃㎟?")) setMode("config");
+                if (window.confirm('이전으로 돌아가면 진행 중인 풀이가 사라져요. 계속할까요?')) setMode('config');
               }}
               style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #e5e7eb", background: "#fff", cursor: "pointer" }}
             >
-              ?????沃섃뫗쨘????쎛??            </button>
+              초기화            </button>
             <ScoreHUD timeElapsed={currentTime ? Math.round((currentTime - startTime) / 1000) : 0} />
           </div>
           <ProblemDisplay

@@ -1,160 +1,310 @@
-/**
- * 문장삽입 문제 생성기
- */
-
 const ProblemGenerationUtils = require('./problemGenerationUtils');
 
+const WINDOW_SIZE = 5;
+const MIN_SENTENCES_REQUIRED = 5;
+
+const CONNECTOR_WORDS = [
+  'thus',
+  'therefore',
+  'because',
+  'however',
+  'moreover',
+  'furthermore',
+  'additionally',
+  'this',
+  'these',
+  'those',
+  'and',
+  'but',
+  'so',
+  'yet',
+  'still',
+  'then'
+];
+
+const PRIORITY_ORDER = [
+  'thus',
+  'therefore',
+  'because',
+  'however',
+  'moreover',
+  'furthermore',
+  'additionally',
+  'this',
+  'these',
+  'those',
+  'and',
+  'but',
+  'so',
+  'yet',
+  'still',
+  'then'
+];
+
 class InsertionProblemGenerator {
-  /**
-   * 문장삽입 문제 생성
-   */
-  static generateInsertionProblems(passages, count, options, document, parsedContent) {
+  static generateInsertionProblems(passages, count, options = {}, document, parsedContent) {
     const problems = [];
-    // 문장삽입은 기본 레벨만 제공 (고급 레벨 비활성화)
-    const difficulty = 'basic';
-    const maxChoices = 5;
+    if (!Array.isArray(passages) || passages.length === 0) {
+      return problems;
+    }
 
-    console.log(`📄 총 ${passages.length}개 지문 중 ${count}개 문장삽입 문제 생성`);
-
-    // 🎯 요청한 개수만큼 생성될 때까지 재시도
+    const sentenceMap = parsedContent?.metadata?.sentenceMap || [];
     const shuffledIndexes = ProblemGenerationUtils.shuffleArray([...Array(passages.length).keys()]);
     let attemptCount = 0;
     let passageIndex = 0;
-    
-    console.log(`🎲 랜덤 선택된 페이지 순서: [${shuffledIndexes.map(i => i + 1).join(', ')}]`);
 
-    // 요청한 개수만큼 생성될 때까지 반복
     while (problems.length < count && attemptCount < passages.length * 2) {
-      const currentIndex = shuffledIndexes[passageIndex % shuffledIndexes.length];
-      const passage = passages[currentIndex];
-      
-      console.log(`🎯 문장삽입 문제 ${problems.length + 1}: 원문 페이지 ${currentIndex + 1} 사용 (${passage.length}자)`);
-      
-      const problem = this.createInsertionProblem(passage, maxChoices, problems.length + 1, currentIndex + 1, document, parsedContent);
+      const sourceIndex = shuffledIndexes[passageIndex % shuffledIndexes.length];
+      const passage = passages[sourceIndex];
+      const precomputedSentences = Array.isArray(sentenceMap[sourceIndex]) ? sentenceMap[sourceIndex] : null;
+
+      const problem = this.createInsertionProblem(
+        passage,
+        WINDOW_SIZE,
+        sourceIndex + 1,
+        document,
+        parsedContent,
+        precomputedSentences
+      );
+
       if (problem) {
         problems.push(problem);
-        console.log(`✅ 문장삽입 문제 ${problems.length} 생성 완료 (원문 페이지 ${currentIndex + 1})`);
-      } else {
-        console.log(`❌ 문장삽입 문제 ${problems.length + 1} 생성 실패 (원문 페이지 ${currentIndex + 1})`);
       }
-      
+
       passageIndex++;
       attemptCount++;
     }
 
-    console.log(`✅ ${problems.length}개 문제 생성 완료`);
     return problems;
   }
 
-  /**
-   * 한 지문에서 문장삽입 문제 생성 - 완전히 새로운 간단한 로직
-   */
-  static createInsertionProblem(passage, maxChoices, problemNumber, originalPageNumber, document, parsedContent) {
-    console.log(`🎯 문장삽입 문제 생성 시작 (위치 ${maxChoices}개)`);
-    
-    // 1. 문장 분리 및 정리
-    const rawSentences = passage.split('.');
-    const sentences = ProblemGenerationUtils.filterValidSentences(rawSentences, 20);
+  static createInsertionProblem(passage, windowSize, originalPageNumber, document, parsedContent, precomputedSentences) {
+    const rawSentences = Array.isArray(precomputedSentences)
+      ? precomputedSentences
+      : ProblemGenerationUtils.splitSentences(passage);
 
-    console.log(`📝 원본 ${rawSentences.length}개 → 유효 ${sentences.length}개 문장`);
-
-    if (sentences.length < maxChoices) {
-      console.log(`⚠️ 문장 부족: ${sentences.length}개 < ${maxChoices}개 필요`);
+    const sentences = rawSentences.map((sentence) => (sentence || '').trim()).filter(Boolean);
+    if (sentences.length < MIN_SENTENCES_REQUIRED) {
       return null;
     }
 
-    // 2. 정확히 maxChoices개 문장만 사용
-    const selectedSentences = sentences.slice(0, maxChoices);
-    
-    // 3. 이 중 하나를 랜덤 선택하여 "주어진 문장"으로 빼냄
-    const randomIndex = Math.floor(Math.random() * maxChoices);
-    const givenSentence = selectedSentences[randomIndex];
-    
-    // 4. 지문 생성 (빠진 자리에 빈 공간 표시)
-    const textWithGap = this.createTextWithGap(selectedSentences, randomIndex, maxChoices);
-    
-    // 5. 정답은 빠진 위치 (1부터 시작)
-    const correctPosition = randomIndex + 1;
+    const gapIndex = this.selectGapIndex(sentences);
+    if (gapIndex === null) {
+      return null;
+    }
 
-    // 6. 객관식 선택지 (①②③④⑤)
-    const multipleChoices = this.generateInsertionChoices(maxChoices);
-    
-    console.log(`✅ 문장삽입 문제: "${givenSentence.substring(0, 40)}..." → 정답 ${correctPosition}번`);
+    const givenSentence = sentences[gapIndex];
+    if (!givenSentence) {
+      return null;
+    }
 
-    // 제목과 출처 정보 설정
-    const documentTitle = document ? document.title : '문서';
-    const originalSource = parsedContent?.sources?.[originalPageNumber - 1] || `page-${originalPageNumber}`;
-    
+    const displaySentences = sentences
+      .filter((_, idx) => idx !== gapIndex)
+      .map((sentence) => sentence.replace(/\s+/g, ' ').trim())
+      .filter(Boolean);
+
+    const displayLength = displaySentences.length;
+    if (displayLength < MIN_SENTENCES_REQUIRED - 1) {
+      return null;
+    }
+
+    const answerBoundary = Math.min(gapIndex, displayLength);
+    const targetChoices = Math.max(Math.min(windowSize, displayLength + 1), 3);
+    const boundarySet = new Set([answerBoundary]);
+
+    let offset = 1;
+    while (boundarySet.size < targetChoices && (answerBoundary - offset >= 0 || answerBoundary + offset <= displayLength)) {
+      if (answerBoundary - offset >= 0) {
+        boundarySet.add(answerBoundary - offset);
+      }
+      if (boundarySet.size >= targetChoices) break;
+      if (answerBoundary + offset <= displayLength) {
+        boundarySet.add(answerBoundary + offset);
+      }
+      offset++;
+    }
+
+    const boundaries = Array.from(boundarySet).sort((a, b) => a - b);
+    if (!boundaries.length) {
+      return null;
+    }
+
+    const boundaryToMarker = new Map();
+    boundaries.forEach((boundary, idx) => boundaryToMarker.set(boundary, `(${idx + 1})`));
+
+    const displayLines = [];
+    for (let i = 0; i <= displayLength; i++) {
+      if (boundaryToMarker.has(i)) {
+        displayLines.push(boundaryToMarker.get(i));
+      }
+      if (i < displayLength) {
+        displayLines.push(displaySentences[i]);
+      }
+    }
+
+    const answerIndex = boundaries.indexOf(answerBoundary);
+    if (answerIndex === -1) {
+      return null;
+    }
+
+    const CIRCLE_START = 9312;
+    const circledText = displayLines
+      .map((entry) => {
+        const match = entry.match(/^(\()(\d+)(\))$/);
+        if (match) {
+          const num = Number(match[2]);
+          if (Number.isInteger(num) && num >= 1 && num <= 20) {
+            return String.fromCharCode(CIRCLE_START + num - 1);
+          }
+        }
+        return entry;
+      })
+      .join('\n');
+
+    const choices = boundaries.map((_, idx) => ({
+      number: idx + 1,
+      symbol: String.fromCharCode(CIRCLE_START + idx),
+      value: (idx + 1).toString()
+    }));
+
+    const documentTitle = document ? document.title : 'Document';
+    const sourceLabel = parsedContent?.sources?.[originalPageNumber - 1] || `page-${originalPageNumber}`;
+
     return {
       type: 'insertion',
-      givenSentence: givenSentence,
-      mainText: textWithGap,
-      multipleChoices: multipleChoices,
-      answer: correctPosition.toString(), // 정답 위치 (1-maxChoices)
-      explanation: `주어진 문장은 원문에서 ${correctPosition}번 위치에 들어가야 합니다.`,
+      givenSentence,
+      mainText: circledText,
+      multipleChoices: choices,
+      answer: (answerIndex + 1).toString(),
+      explanation: `�־��� ������ ${String.fromCharCode(CIRCLE_START + answerIndex)} ��ġ�� ���ϴ�.`,
       is_ai_generated: false,
       metadata: {
         originalTitle: documentTitle,
-        problemNumber: originalSource,
-        source: originalSource,
-        difficulty: maxChoices === 5 ? 'basic' : 'advanced',
-        originalPageNumber: originalPageNumber,
-        correctPosition: correctPosition
+        problemNumber: sourceLabel,
+        source: sourceLabel,
+        difficulty: 'basic',
+        originalPageNumber,
+        correctPosition: answerIndex + 1
       }
     };
   }
+  static selectGapIndex(sentences) {
+    const total = sentences.length;
+    const candidates = sentences
+      .map((sentence, index) => ({ sentence: this.normalizeSentenceStart(sentence), index }))
+      .filter(({ sentence, index }) => index > 0 && index < total - 1 && this.startsWithConnector(sentence))
+      .map(({ sentence, index }) => ({
+        index,
+        priority: this.getPriorityScore(sentence),
+        distance: Math.min(index, total - 1 - index)
+      }));
 
-  /**
-   * 간단하고 명확한 지문 생성 (빈 공간 포함) - 수정된 버전
-   */
-  static createTextWithGap(selectedSentences, gapIndex, maxChoices = 5) {
-    const markers = ['①', '②', '③', '④', '⑤'];
-    let result = '';
-    
-    console.log(`🔧 지문 생성: ${maxChoices}개 위치, ${gapIndex + 1}번 위치가 빈 공간`);
-    console.log(`📝 선택된 문장들:`, selectedSentences.map(s => s.substring(0, 30)));
-    
-    // 빈 공간이 아닌 문장들만 별도로 처리
-    const sentencesWithoutGap = selectedSentences.filter((_, idx) => idx !== gapIndex);
-    let sentenceIndex = 0;
-    
-    for (let i = 0; i < maxChoices; i++) {
-      // 위치 마커
-      result += markers[i] + ' ';
-      
-      if (i === gapIndex) {
-        // 빈 공간 - 아무것도 추가하지 않음
-        console.log(`📍 ${i + 1}번: [빈 공간]`);
-      } else {
-        // 빈 공간이 아닌 문장 추가
-        if (sentenceIndex < sentencesWithoutGap.length) {
-          result += sentencesWithoutGap[sentenceIndex];
-          console.log(`📍 ${i + 1}번: "${sentencesWithoutGap[sentenceIndex].substring(0, 30)}..."`);
-          sentenceIndex++;
-        }
+    if (candidates.length) {
+      const best = candidates.reduce((bestCandidate, current) => {
+        if (!bestCandidate) return current;
+        if (current.priority > bestCandidate.priority) return current;
+        if (current.priority === bestCandidate.priority && current.distance > bestCandidate.distance) return current;
+        if (current.priority === bestCandidate.priority && current.distance === bestCandidate.distance && current.index > bestCandidate.index) return current;
+        return bestCandidate;
+      }, null);
+      return best ? best.index : null;
+    }
+
+    if (total < MIN_SENTENCES_REQUIRED) {
+      return null;
+    }
+
+    const mid = Math.floor(total / 2);
+    return Math.min(Math.max(mid, 1), total - 2);
+  }
+  static buildDisplay(sentences, gapIndex, windowSize) {
+    const displaySentences = sentences.filter((_, idx) => idx !== gapIndex).map((sentence) => sentence.replace(/\s+/g, ' ').trim()).filter(Boolean);
+    const displayLength = displaySentences.length;
+    const answerBoundary = Math.min(gapIndex, displayLength);
+
+    const targetChoices = Math.max(Math.min(windowSize, displayLength + 1), 3);
+    const boundarySet = new Set([answerBoundary]);
+
+    let offset = 1;
+    while (boundarySet.size < targetChoices && (answerBoundary - offset >= 0 || answerBoundary + offset <= displayLength)) {
+      if (answerBoundary - offset >= 0) {
+        boundarySet.add(answerBoundary - offset);
       }
-      
-      // 마지막이 아니면 공백
-      if (i < maxChoices - 1) {
-        result += ' ';
+      if (boundarySet.size >= targetChoices) break;
+      if (answerBoundary + offset <= displayLength) {
+        boundarySet.add(answerBoundary + offset);
+      }
+      offset++;
+    }
+
+    const boundaries = Array.from(boundarySet).sort((a, b) => a - b);
+    if (!boundaries.length) {
+      return null;
+    }
+
+    const boundaryToMarker = new Map();
+    boundaries.forEach((boundary, idx) => {
+      boundaryToMarker.set(boundary, `(${idx + 1})`);
+    });
+
+    const builder = [];
+    for (let i = 0; i <= displayLength; i++) {
+      if (boundaryToMarker.has(i)) {
+        builder.push(boundaryToMarker.get(i));
+      }
+      if (i < displayLength) {
+        builder.push(displaySentences[i]);
       }
     }
-    
-    console.log(`✅ 지문 완성: "${result.substring(0, 100)}..."`);
-    return result.trim();
+
+    const answerIndex = boundaries.indexOf(answerBoundary);
+    if (answerIndex === -1) {
+      return null;
+    }
+
+    const choices = boundaries.map((_, idx) => ({
+      number: idx + 1,
+      symbol: `(${idx + 1})`,
+      value: (idx + 1).toString()
+    }));
+
+    return {
+      text: builder.join('\n'),
+      choices,
+      answer: answerIndex + 1
+    };
   }
 
-  /**
-   * 문장삽입용 객관식 선택지 생성
-   */
-  static generateInsertionChoices(maxChoices) {
-    const symbols = ['①', '②', '③', '④', '⑤', '⑥', '⑦'];
-    
-    return symbols.slice(0, maxChoices).map((symbol, index) => ({
-      number: index + 1,
-      symbol: symbol,
-      value: (index + 1).toString()
-    }));
+  static normalizeSentenceStart(sentence) {
+    let normalized = sentence.trim().toLowerCase();
+    const removablePrefixes = ['and', 'but', 'so', 'yet', 'still', 'then'];
+
+    while (true) {
+      const parts = normalized.split(' ');
+      if (parts.length < 2) break;
+      const [first, second] = parts;
+      if (removablePrefixes.includes(first) && CONNECTOR_WORDS.includes(second)) {
+        normalized = parts.slice(1).join(' ');
+        continue;
+      }
+      if (removablePrefixes.includes(first)) {
+        normalized = parts.slice(1).join(' ');
+        continue;
+      }
+      break;
+    }
+
+    return normalized;
+  }
+
+  static startsWithConnector(sentence) {
+    return CONNECTOR_WORDS.some((word) => sentence.startsWith(`${word} `) || sentence.startsWith(`${word},`));
+  }
+
+  static getPriorityScore(sentence) {
+    const index = PRIORITY_ORDER.findIndex((word) => sentence.startsWith(`${word} `) || sentence.startsWith(`${word},`));
+    if (index === -1) return 0;
+    return PRIORITY_ORDER.length - index;
   }
 }
 

@@ -1,12 +1,6 @@
-/**
- * HomePage 컴포넌트
- * 대시보드 메인 화면
- */
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api.service';
-import logger from '../utils/logger';
 import tierConfig from '../config/tierConfig.json';
 
 const HomePage = () => {
@@ -15,307 +9,269 @@ const HomePage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadDashboardData();
-  }, []);
+    const fetchStats = async () => {
+      try {
+        setLoading(true);
+        const data = await api.problems.stats();
+        setStats(data);
+      } catch (error) {
+        console.error('대시보드 데이터를 불러오지 못했어요.', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const loadDashboardData = async () => {
-    try {
-      setLoading(true);
-      const data = await api.problems.stats();
-      setStats(data);
-      logger.info('Dashboard data loaded', data);
-    } catch (error) {
-      logger.error('Failed to load dashboard', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchStats();
+  }, []);
 
   const getTierInfo = () => {
     const points = user?.points || 0;
-    return tierConfig.tiers.find(tier => 
-      points >= tier.minLP && (tier.maxLP === -1 || points <= tier.maxLP)
+    return tierConfig.tiers.find(
+      (tier) => points >= tier.minLP && (tier.maxLP === -1 || points <= tier.maxLP)
     ) || tierConfig.tiers[0];
   };
 
   const getNextTier = () => {
-    const currentTier = getTierInfo();
-    const currentIndex = tierConfig.tiers.findIndex(t => t.id === currentTier.id);
-    return tierConfig.tiers[currentIndex + 1] || null;
+    const current = getTierInfo();
+    const index = tierConfig.tiers.findIndex((tier) => tier.id === current.id);
+    return tierConfig.tiers[index + 1] || null;
   };
 
-  const calculateProgress = () => {
+  const progressToNextTier = () => {
     const current = getTierInfo();
     const next = getNextTier();
     if (!next) return 100;
-    
-    const currentPoints = user?.points || 0;
+
+    const points = user?.points || 0;
     const range = next.minLP - current.minLP;
-    const progress = currentPoints - current.minLP;
-    return Math.min(100, (progress / range) * 100);
+    const progress = points - current.minLP;
+    return Math.min(100, Math.max(0, (progress / range) * 100));
   };
 
   if (loading) {
     return (
-      <div style={styles.loading}>
-        <div style={styles.spinner}></div>
-        <p>데이터 로딩 중...</p>
+      <div style={styles.loadingWrapper}>
+        <div style={styles.spinner} />
+        <p>대시보드를 준비하고 있어요…</p>
       </div>
     );
   }
 
-  const tierInfo = getTierInfo();
+  const currentTier = getTierInfo();
   const nextTier = getNextTier();
-  const progress = calculateProgress();
+  const progress = progressToNextTier();
 
   return (
     <div style={styles.container}>
-      <h1 style={styles.title}>안녕하세요, {user?.name}님! 👋</h1>
-      
-      {/* 티어 카드 */}
-      {tierInfo.id === 'challenger' ? (
-        <div className="challenger-master-container">
-          <div className="challenger-legendary-badge">LEGENDARY</div>
-          <div className="challenger-particles">
-            <div className="challenger-particle"></div>
-            <div className="challenger-particle"></div>
-            <div className="challenger-particle"></div>
-            <div className="challenger-particle"></div>
-            <div className="challenger-particle"></div>
-          </div>
-          <div className="challenger-content">
-            <div style={{textAlign: 'center', marginBottom: '20px'}}>
-              <div className="challenger-crown">👑</div>
-              <h1 className="challenger-title">CHALLENGER</h1>
-            </div>
-            <div className="challenger-points">
-              {user?.points?.toLocaleString() || 0} LP
-            </div>
+      <h1 style={styles.title}>안녕하세요, {user?.name || '학습자'}님! 👋</h1>
+      <p style={styles.subtitle}>오늘도 한 걸음씩, 꾸준하게 영어 실력을 올려볼까요?</p>
+
+      <section style={styles.tierCard}>
+        <div style={styles.tierHeader}>
+          <span style={{ ...styles.tierIcon, color: currentTier.color }}>{currentTier.icon}</span>
+          <div>
+            <h2 style={{ ...styles.tierName, color: currentTier.color }}>{currentTier.name}</h2>
+            <p style={styles.tierPoints}>{(user?.points || 0).toLocaleString()} LP</p>
           </div>
         </div>
-      ) : (
-        <div style={styles.tierCard}>
-          <div style={styles.tierHeader}>
-            <span style={styles.tierIcon}>{tierInfo.icon}</span>
-            <div>
-              <h2 style={{ ...styles.tierName, color: tierInfo.color }}>
-                {tierInfo.name}
-              </h2>
-              <p style={styles.points}>{user?.points || 0} LP</p>
+
+        {nextTier ? (
+          <div style={styles.progressBox}>
+            <div style={styles.progressInfo}>
+              <span>다음 티어: {nextTier.name}</span>
+              <span>{Math.max(0, nextTier.minLP - (user?.points || 0))} LP 남음</span>
+            </div>
+            <div style={styles.progressBar}>
+              <div style={{ ...styles.progressFill, width: `${progress}%`, background: currentTier.color }} />
             </div>
           </div>
-        
-          {nextTier && (
-            <div style={styles.progressSection}>
-              <div style={styles.progressInfo}>
-                <span>다음 티어: {nextTier.name}</span>
-                <span>{nextTier.minLP - user?.points} LP 필요</span>
-              </div>
-              <div style={styles.progressBar}>
-                <div 
-                  style={{ 
-                    ...styles.progressFill, 
-                    width: `${progress}%`,
-                    background: tierInfo.color 
-                  }}
-                />
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+        ) : (
+          <p style={styles.maxTierMessage}>최고 등급을 달성했어요! 🎉 계속 실력을 유지해 볼까요?</p>
+        )}
+      </section>
 
-      {/* 통계 카드들 */}
-      <div style={styles.statsGrid}>
-        <div style={styles.statCard}>
-          <h3 style={styles.statTitle}>오늘 푼 문제</h3>
-          <p style={styles.statValue}>{stats?.overall?.total || 0}</p>
-          <p style={styles.statLabel}>문제</p>
+      <section style={styles.section}>
+        <h2 style={styles.sectionTitle}>오늘의 요약</h2>
+        <div style={styles.statGrid}>
+          <StatCard label="총 학습 세션" value={stats?.totalSessions ?? 0} suffix="회" />
+          <StatCard label="정답률" value={stats?.accuracy ?? 0} suffix="%" />
+          <StatCard label="누적 문제 수" value={stats?.totalProblems ?? 0} suffix="문" />
+          <StatCard label="지난 7일 학습" value={stats?.weeklySessions ?? 0} suffix="회" />
         </div>
+      </section>
 
-        <div style={styles.statCard}>
-          <h3 style={styles.statTitle}>정답률</h3>
-          <p style={styles.statValue}>{stats?.overall?.accuracy || 0}%</p>
-          <p style={styles.statLabel}>정확도</p>
+      <section style={styles.section}>
+        <h2 style={styles.sectionTitle}>바로 시작하기</h2>
+        <div style={styles.quickGrid}>
+          <QuickButton label="CSAT 세트 생성" description="문제 5세트를 바로 생성" onClick={() => (window.location.href = '/study')} />
+          <QuickButton label="어휘 훈련" description="빈출 어휘로 연습하기" onClick={() => (window.location.href = '/vocabulary')} />
+          <QuickButton label="문서 업로드" description="새 교재를 등록하고 분석" onClick={() => (window.location.href = '/admin')} />
         </div>
-
-        <div style={styles.statCard}>
-          <h3 style={styles.statTitle}>평균 시간</h3>
-          <p style={styles.statValue}>{stats?.overall?.avgTime || 0}</p>
-          <p style={styles.statLabel}>초</p>
-        </div>
-
-        <div style={styles.statCard}>
-          <h3 style={styles.statTitle}>연속 학습</h3>
-          <p style={styles.statValue}>7</p>
-          <p style={styles.statLabel}>일</p>
-        </div>
-      </div>
-
-      {/* 빠른 시작 버튼들 */}
-      <div style={styles.quickStart}>
-        <h2 style={styles.sectionTitle}>빠른 시작</h2>
-        <div style={styles.buttonGrid}>
-          <button 
-            style={styles.quickButton}
-            onClick={() => window.location.href = '/study'}
-          >
-            📚 문제 풀기
-          </button>
-          <button 
-            style={styles.quickButton}
-            onClick={() => window.location.href = '/analysis'}
-          >
-            📊 분석 자료
-          </button>
-          <button 
-            style={styles.quickButton}
-            onClick={() => window.location.href = '/vocabulary'}
-          >
-            📖 단어 시험
-          </button>
-          <button 
-            style={styles.quickButton}
-            onClick={() => window.location.href = '/stats'}
-          >
-            📊 통계 보기
-          </button>
-          <button 
-            style={styles.quickButton}
-            onClick={() => window.location.href = '/ranking'}
-          >
-            🏆 랭킹 확인
-          </button>
-        </div>
-      </div>
+      </section>
     </div>
   );
 };
 
+const StatCard = ({ label, value, suffix }) => (
+  <div style={styles.statCard}>
+    <p style={styles.statLabel}>{label}</p>
+    <p style={styles.statValue}>
+      {Number(value || 0).toLocaleString()}
+      {suffix && <span style={styles.statSuffix}>{suffix}</span>}
+    </p>
+  </div>
+);
+
+const QuickButton = ({ label, description, onClick }) => (
+  <button style={styles.quickButton} onClick={onClick}>
+    <strong>{label}</strong>
+    <span style={styles.quickDescription}>{description}</span>
+  </button>
+);
+
 const styles = {
   container: {
-    padding: '20px',
     maxWidth: '1200px',
-    margin: '0 auto'
-  },
-  loading: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: '400px'
-  },
-  spinner: {
-    width: '40px',
-    height: '40px',
-    border: '4px solid #f3f4f6',
-    borderTop: '4px solid #667eea',
-    borderRadius: '50%',
-    animation: 'spin 1s linear infinite'
+    margin: '0 auto',
+    padding: '24px'
   },
   title: {
     fontSize: '32px',
-    color: '#111827',
-    marginBottom: '30px'
+    fontWeight: 'bold',
+    marginBottom: '8px',
+    color: '#111827'
+  },
+  subtitle: {
+    fontSize: '16px',
+    color: '#6B7280',
+    marginBottom: '32px'
   },
   tierCard: {
-    background: 'white',
+    background: '#FFFFFF',
     borderRadius: '20px',
-    padding: '30px',
-    marginBottom: '30px',
-    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)'
+    padding: '28px',
+    boxShadow: '0 12px 30px rgba(15, 23, 42, 0.12)',
+    marginBottom: '32px'
   },
   tierHeader: {
     display: 'flex',
     alignItems: 'center',
-    gap: '20px',
+    gap: '16px',
     marginBottom: '20px'
   },
   tierIcon: {
-    fontSize: '48px'
+    fontSize: '44px'
   },
   tierName: {
-    fontSize: '24px',
+    fontSize: '26px',
     fontWeight: 'bold',
-    margin: '0'
+    margin: 0
   },
-  points: {
+  tierPoints: {
     fontSize: '18px',
-    color: '#6B7280',
-    margin: '5px 0'
+    margin: '6px 0 0',
+    color: '#6B7280'
   },
-  progressSection: {
+  progressBox: {
     marginTop: '20px'
   },
   progressInfo: {
     display: 'flex',
     justifyContent: 'space-between',
-    marginBottom: '10px',
     fontSize: '14px',
-    color: '#6B7280'
+    color: '#4B5563',
+    marginBottom: '8px'
   },
   progressBar: {
-    height: '10px',
-    background: '#F3F4F6',
-    borderRadius: '5px',
+    width: '100%',
+    height: '12px',
+    borderRadius: '6px',
+    background: '#E5E7EB',
     overflow: 'hidden'
   },
   progressFill: {
-    height: '100%',
-    transition: 'width 0.3s ease'
+    height: '100%'
   },
-  statsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-    gap: '20px',
-    marginBottom: '30px',
-    marginTop: '40px'
+  maxTierMessage: {
+    marginTop: '12px',
+    color: '#10B981',
+    fontWeight: 600
   },
-  statCard: {
-    background: 'white',
-    borderRadius: '15px',
-    padding: '20px',
-    textAlign: 'center',
-    boxShadow: '0 5px 15px rgba(0, 0, 0, 0.08)'
-  },
-  statTitle: {
-    fontSize: '14px',
-    color: '#6B7280',
-    marginBottom: '10px'
-  },
-  statValue: {
-    fontSize: '32px',
-    fontWeight: 'bold',
-    color: '#111827',
-    margin: '10px 0'
-  },
-  statLabel: {
-    fontSize: '12px',
-    color: '#9CA3AF'
-  },
-  quickStart: {
-    marginTop: '30px'
+  section: {
+    marginTop: '36px'
   },
   sectionTitle: {
-    fontSize: '20px',
+    fontSize: '22px',
+    fontWeight: 'bold',
     marginBottom: '20px',
     color: '#111827'
   },
-  buttonGrid: {
+  statGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-    gap: '15px'
+    gap: '16px'
+  },
+  statCard: {
+    background: '#FFFFFF',
+    borderRadius: '16px',
+    padding: '20px',
+    boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)',
+    textAlign: 'center'
+  },
+  statLabel: {
+    fontSize: '14px',
+    color: '#6B7280',
+    marginBottom: '12px'
+  },
+  statValue: {
+    fontSize: '30px',
+    fontWeight: 'bold',
+    color: '#111827'
+  },
+  statSuffix: {
+    fontSize: '16px',
+    marginLeft: '4px',
+    color: '#6B7280'
+  },
+  quickGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+    gap: '18px'
   },
   quickButton: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: '6px',
     padding: '20px',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    color: 'white',
+    borderRadius: '18px',
     border: 'none',
-    borderRadius: '15px',
-    fontSize: '16px',
-    fontWeight: 'bold',
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    color: '#FFFFFF',
     cursor: 'pointer',
-    transition: 'transform 0.2s'
+    boxShadow: '0 10px 28px rgba(79, 70, 229, 0.35)',
+    transition: 'transform 0.2s ease'
+  },
+  quickDescription: {
+    fontSize: '14px',
+    opacity: 0.9
+  },
+  loadingWrapper: {
+    minHeight: '400px',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '12px',
+    color: '#4B5563'
+  },
+  spinner: {
+    width: '48px',
+    height: '48px',
+    borderRadius: '50%',
+    border: '4px solid #E5E7EB',
+    borderTopColor: '#667eea',
+    animation: 'spin 1s linear infinite'
   }
 };
 

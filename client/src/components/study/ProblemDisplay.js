@@ -1,8 +1,45 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import OrderProblemDisplay from './OrderProblemDisplay';
 import InsertionProblemDisplay from './InsertionProblemDisplay';
 import GrammarProblemDisplay from './GrammarProblemDisplay';
 import { problemDisplayStyles, orderStyles } from './problemDisplayStyles';
+
+const renderWithUnderline = (input) => {
+  if (input === null || input === undefined) return null;
+  const str = String(input);
+  const tokens = str
+    .replace(/<<\s*(\d+)\s*>>/g, '<u>')
+    .replace(/<\/\s*(\d+)\s*>>/g, '</u>')
+    .split(/(<\/?u>)/i);
+  if (tokens.length === 1) {
+    return <>{str}</>;
+  }
+
+  const elements = [];
+  let underline = false;
+  tokens.forEach((token, idx) => {
+    const lower = token.toLowerCase();
+    if (lower === '<u>') {
+      underline = true;
+      return;
+    }
+    if (lower === '</u>') {
+      underline = false;
+      return;
+    }
+    if (!token) return;
+    if (underline) {
+      elements.push(
+        <span key={`u-${idx}`} style={problemDisplayStyles.underlineSpan}>
+          {token}
+        </span>
+      );
+    } else {
+      elements.push(<React.Fragment key={`t-${idx}`}>{token}</React.Fragment>);
+    }
+  });
+  return <span style={{ lineHeight: 1.6 }}>{elements}</span>;
+};
 
 const ProblemDisplay = ({
   problem,
@@ -34,34 +71,44 @@ const ProblemDisplay = ({
 
   if (!problem) return null;
 
-  let parsedOrderData = null;
+  const isOrder = problem.type === 'order';
+  const isInsertion = problem.type === 'insertion';
+  const isGrammar = ['grammar', 'grammar_count', 'grammar_span'].includes(problem.type);
+  const isGeneral = !isOrder && !isInsertion && !isGrammar;
+
+  const cardStyle = {
+    ...problemDisplayStyles.problemCard,
+    ...orderStyles.orderProblemCard
+  };
+
+  const sourceLabel = problem.source || problem.metadata?.documentTitle;
+  const problemNumber = problem.metadata?.problemNumber;
+  const passageText = problem.mainText || problem.text || '';
+  const generalOptions = Array.isArray(problem.options) ? problem.options : [];
+
+  const generalButtonStyle = (idx) => ({
+    ...orderStyles.multipleChoiceButton,
+    ...(selectedAnswer === String(idx + 1) ? orderStyles.multipleChoiceSelected : {})
+  });
+
   return (
     <div style={problemDisplayStyles.container}>
       <div style={problemDisplayStyles.header}>
-        <div style={problemDisplayStyles.progress}>
-          문제 {currentIndex + 1} / {totalProblems}
-        </div>
-        <div style={problemDisplayStyles.timer}>
-          ⏱️ {formatTime(timeElapsed)}
-        </div>
+        <div style={problemDisplayStyles.progress}>문제 {currentIndex + 1} / {totalProblems}</div>
+        <div style={problemDisplayStyles.timer}>Time {formatTime(timeElapsed)}</div>
       </div>
 
-      <div style={{
-        ...problemDisplayStyles.problemCard,
-        ...(problem.type === 'order' ? orderStyles.orderProblemCard : {})
-      }}>
-        {/* 순서배열 문제 */}
-        {problem.type === 'order' && (
+      <div style={cardStyle}>
+        {isOrder && (
           <OrderProblemDisplay
             problem={problem}
-            parsedOrderData={parsedOrderData}
+            parsedOrderData={null}
             onAnswer={handleSelect}
             userAnswer={selectedAnswer}
           />
         )}
 
-        {/* 문장 삽입 문제 */}
-        {problem.type === 'insertion' && (
+        {isInsertion && (
           <InsertionProblemDisplay
             problem={problem}
             onAnswer={handleSelect}
@@ -69,8 +116,7 @@ const ProblemDisplay = ({
           />
         )}
 
-        {/* 문법 문제 */}
-        {(problem.type === 'grammar' || problem.type === 'grammar_count') && (
+        {isGrammar && (
           <GrammarProblemDisplay
             problem={problem}
             onAnswer={handleSelect}
@@ -79,66 +125,58 @@ const ProblemDisplay = ({
           />
         )}
 
-        {/* 일반 문제 */}
-        {problem.type !== 'order' && problem.type !== 'insertion' && problem.type !== 'grammar' && (
+        {isGeneral && (
           <>
-            <div style={problemDisplayStyles.instruction}>
-              {problem.instruction || problem.question}
-            </div>
-
-            {problem.mainText && (
-              <div style={problemDisplayStyles.mainText}>{problem.mainText}</div>
-            )}
-
-            {problem.sentenceToInsert && (
-              <div style={problemDisplayStyles.insertText}>
-                [삽입할 문장] {problem.sentenceToInsert}
+            {(sourceLabel || problemNumber) && (
+              <div style={{ marginBottom: '16px' }}>
+                {sourceLabel && (
+                  <div style={orderStyles.orderSourceSection}>출처: {sourceLabel}</div>
+                )}
+                {problemNumber && (
+                  <div style={orderStyles.orderNumberSection}>문제 번호: {problemNumber}</div>
+                )}
               </div>
             )}
 
-            {problem.sentences && (
-              <div style={problemDisplayStyles.sentences}>
-                <div style={orderStyles.sentencesLabel}>아래 [선택지]</div>
+            {passageText && (
+              <div style={{ ...orderStyles.orderGivenText, marginBottom: '20px', whiteSpace: 'pre-wrap' }}>
+                {renderWithUnderline(passageText)}
+              </div>
+            )}
+
+            <div style={orderStyles.orderInstruction}>
+              Q. {renderWithUnderline(problem.question || problem.instruction || '지문을 읽고 알맞은 답을 고르세요.')}
+            </div>
+
+            {Array.isArray(problem.sentences) && problem.sentences.length > 0 && (
+              <div style={{ marginBottom: '20px' }}>
+                <div style={orderStyles.sentencesLabel}>보기</div>
                 {problem.sentences.map((sent, idx) => (
-                  <div key={idx} style={problemDisplayStyles.sentence}>
+                  <div key={idx} style={orderStyles.orderSentence}>
                     <strong>{sent.label}.</strong> {sent.text}
                   </div>
                 ))}
               </div>
             )}
+
+            <div>
+              <div style={orderStyles.sentencesLabel}>정답을 선택하세요</div>
+              {generalOptions.length === 0 ? (
+                <div style={problemDisplayStyles.missingOptions}>선택지가 준비되지 않았습니다.</div>
+              ) : (
+                generalOptions.map((option, idx) => (
+                  <button
+                    key={idx}
+                    style={generalButtonStyle(idx)}
+                    onClick={() => handleSelect(String(idx + 1))}
+                  >
+                    {renderWithUnderline(option)}
+                  </button>
+                ))
+              )}
+            </div>
           </>
         )}
-
-        <div style={problemDisplayStyles.options}>
-          {(problem.options || []).map((option, idx) => (
-            <button
-              key={idx}
-              style={{
-                ...problemDisplayStyles.optionButton,
-                ...(problem.type === 'order' ? orderStyles.orderOptionButton : {}),
-                ...(selectedAnswer === (idx + 1).toString() ? {
-                  ...problemDisplayStyles.selected,
-                  ...(problem.type === 'order' ? orderStyles.orderSelected : {})
-                } : {})
-              }}
-              onClick={() => handleSelect((idx + 1).toString())}
-              onMouseEnter={(e) => {
-                if (problem.type === 'order' && selectedAnswer !== (idx + 1).toString()) {
-                  e.target.style.transform = 'translateY(-2px) scale(1.02)';
-                  e.target.style.boxShadow = '0 8px 25px rgba(139, 92, 246, 0.3)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (problem.type === 'order' && selectedAnswer !== (idx + 1).toString()) {
-                  e.target.style.transform = 'translateY(0) scale(1)';
-                  e.target.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.1)';
-                }
-              }}
-            >
-              {option}
-            </button>
-          ))}
-        </div>
       </div>
 
       <div style={problemDisplayStyles.navigation}>
@@ -173,4 +211,3 @@ const ProblemDisplay = ({
 };
 
 export default ProblemDisplay;
-

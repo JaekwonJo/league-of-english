@@ -32,15 +32,19 @@ const StudyConfig = ({ onStart }) => {
       if (saved) {
         const parsedConfig = JSON.parse(saved);
         console.log('💾 저장된 설정 불러오기:', parsedConfig);
+        const baseTypes = Object.keys(problemTypes.problemTypes).reduce((acc, typeKey) => {
+          acc[typeKey] = 0;
+          return acc;
+        }, {});
+        const mergedTypes = { ...baseTypes, ...(parsedConfig.types || {}) };
         setConfig(prev => ({
           ...prev,
-          types: parsedConfig.types || {},
+          types: mergedTypes,
           orderDifficulty: parsedConfig.orderDifficulty || 'basic',
           insertionDifficulty: parsedConfig.insertionDifficulty || 'basic',
           grammarDifficulty: parsedConfig.grammarDifficulty || 'basic'
         }));
       } else {
-        // 처음 사용자는 모든 타입을 0으로 초기화
         setConfig(prev => ({
           ...prev,
           types: Object.keys(problemTypes.problemTypes).reduce((acc, type) => {
@@ -51,7 +55,6 @@ const StudyConfig = ({ onStart }) => {
       }
     } catch (error) {
       console.error('설정 불러오기 오류:', error);
-      // 오류 시 0으로 초기화
       setConfig(prev => ({
         ...prev,
         types: Object.keys(problemTypes.problemTypes).reduce((acc, type) => {
@@ -68,7 +71,8 @@ const StudyConfig = ({ onStart }) => {
       localStorage.setItem('studyConfig', JSON.stringify({
         types: newConfig.types,
         orderDifficulty: newConfig.orderDifficulty,
-        insertionDifficulty: newConfig.insertionDifficulty
+        insertionDifficulty: newConfig.insertionDifficulty,
+        grammarDifficulty: newConfig.grammarDifficulty
       }));
       console.log('💾 설정 저장 완료:', newConfig.types);
     } catch (error) {

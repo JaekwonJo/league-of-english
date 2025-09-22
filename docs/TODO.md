@@ -1,17 +1,17 @@
-# TODO (Working Plan) — 2025-09-18
+# TODO (Working Plan) 2025-09-18
 
 Now
 - Local Dev Access Recovery
   - [x] Verified Windows PowerShell `npm run dev:all` brings up the client (HTTP 200 on /).
-  - [x] Documented PowerShell vs WSL guidance in README 2025-09-18 summary.
-  - [ ] Install Node 20 inside WSL (nvm or NodeSource) and retest tmux-based dev flow.
+  - [x] Documented PowerShell-only guidance in README (2025-09-19 summary).
+  - [ ] Add a PowerShell port guard (`npm run dev:check`) to fail fast when ports are busy.
 
 - Render Deploy Stability
-  - [x] Sync package-lock with package.json (sqlite3 → sql.js) to satisfy `npm ci`
+  - [x] Sync package-lock with package.json (sqlite3 -> sql.js) to satisfy `npm ci`
   - [x] Add `server/utils/grammarSpanGenerator.js` and include `choices` in `grammar_span` routes
   - [x] Remove fragile unicode fallback for choices (prevent parse errors)
 
-- Phase 2 — PDF Parser (in progress)
+- Phase 2 PDF Parser (in progress)
   - [ ] Marker-first segmentation: robust `N. pX-no.Y(~Z)`
   - [ ] Enforce passage count = max(N); fill sources
   - [ ] Merge short lines for textbook layout

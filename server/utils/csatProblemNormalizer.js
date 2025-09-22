@@ -169,9 +169,11 @@ function normaliseProblem(problem, index) {
     answer: options.length ? (answer || normaliseAnswerValue(problem.answer, options, 'answer')) : undefined,
     explanation: toCleanString(problem.explanation || problem.reason || ''),
     difficulty: toCleanString(problem.difficulty || DEFAULT_DIFFICULTY) || DEFAULT_DIFFICULTY,
-    mainText: toCleanString(problem.mainText || problem.passage || ''),
+    mainText: toCleanString(problem.mainText || problem.passage || problem.text || ''),
     metadata: buildMetadata(problem)
   };
+  const source = toCleanString(problem.source || problem.documentTitle || (problem.metadata && problem.metadata.documentTitle) || '');
+  if (source) normalized.source = source;
 
   if (!normalized.options) delete normalized.options;
   if (!normalized.answer) delete normalized.answer;

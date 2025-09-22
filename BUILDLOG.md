@@ -1,11 +1,11 @@
-ï»¿# BUILDLOG.md
+# BUILDLOG.md
 
 ## 2025-09-20
-- Issue: ì‚¬ëŒ ì†ìœ¼ë¡œ ìˆ˜ì •í•œ `problem manual/*.md`ê°€ PDF ìµœì‹ ë³¸ê³¼ ì–´ê¸‹ë‚˜ AI ì¶œë ¥ì´ í”ë“¤ë ¸ì–´ìš”.
-- Root cause: ë§¤ë‰´ì–¼ ê°±ì‹  ì ˆì°¨ê°€ ë¬¸ì„œí™”ë˜ì§€ ì•Šì•„ PDF ë³€ê²½ì´ ì¦‰ì‹œ ë°˜ì˜ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤.
-- Fix: `scripts/update-problem-manuals.js`ë¥¼ ì¶”ê°€í•´ PDFâ†’ë§¤ë‰´ì–¼ ë³€í™˜ì„ ìë™í™”í•˜ê³  ê´€ë ¨ ë¬¸ì„œë¥¼ ë™ê¸°í™”í–ˆìŠµë‹ˆë‹¤.
+- Issue: »ç¶÷ ¼ÕÀ¸·Î ¼öÁ¤ÇÑ `problem manual/*.md`°¡ PDF ÃÖ½Åº»°ú ¾î±ß³ª AI Ãâ·ÂÀÌ Èçµé·È¾î¿ä.
+- Root cause: ¸Å´º¾ó °»½Å ÀıÂ÷°¡ ¹®¼­È­µÇÁö ¾Ê¾Æ PDF º¯°æÀÌ Áï½Ã ¹İ¿µµÇÁö ¾Ê¾Ò½À´Ï´Ù.
+- Fix: `scripts/update-problem-manuals.js`¸¦ Ãß°¡ÇØ PDF¡æ¸Å´º¾ó º¯È¯À» ÀÚµ¿È­ÇÏ°í °ü·Ã ¹®¼­¸¦ µ¿±âÈ­Çß½À´Ï´Ù.
 - Files touched: `scripts/update-problem-manuals.js`, `PROJECT_STATE.md`, `README.md`.
-- Verification: `node scripts/update-problem-manuals.js` ì‹¤í–‰ í›„ ì¶œë ¥ëœ ë§¤ë‰´ì–¼ì„ ìƒ˜í”Œ ì ê²€í•˜ê³  ë‹¤ìŒ AI í˜¸ì¶œì— ì…ë ¥í–ˆìŠµë‹ˆë‹¤.
+- Verification: `node scripts/update-problem-manuals.js` ½ÇÇà ÈÄ Ãâ·ÂµÈ ¸Å´º¾óÀ» »ùÇÃ Á¡°ËÇÏ°í ´ÙÀ½ AI È£Ãâ¿¡ ÀÔ·ÂÇß½À´Ï´Ù.
 
 ## 2025-09-18
 - Change summary: consolidated the dev workflow around PowerShell `npm run dev:all`, reinforced grammar_span fallbacks, and refreshed problem API options handling.
@@ -15,9 +15,15 @@
 - Verification: `npm run dev:all`, then `curl http://localhost:5000/health`, followed by manual grammar problem checks in the React UI.
 
 ## 2025-09-19
-- Change summary: ?ï¿½ï¿½??ï¿½ëœ ?ï¿½ë¡¬?ï¿½íŠ¸/ê·œì¹™ ê¸°ë°˜?ï¿½ë¡œ ëª¨ë“  MCQ ?ï¿½í˜•???ï¿½ì¼??JSON ?ï¿½í‚¤ë§ˆï¿½? ì¶œë ¥?ï¿½ë„ï¿½?ê°œí¸?ï¿½ê³ , ?ï¿½ëŠ¥???ï¿½í¬ ?ï¿½ë§ˆ ì¹´ë“œ UIï¿½?ë¬¸ì œ ?ï¿½ì´?ï¿½ì›ƒ???ï¿½ì¼?ï¿½ë‹¤.
-- Cause: ê¸°ì¡´ API ì¶œë ¥???ï¿½í˜•ë§ˆë‹¤ ?ï¿½ë½ ?ï¿½ë“œê°€ ?ï¿½ë¥´ï¿½? UI????ë°°ê²½/?ï¿½ï¿½? ?ï¿½íƒì§€ ?ï¿½ìœ¼ï¿½??ï¿½ì œ ?ï¿½í—˜ ?ï¿½ë¦„ï¿½??ï¿½ë??
-- Decision: ë§¤ë‰´??`problem manual/*.md`)???ï¿½ë¡¬?ï¿½íŠ¸??ì£¼ì…, ?ï¿½íŒ¨ ???ï¿½ë°± ë¡œì§??êµ¬ì¶•?ï¿½ê³  `generateGrammarSpanProblem`??ê·œì¹™ ê¸°ë°˜?ï¿½ë¡œ ?ï¿½ì‘?ï¿½í–ˆ??
-- Impact scope: server/services/aiProblemService.js, server/utils/grammarSpanGenerator.js, client/study ë¬¸ì œ ì¹´ë“œ ?ï¿½ë°˜.
-- Verification: Node ?ï¿½ìœ„ ?ï¿½ìŠ¤?ï¿½ë¡œ grammar span ê·œì¹™ ë³€?ï¿½ì„ ?ï¿½ì¸?ï¿½ê³ , ì£¼ìš” ?ï¿½í˜•???ï¿½ë™ ?ï¿½í–‰??`source`/`mainText`/`options`ê°€ ëª¨ë‘ ì±„ì›Œì§€?ï¿½ï¿½? ê²€ì¦í–ˆ??
+- Change summary: ??????µÈ ??·Ò??Æ®/±ÔÄ¢ ±â¹İ??·Î ¸ğµç MCQ ??Çü????ÀÏ??JSON ??Å°¸¶?? Ãâ·Â??µµ??°³Æí??°í, ??´É????Å© ??¸¶ Ä«µå UI??¹®Á¦ ??ÀÌ??¿ô????ÀÏ??´Ù.
+- Cause: ±âÁ¸ API Ãâ·Â????Çü¸¶´Ù ??¶ô ??µå°¡ ??¸£?? UI????¹è°æ/???? ??ÅÃÁö ??À¸????Á¦ ??Çè ??¸§????¶ú??
+- Decision: ¸Å´º??`problem manual/*.md`)????·Ò??Æ®??ÁÖÀÔ, ??ÆĞ ????¹é ·ÎÁ÷??±¸Ãà??°í `generateGrammarSpanProblem`??±ÔÄ¢ ±â¹İ??·Î ??ÀÛ??Çß??
+- Impact scope: server/services/aiProblemService.js, server/utils/grammarSpanGenerator.js, client/study ¹®Á¦ Ä«µå ??¹İ.
+- Verification: Node ??À§ ??½º??·Î grammar span ±ÔÄ¢ º¯??À» ??ÀÎ??°í, ÁÖ¿ä ??Çü????µ¿ ??Çà??`source`/`mainText`/`options`°¡ ¸ğµÎ Ã¤¿öÁö???? °ËÁõÇß??
 
+## 2025-09-22
+- Error: insertion problems truncated sentences and revealed ASCII markers instead of exam-style numerals.
+- Cause: legacy window builder trimmed target sentences and reused them when formatting the gap.
+- Fix: refactored `InsertionProblemGenerator2` to render full passages then convert markers and choices to circled numbers (¨ç~¨ë).
+- Files: `server/utils/insertionProblemGenerator2.js`, regenerated `generated_insertion_problems.json`, docs (`PROJECT_STATE.md`, `README.md`).
+- Verification: ran `node generate_insertion_problems.js`, reviewed problems 5¡¤19¡¤21 in study preview for correct layout and numbering.

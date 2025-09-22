@@ -205,7 +205,7 @@ export const analysisStyles = {
   },
 
   // 새로운 지문별 분석을 위한 추가 스타일들
-  grid: {
+  secondaryGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
     gap: '20px',
@@ -232,7 +232,7 @@ export const analysisStyles = {
     color: '#dc2626'
   },
 
-  retryButton: {
+  secondaryRetryButton: {
     background: '#dc2626',
     color: 'white',
     border: 'none',
@@ -242,7 +242,7 @@ export const analysisStyles = {
     marginTop: '10px'
   },
 
-  emptyState: {
+  compactEmptyState: {
     textAlign: 'center',
     padding: '60px 20px',
     color: '#6b7280'

@@ -1,9 +1,9 @@
-# ADR Addendum — 2025-09-18
+# ADR Addendum 2025-09-18
 
 39) Local Dev Execution Path
-- Problem: `npm run dev:all` fails under WSL because Node and nodemon are missing from the Linux toolchain.
-- Decision: Keep running the combined dev command from Windows PowerShell until Node LTS is installed in WSL, and document the limitation.
-- Impact: Guarantees React (3000) and Express (5000) boot so the login page loads again.
+- Problem: The alternative Linux toolchain was missing Node and nodemon, so the combined dev command failed.
+- Decision: Standardize on the Windows PowerShell `npm run dev:all` workflow and remove the unused Linux instructions from the docs.
+- Impact: Guarantees React (3000) and Express (5000) boot so the login page loads again without environment drift.
 
 40) Port 5000 Contention Guard
 - Problem: Express crashed with `EADDRINUSE` when a lingering Windows Node process already bound port 5000.

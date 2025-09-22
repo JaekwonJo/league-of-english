@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const database = require('../models/database');
 const { generateToken, hashPassword, verifyPassword } = require('../middleware/auth');
+const { logAuthEvent, EVENT_TYPES } = require('../services/auditLogService');
 
 /**
  * POST /api/register
@@ -31,6 +32,15 @@ router.post('/register', async (req, res) => {
       [username, hashedPassword, email, name, school, grade, role]
     );
     
+    await logAuthEvent({
+      userId: result.id || null,
+      username,
+      eventType: EVENT_TYPES.REGISTER,
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'] || '',
+      metadata: { email, role, grade }
+    });
+
     res.status(201).json({
       message: '?Œì›ê°€?…ì´ ?„ë£Œ?˜ì—ˆ?µë‹ˆ??',
       userId: result.id
@@ -88,6 +98,15 @@ router.post('/login', async (req, res) => {
     // ë¹„ë?ë²ˆí˜¸ ?œê±°
     delete user.password_hash;
     
+    await logAuthEvent({
+      userId: user.id,
+      username: user.username,
+      eventType: EVENT_TYPES.LOGIN,
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'] || '',
+      metadata: { role: user.role, membership: user.membership, success: true }
+    });
+
     res.json({
       message: 'ë¡œê·¸???±ê³µ',
       token: token,

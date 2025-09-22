@@ -132,53 +132,89 @@ router.post('/get-smart-problems', verifyToken, checkDailyLimit, async (req, res
         if (aiService?.generateImplicit) out.push(...await aiService.generateImplicit(parseInt(documentId), c));
       }
       else if (t === 'grammar') {
-        // Always generate span-based 5-choice grammar (choose incorrect underlined part)
-        let n=0, i=0;
-        while (n<c && i<passages.length*3) {
-          const p = passages[n%passages.length];
-          const g = generateGrammarSpanProblem(p);
-          if (g && g.text) {
-            out.push({
-              id:`grammar_${Date.now()}_${n}`,
-              type:'grammar_span',
-              question: g.question,
-              text: g.text,
-              choices: g.choices,
-              correctAnswer: String(g.correctAnswer || g.answer),
-              explanation: g.explanation || '',
-              difficulty:'basic',
-              documentTitle: document.title||'',
-              passageNumber: (n%passages.length)+1,
-              metadata:{ originalTitle: document.title||'', problemNumber: `p${(n%passages.length)+1}-no.${n+1}` }
-            });
-            n++;
+        const isAdvanced = (grammarDifficulty || 'basic').toLowerCase() === 'advanced';
+        let produced = 0;
+
+        if (isAdvanced && aiService?.generateGrammarSpanAI) {
+          try {
+            const advancedProblems = await aiService.generateGrammarSpanAI(parseInt(documentId), c);
+            if (Array.isArray(advancedProblems) && advancedProblems.length) {
+              const limited = advancedProblems.slice(0, c);
+              out.push(...limited.map((item, index) => ({
+                id: item.id || `grammar_ai_${Date.now()}_${index}`,
+                type: item.type || 'grammar_span',
+                question: item.question || '다음 글의 밑줄 친 부분 중 문법상 옳지 않은 것을 고르세요.',
+                text: item.text || item.mainText || '',
+                mainText: item.mainText || item.text || '',
+                choices: item.choices || [],
+                options: item.choices || [],
+                correctAnswer: String(item.correctAnswer ?? item.answer ?? ''),
+                explanation: item.explanation || '',
+                difficulty: 'advanced',
+                documentTitle: document.title || '',
+                passageNumber: item.passageNumber || ((index % passages.length) + 1),
+                metadata: { originalTitle: document.title || '', ...(item.metadata || {}) }
+              })));
+              produced = limited.length;
+            }
+          } catch (err) {
+            console.warn('[grammar][advanced] generation failed:', err?.message || err);
           }
-          i++;
+        }
+
+        const remaining = Math.max(0, c - produced);
+        if (remaining > 0) {
+          let n = 0;
+          let i = 0;
+          while (n < remaining && i < passages.length * 3) {
+            const passageIndex = (produced + n) % passages.length;
+            const p = passages[passageIndex];
+            const g = generateGrammarSpanProblem(p);
+            if (g && g.text) {
+              out.push({
+                id: `grammar_${Date.now()}_${produced + n}`,
+                type: 'grammar_span',
+                question: g.question,
+                text: g.text,
+                mainText: g.text,
+                choices: g.choices,
+                options: g.choices,
+                correctAnswer: String(g.correctAnswer || g.answer || ''),
+                explanation: g.explanation || '',
+                difficulty: 'basic',
+                documentTitle: document.title || '',
+                passageNumber: passageIndex + 1,
+                metadata: { originalTitle: document.title || '', problemNumber: `p${passageIndex + 1}-no.${produced + n + 1}` }
+              });
+              n++;
+            }
+            i++;
+          }
         }
       } else if (t === 'blank') {
         if (aiService?.generateBlank) out.push(...await aiService.generateBlank(parseInt(documentId), c));
         else {
-          for (let i=0;i<c;i++){ const p=passages[i%passages.length]; const words=(p.match(/\b[A-Za-z]{6,}\b/g)||[]).slice(0,200); if(words.length<4) continue; const target=words[Math.floor(Math.random()*words.length)]; const pool=words.filter(w=>w!==target); const opts=[target,...pool.sort(()=>Math.random()-0.5).slice(0,3)]; const options=opts.sort(()=>Math.random()-0.5); const correct=options.findIndex(o=>o===target)+1; out.push({ type:'blank', question:'鍮덉뭏???ㅼ뼱媛?留먮줈 媛???곸젅??寃껋??', text:p.replace(target,'_____'), options, answer:String(correct), explanation:'臾몃㎘/?댄쐶', difficulty:'basic' }); }
+          for (let i=0;i<c;i++){ const p=passages[i%passages.length]; const words=(p.match(/\b[A-Za-z]{6,}\b/g)||[]).slice(0,200); if(words.length<4) continue; const target=words[Math.floor(Math.random()*words.length)]; const pool=words.filter(w=>w!==target); const opts=[target,...pool.sort(()=>Math.random()-0.5).slice(0,3)]; const options=opts.sort(()=>Math.random()-0.5); const correct=options.findIndex(o=>o===target)+1; out.push({ type:'blank', question:'다음 글의 빈칸에 들어갈 말로 가장 적절한 것을 고르세요.', text:p.replace(target,'_____'), options, answer:String(correct), explanation:'정답 단서를 문맥에서 확인하세요.', difficulty:'basic' }); }
         }
       } else if (t === 'vocabulary' || t === 'vocab') {
         if (aiService?.generateVocab) out.push(...await aiService.generateVocab(parseInt(documentId), c));
         else {
-          for (let i=0;i<c;i++){ const p=passages[i%passages.length]; const words=(p.match(/\b[A-Za-z]{6,}\b/g)||[]).slice(0,200); if(words.length<4) continue; const target=words[Math.floor(Math.random()*words.length)]; const pool=words.filter(w=>w!==target); const opts=[target,...pool.sort(()=>Math.random()-0.5).slice(0,3)]; const options=opts.sort(()=>Math.random()-0.5); const correct=options.findIndex(o=>o===target)+1; out.push({ type:'vocabulary', question:`臾몃㎘??'${target}'??媛??媛源뚯슫 ?섎???`, options, answer:String(correct), explanation:'臾몃㎘/?댄쐶', difficulty:'basic' }); }
+          for (let i=0;i<c;i++){ const p=passages[i%passages.length]; const words=(p.match(/\b[A-Za-z]{6,}\b/g)||[]).slice(0,200); if(words.length<4) continue; const target=words[Math.floor(Math.random()*words.length)]; const pool=words.filter(w=>w!==target); const opts=[target,...pool.sort(()=>Math.random()-0.5).slice(0,3)]; const options=opts.sort(()=>Math.random()-0.5); const correct=options.findIndex(o=>o===target)+1; out.push({ type:'vocabulary', question:`문맥상 '${target}'과 의미가 가장 가까운 단어를 고르세요.`, options, answer:String(correct), explanation:'정답 단서를 문맥에서 확인하세요.', difficulty:'basic' }); }
         }
       } else if (t === 'title') {
         if (aiService?.generateTitle) out.push(...await aiService.generateTitle(parseInt(documentId), c));
         else {
-          for (let i=0;i<c;i++){ const p=passages[i%passages.length]; const first=(p.split(/(?<=[.!?])\s+/)[0]||'').trim().slice(0,60); const base=first.replace(/[^A-Za-z ]/g,'').split(' ').filter(Boolean).slice(0,5).join(' '); const candidates=[`${base}`||'Main Idea','A Letter to the Principal','Preparing for Exams','Library Hours Extension']; const options=candidates.sort(()=>Math.random()-0.5).slice(0,4); out.push({ type:'title', mainText:p, question:'?ㅼ쓬 湲???쒕ぉ?쇰줈 媛???곸젅??寃껋??', options, answer:'1', explanation:'臾몃㎘/?붿?', difficulty:'basic' }); }
+          for (let i=0;i<c;i++){ const p=passages[i%passages.length]; const first=(p.split(/(?<=[.!?])\s+/)[0]||'').trim().slice(0,60); const base=first.replace(/[^A-Za-z ]/g,'').split(' ').filter(Boolean).slice(0,5).join(' '); const candidates=[`${base}`||'Main Idea','A Letter to the Principal','Preparing for Exams','Library Hours Extension']; const options=candidates.sort(()=>Math.random()-0.5).slice(0,4); out.push({ type:'title', mainText:p, question:'다음 글의 제목으로 가장 적절한 것을 고르세요.', options, answer:'1', explanation:'문맥과 어울리는 선택지를 고르세요.', difficulty:'basic' }); }
         }
       } else if (t === 'theme' || t === 'topic') {
         if (aiService?.generateTopic) out.push(...await aiService.generateTopic(parseInt(documentId), c));
         else {
-          for (let i=0;i<c;i++){ const p=passages[i%passages.length]; const candidates=['Environment protection','School policy','Exam preparation','Library use']; const options=candidates.sort(()=>Math.random()-0.5).slice(0,4); out.push({ type:'theme', mainText:p, question:'湲??二쇱젣濡?媛???곸젅??寃껋??', options, answer:'1', explanation:'臾몃㎘/?붿?', difficulty:'basic' }); }
+          for (let i=0;i<c;i++){ const p=passages[i%passages.length]; const candidates=['Environment protection','School policy','Exam preparation','Library use']; const options=candidates.sort(()=>Math.random()-0.5).slice(0,4); out.push({ type:'theme', mainText:p, question:'다음 글의 주제로 가장 알맞은 것을 고르세요.', options, answer:'1', explanation:'문맥과 어울리는 선택지를 고르세요.', difficulty:'basic' }); }
         }
       } else if (t === 'summary') {
         if (aiService?.generateSummary) out.push(...await aiService.generateSummary(parseInt(documentId), c));
         else {
-          for (let i=0;i<c;i++){ const p=passages[i%passages.length]; const options=['?붿?瑜?媛?????붿빟','遺遺??뺣낫 怨쇱옣','臾몃㎘ 踰쀬뼱??二쇱옣','?몃? ?ъ떎 ?섏뿴']; const shuffled=options.sort(()=>Math.random()-0.5); out.push({ type:'summary', mainText:p, question:'?ㅼ쓬 湲???댁슜?쇰줈 媛???곸젅??寃껋??', options:shuffled, answer:'1', explanation:'臾몃㎘/?붿?', difficulty:'basic' }); }
+          for (let i=0;i<c;i++){ const p=passages[i%passages.length]; const options=['?붿?瑜?媛?????붿빟','遺遺??뺣낫 怨쇱옣','臾몃㎘ 踰쀬뼱??二쇱옣','?몃? ?ъ떎 ?섏뿴']; const shuffled=options.sort(()=>Math.random()-0.5); out.push({ type:'summary', mainText:p, question:'다음 글의 내용과 일치하는 요약을 고르세요.', options:shuffled, answer:'1', explanation:'문맥과 어울리는 선택지를 고르세요.', difficulty:'basic' }); }
         }
       }
     }
@@ -510,27 +546,27 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
       } else if (t === 'blank') {
         if (aiService?.generateBlank) out.push(...await aiService.generateBlank(parseInt(documentId), c));
         else {
-          for (let i=0;i<c;i++){ const p=passages[i%passages.length]; const words=(p.match(/\b[A-Za-z]{6,}\b/g)||[]).slice(0,200); if(words.length<4) continue; const target=words[Math.floor(Math.random()*words.length)]; const pool=words.filter(w=>w!==target); const opts=[target,...pool.sort(()=>Math.random()-0.5).slice(0,3)]; const options=opts.sort(()=>Math.random()-0.5); const correct=options.findIndex(o=>o===target)+1; out.push({ type:'blank', question:'?ㅼ쓬 湲??諛묒쨪???ㅼ뼱媛?留먮줈 媛???곸젅??寃껋??', text:p.replace(target,'_____'), options, answer:String(correct), explanation:'臾몃㎘/?댄쐶', difficulty:'basic' }); }
+          for (let i=0;i<c;i++){ const p=passages[i%passages.length]; const words=(p.match(/\b[A-Za-z]{6,}\b/g)||[]).slice(0,200); if(words.length<4) continue; const target=words[Math.floor(Math.random()*words.length)]; const pool=words.filter(w=>w!==target); const opts=[target,...pool.sort(()=>Math.random()-0.5).slice(0,3)]; const options=opts.sort(()=>Math.random()-0.5); const correct=options.findIndex(o=>o===target)+1; out.push({ type:'blank', question:'?ㅼ쓬 湲??諛묒쨪???ㅼ뼱媛?留먮줈 媛???곸젅??寃껋??', text:p.replace(target,'_____'), options, answer:String(correct), explanation:'정답 단서를 문맥에서 확인하세요.', difficulty:'basic' }); }
         }
       } else if (t === 'vocabulary') {
         if (aiService?.generateVocab) out.push(...await aiService.generateVocab(parseInt(documentId), c));
         else {
-          for (let i=0;i<c;i++){ const p=passages[i%passages.length]; const words=(p.match(/\b[A-Za-z]{6,}\b/g)||[]).slice(0,200); if(words.length<4) continue; const target=words[Math.floor(Math.random()*words.length)]; const pool=words.filter(w=>w!==target); const opts=[target,...pool.sort(()=>Math.random()-0.5).slice(0,3)]; const options=opts.sort(()=>Math.random()-0.5); const correct=options.findIndex(o=>o===target)+1; out.push({ type:'vocabulary', question:`臾몃㎘??'${target}'??媛??媛源뚯슫 ?섎???`, options, answer:String(correct), explanation:'臾몃㎘/?댄쐶', difficulty:'basic' }); }
+          for (let i=0;i<c;i++){ const p=passages[i%passages.length]; const words=(p.match(/\b[A-Za-z]{6,}\b/g)||[]).slice(0,200); if(words.length<4) continue; const target=words[Math.floor(Math.random()*words.length)]; const pool=words.filter(w=>w!==target); const opts=[target,...pool.sort(()=>Math.random()-0.5).slice(0,3)]; const options=opts.sort(()=>Math.random()-0.5); const correct=options.findIndex(o=>o===target)+1; out.push({ type:'vocabulary', question:`문맥상 '${target}'과 의미가 가장 가까운 단어를 고르세요.`, options, answer:String(correct), explanation:'정답 단서를 문맥에서 확인하세요.', difficulty:'basic' }); }
         }
       } else if (t === 'title') {
         if (aiService?.generateTitle) out.push(...await aiService.generateTitle(parseInt(documentId), c));
         else {
-          for (let i=0;i<c;i++){ const p=passages[i%passages.length]; const first=(p.split(/(?<=[.!?])\s+/)[0]||'').trim().slice(0,60); const base=first.replace(/[^A-Za-z ]/g,'').split(' ').filter(Boolean).slice(0,5).join(' '); const candidates=[`${base}`||'Main Idea','A Letter to the Principal','Preparing for Exams','Library Hours Extension']; const options=candidates.sort(()=>Math.random()-0.5).slice(0,4); out.push({ type:'title', mainText:p, question:'?ㅼ쓬 湲???쒕ぉ?쇰줈 媛???곸젅??寃껋??', options, answer:'1', explanation:'臾몃㎘/?붿?', difficulty:'basic' }); }
+          for (let i=0;i<c;i++){ const p=passages[i%passages.length]; const first=(p.split(/(?<=[.!?])\s+/)[0]||'').trim().slice(0,60); const base=first.replace(/[^A-Za-z ]/g,'').split(' ').filter(Boolean).slice(0,5).join(' '); const candidates=[`${base}`||'Main Idea','A Letter to the Principal','Preparing for Exams','Library Hours Extension']; const options=candidates.sort(()=>Math.random()-0.5).slice(0,4); out.push({ type:'title', mainText:p, question:'다음 글의 제목으로 가장 적절한 것을 고르세요.', options, answer:'1', explanation:'문맥과 어울리는 선택지를 고르세요.', difficulty:'basic' }); }
         }
       } else if (t === 'theme') {
         if (aiService?.generateTopic) out.push(...await aiService.generateTopic(parseInt(documentId), c));
         else {
-          for (let i=0;i<c;i++){ const p=passages[i%passages.length]; const candidates=['Environment protection','School policy','Exam preparation','Library use']; const options=candidates.sort(()=>Math.random()-0.5).slice(0,4); out.push({ type:'theme', mainText:p, question:'?ㅼ쓬 湲??二쇱젣濡?媛???곸젅??寃껋??', options, answer:'1', explanation:'臾몃㎘/?붿?', difficulty:'basic' }); }
+          for (let i=0;i<c;i++){ const p=passages[i%passages.length]; const candidates=['Environment protection','School policy','Exam preparation','Library use']; const options=candidates.sort(()=>Math.random()-0.5).slice(0,4); out.push({ type:'theme', mainText:p, question:'?ㅼ쓬 湲??二쇱젣濡?媛???곸젅??寃껋??', options, answer:'1', explanation:'문맥과 어울리는 선택지를 고르세요.', difficulty:'basic' }); }
         }
       } else if (t === 'summary') {
         if (aiService?.generateSummary) out.push(...await aiService.generateSummary(parseInt(documentId), c));
         else {
-          for (let i=0;i<c;i++){ const p=passages[i%passages.length]; const options=['?붿?瑜?媛?????붿빟','遺遺??뺣낫 怨쇱옣','臾몃㎘ 踰쀬뼱??二쇱옣','?몃? ?ъ떎 ?섏뿴']; const shuffled=options.sort(()=>Math.random()-0.5); out.push({ type:'summary', mainText:p, question:'?ㅼ쓬 湲???댁슜?쇰줈 媛???곸젅??寃껋??', options:shuffled, answer:'1', explanation:'臾몃㎘/?붿?', difficulty:'basic' }); }
+          for (let i=0;i<c;i++){ const p=passages[i%passages.length]; const options=['?붿?瑜?媛?????붿빟','遺遺??뺣낫 怨쇱옣','臾몃㎘ 踰쀬뼱??二쇱옣','?몃? ?ъ떎 ?섏뿴']; const shuffled=options.sort(()=>Math.random()-0.5); out.push({ type:'summary', mainText:p, question:'다음 글의 내용과 일치하는 요약을 고르세요.', options:shuffled, answer:'1', explanation:'문맥과 어울리는 선택지를 고르세요.', difficulty:'basic' }); }
         }
       }
     }

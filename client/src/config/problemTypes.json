@@ -1,11 +1,15 @@
-﻿{
+{
   "problemTypes": {
     "blank": {
       "id": "blank",
       "name": "빈칸 채우기",
       "description": "문맥에 가장 적절한 어구 선택",
       "points": 3,
-      "difficulty": { "basic": 2, "medium": 3, "advanced": 3 },
+      "difficulty": {
+        "basic": 2,
+        "medium": 3,
+        "advanced": 3
+      },
       "aiGenerated": true,
       "icon": "🧩",
       "color": "#3B82F6",
@@ -16,15 +20,32 @@
       "name": "순서 배열",
       "description": "문단 논리 순서 파악",
       "points": 2,
-      "difficulty": { "basic": 2, "medium": 2, "advanced": 3 },
+      "difficulty": {
+        "basic": 2,
+        "medium": 2,
+        "advanced": 3
+      },
       "aiGenerated": false,
       "ruleGenerated": true,
       "icon": "🔀",
       "color": "#8B5CF6",
       "instruction": "주어진 문장들의 올바른 순서를 고르세요.",
       "options": {
-        "basic": ["(A)-(B)-(C)", "(A)-(C)-(B)", "(B)-(A)-(C)", "(B)-(C)-(A)", "(C)-(A)-(B)", "(C)-(B)-(A)"],
-        "advanced": ["(A)-(B)-(C)-(D)-(E)", "(A)-(C)-(B)-(E)-(D)", "(B)-(A)-(D)-(C)-(E)", "(C)-(D)-(A)-(E)-(B)", "(D)-(E)-(B)-(A)-(C)"]
+        "basic": [
+          "(A)-(B)-(C)",
+          "(A)-(C)-(B)",
+          "(B)-(A)-(C)",
+          "(B)-(C)-(A)",
+          "(C)-(A)-(B)",
+          "(C)-(B)-(A)"
+        ],
+        "advanced": [
+          "(A)-(B)-(C)-(D)-(E)",
+          "(A)-(C)-(B)-(E)-(D)",
+          "(B)-(A)-(D)-(C)-(E)",
+          "(C)-(D)-(A)-(E)-(B)",
+          "(D)-(E)-(B)-(A)-(C)"
+        ]
       }
     },
     "insertion": {
@@ -32,7 +53,11 @@
       "name": "문장 삽입",
       "description": "주어진 문장의 적절한 위치 찾기",
       "points": 2,
-      "difficulty": { "basic": 2, "medium": 2, "advanced": 3 },
+      "difficulty": {
+        "basic": 2,
+        "medium": 2,
+        "advanced": 3
+      },
       "aiGenerated": false,
       "ruleGenerated": true,
       "icon": "🧱",
@@ -44,7 +69,11 @@
       "name": "어법/문법",
       "description": "밑줄 친 부분의 오류 찾기",
       "points": 2,
-      "difficulty": { "basic": 2, "medium": 2, "advanced": 2 },
+      "difficulty": {
+        "basic": 2,
+        "medium": 2,
+        "advanced": 2
+      },
       "aiGenerated": true,
       "icon": "📝",
       "color": "#F59E0B",
@@ -55,7 +84,11 @@
       "name": "어휘",
       "description": "문맥상 알맞은 어휘 선택",
       "points": 2,
-      "difficulty": { "basic": 2, "medium": 2, "advanced": 2 },
+      "difficulty": {
+        "basic": 2,
+        "medium": 2,
+        "advanced": 2
+      },
       "aiGenerated": true,
       "icon": "📚",
       "color": "#EF4444",
@@ -66,7 +99,11 @@
       "name": "제목",
       "description": "글의 제목 찾기",
       "points": 2,
-      "difficulty": { "basic": 2, "medium": 2, "advanced": 2 },
+      "difficulty": {
+        "basic": 2,
+        "medium": 2,
+        "advanced": 2
+      },
       "aiGenerated": true,
       "icon": "🏷️",
       "color": "#14B8A6",
@@ -77,7 +114,11 @@
       "name": "주제",
       "description": "글의 주제 찾기",
       "points": 2,
-      "difficulty": { "basic": 2, "medium": 2, "advanced": 2 },
+      "difficulty": {
+        "basic": 2,
+        "medium": 2,
+        "advanced": 2
+      },
       "aiGenerated": true,
       "icon": "🗝️",
       "color": "#EC4899",
@@ -88,16 +129,75 @@
       "name": "요약",
       "description": "글의 핵심 내용 요약하기",
       "points": 3,
-      "difficulty": { "basic": 2, "medium": 3, "advanced": 3 },
+      "difficulty": {
+        "basic": 2,
+        "medium": 3,
+        "advanced": 3
+      },
       "aiGenerated": true,
       "icon": "🧠",
       "color": "#6366F1",
       "instruction": "다음 글의 내용과 가장 유사한 요약을 고르세요."
+    },
+    "irrelevant": {
+      "id": "irrelevant",
+      "name": "무관 문장",
+      "description": "본문과 어울리지 않는 문장을 찾는 문제",
+      "points": 2,
+      "difficulty": {
+        "basic": 2,
+        "medium": 2,
+        "advanced": 2
+      },
+      "aiGenerated": true,
+      "icon": "🚫",
+      "color": "#9333EA",
+      "instruction": "글 전체의 흐름을 살펴보고 주제와 맞지 않는 문장을 고르세요."
+    },
+    "implicit": {
+      "id": "implicit",
+      "name": "암묵 추론",
+      "description": "직접적으로 쓰이지 않은 내용을 추론",
+      "points": 3,
+      "difficulty": {
+        "basic": 2,
+        "medium": 3,
+        "advanced": 3
+      },
+      "aiGenerated": true,
+      "icon": "💡",
+      "color": "#2563EB",
+      "instruction": "주요 단서를 바탕으로 글쓴이가 암묵적으로 전달하는 메시지를 추론하세요."
     }
   },
   "defaultCounts": {
-    "basic": { "blank": 3, "order": 2, "insertion": 2, "grammar": 2, "vocabulary": 2, "title": 1, "theme": 1, "summary": 0 },
-    "advanced": { "blank": 4, "order": 3, "insertion": 3, "grammar": 2, "vocabulary": 2, "title": 2, "theme": 2, "summary": 2 }
+    "basic": {
+      "blank": 3,
+      "order": 2,
+      "insertion": 2,
+      "grammar": 2,
+      "vocabulary": 2,
+      "title": 1,
+      "theme": 1,
+      "summary": 0,
+      "irrelevant": 0,
+      "implicit": 0
+    },
+    "advanced": {
+      "blank": 4,
+      "order": 3,
+      "insertion": 3,
+      "grammar": 2,
+      "vocabulary": 2,
+      "title": 2,
+      "theme": 2,
+      "summary": 2,
+      "irrelevant": 0,
+      "implicit": 0
+    }
   },
-  "timeLimit": { "basic": 120, "advanced": 60 }
+  "timeLimit": {
+    "basic": 120,
+    "advanced": 60
+  }
 }

@@ -1,0 +1,20 @@
+﻿{
+  "고2 24년 9월": [
+    {
+      "question": "29. 다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?",
+      "mainText": "One well-known shift took place when the accepted view ― that the Earth was the center of the universe ― changed to one where we understood that we are only inhabitants on one planet <u>① orbiting the Sun</u>. With each person who grasped the solar system view, <u>② it became easier</u> for the next person to do so. So it is with the notion that the world revolves around the human economy. This is slowly being replaced by the view that the economy is a part of the larger system of material flows that connect all living things. When this perspective shifts into place, it will be obvious that our economic well-being requires that we account for, and <u>③ respond to</u>, factors of ecological health. Unfortunately we do not have a century or two <u>④ make</u> the change. By clarifying the nature of the old and new perspectives, and by identifying actions <u>⑤ on which</u> we might cooperate to move the process along, we can help accelerate the shift.",
+      "choices": [
+        "① orbiting the Sun",
+        "② it became easier",
+        "③ respond to",
+        "④ make",
+        "⑤ on which"
+      ],
+      "correctAnswer": 4,
+      "explanation": "④ make → to make : to 부정사를 사용해야 ‘두 세기’의 시간이라는 의미가 자연스럽게 연결됩니다.",
+      "source": "실제 문제지 & C:/Users/jaekw/Documents/웹앱/문서샘플/24년.고2.9월 모의고사_29번 어법문제.pdf",
+      "problemNumber": "29",
+      "difficulty": "advanced"
+    }
+  ]
+}

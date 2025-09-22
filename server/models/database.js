@@ -125,6 +125,19 @@ class Database {
           FOREIGN KEY (document_id) REFERENCES documents(id)
         )`,
 
+        // auth_logs
+        `CREATE TABLE IF NOT EXISTS auth_logs (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER,
+          username VARCHAR(50),
+          event_type VARCHAR(20) NOT NULL,
+          ip_address VARCHAR(45),
+          user_agent TEXT,
+          metadata TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id)
+        )`,
+
         // vocabulary_documents
         `CREATE TABLE IF NOT EXISTS vocabulary_documents (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -281,11 +294,23 @@ class Database {
     return new Promise((resolve, reject) => {
       try {
         const stmt = this.db.prepare(query);
-        stmt.bind(this._normalizeParams(params));
+        const normalized = this._normalizeParams(params);
+        stmt.bind(normalized);
         stmt.step();
+        const firstToken = (query || '').trim().split(/\s+/)[0]?.toUpperCase() || '';
+        const changes = typeof this.db.getRowsModified === 'function' ? this.db.getRowsModified() : undefined;
         stmt.free();
+        let id = undefined;
+        if (firstToken === 'INSERT') {
+          try {
+            const res = this.db.exec('SELECT last_insert_rowid() as id');
+            id = res?.[0]?.values?.[0]?.[0];
+          } catch (lookupError) {
+            console.error('[db] failed to fetch last_insert_rowid', lookupError?.message || lookupError);
+          }
+        }
         this._markDirty();
-        resolve({ id: undefined, changes: undefined });
+        resolve({ id, changes });
       } catch (e) { reject(e); }
     });
   }

@@ -5,7 +5,7 @@
   "main": "server/server.js",
   "scripts": {
     "start": "node server/server.js",
-    "dev": "nodemon server/server.js",
+    "dev": "node ./node_modules/nodemon/bin/nodemon.js server/server.js",
     "dev:all": "concurrently \"npm run dev\" \"npm run client\"",
     "client": "cd client && npm start",
     "client:alt": "cd client && set PORT=3001 && npm start",

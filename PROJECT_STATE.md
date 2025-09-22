@@ -1,4 +1,4 @@
-ï»¿# PROJECT_STATE.md
+# PROJECT_STATE.md
 
 ## What we're building
 - League of English React SPA (problem authoring, solving, analysis, teacher/admin tools)
@@ -12,22 +12,32 @@
 - API base URL comes from `client/.env` `REACT_APP_API_URL` (defaults to `http://localhost:5000/api`).
 - Auth API: `/api/auth/login`, `/api/auth/register` store tokens and profile info in `localStorage`.
 - Grammar span problems return both `<u>...</u>` markup and `choices/options` arrays.
-- PDF â†’ manual refresh is standardised through `node scripts/update-problem-manuals.js` so the AI always reads the latest writer guidance.
+- PDF ¡æ manual refresh is standardised through `node scripts/update-problem-manuals.js` so the AI always reads the latest writer guidance.
+- Sentence-insertion generator outputs full passages with circled markers (¨ç~¨ë) and balanced choice windows (2025-09-22).
 
 ## Current Stage
-- PDF manuals are now regenerated automatically; next step is validating AI generation with the refreshed content and surfacing a minimal review UI.
+- Core content pipelines are aligned (manual sync + insertion generator). Focus now is wiring complete study flow: generation ¡æ practise ¡æ scoring ¡æ analytics.
 
 ## Next 3 (priority)
-1) (P1) Run the manual sync script and confirm AI problem generation consumes the regenerated manuals without schema drift.
-2) (P1) Capture sample generation output and wire it into a basic teacher preview / student view flow.
-3) (P2) Fold the manual-sync workflow into onboarding docs so teammates follow the same refresh steps.
+1) (P1) End-to-end smoke test of circled-marker insertion problems in teacher preview & study UI, capturing screenshots for sign-off (ensures new format renders correctly).
+2) (P1) Draft the scoring + ranking contract (API + DB schema) so student attempts can be persisted and tier logic designed before UI wiring.
+3) (P2) Document contributor FAQ covering manual sync, problem generation scripts, and new insertion behaviour to reduce onboarding overhead.
+
+## Roadmap (high level)
+1. ¹®Á¦ ÀúÀÛ ÀÚµ¿È­: PDF ¾÷·Îµå ¡æ ¹®Á¦ ÀÚµ¿ »ý¼º ÆÄÀÌÇÁ¶óÀÎ °íµµÈ­ ¹× Å×½ºÆ® ÀÚµ¿È­.
+2. ÇÐ½À/Ç®ÀÌ °æÇè: ÇÐ»ý ´ë½Ãº¸µå, Å¸ÀÌ¸Ó, Áï½Ã Ã¤Á¡, ¿À´ä/¸®ºä Èå¸§ ±¸Ãà.
+3. Á¡¼ö ÀúÀå ¹× ºÐ¼®: Supabase/PostgreSQL ±â¹Ý Á¡¼ö ÀúÀå, API ¼³°è, °³ÀÎ¡¤ÇÐ±Þ Åë°è ÆäÀÌÁö ±¸Ãà.
+4. ·©Å©/Æ¼¾î ½Ã½ºÅÛ: ½ÃÁðº° Elo/±¸°£ ¼³°è, ÇÁ·ÎÇÊ/·©Å· ÆäÀÌÁö(UX, ¾ÆÀÌÄÜ, º¸»ó) ±¸Çö.
+5. ºÐ¼®º» & ÇÐ½À °¡ÀÌµå: ¹®Ç×º° AI ÇØ¼³/¸®ºä Á¦°ø, ±³»ç¿ë ºÐ¼® ¸®Æ÷Æ® ÀÚµ¿ »ý¼º.
+6. ¿î¿µ ¹× ¹èÆ÷: Render(backend) + Vercel(frontend) + Supabase(DB) CI/CD ÆÄÀÌÇÁ¶óÀÎ ±¸¼º, ¸ð´ÏÅÍ¸µ/¾Ë¸² ¼¼ÆÃ.
 
 ## Known issues
-- Need confirmation that regenerated manuals produce stable AI output (collect sample runs).
-- Windows firewall still blocks ports 3000/5000 on first launch unless users pre-authorise.
-- Manual port cleanup is required if Node crashes and holds the dev ports.
+- Full end-to-end verification of the new insertion output in the React UI is still pending (needs manual QA and snapshots).
+- Scoring persistence & ranking DB schema not implemented yet; API contracts must be defined before wiring Study flow.
+- Automated tests around problem generators and manual sync are minimal; regression risk remains high until coverage improves.
 
 ## Resolved (recent)
-- Introduced `scripts/update-problem-manuals.js` so manuals now stay in lockstep with the source PDFs.
+- 2025-09-22: Refactored `InsertionProblemGenerator2` so passages remain intact and markers render as circled numerals with balanced windows.
+- Introduced `scripts/update-problem-manuals.js` so manuals stay in lockstep with the source PDFs.
 - Synced README/BUILDLOG/PROJECT_STATE to document the refresh workflow for future contributors.
-- Earlier fixes (PowerShell dev loop + grammar_span UI alignment) remain stable after todayâ€™s changes.
+- Earlier fixes (PowerShell dev loop + grammar_span UI alignment) remain stable after today¡¯s changes.
