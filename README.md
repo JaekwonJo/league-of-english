@@ -1,4 +1,4 @@
-# League of English - CSAT English Practice Suite
+﻿# League of English - CSAT English Practice Suite
 
 League of English is a web application that helps students and teachers generate, solve, and analyse CSAT-style English problems. The project consists of a Node/Express API and a React front-end.
 
@@ -83,3 +83,36 @@ scripts/  # Local development helpers
 ## License
 This project is proprietary. Do not distribute without permission.
 
+## Project Roadmap
+
+### Latest Update (2025-09-24)
+- Added a consolidated roadmap table to keep daily progress visible.
+- Remaining big items: membership upgrade flow, advanced analytics dashboard, file-upload format expansion.
+
+| Step | Description | Status |
+|------|-------------|--------|
+| 01 | 개발 도구 설치 (Node.js, VS Code, Git) | ✅ 완료 |
+| 02 | 프로젝트 폴더 구조 구성 | ✅ 완료 |
+| 03 | React 앱 기본 설정 | ✅ 완료 |
+| 04 | 기존 React 컴포넌트 적용 | ✅ 완료 |
+| 05 | 라우팅 설정 (페이지 이동) | ✅ 완료 |
+| 06 | 스타일링 (그라데이션/반응형) | ✅ 완료 |
+| 07 | Express 서버 구축 | ✅ 완료 |
+| 08 | 데이터베이스 전환 준비 (PostgreSQL) | 🔜 계획 |
+| 09 | 데이터베이스 테이블 생성 (SQL.js) | ✅ 완료 |
+| 10 | 핵심 API 엔드포인트 구현 | ✅ 완료 |
+| 11 | 회원가입·로그인 시스템 | ✅ 완료 |
+| 12 | 파일 업로드 확장 (PDF → DOCX/CSV) | 🔜 예정 |
+| 13 | AI 연동 (OpenAI API) | ✅ 완료 |
+| 14 | 문제 자동 생성 로직 | ✅ 완료 |
+| 15 | 점수·랭킹 시스템 | ✅ 완료 |
+| 16 | 멤버십 결제/업그레이드 흐름 | 🔄 보강 필요 |
+| 17 | 관리자 대시보드 | ✅ 완료 |
+| 18 | 통계·분석 대시보드 | 🔄 확장 필요 |
+| 19 | 일일 제한 관리 | ✅ 완료 |
+| 20 | 환경 변수 설정 | ✅ 완료 |
+| 21 | 보안 강화 (역할·JWT·CORS) | 🔄 진행 중 |
+| 22 | 에러 처리 (전역 핸들러, API별 예외) | 🔄 진행 중 |
+| 23 | 클라우드 서버 선택 (Render/Vercel) | ✅ 완료 |
+| 24 | 도메인 연결 | ✅ 완료 |
+| 25 | 최종 테스트 및 런칭 | 🔄 Smoke 테스트/QA 예정 |

@@ -1,4 +1,10 @@
-﻿## 2025-09-23
+﻿## 2025-09-24
+- Issue: Roadmap/next-step tracking was scattered across multiple docs, making daily status hard to grasp.
+- Root cause: README, PROJECT_STATE, and BUILDLOG had diverging narratives after recent feature pushes.
+- Fix: Consolidated a single roadmap/status table in README and synchronized PROJECT_STATE.md & BUILDLOG.md with today's priorities.
+- Files touched: README.md, PROJECT_STATE.md, BUILDLOG.md.
+- Verification: Reviewed README section to ensure table renders correctly, confirmed PROJECT_STATE next-step list shows new priorities, reran smoke review on docs (no build/test needed).
+## 2025-09-23
 - Issue: Grammar API only produced single-error fallback items and the study UI could not handle multi-answer grammar questions.
 - Root cause: `aiProblemService` lacked a dedicated grammar generator/prompt, no caching for grammar types, and the React component assumed single numeric answers.
 - Fix: Added OpenAI-backed grammar basic/advanced generator with DB caching, created `/generate/grammar`, and rebuilt the study grammar component to support multi-select + answer normalization.
@@ -33,4 +39,5 @@
 - Fix: refactored `InsertionProblemGenerator2` to render full passages then convert markers and choices to circled numbers (①~⑤).
 - Files: `server/utils/insertionProblemGenerator2.js`, regenerated `generated_insertion_problems.json`, docs (`PROJECT_STATE.md`, `README.md`).
 - Verification: ran `node generate_insertion_problems.js`, reviewed problems 5·19·21 in study preview for correct layout and numbering.
+
 

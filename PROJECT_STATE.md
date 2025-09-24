@@ -5,23 +5,30 @@
 
 ## Stack & Commands
 - Node 20 / Express / React 19 / CRA / lucide-react
-- Scripts: dev / client / build / lint
-- Run: `npm run dev:all` from the repository root (preferred) or start `npm run dev` + `npm run client` separately.
+- SQL.js (file-backed) presently; PostgreSQL migration planned
+- Render (API) + Vercel (Web) deployment targets
+- Scripts: dev / client / build / lint / deploy helpers
+- Run: 
+pm run dev:all from the repository root (preferred) or start 
+pm run dev + 
+pm run client separately.
 
 ## Decisions (key)
-- API base URL comes from `client/.env` `REACT_APP_API_URL` (defaults to `http://localhost:5000/api`).
-- Auth API: `/api/auth/login`, `/api/auth/register` store tokens and profile info in `localStorage`.
-- Grammar generators now ship single-answer (`grammar`) and multi-answer (`grammar_multi`) items with cached `<u>...</u>` spans so the study app can underline targets reliably.
-- Problem manuals stay in sync via `node scripts/update-problem-manuals.js`; AI prompts always reference the latest guidance PDFs.
+- API base URL comes from client/.env REACT_APP_API_URL (defaults to http://localhost:5000/api).
+- Auth API: /api/auth/login, /api/auth/register store tokens and profile info in localStorage.
+- Grammar generators now ship single-answer (grammar) and multi-answer (grammar_multi) items with cached <u>...</u> spans so the study app can underline targets reliably.
+- Problem manuals stay in sync via 
+ode scripts/update-problem-manuals.js; AI prompts always reference the latest guidance PDFs.
 - Sentence-insertion generator outputs full passages with circled markers (①~⑤) and balanced choice windows (2025-09-22).
+- Deployment pairs Render (server) + Vercel (client); environment variables (API URL, OpenAI key, JWT secret) are stored per platform.
 
 ## Current Stage
-- Core pipelines (PDF → manuals → API) are aligned; we just wired grammar basic/advanced items into caching and the study UI. Next focus: broaden the other AI question types and connect scoring/analytics.
+- Feature-complete MVP: authentication, AI 문제 생성, 학습 루프, 랭킹/티어, 관리자 콘솔, 분석/업로드, Render·Vercel 배포까지 연결됨. 남은 일은 고급 통계, 멤버십 업그레이드, 파일 포맷 확장 등 마감 전 polish 영역.
 
 ## Next 3 (priority)
-1) (P1) QA grammar-basic/advanced flows end-to-end (API cache → study UI multi-select) and capture regression scenarios for automated tests.
-2) (P1) Port the remaining AI question types (blank/vocab/summary/title/theme) onto the same cached-problem contract so the study loop is consistent.
-3) (P1) Draft the scoring & ranking schema/API so attempt storage, tier updates, and leaderboard math can move forward.
+1) (P1) 구현되지 않은 멤버십 업그레이드/쿠폰 흐름과 Premium 기능 토글을 완성하고 QA.
+2) (P1) 학습 통계 대시보드(유형별 정답률, 주간 그래프, 취약 유형)를 API + UI로 연결.
+3) (P2) 문서 업로드 포맷(DOCX/CSV) 확장 및 Smoke 테스트 자동화로 배포 전 안정화.
 
 ## Roadmap (high level)
 1. Automate problem generation from PDFs/manuals with deterministic QA steps.
@@ -32,14 +39,16 @@
 6. Production ops: Render (backend) + Vercel (frontend) + Supabase (DB) CI/CD, monitoring, incident playbooks.
 
 ## Known issues
-- ESLint config is still missing; `npm run lint` fails. Need a shared config (or update scripts) before enforcing linting in CI.
+- ESLint config is still missing; 
+pm run lint fails. Need a shared config (or update scripts) before enforcing linting in CI.
 - Manual QA for insertion problems is still pending (screenshots + acceptance); same needs to happen for the new grammar multi-select flow.
 - Automated regression coverage for generators remains thin; failures depend on console smoke tests.
-- Scoring persistence & ranking APIs are blocked until the contract in "Next 3" is drafted.
+- 멤버십 업그레이드/결제·쿠폰 UI가 미구현 상태이며, 단어 시험/통계 화면은 placeholder.
 
 ## Resolved (recent)
-- 2025-09-22: Refactored `InsertionProblemGenerator2` so passages remain intact and markers render as circled numerals with balanced windows.
-- Introduced `scripts/update-problem-manuals.js` so manuals stay in lockstep with the source PDFs.
+- 2025-09-24: README에 전체 로드맵 표 추가, PROJECT_STATE/BUILDLOG를 최신 상태로 동기화하여 진행 상황을 명확히 공유.
+- 2025-09-23: Implemented grammar-basic/multi API caching, added /generate/grammar, and upgraded the study UI with multi-answer support and answer normalization.
+- 2025-09-22: Refactored InsertionProblemGenerator2 so passages remain intact and markers render as circled numerals with balanced windows.
+- Introduced scripts/update-problem-manuals.js so manuals stay in lockstep with the source PDFs.
 - Synced README/BUILDLOG/PROJECT_STATE to document the refresh workflow for future contributors.
-- 2025-09-23: Implemented grammar-basic/multi API caching, added `/generate/grammar`, and upgraded the study UI with multi-answer support and answer normalization.
 - Earlier fixes (PowerShell dev loop + grammar-span UI alignment) remain stable after today’s changes.
