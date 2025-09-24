@@ -100,6 +100,30 @@ class ApiService {
   }
 
   /**
+   * GET (text 응답)
+   */
+  async getText(endpoint, params = {}) {
+    try {
+      const queryString = new URLSearchParams(params).toString();
+      const url = `${this.baseURL}${endpoint}${queryString ? '?' + queryString : ''}`;
+      const headers = this.getHeaders();
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers
+      });
+
+      if (!response.ok) {
+        throw response;
+      }
+
+      return await response.text();
+    } catch (error) {
+      await this.handleError(error, `GET_TEXT ${endpoint}`);
+    }
+  }
+
+  /**
    * POST 요청
    */
   async post(endpoint, data = {}) {
@@ -234,6 +258,24 @@ export const api = {
     leaderboard: (params) => apiService.get('/ranking/leaderboard', params),
     myRank: () => apiService.get('/ranking/my-rank'),
     tierDistribution: () => apiService.get('/ranking/tier-distribution')
+  },
+
+  // 선생님
+  teacher: {
+    codes: () => apiService.get('/teacher/codes'),
+    generateCode: () => apiService.post('/teacher/codes'),
+    deactivateCode: (code) => apiService.post('/teacher/codes/' + code + '/deactivate'),
+    students: () => apiService.get('/teacher/students'),
+    join: (code) => apiService.post('/teacher/join', { code }),
+    analyticsOverview: (params) => apiService.get('/teacher/analytics/overview', params),
+    analyticsStudent: (studentId, params) => apiService.get(`/teacher/analytics/students/${studentId}`, params),
+    analyticsExport: (params) => apiService.getText('/teacher/analytics/export', params)
+  },
+
+  // 멤버십
+  membership: {
+    status: () => apiService.get('/membership/status'),
+    redeem: (code) => apiService.post('/membership/redeem', { code })
   },
 
   // 문서 분석

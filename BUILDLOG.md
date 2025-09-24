@@ -1,4 +1,32 @@
-﻿## 2025-09-24
+﻿## 2025-09-24 (PM4)
+- Issue: Teachers lacked a dashboard/export path to review class accuracy and trends.
+- Root cause: `/teacher` routes and the profile page only handled class codes; no analytics queries or UI hooked into `study_records`.
+- Fix: Added `/api/teacher/analytics/overview`, `/students/:id`, `/export` with 기간/학년/멤버십 필터와 CSV 생성, then wired a React dashboard (필터·표·학생 상세·CSV 버튼).
+- Files touched: `server/routes/teacher.routes.js`, `client/src/services/api.service.js`, `client/src/pages/ProfilePage.js`.
+- Verification: Code review of SQL joins + UI state transitions; manual CSV download/detail drilldown test queued once the local dev stack is running.
+
+## 2025-09-24 (PM3)
+- Issue: Teachers could not enrol students, so class-level analytics were impossible.
+- Root cause: `teacher_codes` existed but there were no APIs/UI for issuing codes or linking students.
+- Fix: Added `/api/teacher/*` endpoints (code issue/deactivate, student list, student join) and wired teacher/student cards on the profile page.
+- Files touched: `server/models/database.js`, `server/routes/teacher.routes.js`, `server/server.js`, `server/middleware/auth.js`, `client/src/services/api.service.js`, `client/src/pages/ProfilePage.js`.
+- Verification: Reviewed duplicate-code and expiration paths; manual end-to-end test (teacher code -> student join) scheduled next dev session.
+
+## 2025-09-24 (PM2)
+- Issue: The membership coupon flow was planned but not implemented, blocking premium upgrades.
+- Root cause: `membership_coupons` schema existed but `/membership/*` APIs and profile UI were missing.
+- Fix: Added `/api/membership/status` + `/api/membership/redeem`, enforced free-tier daily limits, and hooked the profile membership card to the live API.
+- Files touched: `server/models/database.js`, `server/routes/membership.routes.js`, `server/server.js`, `client/src/services/api.service.js`, `client/src/pages/ProfilePage.js`.
+- Verification: Code review for duplicate/expired coupon paths; follow-up manual redemption test planned when dev server is running.
+
+## 2025-09-24 (PM)
+- Issue: The stats page was still a placeholder, so students could not review their performance.
+- Root cause: `study_records` aggregation API was missing and the React StatsPage only showed dummy text.
+- Fix: Added `/api/problems/stats` to calculate type accuracy + 7-day trends and rebuilt the page with Recharts visuals.
+- Files touched: server/routes/problem.routes.js, client/src/pages/StatsPage.js.
+- Verification: Code review covered weekly ordering and response schema; manual verification planned once the dev server is running again.
+
+## 2025-09-24
 - Issue: Roadmap/next-step tracking was scattered across multiple docs, making daily status hard to grasp.
 - Root cause: README, PROJECT_STATE, and BUILDLOG had diverging narratives after recent feature pushes.
 - Fix: Consolidated a single roadmap/status table in README and synchronized PROJECT_STATE.md & BUILDLOG.md with today's priorities.
@@ -15,7 +43,7 @@
 ## 2025-09-20
 - Issue: 사람 손으로 수정한 `problem manual/*.md`가 PDF 최신본과 어긋나 AI 출력이 흔들렸어요.
 - Root cause: 매뉴얼 갱신 절차가 문서화되지 않아 PDF 변경이 즉시 반영되지 않았습니다.
-- Fix: `scripts/update-problem-manuals.js`를 추가해 PDF→매뉴얼 변환을 자동화하고 관련 문서를 동기화했습니다.
+- Fix: `scripts/update-problem-manuals.js`를 추가해 PDF->매뉴얼 변환을 자동화하고 관련 문서를 동기화했습니다.
 - Files touched: `scripts/update-problem-manuals.js`, `PROJECT_STATE.md`, `README.md`.
 - Verification: `node scripts/update-problem-manuals.js` 실행 후 출력된 매뉴얼을 샘플 점검하고 다음 AI 호출에 입력했습니다.
 
@@ -39,5 +67,7 @@
 - Fix: refactored `InsertionProblemGenerator2` to render full passages then convert markers and choices to circled numbers (①~⑤).
 - Files: `server/utils/insertionProblemGenerator2.js`, regenerated `generated_insertion_problems.json`, docs (`PROJECT_STATE.md`, `README.md`).
 - Verification: ran `node generate_insertion_problems.js`, reviewed problems 5·19·21 in study preview for correct layout and numbering.
+
+
 
 
