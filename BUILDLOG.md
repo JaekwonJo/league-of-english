@@ -1,4 +1,10 @@
-﻿## 2025-09-24 (PM4)
+﻿## 2025-09-25
+- Issue: Project status docs still emphasized coupon/analytics work instead of the CSAT manual alignment expected today.
+- Root cause: PROJECT_STATE.md hadn't been resynced after reviewing the Wolgo manuals, so the What/Next sections pointed to older priorities.
+- Fix: Rewrote the What/Stack/Decisions/Current/Next blocks to spotlight the grammar-first CSAT template rollout plan.
+- Files touched: PROJECT_STATE.md.
+- Verification: Manual read-through to confirm the doc now matches README and today's planning notes.
+## 2025-09-24 (PM4)
 - Issue: Teachers lacked a dashboard/export path to review class accuracy and trends.
 - Root cause: `/teacher` routes and the profile page only handled class codes; no analytics queries or UI hooked into `study_records`.
 - Fix: Added `/api/teacher/analytics/overview`, `/students/:id`, `/export` with 기간/학년/멤버십 필터와 CSV 생성, then wired a React dashboard (필터·표·학생 상세·CSV 버튼).
@@ -67,7 +73,3 @@
 - Fix: refactored `InsertionProblemGenerator2` to render full passages then convert markers and choices to circled numbers (①~⑤).
 - Files: `server/utils/insertionProblemGenerator2.js`, regenerated `generated_insertion_problems.json`, docs (`PROJECT_STATE.md`, `README.md`).
 - Verification: ran `node generate_insertion_problems.js`, reviewed problems 5·19·21 in study preview for correct layout and numbering.
-
-
-
-

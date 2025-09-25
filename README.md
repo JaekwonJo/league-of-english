@@ -89,9 +89,9 @@ This project is proprietary. Do not distribute without permission.
 
 ## Project Roadmap
 
-### Latest Update (2025-09-24)
-- Added the teacher class analytics dashboard (기간/학년/멤버십 필터, CSV export, per-student drilldown) plus supporting API endpoints.
-- Next up: admin coupon issuance/monitoring UI, school-level charting for teachers, and DOCX/CSV upload expansion.
+### Latest Update (2025-09-25)
+- Refocused the roadmap on CSAT manual alignment: locking grammar templates from the Wolgo manuals, preparing prompt/validator work, and queuing summary templates.
+- Project docs (PROJECT_STATE.md, BUILDLOG.md) synchronized with the manual-first plan.
 
 | Step | Description | Status |
 |------|-------------|--------|
@@ -120,6 +120,4 @@ This project is proprietary. Do not distribute without permission.
 | 23 | 클라우드 서버 선택 (Render/Vercel) | ? 완료 |
 | 24 | 도메인 연결 | ? 완료 |
 | 25 | 최종 테스트 및 런칭 | ?? Smoke 테스트/QA 예정 |
-
-
 
