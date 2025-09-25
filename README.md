@@ -5,6 +5,7 @@ League of English is a web application that helps students and teachers generate
 ## Main Features
 - Upload English passages (PDF/TXT) and generate CSAT problem sets (order, insertion, grammar, vocab, etc.).
 - Generate grammar questions in basic (single-error) and advanced (multi-answer) modes with cached AI outputs.
+- Generate summary problems with (A)/(B) blanks, circled-digit options, and Korean source labels in five-question batches.
 - Solve problems with timers, automatic scoring, and result dashboards.
 - Analyse passages sentence-by-sentence with AI-generated explanations.
 - Track personal progress with a stats dashboard (type accuracy + weekly trend).
@@ -90,8 +91,8 @@ This project is proprietary. Do not distribute without permission.
 ## Project Roadmap
 
 ### Latest Update (2025-09-25)
-- Refocused the roadmap on CSAT manual alignment: locking grammar templates from the Wolgo manuals, preparing prompt/validator work, and queuing summary templates.
-- Project docs (PROJECT_STATE.md, BUILDLOG.md) synchronized with the manual-first plan.
+- Enforced 5-question batch generation and wired the summary (A/B) template end-to-end (prompt → validator → UI).
+- Docs (PROJECT_STATE.md, BUILDLOG.md) refreshed to reflect the new summary pipeline and count sanitiser.
 
 | Step | Description | Status |
 |------|-------------|--------|
@@ -120,4 +121,8 @@ This project is proprietary. Do not distribute without permission.
 | 23 | 클라우드 서버 선택 (Render/Vercel) | ? 완료 |
 | 24 | 도메인 연결 | ? 완료 |
 | 25 | 최종 테스트 및 런칭 | ?? Smoke 테스트/QA 예정 |
+
+
+
+
 

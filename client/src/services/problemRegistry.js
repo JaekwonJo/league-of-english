@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 문제 유형 레지스트리 - 전략 패턴
  * if/else 체인 대신 맵 구조로 문제 유형 관리
  */
@@ -242,8 +242,8 @@ const registerDefaultValidators = () => {
 
   // 요약 검증 (A, B 둘 다 맞아야 함)
   registry.registerValidator('summary', (answer, correct) => {
-    if (!answer || !correct) return false;
-    return answer.A === correct.A && answer.B === correct.B;
+    if (answer === undefined || correct === undefined) return false;
+    return answer?.toString().trim() === correct?.toString().trim();
   });
   
   // 고급 문법(개수) 검증기
@@ -260,3 +260,5 @@ registerDefaultHandlers();
 registerDefaultValidators();
 
 export default registry;
+
+

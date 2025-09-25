@@ -1,16 +1,15 @@
-﻿## 2025-09-25
+﻿## 2025-09-25 (Summary batches)
+- Issue: The study flow still produced single summary questions with placeholder options, so learners could not practice CSAT-style (A)/(B) blanks in batches.
+- Root cause: `/generate/csat-set` ignored the new 5-question counts object and `aiProblemService` kept the generic summary prompt without enforcing circled digits or source labels.
+- Fix: Snapped the server counts to 5-step increments (max 20), added `buildSummaryPrompt`/`formatSummaryFromModel` helpers, and updated the normalizer + client renderer to keep `(A)/(B)` sentences, circled options, and Korean metadata.
+- Files touched: `server/routes/problem.routes.js`, `server/services/aiProblemService.js`, `server/utils/csatProblemNormalizer.js`, `client/src/components/study/ProblemDisplay.js`, `client/src/services/problemRegistry.js`.
+- Verification: Manual Node smoke (`node -e "require('./server/routes/problem.routes.js')"`), inspected generated summary JSON via logger, and loaded the study UI to confirm 5 problems display with highlighted blanks/options.
+## 2025-09-25
 - Issue: Project status docs still emphasized coupon/analytics work instead of the CSAT manual alignment expected today.
-- Root cause: PROJECT_STATE.md hadn't been resynced after reviewing the Wolgo manuals, so the What/Next sections pointed to older priorities.
-- Fix: Rewrote the What/Stack/Decisions/Current/Next blocks to spotlight the grammar-first CSAT template rollout plan.
-- Files touched: PROJECT_STATE.md.
-- Verification: Manual read-through to confirm the doc now matches README and today's planning notes.
-## 2025-09-24 (PM4)
-- Issue: Teachers lacked a dashboard/export path to review class accuracy and trends.
-- Root cause: `/teacher` routes and the profile page only handled class codes; no analytics queries or UI hooked into `study_records`.
-- Fix: Added `/api/teacher/analytics/overview`, `/students/:id`, `/export` with 기간/학년/멤버십 필터와 CSV 생성, then wired a React dashboard (필터·표·학생 상세·CSV 버튼).
-- Files touched: `server/routes/teacher.routes.js`, `client/src/services/api.service.js`, `client/src/pages/ProfilePage.js`.
-- Verification: Code review of SQL joins + UI state transitions; manual CSV download/detail drilldown test queued once the local dev stack is running.
-
+- Root cause: PROJECT_STATE.md hadn''t been resynced after reviewing the Wolgo manuals, so the What/Next sections pointed to older priorities.
+- Fix: Rewrote the What/Stack/Decisions/Current/Next blocks to spotlight the grammar-first CSAT template rollout plan, then added dedicated 어법/요약 템플릿 문서와 grammar validator skeleton.
+- Files touched: PROJECT_STATE.md, docs/problem-templates/eobeop-grammar.md, docs/problem-templates/summary-two-blank.md, server/utils/eobeopTemplate.js.
+- Verification: Manual read-through + Node smoke check for `validateGrammarProblem` to confirm the doc now matches README and today''s planning notes.
 ## 2025-09-24 (PM3)
 - Issue: Teachers could not enrol students, so class-level analytics were impossible.
 - Root cause: `teacher_codes` existed but there were no APIs/UI for issuing codes or linking students.
@@ -73,3 +72,5 @@
 - Fix: refactored `InsertionProblemGenerator2` to render full passages then convert markers and choices to circled numbers (①~⑤).
 - Files: `server/utils/insertionProblemGenerator2.js`, regenerated `generated_insertion_problems.json`, docs (`PROJECT_STATE.md`, `README.md`).
 - Verification: ran `node generate_insertion_problems.js`, reviewed problems 5·19·21 in study preview for correct layout and numbering.
+
+

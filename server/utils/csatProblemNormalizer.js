@@ -5,7 +5,27 @@ const ZERO_BASED_KEYS = new Set(['correctanswer', 'correct_index', 'correctindex
 function toCleanString(value) {
   if (value === null || value === undefined) return '';
   return String(value).trim();
-}\n\nfunction parseAnswerTokens(value, optionCount, zeroBased = false) {\n  if (value === null || value === undefined) return [];\n  const normalized = Array.isArray(value)\n    ? value.flatMap((item) => (typeof item === 'string' ? item.split(/[\\,\\s]+/) : [item]))\n    : String(value).replace(/[\\[\\]{}]/g, '').split(/[\\,\\s]+/);\n  const numbers = [];\n  for (const token of normalized) {\n    if (token === null || token === undefined) continue;\n    const str = String(token).trim();\n    if (!str || !/^-?\\d+$/.test(str)) continue;\n    let num = parseInt(str, 10);\n    if (Number.isNaN(num)) continue;\n    if (zeroBased) num += 1;\n    numbers.push(num);\n  }\n  return [...new Set(numbers)].filter((n) => n >= 1 && (!optionCount || n <= optionCount)).sort((a, b) => a - b);\n}\n\nfunction mapMultipleChoices(choices = []) {
+}
+
+function parseAnswerTokens(value, optionCount, zeroBased = false) {
+  if (value === null || value === undefined) return [];
+  const normalized = Array.isArray(value)
+    ? value.flatMap((item) => (typeof item === 'string' ? item.split(/[\\,\\s]+/) : [item]))
+    : String(value).replace(/[\\[\\]{}]/g, '').split(/[\\,\\s]+/);
+  const numbers = [];
+  for (const token of normalized) {
+    if (token === null || token === undefined) continue;
+    const str = String(token).trim();
+    if (!str || !/^-?\\d+$/.test(str)) continue;
+    let num = parseInt(str, 10);
+    if (Number.isNaN(num)) continue;
+    if (zeroBased) num += 1;
+    numbers.push(num);
+  }
+  return [...new Set(numbers)].filter((n) => n >= 1 && (!optionCount || n <= optionCount)).sort((a, b) => a - b);
+}
+
+function mapMultipleChoices(choices = []) {
   if (!Array.isArray(choices)) return [];
   return choices
     .map((choice) => {
@@ -144,7 +164,7 @@ function buildMetadata(problem) {
     if (problem.metadata && typeof problem.metadata === 'object') {
       Object.assign(metadata, problem.metadata);
     }
-    const passthroughKeys = ['documentTitle', 'passageNumber', 'clusterId'];
+    const passthroughKeys = ['documentTitle', 'passageNumber', 'passageIndex', 'clusterId', 'summaryPattern', 'summaryPatterns', 'keywords', 'summaryKeywords', 'generator'];
     for (const key of passthroughKeys) {
       if (key in problem && !(key in metadata)) {
         metadata[key] = problem[key];
@@ -184,6 +204,30 @@ function normaliseProblem(problem, index) {
     metadata: buildMetadata(problem)
   };
   const source = toCleanString(problem.source || problem.documentTitle || (problem.metadata && problem.metadata.documentTitle) || '');
+
+const sourceLabel = toCleanString(problem.sourceLabel || problem.source_label || '');
+if (sourceLabel) normalized.sourceLabel = sourceLabel;
+
+const summarySentence = toCleanString(problem.summarySentence || problem.summary_sentence || problem.summary);
+if (summarySentence) normalized.summarySentence = summarySentence;
+
+const summarySentenceKor = toCleanString(problem.summarySentenceKor || problem.summary_sentence_kor || '');
+if (summarySentenceKor) normalized.summarySentenceKor = summarySentenceKor;
+
+const summaryPattern = toCleanString(problem.summaryPattern || '');
+if (summaryPattern) {
+  normalized.metadata = normalized.metadata || {};
+  if (!normalized.metadata.summaryPattern) normalized.metadata.summaryPattern = summaryPattern;
+}
+
+if (Array.isArray(problem.keywords)) {
+  const keywords = problem.keywords.map((kw) => toCleanString(kw)).filter((kw) => kw.length > 0);
+  if (keywords.length) {
+    normalized.metadata = normalized.metadata || {};
+    if (!normalized.metadata.keywords) normalized.metadata.keywords = keywords;
+  }
+}
+
   if (source) normalized.source = source;
 
   if (!normalized.options) delete normalized.options;

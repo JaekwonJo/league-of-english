@@ -23,6 +23,45 @@ async function loadPassages(documentId) {
 
 function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
 
+
+const DEFAULT_STEP_SIZE = 5;
+const DEFAULT_MAX_TOTAL = 20;
+
+function snapToStep(value, stepSize = DEFAULT_STEP_SIZE) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return 0;
+  if (stepSize <= 1) return Math.max(0, Math.floor(num));
+  return Math.max(0, Math.floor(num / stepSize) * stepSize);
+}
+
+function normalizeTypeCounts(raw = {}, options = {}) {
+  const stepSize = Number.isFinite(options.step) && options.step > 0 ? options.step : DEFAULT_STEP_SIZE;
+  const maxTotal = Number.isFinite(options.maxTotal) && options.maxTotal > 0 ? options.maxTotal : DEFAULT_MAX_TOTAL;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return { counts: {}, total: 0 };
+  }
+  const counts = {};
+  Object.entries(raw).forEach(([key, value]) => {
+    const snapped = snapToStep(value, stepSize);
+    if (snapped > 0) counts[key] = snapped;
+  });
+  let total = Object.values(counts).reduce((sum, value) => sum + value, 0);
+  if (total > maxTotal) {
+    let overflow = total - maxTotal;
+    const keys = Object.keys(counts);
+    for (let idx = keys.length - 1; idx >= 0 && overflow > 0; idx -= 1) {
+      const key = keys[idx];
+      while (counts[key] > 0 && overflow > 0) {
+        counts[key] = Math.max(0, counts[key] - stepSize);
+        overflow -= stepSize;
+      }
+      if (counts[key] === 0) delete counts[key];
+    }
+    total = Object.values(counts).reduce((sum, value) => sum + value, 0);
+  }
+  return { counts, total };
+}
+
 async function fetchCachedExcludingRecent(documentId, typeKey, userId, limit) {
   try {
     const recent = await database.all(
@@ -35,18 +74,25 @@ async function fetchCachedExcludingRecent(documentId, typeKey, userId, limit) {
       `SELECT * FROM problems WHERE document_id = ? AND type = ? ${clause} ORDER BY RANDOM() LIMIT ?`,
       [documentId, typeKey, parseInt(limit)]
     );
-    return rows.map(r => ({
-      id: r.id,
-      type: r.type,
-      question: r.question,
-      options: JSON.parse(r.options || '[]'),
-      answer: String(r.answer),
-      explanation: r.explanation,
-      difficulty: r.difficulty || 'basic',
-      mainText: r.main_text || undefined,
-      sentences: r.sentences ? JSON.parse(r.sentences) : undefined,
-      metadata: r.metadata ? JSON.parse(r.metadata) : undefined
-    }));
+    const docRow = await database.get('SELECT title FROM documents WHERE id = ?', [documentId]);
+    const fallbackSource = (docRow && typeof docRow.title === 'string' && docRow.title.trim().length) ? docRow.title.trim() : `Document ${documentId}`;
+    return rows.map((r) => {
+      const metadata = r.metadata ? JSON.parse(r.metadata) : undefined;
+      const derivedSource = metadata && typeof metadata.documentTitle === 'string' ? metadata.documentTitle : undefined;
+      return {
+        id: r.id,
+        type: r.type,
+        question: r.question,
+        options: JSON.parse(r.options || '[]'),
+        answer: String(r.answer),
+        explanation: r.explanation,
+        difficulty: r.difficulty || 'basic',
+        mainText: r.main_text || undefined,
+        sentences: r.sentences ? JSON.parse(r.sentences) : undefined,
+        metadata,
+        source: derivedSource
+      };
+    });
   } catch (e) {
     console.warn('[cache] fetchCachedExcludingRecent failed:', e?.message || e);
     return [];
@@ -84,16 +130,52 @@ async function generateWithRetry(methodName, documentId, count, maxRetries = 2, 
 
 router.post('/get-smart-problems', verifyToken, checkDailyLimit, async (req, res) => {
   try {
-    const { documentId, types, count = 10, orderDifficulty='basic', insertionDifficulty='basic', grammarDifficulty='basic' } = req.body || {};
-    if (!documentId || !types) return res.status(400).json({ message: 'Required fields: documentId and types.' });
+    const { documentId, types, counts, count = 10, orderDifficulty='basic', insertionDifficulty='basic', grammarDifficulty='basic' } = req.body || {};
+    if (!documentId) return res.status(400).json({ message: 'Required fields: documentId.' });
+    if (!types && !counts) return res.status(400).json({ message: 'Required field: types.' });
 
     const { passages, parsedContent, document } = await loadPassages(documentId);
 
+    const stepOptions = { step: DEFAULT_STEP_SIZE, maxTotal: DEFAULT_MAX_TOTAL };
     const countsByType = {};
-    if (Array.isArray(types)) {
-      const k = types.length || 1; const base = Math.floor(count / k); let rem = count % k; types.forEach(t=>{ countsByType[t]=base+(rem>0?1:0); rem=Math.max(0,rem-1); });
-    } else if (typeof types === 'object') { for (const [t,c] of Object.entries(types)) countsByType[t] = Math.max(0, parseInt(c)||0); }
-    else if (typeof types === 'string') countsByType[types] = Math.max(0, parseInt(count)||0);
+    const rawCountObject = (counts && typeof counts === 'object' && !Array.isArray(counts))
+      ? counts
+      : ((types && typeof types === 'object' && !Array.isArray(types)) ? types : null);
+
+    if (rawCountObject) {
+      const normalized = normalizeTypeCounts(rawCountObject, stepOptions);
+      Object.assign(countsByType, normalized.counts);
+    } else if (Array.isArray(types)) {
+      const filtered = types.filter(Boolean);
+      let sanitizedTotal = Math.min(stepOptions.maxTotal, snapToStep(count, stepOptions.step));
+      if (!sanitizedTotal && filtered.length) sanitizedTotal = stepOptions.step;
+      let remaining = sanitizedTotal;
+      let index = 0;
+      while (remaining > 0 && filtered.length > 0) {
+        const key = filtered[index % filtered.length];
+        countsByType[key] = (countsByType[key] || 0) + stepOptions.step;
+        remaining -= stepOptions.step;
+        index += 1;
+      }
+    } else if (typeof types === 'string') {
+      const snapped = snapToStep(count, stepOptions.step);
+      const amount = snapped > 0 ? snapped : stepOptions.step;
+      countsByType[types] = Math.min(stepOptions.maxTotal, amount);
+    }
+
+    Object.entries(countsByType).forEach(([key, value]) => {
+      if (!value || value < 0) delete countsByType[key];
+    });
+
+    let totalRequested = Object.values(countsByType).reduce((sum, value) => sum + value, 0);
+    if (!totalRequested) {
+      const fallbackType =
+        (typeof types === 'string' && types) ||
+        (Array.isArray(types) && types.find(Boolean)) ||
+        'summary';
+      countsByType[fallbackType] = Math.min(stepOptions.maxTotal, stepOptions.step);
+      totalRequested = stepOptions.step;
+    }
 
     // Enforce API-only for certain types
     const apiOnly = new Set(['blank','vocabulary','vocab','title','theme','topic','summary','irrelevant','irrelevant_sentence','implicit']);
@@ -150,13 +232,14 @@ router.post('/get-smart-problems', verifyToken, checkDailyLimit, async (req, res
             const generated = await aiService.generateGrammar(parseInt(documentId), c - produced.length, { difficulty: mode });
             const normalizedGenerated = (generated || []).map((item, index) => ({
               id: item.id || ('grammar_ai_' + Date.now() + '_' + index),
-              type: typeKey,
-              question: item.question || '다음 중 밑줄 친 부분에서 문법상 옳지 않은 문장을 고르시오.',
+              type: item.type || typeKey,
+              question: item.question || '다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?',
               options: item.options || item.choices || [],
               answer: String(item.answer ?? item.correctAnswer ?? ''),
               explanation: item.explanation || '',
               difficulty: item.difficulty || mode,
               mainText: item.mainText || item.text || '',
+              source: item.source || (item.metadata && item.metadata.sourceLabel) || document.title || '',
               metadata: item.metadata || { docTitle: document.title || '' }
             }));
             produced.push(...normalizedGenerated);
@@ -313,7 +396,22 @@ router.post('/generate/blank', verifyToken, checkDailyLimit, async (req, res) =>
         const clause = exclude.length ? `AND id NOT IN (${exclude.join(',')})` : '';
         const rows = await database.all(`SELECT * FROM problems WHERE document_id = ? AND type = ? ${clause} ORDER BY RANDOM() LIMIT ?`, [documentId, typeKey, parseInt(count)]);
         if (rows.length) {
-          const mapped = rows.map(r=>({ id:r.id, type:r.type, question:r.question, options: JSON.parse(r.options||'[]'), answer: String(r.answer), explanation: r.explanation, difficulty: r.difficulty||'basic', mainText: r.main_text || undefined }));
+          const mapped = rows.map((r) => {
+            const metadata = r.metadata ? JSON.parse(r.metadata) : undefined;
+            const source = metadata && typeof metadata.documentTitle === 'string' ? metadata.documentTitle : undefined;
+            return {
+              id: r.id,
+              type: r.type,
+              question: r.question,
+              options: JSON.parse(r.options || '[]'),
+              answer: String(r.answer),
+              explanation: r.explanation,
+              difficulty: r.difficulty || 'basic',
+              mainText: r.main_text || undefined,
+              metadata,
+              source
+            };
+          });
           await updateUsage(req.user.id, mapped.length);
           return res.json({ problems: mapped, count: mapped.length });
         }
@@ -350,7 +448,22 @@ router.post('/generate/vocab', verifyToken, checkDailyLimit, async (req, res) =>
         const clause = exclude.length ? `AND id NOT IN (${exclude.join(',')})` : '';
         const rows = await database.all(`SELECT * FROM problems WHERE document_id = ? AND type = ? ${clause} ORDER BY RANDOM() LIMIT ?`, [documentId, typeKey, parseInt(count)]);
         if (rows.length) {
-          const mapped = rows.map(r=>({ id:r.id, type:r.type, question:r.question, options: JSON.parse(r.options||'[]'), answer: String(r.answer), explanation: r.explanation, difficulty: r.difficulty||'basic', mainText: r.main_text || undefined }));
+          const mapped = rows.map((r) => {
+            const metadata = r.metadata ? JSON.parse(r.metadata) : undefined;
+            const source = metadata && typeof metadata.documentTitle === 'string' ? metadata.documentTitle : undefined;
+            return {
+              id: r.id,
+              type: r.type,
+              question: r.question,
+              options: JSON.parse(r.options || '[]'),
+              answer: String(r.answer),
+              explanation: r.explanation,
+              difficulty: r.difficulty || 'basic',
+              mainText: r.main_text || undefined,
+              metadata,
+              source
+            };
+          });
           await updateUsage(req.user.id, mapped.length);
           return res.json({ problems: mapped, count: mapped.length });
         }
@@ -387,7 +500,22 @@ router.post('/generate/title', verifyToken, checkDailyLimit, async (req, res) =>
         const clause = exclude.length ? `AND id NOT IN (${exclude.join(',')})` : '';
         const rows = await database.all(`SELECT * FROM problems WHERE document_id = ? AND type = ? ${clause} ORDER BY RANDOM() LIMIT ?`, [documentId, typeKey, parseInt(count)]);
         if (rows.length) {
-          const mapped = rows.map(r=>({ id:r.id, type:r.type, question:r.question, options: JSON.parse(r.options||'[]'), answer: String(r.answer), explanation: r.explanation, difficulty: r.difficulty||'basic', mainText: r.main_text || undefined }));
+          const mapped = rows.map((r) => {
+            const metadata = r.metadata ? JSON.parse(r.metadata) : undefined;
+            const source = metadata && typeof metadata.documentTitle === 'string' ? metadata.documentTitle : undefined;
+            return {
+              id: r.id,
+              type: r.type,
+              question: r.question,
+              options: JSON.parse(r.options || '[]'),
+              answer: String(r.answer),
+              explanation: r.explanation,
+              difficulty: r.difficulty || 'basic',
+              mainText: r.main_text || undefined,
+              metadata,
+              source
+            };
+          });
           await updateUsage(req.user.id, mapped.length);
           return res.json({ problems: mapped, count: mapped.length });
         }
@@ -424,7 +552,22 @@ router.post('/generate/topic', verifyToken, checkDailyLimit, async (req, res) =>
         const clause = exclude.length ? `AND id NOT IN (${exclude.join(',')})` : '';
         const rows = await database.all(`SELECT * FROM problems WHERE document_id = ? AND type = ? ${clause} ORDER BY RANDOM() LIMIT ?`, [documentId, typeKey, parseInt(count)]);
         if (rows.length) {
-          const mapped = rows.map(r=>({ id:r.id, type:r.type, question:r.question, options: JSON.parse(r.options||'[]'), answer: String(r.answer), explanation: r.explanation, difficulty: r.difficulty||'basic', mainText: r.main_text || undefined }));
+          const mapped = rows.map((r) => {
+            const metadata = r.metadata ? JSON.parse(r.metadata) : undefined;
+            const source = metadata && typeof metadata.documentTitle === 'string' ? metadata.documentTitle : undefined;
+            return {
+              id: r.id,
+              type: r.type,
+              question: r.question,
+              options: JSON.parse(r.options || '[]'),
+              answer: String(r.answer),
+              explanation: r.explanation,
+              difficulty: r.difficulty || 'basic',
+              mainText: r.main_text || undefined,
+              metadata,
+              source
+            };
+          });
           await updateUsage(req.user.id, mapped.length);
           return res.json({ problems: mapped, count: mapped.length });
         }
@@ -461,7 +604,22 @@ router.post('/generate/summary', verifyToken, checkDailyLimit, async (req, res) 
         const clause = exclude.length ? `AND id NOT IN (${exclude.join(',')})` : '';
         const rows = await database.all(`SELECT * FROM problems WHERE document_id = ? AND type = ? ${clause} ORDER BY RANDOM() LIMIT ?`, [documentId, typeKey, parseInt(count)]);
         if (rows.length) {
-          const mapped = rows.map(r=>({ id:r.id, type:r.type, question:r.question, options: JSON.parse(r.options||'[]'), answer: String(r.answer), explanation: r.explanation, difficulty: r.difficulty||'basic', mainText: r.main_text || undefined }));
+          const mapped = rows.map((r) => {
+            const metadata = r.metadata ? JSON.parse(r.metadata) : undefined;
+            const source = metadata && typeof metadata.documentTitle === 'string' ? metadata.documentTitle : undefined;
+            return {
+              id: r.id,
+              type: r.type,
+              question: r.question,
+              options: JSON.parse(r.options || '[]'),
+              answer: String(r.answer),
+              explanation: r.explanation,
+              difficulty: r.difficulty || 'basic',
+              mainText: r.main_text || undefined,
+              metadata,
+              source
+            };
+          });
           await updateUsage(req.user.id, mapped.length);
           return res.json({ problems: mapped, count: mapped.length });
         }
@@ -532,6 +690,100 @@ router.post('/problems/submit', verifyToken, async (req, res) => {
   }
 });
 
+
+/**
+ * 학습 통계 조회
+ * GET /api/problems/stats
+ */
+router.get('/problems/stats', verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const typeRows = await database.all(
+      `SELECT p.type AS type,
+              COUNT(*) AS total,
+              SUM(CASE WHEN sr.is_correct = 1 THEN 1 ELSE 0 END) AS correct
+         FROM study_records sr
+         JOIN problems p ON p.id = sr.problem_id
+        WHERE sr.user_id = ?
+        GROUP BY p.type
+        ORDER BY total DESC`,
+      [userId]
+    );
+
+    const byType = typeRows.map((row) => {
+      const total = Number(row.total) || 0;
+      const correct = Number(row.correct) || 0;
+      const accuracy = total ? Math.round((correct / total) * 1000) / 10 : 0;
+      return {
+        type: row.type || '기타',
+        total,
+        correct,
+        accuracy
+      };
+    });
+
+    const dailyRows = await database.all(
+      `SELECT created_at, is_correct
+         FROM study_records
+        WHERE user_id = ?
+          AND created_at >= datetime('now', '-6 days')
+        ORDER BY created_at ASC`,
+      [userId]
+    );
+
+    const formatKey = (date) => {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    };
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dailyBuckets = {};
+
+    for (const row of dailyRows) {
+      const raw = typeof row.created_at === 'string' ? row.created_at : '';
+      let key = raw.includes('-') ? raw.slice(0, 10) : '';
+      if (!key) {
+        const parsed = new Date(raw);
+        if (!Number.isNaN(parsed.getTime())) key = formatKey(parsed);
+      }
+      if (!key) continue;
+      if (!dailyBuckets[key]) dailyBuckets[key] = { total: 0, correct: 0 };
+      dailyBuckets[key].total += 1;
+      dailyBuckets[key].correct += Number(row.is_correct) === 1 ? 1 : 0;
+    }
+
+    const weekly = [];
+    for (let offset = 6; offset >= 0; offset--) {
+      const day = new Date(today);
+      day.setDate(today.getDate() - offset);
+      const key = formatKey(day);
+      const stats = dailyBuckets[key] || { total: 0, correct: 0 };
+      const accuracy = stats.total ? Math.round((stats.correct / stats.total) * 1000) / 10 : 0;
+      weekly.push({
+        date: key,
+        total: stats.total,
+        correct: stats.correct,
+        accuracy
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        byType,
+        weekly
+      }
+    });
+  } catch (error) {
+    console.error('[stats] failed to load:', error);
+    return res.status(500).json({ success: false, message: '학습 통계를 불러오지 못했어요.' });
+  }
+});
+
 /**
  * Report problem (no-op accept)
  * POST /api/problems/report
@@ -554,7 +806,7 @@ router.post('/problems/report', verifyToken, async (req, res) => {
  */
 router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res) => {
   try {
-    const { documentId, counts } = req.body || {};
+    const { documentId, counts, orderDifficulty = 'basic', insertionDifficulty = 'basic', grammarDifficulty = 'basic' } = req.body || {};
     if (!documentId) return res.status(400).json({ message: 'documentId is required' });
     const fallback = { order: 1, insertion: 1, grammar: 1, blank: 1, vocabulary: 1, title: 1, theme: 1, summary: 1 };
     const wanted = { ...fallback, ...(counts || {}) };
@@ -587,8 +839,8 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
     const out = [];
     for (const [t,cRaw] of Object.entries(typesObj)) {
       const c = parseInt(cRaw)||0; if (!c) continue;
-      if (t === 'order') out.push(...OrderGen.generateOrderProblems(passages, c, { orderDifficulty: 'basic' }, document, parsedContent));
-      else if (t === 'insertion') out.push(...InsertionGen.generateInsertionProblems(passages, c, { insertionDifficulty: 'basic' }, document, parsedContent));
+      if (t === 'order') out.push(...OrderGen.generateOrderProblems(passages, c, { orderDifficulty }, document, parsedContent));
+      else if (t === 'insertion') out.push(...InsertionGen.generateInsertionProblems(passages, c, { insertionDifficulty }, document, parsedContent));
       else if (t === 'irrelevant' || t === 'irrelevant_sentence') {
         if (aiService?.generateIrrelevant) out.push(...await aiService.generateIrrelevant(parseInt(documentId), c));
         else out.push(...generateIrrelevantProblems(passages, c, document, parsedContent));

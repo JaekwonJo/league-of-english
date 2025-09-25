@@ -11,6 +11,12 @@ try {
 const GRAMMAR_MANUAL_PATH = path.join(__dirname, '..', '..', 'problem manual', 'grammar_problem_manual.md');
 let cachedGrammarManual = null;
 
+const SUMMARY_TEMPLATE_PATH = path.join(__dirname, '..', '..', 'docs', 'problem-templates', 'summary-two-blank.md');
+let cachedSummaryTemplate = null;
+const SUMMARY_QUESTION = '\ub2e4\uc74c \uae00\uc744 \uc77d\uace0 (A), (B)\uc5d0 \ub4e4\uc5b4\uac08 \ub9d0\ub85c \uac00\uc7a5 \uc801\uc808\ud55c \uac83\uc744 \uace0\ub974\uc2dc\uc624.';
+const SUMMARY_CIRCLED_DIGITS = ['\u2460', '\u2461', '\u2462', '\u2463', '\u2464'];
+const SUMMARY_EN_DASH = '\u2013';
+
 function readGrammarManual(limit = 3500) {
   if (cachedGrammarManual === null) {
     try {
@@ -144,6 +150,217 @@ function formatGrammarFromModel(raw, context) {
     explanation,
     difficulty: context.difficulty,
     mainText,
+    metadata
+  };
+﻿function readSummaryTemplate(limit = 3600) {
+  if (cachedSummaryTemplate === null) {
+    try {
+      cachedSummaryTemplate = fs.readFileSync(SUMMARY_TEMPLATE_PATH, 'utf8');
+    } catch (err) {
+      console.warn('[aiProblemService] failed to load summary template:', err?.message || err);
+      cachedSummaryTemplate = '';
+    }
+  }
+  if (!cachedSummaryTemplate) return '';
+  return cachedSummaryTemplate.slice(0, limit);
+}
+
+function normalizeSummaryOptions(options = []) {
+  const flat = [];
+  const pushCandidate = (value) => {
+    if (value === null || value === undefined) return;
+    const str = String(value).trim();
+    if (str) flat.push(str);
+  };
+
+  if (!Array.isArray(options)) {
+    pushCandidate(options);
+  } else {
+    options.forEach((option) => {
+      if (option === null || option === undefined) return;
+      if (Array.isArray(option)) {
+        option.forEach((item) => pushCandidate(item));
+        return;
+      }
+      if (typeof option === 'object') {
+        const left = option.left || option.first || option.a || option.A;
+        const right = option.right || option.second || option.b || option.B;
+        if (left && right) {
+          const leftStr = String(left).trim();
+          const rightStr = String(right).trim();
+          if (leftStr && rightStr) {
+            flat.push(`${leftStr} ${SUMMARY_EN_DASH} ${rightStr}`);
+            return;
+          }
+        }
+        if ('text' in option || 'value' in option) {
+          pushCandidate(option.text || option.value);
+          return;
+        }
+        if (Array.isArray(option.options)) {
+          option.options.forEach((item) => pushCandidate(item));
+          return;
+        }
+      }
+      pushCandidate(option);
+    });
+  }
+
+  const sanitized = [];
+  for (let i = 0; i < SUMMARY_CIRCLED_DIGITS.length; i += 1) {
+    const base = flat[i];
+    if (!base) return null;
+    let text = String(base)
+      .replace(/^[\u2460-\u2468]\s*/, '')
+      .replace(/^[0-9]+\.?\s*/, '')
+      .replace(/^[A-E]\.?\s*/i, '')
+      .trim();
+    if (!text) return null;
+    if (!text.includes(SUMMARY_EN_DASH)) {
+      const parts = text.split(/[-\u2013-\u2014]/).map((part) => part.trim()).filter(Boolean);
+      if (parts.length >= 2) {
+        text = `${parts[0]} ${SUMMARY_EN_DASH} ${parts[1]}`;
+      } else {
+        return null;
+      }
+    } else {
+      text = text.replace(/\s*[-\u2013-\u2014]\s*/, ` ${SUMMARY_EN_DASH} `);
+    }
+    sanitized.push(`${SUMMARY_CIRCLED_DIGITS[i]} ${text}`);
+  }
+  return sanitized.length === SUMMARY_CIRCLED_DIGITS.length ? sanitized : null;
+}
+
+function buildSummaryPrompt({ passage, docTitle, manual }) {
+  const clippedPassage = clipText(passage, 1800);
+  const manualSnippet = manual ? `Summary template (Korean excerpt):\n${manual}\n\n` : '';
+  return [
+    'You are an expert CSAT English problem writer. Create exactly ONE summary question with two blanks (A) and (B).',
+    manualSnippet,
+    `Passage title: ${docTitle}`,
+    `Passage (preserve line breaks):\n${clippedPassage}`,
+    '',
+    'Return only valid JSON matching this schema:',
+    '{',
+    `  "type": "summary",`,
+    `  "question": "${SUMMARY_QUESTION}",`,
+    '  "summarySentence": "(A) ... (B) ...",',
+    '  "options": [',
+    '    "\u2460 phrase \u2013 phrase",',
+    '    "\u2461 phrase \u2013 phrase",',
+    '    "\u2462 phrase \u2013 phrase",',
+    '    "\u2463 phrase \u2013 phrase",',
+    '    "\u2464 phrase \u2013 phrase"',
+    '  ],',
+    '  "correctAnswer": 3,',
+    '  "explanation": "\ud55c\uad6d\uc5b4 \ud574\uc124",',
+    '  "sourceLabel": "\ucd9c\ucc98: 2024 \ud559\ub144\ub3c4 ...",',
+    '  "summaryPattern": "\ud328\ud134",',
+    '  "keywords": ["word1", "word2"],',
+    '  "difficulty": "basic"',
+    '}',
+    'Rules:',
+    '- Keep (A) and (B) exactly as uppercase letters inside parentheses.',
+    '- Provide exactly five options labeled with circled digits ①-⑤ and join the pair with an en dash (–).',
+    '- Options must be concise English phrases that plausibly complete the summary.',
+    '- Ensure exactly one correct option and make the distractors plausible but wrong.',
+    '- Write the explanation in Korean referencing the passage.',
+    '- Respond with JSON only; do not include markdown fencing.'
+  ].filter(Boolean).join('\n');
+}
+
+function formatSummaryFromModel(raw, context) {
+  if (!raw || typeof raw !== 'object') return null;
+  const summarySentence = String(raw.summarySentence || raw.summary || raw.summaryText || '').trim();
+  if (!summarySentence || summarySentence.indexOf('(A)') === -1 || summarySentence.indexOf('(B)') === -1) return null;
+
+  const options = normalizeSummaryOptions(raw.options || raw.choices || raw.pairs || []);
+  if (!options || options.length !== SUMMARY_CIRCLED_DIGITS.length) return null;
+
+  const answerKeys = ['correctAnswer', 'answer', 'correctAnswers', 'answers'];
+  let answerValue = null;
+  for (const key of answerKeys) {
+    if (key in raw) {
+      const parsed = parseAnswerList(raw[key], options.length);
+      if (parsed.length) {
+        answerValue = parsed[0];
+        break;
+      }
+    }
+  }
+  if (!answerValue || answerValue < 1 || answerValue > options.length) return null;
+
+  const explanation = String(raw.explanation || raw.rationale || '').trim();
+  const difficultyRaw = String(raw.difficulty || '').trim().toLowerCase();
+  const difficulty = difficultyRaw && ['basic', 'advanced'].includes(difficultyRaw) ? difficultyRaw : 'basic';
+  const sourceLabel = String(raw.sourceLabel || raw.source || '').trim();
+
+  const metadata = {};
+  if (raw.summaryPattern) {
+    const pattern = String(raw.summaryPattern).trim();
+    if (pattern) metadata.summaryPattern = pattern;
+  }
+  if (Array.isArray(raw.keywords)) {
+    const keywords = raw.keywords.map((kw) => String(kw).trim()).filter(Boolean);
+    if (keywords.length) metadata.keywords = keywords;
+  }
+  metadata.passageIndex = context.index + 1;
+  metadata.documentTitle = context.docTitle;
+  if (raw.difficulty && difficultyRaw !== difficulty) metadata.generatedDifficulty = difficultyRaw;
+
+  const result = {
+    id: raw.id || `summary_ai_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+    type: 'summary',
+    question: SUMMARY_QUESTION,
+    summarySentence,
+    options,
+    answer: String(answerValue),
+    explanation,
+    mainText: context.passage,
+    sourceLabel: sourceLabel || `\ucd9c\ucc98: ${context.docTitle}`,
+    difficulty
+  };
+
+  if (!result.explanation) delete result.explanation;
+  if (!result.sourceLabel) delete result.sourceLabel;
+
+  if (raw.summarySentenceKor) {
+    const kor = String(raw.summarySentenceKor).trim();
+    if (kor) result.summarySentenceKor = kor;
+  }
+
+  if (Object.keys(metadata).length) {
+    result.metadata = metadata;
+  }
+
+  return result;
+}
+
+function fallbackSummaryProblem(passage, docTitle, index) {
+  const summarySentence = 'According to the passage, (A) support encourages readers to build lasting (B) for success.';
+  const options = [
+    `${SUMMARY_CIRCLED_DIGITS[0]} casual praise ${SUMMARY_EN_DASH} hesitation`,
+    `${SUMMARY_CIRCLED_DIGITS[1]} short-term rewards ${SUMMARY_EN_DASH} distraction`,
+    `${SUMMARY_CIRCLED_DIGITS[2]} consistent guidance ${SUMMARY_EN_DASH} confidence`,
+    `${SUMMARY_CIRCLED_DIGITS[3]} random excuses ${SUMMARY_EN_DASH} frustration`,
+    `${SUMMARY_CIRCLED_DIGITS[4]} passive waiting ${SUMMARY_EN_DASH} indifference`
+  ];
+  const metadata = {
+    generator: 'fallback',
+    passageIndex: index + 1,
+    documentTitle: docTitle
+  };
+  return {
+    id: `summary_fallback_${Date.now()}_${index}`,
+    type: 'summary',
+    question: SUMMARY_QUESTION,
+    summarySentence,
+    options,
+    answer: '3',
+    explanation: '\uae00\uc740 \uc9c0\uc18d\uc801\uc778 \uc9c0\uc6d0\uc774 \uc790\uc2e0\uac10\uc744 \ud0a4\uc6b4\ub2e4\ub294 \ub0b4\uc6a9\uc744 \uc804\ud569\ub2c8\ub2e4.',
+    difficulty: 'basic',
+    mainText: passage,
+    sourceLabel: `\ucd9c\ucc98: ${docTitle}`,
     metadata
   };
 }
@@ -453,35 +670,40 @@ class AIProblemService {
   }
 
   async generateSummary(documentId, count = 5) {
-    const { passages } = await this.getPassages(documentId);
+    const { passages, document } = await this.getPassages(documentId);
     const problems = [];
     const openai = this.getOpenAI();
+    const docTitle = document?.title || `Document ${documentId}`;
+    const manual = readSummaryTemplate(2400);
+
     for (let i = 0; i < count; i += 1) {
-      const p = passages[i % passages.length];
+      const passage = passages[i % passages.length];
+      if (!passage) continue;
+
       if (openai) {
-        const prompt = `Make ONE 'summary/요약' MCQ for the passage. JSON fields: type='summary', question, options[4], correctAnswer(1-4), explanation(Korean). Passage:\n${p}`;
         try {
+          const prompt = buildSummaryPrompt({ passage, docTitle, manual });
           const resp = await openai.chat.completions.create({
             model: 'gpt-4o-mini',
-            temperature: 0.7,
-            max_tokens: 500,
+            temperature: 0.35,
+            max_tokens: 700,
             messages: [{ role: 'user', content: prompt }]
           });
-          const obj = JSON.parse(stripJsonFences(resp.choices?.[0]?.message?.content || ''));
-          obj.type = 'summary';
-          problems.push(obj);
-          continue;
-        } catch {}
+          const rawText = stripJsonFences(resp.choices?.[0]?.message?.content || '');
+          const parsed = JSON.parse(rawText);
+          const formatted = formatSummaryFromModel(parsed, { passage, docTitle, index: i });
+          if (formatted) {
+            problems.push(formatted);
+            continue;
+          }
+        } catch (err) {
+          console.warn('[aiProblemService] summary generation failed:', err?.message || err);
+        }
       }
-      problems.push({
-        type: 'summary',
-        question: '다음 글의 요지로 가장 적절한 것은?',
-        options: ['A 요지', 'B 요지', 'C 요지', 'D 요지'],
-        correctAnswer: 1,
-        explanation: '글의 핵심 내용을 요약해보세요.',
-        difficulty: 'basic'
-      });
+
+      problems.push(fallbackSummaryProblem(passage, docTitle, i));
     }
+
     return problems;
   }
 

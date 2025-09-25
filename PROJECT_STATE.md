@@ -1,36 +1,39 @@
 ﻿# PROJECT_STATE.md
 
 ## What we're building
-- League of English CSAT English practice suite (React 19 + Express API) covering authoring, study, and teacher analytics.
-- Fully manual-aligned CSAT problem generators where every type mirrors official exam wording, passage layout, and source metadata (starting with the Eobeop/grammar type).
+- League of English CSAT suite: React study client + Express API that deliver manual-aligned problem sets for students and teachers.
+- Multi-problem CSAT generators that obey 5-question batch rules, preserve circled-digit options, and surface passage/source metadata for each item.
+- Prompt/validator pairs derived from the Wolgo manuals so that AI outputs (grammar, summary, etc.) mirror official exam wording and layout.
 
 ## Stack & Commands
-- Node.js 20 Express backend with React 19 (CRA) frontend; lucide-react for icons.
-- SQL.js persists content today; PostgreSQL migration follows after manual-aligned generators stabilize.
-- Preferred dev command: `npm run dev:all` (runs API 5000 + client 3000). `npm run dev` and `npm run client` remain available for single-target work.
-- Refresh manuals via `node scripts/update-problem-manuals.js` so prompts stay faithful to the latest PDFs.
+- Node.js 20 Express backend with React 19 (CRA) frontend; lucide-react powers icons/components.
+- SQL.js persists documents/problems today; PostgreSQL migration remains queued after all CSAT templates are locked down.
+- Preferred dev command: `npm run dev:all` (API 5000 + client 3000). `npm run dev`/`npm run client` stay available for single-target work.
+- Refresh manuals via `node scripts/update-problem-manuals.js` so prompt builders keep the latest PDF guidance.
 
 ## Decisions (key)
-- Each problem type gets a locked template spec derived from `problem manual/*.md` (2024 Wolgo mock exam series) and checked into the repo next to its generator.
-- Generators must display the English passage, Korean stem text, source metadata (exam/year/round/page), and five choices labeled with circled numbers (U+2460..U+2464) exactly as the manuals dictate.
-- Eobeop (grammar) rollout leads; we retain cached `<u>...</u>` spans for highlights and require distractor pattern tagging for review mode.
-- Prompt builders will emit deterministic sections: passage -> question stem -> choices (5) -> answer/explanation placeholders, so the UI can render without post-cleanup.
-- API base URL continues to come from `client/.env` (`REACT_APP_API_URL`), and auth tokens live in `localStorage` until the auth refresh lands.
+- Each problem type keeps a dedicated template doc under `docs/problem-templates/` and must pass a validator before being returned by the API.
+- Summary/grammar/etc. problems expose the English passage, Korean stem, circled-digit choices (U+2460~U+2464), and `sourceLabel` metadata exactly as manuals dictate.
+- Server enforces 5-question increments (max 20) and shares the sanitized counts with the UI so the study screen always shows scrollable batches.
+- Prompt builders render deterministic sections (passage → stem → choices → answer/explanation placeholders) to avoid ad-hoc string patching in the UI.
+- API base URL continues to come from `client/.env` (`REACT_APP_API_URL`), auth tokens stay in `localStorage` until refresh tokens are added.
 
 ## Current Stage
-- Parsing the 2024 Wolgo mock exam grammar manual to lock down stem wording, choice construction, error labeling, and source formatting before touching generator code.
+- Wiring the summary (A/B) template end-to-end: enforce 5-question generation in `generate/csat-set`, push the new prompt/validator through `aiProblemService`, and render the blanks/options correctly in the study UI.
 
 ## Next 3 (priority)
-1) Document the Eobeop template (stem phrasing, choice layout, answer/source fields, representative distractor patterns) in markdown for dev + prompt reference.
-2) Prototype the Eobeop prompt builder + validator so AI outputs emit complete five-choice JSON and flag any template violations.
-3) Draft the same template blueprint for the summary type to queue immediately after grammar stabilizes.
+1) Add caching/fallback coverage for summary outputs so `generateSummary` can survive OpenAI slowdowns without breaking problem batches.
+2) Extend the 5-step count sanitizer to teacher/class flows (e.g., saved configs, analytics requests) and document the API contract for clients.
+3) Backfill automated validation fixtures for summary + grammar templates so regressions surface before deploy.
 
 ## Known issues
-- Grammar template spec is still only in PDF form; markdown reference doc is not written yet.
-- Prompt builder/validator work is pending, so generators still rely on loosely formatted AI output.
-- Summary-type requirements remain undocumented, making downstream implementation a guess.
+- Summary validator currently relies on runtime checks only; no unit tests/assertions guard new edge cases.
+- Grammar multi-answer explanations still lean on AI phrasing—needs manual pattern cataloguing for consistency.
+- Other CSAT types (vocabulary/title/theme) still use legacy prompts without manual-derived wording.
 
-## Resolved (today)
-- 2025-09-25: Realigned PROJECT_STATE to highlight the Wolgo-based grammar template plan after comparing with README/BUILDLOG.
-- 2025-09-25: Document sync unblocked manual-alignment tasks so stakeholders see the CSAT-first focus in every status doc.
-- 2025-09-25: Captured follow-up actions (template doc, prompt builder, summary prep) to keep the rollout sequenced.
+## Resolved (2025-09-25)
+- `POST /generate/csat-set` now snaps counts to 5-question steps (max 20) and accepts the new `counts` payload used by the React study config.
+- Added OpenAI-backed summary prompt/validator (`buildSummaryPrompt`, `formatSummaryFromModel`) so generated items carry (A)/(B) blanks, circled-digit options, and source labels.
+- `csatProblemNormalizer` preserves summary-specific fields (`summarySentence`, `sourceLabel`, metadata) so the client can render them without loss.
+- Study UI renders summary questions with highlighted (A)/(B) blanks, exports circled options, and reuses the 5-question batch styling.
+- `problemRegistry` treats summary as a standard MCQ (string answer), removing the legacy `{A,B}` placeholder logic.
