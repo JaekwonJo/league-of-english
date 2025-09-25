@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 문제 유형 레지스트리 - 전략 패턴
  * if/else 체인 대신 맵 구조로 문제 유형 관리
  */
@@ -260,5 +260,4 @@ registerDefaultHandlers();
 registerDefaultValidators();
 
 export default registry;
-
 

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Study problem display shared styles
  */
 
@@ -30,7 +30,9 @@ export const problemDisplayStyles = {
     borderRadius: '20px',
     padding: '32px',
     marginBottom: '20px',
-    border: '1px solid rgba(148, 163, 184, 0.2)',
+    borderWidth: '1px',
+    borderStyle: 'solid',
+    borderColor: 'rgba(148, 163, 184, 0.2)',
     boxShadow: '0 25px 50px rgba(15, 23, 42, 0.4)'
   },
   navigation: {
@@ -180,7 +182,9 @@ export const orderStyles = {
     padding: '14px 20px',
     borderRadius: '10px',
     marginBottom: '10px',
-    border: '1px solid rgba(148, 163, 184, 0.2)',
+    borderWidth: '1px',
+    borderStyle: 'solid',
+    borderColor: 'rgba(148, 163, 184, 0.2)',
     boxShadow: '0 10px 20px rgba(15, 23, 42, 0.25)',
     textAlign: 'left',
     fontSize: '16px',

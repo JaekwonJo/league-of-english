@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import OrderProblemDisplay from './OrderProblemDisplay';
 import InsertionProblemDisplay from './InsertionProblemDisplay';
 import GrammarProblemDisplay from './GrammarProblemDisplay';
@@ -48,13 +48,13 @@ const renderSummarySentence = (sentence = '', blankStyle = { color: '#2563eb', f
       {segments.map((segment, idx) => {
         if (segment === '(A)' || segment === '(B)') {
           return (
-            <span key={lank-} style={blankStyle}>
+            <span key={`blank-${idx}`} style={blankStyle}>
               {segment}
             </span>
           );
         }
         if (!segment) return null;
-        return <React.Fragment key={	ext-}>{segment}</React.Fragment>;
+        return <React.Fragment key={`text-${idx}`}>{segment}</React.Fragment>;
       })}
     </span>
   );

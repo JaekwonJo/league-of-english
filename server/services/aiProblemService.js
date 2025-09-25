@@ -1,763 +1,741 @@
-﻿const fs = require('fs');
-const path = require('path');
-const database = require('../models/database');
-const { generateCSATGrammarProblem } = require('../utils/csatGrammarGenerator');
+﻿const fs = require("fs");
+const path = require("path");
+const database = require("../models/database");
 
 let OpenAI = null;
 try {
-  OpenAI = require('openai');
-} catch {}
-
-const GRAMMAR_MANUAL_PATH = path.join(__dirname, '..', '..', 'problem manual', 'grammar_problem_manual.md');
-let cachedGrammarManual = null;
-
-const SUMMARY_TEMPLATE_PATH = path.join(__dirname, '..', '..', 'docs', 'problem-templates', 'summary-two-blank.md');
-let cachedSummaryTemplate = null;
-const SUMMARY_QUESTION = '\ub2e4\uc74c \uae00\uc744 \uc77d\uace0 (A), (B)\uc5d0 \ub4e4\uc5b4\uac08 \ub9d0\ub85c \uac00\uc7a5 \uc801\uc808\ud55c \uac83\uc744 \uace0\ub974\uc2dc\uc624.';
-const SUMMARY_CIRCLED_DIGITS = ['\u2460', '\u2461', '\u2462', '\u2463', '\u2464'];
-const SUMMARY_EN_DASH = '\u2013';
-
-function readGrammarManual(limit = 3500) {
-  if (cachedGrammarManual === null) {
-    try {
-      cachedGrammarManual = fs.readFileSync(GRAMMAR_MANUAL_PATH, 'utf8');
-    } catch (err) {
-      console.warn('[aiProblemService] failed to load grammar manual:', err?.message || err);
-      cachedGrammarManual = '';
-    }
-  }
-  if (!cachedGrammarManual) return '';
-  return cachedGrammarManual.slice(0, limit);
+  OpenAI = require("openai");
+} catch (error) {
+  console.warn("[aiProblemService] OpenAI SDK unavailable:", error?.message || error);
 }
 
+const GRAMMAR_MANUAL_PATH = path.join(__dirname, "..", "..", "problem manual", "grammar_problem_manual.md");
+let cachedGrammarManual = null;
+
+const {
+  getManualExcerpt: getSummaryManualExcerpt,
+  buildPrompt: buildSummaryPrompt,
+  coerceSummaryProblem,
+  validateSummaryProblem
+} = require("../utils/summaryTemplate");
+
+const {
+  buildGrammarPrompt,
+  validateGrammarProblem,
+  CIRCLED_DIGITS: GRAMMAR_DIGITS,
+  BASE_QUESTION
+} = require("../utils/eobeopTemplate");
+
 function stripJsonFences(text) {
-  if (!text) return '';
+  if (!text) return "";
   return String(text)
-    .replace(/```json\s*/gi, '')
-    .replace(/```/g, '')
+    .replace(/```json\s*/gi, "")
+    .replace(/```/g, "")
     .trim();
 }
 
-function clipText(text, limit) {
-  if (!text) return '';
-  const clean = String(text).replace(/\s+/g, ' ').trim();
+function clipText(text, limit = 1800) {
+  if (!text) return "";
+  const clean = String(text).replace(/\s+/g, " ").trim();
   if (clean.length <= limit) return clean;
-  return `${clean.slice(0, limit)} …`;
+  return `${clean.slice(0, limit)} \u2026`;
 }
 
-function normalizeOptions(list = []) {
-  if (!Array.isArray(list)) return [];
-  return list
-    .map((item, index) => {
-      if (item === null || item === undefined) return null;
-      const marker = String.fromCharCode(9312 + index);
-      let value = '';
-      if (typeof item === 'object' && item !== null) {
-        value = String(item.value || item.text || item.option || item.content || item.label || '').trim();
-      } else {
-        value = String(item).trim();
-      }
-      if (!value) return null;
-      value = value
-        .replace(/^[①-⑤]\s*/u, '')
-        .replace(/^[0-9]+\.\s*/, '')
-        .replace(/^[A-E]\.\s*/i, '')
-        .trim();
-      if (!value) return null;
-      return `${marker} ${value}`;
-    })
-    .filter(Boolean);
-}
-
-function parseAnswerList(value, optionCount, zeroBased = false) {
-  if (value === null || value === undefined) return [];
-  const tokens = Array.isArray(value) ? value : String(value).split(/[,:;\s]+/);
-  const numbers = [];
-  for (const token of tokens) {
-    if (token === null || token === undefined) continue;
-    const str = String(token).trim();
-    if (!str || !/^-?\d+$/.test(str)) continue;
-    let num = parseInt(str, 10);
-    if (Number.isNaN(num)) continue;
-    if (zeroBased) num += 1;
-    if (num >= 1 && (!optionCount || num <= optionCount)) numbers.push(num);
-  }
-  const unique = [...new Set(numbers)].sort((a, b) => a - b);
-  return unique;
-}
-
-function buildGrammarPrompt({ passage, manual, difficulty, docTitle }) {
-  const clippedPassage = clipText(passage, 1600);
-  const questionInstruction = difficulty === 'advanced'
-    ? '학생은 밑줄 친 부분이 문법적으로 옳은 문장을 모두 고르는 문제입니다.'
-    : '학생은 밑줄 친 부분에서 문법적으로 옳지 않은 문장을 고르는 문제입니다.';
-  const answerField = difficulty === 'advanced'
-    ? '"correctAnswers": [1,3], // array of all correct option numbers (sorted)'
-    : '"correctAnswer": 3, // number of the incorrect option';
-
-  return `You are a top-tier CSAT English grammar item writer. Use the handbook excerpt and the passage to craft ONE ${difficulty} grammar problem.\n\nHandbook excerpt (Korean guidance):\n${manual}\n\nPassage from '${docTitle}':\n${clippedPassage}\n\n${questionInstruction}\nRules:\n- Provide exactly five options, each string must begin with a circled numeral (①~⑤).\n- Underline the key grammar target inside each option using <u> ... </u>.\n- Every option must closely follow sentences or clauses from the passage (trim or combine if needed, never invent new content).\n- The explanation must be in Korean and reference the grammar point.\n- Include a short Korean source label if helpful (예: 'p3-no.21').\n- For basic difficulty, exactly one option must be grammatically incorrect. For advanced difficulty, at least two options must be grammatically correct.\n- Return only valid JSON with the shape:\n{\n  "type": "${difficulty === 'advanced' ? 'grammar_multi' : 'grammar'}",\n  "question": "다음 중 ...",\n  "options": ["① ...", "② ...", "③ ...", "④ ...", "⑤ ..."],\n  ${answerField}\n  "explanation": "…",\n  "context": ["sentence1", "sentence2"],\n  "sourceLabel": "p3-no.21",\n  "grammarPoint": "주어-동사 수일치"\n}\nNo commentary outside the JSON.`;
-}
-
-function formatGrammarFromModel(raw, context) {
-  if (!raw || typeof raw !== 'object') return null;
-  const options = normalizeOptions(raw.options || raw.choices || raw.sentences || []);
-  const slicedOptions = options.slice(0, 5);
-  if (slicedOptions.length < 5) return null;
-  const optionCount = slicedOptions.length;
-
-  const question = String(
-    raw.question ||
-      (context.difficulty === 'advanced'
-        ? '다음 중 밑줄 친 부분이 문법적으로 옳은 문장을 모두 고르시오.'
-        : '다음 중 밑줄 친 부분에서 문법상 옳지 않은 문장을 고르시오.')
-  ).trim();
-
-  const answerValues = context.difficulty === 'advanced'
-    ? parseAnswerList(raw.correctAnswers || raw.correctAnswer || raw.answer, optionCount)
-    : parseAnswerList(raw.correctAnswer || raw.answer, optionCount);
-
-  if (!answerValues.length) return null;
-  if (context.difficulty === 'advanced' && answerValues.length < 2) return null;
-
-  const explanation = String(raw.explanation || raw.rationale || '').trim();
-  const contextList = Array.isArray(raw.context)
-    ? raw.context
-    : Array.isArray(raw.contextSentences)
-    ? raw.contextSentences
-    : [];
-  const mainText = contextList.length
-    ? contextList.map((item) => String(item).trim()).filter(Boolean).join(' ')
-    : String(raw.contextText || raw.mainText || raw.passage || '').trim() || context.passage;
-
-  const metadata = {
-    generator: 'openai',
-    difficulty: context.difficulty,
-    docTitle: context.docTitle,
-    order: context.index + 1
-  };
-  if (raw.sourceLabel) metadata.sourceLabel = String(raw.sourceLabel).trim();
-  if (raw.grammarPoint) metadata.grammarPoint = String(raw.grammarPoint).trim();
-  if (contextList.length) metadata.contextSentences = contextList.map((item) => String(item).trim()).filter(Boolean);
-  if (raw.distractors) metadata.distractors = raw.distractors;
-  if (raw.hints) metadata.hints = raw.hints;
-
-  return {
-    id: raw.id || `grammar_ai_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
-    type: context.difficulty === 'advanced' ? 'grammar_multi' : 'grammar',
-    question,
-    options: slicedOptions,
-    answer: answerValues.join(','),
-    explanation,
-    difficulty: context.difficulty,
-    mainText,
-    metadata
-  };
-﻿function readSummaryTemplate(limit = 3600) {
-  if (cachedSummaryTemplate === null) {
+function readGrammarManual(limit = 2000) {
+  if (cachedGrammarManual === null) {
     try {
-      cachedSummaryTemplate = fs.readFileSync(SUMMARY_TEMPLATE_PATH, 'utf8');
-    } catch (err) {
-      console.warn('[aiProblemService] failed to load summary template:', err?.message || err);
-      cachedSummaryTemplate = '';
+      cachedGrammarManual = fs.readFileSync(GRAMMAR_MANUAL_PATH, "utf8");
+    } catch (error) {
+      console.warn("[aiProblemService] failed to load grammar manual:", error?.message || error);
+      cachedGrammarManual = "";
     }
   }
-  if (!cachedSummaryTemplate) return '';
-  return cachedSummaryTemplate.slice(0, limit);
+  if (!cachedGrammarManual) return "";
+  return cachedGrammarManual.slice(0, limit);
 }
 
-function normalizeSummaryOptions(options = []) {
-  const flat = [];
-  const pushCandidate = (value) => {
-    if (value === null || value === undefined) return;
-    const str = String(value).trim();
-    if (str) flat.push(str);
-  };
-
-  if (!Array.isArray(options)) {
-    pushCandidate(options);
-  } else {
-    options.forEach((option) => {
-      if (option === null || option === undefined) return;
-      if (Array.isArray(option)) {
-        option.forEach((item) => pushCandidate(item));
-        return;
-      }
-      if (typeof option === 'object') {
-        const left = option.left || option.first || option.a || option.A;
-        const right = option.right || option.second || option.b || option.B;
-        if (left && right) {
-          const leftStr = String(left).trim();
-          const rightStr = String(right).trim();
-          if (leftStr && rightStr) {
-            flat.push(`${leftStr} ${SUMMARY_EN_DASH} ${rightStr}`);
-            return;
-          }
-        }
-        if ('text' in option || 'value' in option) {
-          pushCandidate(option.text || option.value);
-          return;
-        }
-        if (Array.isArray(option.options)) {
-          option.options.forEach((item) => pushCandidate(item));
-          return;
-        }
-      }
-      pushCandidate(option);
-    });
+function shuffleUnique(source, size) {
+  const arr = Array.isArray(source) ? [...source] : [];
+  for (let i = arr.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
   }
+  return arr.slice(0, size);
+}
 
-  const sanitized = [];
-  for (let i = 0; i < SUMMARY_CIRCLED_DIGITS.length; i += 1) {
-    const base = flat[i];
-    if (!base) return null;
-    let text = String(base)
-      .replace(/^[\u2460-\u2468]\s*/, '')
-      .replace(/^[0-9]+\.?\s*/, '')
-      .replace(/^[A-E]\.?\s*/i, '')
-      .trim();
-    if (!text) return null;
-    if (!text.includes(SUMMARY_EN_DASH)) {
-      const parts = text.split(/[-\u2013-\u2014]/).map((part) => part.trim()).filter(Boolean);
-      if (parts.length >= 2) {
-        text = `${parts[0]} ${SUMMARY_EN_DASH} ${parts[1]}`;
-      } else {
-        return null;
-      }
-    } else {
-      text = text.replace(/\s*[-\u2013-\u2014]\s*/, ` ${SUMMARY_EN_DASH} `);
+function normalizeGrammarOptions(options = []) {
+  if (!Array.isArray(options)) return [];
+  const normalized = [];
+  for (let i = 0; i < 5 && i < options.length; i += 1) {
+    let text = options[i];
+    if (text && typeof text === "object") {
+      text = text.text || text.value || text.content;
     }
-    sanitized.push(`${SUMMARY_CIRCLED_DIGITS[i]} ${text}`);
-  }
-  return sanitized.length === SUMMARY_CIRCLED_DIGITS.length ? sanitized : null;
-}
-
-function buildSummaryPrompt({ passage, docTitle, manual }) {
-  const clippedPassage = clipText(passage, 1800);
-  const manualSnippet = manual ? `Summary template (Korean excerpt):\n${manual}\n\n` : '';
-  return [
-    'You are an expert CSAT English problem writer. Create exactly ONE summary question with two blanks (A) and (B).',
-    manualSnippet,
-    `Passage title: ${docTitle}`,
-    `Passage (preserve line breaks):\n${clippedPassage}`,
-    '',
-    'Return only valid JSON matching this schema:',
-    '{',
-    `  "type": "summary",`,
-    `  "question": "${SUMMARY_QUESTION}",`,
-    '  "summarySentence": "(A) ... (B) ...",',
-    '  "options": [',
-    '    "\u2460 phrase \u2013 phrase",',
-    '    "\u2461 phrase \u2013 phrase",',
-    '    "\u2462 phrase \u2013 phrase",',
-    '    "\u2463 phrase \u2013 phrase",',
-    '    "\u2464 phrase \u2013 phrase"',
-    '  ],',
-    '  "correctAnswer": 3,',
-    '  "explanation": "\ud55c\uad6d\uc5b4 \ud574\uc124",',
-    '  "sourceLabel": "\ucd9c\ucc98: 2024 \ud559\ub144\ub3c4 ...",',
-    '  "summaryPattern": "\ud328\ud134",',
-    '  "keywords": ["word1", "word2"],',
-    '  "difficulty": "basic"',
-    '}',
-    'Rules:',
-    '- Keep (A) and (B) exactly as uppercase letters inside parentheses.',
-    '- Provide exactly five options labeled with circled digits ①-⑤ and join the pair with an en dash (–).',
-    '- Options must be concise English phrases that plausibly complete the summary.',
-    '- Ensure exactly one correct option and make the distractors plausible but wrong.',
-    '- Write the explanation in Korean referencing the passage.',
-    '- Respond with JSON only; do not include markdown fencing.'
-  ].filter(Boolean).join('\n');
-}
-
-function formatSummaryFromModel(raw, context) {
-  if (!raw || typeof raw !== 'object') return null;
-  const summarySentence = String(raw.summarySentence || raw.summary || raw.summaryText || '').trim();
-  if (!summarySentence || summarySentence.indexOf('(A)') === -1 || summarySentence.indexOf('(B)') === -1) return null;
-
-  const options = normalizeSummaryOptions(raw.options || raw.choices || raw.pairs || []);
-  if (!options || options.length !== SUMMARY_CIRCLED_DIGITS.length) return null;
-
-  const answerKeys = ['correctAnswer', 'answer', 'correctAnswers', 'answers'];
-  let answerValue = null;
-  for (const key of answerKeys) {
-    if (key in raw) {
-      const parsed = parseAnswerList(raw[key], options.length);
-      if (parsed.length) {
-        answerValue = parsed[0];
-        break;
-      }
+    if (typeof text !== "string") {
+      normalized.push("");
+      continue;
     }
-  }
-  if (!answerValue || answerValue < 1 || answerValue > options.length) return null;
-
-  const explanation = String(raw.explanation || raw.rationale || '').trim();
-  const difficultyRaw = String(raw.difficulty || '').trim().toLowerCase();
-  const difficulty = difficultyRaw && ['basic', 'advanced'].includes(difficultyRaw) ? difficultyRaw : 'basic';
-  const sourceLabel = String(raw.sourceLabel || raw.source || '').trim();
-
-  const metadata = {};
-  if (raw.summaryPattern) {
-    const pattern = String(raw.summaryPattern).trim();
-    if (pattern) metadata.summaryPattern = pattern;
-  }
-  if (Array.isArray(raw.keywords)) {
-    const keywords = raw.keywords.map((kw) => String(kw).trim()).filter(Boolean);
-    if (keywords.length) metadata.keywords = keywords;
-  }
-  metadata.passageIndex = context.index + 1;
-  metadata.documentTitle = context.docTitle;
-  if (raw.difficulty && difficultyRaw !== difficulty) metadata.generatedDifficulty = difficultyRaw;
-
-  const result = {
-    id: raw.id || `summary_ai_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
-    type: 'summary',
-    question: SUMMARY_QUESTION,
-    summarySentence,
-    options,
-    answer: String(answerValue),
-    explanation,
-    mainText: context.passage,
-    sourceLabel: sourceLabel || `\ucd9c\ucc98: ${context.docTitle}`,
-    difficulty
-  };
-
-  if (!result.explanation) delete result.explanation;
-  if (!result.sourceLabel) delete result.sourceLabel;
-
-  if (raw.summarySentenceKor) {
-    const kor = String(raw.summarySentenceKor).trim();
-    if (kor) result.summarySentenceKor = kor;
-  }
-
-  if (Object.keys(metadata).length) {
-    result.metadata = metadata;
-  }
-
-  return result;
-}
-
-function fallbackSummaryProblem(passage, docTitle, index) {
-  const summarySentence = 'According to the passage, (A) support encourages readers to build lasting (B) for success.';
-  const options = [
-    `${SUMMARY_CIRCLED_DIGITS[0]} casual praise ${SUMMARY_EN_DASH} hesitation`,
-    `${SUMMARY_CIRCLED_DIGITS[1]} short-term rewards ${SUMMARY_EN_DASH} distraction`,
-    `${SUMMARY_CIRCLED_DIGITS[2]} consistent guidance ${SUMMARY_EN_DASH} confidence`,
-    `${SUMMARY_CIRCLED_DIGITS[3]} random excuses ${SUMMARY_EN_DASH} frustration`,
-    `${SUMMARY_CIRCLED_DIGITS[4]} passive waiting ${SUMMARY_EN_DASH} indifference`
-  ];
-  const metadata = {
-    generator: 'fallback',
-    passageIndex: index + 1,
-    documentTitle: docTitle
-  };
-  return {
-    id: `summary_fallback_${Date.now()}_${index}`,
-    type: 'summary',
-    question: SUMMARY_QUESTION,
-    summarySentence,
-    options,
-    answer: '3',
-    explanation: '\uae00\uc740 \uc9c0\uc18d\uc801\uc778 \uc9c0\uc6d0\uc774 \uc790\uc2e0\uac10\uc744 \ud0a4\uc6b4\ub2e4\ub294 \ub0b4\uc6a9\uc744 \uc804\ud569\ub2c8\ub2e4.',
-    difficulty: 'basic',
-    mainText: passage,
-    sourceLabel: `\ucd9c\ucc98: ${docTitle}`,
-    metadata
-  };
-}
-
-function fallbackGrammarBasic(passage, docTitle, index) {
-  try {
-    const base = generateCSATGrammarProblem(passage, { difficulty: 'basic', seed: Date.now() + index });
-    if (!base || !Array.isArray(base.choices)) return null;
-    const options = normalizeOptions(base.choices).slice(0, 5);
-    if (options.length < 5) return null;
-    const answers = parseAnswerList(base.correctAnswer || base.answer, options.length);
-    const answer = answers.length ? answers[0] : 1;
-    return {
-      id: `grammar_fallback_${Date.now()}_${index}`,
-      type: 'grammar',
-      question: base.question || '다음 중 밑줄 친 부분에서 문법상 옳지 않은 문장을 고르시오.',
-      options,
-      answer: String(answer),
-      explanation: base.explanation || '동사의 수나 시제를 확인하세요.',
-      difficulty: 'basic',
-      mainText: base.text || passage,
-      metadata: {
-        generator: 'fallback',
-        difficulty: 'basic',
-        docTitle
-      }
-    };
-  } catch (err) {
-    console.warn('[aiProblemService] fallback basic grammar failed:', err?.message || err);
-    return null;
-  }
-}
-
-function fallbackGrammarAdvanced(passage, docTitle, index) {
-  const basic = fallbackGrammarBasic(passage, docTitle, index);
-  if (!basic) return null;
-  const options = basic.options;
-  const incorrect = parseAnswerList(basic.answer, options.length)[0] || 1;
-  const correct = [];
-  for (let i = 1; i <= options.length; i += 1) {
-    if (i !== incorrect) correct.push(i);
-  }
-  return {
-    id: `grammar_multi_fallback_${Date.now()}_${index}`,
-    type: 'grammar_multi',
-    question: '다음 중 밑줄 친 부분이 문법적으로 옳은 문장을 모두 고르시오.',
-    options,
-    answer: correct.join(','),
-    explanation: basic.explanation
-      ? `${basic.explanation} 나머지 문장은 원문의 구조를 유지해 문법적으로 옳습니다.`
-      : '밑줄 친 부분에 오류가 없는 문장을 모두 고르세요.',
-    difficulty: 'advanced',
-    mainText: basic.mainText,
-    metadata: {
-      generator: 'fallback',
-      difficulty: 'advanced',
-      docTitle,
-      referenceIncorrect: incorrect
+    let clean = text.trim();
+    clean = clean.replace(/^[\u2460-\u2468]\s*/, "").trim();
+    if (!clean.startsWith("<u>")) {
+      clean = clean.replace(/^[0-9]+\.?\s*/, "").trim();
+      clean = clean.replace(/^[A-E]\.?\s*/i, "").trim();
     }
-  };
+    if (!clean.includes("<u>")) {
+      normalized.push("");
+      continue;
+    }
+    normalized.push(`${GRAMMAR_DIGITS[i]} ${clean}`);
+  }
+  while (normalized.length < 5) {
+    normalized.push("");
+  }
+  return normalized;
+}
+
+function ensureSourceLabel(raw, context) {
+  const value = String(raw || "").trim();
+  if (value.startsWith("\ucd9c\ucc98:")) return value;
+  const docTitle = String(context.docTitle || "").trim();
+  return docTitle ? `\ucd9c\ucc98: ${docTitle}` : "\ucd9c\ucc98: LoE Source";
 }
 
 class AIProblemService {
-  async getPassages(documentId) {
-    const doc = await database.get('SELECT * FROM documents WHERE id = ?', [documentId]);
-    if (!doc) throw new Error('Document not found');
-
-    let passages = [];
-    try {
-      const parsed = JSON.parse(doc.content);
-      if (Array.isArray(parsed.passages) && parsed.passages.length) {
-        passages = parsed.passages.map((item) => String(item || ''));
-      } else if (parsed.content && typeof parsed.content === 'string') {
-        passages = parsed.content
-          .split(/\n{2,}/)
-          .map((s) => s.trim())
-          .filter((s) => s.length > 40);
-      }
-    } catch (err) {
-      // ignore JSON parse errors
-    }
-
-    if (!passages.length && typeof doc.content === 'string') {
-      passages = String(doc.content || '')
-        .split(/\n{2,}/)
-        .map((s) => s.trim())
-        .filter((s) => s.length > 40);
-    }
-    if (!passages.length) {
-      passages = [String(doc.content || '')];
-    }
-
-    return { passages, document: doc };
+  constructor() {
+    this._openai = null;
   }
 
-  async countCached(documentId, type) {
-    const row = await database.get('SELECT COUNT(*) AS cnt FROM problems WHERE document_id = ? AND type = ?', [documentId, type]);
-    return row?.cnt || 0;
+  getOpenAI() {
+    if (!OpenAI || !process.env.OPENAI_API_KEY) return null;
+    if (!this._openai) {
+      this._openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    }
+    return this._openai;
+  }
+
+  async getPassages(documentId) {
+    const doc = await database.get("SELECT * FROM documents WHERE id = ?", [documentId]);
+    if (!doc) throw new Error("Document not found");
+    let passages = [];
+    let parsedContent = null;
+    try {
+      parsedContent = JSON.parse(doc.content);
+      if (Array.isArray(parsedContent.passages) && parsedContent.passages.length > 0) {
+        passages = parsedContent.passages
+          .map((p) => String(p || "").trim())
+          .filter((p) => p.length > 0);
+      }
+    } catch (error) {
+      parsedContent = null;
+    }
+    if (!passages.length) {
+      passages = String(doc.content || "")
+        .split(/\n{2,}/)
+        .map((chunk) => chunk.trim())
+        .filter((chunk) => chunk.length > 40);
+    }
+    if (!passages.length && doc.content) {
+      passages = [String(doc.content)];
+    }
+    return { document: doc, passages, parsedContent };
+  }
+
+  async generateBlank(documentId, count = 5) {
+    const { passages } = await this.getPassages(documentId);
+    const results = [];
+    const openai = this.getOpenAI();
+    if (!openai) {
+      return this.generateBlankRule(passages, count);
+    }
+
+    const question = "\ub2e4\uc74c \uae00\uc758 \ube48\uce78\uc5d0 \uc801\uc808\ud55c \ub9d0\uc744 \uace0\ub974\uc2dc\uc624.";
+
+    for (let i = 0; i < count; i += 1) {
+      const passage = passages[i % passages.length];
+      let attempts = 0;
+      let assigned = false;
+      while (!assigned && attempts < 3) {
+        attempts += 1;
+        try {
+          const prompt = [
+            "You are a CSAT English cloze item writer.",
+            "Create exactly one four-option multiple-choice question.",
+            "",
+            `Passage:\n${clipText(passage, 900)}`,
+            "",
+            "Return JSON only:",
+            "{",
+            "  \"type\": \"blank\",",
+            `  \"question\": \"${question}\",`,
+            "  \"text\": \"... one blank ...\",",
+            "  \"options\": [\"option1\", \"option2\", \"option3\", \"option4\"],",
+            "  \"correctAnswer\": 2,",
+            "  \"explanation\": \"Korean rationale\",",
+            "  \"sourceLabel\": \"\\ucd9c\\ucc98: ...\"",
+            "}"
+          ].join("\n");
+
+          const response = await openai.chat.completions.create({
+            model: "gpt-4o-mini",
+            temperature: 0.45,
+            max_tokens: 520,
+            messages: [{ role: "user", content: prompt }]
+          });
+          const payload = JSON.parse(stripJsonFences(response.choices?.[0]?.message?.content || ""));
+          const options = Array.isArray(payload.options)
+            ? payload.options.map((opt) => String(opt || "").trim())
+            : [];
+          const answer = Number(payload.correctAnswer || payload.answer);
+          if (options.length === 4 && Number.isInteger(answer) && answer >= 1 && answer <= 4) {
+            results.push({
+              id: payload.id || `blank_ai_${Date.now()}_${results.length}`,
+              type: "blank",
+              question,
+              text: payload.text || payload.passage || passage,
+              options,
+              answer: String(answer),
+              correctAnswer: String(answer),
+              explanation: String(payload.explanation || "").trim(),
+              sourceLabel: ensureSourceLabel(payload.sourceLabel, { docTitle: "" })
+            });
+            assigned = true;
+          } else {
+            throw new Error("invalid blank structure");
+          }
+        } catch (error) {
+          console.warn("[ai-blank] generation failed:", error?.message || error);
+          if (attempts >= 3) {
+            results.push(...this.generateBlankRule([passage], 1));
+            assigned = true;
+          }
+        }
+      }
+    }
+
+    return results;
+  }
+
+  generateBlankRule(passages, count) {
+    const question = "\ub2e4\uc74c \uae00\uc758 \ube48\uce78\uc5d0 \uc801\uc808\ud55c \ub9d0\uc744 \uace0\ub974\uc2dc\uc624.";
+    const results = [];
+    for (let i = 0; i < count; i += 1) {
+      const passage = passages[i % passages.length];
+      const words = (String(passage).match(/\b[A-Za-z]{5,}\b/g) || []).slice(0, 120);
+      if (words.length < 4) continue;
+      const answerWord = words[Math.floor(Math.random() * words.length)];
+      const distractors = shuffleUnique(words.filter((word) => word !== answerWord), 3);
+      const options = shuffleUnique([answerWord, ...distractors], 4);
+      const answerIndex = options.findIndex((word) => word === answerWord);
+      results.push({
+        id: `blank_rule_${Date.now()}_${i}`,
+        type: "blank",
+        question,
+        text: String(passage).replace(new RegExp(`\\b${answerWord}\\b`), "_____"),
+        options,
+        answer: String(answerIndex + 1),
+        correctAnswer: String(answerIndex + 1),
+        explanation: `Answer: ${answerWord}`
+      });
+    }
+    return results;
+  }
+
+  async generateVocab(documentId, count = 5) {
+    const { passages } = await this.getPassages(documentId);
+    const openai = this.getOpenAI();
+    const question = "\ub2e4\uc74c \uae00\uc758 \ube7c\ub9ac\uae30 \ub41c \ub2e8\uc5b4\uc640 \uc758\ubbf8\uc0ac\uac74 \uac00\uc7a5 \uac19\uc740 \ub2e8\uc5b4\ub97c \uace0\ub974\uc2dc\uc624.";
+    const results = [];
+
+    if (!openai) {
+      for (let i = 0; i < count; i += 1) {
+        const passage = passages[i % passages.length];
+        const words = (String(passage).match(/\b[A-Za-z]{5,}\b/g) || []).slice(0, 20);
+        if (words.length < 4) continue;
+        const target = words[0];
+        const options = shuffleUnique(words.slice(1), 3);
+        const answer = Math.floor(Math.random() * 4) + 1;
+        const finalOptions = [...options];
+        finalOptions.splice(answer - 1, 0, target);
+        results.push({
+          id: `vocab_rule_${Date.now()}_${i}`,
+          type: "vocabulary",
+          question,
+          text: passage,
+          options: finalOptions,
+          answer: String(answer),
+          correctAnswer: String(answer),
+          explanation: `Target word: ${target}`
+        });
+      }
+      return results;
+    }
+
+    for (let i = 0; i < count; i += 1) {
+      const passage = passages[i % passages.length];
+      let success = false;
+      let attempts = 0;
+      while (!success && attempts < 3) {
+        attempts += 1;
+        try {
+          const prompt = [
+            "You are a CSAT synonym vocabulary item writer.",
+            `Passage:\n${clipText(passage, 900)}`,
+            "",
+            "Return JSON only:",
+            "{",
+            "  \"type\": \"vocabulary\",",
+            `  \"question\": \"${question}\",`,
+            "  \"text\": \"... <u>target</u> ...\",",
+            "  \"options\": [\"option1\", \"option2\", \"option3\", \"option4\"],",
+            "  \"correctAnswer\": 1,",
+            "  \"explanation\": \"Korean rationale\",",
+            "  \"sourceLabel\": \"\\ucd9c\\ucc98: ...\"",
+            "}"
+          ].join("\n");
+
+          const response = await openai.chat.completions.create({
+            model: "gpt-4o-mini",
+            temperature: 0.4,
+            max_tokens: 520,
+            messages: [{ role: "user", content: prompt }]
+          });
+          const payload = JSON.parse(stripJsonFences(response.choices?.[0]?.message?.content || ""));
+          const options = Array.isArray(payload.options)
+            ? payload.options.map((opt) => String(opt || "").trim())
+            : [];
+          const answer = Number(payload.correctAnswer || payload.answer);
+          if (options.length === 4 && Number.isInteger(answer) && answer >= 1 && answer <= 4) {
+            results.push({
+              id: payload.id || `vocab_ai_${Date.now()}_${results.length}`,
+              type: "vocabulary",
+              question,
+              text: payload.text || passage,
+              options,
+              answer: String(answer),
+              correctAnswer: String(answer),
+              explanation: String(payload.explanation || "").trim(),
+              sourceLabel: ensureSourceLabel(payload.sourceLabel, { docTitle: "" })
+            });
+            success = true;
+          } else {
+            throw new Error("invalid vocabulary structure");
+          }
+        } catch (error) {
+          console.warn("[ai-vocab] generation failed:", error?.message || error);
+          if (attempts >= 3) {
+            const fallback = this.generateBlankRule([passage], 1)[0];
+            if (fallback) {
+              fallback.type = "vocabulary";
+              fallback.question = question;
+              results.push(fallback);
+            }
+            success = true;
+          }
+        }
+      }
+    }
+
+    return results;
+  }
+
+  async generateTitle(documentId, count = 5) {
+    const { passages } = await this.getPassages(documentId);
+    const openai = this.getOpenAI();
+    const question = "\ub2e4\uc74c \uae00\uc758 \uc81c\ubaa9\uc73c\ub85c \uc801\uc808\ud55c \uac83\uc744 \uace0\ub974\uc2dc\uc624.";
+    const results = [];
+
+    if (!openai) {
+      return passages.slice(0, count).map((passage, index) => ({
+        id: `title_rule_${Date.now()}_${index}`,
+        type: "title",
+        question,
+        text: passage,
+        options: shuffleUnique([
+          "Mindfulness and Focus",
+          "Technological Innovations",
+          "Historical Anecdotes",
+          "Environmental Concerns"
+        ], 4),
+        answer: "1",
+        correctAnswer: "1",
+        explanation: "\uc77c\uce58\ud558\ub294 \ubb38\ub2e8\uc744 \ucc3e\uc73c\uc138\uc694."
+      }));
+    }
+
+    for (let i = 0; i < count; i += 1) {
+      const passage = passages[i % passages.length];
+      let success = false;
+      let attempts = 0;
+      while (!success && attempts < 3) {
+        attempts += 1;
+        try {
+          const prompt = [
+            "You are a CSAT English main-idea/title item writer.",
+            `Passage:\n${clipText(passage, 1200)}`,
+            "",
+            "Return JSON only:",
+            "{",
+            "  \"type\": \"title\",",
+            `  \"question\": \"${question}\",`,
+            "  \"options\": [\"option1\", \"option2\", \"option3\", \"option4\"],",
+            "  \"correctAnswer\": 2,",
+            "  \"explanation\": \"Korean rationale\",",
+            "  \"sourceLabel\": \"\\ucd9c\\ucc98: ...\"",
+            "}"
+          ].join("\n");
+
+          const response = await openai.chat.completions.create({
+            model: "gpt-4o-mini",
+            temperature: 0.45,
+            max_tokens: 520,
+            messages: [{ role: "user", content: prompt }]
+          });
+          const payload = JSON.parse(stripJsonFences(response.choices?.[0]?.message?.content || ""));
+          const options = Array.isArray(payload.options)
+            ? payload.options.map((opt) => String(opt || "").trim())
+            : [];
+          const answer = Number(payload.correctAnswer || payload.answer);
+          if (options.length === 4 && Number.isInteger(answer) && answer >= 1 && answer <= 4) {
+            results.push({
+              id: payload.id || `title_ai_${Date.now()}_${results.length}`,
+              type: "title",
+              question,
+              text: passage,
+              options,
+              answer: String(answer),
+              correctAnswer: String(answer),
+              explanation: String(payload.explanation || "").trim(),
+              sourceLabel: ensureSourceLabel(payload.sourceLabel, { docTitle: "" })
+            });
+            success = true;
+          } else {
+            throw new Error("invalid title structure");
+          }
+        } catch (error) {
+          console.warn("[ai-title] generation failed:", error?.message || error);
+          if (attempts >= 3) {
+            results.push({
+              id: `title_fallback_${Date.now()}_${i}`,
+              type: "title",
+              question,
+              text: passage,
+              options: shuffleUnique([
+                "Benefits of Teamwork",
+                "Travel Planning Tips",
+                "Caring for the Environment",
+                "Digital Communication Tools"
+              ], 4),
+              answer: "1",
+              correctAnswer: "1",
+              explanation: "\uc8fc\uc81c\ub97c \ub098\ud0c0\ub0b4\ub294 \ubb38\uc7a5\uc744 \ucc3e\uc73c\uc138\uc694."
+            });
+            success = true;
+          }
+        }
+      }
+    }
+
+    return results;
+  }
+
+  async generateTheme(documentId, count = 5) {
+    const { passages } = await this.getPassages(documentId);
+    const openai = this.getOpenAI();
+    const question = "\ub2e4\uc74c \uae00\uc758 \uc8fc\uc81c\ub85c \uc801\uc808\ud55c \uac83\uc744 \uace0\ub974\uc2dc\uc624.";
+    const results = [];
+
+    if (!openai) {
+      return passages.slice(0, count).map((passage, index) => ({
+        id: `theme_rule_${Date.now()}_${index}`,
+        type: "theme",
+        question,
+        text: passage,
+        options: ["\uc0dd\ud65c \uc9c0\ud61c", "\uac74\uac15 \uad8c\uc7a5", "\uacbd\uc81c \ubb38\uc81c", "\uacbd\ud5a5 \uc815\ubcf4"],
+        answer: "1",
+        correctAnswer: "1",
+        explanation: "\uc8fc\uc81c\ub97c \ub098\ud0c0\ub0b4\ub294 \ubb38\uc7a5\uc744 \ucc3e\uc73c\uc138\uc694."
+      }));
+    }
+
+    for (let i = 0; i < count; i += 1) {
+      const passage = passages[i % passages.length];
+      let success = false;
+      let attempts = 0;
+      while (!success && attempts < 3) {
+        attempts += 1;
+        try {
+          const prompt = [
+            "You are a CSAT English main idea/item writer.",
+            `Passage:\n${clipText(passage, 1200)}`,
+            "",
+            "Return JSON only:",
+            "{",
+            "  \"type\": \"theme\",",
+            `  \"question\": \"${question}\",`,
+            "  \"options\": [\"option1\", \"option2\", \"option3\", \"option4\"],",
+            "  \"correctAnswer\": 3,",
+            "  \"explanation\": \"Korean rationale\",",
+            "  \"sourceLabel\": \"\\ucd9c\\ucc98: ...\"",
+            "}"
+          ].join("\n");
+
+          const response = await openai.chat.completions.create({
+            model: "gpt-4o-mini",
+            temperature: 0.4,
+            max_tokens: 500,
+            messages: [{ role: "user", content: prompt }]
+          });
+          const payload = JSON.parse(stripJsonFences(response.choices?.[0]?.message?.content || ""));
+          const options = Array.isArray(payload.options)
+            ? payload.options.map((opt) => String(opt || "").trim())
+            : [];
+          const answer = Number(payload.correctAnswer || payload.answer);
+          if (options.length === 4 && Number.isInteger(answer) && answer >= 1 && answer <= 4) {
+            results.push({
+              id: payload.id || `theme_ai_${Date.now()}_${results.length}`,
+              type: "theme",
+              question,
+              text: passage,
+              options,
+              answer: String(answer),
+              correctAnswer: String(answer),
+              explanation: String(payload.explanation || "").trim(),
+              sourceLabel: ensureSourceLabel(payload.sourceLabel, { docTitle: "" })
+            });
+            success = true;
+          } else {
+            throw new Error("invalid theme structure");
+          }
+        } catch (error) {
+          console.warn("[ai-theme] generation failed:", error?.message || error);
+          if (attempts >= 3) {
+            results.push({
+              id: `theme_fallback_${Date.now()}_${i}`,
+              type: "theme",
+              question,
+              text: passage,
+              options: ["\uc0dd\ud65c \uc9c0\ud61c", "\uac74\uac15 \uad8c\uc7a5", "\uacbd\uc81c \ubb38\uc81c", "\uacbd\ud5a5 \uc815\ubcf4"],
+              answer: "1",
+              correctAnswer: "1",
+              explanation: "\uc8fc\uc81c\uac00 \uc81c\uc2dc\ud558\ub294 \ub0b4\uc6a9\uc744 \ud655\uc778\ud558\uc138\uc694."
+            });
+            success = true;
+          }
+        }
+      }
+    }
+
+    return results;
+  }
+
+  async generateTopic(documentId, count = 5) {
+    return this.generateTheme(documentId, count);
+  }
+
+  async generateSummary(documentId, count = 5) {
+    const { document, passages } = await this.getPassages(documentId);
+    const openai = this.getOpenAI();
+    if (!openai) throw new Error("AI generator unavailable for summary problems");
+    const manualExcerpt = getSummaryManualExcerpt(3200);
+    const docTitle = document?.title || `Document ${documentId}`;
+    const results = [];
+
+    for (let i = 0; i < count; i += 1) {
+      const passage = passages[i % passages.length];
+      if (!passage) continue;
+      let success = false;
+      let attempts = 0;
+      while (!success && attempts < 3) {
+        attempts += 1;
+        try {
+          const prompt = buildSummaryPrompt({
+            passage,
+            docTitle,
+            manualExcerpt
+          });
+          const response = await openai.chat.completions.create({
+            model: "gpt-4o-mini",
+            temperature: 0.35,
+            max_tokens: 720,
+            messages: [{ role: "user", content: prompt }]
+          });
+          const payload = JSON.parse(stripJsonFences(response.choices?.[0]?.message?.content || ""));
+          const problem = coerceSummaryProblem(payload, {
+            index: results.length,
+            docTitle,
+            passage
+          });
+          if (!problem) throw new Error("summary coercion failed");
+          const validation = validateSummaryProblem(problem);
+          if (!validation.valid) {
+            throw new Error(`summary validation issues: ${validation.issues.join(',')}`);
+          }
+          if (!problem.sourceLabel) {
+            problem.sourceLabel = `\ucd9c\ucc98: ${docTitle}`;
+          }
+          problem.metadata = problem.metadata || {};
+          problem.metadata.documentId = documentId;
+          results.push(problem);
+          success = true;
+        } catch (error) {
+          console.warn("[ai-summary] generation failed:", error?.message || error);
+          if (attempts >= 3) {
+            throw error;
+          }
+        }
+      }
+    }
+
+    return results;
+  }
+
+  formatGrammarProblem(raw, context) {
+    if (!raw || typeof raw !== "object") return null;
+    const normalized = {
+      type: "grammar",
+      question: String(raw.question || "").trim() || BASE_QUESTION,
+      passage: String(raw.passage || raw.text || raw.mainText || context.passage || "").trim(),
+      mainText: String(raw.passage || raw.text || raw.mainText || context.passage || "").trim(),
+      options: normalizeGrammarOptions(raw.options || raw.choices || []),
+      explanation: String(raw.explanation || "").trim(),
+      sourceLabel: ensureSourceLabel(raw.sourceLabel || raw.source, context)
+    };
+
+    const answerKeys = ["correctAnswers", "correctAnswer", "answers", "answer"];
+    let answers = [];
+    for (const key of answerKeys) {
+      if (raw[key] !== undefined && raw[key] !== null) {
+        const value = Array.isArray(raw[key]) ? raw[key] : String(raw[key]).split(/[\s,]+/);
+        answers = value
+          .map((token) => parseInt(String(token).trim(), 10))
+          .filter((num) => Number.isInteger(num) && num >= 1 && num <= 5);
+        if (answers.length) break;
+      }
+    }
+    if (!answers.length) return null;
+
+    const validation = validateGrammarProblem(
+      {
+        ...normalized,
+        options: normalized.options,
+        correctAnswers: answers
+      },
+      { minCorrect: 1 }
+    );
+
+    if (!validation.valid) {
+      console.warn("[ai-grammar] validation issues:", validation.issues);
+      return null;
+    }
+
+    const answerValue = validation.answers.length === 1
+      ? String(validation.answers[0])
+      : validation.answers.join(',');
+
+    return {
+      id: raw.id || `grammar_ai_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+      type: "grammar",
+      question: normalized.question,
+      mainText: normalized.mainText,
+      passage: normalized.mainText,
+      options: normalized.options,
+      answer: answerValue,
+      correctAnswer: answerValue,
+      explanation: normalized.explanation,
+      sourceLabel: normalized.sourceLabel,
+      difficulty: "csat",
+      metadata: {
+        documentTitle: context.docTitle,
+        passageIndex: context.index + 1,
+        generator: "openai",
+        grammarPoint: raw.grammarPoint || undefined
+      }
+    };
+  }
+
+  async generateGrammar(documentId, count = 5) {
+    const { document, passages } = await this.getPassages(documentId);
+    const openai = this.getOpenAI();
+    if (!openai) throw new Error("AI generator unavailable for grammar problems");
+    const manualExcerpt = readGrammarManual(2000);
+    const docTitle = document?.title || `Document ${documentId}`;
+    const results = [];
+
+    for (let i = 0; i < count; i += 1) {
+      const passage = passages[i % passages.length];
+      if (!passage) continue;
+      let success = false;
+      let attempts = 0;
+      while (!success && attempts < 3) {
+        attempts += 1;
+        try {
+          const prompt = buildGrammarPrompt({
+            passage,
+            docTitle,
+            passageIndex: i,
+            difficulty: "basic",
+            manualExcerpt
+          });
+          const response = await openai.chat.completions.create({
+            model: "gpt-4o-mini",
+            temperature: 0.25,
+            max_tokens: 900,
+            messages: [{ role: "user", content: prompt }]
+          });
+          const payload = JSON.parse(stripJsonFences(response.choices?.[0]?.message?.content || ""));
+          const problem = this.formatGrammarProblem(payload, {
+            docTitle,
+            passage,
+            index: results.length
+          });
+          if (!problem) throw new Error("grammar formatting failed");
+          results.push(problem);
+          success = true;
+        } catch (error) {
+          console.warn("[ai-grammar] generation failed:", error?.message || error);
+          if (attempts >= 3) {
+            throw error;
+          }
+        }
+      }
+    }
+
+    return results;
   }
 
   async fetchCached(documentId, type, limit) {
     return database.all(
-      'SELECT * FROM problems WHERE document_id = ? AND type = ? ORDER BY RANDOM() LIMIT ?',
-      [documentId, type, parseInt(limit)]
+      "SELECT * FROM problems WHERE document_id = ? AND type = ? ORDER BY RANDOM() LIMIT ?",
+      [documentId, type, parseInt(limit, 10)]
     );
   }
 
   async saveProblems(documentId, type, problems) {
-    for (const p of problems) {
-      const options = JSON.stringify(p.options || p.choices || []);
-      const answer = Array.isArray(p.answer)
-        ? p.answer.join(',')
-        : String(p.correctAnswer ?? p.answer ?? '');
-      const explanation = p.explanation || '';
-      const difficulty = p.difficulty || 'basic';
-      const mainText = p.mainText || p.text || null;
-      const sentences = Array.isArray(p.sentences) ? JSON.stringify(p.sentences) : null;
-      const metadata = p.metadata ? JSON.stringify(p.metadata) : null;
-
+    for (const item of problems) {
+      const options = JSON.stringify(item.options || []);
+      const answer = Array.isArray(item.answer)
+        ? item.answer.join(',')
+        : String(item.correctAnswer ?? item.answer ?? "");
+      const explanation = item.explanation || "";
+      const difficulty = item.difficulty || "basic";
+      const mainText = item.mainText || item.text || null;
+      const metadata = item.metadata ? JSON.stringify(item.metadata) : null;
       await database.run(
-        `INSERT INTO problems (document_id, type, question, options, answer, explanation, difficulty, is_ai_generated, main_text, sentences, metadata)
-         VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)`,
+        "INSERT INTO problems (document_id, type, question, options, answer, explanation, difficulty, is_ai_generated, main_text, metadata) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)",
         [
           documentId,
           type,
-          p.question || '',
+          item.question || "",
           options,
           answer,
           explanation,
           difficulty,
           mainText,
-          sentences,
           metadata
         ]
       );
     }
   }
-
-  getOpenAI() {
-    if (!process.env.OPENAI_API_KEY || !OpenAI) return null;
-    if (!this._openai) this._openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    return this._openai;
-  }
-
-  async generateBlank(documentId, count = 5) {
-    const { passages } = await this.getPassages(documentId);
-    const problems = [];
-    const openai = this.getOpenAI();
-    if (openai) {
-      for (let i = 0; i < count; i += 1) {
-        const p = passages[i % passages.length];
-        const prompt = `You are an English test item writer. Create ONE cloze (fill-in-the-blank) multiple-choice question from the passage. Return strict JSON only.\nPassage:\n${p}\n\nJSON shape:\n{\n  "type": "blank",\n  "question": "Korean: 다음 글의 빈칸에 들어갈 말로 가장 알맞은 것은?",\n  "text": "Passage excerpt with one blank: _____",\n  "options": ["option1","option2","option3","option4"],\n  "correctAnswer": 1,\n  "explanation": "short rationale in Korean"\n}`;
-        try {
-          const resp = await openai.chat.completions.create({
-            model: 'gpt-4o-mini',
-            temperature: 0.7,
-            max_tokens: 500,
-            messages: [{ role: 'user', content: prompt }]
-          });
-          const txt = stripJsonFences(resp.choices?.[0]?.message?.content || '');
-          const obj = JSON.parse(txt);
-          obj.type = 'blank';
-          problems.push(obj);
-          continue;
-        } catch (e) {
-          // fallthrough to rule-based
-        }
-        problems.push(...await this.generateBlankRule([p], 1));
-      }
-      return problems;
-    }
-
-    return this.generateBlankRule(passages, count);
-  }
-
-  async generateBlankRule(passages, count) {
-    const problems = [];
-    for (let i = 0; i < count; i += 1) {
-      const p = passages[i % passages.length];
-      const words = (p.match(/\b[A-Za-z]{5,}\b/g) || []).slice(0, 200);
-      if (words.length < 4) continue;
-      const answerWord = words[Math.floor(Math.random() * words.length)];
-      const questionText = p.replace(new RegExp(`\\b${answerWord}\\b`), '_____');
-      const distractors = shuffleUnique(words.filter((w) => w.toLowerCase() !== answerWord.toLowerCase()), 3);
-      const options = shuffleUnique([answerWord, ...distractors], 4);
-      const correct = options.findIndex((w) => w === answerWord) + 1;
-      problems.push({
-        type: 'blank',
-        question: '다음 글의 빈칸에 들어갈 말로 가장 알맞은 것은?',
-        text: questionText,
-        options,
-        correctAnswer: correct,
-        explanation: `정답: ${answerWord}`,
-        difficulty: 'basic'
-      });
-    }
-    return problems;
-  }
-
-  async generateVocab(documentId, count = 5) {
-    const { passages } = await this.getPassages(documentId);
-    const problems = [];
-    const openai = this.getOpenAI();
-    for (let i = 0; i < count; i += 1) {
-      const p = passages[i % passages.length];
-      if (openai) {
-        const prompt = `Create ONE vocabulary synonym MCQ from the passage. Return JSON only.\nPassage:\n${p}\nJSON:\n{"type":"vocabulary","question":"문맥상 밑줄 친 단어와 의미가 가장 가까운 것을 고르시오.","text":"... with <u>target</u> underlined ...","options":["A","B","C","D"],"correctAnswer":1,"explanation":"short Korean rationale"}`;
-        try {
-          const resp = await openai.chat.completions.create({
-            model: 'gpt-4o-mini',
-            temperature: 0.7,
-            max_tokens: 500,
-            messages: [{ role: 'user', content: prompt }]
-          });
-          const txt = stripJsonFences(resp.choices?.[0]?.message?.content || '');
-          const obj = JSON.parse(txt);
-          obj.type = 'vocabulary';
-          problems.push(obj);
-          continue;
-        } catch {}
-      }
-      const words = (p.match(/\b[A-Za-z]{6,}\b/g) || []).slice(0, 200);
-      if (words.length < 4) continue;
-      const target = words[Math.floor(Math.random() * words.length)];
-      const options = shuffleUnique([target, ...shuffleUnique(words.filter((w) => w !== target), 3)], 4);
-      const correct = options.findIndex((o) => o === target) + 1;
-      problems.push({
-        type: 'vocabulary',
-        question: `문맥상 '${target}'과 의미가 가까운 단어를 고르시오.`,
-        options,
-        correctAnswer: correct,
-        explanation: '문맥을 통해 의미를 확인하세요.',
-        difficulty: 'basic'
-      });
-    }
-    return problems;
-  }
-
-  async generateTitle(documentId, count = 5) {
-    const { passages } = await this.getPassages(documentId);
-    const problems = [];
-    const openai = this.getOpenAI();
-    for (let i = 0; i < count; i += 1) {
-      const p = passages[i % passages.length];
-      if (openai) {
-        const prompt = `Make ONE 'best title' MCQ for the passage. Return JSON only with fields: type='title', question, options[4], correctAnswer(1-4), explanation(Korean). Passage:\n${p}`;
-        try {
-          const resp = await openai.chat.completions.create({
-            model: 'gpt-4o-mini',
-            temperature: 0.7,
-            max_tokens: 400,
-            messages: [{ role: 'user', content: prompt }]
-          });
-          const obj = JSON.parse(stripJsonFences(resp.choices?.[0]?.message?.content || ''));
-          obj.type = 'title';
-          problems.push(obj);
-          continue;
-        } catch {}
-      }
-      const first = (p.split(/(?<=[.!?])\s+/)[0] || '').trim().slice(0, 60);
-      const base = first.replace(/[^A-Za-z ]/g, '').split(' ').filter(Boolean).slice(0, 5).join(' ');
-      const candidates = shuffleUnique([`${base}` || 'Main Idea', 'A Letter to the Principal', 'Preparing for Exams', 'Library Hours Extension'], 4);
-      problems.push({
-        type: 'title',
-        question: '다음 글의 제목으로 가장 적절한 것은?',
-        options: candidates,
-        correctAnswer: 1,
-        explanation: '글 전체 흐름을 요약해보세요.',
-        difficulty: 'basic'
-      });
-    }
-    return problems;
-  }
-
-  async generateTopic(documentId, count = 5) {
-    const { passages } = await this.getPassages(documentId);
-    const problems = [];
-    const openai = this.getOpenAI();
-    for (let i = 0; i < count; i += 1) {
-      const p = passages[i % passages.length];
-      if (openai) {
-        const prompt = `Make ONE 'main topic' MCQ for the passage. JSON fields: type='theme', question, options[4], correctAnswer(1-4), explanation(Korean). Passage:\n${p}`;
-        try {
-          const resp = await openai.chat.completions.create({
-            model: 'gpt-4o-mini',
-            temperature: 0.7,
-            max_tokens: 400,
-            messages: [{ role: 'user', content: prompt }]
-          });
-          const obj = JSON.parse(stripJsonFences(resp.choices?.[0]?.message?.content || ''));
-          obj.type = 'theme';
-          problems.push(obj);
-          continue;
-        } catch {}
-      }
-      const candidates = ['환경 보호', '학교 정책', '시험 준비', '도서관 이용'];
-      problems.push({
-        type: 'theme',
-        question: '다음 글의 주제로 가장 적절한 것은?',
-        options: shuffleUnique(candidates, 4),
-        correctAnswer: 2,
-        explanation: '주제를 나타내는 핵심 문장을 찾아보세요.',
-        difficulty: 'basic'
-      });
-    }
-    return problems;
-  }
-
-  async generateSummary(documentId, count = 5) {
-    const { passages, document } = await this.getPassages(documentId);
-    const problems = [];
-    const openai = this.getOpenAI();
-    const docTitle = document?.title || `Document ${documentId}`;
-    const manual = readSummaryTemplate(2400);
-
-    for (let i = 0; i < count; i += 1) {
-      const passage = passages[i % passages.length];
-      if (!passage) continue;
-
-      if (openai) {
-        try {
-          const prompt = buildSummaryPrompt({ passage, docTitle, manual });
-          const resp = await openai.chat.completions.create({
-            model: 'gpt-4o-mini',
-            temperature: 0.35,
-            max_tokens: 700,
-            messages: [{ role: 'user', content: prompt }]
-          });
-          const rawText = stripJsonFences(resp.choices?.[0]?.message?.content || '');
-          const parsed = JSON.parse(rawText);
-          const formatted = formatSummaryFromModel(parsed, { passage, docTitle, index: i });
-          if (formatted) {
-            problems.push(formatted);
-            continue;
-          }
-        } catch (err) {
-          console.warn('[aiProblemService] summary generation failed:', err?.message || err);
-        }
-      }
-
-      problems.push(fallbackSummaryProblem(passage, docTitle, i));
-    }
-
-    return problems;
-  }
-
-  async generateGrammar(documentId, count = 5, options = {}) {
-    const { difficulty = 'basic' } = options;
-    const mode = String(difficulty || 'basic').toLowerCase() === 'advanced' ? 'advanced' : 'basic';
-    const { passages, document } = await this.getPassages(documentId);
-    const manual = readGrammarManual();
-    const openai = this.getOpenAI();
-    const problems = [];
-    const docTitle = document?.title || `Document ${documentId}`;
-
-    for (let i = 0; i < count; i += 1) {
-      const passage = passages[i % passages.length];
-      if (!passage) continue;
-
-      if (openai) {
-        try {
-          const prompt = buildGrammarPrompt({ passage, manual, difficulty: mode, docTitle });
-          const resp = await openai.chat.completions.create({
-            model: 'gpt-4o-mini',
-            temperature: mode === 'advanced' ? 0.2 : 0.35,
-            max_tokens: 900,
-            messages: [{ role: 'user', content: prompt }]
-          });
-          const rawText = stripJsonFences(resp.choices?.[0]?.message?.content || '');
-          const parsed = JSON.parse(rawText);
-          const formatted = formatGrammarFromModel(parsed, { difficulty: mode, passage, docTitle, index: i });
-          if (formatted) {
-            problems.push(formatted);
-            continue;
-          }
-        } catch (err) {
-          console.warn(`[ai-grammar:${mode}]`, err?.message || err);
-        }
-      }
-
-      const fallback = mode === 'advanced'
-        ? fallbackGrammarAdvanced(passage, docTitle, i)
-        : fallbackGrammarBasic(passage, docTitle, i);
-      if (fallback) problems.push(fallback);
-    }
-
-    return problems;
-  }
-}
-
-function shuffleUnique(arr, n) {
-  const a = arr.slice();
-  for (let i = a.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a.slice(0, n);
 }
 
 module.exports = new AIProblemService();
