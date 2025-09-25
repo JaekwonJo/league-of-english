@@ -15,19 +15,19 @@
 - Each problem type keeps a dedicated template doc under `docs/problem-templates/` and must pass a validator before being returned by the API.
 - Summary/grammar problems expose the English passage, circled-digit choices (U+2460~U+2464), and `sourceLabel` metadata exactly as manuals dictate.
 - Server enforces 5-question increments (max 20) at the API layer and the study UI mirrors those steps so users scroll through batches instead of single items.
-- Prompt builders render deterministic sections (passage → stem → choices → answer/explanation placeholders) to avoid ad-hoc string patching in the UI.
+- Prompt builders render deterministic sections (passage -> stem -> choices -> answer/explanation placeholders) to avoid ad-hoc string patching in the UI.
 - API base URL continues to come from `client/.env` (`REACT_APP_API_URL`); auth tokens stay in `localStorage` until refresh tokens are introduced.
 
 ## Current Stage
-- Rolling out the refactored AI pipelines (summary + grammar) through `aiProblemService` and `/generate/csat-set`, then hardening the study UI against multi-problem batches.
+- Hardening the refactored summary and grammar batch flow while planning cache/fallback support and automated tests before expanding to other problem types.
 
 ## Next 3 (priority)
 1) Add caching/fallback coverage for summary and grammar so batches survive transient OpenAI failures without dropping the entire study session.
-2) Stand up automated fixtures/tests for the new templates/validators to catch regressions before deploy.
-3) Migrate the remaining CSAT generators (blank, vocabulary, title, theme) onto manual-driven prompts with circled digits and source labels.
+2) Stand up automated fixtures/tests for the new templates and validators to catch regressions before deploy.
+3) Migrate the remaining CSAT generators (blank, vocabulary, title, theme) onto manual-driven prompts with circled digits and source labels so every type shares the same response shape.
 
 ## Known issues
-- ESLint config is missing (`npm run lint` fails), so static analysis is limited to CRA’s build step.
+- ESLint config is missing (`npm run lint` fails), so static analysis is limited to CRA's build step.
 - Irrelevant/implicit generators still use generic sentence heuristics instead of Wolgo-aligned templates.
 - No integration tests yet for `generate/csat-set`; only manual runs cover the multi-type batching logic.
 

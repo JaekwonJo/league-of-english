@@ -90,9 +90,9 @@ This project is proprietary. Do not distribute without permission.
 
 ## Project Roadmap
 
-### Latest Update (2025-09-25)
-- Enforced 5-question batch generation and wired the summary (A/B) template end-to-end (prompt → validator → UI).
-- Docs (PROJECT_STATE.md, BUILDLOG.md) refreshed to reflect the new summary pipeline and count sanitiser.
+### Latest Update (2025-09-26)
+- Focused on resilience for the summary/grammar batch flow: caching/fallbacks, automated template tests, and migrating the remaining CSAT generators onto manual-driven prompts.
+- Synced PROJECT_STATE.md and BUILDLOG.md so the new priorities are clear for the team.
 
 | Step | Description | Status |
 |------|-------------|--------|
