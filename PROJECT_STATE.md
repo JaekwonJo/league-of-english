@@ -1,38 +1,44 @@
 ﻿# PROJECT_STATE.md
 
 ## What we're building
-- League of English CSAT suite: React study client + Express API delivering manual-aligned problem sets for students and teachers.
-- Multi-problem CSAT generators that obey 5-question batch rules, preserve circled-digit options, and surface passage/source metadata for each item.
-- Prompt/validator pairs derived from the Wolgo manuals so AI outputs (grammar, summary, etc.) mirror official exam wording and layout.
+- League of English CSAT suite delivering exam-quality problem sets through an API-driven pipeline for every problem type (summary, grammar, vocabulary, blank, theme, etc.).
+- Persistent problem library that stores vetted AI-generated items, tracks which students have seen each question, and rotates unseen problems automatically.
+- Teacher/student portals built on trustworthy content plus reporting tools so moderators can retire low-quality items quickly.
 
 ## Stack & Commands
-- Node.js 20 Express backend with React 19 (CRA) frontend; lucide-react powers icons/components.
-- SQL.js persists documents/problems today; PostgreSQL migration remains queued after the CSAT templates are finalized.
-- Preferred dev command: `npm run dev:all` (API 5000 + client 3000). `npm run dev`/`npm run client` stay available for single-target work.
-- Refresh manuals via `node scripts/update-problem-manuals.js` so prompt builders keep the latest PDF guidance.
+- Node.js 20 Express backend with React 19 (CRA) frontend; lucide-react powers shared iconography/components.
+- SQL.js still persists documents and generated problems today; PostgreSQL migration remains queued once caching + rotation metadata are finalised.
+- Preferred dev command: `npm run dev:all` (API 5000 + client 3000). `npm run dev`/`npm run client` remain for single-target work.
+- Refresh manuals via `node scripts/update-problem-manuals.js` so prompt builders keep the latest Wolgo guidance while we expand API prompts to new types.
 
 ## Decisions (key)
-- Each problem type keeps a dedicated template doc under `docs/problem-templates/` and must pass a validator before being returned by the API.
-- Summary/grammar problems expose the English passage, circled-digit choices (U+2460~U+2464), and `sourceLabel` metadata exactly as manuals dictate.
-- Server enforces 5-question increments (max 20) at the API layer and the study UI mirrors those steps so users scroll through batches instead of single items.
-- Prompt builders render deterministic sections (passage -> stem -> choices -> answer/explanation placeholders) to avoid ad-hoc string patching in the UI.
+- Retire deterministic/rule-based fallbacks: if the API pipeline cannot return a validated item, we queue regeneration rather than ship lower-quality templates.
+- Every generated problem is stored in the problem library with source metadata, validation status, and exposure tracking before it reaches students.
+- Study sessions draw from cached, unseen problems first; only when a student exhausts the cache do we invoke the API again for that type.
+- Reporting flow lets students flag problematic items; moderators can deactivate them so the cache and rotation immediately exclude the issue.
 - API base URL continues to come from `client/.env` (`REACT_APP_API_URL`); auth tokens stay in `localStorage` until refresh tokens are introduced.
 
 ## Current Stage
-- Hardening the refactored summary and grammar batch flow while planning cache/fallback support and automated tests before expanding to other problem types.
+- Defining the API-only generation scope for the remaining problem types while designing the smart cache/rotation layer and the problem report workflow.
 
 ## Next 3 (priority)
-1) Add caching/fallback coverage for summary and grammar so batches survive transient OpenAI failures without dropping the entire study session.
-2) Stand up automated fixtures/tests for the new templates and validators to catch regressions before deploy.
-3) Migrate the remaining CSAT generators (blank, vocabulary, title, theme) onto manual-driven prompts with circled digits and source labels so every type shares the same response shape.
+1) Replace the remaining rule-based generators (vocabulary, blank, theme, title, etc.) with manual-aligned OpenAI prompts that mirror the Wolgo samples.
+2) Implement the smart cache/resurfacing service that stores generated items, tracks per-student exposure, and falls back to the API only when no unseen problems remain.
+3) Add report/review tooling so flagged questions are quarantined, audited, and removed from both the cache and future study sessions.
 
 ## Known issues
-- ESLint config is missing (`npm run lint` fails), so static analysis is limited to CRA's build step.
-- Irrelevant/implicit generators still use generic sentence heuristics instead of Wolgo-aligned templates.
-- No integration tests yet for `generate/csat-set`; only manual runs cover the multi-type batching logic.
+- ESLint config is still missing (`npm run lint` fails), so static analysis stays limited to CRA's build step.
+- Legacy rule-based generators remain in the codebase until each type migrates to the API prompts.
+- Smart cache and per-student exposure ledger are not implemented yet, so duplicate problems can still resurface.
+
+## Resolved (Today)
+- Documented the API-only mandate across PROJECT_STATE, BUILDLOG, and README so planning references stay accurate.
+- Clarified the smart cache/exposure ledger requirements to prevent duplicate surface of old problems.
+- Captured the rapid report triage workflow so moderators can remove low-quality items without reintroducing fallbacks.
 
 ## Resolved (2025-09-26)
 - Added `server/utils/summaryTemplate.js` and rewrote `aiProblemService` to build/validate CSAT-style summary problems (A/B blanks, circled options, source labels).
 - Integrated the Wolgo grammar template via `server/utils/eobeopTemplate.js`, removed basic/advanced fallbacks, and returned API-only grammar batches with circled options and underlined passages.
 - Rebuilt `/generate/csat-set` route to enforce 5-question steps (max 20), dispatch batched generators, and normalize responses for the React study screen.
 - Updated the study client (`useStudySession`, `StudyConfig`, `ProblemDisplay`, `GrammarProblemDisplay`) to request 5-at-once, render list mode cleanly, and support the new summary/grammar data shape.
+

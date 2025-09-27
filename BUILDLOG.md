@@ -1,3 +1,10 @@
+﻿## 2025-09-27 (API-only roadmap sync)
+- Error: Planning docs still referenced rule-based fallbacks, obscuring the API-only requirement.
+- Cause: Requirements shifted yesterday but PROJECT_STATE.md, README.md, and BUILDLOG.md were left unchanged.
+- Fix: Rewrote What/Features/Roadmap sections to promise API-only generation, smart caching, and rapid report handling.
+- Files: PROJECT_STATE.md, README.md, BUILDLOG.md.
+- Verification: Manual read-through against the new checklist to confirm wording alignment.
+
 ## 2025-09-26 (Docs + resilience focus)
 - Issue: Planning docs still highlighted the initial summary/grammar refactor without the follow-up cache/test/migration priorities, so teammates could miss today's focus.
 - Root cause: After landing the batch refactor we had not realigned PROJECT_STATE.md, README.md, and BUILDLOG.md with the resilience work.

@@ -3,15 +3,16 @@
 League of English is a web application that helps students and teachers generate, solve, and analyse CSAT-style English problems. The project consists of a Node/Express API and a React front-end.
 
 ## Main Features
-- Upload English passages (PDF/TXT) and generate CSAT problem sets (order, insertion, grammar, vocab, etc.).
-- Generate manual-aligned grammar questions (circled-digit options, underlined passages) in five-question batches via the OpenAI pipeline.
-- Generate summary problems with (A)/(B) blanks, circled-digit options, and Korean source labels in five-question batches.
+- Upload English passages (PDF/TXT) and generate CSAT problem sets (order, insertion, grammar, vocabulary, etc.) exclusively through the OpenAI API using Wolgo-aligned prompts.
+- Generate manual-aligned grammar and summary questions with circled-digit options, underlined passages, and validated source labels in five-question batches.
+- Persist every API-generated problem in a shared library, track student exposure, and rotate unseen items before requesting fresh generations.
 - Solve problems with timers, automatic scoring, and result dashboards.
 - Analyse passages sentence-by-sentence with AI-generated explanations.
 - Track personal progress with a stats dashboard (type accuracy + weekly trend).
 - Redeem membership coupons to unlock premium limits and perks.
 - Teachers issue class codes so students can link their accounts for shared analytics.
-- Teachers can review class analytics with 기간/학년/멤버십 필터와 CSV export to support coaching.
+- Teachers can review class analytics with time-range filters and CSV export to support coaching.
+- Students and teachers can report low-quality questions so moderators remove them from the cache instantly.
 - Admin tools for document management, ranking, and vocab exercises.
 
 ## Tech Stack
@@ -90,9 +91,10 @@ This project is proprietary. Do not distribute without permission.
 
 ## Project Roadmap
 
-### Latest Update (2025-09-26)
-- Focused on resilience for the summary/grammar batch flow: caching/fallbacks, automated template tests, and migrating the remaining CSAT generators onto manual-driven prompts.
-- Synced PROJECT_STATE.md and BUILDLOG.md so the new priorities are clear for the team.
+### Latest Update (2025-09-27)
+- Retired the rule-based fallbacks in planning docs so every problem type targets API-only generation.
+- Outlined the smart cache/exposure ledger and fast report triage flow to keep students on fresh, high-quality items.
+- Synced PROJECT_STATE.md and BUILDLOG.md so teammates share the same checklist for today.
 
 | Step | Description | Status |
 |------|-------------|--------|
