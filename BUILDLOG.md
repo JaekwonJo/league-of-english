@@ -1,4 +1,11 @@
-﻿## 2025-09-27 (source labels + summary options)
+## 2025-09-27 (docs sync + API persistence clarity)
+- Issue: Teammates were unsure whether API-generated grammar/summary problems persist in the DB because status docs were stale.
+- Cause: After wiring 'saveProblems' inside '/generate/csat-set', we never refreshed the docs to describe the API-only roadmap and remaining fallback gaps.
+- Fix: Updated PROJECT_STATE.md, README.md, and BUILDLOG.md so they spell out DB persistence, pending fallback removal, and cache priorities.
+- Files: PROJECT_STATE.md, README.md, BUILDLOG.md.
+- Verification: Manual read-through and double-checked 'saveProblems' usage in server/routes/problem.routes.js.
+
+## 2025-09-27 (source labels + summary options)
 - Error: Study screen repeated 출처 prefixes and summary options lost their first letters (e.g. djust, xtending).
 - Cause: API/client sanitizers did not trim existing prefixes and the summary normalizer stripped circled digits without restoring the leading characters.
 - Fix: Added shared source-label cleanup, hardened the summary option formatter, and raised the prompt difficulty to advanced-level distractors.

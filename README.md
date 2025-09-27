@@ -93,10 +93,10 @@ This project is proprietary. Do not distribute without permission.
 ## Project Roadmap
 
 ### Latest Update (2025-09-27)
-- Cleaned duplicated 출처 labels across the API and study UI so each card cites its source once.
-- Hardened the summary option formatter and prompt so advanced-level choices keep their leading letters and en dashes.
-- Restored the grammar study component after the JSX compile error by restructuring the source label rendering.
-- Tracking cache/exposure rollout next, alongside removing the remaining static fallback question banks.
+- Clarified that grammar and summary batches persist automatically through 'saveProblems' so API outputs populate the shared library.
+- Documented the plan to replace remaining rule-based fallback banks (vocabulary, theme, title, blank) with OpenAI-driven generation.
+- Highlighted cache/exposure rotation work so study sessions reuse stored high-quality items before new API calls.
+
 
 | Step | Description | Status |
 |------|-------------|--------|
