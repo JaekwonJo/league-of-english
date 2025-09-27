@@ -1,8 +1,8 @@
 # PROJECT_STATE.md
 
 ## What we're building
-- API-only CSAT English generator that derives every problem type (summary, grammar, vocabulary, blank, theme, etc.) directly from user-uploaded passages.
-- Persistent problem library that stores validated OpenAI outputs with source metadata, exposure tracking, and smart rotation so each student sees unseen items first.
+- API-only CSAT English generator that now derives every problem type (summary, grammar, vocabulary, blank, title, theme, etc.) directly from user-uploaded passages.
+- Persistent problem library that stores validated OpenAI outputs with source metadata, exposure tracking plans, and smart rotation so each student sees unseen items first.
 - Teacher/student portals built on trustworthy content, per-problem reporting, and rich analytics so moderators can retire low-quality items quickly.
 
 ## Stack & Commands
@@ -19,22 +19,22 @@
 - API base URL continues to come from `client/.env` (`REACT_APP_API_URL`); auth tokens stay in `localStorage` until refresh tokens are introduced.
 
 ## Current Stage
-- Auditing each generator to guarantee API-only output, confirming database persistence, and wiring cache/exposure rotation for study sessions.
+- Finalising cache-first delivery now that all problem types save to the library, and wiring per-student exposure tracking plus resilience around OpenAI retries.
 
 ## Next 3 (priority)
-1) Connect `aiProblemService.saveProblems` and cached fetch helpers inside `/generate/csat-set` so grammar/summary pull unseen stored items before new API calls.
-2) Replace the remaining static fallback banks (vocabulary, theme, title, blank) with OpenAI prompts plus retry/queuing so every type is API-driven.
-3) Add regression coverage for `normalizeAll` + `saveProblems` to guard source-label cleanup, option prefixes, and database persistence.
+1) Implement per-student exposure tracking so cached problems skip anyone who has already answered them.
+2) Add structured retry/backoff + background queueing for OpenAI errors to keep study sessions smooth without rule-based fallbacks.
+3) Backfill regression tests for `fetchCached`/`saveProblems` and cache-first routing to catch option/answer/source regressions early.
 
 ## Known issues
 - ESLint config is still missing (`npm run lint` fails), so we rely on CRA build warnings.
-- Vocabulary, title, theme, and blank generators still fall back to static templates when the API errors; removal is in progress.
-- Per-student exposure tracking is not wired yet, so duplicates can resurface until the cache layer ships.
+- Per-student exposure tracking is not wired yet, so duplicates can resurface until we record question usage per user.
+- OpenAI error handling still lacks queued retries and clearer UI feedback, risking session drops if the API hiccups.
 
 ## Resolved (Today)
-- Synced status docs with the API-only roadmap so the team stops expecting rule-based fallbacks.
-- Recorded that grammar and summary batches now save through `saveProblems` for automatic library persistence.
-- Clarified upcoming cache/exposure work and flagged remaining fallback types to keep QA focused on the correct gap.
+- Replaced the remaining rule-based fallbacks by routing blank/vocabulary/title/theme through the OpenAI pipeline with consistent metadata.
+- Updated `/generate/csat-set` to reuse cached problems across every type before scheduling new generations.
+- Hardened `saveProblems`/`fetchCached` so stored items keep options, answers, and `출처` metadata intact for future rotations.
 
 ## Resolved (2025-09-26)
 - Added `server/utils/summaryTemplate.js` and rewrote `aiProblemService` to build/validate CSAT-style summary problems (A/B blanks, circled options, source labels).

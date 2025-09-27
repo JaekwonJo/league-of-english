@@ -1,3 +1,10 @@
+## 2025-09-27 (cache-first API conversions)
+- Issue: Blank, vocabulary, title, and theme still fell back to rule-based templates so cached problems never grew and students saw repeats.
+- Cause: `/generate/csat-set` only cached grammar/summary outputs and the other generators skipped `saveProblems`, so the DB never stored those items.
+- Fix: Routed all types through `fetchCached` -> OpenAI -> `saveProblems`, and normalized persistence so options/answers/source metadata stay intact.
+- Files: server/services/aiProblemService.js, server/routes/problem.routes.js.
+- Verification: `node -e "require('./server/services/aiProblemService.js')"`, `node -e "require('./server/routes/problem.routes.js')"`, manual study run to confirm API-only cards rotate from DB.
+
 ## 2025-09-27 (docs sync + API persistence clarity)
 - Issue: Teammates were unsure whether API-generated grammar/summary problems persist in the DB because status docs were stale.
 - Cause: After wiring 'saveProblems' inside '/generate/csat-set', we never refreshed the docs to describe the API-only roadmap and remaining fallback gaps.
