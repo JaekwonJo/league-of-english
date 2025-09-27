@@ -1,4 +1,11 @@
-﻿## 2025-09-27 (API-only roadmap sync)
+﻿## 2025-09-27 (source labels + summary options)
+- Error: Study screen repeated 출처 prefixes and summary options lost their first letters (e.g. djust, xtending).
+- Cause: API/client sanitizers did not trim existing prefixes and the summary normalizer stripped circled digits without restoring the leading characters.
+- Fix: Added shared source-label cleanup, hardened the summary option formatter, and raised the prompt difficulty to advanced-level distractors.
+- Files: server/services/aiProblemService.js, server/utils/summaryTemplate.js, client/src/components/study/ProblemDisplay.js, client/src/components/study/GrammarProblemDisplay.js.
+- Verification: npm run build; manual study session reload confirmed intact options and single 출처 labels.
+
+## 2025-09-27 (API-only roadmap sync)
 - Error: Planning docs still referenced rule-based fallbacks, obscuring the API-only requirement.
 - Cause: Requirements shifted yesterday but PROJECT_STATE.md, README.md, and BUILDLOG.md were left unchanged.
 - Fix: Rewrote What/Features/Roadmap sections to promise API-only generation, smart caching, and rapid report handling.
@@ -93,6 +100,7 @@
 - Fix: refactored `InsertionProblemGenerator2` to render full passages then convert markers and choices to circled numbers (①~⑤).
 - Files: `server/utils/insertionProblemGenerator2.js`, regenerated `generated_insertion_problems.json`, docs (`PROJECT_STATE.md`, `README.md`).
 - Verification: ran `node generate_insertion_problems.js`, reviewed problems 5·19·21 in study preview for correct layout and numbering.
+
 
 
 

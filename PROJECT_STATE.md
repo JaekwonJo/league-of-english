@@ -19,26 +19,29 @@
 - API base URL continues to come from `client/.env` (`REACT_APP_API_URL`); auth tokens stay in `localStorage` until refresh tokens are introduced.
 
 ## Current Stage
-- Defining the API-only generation scope for the remaining problem types while designing the smart cache/rotation layer and the problem report workflow.
+- Hardening the API-only grammar and summary generators while preparing the cache and exposure tracker rollout.
 
 ## Next 3 (priority)
-1) Replace the remaining rule-based generators (vocabulary, blank, theme, title, etc.) with manual-aligned OpenAI prompts that mirror the Wolgo samples.
-2) Implement the smart cache/resurfacing service that stores generated items, tracks per-student exposure, and falls back to the API only when no unseen problems remain.
-3) Add report/review tooling so flagged questions are quarantined, audited, and removed from both the cache and future study sessions.
+1) Hook aiProblemService.saveProblems and fetchCached into /generate/csat-set so unseen items rotate before new API calls.
+2) Replace the static fallback question banks for vocabulary, theme, and title with API retries plus clear user messaging.
+3) Add regression tests covering summary option normalization and source-label sanitizing on both server and client.
 
 ## Known issues
-- ESLint config is still missing (`npm run lint` fails), so static analysis stays limited to CRA's build step.
-- Legacy rule-based generators remain in the codebase until each type migrates to the API prompts.
-- Smart cache and per-student exposure ledger are not implemented yet, so duplicate problems can still resurface.
+- ESLint config is still missing (npm run lint fails), so we rely on CRA build warnings.
+- Static fallback problem banks still ship when OpenAI errors, conflicting with the API-only mandate until we wire robust retries.
+- Per-student exposure tracking is not wired yet, so duplicates can resurface until the cache layer ships.
 
 ## Resolved (Today)
-- Documented the API-only mandate across PROJECT_STATE, BUILDLOG, and README so planning references stay accurate.
-- Clarified the smart cache/exposure ledger requirements to prevent duplicate surface of old problems.
-- Captured the rapid report triage workflow so moderators can remove low-quality items without reintroducing fallbacks.
+- Trimmed duplicate 출처 prefixes on API responses and study cards so Wolgo titles display correctly.
+- Strengthened the summary option normalizer so circled choices keep their leading letters and en dashes (fixes djust, xtending).
+- Raised the summary prompt difficulty to advanced and seeded variant tags for richer distractors.
+- Repaired the grammar study component after the JSX parse error by rebuilding the source label renderer.
 
 ## Resolved (2025-09-26)
 - Added `server/utils/summaryTemplate.js` and rewrote `aiProblemService` to build/validate CSAT-style summary problems (A/B blanks, circled options, source labels).
 - Integrated the Wolgo grammar template via `server/utils/eobeopTemplate.js`, removed basic/advanced fallbacks, and returned API-only grammar batches with circled options and underlined passages.
 - Rebuilt `/generate/csat-set` route to enforce 5-question steps (max 20), dispatch batched generators, and normalize responses for the React study screen.
 - Updated the study client (`useStudySession`, `StudyConfig`, `ProblemDisplay`, `GrammarProblemDisplay`) to request 5-at-once, render list mode cleanly, and support the new summary/grammar data shape.
+
+
 
