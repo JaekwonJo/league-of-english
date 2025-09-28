@@ -5,7 +5,7 @@ League of English is a web application that helps students and teachers generate
 ## Main Features
 - Upload English passages (PDF/TXT) and generate CSAT problem sets (order, insertion, grammar, vocabulary, etc.) exclusively through the OpenAI API using Wolgo-aligned prompts.
 - Generate manual-aligned grammar and summary questions with circled-digit options, underlined passages, and validated source labels in five-question batches.
-- Study cards show a single 출처 label with advanced-level options that mirror Wolgo exam formatting and stay in sync with the saved library copy.
+- Study cards show a single 출처 label with advanced-level options that mirror Wolgo exam formatting and stay aligned with the saved library copy.
 - Persist every API-generated problem in a shared library, rotate cached items before hitting the API again, and prepare student-level exposure tracking.
 - Solve problems with timers, automatic scoring, and result dashboards.
 - Analyse passages sentence-by-sentence with AI-generated explanations.
@@ -92,10 +92,10 @@ This project is proprietary. Do not distribute without permission.
 
 ## Project Roadmap
 
-### Latest Update (2025-09-27)
-- Completed the cache-first pipeline so blank/vocabulary/title/theme now generate via OpenAI and persist alongside grammar/summary.
-- `/generate/csat-set` now reuses stored problems across every type before invoking the API, eliminating rule-based fallbacks.
-- Next focus: per-student exposure tracking and OpenAI retry/queueing so rotations stay personalised and resilient.
+### Latest Update (2025-09-28)
+- Synced the roadmap/docs to underline the API-only policy (order/insertion remain scripted for now) and the refreshed sanitiser behaviour.
+- Documented the source-label + option-prefix fixes so study cards always render a single 출처 tag with intact leading letters.
+- Immediate focus: per-student exposure tracking and OpenAI retry/queueing so rotations stay personal and resilient.
 
 
 | Step | Description | Status |
