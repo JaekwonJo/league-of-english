@@ -1,131 +1,182 @@
-2024년도 9월 1학년 2024년9월고1모의고사
-- 1 -
-진진영어
-다음 글의 밑줄 친 부분 중, 어법상 틀린 것은? [21]
-One valuable technique for getting out of helplessness,
-depression, and situations which are predominantly
-being run by the thought, “I can’t,” is to choose to be
-with other persons ① who have resolved the problem
-which we struggle. This is ② one great power of self-
-help groups. When we are in a negative state, we have
-given a lot of energy to negative thought forms, and
-the positive thought forms are weak. ③ Those in a
-higher vibration are free of the energy from their
-negative thoughts and have energized positive thought
-forms. ④ Just being around them is beneficial. In some
-self-help groups, this is called “hanging out with the
-winners.” The benefit here is on the psychic level of
-consciousness, and there is a transfer of positive
-energy and ⑤ relighting one’s own latent positive
-thought forms.
-다음 글의 밑줄 친 부분 중, 어법상 틀린 것은? [22]
-Our emotions are thought to exist because they have
-contributed to our survival as a species. Fear has ①
-helped us avoid dangers, expressing anger helps us
-scare off threats, and expressing positive emotions
-helps us bond with others. From an evolutionary
-perspective, an emotion is a kind of “program” that, ②
-when triggered, directs many of our activities
-(including attention, perception, memory, movement,
-expressions, etc.). For example, fear makes us very
-attentive, narrows our perceptual focus to threatening
-stimuli, will cause us either to face a situation (fight)
-or ③ avoids it (flight), and may cause us to remember
-an experience more acutely (so that we avoid the
-threat in the future). Regardless of the specific ways in
-which they activate our systems, the specific emotions
-we possess ④ are thought to exist because they have
-helped us (as a species) survive challenges within our
-environment long ago. If they ⑤ had not helped us
-adapt and survive, they would not have evolved with
-us.
-다음 글의 밑줄 친 부분 중, 어법상 틀린 것은? [32]
-Every time a new medium comes along — whether it’s
-the invention of the printed book, or TV, or SNS — and
-you start to use it, it’s like you ① are putting on a new
-kind of goggles, with their own special colors and
-lenses. Each set of goggles you put on ② make you
-see things differently. So when you start to watch
-television, before you absorb the message of any
-particular TV show — whether it’s Wheel of Fortune or
-The Wire — you start ③ seeing the world as being
-shaped like television itself. That’s ④ why Marshall
-McLuhan said that every time a new medium comes
-along — a new way for humans to communicate — it
-has buried in it a message. It is gently guiding us to
-see the world according to a new set of codes. The way
-information gets to you, McLuhan argued, is more
-important than the information itself. TV teaches you
-⑤ that the world is fast; that it’s about surfaces and
-appearances.
-다음 글의 밑줄 친 부분 중, 어법상 틀린 것은? [21]
-One valuable technique for getting out of helplessness,
-depression, and situations which are predominantly
-being run by the thought, “I can’t,” ① is to choose to
-be with other persons who have resolved the problem
-with which we struggle. This is one of the great powers
-of self-help groups. When we are in a negative state,
-we ② have given a lot of energy to negative thought
-forms, and the positive thought forms are weak. ③
-Those who are in a higher vibration are free of the
-energy from their negative thoughts and have
-energized positive thought forms. Merely ④ to be in
-their presence is beneficial. In some self-help groups,
-⑤ which is called “hanging out with the winners.” The
-benefit here is on the psychic level of consciousness,
-and there is a transfer of positive energy and relighting
-of one’s own latent positive thought forms.
-* latent: 잠재적인
-다음 글의 밑줄 친 부분 중, 어법상 틀린 것은? [22]
-1.
-2.
-3.
-4.
-5.
+# 📚 LoE 어법 변형 출제 매뉴얼 Master (Final)
 
-2024년도 9월 1학년 2024년9월고1모의고사
-- 2 -
-진진영어
-Our emotions are thought to exist because they have
-contributed to our survival as a species. Fear
-has helped us avoid dangers, expressing anger helps
-us scare off threats, and expressing positive emotions
-helps us ① bond with others. From an evolutionary
-perspective, an emotion is a kind of “program” ②
-which, when triggered, directs many of our activities
-(including attention, perception, memory, movement,
-expressions, etc.). For example, fear makes us very
-attentive, narrows our perceptual focus to threatening
-stimuli, will cause us either to face a situation (fight)
-or avoid it (flight), and may cause us to remember an
-experience ③ more acute (so that we avoid the threat
-in the future). Regardless of the specific ways ④ in
-which they activate our systems, the specific emotions
-we possess are thought to exist because they have
-helped us (as a species) survive challenges within our
-environment long ago. If they had not helped us adapt
-and survive, they would not ⑤ have evolved with us.
-다음 글의 밑줄 친 부분 중, 어법상 틀린 것은? [32]
-Every time a new medium ① comes along — whether
-it’s the invention of the printed book, or TV, or SNS —
-and you start to use it, it’s like you are putting on a
-new kind of goggles, with their own special colors and
-lenses. Each set of goggles you put on ② make you
-see things differently. So when you start to watch
-television, before you absorb the message of any
-particular TV show — whether it’s Wheel of Fortune or
-The Wire — you start ③ to see the world as being
-shaped like television itself. That’s why Marshall
-McLuhan said ④ that every time a new medium comes
-along — a new way for humans to communicate — it
-has buried in it a message. It is gently guiding us to
-see the world according to a new set of codes. The way
-information gets to you, McLuhan argued, ⑤ is more
-important than the information itself. TV teaches you
-that the world is fast; that it’s about surfaces and
-appearances.
-다음 글의 밑줄 친 부분 중, 어법상 틀린 것은? [21]
-One valuable technique for getting out of helplessness,
-depression, and situations which are predominantly
-being run by the thought, “I can’t,” ① is to choose to
-be with other persons who have resolved th
+용도: GPT-5(당신)가 업로드된 원문을 기반으로 고등학교 어법 문제 실전형(중상~최상 난도) 어법 변형 문제를 대량·일관 생산하기 위한 최종 규칙집.
+
+핵심 철학: 원문 전체 제시 → 문장 속 밑줄 5개 → 단 1개만 정교한 오류 → 실전형 해설.
+
+출처 표기 규격: 문제 최상단에 반드시 `출처: 파일명_pX-no.XX` 형식으로 표기.
+
+---
+
+## 0) 용어 정리
+
+* **원문 고정(Source lock)**: 원문 철자/어순/구성/구두점을 그대로 유지.
+* **통합형 문제(Inline)**: 원문 전체 문단을 그대로 제시하고, 문장 내부에 ①~⑤ 밑줄 번호를 삽입. 별도 선택지 목록은 두지 않는다.
+* **오류(Erroneous slot)**: 5개 밑줄 중 딱 1개만 어법상 오류. 나머지 4개는 원문 그대로이거나 문법적으로 완전한 동등형.
+* **원문 전체(Full-passage)**: 발췌 금지. 해당 문제에 쓰는 원문 단락은 처음부터 끝까지 모두 제시.
+
+---
+
+## 1) 적용 범위 & 난이도
+
+* **대상 원문**: 업로드된 LoE.pdf
+* **난이도 목표**: 고2 상위권~고3 수준 중상~최상 난도.
+* **금지**: 초보형/노골형 오류(예: there is many N, 단순 시제/단복수 오타성) 절대 금지.
+
+---
+
+## 2) 문제 형식(통합형) — 원문 전체 + 밑줄 5개
+
+* 문제 구성:
+
+  1. 출처 라벨
+  2. 원문 전체(문단 단위)
+  3. 정답·해설 (간결·정확, 문제 마지막에)
+
+* **밑줄 규칙**:
+
+  * ①~⑤ 5개만 부여.
+  * 원문 동등형(문법적 정답)일 수 있으나 의미·용법 일치해야 함.
+  * 오류는 정확히 1개.
+
+---
+
+## 3) 허용 오류 유형 (고급형 전용 라이브러리)
+
+> 모든 오류는 원문에 실존하는 구조 기반, 최소 편집으로만 변형.
+
+**A. 전치사·관계사·접속사 구별**
+
+* 전치사 잔류 vs 도치: *which S V (P)* ↔ *P + which S V*
+* 관계대명사/관계부사/접속사 혼동
+* 전치사 선택·탈락: *rely on*, *coping with* 등
+
+**B. 병렬 구조**
+
+* 부정사 병렬
+* 동명사/분사 병렬
+* 구 패턴 병렬, 등위 접속사 병렬, 상관접속사 병렬
+* 동사/준동사 병렬: 해석 기반 고난도
+
+**C. 형용사/부사·수식어 위치**
+
+* 보어 자리: 형용사만 가능 (*is relative*)
+* 부사 위치: 동사/형용사/문장 수식 자연성
+* 명사 수식: 형용사만, 부사 불가 (*potential power*)
+
+**D. 비정형식·준동사 선택**
+
+* *to부정사 ↔ to+동명사*
+* 한국인이 헷갈리는 전치사 to VS to부정사
+
+**E. 분사/태**
+
+* 능동/수동 분사
+* 불필요 수동/불가능 수동 금지
+* 자동사, 타동사 구별/태 구별
+
+**F. 가정법·시제**
+
+* *Had + S + p.p., S would/could have p.p.*
+* 혼합 시제 금지: *would have p.p. and V* (×) → *would have p.p. and have p.p.*
+* 혼합 가정법, without가정법, as if , as though 가정법
+* to부정사, 동명사, 분사의 시제, 태
+
+**G. 부정어/강조/대동사**
+
+* 부정어 도치·시제 정합
+* 강조동사/대동사 용법
+
+**H. 5형식·사역·지각동사**
+
+* so that 구문, 5형식 목적보어 일치성
+* 5형식동사의 목적격 보어의 형태와 능동 vs 수동 구분하기
+
+**I. 도치·강조 구문**
+
+* 도치 어순/시제 정합
+* 강조 구문 *It is/was … that ~*에서 시제·일치 오류
+
+**J. 일치성 문제(대명사·시제 일치)**
+
+* 대명사의 수일치, 선행사 불일치
+* 시제 일관성
+
+---
+
+## 4) 금지 목록 (Hard NO)
+
+* 단순 오타형 (there is many, have has)
+* 억지·부자연스러운 오류
+* 원문 의미 훼손/정보 추가 삭제
+* 어순 재배열, 구두점 변형
+* 5개 중 2개 이상 오류 생성
+
+---
+
+## 5) 밑줄 선정 휴리스틱
+
+* 핵심 문법 지점: 전치사구, 관계사절 머리, 병렬 두 번째 항, 보어, 준동사
+* 의미 핵심 손대지 않기: 고유명사·수치 등 금지
+* 최소 편집: 철자/품사/전치사/준동사 교체 1회
+* 난이도 조절: 문장 중후반, 병렬 비대칭 활용
+
+---
+
+## 6) 오류 삽입 원자 연산
+
+* 전치사 교체/탈락/추가: *with → of*, *on which ↔ which … on*
+* 관계사 치환: *when ↔ which*, *that ↔ which*
+* 형태 전환: *return ↔ returning*
+* 보어 품사 변환: *relative ↔ relatively*
+* 준동사 교체: *to V ↔ to V-ing*
+* 병렬 to 생략/유지 불일치
+* 가정법 조동사 위배: *would have p.p. and V*
+
+---
+
+## 7) 생성 알고리즘(체크리스트)
+
+1. 원문 단락 전체 복사
+2. 밑줄 5곳 지정
+3. 오류 유형 A~J 중 1개 선택
+4. 원자 연산 1회로 오류 삽입
+5. 자체 검수: 의미 유지·정답 유일·난도 충족·해설 간결
+6. 출력 포맷 준수
+
+---
+
+## 8) 출력 포맷
+
+```
+출처: 파일명_pX-no.XX
+
+[원문 전체 단락]
+… **① [원문/변형]** … **② [원문/변형]** … **③ [원문/변형]** … **④ [원문/변형]** … **⑤ [원문/변형]** …
+
+**정답: ③**
+- 해설: [오류 규칙 1문장]. [나머지 4개 정답 근거 1~2문장].
+```
+
+---
+
+## 9) QA 체크리스트
+
+* 원문 완전 동일 제시
+* 밑줄 5개 중 오류는 단 1개
+* 오류는 A~J 고급 유형 중 1개
+* 최소 편집 적용
+* 의미·논지 보존
+* 난도 중상~최상
+* 해설: 규칙+검증, 간결
+
+---
+
+## 10) 운영 정책
+
+* 모든 변경은 본 Master에 통합
+* 문제 생성은 항상 이 문서를 유일 참조 규칙으로 사용
+
+---
+
+✅ 결론: 이 Master를 따르면 생성 문제는 언제나 ① 원문 전체 고정, ② 밑줄 5개 중 오류 1개, ③ 실전형 고급 문법 함정, ④ 한국식 해설을 만족한다.

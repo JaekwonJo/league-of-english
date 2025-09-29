@@ -1,226 +1,296 @@
 /**
- * StudyPage: ÌïôÏäµ Î¨∏Ï†úÎ•º Íµ¨ÏÑ±ÌïòÍ≥† ÌíÄÏù¥ÌïòÎäî Î©îÏù∏ ÌéòÏù¥ÏßÄ
+ * StudyPage: «–Ω¿ πÆ¡¶∏¶ ±∏º∫«œ∞Ì «Æ¿Ã«œ¥¬ ∏ﬁ¿Œ ∆‰¿Ã¡ˆ
  */
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import apiService from "../services/api.service";
-import problemRegistry from "../services/problemRegistry";
 import StudyConfig from "../components/study/StudyConfig";
 import ProblemDisplay from "../components/study/ProblemDisplay";
 import ScoreHUD from "../components/study/ScoreHUD";
 import StudyResult from "../components/study/StudyResult";
-import logger from "../utils/logger";
+import useStudySession, { formatSeconds } from "../hooks/useStudySession";
+
+const VOCAB_FLASHCARDS = [
+  { word: "abandon", meaning: "πˆ∏Æ¥Ÿ, ∆˜±‚«œ¥Ÿ" },
+  { word: "abstract", meaning: "√ﬂªÛ¿˚¿Œ, ¿Ã∑–¿˚¿Œ" },
+  { word: "accompany", meaning: "µøπ›«œ¥Ÿ, «‘≤≤ ∞°¥Ÿ" },
+  { word: "accumulate", meaning: "√‡¿˚«œ¥Ÿ, ∏¿∏¥Ÿ" },
+  { word: "adapt", meaning: "¿˚¿¿«œ¥Ÿ, ∏¬√ﬂ¥Ÿ" },
+  { word: "adjust", meaning: "¡∂¡§«œ¥Ÿ, ¿˚¿¿«œ¥Ÿ" },
+  { word: "advocate", meaning: "øÀ»£«œ¥Ÿ, ¡ˆ¡ˆ«œ¥Ÿ" },
+  { word: "allocate", meaning: "«“¥Á«œ¥Ÿ, πË∫–«œ¥Ÿ" },
+  { word: "alter", meaning: "πŸ≤Ÿ¥Ÿ, ºˆ¡§«œ¥Ÿ" },
+  { word: "analyze", meaning: "∫–ºÆ«œ¥Ÿ" },
+  { word: "approach", meaning: "¡¢±Ÿ«œ¥Ÿ, ¥Ÿ∞°∞°¥Ÿ" },
+  { word: "assume", meaning: "∞°¡§«œ¥Ÿ, ∂∞∏√¥Ÿ" },
+  { word: "assure", meaning: "∫∏¿Â«œ¥Ÿ, »ÆΩ≈Ω√≈∞¥Ÿ" },
+  { word: "attempt", meaning: "Ω√µµ«œ¥Ÿ" },
+  { word: "attribute", meaning: "~¿« ≈ø¿∏∑Œ µπ∏Æ¥Ÿ" },
+  { word: "bias", meaning: "∆Ì∞ﬂ, º±¿‘∞ﬂ" },
+  { word: "capacity", meaning: "ºˆøÎ∑¬, ¥…∑¬" },
+  { word: "cease", meaning: "±◊∏∏µŒ¥Ÿ, ¡ﬂ¡ˆ«œ¥Ÿ" },
+  { word: "coherent", meaning: "¿œ∞¸µ», ≥Ì∏Æ¿˚¿Œ" },
+  { word: "coincide", meaning: "¿œƒ°«œ¥Ÿ, µøΩ√ø° ¿œæÓ≥™¥Ÿ" },
+  { word: "collapse", meaning: "∫ÿ±´«œ¥Ÿ, π´≥ ¡ˆ¥Ÿ" },
+  { word: "combine", meaning: "∞·«’«œ¥Ÿ" },
+  { word: "commence", meaning: "Ω√¿€«œ¥Ÿ" },
+  { word: "commit", meaning: "¿˙¡ˆ∏£¥Ÿ, «ÂΩ≈«œ¥Ÿ" },
+  { word: "commodity", meaning: "ªÛ«∞, ø¯¿⁄¿Á" },
+  { word: "compensate", meaning: "∫∏ªÛ«œ¥Ÿ" },
+  { word: "compile", meaning: "∆Ì¡˝«œ¥Ÿ, ºˆ¡˝«œ¥Ÿ" },
+  { word: "complement", meaning: "∫∏øœ«œ¥Ÿ, ∫∏√Êπ∞" },
+  { word: "comply", meaning: "µ˚∏£¥Ÿ, ¡ÿºˆ«œ¥Ÿ" },
+  { word: "comprehensive", meaning: "¡æ«’¿˚¿Œ, ∆˜∞˝¿˚¿Œ" },
+  { word: "conceive", meaning: "ª˝∞¢«ÿ ≥ª¥Ÿ, ªÛªÛ«œ¥Ÿ" },
+  { word: "conclude", meaning: "∞·∑–¡˛¥Ÿ, ≥°≥ª¥Ÿ" },
+  { word: "conduct", meaning: "ºˆ«‡«œ¥Ÿ, ¡ˆ»÷«œ¥Ÿ" },
+  { word: "confer", meaning: "ªÛ¿««œ¥Ÿ, ºˆø©«œ¥Ÿ" },
+  { word: "confirm", meaning: "»Æ¿Œ«œ¥Ÿ, »Æ¡§«œ¥Ÿ" },
+  { word: "confront", meaning: "¡˜∏È«œ¥Ÿ, ∏¬º≠¥Ÿ" },
+  { word: "consequence", meaning: "∞·∞˙, ¡ﬂø‰º∫" },
+  { word: "conserve", meaning: "∫∏¡∏«œ¥Ÿ" },
+  { word: "consistent", meaning: "¿œ∞¸µ», «—∞·∞∞¿∫" },
+  { word: "construct", meaning: "∞«º≥«œ¥Ÿ, ±∏º∫«œ¥Ÿ" },
+  { word: "consult", meaning: "ªÛ¥„«œ¥Ÿ, ¬¸∞Ì«œ¥Ÿ" },
+  { word: "consume", meaning: "º“∫Ò«œ¥Ÿ" },
+  { word: "contain", meaning: "∆˜«‘«œ¥Ÿ, æÔ¡¶«œ¥Ÿ" },
+  { word: "contemporary", meaning: "µøΩ√¥Î¿«, «ˆ¥Î¿«" },
+  { word: "contradict", meaning: "∏º¯µ«¥Ÿ, π›π⁄«œ¥Ÿ" },
+  { word: "contribute", meaning: "±‚ø©«œ¥Ÿ, ±‚∫Œ«œ¥Ÿ" },
+  { word: "convert", meaning: "¿¸»Ø«œ¥Ÿ, ∞≥¡∂«œ¥Ÿ" },
+  { word: "convince", meaning: "≥≥µÊΩ√≈∞¥Ÿ, »ÆΩ≈Ω√≈∞¥Ÿ" },
+  { word: "cooperate", meaning: "«˘∑¬«œ¥Ÿ" },
+  { word: "coordinate", meaning: "¡∂¡§«œ¥Ÿ, ¡∂»≠Ω√≈∞¥Ÿ" },
+  { word: "corporate", meaning: "±‚æ˜¿«, ∞¯µø¿«" },
+  { word: "correspond", meaning: "¿œƒ°«œ¥Ÿ, º≠Ω≈¿ª ¡÷∞Ìπﬁ¥Ÿ" },
+  { word: "crucial", meaning: "¡ﬂø‰«—, ∞·¡§¿˚¿Œ" },
+  { word: "decline", meaning: "∞®º“«œ¥Ÿ, ∞≈¿˝«œ¥Ÿ" },
+  { word: "deduce", meaning: "√ﬂ∑–«œ¥Ÿ" },
+  { word: "define", meaning: "¡§¿««œ¥Ÿ" },
+  { word: "demonstrate", meaning: "¡ı∏Ì«œ¥Ÿ, Ω√¿ß«œ¥Ÿ" },
+  { word: "derive", meaning: "æÚ¥Ÿ, ≤¯æÓ≥ª¥Ÿ" },
+  { word: "detect", meaning: "∞®¡ˆ«œ¥Ÿ, πﬂ∞ﬂ«œ¥Ÿ" },
+  { word: "determine", meaning: "∞·¡§«œ¥Ÿ, ∞·Ω…«œ¥Ÿ" },
+  { word: "diminish", meaning: "¡ŸæÓµÈ¥Ÿ, √‡º“«œ¥Ÿ" },
+  { word: "discard", meaning: "πˆ∏Æ¥Ÿ, ∆Û±‚«œ¥Ÿ" },
+  { word: "discipline", meaning: "»∆∑√, ±‘¿≤" },
+  { word: "display", meaning: "¿¸Ω√«œ¥Ÿ, µÂ∑Ø≥ª¥Ÿ" },
+  { word: "distinct", meaning: "∂—∑««—, ∫∞∞≥¿«" },
+  { word: "distribute", meaning: "∫–πË«œ¥Ÿ, ¿Ø≈Î«œ¥Ÿ" },
+  { word: "diverse", meaning: "¥ŸæÁ«—" },
+  { word: "dominate", meaning: "¡ˆπË«œ¥Ÿ" },
+  { word: "eliminate", meaning: "¡¶∞≈«œ¥Ÿ, æ¯æ÷¥Ÿ" },
+  { word: "emerge", meaning: "≥™≈∏≥™¥Ÿ, ∫ŒªÛ«œ¥Ÿ" },
+  { word: "enable", meaning: "∞°¥…«œ∞‘ «œ¥Ÿ" },
+  { word: "encounter", meaning: "∏∂¡÷ƒ°¥Ÿ, ∞ﬁ¥Ÿ" },
+  { word: "enhance", meaning: "∞≠»≠«œ¥Ÿ, ≥Ù¿Ã¥Ÿ" },
+  { word: "ensure", meaning: "∫∏¿Â«œ¥Ÿ" },
+  { word: "equivalent", meaning: "µøµÓ«— ∞Õ, µøµÓ«—" },
+  { word: "evaluate", meaning: "∆Ú∞°«œ¥Ÿ" },
+  { word: "evolve", meaning: "¡¯»≠«œ¥Ÿ, πﬂ¿¸«œ¥Ÿ" },
+  { word: "exceed", meaning: "√ ∞˙«œ¥Ÿ" },
+  { word: "execute", meaning: "ºˆ«‡«œ¥Ÿ, √≥«¸«œ¥Ÿ" },
+  { word: "expand", meaning: "»Æ¿Â«œ¥Ÿ" },
+  { word: "exploit", meaning: "¿ÃøÎ«œ¥Ÿ, ¬¯√Î«œ¥Ÿ" },
+  { word: "expose", meaning: "≥Î√‚Ω√≈∞¥Ÿ" },
+  { word: "extend", meaning: "ø¨¿Â«œ¥Ÿ, ¥√∏Æ¥Ÿ" },
+  { word: "facilitate", meaning: "øÎ¿Ã«œ∞‘ «œ¥Ÿ" },
+  { word: "fulfill", meaning: "¿Ã«‡«œ¥Ÿ, ¥ﬁº∫«œ¥Ÿ" },
+  { word: "generate", meaning: "ª˝º∫«œ¥Ÿ, ∏∏µÈæÓ≥ª¥Ÿ" },
+  { word: "illustrate", meaning: "º≥∏Ì«œ¥Ÿ, ª»≠∏¶ ≥÷¥Ÿ" },
+  { word: "implement", meaning: "Ω««‡«œ¥Ÿ, µµ±∏" },
+  { word: "imply", meaning: "æœΩ√«œ¥Ÿ" },
+  { word: "impose", meaning: "∫Œ∞˙«œ¥Ÿ, ∞≠ø‰«œ¥Ÿ" },
+  { word: "incentive", meaning: "¿Â∑¡√•, ¿Ø¿Œ" },
+  { word: "indicate", meaning: "≥™≈∏≥ª¥Ÿ, ∞°∏Æ≈∞¥Ÿ" },
+  { word: "inevitable", meaning: "«««“ ºˆ æ¯¥¬" },
+  { word: "interpret", meaning: "«ÿºÆ«œ¥Ÿ, ≈Îø™«œ¥Ÿ" },
+  { word: "maintain", meaning: "¿Ø¡ˆ«œ¥Ÿ, ¡÷¿Â«œ¥Ÿ" },
+  { word: "mature", meaning: "º∫º˜«—, º∫º˜«ÿ¡ˆ¥Ÿ" },
+  { word: "modify", meaning: "ºˆ¡§«œ¥Ÿ" },
+  { word: "monitor", meaning: "∞®Ω√«œ¥Ÿ, ¡÷Ω√«œ¥Ÿ" },
+  { word: "motivate", meaning: "µø±‚∏¶ ∫Œø©«œ¥Ÿ" },
+  { word: "neutral", meaning: "¡ﬂ∏≥¿«" }
+];
+
+const REVEAL_STEP_SECONDS = 3;
+
+
+const pickFlashcards = (count = 3) => {
+  const pool = [...VOCAB_FLASHCARDS];
+  const picked = [];
+  while (pool.length && picked.length < count) {
+    const index = Math.floor(Math.random() * pool.length);
+    picked.push(pool.splice(index, 1)[0]);
+  }
+  return picked;
+};
+
+const LoadingState = ({ vocabCards = [], revealStepSeconds = REVEAL_STEP_SECONDS }) => {
+  const [countdowns, setCountdowns] = useState([]);
+
+  useEffect(() => {
+    if (!vocabCards.length) {
+      setCountdowns([]);
+      return undefined;
+    }
+
+    const initial = vocabCards.map((_, index) => (index + 1) * revealStepSeconds);
+    setCountdowns(initial);
+
+    const interval = setInterval(() => {
+      setCountdowns((prev) => {
+        const next = prev.map((value) => (value > 0 ? value - 1 : 0));
+        if (next.every((value) => value === 0)) {
+          clearInterval(interval);
+        }
+        return next;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [vocabCards, revealStepSeconds]);
+
+  return (
+    <div style={styles.loading}>
+      <div style={styles.spinner}></div>
+      <p style={styles.loadingMessage}>Generating your study set... hang tight!</p>
+      {vocabCards.length > 0 && (
+        <div style={styles.flashcardArea}>
+          <div style={styles.flashcardTitle}>Mini vocab warm-up while you wait!</div>
+          <div style={styles.flashcardList}>
+            {vocabCards.map(({ word, meaning }, index) => {
+              const secondsRemaining = countdowns[index] !== undefined ? countdowns[index] : revealStepSeconds * (index + 1);
+              const revealMeaning = secondsRemaining === 0;
+              return (
+                <div key={word} style={styles.flashcardItem}>
+                  <div style={styles.flashcardWord}>{word}</div>
+                  {revealMeaning ? (
+                    <div style={styles.flashcardMeaning}>{meaning}</div>
+                  ) : (
+                    <div style={styles.flashcardCountdown}>Meaning appears in {secondsRemaining}s</div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+
+const ErrorState = ({ message, onRetry }) => (
+  <div style={styles.error}>
+    <h2>Problem generation error</h2>
+    <p>{message}</p>
+    <button onClick={onRetry} style={styles.button}>
+      Try again
+    </button>
+  </div>
+);
+
+const StudyModeView = ({
+  problems,
+  answers,
+  allAnswered,
+  progressPercent,
+  timeLeft,
+  initialTimeLeft,
+  elapsedSeconds,
+  onAnswer,
+  onFinish,
+  onRestart,
+}) => (
+  <div style={styles.studyWrapper}>
+    <div style={styles.studyHeader}>
+      <button
+        className="no-print"
+        onClick={() => {
+          if (window.confirm("º≥¡§¿ª ∫Ø∞Ê«œ∏È «ˆ¿Á «Æ¿Ã ¡ﬂ¿Œ πÆ¡¶∞° √ ±‚»≠µÀ¥œ¥Ÿ. ∞Ëº”«œΩ√∞⁄æÓø‰?")) onRestart();
+        }}
+        style={styles.resetButton}
+      >
+        º≥¡§ √ ±‚»≠
+      </button>
+      <ScoreHUD timeElapsed={elapsedSeconds} />
+    </div>
+
+    {initialTimeLeft > 0 && (
+      <div style={styles.progressSection}>
+        <div style={styles.progressBarOuter}>
+          <div style={{ ...styles.progressBarInner, width: `${progressPercent}%` }} />
+        </div>
+        <div style={styles.progressLabels}>
+          <span>≥≤¿∫ Ω√∞£ {formatSeconds(timeLeft)}</span>
+          <span>¿¸√º {formatSeconds(initialTimeLeft)}</span>
+        </div>
+      </div>
+    )}
+
+    <div style={styles.problemList}>
+      {problems.map((problem, index) => (
+        <ProblemDisplay
+          key={problem.id || `${problem.type}-${index}`}
+          problem={problem}
+          problemIndex={index}
+          totalProblems={problems.length}
+          userAnswer={answers[index]}
+          onAnswer={onAnswer}
+          displayMode="list"
+        />
+      ))}
+    </div>
+
+    <div style={styles.submitBar}>
+      <div style={styles.submitHint}>
+        {allAnswered ? "∏µÁ πÆ¡¶∏¶ »Æ¿Œ«ﬂΩ¿¥œ¥Ÿ. ¡¶√‚ πˆ∆∞¿ª ¥≠∑Ø¡÷ººø‰!" : "∏µÁ πÆ«◊¿ª «Æ∞Ì ¡¶√‚ πˆ∆∞¿ª ¥≠∑Ø¡÷ººø‰."}
+      </div>
+      <button
+        style={{
+          ...styles.submitButton,
+          ...(allAnswered ? {} : styles.submitButtonDisabled),
+        }}
+        onClick={onFinish}
+        disabled={!allAnswered}
+      >
+        ¿¸√º ¡¶√‚«œ±‚
+      </button>
+    </div>
+  </div>
+);
 
 const StudyPage = () => {
   const { user } = useAuth();
+  const {
+    mode,
+    problems,
+    answers,
+    results,
+    loading,
+    error,
+    timeLeft,
+    initialTimeLeft,
+    elapsedSeconds,
+    progressPercent,
+    allAnswered,
+    startStudy,
+    handleAnswer,
+    finishStudy,
+    restart,
+    setError,
+  } = useStudySession(user);
 
-  const [mode, setMode] = useState("config"); // config | study | result
-  const [problems, setProblems] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [answers, setAnswers] = useState({});
-  const [timeSpent, setTimeSpent] = useState({});
-  const [results, setResults] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const loadingFlashcards = useMemo(() => (loading && mode !== "study") ? pickFlashcards(5) : [], [loading, mode]);
 
-  const [startTime, setStartTime] = useState(null);
-  const [currentTime, setCurrentTime] = useState(null);
-  const [timeLeft, setTimeLeft] = useState(120);
 
-  useEffect(() => {
-    if (mode === "study" && !startTime) {
-      setStartTime(Date.now());
-      const timer = setInterval(() => setCurrentTime(Date.now()), 1000);
-      return () => clearInterval(timer);
-    }
-  }, [mode, startTime]);
-
-  const getTierStep = useCallback(() => {
-    const order = ["Iron", "Bronze", "Silver", "Gold", "Platinum", "Diamond", "Master", "Challenger"];
-    const tierName = String(user?.tier?.name || user?.tier || "").toLowerCase();
-    const idx = order.findIndex((label) => label.toLowerCase() === tierName);
-    return Math.max(0, idx);
-  }, [user]);
-
-  const getBaseTimePerProblem = useCallback(() => {
-    const reduction = getTierStep() * 5;
-    return Math.max(60, 120 - reduction);
-  }, [getTierStep]);
-
-  useEffect(() => {
-    if (mode === "study") setTimeLeft(getBaseTimePerProblem());
-  }, [mode, currentIndex, getBaseTimePerProblem]);
-
-  const finishStudy = useCallback(async () => {
-    try {
-      setLoading(true);
-      const studyResults = [];
-      let totalCorrect = 0;
-      let totalTime = 0;
-
-      const normalizeAnswerArray = (value) => {
-        if (value === null || value === undefined) return [];
-        return String(value)
-          .replace(/[\[\]{}]/g, '')
-          .split(/[\s,]+/)
-          .filter(Boolean)
-          .map((token) => parseInt(token, 10))
-          .filter((num) => !Number.isNaN(num))
-          .sort((a, b) => a - b);
-      };
-
-      for (let i = 0; i < problems.length; i++) {
-        const problem = problems[i];
-        const userAnswer = answers[i];
-        const spent = timeSpent[i] || 0;
-        const expectedArray = normalizeAnswerArray(problem.answer);
-        const actualArray = normalizeAnswerArray(userAnswer);
-        const fallbackCompare = String(problem.answer) === String(userAnswer);
-        const isCorrect = expectedArray.length > 0
-          ? (actualArray.length === expectedArray.length && expectedArray.every((value, idx) => value === actualArray[idx]))
-          : fallbackCompare;
-        if (isCorrect) totalCorrect += 1;
-        totalTime += spent;
-        studyResults.push({
-          problem,
-          problemType: problem.type,
-          question: problem.question || problem.instruction || '',
-          userAnswer: actualArray.length ? actualArray.join(',') : (userAnswer !== undefined ? String(userAnswer) : ''),
-          correctAnswer: expectedArray.length ? expectedArray.join(',') : (problem.answer !== undefined ? String(problem.answer) : ''),
-          isCorrect,
-          timeSpent: Math.round(spent / 1000),
-        });
-      }
-
-      const accuracy = problems.length ? Math.round((totalCorrect / problems.length) * 100) : 0;
-
-      setResults({
-        studyResults,
-        problems: studyResults,
-        totalProblems: problems.length,
-        totalCorrect,
-        accuracy,
-        totalTime: Math.round(totalTime / 1000),
-        earnedPoints: totalCorrect * 10 - (studyResults.length - totalCorrect) * 5,
-      });
-
-      setMode("result");
-      logger.info("Study completed:", { totalCorrect, accuracy });
-    } catch (err) {
-      logger.error("Failed to finish study:", err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [answers, problems, timeSpent]);
-
-  useEffect(() => {
-    if (mode !== "study") return undefined;
-    if (timeLeft <= 0) {
-      if (currentIndex < problems.length - 1) {
-        setCurrentIndex((idx) => idx + 1);
-      } else {
-        finishStudy();
-      }
-      return undefined;
-    }
-    const timer = setTimeout(() => setTimeLeft((prev) => prev - 1), 1000);
-    return () => clearTimeout(timer);
-  }, [mode, timeLeft, currentIndex, problems.length, finishStudy]);
-
-  const startStudy = async (studyConfig) => {
-    try {
-      setLoading(true);
-      setError(null);
-      logger.info("Starting study with config:", studyConfig);
-
-      const totalCount = Object.values(studyConfig.types || {}).reduce((sum, count) => sum + count, 0);
-      const payload = {
-        documentId: studyConfig.documentId,
-        counts: studyConfig.types,
-        orderDifficulty: studyConfig.orderDifficulty || "basic",
-        insertionDifficulty: studyConfig.insertionDifficulty || "basic",
-        grammarDifficulty: studyConfig.grammarDifficulty || "basic",
-        totalCount: Math.max(1, totalCount || 1),
-      };
-
-      const response = await apiService.post("/generate/csat-set", payload);
-      const processed = (response.problems || []).map((problem) => problemRegistry.executeHandler(problem.type, problem));
-
-      if (!processed.length) {
-        throw new Error("Î¨∏Ï†ú ÏÑ∏Ìä∏Î•º ÎßåÎì§ÏßÄ Î™ªÌñàÏäµÎãàÎã§. Ïû†Ïãú ÌõÑ Îã§Ïãú ÏãúÎèÑÌïòÍ±∞ÎÇò Í¥ÄÎ¶¨ÏûêÏóêÍ≤å Î¨∏ÏùòÌï¥Ï£ºÏÑ∏Ïöî.");
-      }
-
-      setProblems(processed);
-      setMode("study");
-      setStartTime(Date.now());
-      logger.info(`Loaded ${processed.length} problems`);
-    } catch (err) {
-      logger.error("Failed to start study:", err);
-      const msg = err?.message || "";
-      let clean;
-      if (/404/.test(msg)) clean = "Î¨∏ÏÑúÎ•º Ï∞æÏùÑ Ïàò ÏóÜÏñ¥Ïöî. ÏóÖÎ°úÎìú ÏÉÅÌÉúÎ•º ÌôïÏù∏Ìïú Îí§ Îã§Ïãú ÏãúÎèÑÌï¥Ï£ºÏÑ∏Ïöî.";
-      else if (/503/.test(msg)) clean = "Î¨∏Ï†ú ÏÉùÏÑ± ÏÑúÎ≤ÑÍ∞Ä Ïû†Ïãú Î∞îÏÅ©ÎãàÎã§. Ïû†Íπê Í∏∞Îã§Î†∏Îã§Í∞Ä Îã§Ïãú Ïã§ÌñâÌï¥Ï£ºÏÑ∏Ïöî.";
-      else if (/401/.test(msg) || /token|auth/i.test(msg)) clean = 'Î°úÍ∑∏Ïù∏ ÏãúÍ∞ÑÏù¥ ÎßåÎ£åÎêòÏóàÏäµÎãàÎã§. Îã§Ïãú Î°úÍ∑∏Ïù∏Ìï¥ Ï£ºÏÑ∏Ïöî.';
-      else clean = "Ïïå Ïàò ÏóÜÎäî Ïò§Î•òÍ∞Ä Î∞úÏÉùÌñàÏäµÎãàÎã§. Ïû†Ïãú ÌõÑ Îã§Ïãú ÏãúÎèÑÌï¥Ï£ºÏÑ∏Ïöî.";
-      setError(clean);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAnswer = (answer) => {
-    const elapsedForProblem = Date.now() - (startTime + (timeSpent[currentIndex] || 0));
-    setAnswers((prev) => ({ ...prev, [currentIndex]: answer }));
-    setTimeSpent((prev) => ({ ...prev, [currentIndex]: (prev[currentIndex] || 0) + elapsedForProblem }));
-    logger.debug(`Answer submitted for problem ${currentIndex}:`, answer);
-  };
-
-  const nextProblem = () => {
-    if (currentIndex < problems.length - 1) {
-      setCurrentIndex((idx) => idx + 1);
-    } else {
-      finishStudy();
-    }
-  };
-
-  const prevProblem = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex((idx) => idx - 1);
-    }
-  };
-
-  const restart = () => {
-    setMode("config");
-    setProblems([]);
-    setCurrentIndex(0);
-    setAnswers({});
-    setTimeSpent({});
-    setResults(null);
-    setStartTime(null);
-    setCurrentTime(null);
-  };
-
-  if (loading) {
-    return (
-      <div style={styles.loading}>
-        <div style={styles.spinner}></div>
-        <p>Î¨∏Ï†úÎ•º Î∂àÎü¨Ïò§Îäî Ï§ëÏù¥ÏóêÏöî...</p>
-      </div>
-    );
+  if (loading && mode !== "study") {
+    return <LoadingState vocabCards={loadingFlashcards} />;
   }
 
-  if (error) {
-    return (
-      <div style={styles.error}>
-        <h2>Ïò§Î•òÍ∞Ä ÎÇ¨Ïñ¥Ïöî</h2>
-        <p>{error}</p>
-        <button onClick={restart} style={styles.button}>
-          Îã§Ïãú ÏãúÏûë
-        </button>
-      </div>
-    );
+  if (error && mode !== "study") {
+    return <ErrorState message={error} onRetry={() => { setError(null); restart(); }} />;
   }
 
   switch (mode) {
@@ -229,31 +299,18 @@ const StudyPage = () => {
 
     case "study":
       return (
-        <div style={{ maxWidth: 900, margin: "0 auto", padding: "16px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-            <button
-              className="no-print"
-              onClick={() => {
-                if (window.confirm('Ïù¥Ï†ÑÏúºÎ°ú ÎèåÏïÑÍ∞ÄÎ©¥ ÏßÑÌñâ Ï§ëÏù∏ ÌíÄÏù¥Í∞Ä ÏÇ¨ÎùºÏ†∏Ïöî. Í≥ÑÏÜçÌï†ÍπåÏöî?')) setMode('config');
-              }}
-              style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #e5e7eb", background: "#fff", cursor: "pointer" }}
-            >
-              Ï¥àÍ∏∞Ìôî            </button>
-            <ScoreHUD timeElapsed={currentTime ? Math.round((currentTime - startTime) / 1000) : 0} />
-          </div>
-          <ProblemDisplay
-            problem={problems[currentIndex]}
-            currentIndex={currentIndex}
-            totalProblems={problems.length}
-            userAnswer={answers[currentIndex]}
-            onAnswer={handleAnswer}
-            onNext={nextProblem}
-            onPrev={prevProblem}
-            onFinish={finishStudy}
-            timeElapsed={currentTime ? Math.round((currentTime - startTime) / 1000) : 0}
-            timeLeft={timeLeft}
-          />
-        </div>
+        <StudyModeView
+          problems={problems}
+          answers={answers}
+          allAnswered={allAnswered}
+          progressPercent={progressPercent}
+          timeLeft={timeLeft}
+          initialTimeLeft={initialTimeLeft}
+          elapsedSeconds={elapsedSeconds}
+          onAnswer={handleAnswer}
+          onFinish={finishStudy}
+          onRestart={restart}
+        />
       );
 
     case "result":
@@ -270,7 +327,10 @@ const styles = {
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
+    gap: "16px",
+    padding: "24px",
     minHeight: "400px",
+    textAlign: "center",
   },
   spinner: {
     width: "40px",
@@ -279,6 +339,51 @@ const styles = {
     borderTop: "4px solid #667eea",
     borderRadius: "50%",
     animation: "spin 1s linear infinite",
+  },
+  loadingMessage: {
+    color: "#334155",
+    fontSize: "18px",
+    fontWeight: 600,
+  },
+  flashcardArea: {
+    marginTop: "8px",
+    background: "rgba(255, 255, 255, 0.88)",
+    borderRadius: "16px",
+    padding: "20px",
+    boxShadow: "0 18px 28px rgba(148, 163, 184, 0.35)",
+    width: "100%",
+    maxWidth: "420px",
+  },
+  flashcardTitle: {
+    fontSize: "16px",
+    fontWeight: 700,
+    color: "#0F172A",
+    marginBottom: "12px",
+  },
+  flashcardList: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px",
+  },
+  flashcardItem: {
+    background: "#1E293B",
+    borderRadius: "12px",
+    padding: "14px 16px",
+    color: "#F8FAFC",
+    boxShadow: "0 10px 20px rgba(15, 23, 42, 0.35)",
+  },
+  flashcardWord: {
+    fontSize: "18px",
+    fontWeight: 700,
+    marginBottom: "4px",
+  },
+  flashcardMeaning: {
+    fontSize: "14px",
+    color: "#E2E8F0",
+  },
+  flashcardCountdown: {
+    fontSize: "13px",
+    color: "#CBD5F5",
   },
   error: {
     textAlign: "center",
@@ -300,7 +405,88 @@ const styles = {
     cursor: "pointer",
     marginTop: "20px",
   },
+  studyWrapper: {
+    maxWidth: "960px",
+    margin: "0 auto",
+    padding: "24px 16px 48px",
+  },
+  studyHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "12px",
+    flexWrap: "wrap",
+    marginBottom: "24px",
+  },
+  resetButton: {
+    padding: "10px 18px",
+    borderRadius: "10px",
+    border: "1px solid #cbd5f5",
+    background: "#ffffff",
+    color: "#1f2937",
+    fontWeight: 600,
+    cursor: "pointer",
+  },
+  progressSection: {
+    marginBottom: "24px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "8px",
+  },
+  progressBarOuter: {
+    width: "100%",
+    height: "10px",
+    borderRadius: "999px",
+    background: "rgba(148, 163, 184, 0.25)",
+    overflow: "hidden",
+  },
+  progressBarInner: {
+    height: "100%",
+    background: "linear-gradient(135deg, #34d399 0%, #3b82f6 100%)",
+    transition: "width 0.3s ease",
+  },
+  progressLabels: {
+    display: "flex",
+    justifyContent: "space-between",
+    color: "#94A3B8",
+    fontSize: "14px",
+    fontWeight: 600,
+  },
+  problemList: {
+    display: "flex",
+    flexDirection: "column",
+  },
+  submitBar: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "16px",
+    marginTop: "32px",
+    flexWrap: "wrap",
+  },
+  submitHint: {
+    color: "#94A3B8",
+    fontSize: "14px",
+  },
+  submitButton: {
+    padding: "14px 32px",
+    borderRadius: "12px",
+    border: "none",
+    background: "linear-gradient(135deg, #6366f1 0%, #7c3aed 100%)",
+    color: "white",
+    fontWeight: 700,
+    fontSize: "16px",
+    cursor: "pointer",
+    boxShadow: "0 15px 35px rgba(99, 102, 241, 0.35)",
+    transition: "opacity 0.2s ease",
+  },
+  submitButtonDisabled: {
+    opacity: 0.5,
+    cursor: "not-allowed",
+    boxShadow: "none",
+  },
 };
 
 export default StudyPage;
+
 

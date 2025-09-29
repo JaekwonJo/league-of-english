@@ -24,7 +24,8 @@
     "session:summary": "node scripts/auto-session-summary.js",
     "session:auto": "node scripts/auto-session-daemon.js",
     "session:auto:5m": "node scripts/auto-session-daemon.js 300000",
-    "doctor:client": "node scripts/doctor-client.js"
+    "doctor:client": "node scripts/doctor-client.js",
+    "test": "node --test server/tests"
   },
   "engines": {
     "node": ">=18"
