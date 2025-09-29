@@ -19,22 +19,27 @@
 - API base URL continues to come from `client/.env` (`REACT_APP_API_URL`); auth tokens stay in `localStorage` until refresh tokens are introduced.
 
 ## Current Stage
-- Finalising cache-first delivery after the source-label and option-sanitiser fixes, while wiring per-student exposure tracking and hardening OpenAI retry behaviour.
+- Per-student exposure tracking and the OpenAI retry queue are in place; validating cached rotations and tightening prompt QA before moving on to teacher tooling.
 
 ## Next 3 (priority)
-1) Implement per-student exposure tracking so cached problems skip anyone who has already answered them and only call the API when the cache is empty for that learner.
-2) Add structured retry/backoff + background queueing for OpenAI errors to keep study sessions smooth without reintroducing rule-based fallbacks.
-3) Backfill regression tests for `fetchCached`/`saveProblems` and the summary/grammar formatters to catch option/answer/source regressions early.
+1) QA grammar and vocabulary prompts against the latest Wolgo references so distractors stay genuinely top-tier.
+2) Surface the new OpenAI queue status in the Study UI (spinner + friendly copy) and polish error messaging.
+3) Expand automated tests around `generate/csat-set` (order/insertion fallbacks, exposure marking) and wire them into CI.
 
 ## Known issues
 - ESLint config is still missing (`npm run lint` fails), so we rely on CRA build warnings and manual review.
-- Grammar/vocabulary prompt outputs still need sustained QA to guarantee Wolgo-level difficulty; shaky generations must be reported and filtered until prompts stabilise.
-- OpenAI error handling still lacks queued retries and clearer UI feedback, risking session drops if the API hiccups or the cache runs dry mid-session.
+- Order/insertion types are still rule-based; they need Wolgo-aligned OpenAI prompts plus validators.
+- Study UI does not yet surface the OpenAI queue status, so students cannot tell when generation is still running.
+- `npm test` currently fails because the glob pattern is not expanded on Windows bash; run `node --test server/tests/aiProblemService.test.js` until the script is patched.
 
-## Resolved (Today)
-- Synced PROJECT_STATE, BUILDLOG, and README so the roadmap now reflects API-only generation and the removal of rule-based fallbacks.
-- Documented the source-label cleanup and first-letter option sanitiser fixes that keep study cards aligned with cached copies.
-- Reconfirmed cache-first rotation expectations so admins understand the flow before per-student exposure tracking lands.
+## Resolved (2025-09-30)
+- Synced PROJECT_STATE.md, README.md, and BUILDLOG.md so the roadmap, Next 3 priorities, and API-only messaging stay consistent.
+- Highlighted the new `server/tests/aiProblemService.test.js` coverage that guards circled-digit formatting and exposure tracking.
+
+## Resolved (2025-09-28)
+- Added `problem_exposures` table + `markExposures` so cached questions only appear once per student.
+- Reworked `/generate/csat-set` to fetch unseen cached items first, then persist fresh OpenAI batches, and queue OpenAI calls with retry/backoff.
+- Updated the Wolgo grammar template/normaliser to keep circled digits + source labels intact and introduced node-test coverage for summary/grammar/exposure flows.
 
 ## Resolved (2025-09-26)
 - Added `server/utils/summaryTemplate.js` and rewrote `aiProblemService` to build/validate CSAT-style summary problems (A/B blanks, circled options, source labels).

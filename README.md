@@ -1,4 +1,4 @@
-﻿# League of English - CSAT English Practice Suite
+﻿﻿# League of English - CSAT English Practice Suite
 
 League of English is a web application that helps students and teachers generate, solve, and analyse CSAT-style English problems. The project consists of a Node/Express API and a React front-end.
 
@@ -6,7 +6,7 @@ League of English is a web application that helps students and teachers generate
 - Upload English passages (PDF/TXT) and generate CSAT problem sets (order, insertion, grammar, vocabulary, etc.) exclusively through the OpenAI API using Wolgo-aligned prompts.
 - Generate manual-aligned grammar and summary questions with circled-digit options, underlined passages, and validated source labels in five-question batches.
 - Study cards show a single 출처 label with advanced-level options that mirror Wolgo exam formatting and stay aligned with the saved library copy.
-- Persist every API-generated problem in a shared library, rotate cached items before hitting the API again, and prepare student-level exposure tracking.
+- Persist every API-generated problem in a shared library, rotate cached items before hitting the API again, and record student-level exposure so solved items stay hidden.
 - Solve problems with timers, automatic scoring, and result dashboards.
 - Analyse passages sentence-by-sentence with AI-generated explanations.
 - Track personal progress with a stats dashboard (type accuracy + weekly trend).
@@ -53,8 +53,9 @@ League of English is a web application that helps students and teachers generate
 | `npm run dev` | Run Express API only (port 5000). |
 | `npm run client` | Run React dev server only (port 3000). |
 | `npm run dev:all` | Run both API and client concurrently from the repository root. |
+| `npm test` | Run the Node test suite (use `node --test server/tests/aiProblemService.test.js` until the globbing script is fixed). |
 | `npm run build` | Build the React client. |
-| `npm run lint` | Lint server-side JS files. |
+| `npm run lint` | Lint server-side JS files (blocked until an ESLint config is restored). |
 | `node scripts/update-problem-manuals.js` | Refresh the authoring manuals from the latest source PDFs. |
 
 ## Manual Sync Workflow
@@ -92,10 +93,10 @@ This project is proprietary. Do not distribute without permission.
 
 ## Project Roadmap
 
-### Latest Update (2025-09-28)
-- Synced the roadmap/docs to underline the API-only policy (order/insertion remain scripted for now) and the refreshed sanitiser behaviour.
-- Documented the source-label + option-prefix fixes so study cards always render a single 출처 tag with intact leading letters.
-- Immediate focus: per-student exposure tracking and OpenAI retry/queueing so rotations stay personal and resilient.
+### Latest Update (2025-09-30)
+- Synced PROJECT_STATE.md, README.md, and BUILDLOG.md so the API-only roadmap, caching rules, and priorities match.
+- Highlighted the new `node --test` coverage for `aiProblemService` to guard circled digits, source labels, and exposure tracking.
+- Next up: QA grammar/vocab prompts, expose queue status in the Study UI, and extend automated tests/CI coverage.
 
 
 | Step | Description | Status |

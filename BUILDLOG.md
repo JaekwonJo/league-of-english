@@ -1,3 +1,17 @@
+## 2025-09-30 (docs + node test sync)
+- Issue: Status docs still referenced the older roadmap language and the failing `npm test` glob, so teammates missed the direct node test command and the newest coverage.
+- Cause: After adding `server/tests/aiProblemService.test.js`, we had not refreshed the documentation to describe how to run it nor highlighted the API-only alignment work across files.
+- Fix: Updated PROJECT_STATE.md, README.md, and BUILDLOG.md to keep the roadmap consistent, call out the aiProblemService test, and flag the globbing bug in the npm script.
+- Files: PROJECT_STATE.md, README.md, BUILDLOG.md.
+- Verification: Manual read-through of the synced docs; `node --test server/tests/aiProblemService.test.js`.
+
+## 2025-09-28 (per-student exposure tracking)
+- Issue: Students kept seeing repeat API problems whenever the cache refilled mid-session.
+- Cause: `/generate/csat-set` only filtered duplicates with the in-memory `usedProblemIds`, so nothing prevented the same question from resurfacing on the next request.
+- Fix: Added a `problem_exposures` table + `markExposures`, reworked `fetchCached` to filter by user, and wrapped OpenAI calls in a retry queue that persists every batch into the cache.
+- Files: server/models/database.js, server/services/aiProblemService.js, server/routes/problem.routes.js.
+- Verification: npm test (node --test server/tests/**/*.test.js).
+
 ## 2025-09-28 (documentation sync + API-only policy)
 - Issue: Roadmap and README still implied rule-based fallbacks and never mentioned the recent source-label/option sanitizer fixes, so teammates questioned whether grammar/vocab were truly API-only.
 - Cause: After landing the sanitiser patches and cache-first rotation, we forgot to refresh the docs to capture the API-only requirement and the new QA focus areas.
