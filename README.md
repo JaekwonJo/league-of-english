@@ -95,8 +95,8 @@ This project is proprietary. Do not distribute without permission.
 ## Project Roadmap
 
 ### Latest Update (2025-09-30)
-- Re-synced PROJECT_STATE.md, README.md, and BUILDLOG.md after re-running `npm test`/`npm run lint` so the docs spell out the current failure messages and keep automation fixes front-and-centre.
-- Verified `npm test` throws `Could not find .../**/*.test.js` on Windows shells and documented the direct `node --test server/tests/aiProblemService.test.js` fallback.
+- Re-synced PROJECT_STATE.md, README.md, and BUILDLOG.md after re-running `npm test` and `npm run lint` today so the docs spell out the current failure messages and keep automation fixes front-and-centre.
+- Verified `npm test` prints `Could not find '/mnt/c/Users/jaekw/Desktop/league-of-english/server/tests/**/*.test.js'` on Windows shells and documented the direct `node --test server/tests/aiProblemService.test.js` fallback.
 - Immediate focus: patch the failing `npm test` script, restore the ESLint config so `npm run lint` works again, and surface the Study UI queue status before expanding teacher tooling.
 
 
