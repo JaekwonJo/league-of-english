@@ -48,6 +48,13 @@ const GRAMMAR_PASSAGE_VARIANT = [
   'Consequently, leadership concluded the rollout could proceed.'
 ].join(' ');
 
+const GRAMMAR_PASSAGE_HYPHEN = [
+  'The institute is committed to pro-\nviding resources that allow schools to focus on equity.',
+  'Stakeholders highlight ongoing monitoring across departments.',
+  'Teachers remain engaged during feedback cycles and collaboration.',
+  'Policies adapt whenever new evaluation data emerges.'
+].join(' ');
+
 const GRAMMAR_OPTIONS = [
   `${CIRCLED_DIGITS[0]} <u>Despite of</u>`,
   `${CIRCLED_DIGITS[1]} <u>Having finished</u>`,
@@ -62,6 +69,14 @@ const GRAMMAR_OPTIONS_VARIANT = [
   `${CIRCLED_DIGITS[2]} <u>documentation would be thorough</u>`,
   `${CIRCLED_DIGITS[3]} <u>observers confirmed the method</u>`,
   `${CIRCLED_DIGITS[4]} <u>Leadership concluded the rollout could proceed.</u>`
+];
+
+const GRAMMAR_OPTIONS_HYPHEN = [
+  `${CIRCLED_DIGITS[0]} <u>providing</u>`,
+  `${CIRCLED_DIGITS[1]} <u>to focus</u>`,
+  `${CIRCLED_DIGITS[2]} <u>monitoring</u>`,
+  `${CIRCLED_DIGITS[3]} <u>remain engaged</u>`,
+  `${CIRCLED_DIGITS[4]} <u>Policies adapt</u>`
 ];
 
 const SOURCE_PREFIX = '\ucd9c\ucc98';
@@ -239,6 +254,29 @@ test('formatGrammarProblem rebuild handles case and punctuation differences', ()
     {
       docTitle: 'Grammar Doc',
       passage: GRAMMAR_PASSAGE_VARIANT,
+      index: 0
+    }
+  );
+
+  assert.ok(formatted);
+  const underlineMatches = formatted.mainText.match(/<u[\s\S]*?<\/u>/g) || [];
+  assert.equal(underlineMatches.length, 5);
+  assert.ok(formatted.options.every((option, index) => option.startsWith(CIRCLED_DIGITS[index])));
+});
+
+test('formatGrammarProblem rebuilds underlines across hyphenated line breaks', () => {
+  const formatted = aiService.formatGrammarProblem(
+    {
+      question: BASE_QUESTION,
+      passage: GRAMMAR_PASSAGE_HYPHEN,
+      options: GRAMMAR_OPTIONS_HYPHEN,
+      correctAnswer: 4,
+      explanation: '하이픈 줄바꿈을 포함해도 밑줄을 모두 복구합니다.',
+      sourceLabel: `${SOURCE_PREFIX}: Hyphen Grammar`
+    },
+    {
+      docTitle: 'Grammar Doc',
+      passage: GRAMMAR_PASSAGE_HYPHEN,
       index: 0
     }
   );

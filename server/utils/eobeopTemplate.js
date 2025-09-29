@@ -92,7 +92,7 @@ function hasHangul(text) {
 }
 
 function countUnderlines(text) {
-  return (String(text || '').match(/<u>.*?<\/u>/g) || []).length;
+  return (String(text || '').match(/<u[\s\S]*?<\/u>/g) || []).length;
 }
 
 function validateGrammarProblem(problem = {}, { minCorrect = 1 } = {}) {
@@ -119,7 +119,7 @@ function validateGrammarProblem(problem = {}, { minCorrect = 1 } = {}) {
     if (!text.startsWith(marker)) {
       issues.push(`option_${index + 1}_marker`);
     }
-    if (!/<u>.*?<\/u>/.test(text)) {
+    if (!/<u[\s\S]*?<\/u>/.test(text)) {
       issues.push(`option_${index + 1}_underline_missing`);
     }
   });

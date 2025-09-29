@@ -137,6 +137,34 @@ function extractOptionUnderlines(options = [], failureReasons = null) {
   return segments;
 }
 
+const HYPHEN_VARIANTS = ['-', '\u2010', '\u2011', '\u2012', '\u2013', '\u2014', '\u2212'];
+
+function buildFlexiblePattern(candidate) {
+  if (!candidate) return '';
+  const chars = Array.from(candidate);
+  let pattern = '';
+  for (let i = 0; i < chars.length; i += 1) {
+    const ch = chars[i];
+    if (/\s/.test(ch)) {
+      pattern += '\\s+';
+    } else {
+      pattern += escapeRegex(ch);
+    }
+
+    if (i < chars.length - 1) {
+      const next = chars[i + 1];
+      const allowHyphen = !/\s/.test(ch) && !/\s/.test(next);
+      if (allowHyphen) {
+        const hyphenClass = `[${HYPHEN_VARIANTS.join('')}]`;
+        pattern += `(?:\\s+|${hyphenClass}?\\s*)?`;
+      } else {
+        pattern += '\\s*';
+      }
+    }
+  }
+  return pattern;
+}
+
 function findSegmentRange(plain, cursor, rawSegment, failureReasons) {
   const cleaned = normalizeWhitespace(stripTags(rawSegment || ""));
   if (!cleaned) {
@@ -163,10 +191,14 @@ function findSegmentRange(plain, cursor, rawSegment, failureReasons) {
     return null;
   };
 
-  const attemptRegex = (candidate) => {
+  const attemptRegex = (candidate, { flexible = false } = {}) => {
     if (!candidate.length) return null;
-    const pattern = escapeRegex(candidate).replace(/\s+/g, '\\s+');
-    const regex = new RegExp(pattern, 'i');
+    const pattern = !flexible
+      ? escapeRegex(candidate).replace(/\s+/g, '\\s+')
+      : buildFlexiblePattern(candidate);
+    if (!pattern) return null;
+    const flags = flexible ? 'iu' : 'i';
+    const regex = new RegExp(pattern, flags);
     const slice = plain.slice(cursor);
     const match = slice.match(regex);
     if (match && typeof match.index === 'number') {
@@ -197,16 +229,25 @@ function findSegmentRange(plain, cursor, rawSegment, failureReasons) {
 
   const punctuationTrimmed = cleaned.replace(/[.,;:!?"']+$/u, '').trim();
 
-  return (
-    attemptExact(cleaned)
-    || attemptCaseInsensitive(cleaned)
-    || (punctuationTrimmed && attemptExact(punctuationTrimmed))
-    || (punctuationTrimmed && attemptCaseInsensitive(punctuationTrimmed))
-    || attemptRegex(cleaned)
-    || (punctuationTrimmed && attemptRegex(punctuationTrimmed))
-    || attemptFirstLastWord()
-    || (failureReasons && failureReasons.push(`본문에서 "${cleaned}" 위치를 찾을 수 없음`), null)
-  );
+  const attempts = [
+    () => attemptExact(cleaned),
+    () => attemptCaseInsensitive(cleaned),
+    () => (punctuationTrimmed ? attemptExact(punctuationTrimmed) : null),
+    () => (punctuationTrimmed ? attemptCaseInsensitive(punctuationTrimmed) : null),
+    () => attemptRegex(cleaned),
+    () => (punctuationTrimmed ? attemptRegex(punctuationTrimmed) : null),
+    () => attemptRegex(cleaned, { flexible: true }),
+    () => (punctuationTrimmed ? attemptRegex(punctuationTrimmed, { flexible: true }) : null),
+    () => attemptFirstLastWord()
+  ];
+
+  for (const attempt of attempts) {
+    const range = attempt();
+    if (range) return range;
+  }
+
+  if (failureReasons) failureReasons.push(`본문에서 "${cleaned}" 위치를 찾을 수 없음`);
+  return null;
 }
 
 function rebuildUnderlinesFromOptions(mainText, options = [], failureReasons = null) {
