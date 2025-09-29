@@ -30,6 +30,18 @@ const {
 const SOURCE_PREFIX_REGEX = /^\s*(?:\ucd9c\ucc98|Source)\s*[:\u2502-]?\s*/iu;
 const UNDERLINE_PATTERN = /<u[\s\S]*?<\/u>/gi;
 
+function stripTags(text = "") {
+  return String(text).replace(/<[^>]+>/g, "");
+}
+
+function normalizeWhitespace(text = "") {
+  return String(text).replace(/\s+/g, " ").trim();
+}
+
+function escapeRegex(text = "") {
+  return String(text).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function stripJsonFences(text) {
   if (!text) return "";
   return String(text)
@@ -108,13 +120,16 @@ function normalizeGrammarOptions(options = []) {
   return normalized;
 }
 
-function extractOptionUnderlines(options = []) {
+function extractOptionUnderlines(options = [], failureReasons = null) {
   if (!Array.isArray(options)) return [];
   const segments = [];
   for (let i = 0; i < options.length; i += 1) {
     const text = typeof options[i] === "string" ? options[i] : "";
     const match = text.match(/<u[\s\S]*?>([\s\S]*?)<\/u>/i);
     if (!match || !match[1]) {
+      if (failureReasons) {
+        failureReasons.push(`옵션 ${i + 1}에 밑줄 구간이 없음`);
+      }
       return [];
     }
     segments.push(match[1]);
@@ -122,29 +137,104 @@ function extractOptionUnderlines(options = []) {
   return segments;
 }
 
-function rebuildUnderlinesFromOptions(mainText, options = []) {
+function findSegmentRange(plain, cursor, rawSegment, failureReasons) {
+  const cleaned = normalizeWhitespace(stripTags(rawSegment || ""));
+  if (!cleaned) {
+    if (failureReasons) failureReasons.push('옵션 밑줄이 비어 있음');
+    return null;
+  }
+
+  const plainLower = plain.toLowerCase();
+
+  const attemptExact = (candidate) => {
+    const idx = plain.indexOf(candidate, cursor);
+    if (idx !== -1) {
+      return { start: idx, end: idx + candidate.length };
+    }
+    return null;
+  };
+
+  const attemptCaseInsensitive = (candidate) => {
+    const lower = candidate.toLowerCase();
+    const idx = plainLower.indexOf(lower, cursor);
+    if (idx !== -1) {
+      return { start: idx, end: idx + candidate.length };
+    }
+    return null;
+  };
+
+  const attemptRegex = (candidate) => {
+    if (!candidate.length) return null;
+    const pattern = escapeRegex(candidate).replace(/\s+/g, '\\s+');
+    const regex = new RegExp(pattern, 'i');
+    const slice = plain.slice(cursor);
+    const match = slice.match(regex);
+    if (match && typeof match.index === 'number') {
+      const start = cursor + match.index;
+      return { start, end: start + match[0].length };
+    }
+    return null;
+  };
+
+  const attemptFirstLastWord = () => {
+    const words = cleaned.split(' ');
+    if (!words.length) return null;
+    const first = words[0];
+    const pattern = new RegExp(`\\b${escapeRegex(first)}\\b`, 'i');
+    const slice = plain.slice(cursor);
+    const match = slice.match(pattern);
+    if (!match || typeof match.index !== 'number') return null;
+    const start = cursor + match.index;
+    const windowEnd = Math.min(plain.length, start + Math.max(cleaned.length + 20, 80));
+    const windowText = plain.slice(start, windowEnd);
+    const last = words[words.length - 1];
+    const lastPattern = new RegExp(`\\b${escapeRegex(last)}\\b`, 'i');
+    const lastMatch = windowText.match(lastPattern);
+    if (!lastMatch || typeof lastMatch.index !== 'number') return null;
+    const end = start + lastMatch.index + lastMatch[0].length;
+    return { start, end };
+  };
+
+  const punctuationTrimmed = cleaned.replace(/[.,;:!?"']+$/u, '').trim();
+
+  return (
+    attemptExact(cleaned)
+    || attemptCaseInsensitive(cleaned)
+    || (punctuationTrimmed && attemptExact(punctuationTrimmed))
+    || (punctuationTrimmed && attemptCaseInsensitive(punctuationTrimmed))
+    || attemptRegex(cleaned)
+    || (punctuationTrimmed && attemptRegex(punctuationTrimmed))
+    || attemptFirstLastWord()
+    || (failureReasons && failureReasons.push(`본문에서 "${cleaned}" 위치를 찾을 수 없음`), null)
+  );
+}
+
+function rebuildUnderlinesFromOptions(mainText, options = [], failureReasons = null) {
   if (!mainText) return null;
-  const segments = extractOptionUnderlines(options);
+  const segments = extractOptionUnderlines(options, failureReasons);
   if (segments.length !== 5) return null;
 
   const plain = String(mainText).replace(/<\/?u[^>]*>/gi, "");
   let cursor = 0;
-  let rebuilt = "";
+  const rebuiltParts = [];
 
   for (let i = 0; i < segments.length; i += 1) {
     const segment = segments[i];
-    if (!segment) return null;
-    const index = plain.indexOf(segment, cursor);
-    if (index === -1) {
+    const range = findSegmentRange(plain, cursor, segment, failureReasons);
+    if (!range) {
       return null;
     }
-    rebuilt += plain.slice(cursor, index) + `<u>${segment}</u>`;
-    cursor = index + segment.length;
+    const { start, end } = range;
+    rebuiltParts.push(plain.slice(cursor, start));
+    rebuiltParts.push(`<u>${plain.slice(start, end)}</u>`);
+    cursor = end;
   }
-  rebuilt += plain.slice(cursor);
+  rebuiltParts.push(plain.slice(cursor));
 
+  const rebuilt = rebuiltParts.join('');
   const rebuiltCount = (rebuilt.match(UNDERLINE_PATTERN) || []).length;
   if (rebuiltCount !== 5) {
+    if (failureReasons) failureReasons.push(`복원 후에도 밑줄이 ${rebuiltCount}개`);
     return null;
   }
   return rebuilt;
@@ -676,7 +766,7 @@ class AIProblemService {
     }
     let underlineCount = (mainText.match(UNDERLINE_PATTERN) || []).length;
     if (underlineCount !== 5) {
-      const rebuilt = rebuildUnderlinesFromOptions(mainText, options);
+      const rebuilt = rebuildUnderlinesFromOptions(mainText, options, failureReasons);
       if (rebuilt) {
         mainText = rebuilt;
         underlineCount = 5;

@@ -40,12 +40,28 @@ const GRAMMAR_PASSAGE_MISSING = [
   'The manager insisted that The manager demanded the report be submitted today.'
 ].join(' ');
 
+const GRAMMAR_PASSAGE_VARIANT = [
+  'The mentor advised that the plan should remain flexible.',
+  'However, she noted that execution must stay precise.',
+  'Finally, the team agreed that documentation would be thorough.',
+  'During reviews, observers confirmed the method was sound.',
+  'Consequently, leadership concluded the rollout could proceed.'
+].join(' ');
+
 const GRAMMAR_OPTIONS = [
   `${CIRCLED_DIGITS[0]} <u>Despite of</u>`,
   `${CIRCLED_DIGITS[1]} <u>Having finished</u>`,
   `${CIRCLED_DIGITS[2]} <u>Scarcely had</u>`,
   `${CIRCLED_DIGITS[3]} <u>Provided that</u>`,
   `${CIRCLED_DIGITS[4]} <u>The manager demanded</u>`
+];
+
+const GRAMMAR_OPTIONS_VARIANT = [
+  `${CIRCLED_DIGITS[0]} <u>The mentor advised</u>`,
+  `${CIRCLED_DIGITS[1]} <u>She Noted</u>`,
+  `${CIRCLED_DIGITS[2]} <u>documentation would be thorough</u>`,
+  `${CIRCLED_DIGITS[3]} <u>observers confirmed the method</u>`,
+  `${CIRCLED_DIGITS[4]} <u>Leadership concluded the rollout could proceed.</u>`
 ];
 
 const SOURCE_PREFIX = '\ucd9c\ucc98';
@@ -200,6 +216,29 @@ test('formatGrammarProblem rebuilds missing underlines using options', () => {
     {
       docTitle: 'Grammar Doc',
       passage: GRAMMAR_PASSAGE_MISSING,
+      index: 0
+    }
+  );
+
+  assert.ok(formatted);
+  const underlineMatches = formatted.mainText.match(/<u[\s\S]*?<\/u>/g) || [];
+  assert.equal(underlineMatches.length, 5);
+  assert.ok(formatted.options.every((option, index) => option.startsWith(CIRCLED_DIGITS[index])));
+});
+
+test('formatGrammarProblem rebuild handles case and punctuation differences', () => {
+  const formatted = aiService.formatGrammarProblem(
+    {
+      question: BASE_QUESTION,
+      passage: GRAMMAR_PASSAGE_VARIANT,
+      options: GRAMMAR_OPTIONS_VARIANT,
+      correctAnswer: 4,
+      explanation: '대소문자와 문장부호 차이가 있어도 복원됩니다.',
+      sourceLabel: `${SOURCE_PREFIX}: Variant Underlines`
+    },
+    {
+      docTitle: 'Grammar Doc',
+      passage: GRAMMAR_PASSAGE_VARIANT,
       index: 0
     }
   );

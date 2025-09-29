@@ -34,7 +34,7 @@
 - Order/insertion problem types are still rule-based; they need Wolgo-aligned OpenAI prompts plus validators before we can retire the scripted path.
 
 ## Resolved (2025-10-01 - grammar underline auto-heal)
-- Patched `formatGrammarProblem` to rebuild missing `<u>...</u>` spans from the provided options, added failure diagnostics, and covered the flow with a Node test so grammar batches stop 500-ing on 4-underlines payloads.
+- Patched `formatGrammarProblem` to rebuild missing `<u>...</u>` spans from the provided options (대소문자/문장부호 차이 허용), 추가 실패 진단을 붙이고 Node 테스트로 검증해 4-underlines payload에서도 더 이상 500이 나지 않게 했습니다.
 - Verified the fix locally with `npm test` and `npm run lint` (both green on Windows/WSL).
 
 ## Resolved (2025-09-30 - grammar manual v6.0 + tooling sync)
