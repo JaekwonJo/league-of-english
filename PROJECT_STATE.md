@@ -19,12 +19,12 @@
 - API base URL continues to come from `client/.env` (`REACT_APP_API_URL`); auth tokens stay in `localStorage` until refresh tokens are introduced.
 
 ## Current Stage
-- Per-student exposure tracking and the OpenAI retry queue are in place; validating cached rotations and tightening prompt QA before moving on to teacher tooling.
+- Queue-backed generation and per-student exposure tracking are live; unblocking local automation (tests + lint) and preparing the Study UI queue status before expanding teacher tooling.
 
 ## Next 3 (priority)
-1) QA grammar and vocabulary prompts against the latest Wolgo references so distractors stay genuinely top-tier.
-2) Surface the new OpenAI queue status in the Study UI (spinner + friendly copy) and polish error messaging.
-3) Expand automated tests around `generate/csat-set` (order/insertion fallbacks, exposure marking) and wire them into CI.
+1) Patch the `npm test` script so Windows shells run the suite; remove the glob failure that blocks CI and teammates.
+2) Surface the OpenAI queue status in the Study UI with a live spinner and friendly copy so students know generation is in progress.
+3) Restore the ESLint config and re-enable `npm run lint` to catch regressions automatically before builds.
 
 ## Known issues
 - ESLint config is still missing (`npm run lint` fails), so we rely on CRA build warnings and manual review.
@@ -33,8 +33,8 @@
 - `npm test` currently fails because the glob pattern is not expanded on Windows bash; run `node --test server/tests/aiProblemService.test.js` until the script is patched.
 
 ## Resolved (2025-09-30)
-- Synced PROJECT_STATE.md, README.md, and BUILDLOG.md so the roadmap, Next 3 priorities, and API-only messaging stay consistent.
-- Highlighted the new `server/tests/aiProblemService.test.js` coverage that guards circled-digit formatting and exposure tracking.
+- Re-synced PROJECT_STATE.md, README.md, and BUILDLOG.md to spotlight the queue-ready backend, refreshed Top 3 priorities, and the temporary `node --test` workaround.
+- Re-ran `node --test server/tests/aiProblemService.test.js` to confirm circled-digit formatting and exposure tracking stay green while the npm script fix is pending.
 
 ## Resolved (2025-09-28)
 - Added `problem_exposures` table + `markExposures` so cached questions only appear once per student.

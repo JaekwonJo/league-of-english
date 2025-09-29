@@ -1,4 +1,4 @@
-﻿﻿# League of English - CSAT English Practice Suite
+# League of English - CSAT English Practice Suite
 
 League of English is a web application that helps students and teachers generate, solve, and analyse CSAT-style English problems. The project consists of a Node/Express API and a React front-end.
 
@@ -94,9 +94,9 @@ This project is proprietary. Do not distribute without permission.
 ## Project Roadmap
 
 ### Latest Update (2025-09-30)
-- Synced PROJECT_STATE.md, README.md, and BUILDLOG.md so the API-only roadmap, caching rules, and priorities match.
-- Highlighted the new `node --test` coverage for `aiProblemService` to guard circled digits, source labels, and exposure tracking.
-- Next up: QA grammar/vocab prompts, expose queue status in the Study UI, and extend automated tests/CI coverage.
+- Refreshed PROJECT_STATE.md, README.md, and BUILDLOG.md to emphasise the queue-ready backend and today's hygiene priorities (fixing `npm test`, restoring lint, shipping queue status UI).
+- Verified `node --test server/tests/aiProblemService.test.js` while the Windows glob issue in `npm test` stays on the front burner.
+- Immediate focus: patch the failing `npm test` script, surface the Study UI queue status, and bring ESLint back before diving into teacher tooling.
 
 
 | Step | Description | Status |
