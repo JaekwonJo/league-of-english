@@ -20,18 +20,22 @@
 - API base URL continues to come from `client/.env` (`REACT_APP_API_URL`); auth tokens stay in `localStorage` until refresh tokens are introduced.
 
 ## Current Stage
-- Queue-backed generation, per-student exposure tracking, and the Study queue spinner/vocab countdown are live; today's pass modernised the grammar manual to v6.0 and tightened tooling so Windows/WSL devs get green `npm test` + `npm run lint` out of the box.
+- Queue-backed generation, per-student exposure tracking, and the Study queue spinner/vocab countdown are live; today's pass patches the grammar formatter to auto-rebuild missing `<u>...</u>` spans from the options and adds a regression test so Windows/WSL devs still get green `npm test` + `npm run lint` out of the box.
 
 ## Next 3 (priority)
-1. **Verify the Study loading countdown in-browser.** We need to run `npm run dev:all` and watch a full generation cycle to confirm the vocab ticker resets when the API response lands and that accessibility copy remains readable.
-2. **Propagate the v6.0 grammar manual to every generator.** After updating `grammar_problem_manual.md`, re-run `node scripts/update-problem-manuals.js` or manually spot-check downstream prompts so no legacy instructions sneak back in.
-3. **Expand lint/test coverage to the client.** ESLint currently targets `server/**/*.js` only; add shared config + component tests so the countdown UI and future study widgets stay regression-proof.
+1. **Run end-to-end Study QA for grammar generation.** Fire up `npm run dev:all`, request a grammar set, and confirm the rebuilt underlines survive the full OpenAI → API → React flow.
+2. **Localise the loading spinner + vocab reveal.** The warm-up still prints English copy and shows mojibake for Korean meanings; swap the strings to Korean and fix the encoding glitch.
+3. **Add client-side coverage for the countdown + grammar display.** Extend lint/test harnesses to `client/` so the vocab ticker, Korean copy, and underline renderer stay regression-proof.
 
 ## Known issues
-- Study loading UI still needs manual QA: ensure the countdown stops exactly at completion, handles failures gracefully, and keeps focus visible for keyboard users.
-- Grammar generation scripts outside the repo (cloud functions, notebooks, etc.) may still reference the pre-v6.0 manual; orchestrators must pull the synced markdown before the next batch run.
+- Study loading UI still needs manual QA: ensure the countdown stops exactly at completion, handles failures gracefully, keeps focus visible for keyboard users, and verifies the underline rebuild with real payloads.
+- Grammar loading spinner strings remain English and the warm-up vocabulary meanings render as mojibake on some Windows browsers; switch to native Korean copy and normalise encoding.
 - Client-side linting/test harness is absent, so React regressions (like the countdown timer) can slip through until manual testing.
 - Order/insertion problem types are still rule-based; they need Wolgo-aligned OpenAI prompts plus validators before we can retire the scripted path.
+
+## Resolved (2025-10-01 - grammar underline auto-heal)
+- Patched `formatGrammarProblem` to rebuild missing `<u>...</u>` spans from the provided options, added failure diagnostics, and covered the flow with a Node test so grammar batches stop 500-ing on 4-underlines payloads.
+- Verified the fix locally with `npm test` and `npm run lint` (both green on Windows/WSL).
 
 ## Resolved (2025-09-30 - grammar manual v6.0 + tooling sync)
 - Upgraded `grammar_problem_manual.md` (root + problem manual) to Master v6.0, documenting the TOEFL/GRE-grade error taxonomy and the updated dangling-participle guidance.

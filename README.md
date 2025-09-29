@@ -75,7 +75,7 @@ Once the checks pass, commit the updated manuals alongside any fixes so teammate
 - **Port already in use**: Close other apps using ports 3000 or 5000. You can run `Get-Process -Id (Get-NetTCPConnection -LocalPort 5000).OwningProcess` in PowerShell (with admin rights) to identify and stop them.
 - **React keeps pointing to the wrong API**: Delete `client/.env`, then restart using `npm run dev:all` so the client falls back to `http://localhost:5000/api`.
 - **Study 화면에서 로딩 카운트다운이 멈추지 않음**: 백엔드 OpenAI 큐가 응답을 못 받으면 클라이언트가 계속 대기합니다. `backend-dev.log`에서 에러를 확인하고, 필요하면 브라우저 콘솔에서 `localStorage.clear()` 후 다시 세션을 시작하세요.
-- **Grammar problem shows no underlines**: make sure you are on the latest branch; the front-end now parses `<u>...</u>` spans.
+- **Grammar problem shows no underlines**: make sure you are on the latest branch; the backend now rebuilds missing `<u>...</u>` spans from the options, and the front-end parses them correctly.
 - **PowerShell execution policy blocks scripts**: temporarily allow scripts by running `Set-ExecutionPolicy -Scope Process RemoteSigned` before starting the dev servers.
 
 ## Repository Structure (high-level)
@@ -97,10 +97,10 @@ This project is proprietary. Do not distribute without permission.
 
 ## Project Roadmap
 
-### Latest Update (2025-09-30)
-- Added the Study queue spinner + vocab countdown, confirmed `npm test`/`npm run lint` pass on Windows/WSL, and logged the follow-up QA tasks.
-- Upgraded grammar manuals to Master v6.0 (TOEFL/GRE급) and synced the docs with the new error taxonomy + dangling 분사 가이드.
-- Immediate focus: live QA for the countdown UX, propagate the new manual to every generator, and extend lint/tests to the React client.
+### Latest Update (2025-10-01)
+- Grammar generation no longer 500s on four-underlines payloads: the formatter now rebuilds missing `<u>…</u>` spans from the options and ships with a regression test (`npm test`).
+- Windows/WSL checks stay green (`npm run lint`, `npm test`), so devs can focus on UI polish instead of tooling drift.
+- Immediate focus: QA the countdown + grammar flow in the browser, localise the loading spinner/vocab warm-up copy to Korean, and extend client lint/tests to lock in the fixes.
 
 
 | Step | Description | Status |

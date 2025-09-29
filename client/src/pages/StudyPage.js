@@ -1,5 +1,5 @@
 /**
- * StudyPage: ÇĞ½À ¹®Á¦¸¦ ±¸¼ºÇÏ°í Ç®ÀÌÇÏ´Â ¸ŞÀÎ ÆäÀÌÁö
+ * StudyPage: í•™ìŠµ ë¬¸ì œë¥¼ êµ¬ì„±í•˜ê³  í‘¸ëŠ” ë©”ì¸ í˜ì´ì§€
  */
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -11,106 +11,53 @@ import StudyResult from "../components/study/StudyResult";
 import useStudySession, { formatSeconds } from "../hooks/useStudySession";
 
 const VOCAB_FLASHCARDS = [
-  { word: "abandon", meaning: "¹ö¸®´Ù, Æ÷±âÇÏ´Ù" },
-  { word: "abstract", meaning: "Ãß»óÀûÀÎ, ÀÌ·ĞÀûÀÎ" },
-  { word: "accompany", meaning: "µ¿¹İÇÏ´Ù, ÇÔ²² °¡´Ù" },
-  { word: "accumulate", meaning: "ÃàÀûÇÏ´Ù, ¸ğÀ¸´Ù" },
-  { word: "adapt", meaning: "ÀûÀÀÇÏ´Ù, ¸ÂÃß´Ù" },
-  { word: "adjust", meaning: "Á¶Á¤ÇÏ´Ù, ÀûÀÀÇÏ´Ù" },
-  { word: "advocate", meaning: "¿ËÈ£ÇÏ´Ù, ÁöÁöÇÏ´Ù" },
-  { word: "allocate", meaning: "ÇÒ´çÇÏ´Ù, ¹èºĞÇÏ´Ù" },
-  { word: "alter", meaning: "¹Ù²Ù´Ù, ¼öÁ¤ÇÏ´Ù" },
-  { word: "analyze", meaning: "ºĞ¼®ÇÏ´Ù" },
-  { word: "approach", meaning: "Á¢±ÙÇÏ´Ù, ´Ù°¡°¡´Ù" },
-  { word: "assume", meaning: "°¡Á¤ÇÏ´Ù, ¶°¸Ã´Ù" },
-  { word: "assure", meaning: "º¸ÀåÇÏ´Ù, È®½Å½ÃÅ°´Ù" },
-  { word: "attempt", meaning: "½ÃµµÇÏ´Ù" },
-  { word: "attribute", meaning: "~ÀÇ Å¿À¸·Î µ¹¸®´Ù" },
-  { word: "bias", meaning: "Æí°ß, ¼±ÀÔ°ß" },
-  { word: "capacity", meaning: "¼ö¿ë·Â, ´É·Â" },
-  { word: "cease", meaning: "±×¸¸µÎ´Ù, ÁßÁöÇÏ´Ù" },
-  { word: "coherent", meaning: "ÀÏ°üµÈ, ³í¸®ÀûÀÎ" },
-  { word: "coincide", meaning: "ÀÏÄ¡ÇÏ´Ù, µ¿½Ã¿¡ ÀÏ¾î³ª´Ù" },
-  { word: "collapse", meaning: "ºØ±«ÇÏ´Ù, ¹«³ÊÁö´Ù" },
-  { word: "combine", meaning: "°áÇÕÇÏ´Ù" },
-  { word: "commence", meaning: "½ÃÀÛÇÏ´Ù" },
-  { word: "commit", meaning: "ÀúÁö¸£´Ù, Çå½ÅÇÏ´Ù" },
-  { word: "commodity", meaning: "»óÇ°, ¿øÀÚÀç" },
-  { word: "compensate", meaning: "º¸»óÇÏ´Ù" },
-  { word: "compile", meaning: "ÆíÁıÇÏ´Ù, ¼öÁıÇÏ´Ù" },
-  { word: "complement", meaning: "º¸¿ÏÇÏ´Ù, º¸Ãæ¹°" },
-  { word: "comply", meaning: "µû¸£´Ù, ÁØ¼öÇÏ´Ù" },
-  { word: "comprehensive", meaning: "Á¾ÇÕÀûÀÎ, Æ÷°ıÀûÀÎ" },
-  { word: "conceive", meaning: "»ı°¢ÇØ ³»´Ù, »ó»óÇÏ´Ù" },
-  { word: "conclude", meaning: "°á·ĞÁş´Ù, ³¡³»´Ù" },
-  { word: "conduct", meaning: "¼öÇàÇÏ´Ù, ÁöÈÖÇÏ´Ù" },
-  { word: "confer", meaning: "»óÀÇÇÏ´Ù, ¼ö¿©ÇÏ´Ù" },
-  { word: "confirm", meaning: "È®ÀÎÇÏ´Ù, È®Á¤ÇÏ´Ù" },
-  { word: "confront", meaning: "Á÷¸éÇÏ´Ù, ¸Â¼­´Ù" },
-  { word: "consequence", meaning: "°á°ú, Áß¿ä¼º" },
-  { word: "conserve", meaning: "º¸Á¸ÇÏ´Ù" },
-  { word: "consistent", meaning: "ÀÏ°üµÈ, ÇÑ°á°°Àº" },
-  { word: "construct", meaning: "°Ç¼³ÇÏ´Ù, ±¸¼ºÇÏ´Ù" },
-  { word: "consult", meaning: "»ó´ãÇÏ´Ù, Âü°íÇÏ´Ù" },
-  { word: "consume", meaning: "¼ÒºñÇÏ´Ù" },
-  { word: "contain", meaning: "Æ÷ÇÔÇÏ´Ù, ¾ïÁ¦ÇÏ´Ù" },
-  { word: "contemporary", meaning: "µ¿½Ã´ëÀÇ, Çö´ëÀÇ" },
-  { word: "contradict", meaning: "¸ğ¼øµÇ´Ù, ¹İ¹ÚÇÏ´Ù" },
-  { word: "contribute", meaning: "±â¿©ÇÏ´Ù, ±âºÎÇÏ´Ù" },
-  { word: "convert", meaning: "ÀüÈ¯ÇÏ´Ù, °³Á¶ÇÏ´Ù" },
-  { word: "convince", meaning: "³³µæ½ÃÅ°´Ù, È®½Å½ÃÅ°´Ù" },
-  { word: "cooperate", meaning: "Çù·ÂÇÏ´Ù" },
-  { word: "coordinate", meaning: "Á¶Á¤ÇÏ´Ù, Á¶È­½ÃÅ°´Ù" },
-  { word: "corporate", meaning: "±â¾÷ÀÇ, °øµ¿ÀÇ" },
-  { word: "correspond", meaning: "ÀÏÄ¡ÇÏ´Ù, ¼­½ÅÀ» ÁÖ°í¹Ş´Ù" },
-  { word: "crucial", meaning: "Áß¿äÇÑ, °áÁ¤ÀûÀÎ" },
-  { word: "decline", meaning: "°¨¼ÒÇÏ´Ù, °ÅÀıÇÏ´Ù" },
-  { word: "deduce", meaning: "Ãß·ĞÇÏ´Ù" },
-  { word: "define", meaning: "Á¤ÀÇÇÏ´Ù" },
-  { word: "demonstrate", meaning: "Áõ¸íÇÏ´Ù, ½ÃÀ§ÇÏ´Ù" },
-  { word: "derive", meaning: "¾ò´Ù, ²ø¾î³»´Ù" },
-  { word: "detect", meaning: "°¨ÁöÇÏ´Ù, ¹ß°ßÇÏ´Ù" },
-  { word: "determine", meaning: "°áÁ¤ÇÏ´Ù, °á½ÉÇÏ´Ù" },
-  { word: "diminish", meaning: "ÁÙ¾îµé´Ù, Ãà¼ÒÇÏ´Ù" },
-  { word: "discard", meaning: "¹ö¸®´Ù, Æó±âÇÏ´Ù" },
-  { word: "discipline", meaning: "ÈÆ·Ã, ±ÔÀ²" },
-  { word: "display", meaning: "Àü½ÃÇÏ´Ù, µå·¯³»´Ù" },
-  { word: "distinct", meaning: "¶Ñ·ÇÇÑ, º°°³ÀÇ" },
-  { word: "distribute", meaning: "ºĞ¹èÇÏ´Ù, À¯ÅëÇÏ´Ù" },
-  { word: "diverse", meaning: "´Ù¾çÇÑ" },
-  { word: "dominate", meaning: "Áö¹èÇÏ´Ù" },
-  { word: "eliminate", meaning: "Á¦°ÅÇÏ´Ù, ¾ø¾Ö´Ù" },
-  { word: "emerge", meaning: "³ªÅ¸³ª´Ù, ºÎ»óÇÏ´Ù" },
-  { word: "enable", meaning: "°¡´ÉÇÏ°Ô ÇÏ´Ù" },
-  { word: "encounter", meaning: "¸¶ÁÖÄ¡´Ù, °Ş´Ù" },
-  { word: "enhance", meaning: "°­È­ÇÏ´Ù, ³ôÀÌ´Ù" },
-  { word: "ensure", meaning: "º¸ÀåÇÏ´Ù" },
-  { word: "equivalent", meaning: "µ¿µîÇÑ °Í, µ¿µîÇÑ" },
-  { word: "evaluate", meaning: "Æò°¡ÇÏ´Ù" },
-  { word: "evolve", meaning: "ÁøÈ­ÇÏ´Ù, ¹ßÀüÇÏ´Ù" },
-  { word: "exceed", meaning: "ÃÊ°úÇÏ´Ù" },
-  { word: "execute", meaning: "¼öÇàÇÏ´Ù, Ã³ÇüÇÏ´Ù" },
-  { word: "expand", meaning: "È®ÀåÇÏ´Ù" },
-  { word: "exploit", meaning: "ÀÌ¿ëÇÏ´Ù, ÂøÃëÇÏ´Ù" },
-  { word: "expose", meaning: "³ëÃâ½ÃÅ°´Ù" },
-  { word: "extend", meaning: "¿¬ÀåÇÏ´Ù, ´Ã¸®´Ù" },
-  { word: "facilitate", meaning: "¿ëÀÌÇÏ°Ô ÇÏ´Ù" },
-  { word: "fulfill", meaning: "ÀÌÇàÇÏ´Ù, ´Ş¼ºÇÏ´Ù" },
-  { word: "generate", meaning: "»ı¼ºÇÏ´Ù, ¸¸µé¾î³»´Ù" },
-  { word: "illustrate", meaning: "¼³¸íÇÏ´Ù, »ğÈ­¸¦ ³Ö´Ù" },
-  { word: "implement", meaning: "½ÇÇàÇÏ´Ù, µµ±¸" },
-  { word: "imply", meaning: "¾Ï½ÃÇÏ´Ù" },
-  { word: "impose", meaning: "ºÎ°úÇÏ´Ù, °­¿äÇÏ´Ù" },
-  { word: "incentive", meaning: "Àå·ÁÃ¥, À¯ÀÎ" },
-  { word: "indicate", meaning: "³ªÅ¸³»´Ù, °¡¸®Å°´Ù" },
-  { word: "inevitable", meaning: "ÇÇÇÒ ¼ö ¾ø´Â" },
-  { word: "interpret", meaning: "ÇØ¼®ÇÏ´Ù, Åë¿ªÇÏ´Ù" },
-  { word: "maintain", meaning: "À¯ÁöÇÏ´Ù, ÁÖÀåÇÏ´Ù" },
-  { word: "mature", meaning: "¼º¼÷ÇÑ, ¼º¼÷ÇØÁö´Ù" },
-  { word: "modify", meaning: "¼öÁ¤ÇÏ´Ù" },
-  { word: "monitor", meaning: "°¨½ÃÇÏ´Ù, ÁÖ½ÃÇÏ´Ù" },
-  { word: "motivate", meaning: "µ¿±â¸¦ ºÎ¿©ÇÏ´Ù" },
-  { word: "neutral", meaning: "Áß¸³ÀÇ" }
+  { word: "construct", meaning: "êµ¬ì„±í•˜ë‹¤, ê±´ì„¤í•˜ë‹¤" },
+  { word: "ensure", meaning: "ë³´ì¥í•˜ë‹¤, í™•ì‹¤íˆ í•˜ë‹¤" },
+  { word: "discard", meaning: "ë²„ë¦¬ë‹¤, íê¸°í•˜ë‹¤" },
+  { word: "expand", meaning: "í™•ì¥í•˜ë‹¤, ë„“íˆë‹¤" },
+  { word: "display", meaning: "ì „ì‹œí•˜ë‹¤, ë“œëŸ¬ë‚´ë‹¤" },
+  { word: "integrate", meaning: "í†µí•©í•˜ë‹¤, í•˜ë‚˜ë¡œ ë§Œë“¤ë‹¤" },
+  { word: "mediate", meaning: "ì¤‘ì¬í•˜ë‹¤, ì¡°ì •í•˜ë‹¤" },
+  { word: "navigate", meaning: "ê¸¸ì„ ì°¾ë‹¤, í•­í•´í•˜ë‹¤" },
+  { word: "observe", meaning: "ê´€ì°°í•˜ë‹¤, ì¤€ìˆ˜í•˜ë‹¤" },
+  { word: "perceive", meaning: "ì¸ì§€í•˜ë‹¤, íŒŒì•…í•˜ë‹¤" },
+  { word: "reinforce", meaning: "ê°•í™”í•˜ë‹¤, ë³´ê°•í•˜ë‹¤" },
+  { word: "sustain", meaning: "ì§€ì†í•˜ë‹¤, ë– ë°›ì¹˜ë‹¤" },
+  { word: "transform", meaning: "ë³€í˜•ì‹œí‚¤ë‹¤, ë°”ê¾¸ë‹¤" },
+  { word: "undergo", meaning: "ê²ªë‹¤, ê²½í—˜í•˜ë‹¤" },
+  { word: "violate", meaning: "ìœ„ë°˜í•˜ë‹¤, ì¹¨í•´í•˜ë‹¤" },
+  { word: "allocate", meaning: "í• ë‹¹í•˜ë‹¤, ë°°ë¶„í•˜ë‹¤" },
+  { word: "assess", meaning: "í‰ê°€í•˜ë‹¤, ì‚°ì •í•˜ë‹¤" },
+  { word: "compile", meaning: "í¸ì§‘í•˜ë‹¤, ì—®ë‹¤" },
+  { word: "depict", meaning: "ë¬˜ì‚¬í•˜ë‹¤, ê·¸ë¦¬ë‹¤" },
+  { word: "emphasize", meaning: "ê°•ì¡°í•˜ë‹¤" },
+  { word: "facilitate", meaning: "ì´‰ì§„í•˜ë‹¤, ì‰½ê²Œ í•˜ë‹¤" },
+  { word: "generate", meaning: "ìƒì„±í•˜ë‹¤, ë§Œë“¤ì–´ ë‚´ë‹¤" },
+  { word: "illustrate", meaning: "ì„¤ëª…í•˜ë‹¤, ì˜ˆì‹œë¥¼ ë“¤ë‹¤" },
+  { word: "justify", meaning: "ì •ë‹¹í™”í•˜ë‹¤" },
+  { word: "mitigate", meaning: "ì™„í™”í•˜ë‹¤, ì¤„ì´ë‹¤" },
+  { word: "negotiate", meaning: "í˜‘ìƒí•˜ë‹¤" },
+  { word: "optimize", meaning: "ìµœì í™”í•˜ë‹¤" },
+  { word: "presume", meaning: "ì¶”ì •í•˜ë‹¤, ê°€ì •í•˜ë‹¤" },
+  { word: "quantify", meaning: "ìˆ˜ëŸ‰í™”í•˜ë‹¤" },
+  { word: "regulate", meaning: "ê·œì œí•˜ë‹¤, ì¡°ì ˆí•˜ë‹¤" },
+  { word: "synthesize", meaning: "ì¢…í•©í•˜ë‹¤, í•©ì„±í•˜ë‹¤" },
+  { word: "trigger", meaning: "ì´‰ë°œí•˜ë‹¤, ìœ ë°œí•˜ë‹¤" },
+  { word: "uphold", meaning: "ìœ ì§€í•˜ë‹¤, ì˜¹í˜¸í•˜ë‹¤" },
+  { word: "withstand", meaning: "ê²¬ë””ë‹¤, ë²„í‹°ë‹¤" },
+  { word: "accumulate", meaning: "ì¶•ì í•˜ë‹¤, ëª¨ìœ¼ë‹¤" },
+  { word: "clarify", meaning: "ëª…í™•íˆ í•˜ë‹¤" },
+  { word: "dedicate", meaning: "í—Œì‹ í•˜ë‹¤, ë°”ì¹˜ë‹¤" },
+  { word: "eliminate", meaning: "ì œê±°í•˜ë‹¤, ì—†ì• ë‹¤" },
+  { word: "formulate", meaning: "ê³µì‹í™”í•˜ë‹¤, ë§Œë“¤ì–´ ë‚´ë‹¤" },
+  { word: "highlight", meaning: "ê°•ì¡°í•˜ë‹¤, ë¶€ê°ì‹œí‚¤ë‹¤" },
+  { word: "immerse", meaning: "ëª°ë‘í•˜ê²Œ í•˜ë‹¤, ë‹´ê·¸ë‹¤" },
+  { word: "moderate", meaning: "ì™„í™”í•˜ë‹¤, ì¡°ì ˆí•˜ë‹¤" },
+  { word: "prohibit", meaning: "ê¸ˆì§€í•˜ë‹¤" },
+  { word: "refine", meaning: "ì •ì œí•˜ë‹¤, ê°œì„ í•˜ë‹¤" },
+  { word: "scrutinize", meaning: "ë©´ë°€íˆ ì¡°ì‚¬í•˜ë‹¤" },
+  { word: "terminate", meaning: "ì¢…ê²°í•˜ë‹¤, ëë‚´ë‹¤" },
+  { word: "validate", meaning: "ê²€ì¦í•˜ë‹¤, ì…ì¦í•˜ë‹¤" },
 ];
 
 const REVEAL_STEP_SECONDS = 3;
@@ -154,10 +101,10 @@ const LoadingState = ({ vocabCards = [], revealStepSeconds = REVEAL_STEP_SECONDS
   return (
     <div style={styles.loading}>
       <div style={styles.spinner}></div>
-      <p style={styles.loadingMessage}>Generating your study set... hang tight!</p>
+      <p style={styles.loadingMessage}>ë¬¸ì œë¥¼ ì¤€ë¹„í•˜ê³  ìˆì–´ìš”! ì ì‹œë§Œ ê¸°ë‹¤ë ¤ ì£¼ì„¸ìš” ğŸ˜Š</p>
       {vocabCards.length > 0 && (
         <div style={styles.flashcardArea}>
-          <div style={styles.flashcardTitle}>Mini vocab warm-up while you wait!</div>
+          <div style={styles.flashcardTitle}>ê¸°ë‹¤ë¦¬ëŠ” ë™ì•ˆ ë‹¨ì–´ ë¯¸ë¦¬ë³´ê¸°âœ¨</div>
           <div style={styles.flashcardList}>
             {vocabCards.map(({ word, meaning }, index) => {
               const secondsRemaining = countdowns[index] !== undefined ? countdowns[index] : revealStepSeconds * (index + 1);
@@ -168,7 +115,7 @@ const LoadingState = ({ vocabCards = [], revealStepSeconds = REVEAL_STEP_SECONDS
                   {revealMeaning ? (
                     <div style={styles.flashcardMeaning}>{meaning}</div>
                   ) : (
-                    <div style={styles.flashcardCountdown}>Meaning appears in {secondsRemaining}s</div>
+                    <div style={styles.flashcardCountdown}>{secondsRemaining}ì´ˆ ë’¤ì— ëœ»ì´ ë³´ì—¬ìš”</div>
                   )}
                 </div>
               );
@@ -183,10 +130,10 @@ const LoadingState = ({ vocabCards = [], revealStepSeconds = REVEAL_STEP_SECONDS
 
 const ErrorState = ({ message, onRetry }) => (
   <div style={styles.error}>
-    <h2>Problem generation error</h2>
+    <h2>ë¬¸ì œë¥¼ ë§Œë“¤ë‹¤ê°€ ì ì‹œ ë©ˆì·„ì–´ìš” ğŸ˜¢</h2>
     <p>{message}</p>
     <button onClick={onRetry} style={styles.button}>
-      Try again
+      ë‹¤ì‹œ ì‹œë„í•˜ê¸°
     </button>
   </div>
 );
@@ -208,11 +155,11 @@ const StudyModeView = ({
       <button
         className="no-print"
         onClick={() => {
-          if (window.confirm("¼³Á¤À» º¯°æÇÏ¸é ÇöÀç Ç®ÀÌ ÁßÀÎ ¹®Á¦°¡ ÃÊ±âÈ­µË´Ï´Ù. °è¼ÓÇÏ½Ã°Ú¾î¿ä?")) onRestart();
+          if (window.confirm("í•™ìŠµì„ ì²˜ìŒë¶€í„° ë‹¤ì‹œ ì‹œì‘í•˜ë©´ ì§€ê¸ˆê¹Œì§€ í‘¼ ë¬¸ì œê°€ ëª¨ë‘ ì´ˆê¸°í™”ë¼ìš”. ê³„ì†í• ê¹Œìš”?")) onRestart();
         }}
         style={styles.resetButton}
       >
-        ¼³Á¤ ÃÊ±âÈ­
+        ì²˜ìŒë¶€í„° ë‹¤ì‹œ í’€ê¸°
       </button>
       <ScoreHUD timeElapsed={elapsedSeconds} />
     </div>
@@ -223,8 +170,8 @@ const StudyModeView = ({
           <div style={{ ...styles.progressBarInner, width: `${progressPercent}%` }} />
         </div>
         <div style={styles.progressLabels}>
-          <span>³²Àº ½Ã°£ {formatSeconds(timeLeft)}</span>
-          <span>ÀüÃ¼ {formatSeconds(initialTimeLeft)}</span>
+          <span>ë‚¨ì€ ì‹œê°„ {formatSeconds(timeLeft)}</span>
+          <span>ì „ì²´ {formatSeconds(initialTimeLeft)}</span>
         </div>
       </div>
     )}
@@ -245,7 +192,7 @@ const StudyModeView = ({
 
     <div style={styles.submitBar}>
       <div style={styles.submitHint}>
-        {allAnswered ? "¸ğµç ¹®Á¦¸¦ È®ÀÎÇß½À´Ï´Ù. Á¦Ãâ ¹öÆ°À» ´­·¯ÁÖ¼¼¿ä!" : "¸ğµç ¹®Ç×À» Ç®°í Á¦Ãâ ¹öÆ°À» ´­·¯ÁÖ¼¼¿ä."}
+        {allAnswered ? "ëª¨ë“  ë¬¸ì œë¥¼ í™•ì¸í–ˆì–´ìš”! ë§ˆë¬´ë¦¬ ë²„íŠ¼ì„ ëˆŒëŸ¬ ì£¼ì„¸ìš”." : "ì•„ì§ í’€ì§€ ì•Šì€ ë¬¸ì œê°€ ìˆì–´ìš”. ëª¨ë‘ í’€ë©´ ë§ˆë¬´ë¦¬ ë²„íŠ¼ì´ ì—´ë ¤ìš”."}
       </div>
       <button
         style={{
@@ -255,7 +202,7 @@ const StudyModeView = ({
         onClick={onFinish}
         disabled={!allAnswered}
       >
-        ÀüÃ¼ Á¦ÃâÇÏ±â
+        ì „ì²´ ë§ˆë¬´ë¦¬í•˜ê¸°
       </button>
     </div>
   </div>
@@ -488,5 +435,3 @@ const styles = {
 };
 
 export default StudyPage;
-
-

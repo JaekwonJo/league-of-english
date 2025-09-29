@@ -1,3 +1,10 @@
+## 2025-10-01 (grammar underline auto-heal)
+- Issue: OpenAI sometimes returned grammar passages with only 2-4 `<u>...</u>` spans even though all five options were correct, so `/generate/csat-set` kept 500-ing.
+- Cause: `formatGrammarProblem` required exactly five inline underlines and never rebuilt them from the option text, so minor formatting drift broke the pipeline.
+- Fix: Added an underline-rebuild helper, surfaced richer failure diagnostics, and covered the scenario with a Node test while syncing the status docs.
+- Files: server/services/aiProblemService.js, server/tests/aiProblemService.test.js, PROJECT_STATE.md, README.md.
+- Verification: `npm test`, `npm run lint`.
+
 ## 2025-09-30 (grammar manual v6.0 + study queue UX sync)
 - Issue: The grammar manual still referenced the older Master spec and docs kept warning about failing npm scripts even after the fixes landed, so downstream generators risked pulling stale guidance while devs hesitated to trust the tooling.
 - Cause: After shipping the countdown UI and updating scripts, we forgot to refresh the manuals/docs together, leaving contributors without a single source of truth.
