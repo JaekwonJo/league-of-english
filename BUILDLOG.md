@@ -1,3 +1,10 @@
+## 2025-10-01 (docs nickname cleanup)
+- Issue: Status docs still exposed the DC forum nickname, which risked leaking personal info and confused external collaborators.
+- Cause: Earlier documentation syncs copied the handle directly into CLAUDE.md and README.md without a neutral label.
+- Fix: Replaced every occurrence with `LoE관리자`, refreshed PROJECT_STATE.md, README.md, and CLAUDE.md, and verified no other files referenced the old nickname.
+- Files: PROJECT_STATE.md, README.md, CLAUDE.md.
+- Verification: `grep -R "슬랄라"` returns no matches outside ignored folders.
+
 ## 2025-10-01 (grammar underline auto-heal)
 - Issue: OpenAI sometimes returned grammar passages with only 2-4 `<u>...</u>` spans even though all five options were correct, so `/generate/csat-set` kept 500-ing.
 - Cause: `formatGrammarProblem` required exactly five inline underlines and never rebuilt them from the option text, so minor formatting drift (대소문자, 문장부호, 다중 공백)에서 계속 실패.
@@ -163,6 +170,5 @@
 - Fix: refactored `InsertionProblemGenerator2` to render full passages then convert markers and choices to circled numbers (①~⑤).
 - Files: `server/utils/insertionProblemGenerator2.js`, regenerated `generated_insertion_problems.json`, docs (`PROJECT_STATE.md`, `README.md`).
 - Verification: ran `node generate_insertion_problems.js`, reviewed problems 5·19·21 in study preview for correct layout and numbering.
-
 
 

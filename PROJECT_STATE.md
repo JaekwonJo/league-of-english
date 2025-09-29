@@ -20,7 +20,7 @@
 - API base URL continues to come from `client/.env` (`REACT_APP_API_URL`); auth tokens stay in `localStorage` until refresh tokens are introduced.
 
 ## Current Stage
-- Queue-backed generation, per-student exposure tracking, and the Study queue spinner/vocab countdown are live; today's pass patches the grammar formatter to auto-rebuild missing `<u>...</u>` spans from the options and adds a regression test so Windows/WSL devs still get green `npm test` + `npm run lint` out of the box.
+- Queue-backed generation, per-student exposure tracking, and the Study queue spinner/vocab countdown are live; today's pass scrubbed personal nicknames from the docs in favor of `LoE관리자`, keeping the public-facing materials consistent while the grammar formatter auto-rebuild remains in place (still green on `npm test` + `npm run lint`).
 
 ## Next 3 (priority)
 1. **Run end-to-end Study QA for grammar generation.** Fire up `npm run dev:all`, request a grammar set, and confirm the rebuilt underlines survive the full OpenAI → API → React flow.
@@ -28,10 +28,15 @@
 3. **Add client-side coverage for the countdown + grammar display.** Extend lint/test harnesses to `client/` so the vocab ticker, Korean copy, and underline renderer stay regression-proof.
 
 ## Known issues
-- Study loading UI still needs manual QA: ensure the countdown stops exactly at completion, handles failures gracefully, keeps focus visible for keyboard users, and verifies the underline rebuild with real payloads.
-- Grammar loading spinner strings remain English and the warm-up vocabulary meanings render as mojibake on some Windows browsers; switch to native Korean copy and normalise encoding.
-- Client-side linting/test harness is absent, so React regressions (like the countdown timer) can slip through until manual testing.
-- Order/insertion problem types are still rule-based; they need Wolgo-aligned OpenAI prompts plus validators before we can retire the scripted path.
+- Study loading UI still needs manual QA: validate countdown completion, keyboard focus, and underline rebuild behaviour with live API payloads.
+- Loading spinner and vocab warm-up strings remain English with mojibake on some Windows browsers; replace with Korean copy and normalised encoding.
+- Client-side linting and automated tests are missing, so React countdown and loading widgets rely on manual checks.
+- Order and insertion problem types are still rule-based; Wolgo-aligned OpenAI prompts plus validators are required before we retire the scripted path.
+
+## Resolved (2025-10-01 - docs nickname cleanup)
+- Replaced the personal nickname with `LoE관리자` across status docs to keep published materials professional and avoid leaking DC forum handles.
+- Updated README and CLAUDE overview so future contributors see the new naming instantly.
+- Confirmed no other files reference the deprecated nickname by searching the repository.
 
 ## Resolved (2025-10-01 - grammar underline auto-heal)
 - Patched `formatGrammarProblem` to rebuild missing `<u>...</u>` spans from the provided options (대소문자/문장부호 차이 허용), 추가 실패 진단을 붙이고 Node 테스트로 검증해 4-underlines payload에서도 더 이상 500이 나지 않게 했습니다.

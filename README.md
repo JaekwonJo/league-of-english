@@ -1,139 +1,170 @@
-# League of English - CSAT English Practice Suite
+# League of English (LoE)
 
-League of English is a web application that helps students and teachers generate, solve, and analyse CSAT-style English problems. The project consists of a Node/Express API and a React front-end.
+> "우리 학원 선생님이 올린 지문 하나로, 학생 맞춤형 시험과 숙제, 통계, 랭크까지 AI가 한 번에 만들어 주자!"
 
-## Main Features
-- Upload English passages (PDF/TXT) and generate CSAT problem sets (order, insertion, grammar, vocabulary, etc.) exclusively through the OpenAI API using Wolgo-aligned prompts.
-- Generate manual-aligned grammar and summary questions with circled-digit options, underlined passages, and validated source labels in five-question batches.
-- Study cards show a single 출처 label with advanced-level options that mirror Wolgo exam formatting and stay aligned with the saved library copy.
-- Persist every API-generated problem in a shared library, rotate cached items before hitting the API again, and record student-level exposure so solved items stay hidden.
-- Solve problems with timers, automatic scoring, and result dashboards.
-- Analyse passages sentence-by-sentence with AI-generated explanations.
-- Track personal progress with a stats dashboard (type accuracy + weekly trend).
-- Study queue UI surfaces OpenAI queue status with a spinner and timed vocab reveal so students know generation is still running.
-- Redeem membership coupons to unlock premium limits and perks.
-- Teachers issue class codes so students can link their accounts for shared analytics.
-- Teachers can review class analytics with time-range filters and CSV export to support coaching.
-- Students and teachers can report low-quality questions so moderators remove them from the cache instantly.
-- Admin tools for document management, ranking, and vocab exercises.
+## 1. 프로젝트 비전
+- **목표**: 학원에서 쓰는 영어 지문을 업로드하면, 수능-내신 스타일 문제를 자동으로 생성하고, 학생 학습 데이터를 분석해 바로 피드백하는 올인원 플랫폼.
+- **핵심 가치**
+1. **콘텐츠 자동화**: 문제 출제, 해설, 숙제를 AI가 대신 작성.
+2. **맞춤 학습**: 학생별 취약 유형, 랭크, 숙제 추천.
+3. **운영 효율**: 선생님-학부모-관리자가 한 대시보드에서 진행 상황 확인.
+4. **수익 모델**: 학원 내부에서 사용하다가 B2B/B2C SaaS로 확장 가능한 구독 구조.
 
-## Tech Stack
-- **Frontend**: React 19, CRA, lucide-react
-- **Backend**: Node 20, Express, sql.js
-- **Tooling**: Windows PowerShell, npm scripts (`dev`, `client`, `build`, `lint`)
+> Latest update (2025-10-01): 문서 전반의 운영자 표기를 `LoE관리자`로 통일했고, 어법 밑줄 재구성 패치는 `npm test`와 `npm run lint`에서 계속 통과 중입니다.
 
-## Prerequisites
-- Windows 10/11 with the built-in Windows PowerShell (preferably run as Administrator when managing ports).
-- Node.js 20 LTS installed on Windows (via the official installer or nvm-windows).
-- npm 10+ (bundled with the Node.js installer).
+## 2. 사용자 페르소나
+| 역할 | 목표 | LoE에서 얻는 것 |
+|------|------|----------------|
+| 학생 (고1~고3) | 수능형 문제 연습, 빠른 채점, 재미 | 게임식 학습, 즉시 해설, LP 랭크 |
+| 학부모 | 자녀 학습 현황 확인 | 자동 리포트, 숙제 인증, 성적 추이 |
+| 선생님 | 문제 제작, 숙제 배포, 반별 관리 | 지문 업로드 -> 문제은행, 숙제/시험 배포, 성적표 |
+| 관리자(LoE관리자) | 학원 운영, 구독 수익, 품질 유지 | 전체 대시보드, 결제 관리, 지표 모니터링 |
 
-## Quick Start (PowerShell)
-1. **Open Windows PowerShell.**
-   ```powershell
-   cd C:\Users\jaekw\Desktop\league-of-english
-   ```
-2. **Install dependencies (first time only).**
-   ```powershell
-   npm install
-   cd client
-   npm install
-   cd ..
-   ```
-3. **Run the full stack.**
-   ```powershell
-   npm run dev:all
-   ```
-   - This launches the API on port 5000 and the React app on port 3000.
-   - Visit `http://localhost:3000` in your browser.
-   - API health check: `http://localhost:5000/health`.
-4. **Stop the servers.** Press `Ctrl + C` in the PowerShell window.
+## 3. 제품 개요
+### 3.1 제품 기둥
+1. **문서 업로드 & 문제 생성**: PDF/TXT 업로드 -> 문장 추출 -> AI 문제 생성 -> 검증 후 캐시 저장.
+2. **학습 & 평가 경험**: 타이머, 즉시 채점, 해설, 오답노트, 랭크, 숙제 관리.
+3. **분석 & 보고**: 학생별/반별 성적, 유형별 정확도, 학부모 리포트, 관리자 요약.
+4. **운영 & 결제**: 구독 플랜, 사용량 제한, 결제 기록, 쿠폰, 알림.
 
-## Common Scripts
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Run Express API only (port 5000). |
-| `npm run client` | Run React dev server only (port 3000). |
-| `npm run dev:all` | Run both API and client concurrently from the repository root. |
-| `npm test` | Run the Node test suite via Node's test runner (passes on Windows/WSL). |
-| `npm run build` | Build the React client. |
-| `npm run lint` | Lint server-side JS files using ESLint (`.eslintrc.cjs`). |
-| `node scripts/update-problem-manuals.js` | Refresh the authoring manuals from the latest source PDFs. |
+### 3.2 기능 맵
+| 구분 | 현재 (MVP) | 다음 단계 (P2) | 이후 (P3+) |
+|------|-------------|-----------------|-------------|
+| 문제 유형 | 어법, 순서, 삽입 | 빈칸, 어휘, 제목, 주제, 요약 | 서술형 변환, 번역, 작문 |
+| 학습 경험 | 타이머, 자동 채점, LP/랭크 | 단어 시험, 숙제 스케줄러, PWA | 스터디룸, 친구 비교, AI 튜터 |
+| 분석 | 기본 점수, 랭크 | 취약 유형 분석, 학부모 리포트, 반별 비교 | AI 추천 코스, 목표 관리 |
+| 운영 | 관리자 계정, 문서 관리 | 구독 결제, 쿠폰, 알림 | B2B 학원 대시보드, 멀티 캠퍼스 |
 
-## Manual Sync Workflow
-When you refresh the authoring manuals from the latest PDFs, run the script and then walk through these checks so the AI keeps using clean guidance.
+## 4. 대표 유저 흐름
+### 4.1 학생 플로우
+1. 로그인 -> 오늘의 숙제/시험 확인.
+2. 문제 세트 선택 -> 로딩 스피너 + 단어 예열 -> 문제 5문항씩 풀이.
+3. 즉시 채점 -> 해설/오답 정리 -> LP 반영 -> 랭크/티어 갱신.
+4. 복습 추천 목록에서 틀린 유형 다시 풀기.
 
-1. **Run the converter.** `node scripts/update-problem-manuals.js` regenerates each `problem manual/*.md` from the PDFs that share the same base name.
-2. **Confirm the diffs.** Run `git diff "problem manual"` to make sure the updates match the intended PDF changes and spot any garbled characters early.
-3. **Spot-check in the app.** Start the stack (`npm run dev:all`) and create at least one AI grammar question so you can verify the regenerated text renders correctly.
-4. **Capture any follow-up fixes.** If a manual needs hand edits, make them after the script finishes. Re-run the script only when you re-export the PDFs so automation stays the source of truth.
+### 4.2 선생님 플로우
+1. PDF 업로드 -> 문장 자동 추출 -> AI 문제 생성 (승인/수정 가능).
+2. 문제 세트/숙제 구성 -> 반/학생에게 배포.
+3. 리포트(정답률, 소요 시간, 취약 유형) 확인 -> 보충 과제 지정.
 
-> **v6.0 주의:** grammar 매뉴얼은 TOEFL/GRE급 규칙(A~P)과 dangling 분사 정정 노트를 반드시 포함해야 합니다. 생성 결과가 예전 버전을 참고한다면 최신 markdown을 다시 주입하세요.
+### 4.3 학부모 플로우
+1. 학부모 계정 로그인 -> 자녀별 학습 현황 확인.
+2. 숙제 제출 여부, 시험 성적, 해설 열람.
+3. 월별 리포트, 추천 학습 팁 (AI 요약) 수신.
 
-Once the checks pass, commit the updated manuals alongside any fixes so teammates inherit the same state.
+### 4.4 관리자 플로우
+1. 전체 학원 지표 대시보드: 가입 수, 사용량, 구독 현황, LP 랭킹.
+2. 문제 품질 모니터링, AI 실패 로그 확인.
+3. 플랜별 제한 설정, 결제/환불, 쿠폰 발급.
 
-## Troubleshooting
-- **Port already in use**: Close other apps using ports 3000 or 5000. You can run `Get-Process -Id (Get-NetTCPConnection -LocalPort 5000).OwningProcess` in PowerShell (with admin rights) to identify and stop them.
-- **React keeps pointing to the wrong API**: Delete `client/.env`, then restart using `npm run dev:all` so the client falls back to `http://localhost:5000/api`.
-- **Study 화면에서 로딩 카운트다운이 멈추지 않음**: 백엔드 OpenAI 큐가 응답을 못 받으면 클라이언트가 계속 대기합니다. `backend-dev.log`에서 에러를 확인하고, 필요하면 브라우저 콘솔에서 `localStorage.clear()` 후 다시 세션을 시작하세요.
-- **Grammar problem shows no underlines**: make sure you are on the latest branch; the backend now rebuilds missing `<u>...</u>` spans from the options, and the front-end parses them correctly.
-- **PowerShell execution policy blocks scripts**: temporarily allow scripts by running `Set-ExecutionPolicy -Scope Process RemoteSigned` before starting the dev servers.
-
-## Repository Structure (high-level)
+## 5. 기술 아키텍처
 ```
-client/   # React front-end
-server/   # Express API & AI problem generation services
-docs/     # ADRs, decision logs, session notes
-scripts/  # Local development helpers
+ +-----------------+       +----------------------+      +------------------+
+ | React 19 (CRA)  | <---> | REST API (/api/...)  | <--- | OpenAI GPT-4o API|
+ | Zustand, SWR     |       | Express on Node.js   |      |  prompt handler   |
+ | React Query      |       |  auth, problems      |      +------------------+
+ +-----------------+       |  documents, study     |
+         ^                 +-----------+----------+
+         |                             |
+         |                   +---------v----------+
+         |                   | SQL.js (embedded)  |
+         |                   |  users, documents, |
+         |                   |  problems, cache   |
+         |                   +--------------------+
+         |
+ Browser localStorage (auth tokens, progress)
 ```
+- 향후 계획: PostgreSQL + Prisma, Redis 캐시, Render/Vercel 배포, Stripe 결제.
 
-## Contributing
-1. Fork and clone the repository.
-2. Run `npm install` in the root and in `client/`.
-3. Create a feature branch, make changes, and run lint/tests when applicable.
-4. Submit a pull request describing the changes and testing steps.
+## 6. 데이터 모델 요약
+| 테이블 | 주요 필드 | 비고 |
+|--------|-----------|------|
+| users | role(admin/teacher/student/parent), tier, points, membership | 비밀번호 해시, 소셜 연동 예약 |
+| documents | title, passages(JSON), owner, tags, visibility | 업로드 원본과 정제본 보관 |
+| problems | type, question, options, answer, explanation, metadata | generator(openai/rule), sourceLabel |
+| study_records | userId, problemId, score, timeSpent, submittedAt | 노출 차단(노출 테이블), 복습 추천 |
+| assignments (예정) | owner, targets, dueDate, status | 숙제/시험 관리 |
+| subscriptions (예정) | plan, billingCycle, paymentProvider, usageCount | Stripe 연동 |
 
-## License
-This project is proprietary. Do not distribute without permission.
+## 7. AI 문제 생성 파이프라인
+1. **입력 준비**: 문서에서 문장/문단 추출 -> 문제 유형별 prompt 템플릿 조합.
+2. **모델 호출**: `gpt-4o-mini`, 낮은 temperature, JSON 형식 지시.
+3. **결과 검증** (`aiProblemService`)
+   - JSON 파싱 -> 옵션/밑줄/정답 개수 검증.
+   - 어법: `<u>...</u>` 5개 강제. 부족 시 옵션에서 밑줄 구간 추출 -> 본문에 재삽입.
+   - 소스 라벨, 해설, 정답 범위 확인.
+4. **저장 & 캐시**
+   - 문제 DB insert (metadata 포함).
+   - 동일 문서/유형은 캐시 우선 제공 -> 노출 테이블로 중복 방지.
+5. **실패 처리**
+   - 실패 이유(underline, JSON, 정답 등) 수집.
+   - 3회 리트라이 후 에러 반환 + 로그 기록.
 
-## Project Roadmap
+## 8. 개발 환경 및 스크립트
+```bash
+# 1) 의존성 설치
+npm install
+cd client && npm install
 
-### Latest Update (2025-10-01)
-- Grammar generation no longer 500s on four-underlines payloads: the formatter now rebuilds missing `<u>…</u>` spans from the options and ships with a regression test (`npm test`).
-- Windows/WSL checks stay green (`npm run lint`, `npm test`), so devs can focus on UI polish instead of tooling drift.
-- Immediate focus: QA the countdown + grammar flow in the browser, localise the loading spinner/vocab warm-up copy to Korean, and extend client lint/tests to lock in the fixes.
+# 2) 개발 서버 함께 실행 (PowerShell)
+npm run dev:all
+#   - API: http://localhost:5000
+#   - Web: http://localhost:3000
 
+# 3) 품질 체크
+npm test        # 서버 테스트 (node --test)
+npm run lint    # ESLint (server/**/*.js)
 
-| Step | Description | Status |
-|------|-------------|--------|
-| 01 | 개발 도구 설치 (Node.js, VS Code, Git) | ? 완료 |
-| 02 | 프로젝트 폴더 구조 구성 | ? 완료 |
-| 03 | React 앱 기본 설정 | ? 완료 |
-| 04 | 기존 React 컴포넌트 적용 | ? 완료 |
-| 05 | 라우팅 설정 (페이지 이동) | ? 완료 |
-| 06 | 스타일링 (그라데이션/반응형) | ? 완료 |
-| 07 | Express 서버 구축 | ? 완료 |
-| 08 | 데이터베이스 전환 준비 (PostgreSQL) | ?? 계획 |
-| 09 | 데이터베이스 테이블 생성 (SQL.js) | ? 완료 |
-| 10 | 핵심 API 엔드포인트 구현 | ? 완료 |
-| 11 | 회원가입·로그인 시스템 | ? 완료 |
-| 12 | 파일 업로드 확장 (PDF → DOCX/CSV) | ?? 예정 |
-| 13 | AI 연동 (OpenAI API) | ? 완료 |
-| 14 | 문제 자동 생성 로직 | ? 완료 |
-| 15 | 점수·랭킹 시스템 | ? 완료 |
-| 16 | 멤버십 결제/업그레이드 흐름 | ?? 보강 필요 |
-| 17 | 관리자 대시보드 | ? 완료 |
-| 18 | 통계·분석 대시보드 | ?? 확장 필요 |
-| 19 | 일일 제한 관리 | ? 완료 |
-| 20 | 환경 변수 설정 | ? 완료 |
-| 21 | 보안 강화 (역할·JWT·CORS) | ?? 진행 중 |
-| 22 | 에러 처리 (전역 핸들러, API별 예외) | ?? 진행 중 |
-| 23 | 클라우드 서버 선택 (Render/Vercel) | ? 완료 |
-| 24 | 도메인 연결 | ? 완료 |
-| 25 | 최종 테스트 및 런칭 | ?? Smoke 테스트/QA 예정 |
+# 4) 문서/매뉴얼 갱신
+docs: node scripts/update-problem-manuals.js
+```
+- 환경 변수: `OPENAI_API_KEY`, `JWT_SECRET`, `REACT_APP_API_URL` 등 `.env`로 관리.
+- Windows 기본, 필요 시 WSL 사용 가능.
 
+## 9. 품질 전략
+- **자동 테스트**
+  - Node test runner: AI 문제 포맷 검증 (`server/tests/aiProblemService.test.js`).
+  - TODO: 프론트 컴포넌트 테스트(Jest/Testing Library), E2E(Playwright).
+- **린트/포맷**: ESLint, Prettier.
+- **로그/모니터링**: OpenAI 호출 로그, 실패 사유 기록, dev/prod 분기.
+- **수동 QA 체크리스트**
+  1. 문법 문제 5문항 로딩 -> 밑줄 5개 모두 표시.
+  2. 로딩 스피너 한글 문구 + 단어 예열 정상.
+  3. 학습 세션 종료 후 LP 반영/랭크 갱신.
+  4. 관리자 업로드 -> 문제 승인 -> 숙제 배포 흐름.
 
+## 10. 로드맵
+### P1 (완료)
+- 로그인, 문서 업로드, 문제 3종(어법/순서/삽입), 학습/채점/랭크, AI 어법 밑줄 복구.
 
+### P2 (진행 중)
+1. AI 문제 5종 확장 (빈칸/어휘/제목/주제/요약).
+2. 숙제 및 단어 시험 생성/배포.
+3. 학부모-선생님 리포트 화면.
+4. Stripe 결제, 구독 제한, 쿠폰 시스템.
+5. 클라이언트 린트/테스트 도입.
 
+### P3 (계획)
+- 고급 분석/추천, 소셜 기능(친구 경쟁), PWA, 파일 출력 자동화.
+- B2B 확장: 멀티 학원 지원, 사용자 초대, API 제공.
 
+## 11. 용어 사전
+| 용어 | 뜻 |
+|------|----|
+| LP (League Point) | 문제 풀이로 쌓이는 점수, 티어 산정 기준 |
+| 티어 | Iron -> Bronze -> Silver -> Gold -> Platinum -> Diamond -> Master -> Challenger |
+| Study Queue | 문제 생성 중 표시되는 로딩 + 단어 예열 화면 |
+| Exposure | 학생이 이미 본 문제를 다시 주지 않기 위한 기록 |
+| Variant Tag | OpenAI 호출마다 붙이는 고유 식별자 (디버깅용) |
 
+## 12. 협업 원칙
+1. **계획 먼저, 실행은 허가 후**: 큰 변경은 항목별 계획을 먼저 공유.
+2. **설명은 초등학생도 이해 가능한 언어로**: 전문 용어는 쉬운 비유와 함께.
+3. **에러 공유는 즉시**: 콘솔 로그, API 응답, 재현 절차를 함께 전달.
+4. **문서 우선**: 주요 결정은 README/PROJECT_STATE/BUILDLOG에 기록.
 
+## 13. 영감이 된 한 마디
+> "프로토타입은 일주일이면 만들 수 있지만, 우리 학원에 꼭 맞는 서비스는 내가 직접 만들어야 가장 완벽해." - LoE관리자
+
+---
+이 README는 전체 기획서 역할을 합니다. 기능이나 우선순위가 바뀌면 반드시 업데이트해 주세요.
