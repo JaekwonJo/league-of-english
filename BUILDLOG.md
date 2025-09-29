@@ -1,3 +1,10 @@
+## 2025-09-30 (status docs + CLI verification)
+- Issue: Status docs called out the automation backlog but skipped the exact failure messages from `npm test` and `npm run lint`, so Windows users still had to rediscover the errors.
+- Cause: After the previous sync we never re-ran the scripts on the current branch, so the documentation referenced fixes without showing their reproduction details.
+- Fix: Re-ran both commands, captured the `Could not find .../**/*.test.js` and "ESLint couldn't find a configuration file" outputs, and updated PROJECT_STATE.md/README.md with those specifics while logging the sync.
+- Files: PROJECT_STATE.md, README.md, BUILDLOG.md.
+- Verification: `npm test` (expected failure reproduced), `npm run lint` (expected failure reproduced).
+
 ## 2025-09-30 (status docs refresh + npm test TODO)
 - Issue: Status docs still pointed at prompt QA as the top priority and skipped the failing `npm test` script, so contributors could not rely on the documented workflow.
 - Cause: After shipping the queue-backed generation + exposure tracking, we never reprioritised the roadmap to cover the Windows glob failure or the missing ESLint config.

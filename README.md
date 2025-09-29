@@ -53,9 +53,9 @@ League of English is a web application that helps students and teachers generate
 | `npm run dev` | Run Express API only (port 5000). |
 | `npm run client` | Run React dev server only (port 3000). |
 | `npm run dev:all` | Run both API and client concurrently from the repository root. |
-| `npm test` | Run the Node test suite (use `node --test server/tests/aiProblemService.test.js` until the globbing script is fixed). |
+| `npm test` | Run the Node test suite (currently crashes with `Could not find .../**/*.test.js`; run `node --test server/tests/aiProblemService.test.js` until the script is patched). |
 | `npm run build` | Build the React client. |
-| `npm run lint` | Lint server-side JS files (blocked until an ESLint config is restored). |
+| `npm run lint` | Lint server-side JS files (fails with "ESLint couldn't find a configuration file" until the config is restored). |
 | `node scripts/update-problem-manuals.js` | Refresh the authoring manuals from the latest source PDFs. |
 
 ## Manual Sync Workflow
@@ -71,6 +71,7 @@ Once the checks pass, commit the updated manuals alongside any fixes so teammate
 ## Troubleshooting
 - **Port already in use**: Close other apps using ports 3000 or 5000. You can run `Get-Process -Id (Get-NetTCPConnection -LocalPort 5000).OwningProcess` in PowerShell (with admin rights) to identify and stop them.
 - **React keeps pointing to the wrong API**: Delete `client/.env`, then restart using `npm run dev:all` so the client falls back to `http://localhost:5000/api`.
+- **`npm test` fails with a missing file error**: The script still uses a glob that Windows shells do not expand (`Could not find .../**/*.test.js`). Run `node --test server/tests/aiProblemService.test.js` until the npm script is fixed.
 - **Grammar problem shows no underlines**: make sure you are on the latest branch; the front-end now parses `<u>...</u>` spans.
 - **PowerShell execution policy blocks scripts**: temporarily allow scripts by running `Set-ExecutionPolicy -Scope Process RemoteSigned` before starting the dev servers.
 
@@ -94,9 +95,9 @@ This project is proprietary. Do not distribute without permission.
 ## Project Roadmap
 
 ### Latest Update (2025-09-30)
-- Refreshed PROJECT_STATE.md, README.md, and BUILDLOG.md to emphasise the queue-ready backend and today's hygiene priorities (fixing `npm test`, restoring lint, shipping queue status UI).
-- Verified `node --test server/tests/aiProblemService.test.js` while the Windows glob issue in `npm test` stays on the front burner.
-- Immediate focus: patch the failing `npm test` script, surface the Study UI queue status, and bring ESLint back before diving into teacher tooling.
+- Re-synced PROJECT_STATE.md, README.md, and BUILDLOG.md after re-running `npm test`/`npm run lint` so the docs spell out the current failure messages and keep automation fixes front-and-centre.
+- Verified `npm test` throws `Could not find .../**/*.test.js` on Windows shells and documented the direct `node --test server/tests/aiProblemService.test.js` fallback.
+- Immediate focus: patch the failing `npm test` script, restore the ESLint config so `npm run lint` works again, and surface the Study UI queue status before expanding teacher tooling.
 
 
 | Step | Description | Status |

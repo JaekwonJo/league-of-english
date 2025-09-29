@@ -19,18 +19,22 @@
 - API base URL continues to come from `client/.env` (`REACT_APP_API_URL`); auth tokens stay in `localStorage` until refresh tokens are introduced.
 
 ## Current Stage
-- Queue-backed generation and per-student exposure tracking are live; unblocking local automation (tests + lint) and preparing the Study UI queue status before expanding teacher tooling.
+- Queue-backed generation and per-student exposure tracking are live; we just re-ran the CLI to confirm the `npm test` glob failure and missing ESLint config, so unblocking automation and adding the Study UI queue status stays ahead of teacher tooling.
 
 ## Next 3 (priority)
-1) Patch the `npm test` script so Windows shells run the suite; remove the glob failure that blocks CI and teammates.
-2) Surface the OpenAI queue status in the Study UI with a live spinner and friendly copy so students know generation is in progress.
-3) Restore the ESLint config and re-enable `npm run lint` to catch regressions automatically before builds.
+1) Fix the `npm test` script so it invokes Node's test runner without shell globbing; Windows currently prints `Could not find .../**/*.test.js`, which blocks both CI and cross-platform teammates.
+2) Restore an ESLint config (`.eslintrc.*` + npm wiring) so `npm run lint` stops erroring and automated JS checks run before merges.
+3) Surface the OpenAI queue status in the Study UI (spinner + reassuring copy) so students see progress instead of re-clicking while generation runs.
 
 ## Known issues
-- ESLint config is still missing (`npm run lint` fails), so we rely on CRA build warnings and manual review.
+- ESLint config is still missing; `npm run lint` exits with "ESLint couldn't find a configuration file", so we rely on CRA build warnings and manual review.
 - Order/insertion types are still rule-based; they need Wolgo-aligned OpenAI prompts plus validators.
 - Study UI does not yet surface the OpenAI queue status, so students cannot tell when generation is still running.
-- `npm test` currently fails because the glob pattern is not expanded on Windows bash; run `node --test server/tests/aiProblemService.test.js` until the script is patched.
+- `npm test` currently fails with `Could not find '/path/to/repo/server/tests/**/*.test.js'` because Windows shells do not expand the glob; run `node --test server/tests/aiProblemService.test.js` until the script is patched.
+
+## Resolved (2025-09-30 - doc sync + CLI verification)
+- Re-read PROJECT_STATE.md, README.md, and BUILDLOG.md, then re-ran `npm test` and `npm run lint` to capture the current failure messages so the status docs stay actionable while the fixes are pending.
+- Recorded the exact Windows glob error and ESLint config gap inside the status docs to guide whoever tackles the automation backlog next.
 
 ## Resolved (2025-09-30)
 - Re-synced PROJECT_STATE.md, README.md, and BUILDLOG.md to spotlight the queue-ready backend, refreshed Top 3 priorities, and the temporary `node --test` workaround.
