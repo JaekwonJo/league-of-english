@@ -20,12 +20,12 @@
 - API base URL continues to come from `client/.env` (`REACT_APP_API_URL`); auth tokens stay in `localStorage` until refresh tokens are introduced.
 
 ## Current Stage
-- Queue-backed generation, per-student exposure tracking, and the Study queue spinner/vocab countdown are live; today's pass scrubbed personal nicknames from the docs in favor of `LoE관리자`, keeping the public-facing materials consistent while the grammar formatter auto-rebuild remains in place (still green on `npm test` + `npm run lint`).
+- Queue-backed generation and the grammar underline auto-heal are stable, and `npm test`/`npm run lint` continue to pass; the Study spinner still shows English copy, so today's sync spotlights the localisation + QA follow-up while we prep client automation.
 
 ## Next 3 (priority)
-1. **Run end-to-end Study QA for grammar generation.** Fire up `npm run dev:all`, request a grammar set, and confirm the rebuilt underlines survive the full OpenAI → API → React flow.
-2. **Localise the loading spinner + vocab reveal.** The warm-up still prints English copy and shows mojibake for Korean meanings; swap the strings to Korean and fix the encoding glitch.
-3. **Add client-side coverage for the countdown + grammar display.** Extend lint/test harnesses to `client/` so the vocab ticker, Korean copy, and underline renderer stay regression-proof.
+1. **Localise the Study spinner + vocab warm-up.** Swap the remaining English strings to Korean and fix the mojibake so the countdown screen feels native.
+2. **Run end-to-end Study QA for grammar batches.** Launch `npm run dev:all`, request a grammar set, and confirm all five rebuilt underlines render correctly from OpenAI → API → React.
+3. **Add client-side tests/linting for spinner + countdown UI.** Extend the test harness to `client/` so localisation and underline rendering stay regression-proof.
 
 ## Known issues
 - Study loading UI still needs manual QA: validate countdown completion, keyboard focus, and underline rebuild behaviour with live API payloads.

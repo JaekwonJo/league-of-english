@@ -1,3 +1,10 @@
+## 2025-10-02 (status docs sync for spinner focus)
+- Issue: Top-priority docs still highlighted 지난 닉네임 정리 작업이라, 스터디 스피너 한글화·어법 QA·클라이언트 자동화가 흐릿하게 보였습니다.
+- Cause: 10월 1일 문서 정리 이후 새 과제가 생겼지만 README/PROJECT_STATE/BUILDLOG에 일관되게 반영하지 못했습니다.
+- Fix: PROJECT_STATE.md와 README.md를 한글 스피너, 어법 세트 QA, 클라이언트 테스트 도입 중심으로 다시 정렬하고 BUILDLOG에 업데이트를 추가했습니다.
+- Files: PROJECT_STATE.md, README.md, BUILDLOG.md.
+- Verification: 손으로 문서 교차 확인 (`npm test`, `npm run lint` 현 상태 문서에 명시).
+
 ## 2025-10-01 (docs nickname cleanup)
 - Issue: Status docs still exposed the DC forum nickname, which risked leaking personal info and confused external collaborators.
 - Cause: Earlier documentation syncs copied the handle directly into CLAUDE.md and README.md without a neutral label.
@@ -170,5 +177,4 @@
 - Fix: refactored `InsertionProblemGenerator2` to render full passages then convert markers and choices to circled numbers (①~⑤).
 - Files: `server/utils/insertionProblemGenerator2.js`, regenerated `generated_insertion_problems.json`, docs (`PROJECT_STATE.md`, `README.md`).
 - Verification: ran `node generate_insertion_problems.js`, reviewed problems 5·19·21 in study preview for correct layout and numbering.
-
 
