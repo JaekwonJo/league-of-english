@@ -1,115 +1,178 @@
-# PROBLEM_PROMPTS_GRAMMAR_SPAN.md — CSAT ‘어법(Grammar)’ 문제 파이널 매뉴얼
+# 📚 LoE 어법 변형 출제 매뉴얼 Master v6.0 (TOEFL/GRE급 고난도 전용)
 
-## A. 문제 정의와 채점 철학
-- **정의**: 영어 단락에서 5개의 밑줄 중 **정확히 1곳**만 문법 오류로 설정하고, 나머지는 모두 적법한 구조로 둔 뒤 “어법상 옳지 않은 것”을 찾게 하는 문제.
-- **측정 역량**: 단순 규칙 암기가 아니라 **문맥 속 문법 구조 판단** + **유일정답성 판별**.
-- **채점 철학**:
-  - 정답은 **한 번의 수정(1-step fix)**으로 해결 가능해야 함.
-  - 나머지 4곳은 ‘헷갈리지만 맞는’ 고난도 함정.
-  - **코퍼스 자연성**: 수정 후 문장은 실제 영어 쓰기에서 자연스러워야 한다.
-  - **유일정답성** 필수: 정답 외 다른 밑줄은 절대 오류가 되면 안 됨.
+> **목표:** 고2·고3 상위권~최상위/TOEFL·GRE 스타일의 **진짜 고난도** 어법 변형만 생산.
+> **핵심 철학:** *원문 전체 제시* → *문장 속 밑줄 5개(①~⑤)* → *오류 1개는 고급 규칙 기반* → *간결·정확 해설*.
+> **출처 라벨:** `출처: 파일명_pX-no.XX`
 
 ---
 
-## B. 지문 선택 기준
-- **장르**: 설명문·과학·심리·사회 글.
-- **길이**: 120~180어.
-- **조건**:
-  - 최소 5~7문장.
-  - 관계사, 분사, 전치사, 병렬, 수일치, 시제 등 다양한 구문 포함.
-- **기출 예시**: 2025 수능 29번【28†source】.
+## 0) 절대 원칙 (Triviality Filter)
+
+* **Source lock:** 원문 철자·어순·구두점 **100% 고정**. 발췌/재배열 금지.
+* **Inline:** 원문 **전체 문단**을 그대로 제시하고, 문장 내부에 ①~⑤만 삽입(별도 보기 금지).
+* **오류 1개 규칙:** 밑줄 5개 중 **정확히 1개만** 오류. 최소 3개는 **원문과 글자까지 동일**.
+* **초급 금지:** 단순 수일치/시제·오타형(예: *we returns*, *would have allow*) **절대 금지**.
+* **판별 난이도:** **해석과 규칙의 결합** 없이는 풀 수 없도록(표면형으로 즉시 보이면 탈락).
+
+> ※ **정정 고지:** *“A few years later, … coined ‘AI,’ replacing …”*은 **올바른 분사구문**입니다(주어 동일·의미 자연). *and replaced*로 바꿀 수도 있으나 **둘 다 가능**하며, “replacing이 틀렸다”는 판정은 **오류**였습니다. 앞으로는 **dangling/주어 불일치**일 때만 분사 오류로 출제합니다.
 
 ---
 
-## C. 수능형 출제 포인트 (18개 축)
-### 빈출 핵심 (★)
-1. **주어-동사 수일치(★)**: 의미상 주어, 삽입구 무시.
-2. **시제·상·조동사(★)**: 시간축 일관성, 완료·가정법.
-3. **태(능/수동)·목적어 구조(★)**: 타동사 목적어, 수동태 보어.
-4. **분사·분사구문(★)**: -ing/-ed, dangling participle.
-5. **관계사/관계절(★)**: 선행사·격 일치.
-6. **명사절/접속사(★)**: what/that/if/whether 구별.
-7. **병렬·등위(★)**: 품사·형식 일치.
-8. **비교구문(★)**: as~as, 비교급 than.
-9. **전치사·관용(★)**: collocation, 자동사/타동사 구별.
-10. **관사·한정사(★)**: 불가산/가산, each/every.
-11. **대명사 호응(★)**: 단복수, 참조 명확성.
+## 1) 허용 오류 유형 (고급형 라이브러리 A~P)
 
-### 중상위 포인트
-12. 부정/도치
-13. 가정법
-14. 부정사·동명사
-15. 수식어 위치
-16. It/There 구문
-17. 연결어(although/because 등)
-18. 어순/강조구문
+> 모든 변형은 **원문에 실제 존재하는 구조**를 기반으로 **최소 편집(minimal edit)** 1회로만 시행.
+
+**A. 전치사·관계사·접속사 구별**
+
+* 전치사 잔류/도치: *which S V (P)* ↔ *P + which S V*
+* 관계대명사/관계부사/접속사 혼동: *that/which/when/what/whether/if* 구별
+* 전치사 선택·탈락: *rely on*, *coping with*, *known as*, *engaged in* 등
+
+**B. 병렬(형태·범주·논리 일치)**
+
+* *to V … and (to) V*, *V‑ing … and V‑ing*
+* 등위/상관 접속사: *both A and B / not only A but also B / the more … the more …*
+* **의미역 불일치**(범주 같아 보여도 논리 구실이 어긋남) 출제
+
+**C. 형용사/부사·수식어 위치(보어·전치 수식)**
+
+* 보어 자리 형용사(*is relative*), 명사 앞 수식 형용사(*potential power*)
+* 부사 위치 자연성(동사/형용사/문장 수식)
+
+**D. 비정형식·준동사 선택(Non‑finite/Control/Raising)**
+
+* *to V ↔ to V‑ing*
+* *allow/enable/expect/tend/happen/seem* 등 **control/raising** 동사 구조
+* 전치사 **to** vs **to부정사** 혼동 금지
+
+**E. 분사/태/절축약(Absolute/Reduced Relatives)**
+
+* 능·수동 분사(*confused/confusing*), 절축약(*meaning that …*, *as measured …*)
+* **Dangling** 여부, 주어 일치 필수
+* 본동사 vs 분사구문 대립(*cooling vs cools*)
+
+**F. 가정법·도치·Backshift**
+
+* *Had S p.p., S would/could have p.p.*
+* 혼합 금지: *would have p.p. and V* × → **would have p.p. and have p.p.**
+* 간접화법 시제일치/조동사 backshift
+
+**G. 부정어/강조·대용(Pro‑forms)**
+
+* *no sooner … than / hardly … when* 도치·시제
+* *no wonder (that) …*
+* **do/so/one/that/it**의 정확한 참조(대동사/대명사 대용)
+
+**H. 5형식·사역/지각·목적보어**
+
+* *make/have/let/get/help* 목적보어 **형태/태 일치**
+* *consider A (to be) B / regard A as B* 변형
+* *so … that / such … that / too … to / enough to*
+
+**I. 도치·강조 구문**
+
+* *Only if ~/ Never have I ~/ Not until ~*
+* **It‑cleft**: *It is/was … that ~*의 시제·일치
+
+**J. 일치성(대명사·시제·지시어)**
+
+* 선행사/수 일치, **one/ones/it/they** 정확한 참조
+* 문맥 시제 일관성(문장 간 backshift)
+
+**K. 전치사화 분사/전치사적 표현**
+
+* *given, owing to, due to, with/without + NP + V‑ing/p.p.*
+* *as/with* 절축약 vs 분사구문 구별
+
+**L. Headless/Free relatives & Complementizers**
+
+* **what**(선행사 無) vs **that**(제한적 용법), *whether vs if*
+* 동격절 vs 관계절 구별
+
+**M. 비교/등위·상관 비교구문**
+
+* *more/less than, as … as, rather than, not so much A as B*
+* **do‑support 비교 도치**: *so do I / than do I*
+
+**N. 수량/측정·논리 일관성**
+
+* *the number of … is* vs *a number of … are*
+* 단위/정밀도 서술의 **참조 일관성**(*as measured …*, *one part in a million*)
+
+**O. 담화 연결·논리 표지(Conjuncts)**
+
+* *thus/therefore/however/meanwhile* 등의 위치·세미콜론/콤마 사용
+* 등위/종속 혼동 방지
+
+**P. 담화 회복·지시체계(Anaphora/Cataphora)**
+
+* *this/that/these/those/it*이 가리키는 선행 내용 정확성(문단 내 장거리 참조)
 
 ---
 
-## D. 제작 절차 (7단계)
-1. **본문 선정**: 설명문 단락.
-2. **포인트 추출**: 위 18축 중 8~12개 후보 선정.
-3. **의도 오류 1개 삽입**: 수일치·전치사·병렬 중 하나.
-4. **나머지 4곳은 맞지만 헷갈리게**: 분사 수식, 관계사 격, 전치사 관용.
-5. **밑줄 표기**: `<<1>>…<</1>>` ~ `<<5>>…<</5>>`.
-6. **보기**: "1"~"5". 정답은 반드시 하나.
-7. **해설 작성**: 규칙명 + 맥락 단서.
+## 2) 금지·제한(Strong NO)
+
+* 초급·노골 오류(단순 수일치/시제, 철자 교체만으로 보이는 것).
+* 의미 훼손/정보 추가/어순 재배열/구두점 변형.
+* **복수 오류**(두 곳 이상 오류)·**정답 다중화**.
 
 ---
 
-## E. 예시 (기출 재구성)
+## 3) 밑줄 선정 규칙 (고난도 포커싱)
 
-### mainText (예시)
-Think of yourself. When you decide to get up and get a drink of water, you don’t consciously consider every step. Imagine if we <<1>>had to consider<</1>> every single muscle to move. It would be tiresome, as patients recovering from brain injury <<2>>knows<</2>>. The autopilot parts of our brain do it automatically, <<3>>freeing up<</3>> the conscious mind. It is the older brain parts <<4>>that support<</4>> these processes. Most of the time, <<5>>what you are perceiving<</5>> is based on crude analysis.
+1. **핵심 링커/헤드**: 전치사·관계사 머리, 비교 표현의 **than/as** 지점.
+2. **병렬의 두 번째 항**: 첫 항 정답·두 번째 항 미세 변형.
+3. **보어/준동사/절축약**: 보어 형용사, *to V / V‑ing*, 절축약 분사구문.
+4. **장거리 일치/참조**: 문장 간 시제·대명사 참조 일관성.
 
-### 결과(JSON)
-```json
-{"type":"grammar_span","mainText":"Think of yourself. When you decide to get up and get a drink of water, you don’t consciously consider every step. Imagine if we <<1>>had to consider<</1>> every single muscle to move. It would be tiresome, as patients recovering from brain injury <<2>>knows<</2>>. The autopilot parts of our brain do it automatically, <<3>>freeing up<</3>> the conscious mind. It is the older brain parts <<4>>that support<</4>> these processes. Most of the time, <<5>>what you are perceiving<</5>> is based on crude analysis.","question":"Q. 다음 글의 밑줄 친 부분 중 문법상 옳지 않은 것을 고르세요.","options":["1","2","3","4","5"],"answer":2,"explanation":"주어-동사 수일치 오류: patients는 복수이므로 knows → know로 고쳐야 한다.","evidenceLines":["patients recovering from brain injury <<2>>knows<</2>>"],"metadata":{"style":"csat","difficulty":"basic"}}
+---
+
+## 4) 오류 삽입 원자 연산 (1회만)
+
+* 전치사 **교체/탈락/도치**: *on which ↔ which … on*, *with → of*, *rely on → rely ∅*
+* 관계소 **치환**: *when ↔ which*, *that ↔ which*, *whether ↔ if*
+
+* 형태 **전환**: *to V ↔ V‑ing*, *return ↔ returning*, *measured ↔ measuring*
+* 보어 **품사 전환**: *relative ↔ relatively*
+* 가정법 **조동사 통일/불일치 유도***: *would have p.p. and have p.p.* ↔ *would have p.p. and V*
+
+---
+
+## 5) 생성·검수 알고리즘
+
+1. 원문 단락 **그대로** 붙여넣기(출처 포함).
+2. 문장 내부 **①~⑤ 밑줄** 배치(≥3개 원문 동일).
+3. **A~P 중 1유형** 선택 → **원자 연산 1회**로 오류 생성.
+4. **정답 유일성/의미 보존/난도** 체크.
+5. **해설**: 규칙 1문장 + 나머지 4개가 옳은 근거 1~2문장(짧고 정확).
+
+> ※ 해설 표시는 **세트 맨 마지막에 한꺼번에** 모아 제공 가능(요청 시).
+
+---
+
+## 6) 난이도 캘리브레이션(TOEFL/GRE 게이트)
+
+* **표면형 판별 금지:** 눈에 확 띄는 형태 오류는 배제.
+* **의미·담화 의존성:** 해석·참조 추적 없이는 판단 불가하게 설계.
+* **장거리 제약 활용:** 비교/가정법/도치/대용/절축약 등 **문장 간 신호**를 걸어두기.
+* **실전 근거:** 최근 고2 모의·수능 스타일 + TOEFL/GRE SC/문법 함정 준용.
+
+---
+
+## 7) 출력 포맷(복붙 규격)
+
+```
+출처: 파일명_pX-no.XX
+
+[원문 전체 단락]
+… **① [원문/변형]** … **② [원문/변형]** … **③ [원문/변형]** … **④ [원문/변형]** … **⑤ [원문/변형]** …
+
+**정답: ③**
+- 해설: [오류 유형·규칙 1문장]. [나머지 4개 정답 근거 1~2문장].
 ```
 
 ---
 
-## F. 오답 설계 기술
-1. **거리 두기**: 주어-동사 사이 긴 수식어.
-2. **형태 유사**: freeing/free, affect/effect.
-3. **관계사 격 함정**: whom/who 혼란.
-4. **병렬 불균형**: to do, doing, and to do.
-5. **분사 수식 방향**: 능동/수동 의미 구별.
-6. **전치사 관용**: familiar with/to, consist of.
+### ✅ 결론
 
----
-
-## G. 난이도 조절 레버
-- **상**: 오류 = 장거리 수일치, 가정법, 도치. 함정 = 관계사 전치사, 분사 수식.
-- **중**: 오류 = 병렬·전치사. 함정 = 삽입구.
-- **하**: 오류 = 단순 수일치·시제. 정답 단서가 바로 근처.
-
----
-
-## H. 품질 QC 체크리스트
-- [ ] 정답 1개만 오류, 나머지 모두 적법.
-- [ ] 정답은 1-step 수정 가능.
-- [ ] 수정 후 문장이 교과서·언론 수준 자연성.
-- [ ] 해설 = 규칙명+맥락 단서.
-- [ ] CSAT 포맷 유지.
-
----
-
-## I. 실패 예시 (금지)
-- 오류 2곳 이상.
-- 정답이 2개 이상 가능.
-- `options`가 5개 미만/초과.
-- 정답이 직역/문체 차이.
-
----
-
-## J. 재시도 정책
-- 실패 시 오류유형 교체(수일치→전치사 등).
-- 밑줄 위치 조정.
-- 최대 2회 재시도.
-
----
-
-## K. 결론
-이 매뉴얼은 **어법 문제(29번류)**의 모든 출제 원리·18개 규칙 총람·난이도 설계·오답 설계 기술·품질 검증 절차를 망라한다. 이를 따르면 어떤 지문도 **유일정답형 어법 문제**로 변환 가능하다.
-
+이 v6.0은 **초급/노골 오류를 전면 봉쇄**하고, **관계·병렬·절축약·가정법·대용·비교·담화참조** 등 장거리 제약이 걸린 **TOEFL/GRE급 함정**만 허용합니다. 이제 이 기준으로 샘플을 다시 뽑으면 “교수 출제톤”의 진짜 고난도만 나오도록 보장합니다.

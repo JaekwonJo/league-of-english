@@ -10,6 +10,7 @@ League of English is a web application that helps students and teachers generate
 - Solve problems with timers, automatic scoring, and result dashboards.
 - Analyse passages sentence-by-sentence with AI-generated explanations.
 - Track personal progress with a stats dashboard (type accuracy + weekly trend).
+- Study queue UI surfaces OpenAI queue status with a spinner and timed vocab reveal so students know generation is still running.
 - Redeem membership coupons to unlock premium limits and perks.
 - Teachers issue class codes so students can link their accounts for shared analytics.
 - Teachers can review class analytics with time-range filters and CSV export to support coaching.
@@ -53,9 +54,9 @@ League of English is a web application that helps students and teachers generate
 | `npm run dev` | Run Express API only (port 5000). |
 | `npm run client` | Run React dev server only (port 3000). |
 | `npm run dev:all` | Run both API and client concurrently from the repository root. |
-| `npm test` | Run the Node test suite (currently crashes with `Could not find .../**/*.test.js`; run `node --test server/tests/aiProblemService.test.js` until the script is patched). |
+| `npm test` | Run the Node test suite via Node's test runner (passes on Windows/WSL). |
 | `npm run build` | Build the React client. |
-| `npm run lint` | Lint server-side JS files (fails with "ESLint couldn't find a configuration file" until the config is restored). |
+| `npm run lint` | Lint server-side JS files using ESLint (`.eslintrc.cjs`). |
 | `node scripts/update-problem-manuals.js` | Refresh the authoring manuals from the latest source PDFs. |
 
 ## Manual Sync Workflow
@@ -66,12 +67,14 @@ When you refresh the authoring manuals from the latest PDFs, run the script and 
 3. **Spot-check in the app.** Start the stack (`npm run dev:all`) and create at least one AI grammar question so you can verify the regenerated text renders correctly.
 4. **Capture any follow-up fixes.** If a manual needs hand edits, make them after the script finishes. Re-run the script only when you re-export the PDFs so automation stays the source of truth.
 
+> **v6.0 주의:** grammar 매뉴얼은 TOEFL/GRE급 규칙(A~P)과 dangling 분사 정정 노트를 반드시 포함해야 합니다. 생성 결과가 예전 버전을 참고한다면 최신 markdown을 다시 주입하세요.
+
 Once the checks pass, commit the updated manuals alongside any fixes so teammates inherit the same state.
 
 ## Troubleshooting
 - **Port already in use**: Close other apps using ports 3000 or 5000. You can run `Get-Process -Id (Get-NetTCPConnection -LocalPort 5000).OwningProcess` in PowerShell (with admin rights) to identify and stop them.
 - **React keeps pointing to the wrong API**: Delete `client/.env`, then restart using `npm run dev:all` so the client falls back to `http://localhost:5000/api`.
-- **`npm test` fails with a missing file error**: The script still uses a glob that Windows shells do not expand (`Could not find .../**/*.test.js`). Run `node --test server/tests/aiProblemService.test.js` until the npm script is fixed.
+- **Study 화면에서 로딩 카운트다운이 멈추지 않음**: 백엔드 OpenAI 큐가 응답을 못 받으면 클라이언트가 계속 대기합니다. `backend-dev.log`에서 에러를 확인하고, 필요하면 브라우저 콘솔에서 `localStorage.clear()` 후 다시 세션을 시작하세요.
 - **Grammar problem shows no underlines**: make sure you are on the latest branch; the front-end now parses `<u>...</u>` spans.
 - **PowerShell execution policy blocks scripts**: temporarily allow scripts by running `Set-ExecutionPolicy -Scope Process RemoteSigned` before starting the dev servers.
 
@@ -95,9 +98,9 @@ This project is proprietary. Do not distribute without permission.
 ## Project Roadmap
 
 ### Latest Update (2025-09-30)
-- Re-synced PROJECT_STATE.md, README.md, and BUILDLOG.md after re-running `npm test` and `npm run lint` today so the docs spell out the current failure messages and keep automation fixes front-and-centre.
-- Verified `npm test` prints `Could not find '/mnt/c/Users/jaekw/Desktop/league-of-english/server/tests/**/*.test.js'` on Windows shells and documented the direct `node --test server/tests/aiProblemService.test.js` fallback.
-- Immediate focus: patch the failing `npm test` script, restore the ESLint config so `npm run lint` works again, and surface the Study UI queue status before expanding teacher tooling.
+- Added the Study queue spinner + vocab countdown, confirmed `npm test`/`npm run lint` pass on Windows/WSL, and logged the follow-up QA tasks.
+- Upgraded grammar manuals to Master v6.0 (TOEFL/GRE급) and synced the docs with the new error taxonomy + dangling 분사 가이드.
+- Immediate focus: live QA for the countdown UX, propagate the new manual to every generator, and extend lint/tests to the React client.
 
 
 | Step | Description | Status |

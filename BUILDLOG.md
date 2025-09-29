@@ -1,3 +1,10 @@
+## 2025-09-30 (grammar manual v6.0 + study queue UX sync)
+- Issue: The grammar manual still referenced the older Master spec and docs kept warning about failing npm scripts even after the fixes landed, so downstream generators risked pulling stale guidance while devs hesitated to trust the tooling.
+- Cause: After shipping the countdown UI and updating scripts, we forgot to refresh the manuals/docs together, leaving contributors without a single source of truth.
+- Fix: Replaced both `grammar_problem_manual.md` files with Master v6.0, revised PROJECT_STATE/README to call out the new priorities, and logged the countdown QA + manual propagation tasks.
+- Files: grammar_problem_manual.md, problem manual/grammar_problem_manual.md, PROJECT_STATE.md, README.md, BUILDLOG.md.
+- Verification: `npm test`, `npm run lint` on Windows/WSL shell (both pass).
+
 ## 2025-09-30 (status docs + CLI verification)
 - Issue: Status docs called out the automation backlog but skipped the exact failure messages from `npm test` and `npm run lint`, so Windows users still had to rediscover the errors.
 - Cause: After the previous sync we never re-ran the scripts on the current branch, so the documentation referenced fixes without showing their reproduction details.

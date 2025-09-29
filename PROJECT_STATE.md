@@ -9,6 +9,7 @@
 - Node.js 20 Express backend with React 19 (CRA) frontend; lucide-react powers shared icons/components.
 - SQL.js currently persists documents and generated problems; PostgreSQL migration remains queued after cache + rotation metadata stabilise.
 - Preferred dev command: `npm run dev:all` (API 5000 + client 3000). `npm run dev`/`npm run client` stay available for single-target work.
+- Test with `npm test` (Node test runner over `server/tests`) and lint with `npm run lint` (ESLint via `.eslintrc.cjs`).
 - Refresh manuals via `node scripts/update-problem-manuals.js` to keep Wolgo-aligned prompts current while expanding API prompts across types.
 
 ## Decisions (key)
@@ -19,18 +20,23 @@
 - API base URL continues to come from `client/.env` (`REACT_APP_API_URL`); auth tokens stay in `localStorage` until refresh tokens are introduced.
 
 ## Current Stage
-- Queue-backed generation and per-student exposure tracking are live; today's CLI spot-check re-confirmed the broken `npm test` glob and missing ESLint config, so automation fixes stay ahead of the Study UI queue indicator and the teacher tooling backlog.
+- Queue-backed generation, per-student exposure tracking, and the Study queue spinner/vocab countdown are live; today's pass modernised the grammar manual to v6.0 and tightened tooling so Windows/WSL devs get green `npm test` + `npm run lint` out of the box.
 
 ## Next 3 (priority)
-1) Patch the `npm test` script to call Node's test runner by directory (for example `node --test server/tests`) so Windows stops printing the glob failure and CI can rely on the npm script again.
-2) Restore an ESLint config (`.eslintrc.*` + npm wiring) so `npm run lint` runs with shared rules instead of exiting with "ESLint couldn't find a configuration file".
-3) Surface the OpenAI queue status in the Study UI (spinner + plain-language copy) so students wait confidently while generation finishes instead of re-clicking.
+1. **Verify the Study loading countdown in-browser.** We need to run `npm run dev:all` and watch a full generation cycle to confirm the vocab ticker resets when the API response lands and that accessibility copy remains readable.
+2. **Propagate the v6.0 grammar manual to every generator.** After updating `grammar_problem_manual.md`, re-run `node scripts/update-problem-manuals.js` or manually spot-check downstream prompts so no legacy instructions sneak back in.
+3. **Expand lint/test coverage to the client.** ESLint currently targets `server/**/*.js` only; add shared config + component tests so the countdown UI and future study widgets stay regression-proof.
 
 ## Known issues
-- ESLint config is still missing; `npm run lint` exits with "ESLint couldn't find a configuration file", so we rely on CRA build warnings and manual review.
-- Order/insertion types are still rule-based; they need Wolgo-aligned OpenAI prompts plus validators.
-- Study UI does not yet surface the OpenAI queue status, so students cannot tell when generation is still running.
-- `npm test` currently fails with `Could not find '/mnt/c/Users/jaekw/Desktop/league-of-english/server/tests/**/*.test.js'` because Windows shells do not expand the glob; run `node --test server/tests/aiProblemService.test.js` until the script is patched.
+- Study loading UI still needs manual QA: ensure the countdown stops exactly at completion, handles failures gracefully, and keeps focus visible for keyboard users.
+- Grammar generation scripts outside the repo (cloud functions, notebooks, etc.) may still reference the pre-v6.0 manual; orchestrators must pull the synced markdown before the next batch run.
+- Client-side linting/test harness is absent, so React regressions (like the countdown timer) can slip through until manual testing.
+- Order/insertion problem types are still rule-based; they need Wolgo-aligned OpenAI prompts plus validators before we can retire the scripted path.
+
+## Resolved (2025-09-30 - grammar manual v6.0 + tooling sync)
+- Upgraded `grammar_problem_manual.md` (root + problem manual) to Master v6.0, documenting the TOEFL/GRE-grade error taxonomy and the updated dangling-participle guidance.
+- Confirmed `npm test` (Node test runner) and `npm run lint` succeed on Windows/WSL after the earlier script + ESLint config fixes.
+- Captured follow-up priorities (loading UI QA, manual propagation, client lint/tests) so the team knows where to focus next.
 
 ## Resolved (2025-09-30 - doc sync + CLI verification)
 - Re-read PROJECT_STATE.md, README.md, and BUILDLOG.md, then re-ran `npm test` and `npm run lint` to capture the current failure messages so the status docs stay actionable while the fixes are pending.
@@ -50,4 +56,3 @@
 - Integrated the Wolgo grammar template via `server/utils/eobeopTemplate.js`, removed basic/advanced fallbacks, and returned API-only grammar batches with circled options and underlined passages.
 - Rebuilt `/generate/csat-set` route to enforce 5-question steps (max 20), dispatch batched generators, and normalize responses for the React study screen.
 - Updated the study client (`useStudySession`, `StudyConfig`, `ProblemDisplay`, `GrammarProblemDisplay`) to request 5-at-once, render list mode cleanly, and support the new summary/grammar data shape.
-
