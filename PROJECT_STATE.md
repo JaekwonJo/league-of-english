@@ -42,8 +42,8 @@
 - Patched `formatGrammarProblem` to rebuild missing `<u>...</u>` spans from the provided options (대소문자/문장부호 차이 허용), 추가 실패 진단을 붙이고 Node 테스트로 검증해 4-underlines payload에서도 더 이상 500이 나지 않게 했습니다.
 - Verified the fix locally with `npm test` and `npm run lint` (both green on Windows/WSL).
 
-## Resolved (2025-09-30 - grammar manual v7.0 + tooling sync)
-- Upgraded `grammar_problem_manual.md` (root + problem manual) to Master v7.0, documenting the Style Contract/Variation Engine 분리와 최신 dangling-participle 가이드.
+## Resolved (2025-09-30 - grammar manual v7.1 + tooling sync)
+- Upgraded `grammar_problem_manual.md` (root + problem manual) to Master v7.1, documenting the Style Contract/Variation Engine 분리와 어법·어휘 통합 패턴 가이드.
 - Confirmed `npm test` (Node test runner) and `npm run lint` succeed on Windows/WSL after the earlier script + ESLint config fixes.
 - Captured follow-up priorities (loading UI QA, manual propagation, client lint/tests) so the team knows where to focus next.
 
