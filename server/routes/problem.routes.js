@@ -5,7 +5,6 @@ const { verifyToken, checkDailyLimit, updateUsage } = require('../middleware/aut
 const aiService = require('../services/aiProblemService');
 const OrderGenerator = require('../utils/orderProblemGenerator');
 const InsertionGenerator = require('../utils/insertionProblemGenerator2');
-const { generateIrrelevantProblems } = require('../utils/irrelevantSentenceGenerator');
 const { normalizeAll } = require('../utils/csatProblemNormalizer');
 
 const STEP_SIZE = 5;
@@ -17,7 +16,8 @@ const OPENAI_REQUIRED_TYPES = new Set([
   'title',
   'theme',
   'summary',
-  'implicit'
+  'implicit',
+  'irrelevant'
 ]);
 
 function snapToStep(value) {
@@ -289,13 +289,20 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
           break;
         }
         case 'irrelevant': {
-          const generated = generateIrrelevantProblems(
-            context.passages,
-            amount,
-            context.document,
-            context.parsedContent || {}
-          );
-          addedForType += appendProblems(generated);
+          const cached = await aiService.fetchCached(documentId, 'irrelevant', amount, {
+            excludeIds: Array.from(usedProblemIds),
+            userId: req.user.id
+          });
+          addedForType += appendProblems(cached);
+          let remaining = amount - addedForType;
+
+          if (remaining > 0) {
+            const generatedBatch = await aiService.generateIrrelevant(documentId, remaining);
+            const savedBatch = await aiService.saveProblems(documentId, 'irrelevant', generatedBatch, { docTitle });
+            const usable = Array.isArray(savedBatch) && savedBatch.length ? savedBatch : generatedBatch;
+            addedForType += appendProblems(usable);
+          }
+
           break;
         }
         default:
@@ -312,7 +319,7 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
       return res.status(503).json({ message: 'Failed to build a valid problem set.' });
     }
 
-    const exposureWhitelist = new Set(['blank', 'grammar', 'vocabulary', 'title', 'theme', 'summary', 'implicit']);
+    const exposureWhitelist = new Set(['blank', 'grammar', 'vocabulary', 'title', 'theme', 'summary', 'implicit', 'irrelevant']);
     const exposureIds = [...new Set(normalizedProblems
       .filter((problem) => problem && exposureWhitelist.has(problem.type))
       .map((problem) => Number(problem.id))

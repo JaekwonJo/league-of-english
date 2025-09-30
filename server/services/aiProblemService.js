@@ -14,17 +14,20 @@ const TITLE_MANUAL_PATH = path.join(__dirname, "..", "..", "docs", "problem-temp
 const BLANK_MANUAL_PATH = path.join(__dirname, "..", "..", "docs", "problem-templates", "blank-master.md");
 const TOPIC_MANUAL_PATH = path.join(__dirname, "..", "..", "docs", "problem-templates", "topic-master.md");
 const IMPLICIT_MANUAL_PATH = path.join(__dirname, "..", "..", "docs", "problem-templates", "implicit-master.md");
+const IRRELEVANT_MANUAL_PATH = path.join(__dirname, "..", "..", "docs", "problem-templates", "irrelevant-master.md");
 let cachedGrammarManual = null;
 let cachedTitleManual = null;
 let cachedBlankManual = null;
 let cachedTopicManual = null;
 let cachedImplicitManual = null;
+let cachedIrrelevantManual = null;
 
 const BLANK_QUESTION = "\ub2e4\uc74c \uae00\uc758 \ube48\uce78\uc5d0 \ub4e4\uc5b4\uac08 \ub9d0\ub85c \uac00\uc7a5 \uc801\uc808\ud55c \uac83\uc744 \uace0\ub974\uc2dc\uc624.";
 const BLANK_DEFINITION_QUESTION = "\ub2e4\uc74c \uae00\uc758 \ube48\uce78\uc5d0 \ub4e4\uc5b4\uac08 \ub2e8\uc5b4\uc758 \uc601\uc601 \ud480\uc774\ub85c \uac00\uc7a5 \uc801\uc808\ud55c \uac83\uc744 \uace0\ub974\uc2dc\uc624.";
 const CIRCLED_DIGITS = ['\u2460', '\u2461', '\u2462', '\u2463', '\u2464'];
 const TOPIC_QUESTION = "\ub2e4\uc74c \uae00\uc758 \uc8fc\uc81c\ub85c \uac00\uc7a5 \uc801\uc808\ud55c \uac83\uc744 \uace0\ub974\uc2dc\uc624.";
 const IMPLICIT_QUESTION = "\ub2e4\uc74c \uae00\uc5d0\uc11c \ubc11\uc904 \uce5c \ubd80\ubd84\uc774 \uc758\ubbf8\ud558\ub294 \ubc14\ub85c \uac00\uc7a5 \uc801\uc808\ud55c \uac83\uc740?";
+const IRRELEVANT_QUESTION = "\ub2e4\uc74c \uae00\uc5d0\uc11c \uc804\uccb4 \ud750\ub984\uacfc \uad00\uacc4 \uc5c6\ub294 \ubb38\uc7a5\uc740?";
 
 function containsHangul(text = "") {
   return /[가-힣]/.test(String(text));
@@ -138,6 +141,19 @@ function readImplicitManual(limit = 1800) {
   }
   if (!cachedImplicitManual) return "";
   return cachedImplicitManual.slice(0, limit);
+}
+
+function readIrrelevantManual(limit = 2000) {
+  if (cachedIrrelevantManual === null) {
+    try {
+      cachedIrrelevantManual = fs.readFileSync(IRRELEVANT_MANUAL_PATH, "utf8");
+    } catch (error) {
+      console.warn("[aiProblemService] failed to load irrelevant manual:", error?.message || error);
+      cachedIrrelevantManual = "";
+    }
+  }
+  if (!cachedIrrelevantManual) return "";
+  return cachedIrrelevantManual.slice(0, limit);
 }
 
 function shuffleUnique(source, size) {
@@ -1102,6 +1118,158 @@ class AIProblemService {
           console.warn("[ai-implicit] generation failed:", error?.message || error);
           if (attempts >= 3) {
             throw new Error(`[ai-implicit] generation failed after retries: ${error?.message || error}`);
+          }
+        }
+      }
+    }
+
+    return results;
+  }
+
+  async generateIrrelevant(documentId, count = 5) {
+    const { document, passages } = await this.getPassages(documentId);
+    const docTitle = document?.title || `Document ${documentId}`;
+    const results = [];
+    const manualExcerpt = readIrrelevantManual(2000);
+
+    if (!this.getOpenAI()) {
+      throw new Error("AI generator unavailable for irrelevant problems");
+    }
+
+    const hasCircledPrefix = (text, index) =>
+      typeof text === 'string' && text.trim().startsWith(CIRCLED_DIGITS[index]);
+
+    const looksEnglishSentence = (text) => /[A-Za-z]/.test(String(text || ''));
+
+    const validateEnumeratedText = (text) => {
+      if (!text) return false;
+      const matches = String(text)
+        .split(/\((\d)\)/)
+        .filter((chunk) => chunk && chunk.trim().length > 0);
+      return /(\([1-5]\))/.test(text) && matches.length >= 5;
+    };
+
+    for (let i = 0; i < count; i += 1) {
+      const passage = passages[i % passages.length];
+      let success = false;
+      let attempts = 0;
+
+      while (!success && attempts < 3) {
+        attempts += 1;
+        try {
+          const prompt = [
+            "You are a deterministic K-CSAT 'irrelevant sentence' item writer.",
+            "Follow the style contract exactly. Question text must remain Korean.",
+            manualExcerpt,
+            `Passage (preserve sentences; enumerate as (1)~(n)):\n${clipText(passage, 1500)}`,
+            "",
+            "Return raw JSON only with this schema:",
+            "{",
+            "  \"type\": \"irrelevant\",",
+            `  \"question\": \"${IRRELEVANT_QUESTION}\",`,
+            "  \"text\": \"(1) ... (2) ... (3) ... (4) ... (5) ...\",",
+            "  \"options\": [",
+            "    \"\\u2460 English sentence\",",
+            "    \"\\u2461 English sentence\",",
+            "    \"\\u2462 English sentence\",",
+            "    \"\\u2463 English sentence\",",
+            "    \"\\u2464 English sentence\"",
+            "  ],",
+            "  \"correctAnswer\": 3,",
+            "  \"explanation\": \"한국어 해설\",",
+            "  \"sourceLabel\": \"\\ucd9c\\ucc98│기관 연도 회차 문항 (pXX)\",",
+            "  \"irrelevantType\": \"T1|T2|T3|T4|T5|T6|T7|T8|T9|T10\",",
+            "  \"defectAxis\": [\"theme\", \"discourse\", \"cohesion\", \"logic\", \"convention\"]",
+            "}",
+            "Rules:",
+            "- Provide exactly five sentences in options, each prefixed with circled digits (\\u2460-\\u2464).",
+            "- Options must be English declarative sentences that mirror the passage sentences.",
+            "- Exactly one option must break the passage's theme/discourse/cohesion/logic/convention axes decisively.",
+            "- The remaining four options must support the passage's main argument and discourse path.",
+            "- Explanation must be Korean, naming at least one axis where the correct option fails and noting why the others fit.",
+            "- sourceLabel must start with '출처│'.",
+            "- Respond with JSON only (no Markdown fences)."
+          ].filter(Boolean).join("\n");
+
+          const response = await this.callChatCompletion({
+            model: "gpt-4o-mini",
+            temperature: 0.35,
+            max_tokens: 520,
+            messages: [{ role: "user", content: prompt }]
+          }, { label: 'irrelevant' });
+
+          const payload = JSON.parse(stripJsonFences(response.choices?.[0]?.message?.content || ""));
+          const question = String(payload.question || '').trim();
+          if (question !== IRRELEVANT_QUESTION) {
+            throw new Error(`unexpected irrelevant question: ${question}`);
+          }
+
+          const text = String(payload.text || '').trim();
+          if (!validateEnumeratedText(text)) {
+            throw new Error('irrelevant text must contain enumerated sentences (1)~(5)');
+          }
+
+          const options = Array.isArray(payload.options)
+            ? payload.options.map((opt) => String(opt || '').trim()).filter(Boolean)
+            : [];
+          if (options.length !== CIRCLED_DIGITS.length) {
+            throw new Error('irrelevant options must contain 5 entries');
+          }
+          options.forEach((option, index) => {
+            if (!hasCircledPrefix(option, index)) {
+              throw new Error(`irrelevant option ${index + 1} missing circled digit`);
+            }
+            const value = option.slice(CIRCLED_DIGITS[index].length).trim();
+            if (!looksEnglishSentence(value)) {
+              throw new Error(`irrelevant option ${index + 1} must contain English text`);
+            }
+          });
+
+          const answer = Number(payload.correctAnswer || payload.answer);
+          if (!Number.isInteger(answer) || answer < 1 || answer > CIRCLED_DIGITS.length) {
+            throw new Error('invalid irrelevant correctAnswer');
+          }
+
+          const explanation = String(payload.explanation || '').trim();
+          if (!explanation || !containsHangul(explanation)) {
+            throw new Error('irrelevant explanation must be Korean');
+          }
+
+          const sourceLabel = ensureSourceLabel(payload.sourceLabel, { docTitle });
+
+          const metadata = {
+            documentTitle: docTitle,
+            generator: 'openai'
+          };
+          if (payload.irrelevantType) {
+            metadata.irrelevantType = String(payload.irrelevantType).trim();
+          }
+          if (Array.isArray(payload.defectAxis)) {
+            const axes = payload.defectAxis
+              .map((axis) => String(axis || '').trim())
+              .filter((axis) => axis.length > 0);
+            if (axes.length) {
+              metadata.defectAxis = axes;
+            }
+          }
+
+          results.push({
+            id: payload.id || `irrelevant_ai_${Date.now()}_${results.length}`,
+            type: 'irrelevant',
+            question,
+            text,
+            options,
+            answer: String(answer),
+            correctAnswer: String(answer),
+            explanation,
+            sourceLabel,
+            metadata
+          });
+          success = true;
+        } catch (error) {
+          console.warn("[ai-irrelevant] generation failed:", error?.message || error);
+          if (attempts >= 3) {
+            throw new Error(`[ai-irrelevant] generation failed after retries: ${error?.message || error}`);
           }
         }
       }

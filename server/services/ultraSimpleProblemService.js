@@ -81,6 +81,9 @@ class UltraSimpleProblemService {
       } else if (t === 'implicit') {
         const arr = await AI.generateImplicit(documentId, c);
         out.push(...arr);
+      } else if (t === 'irrelevant') {
+        const arr = await AI.generateIrrelevant(documentId, c);
+        out.push(...arr);
       }
     }
 
