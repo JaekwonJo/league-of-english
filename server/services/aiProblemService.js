@@ -12,13 +12,16 @@ try {
 const GRAMMAR_MANUAL_PATH = path.join(__dirname, "..", "..", "problem manual", "grammar_problem_manual.md");
 const TITLE_MANUAL_PATH = path.join(__dirname, "..", "..", "docs", "problem-templates", "title-master.md");
 const BLANK_MANUAL_PATH = path.join(__dirname, "..", "..", "docs", "problem-templates", "blank-master.md");
+const TOPIC_MANUAL_PATH = path.join(__dirname, "..", "..", "docs", "problem-templates", "topic-master.md");
 let cachedGrammarManual = null;
 let cachedTitleManual = null;
 let cachedBlankManual = null;
+let cachedTopicManual = null;
 
 const BLANK_QUESTION = "\ub2e4\uc74c \uae00\uc758 \ube48\uce78\uc5d0 \ub4e4\uc5b4\uac08 \ub9d0\ub85c \uac00\uc7a5 \uc801\uc808\ud55c \uac83\uc744 \uace0\ub974\uc2dc\uc624.";
 const BLANK_DEFINITION_QUESTION = "\ub2e4\uc74c \uae00\uc758 \ube48\uce78\uc5d0 \ub4e4\uc5b4\uac08 \ub2e8\uc5b4\uc758 \uc601\uc601 \ud480\uc774\ub85c \uac00\uc7a5 \uc801\uc808\ud55c \uac83\uc744 \uace0\ub974\uc2dc\uc624.";
 const CIRCLED_DIGITS = ['\u2460', '\u2461', '\u2462', '\u2463', '\u2464'];
+const TOPIC_QUESTION = "\ub2e4\uc74c \uae00\uc758 \uc8fc\uc81c\ub85c \uac00\uc7a5 \uc801\uc808\ud55c \uac83\uc744 \uace0\ub974\uc2dc\uc624.";
 
 function containsHangul(text = "") {
   return /[가-힣]/.test(String(text));
@@ -106,6 +109,19 @@ function readBlankManual(limit = 2000) {
   }
   if (!cachedBlankManual) return "";
   return cachedBlankManual.slice(0, limit);
+}
+
+function readTopicManual(limit = 1600) {
+  if (cachedTopicManual === null) {
+    try {
+      cachedTopicManual = fs.readFileSync(TOPIC_MANUAL_PATH, "utf8");
+    } catch (error) {
+      console.warn("[aiProblemService] failed to load topic manual:", error?.message || error);
+      cachedTopicManual = "";
+    }
+  }
+  if (!cachedTopicManual) return "";
+  return cachedTopicManual.slice(0, limit);
 }
 
 function shuffleUnique(source, size) {
@@ -806,12 +822,19 @@ class AIProblemService {
   async generateTheme(documentId, count = 5) {
     const { document, passages } = await this.getPassages(documentId);
     const docTitle = document?.title || `Document ${documentId}`;
-    const question = "\ub2e4\uc74c \uae00\uc758 \uc8fc\uc81c\ub85c \uc801\uc808\ud55c \uac83\uc744 \uace0\ub974\uc2dc\uc624.";
     const results = [];
-
     if (!this.getOpenAI()) {
       throw new Error("AI generator unavailable for theme problems");
     }
+    const manualExcerpt = readTopicManual(1600);
+
+    const isValidWordCount = (text) => {
+      const words = String(text || '')
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+      return words.length >= 6 && words.length <= 14;
+    };
 
     for (let i = 0; i < count; i += 1) {
       const passage = passages[i % passages.length];
@@ -821,51 +844,94 @@ class AIProblemService {
         attempts += 1;
         try {
           const prompt = [
-            "You are a CSAT English main idea/item writer.",
-            `Passage:\n${clipText(passage, 1200)}`,
+            "You are a deterministic K-CSAT English topic item writer.",
+            "Follow the style contract exactly. Question text must remain Korean.",
+            manualExcerpt,
+            `Passage (preserve line breaks):\n${clipText(passage, 1400)}`,
             "",
-            "Return JSON only:",
+            "Return raw JSON only with this schema:",
             "{",
             "  \"type\": \"theme\",",
-            `  \"question\": \"${question}\",`,
-            "  \"options\": [\"option1\", \"option2\", \"option3\", \"option4\"],",
+            `  \"question\": \"${TOPIC_QUESTION}\",`,
+            "  \"options\": [",
+            "    \"\\u2460 option\",",
+            "    \"\\u2461 option\",",
+            "    \"\\u2462 option\",",
+            "    \"\\u2463 option\",",
+            "    \"\\u2464 option\"",
+            "  ],",
             "  \"correctAnswer\": 3,",
-            "  \"explanation\": \"Korean rationale\",",
-            "  \"sourceLabel\": \"\\ucd9c\\ucc98: ...\"",
-            "}"
-          ].join("\n");
+            "  \"explanation\": \"한국어 해설\",",
+            "  \"sourceLabel\": \"\\ucd9c\\ucc98\u2502기관 연도 회차 문항 (pXX)\",",
+            "  \"topicType\": \"core|narrow|broad|detail|counter|role-swap|metaphor|scope|half-truth\"",
+            "}",
+            "Rules:",
+            "- Provide five English options labelled with circled digits (\\u2460-\\u2464).",
+            "- Each option must be a 6-14 word academic/neutral phrase or sentence.",
+            "- Exactly one option must match the passage's thesis (message) and scope (audience/domain).",
+            "- Each distractor must contain a distinct defect (narrow, broad, detail, counter-claim, role-swap, metaphor-literal, scope error, half-truth).",
+            "- Write the explanation in Korean summarising why the correct option fits and naming at least one defect among the distractors.",
+            "- sourceLabel must start with '출처│'.",
+            "- Respond with JSON only (no Markdown fences)."
+          ].filter(Boolean).join("\n");
 
           const response = await this.callChatCompletion({
             model: "gpt-4o-mini",
             temperature: 0.4,
-            max_tokens: 500,
+            max_tokens: 520,
             messages: [{ role: "user", content: prompt }]
           }, { label: 'theme' });
           const payload = JSON.parse(stripJsonFences(response.choices?.[0]?.message?.content || ""));
-          const options = Array.isArray(payload.options)
-            ? payload.options.map((opt) => String(opt || "").trim())
-            : [];
-          const answer = Number(payload.correctAnswer || payload.answer);
-          if (options.length === 4 && Number.isInteger(answer) && answer >= 1 && answer <= 4) {
-            results.push({
-              id: payload.id || `theme_ai_${Date.now()}_${results.length}`,
-              type: "theme",
-              question,
-              text: passage,
-              options,
-              answer: String(answer),
-              correctAnswer: String(answer),
-              explanation: String(payload.explanation || "").trim(),
-              sourceLabel: ensureSourceLabel(payload.sourceLabel, { docTitle }),
-              metadata: {
-                documentTitle: docTitle,
-                generator: 'openai'
-              }
-            });
-            success = true;
-          } else {
-            throw new Error("invalid theme structure");
+          const question = String(payload.question || '').trim();
+          if (question !== TOPIC_QUESTION) {
+            throw new Error(`unexpected topic question: ${question}`);
           }
+          const options = Array.isArray(payload.options)
+            ? payload.options.map((opt) => String(opt || '').trim()).filter(Boolean)
+            : [];
+          if (options.length !== CIRCLED_DIGITS.length) {
+            throw new Error('topic options must contain 5 entries');
+          }
+          options.forEach((option, index) => {
+            if (!option.startsWith(CIRCLED_DIGITS[index])) {
+              throw new Error(`topic option ${index + 1} missing circled digit`);
+            }
+            const value = option.slice(CIRCLED_DIGITS[index].length).trim();
+            if (!isValidWordCount(value)) {
+              throw new Error(`topic option ${index + 1} must be 6-14 words`);
+            }
+          });
+          const answer = Number(payload.correctAnswer || payload.answer);
+          if (!Number.isInteger(answer) || answer < 1 || answer > CIRCLED_DIGITS.length) {
+            throw new Error('invalid topic correctAnswer');
+          }
+          const explanation = String(payload.explanation || '').trim();
+          if (!explanation || !containsHangul(explanation)) {
+            throw new Error('topic explanation must be Korean');
+          }
+          const sourceLabel = ensureSourceLabel(payload.sourceLabel, { docTitle });
+
+          const metadata = {
+            documentTitle: docTitle,
+            generator: 'openai'
+          };
+          if (payload.topicType) {
+            metadata.topicType = String(payload.topicType).trim();
+          }
+
+          results.push({
+            id: payload.id || `theme_ai_${Date.now()}_${results.length}`,
+            type: 'theme',
+            question,
+            text: passage,
+            options,
+            answer: String(answer),
+            correctAnswer: String(answer),
+            explanation,
+            sourceLabel,
+            metadata
+          });
+          success = true;
         } catch (error) {
           console.warn("[ai-theme] generation failed:", error?.message || error);
           if (attempts >= 3) {

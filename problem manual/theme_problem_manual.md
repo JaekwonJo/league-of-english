@@ -1,136 +1,24 @@
-2024년도 9월 1학년 2024년9월고1모의고사
-- 1 -
-진진영어
-다음 글의 주제로 가장 적절한 것은? [21]
-One valuable technique for getting out of helplessness,
-depression, and situations which are predominantly
-being run by the thought, “I can’t,” is to choose to be
-with other persons who have resolved the problem
-with which we struggle. This is one of the great powers
-of self-help groups. When we are in a negative state,
-we have given a lot of energy to negative thought
-forms, and the positive thought forms are weak. Those
-who are in a higher vibration are free of the energy
-from their negative thoughts and have energized
-positive thought forms. Merely to be in their presence
-is beneficial. In some self-help groups, this is called
-“hanging out with the winners.” The benefit here is on
-the psychic level of consciousness, and there is a
-transfer of positive energy and relighting of one’s own
-latent positive thought forms.
-* latent: 잠재적인
-① the importance of positive energy in daily life
-② ways to smoothly resolve conflicts with others
-③ feetures of people with a strong sense of selflessness
-④ learning the secrets to winning from successful people
-⑤ shifting away from a negative mindset with positive
-people
-다음 글의 주제로 가장 적절한 것은? [22]
-Our emotions are thought to exist because they have
-contributed to our survival as a species. Fear has
-helped us avoid dangers, expressing anger helps us
-scare off threats, and expressing positive emotions
-helps us bond with others. From an evolutionary
-perspective, an emotion is a kind of “program” that,
-when triggered, directs many of our activities
-(including attention, perception, memory, movement,
-expressions, etc.). For example, fear makes us very
-attentive, narrows our perceptual focus to threatening
-stimuli, will cause us either to face a situation (fight)
-or avoid it (flight), and may cause us to remember an
-experience more acutely (so that we avoid the threat
-in the future). Regardless of the specific ways in which
-they activate our systems, the specific emotions we
-possess are thought to exist because they have helped
-us (as a species) survive challenges within our
-environment long ago. If they had not helped us adapt
-and survive, they would not have evolved with us.
-① novel designs of emotions to direct our behaviors
-② significance of emotional suspension in a modern life
-③ circumlocutory expression and creativity caused by
-emotions
-④ the evolutionary advantage of emotions in human
-survival
-⑤ emotions as a imperative source of entertainment
-expression
-다음 글의 주제로 가장 적절한 것은? [24]
-Whales are highly efficient at carbon storage. When
-they die, each whale sequesters an average of 30 tons
-of carbon dioxide, taking that carbon out of the
-atmosphere for centuries. For comparison, the average
-tree absorbs only 48 pounds of CO2 a year. From a
-climate perspective, each whale is the marine
-equivalent of thousands of trees. Whales also help
-sequester carbon by fertilizing the ocean as they
-release nutrient-rich waste, in turn increasing
-phytoplankton populations, which also sequester
-carbon ― leading some scientists to call them the
-“engineers of marine ecosystems.” In 2019,
-economists from the International Monetary Fund
-(IMF) estimated the value of the ecosystem services
-provided by each whale at over $2 million USD. They
-called for a new global program of economic incentives
-to return whale populations to preindustrial whaling
-levels as one example of a “nature-based solution” to
-climate change. Calls are now being made for a global
-whale restoration program, to slow down climate
-change.
-*sequester: 격리하다 **phytoplankton: 식물성 플랑크톤
-① global efforts to stop illegal whaling
-② whales endagered by global warming
-③ the way whales help mitigate climate change
-④ whales' capacity to sequester themselves from air
-⑤ reasons and the ways whales sequester carbon in their
-bodies
-다음 글의 주제로 가장 적절한 것은? [31]
-1.
-2.
-3.
-4.
+# 주제(Topic) 통합 매뉴얼 · 완성판 (K-CSAT Topic Master · Deterministic)
 
-2024년도 9월 1학년 2024년9월고1모의고사
-- 2 -
-진진영어
-You hear again and again that some of the greatest
-composers were misunderstood in their own day. Not
-everyone could understand the compositions of
-Beethoven, Brahms, or Stravinsky in their day. The
-reason for this initial lack of acceptance is
-unfamiliarity. The musical forms, or ideas expressed
-within them, were completely new. And yet, this is
-exactly one of the things that makes them so great.
-Effective composers have their own ideas. Have you
-ever seen the classic movie Amadeus? The composer
-Antonio Salieri is the “host” of this movie; he’s
-depicted as one of the most famous non-great
-composers ― he lived at the time of Mozart and was
-completely overshadowed by him. Now, Salieri wasn’t
-a bad composer; in fact, he was a very good one. But
-he wasn’t one of the world’s great composers because
-his work wasn’t original. What he wrote sounded just
-like what everyone else was composing at the time.
-① the importance of originality in music composition
-② the success of composers who copied others' styles
-③ the importance of music education in the 18th century
-④ the influence of classical music on modern
-compositions
-⑤ the role of film in shaping the reputation of composers
-like Mozart
-다음 글의 주제로 가장 적절한 것은? [32]
-Every time a new medium comes along — whether it’s
-the invention of the printed book, or TV, or SNS — and
-you start to use it, it’s like you are putting on a new
-kind of goggles, with their own special colors and
-lenses. Each set of goggles you put on makes you see
-things differently. So when you start to watch
-television, before you absorb the message of any
-particular TV show — whether it’s Wheel of Fortune or
-The Wire — you start to see the world as being shaped
-like television itself. That’s why Marshall McLuhan said
-that every time a new medium comes along — a new
-way for humans to communicate — it has buried in it a
-message. It is gently guiding us to see the world
-according to a new set of codes. The way information
-gets to you, McLuhan argued, is more important than
-the information itself. TV teaches you that the world is
-fast; that it’s about surfaces a
+> **현장요약**: 주제는 “메시지(논지) + 범위”입니다. 지시문은 `다음 글의 주제로 가장 적절한 것은?`, 보기 5개는 영어 문장/명사구(6~14단어). 정답은 논지·범위·극성이 완전 일치하는 단 하나, 나머지는 좁힘/넓힘/세부/역논지 등 서로 다른 결함을 가진 보기를 배치합니다. 세부 규격은 `docs/problem-templates/topic-master.md`를 따르세요.
+
+## 핵심 체크리스트
+
+1. **지문**: 원문 그대로. 삭제/추가/재배열 금지.
+2. **지시문**: 한국어 고정 `다음 글의 주제로 가장 적절한 것은?`
+3. **보기**: ①~⑤, 영어 문장/구, 학술적·중립 톤, 6~14단어 권장.
+4. **정답**: 논지(Thesis) + 범위(Scope)가 정확히 일치.
+5. **오답 결함**: 좁힘(Narrow), 넓힘(Broad), 세부(Detail), 역논지(Counter-claim), 주객전도(Role-swap), 비유 표면화(Metaphor-literal), 범위 오류(Scope error), 부분진실(Half-truth) 등 중복 없이 배치.
+6. **해설**: 한국어로 정답 근거와 대표 오답 결함 유형을 명시.
+7. **출처 라벨**: `출처│기관 연도 회차 문항 (pXX)` 형식.
+
+## 생성 프로세스(요약)
+
+1. 지문에서 **논지·범위 신호**(첫 문장, 역접 뒤, 결론, 반복 키워드)를 추출.
+2. `[대상/범위] + [작용/관계] + [귀결/의의]`로 정답 초안 작성.
+3. 6~14단어로 다듬어 학술적·중립 톤 유지.
+4. 오답 4개를 위 결함 라이브러리에서 선택해 설계.
+5. 길이·어조·어휘 중복률(≤50%) 검토 후 정답 유일성 확인.
+6. 한국어 해설 작성 → 정답 근거 + 오답 결함.
+
+> 새 코퍼스에서 발견된 신규 패턴/결함은 Variation Engine 사전에 추가하여 계속 확장하세요.
