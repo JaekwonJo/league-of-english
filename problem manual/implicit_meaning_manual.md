@@ -1,142 +1,34 @@
-2024년도 9월 1학년 2024년9월고1모의고사
-- 1 -
-진진영어
-다음 글에서 밑줄 친 부분이 의미하는 바로 가장 적절한 것은?
-[24]
-Whales are highly efficient at carbon storage. When
-they die, each whale sequesters an average of 30 tons
-of carbon dioxide, taking that carbon out of the
-atmosphere for centuries. For comparison, the average
-tree absorbs only 48 pounds of CO2 a year. From a
-climate perspective, each whale is the marine
-equivalent of thousands of trees. Whales also help
-sequester carbon by fertilizing the ocean as they
-release nutrient-rich waste, in turn increasing
-phytoplankton populations, which also sequester
-carbon ― leading some scientists to call them the
-“engineers of marine ecosystems.” In 2019,
-economists from the International Monetary Fund
-(IMF) estimated the value of the ecosystem services
-provided by each whale at over $2 million USD. They
-called for a new global program of economic incentives
-to return whale populations to preindustrial whaling
-levels as one example of a “nature-based solution” to
-climate change. Calls are now being made for a global
-whale restoration program, to slow down climate
-change.
-*sequester: 격리하다 **phytoplankton: 식물성 플랑크톤
-① active animals cleaning the waste water from the land
-② consumers primarily eating harmful species in the
-ocean
-③ natural cleaners degrading ocean plastic pollution
-④ clever predators hunting effectively while having a
-minimal impact on ecosystems
-⑤ important agents purifying the marine environment by
-holding carbon
-다음 글에서 밑줄 친 부분이 의미하는 바로 가장 적절한 것은?
-[31]
-You hear again and again that some of the greatest
-composers were misunderstood in their own day. Not
-everyone could understand the compositions of
-Beethoven, Brahms, or Stravinsky in their day. The
-reason for this initial lack of acceptance is
-unfamiliarity. The musical forms, or ideas expressed
-within them, were completely new. And yet, this is
-exactly one of the things that makes them so great.
-Effective composers have their own ideas. Have you
-ever seen the classic movie Amadeus? The composer
-Antonio Salieri is the “host” of this movie; he’s
-depicted as one of the most famous non-great
-composers ― he lived at the time of Mozart and was
-completely overshadowed by him. Now, Salieri wasn’t
-a bad composer; in fact, he was a very good one. But
-he wasn’t one of the world’s great composers because
-his work wasn’t original. What he wrote sounded
-just like what everyone else was composing at
-the time.
-① His works were distinguishable from others'
-② His compositions missed novelty and unusualness
-③ His music was not known to the public at the time
-④ His compositions were too complex to be comprehend
-⑤ His music was full of emotions, different from the ones
-used by others
-1.
-2.
-다음 글에서 밑줄 친 부분이 의미하는 바로 가장 적절한 것은?
-[32]
-Every time a new medium comes along — whether it’s
-the invention of the printed book, or TV, or SNS — and
-you start to use it, it’s like you are putting on a new
-kind of goggles, with their own special colors and
-lenses. Each set of goggles you put on makes you see
-things differently. So when you start to watch
-television, before you absorb the message of any
-particular TV show — whether it’s Wheel of Fortune or
-The Wire — you start to see the world as being shaped
-like television itself. That’s why Marshall McLuhan said
-that every time a new medium comes along — a new
-way for humans to communicate — it has buried in it a
-message. It is gently guiding us to see the world
-according to a new set of codes. The way information
-gets to you, McLuhan argued, is more important than
-the information itself. TV teaches you that the world is
-fast; that it’s about surfaces and appearances.
-3.
+# 함축적 의미 추론 통합 매뉴얼 · 요약본 (K-CSAT Implicit Master)
 
-2024년도 9월 1학년 2024년9월고1모의고사
-- 2 -
-진진영어
-① limiting your perspective to a single form of media
-② actually wearing goggles to improve how you see
-things
-③ understanding the world through accurate and detailed
-data
-④ concentrating more on traditional viewpoints of the
-world
-⑤ seeing the world as shaped by a new medium you’re
-using
-다음 글에서 밑줄 친 “luminiferious ether”에 대한 설명
-으로 옳은 것은? [33]
-Concepts are vital to human survival, but we must also
-be careful with them because concepts open the door
-to essentialism. They encourage us to see things that
-aren’t present. Stuart Firestein opens his book,
-Ignorance, with an old proverb, “It is very difficult to
-find a black cat in a dark room, especially when there
-is no cat.” This statement beautifully sums up the
-search for essences. History has many examples of
-scientists who searched fruitlessly for an essence
-because they used the wrong concept to guide their
-hypotheses. Firestein gives the example of
-luminiferous ether, a mysterious substance that was
-thought to fill the universe so that light would have a
-medium to move through. The ether was a black cat,
-writes Firestein, and physicists had been theorizing in
-a dark room, and then experimenting in it, looking for
-evidence of a cat that did not exist.
-① a form of energy that is seldom found in the natural
-world
-② a material that was eventually confirmed to exist
-③ a mysterious form of dark force used by Jedi masters
-④ a measure used by scientists to identify the speed of
-light
-⑤ a non-existent medium that scientists believed light
-moved through
-다음 글에서 밑줄 친 부분이 의미하는 바로 가장 적절한 것은?
-[31]
-You hear again and again that some of the greatest
-composers were misunderstood in their own day. Not
-everyone could understand the compositions of
-Beethoven, Brahms, or Stravinsky in their day. The
-reason for this initial lack of acceptance is
-unfamiliarity. The musical forms, or ideas expressed
-within them, were completely new. And yet, this is
-exactly one of the things that makes them so great.
-Effective composers have their own ideas. Have you
-ever seen the classic movie Amadeus? The composer
-Antonio Salieri is the “host” of this movie; he’s
-depicted as one of the most famous non-great
-composers ― he lived at the time of Mozart and was
-completely overshadowed by him. Now, Salieri wasn’t
-a bad composer; in fact, he was a very good one. But
-he wasn’t one of the w
+> **무엇을 만들까요?**
+> 영어 원문 속 숨은 메시지를 추론하는 5지선다 문제를, 어떤 AI가 실행해도 동일하게 재현되도록 만드는 규격입니다. 전체 세부 내용은 `docs/problem-templates/implicit-master.md`에서 확인하세요.
+
+## 핵심 체크포인트
+
+1. **지문 & 밑줄**: 영어 원문을 그대로 사용하고, 의미를 묻고 싶은 표현을 `<u>...</u>`로 정확히 한 번 감싸요.
+2. **질문 문장**: 항상 `다음 글에서 밑줄 친 부분이 의미하는 바로 가장 적절한 것은?`
+3. **선택지**: ①~⑤로 시작하는 한국어 문장/명사구 5개. 길이와 톤은 서로 비슷하게 맞춰요.
+4. **정답 기준**: 담화 흐름·논리·지시관계가 완벽히 맞는 보기는 1개뿐! 나머지는 초점 전도, 극성 반전, 범위 과·축소, 사실 오염, 관계 오류 등 서로 다른 결함을 넣어요.
+5. **해설**: 한국어 2~3문장으로 정답 근거와 대표 오답의 결함을 설명해요.
+6. **출처 라벨**: `출처│기관 연도 회차 문항 (pXX)` 형식을 지켜요.
+7. **Metadata**: 필요하면 `implicitType`(I-M/I-A/...)과 `defectTags`를 함께 적어 두면 후속 QA에 도움이 돼요.
+
+## 생성 흐름(요약)
+
+1. 담화 기능·지시어·대조 전환 등을 태깅해 **신호맵**을 만들어요.
+2. 장거리 단서나 핵심 비유를 골라 `<u>...</u>`로 표시해요.
+3. 신호맵을 따라 정답 메시지를 한 줄 한국어로 추상화해요.
+4. 오답 4개에는 초점/극성/범위/사실/관계 결함을 각각 심어요(Triviality=0 유지).
+5. circled digits와 어조를 맞추고, 해설·sourceLabel을 채워 JSON으로 출력해요.
+
+## 품질 체크리스트
+
+- [ ] 질문 문장이 정확히 한국어 지시문으로 들어갔나요?
+- [ ] `<u>...</u>`가 딱 1번 쓰였나요?
+- [ ] ①~⑤ 모두 한국어가 포함돼 있고 길이 균형이 맞나요?
+- [ ] 정답은 메시지·극성·범위가 완벽히 일치하나요?
+- [ ] 각 오답의 결함 유형이 서로 다른가요?
+- [ ] 해설에 정답 근거와 오답 결함이 적혀 있나요?
+- [ ] `sourceLabel`이 `출처│`로 시작하나요?
+
+> **한 줄 요약**: 비유·지시·대조 속 숨은 “메시지”를 찾아내고, 오답엔 결함 태그를 정확히 부여하면 언제나 같은 함축 문제를 재현할 수 있어요.

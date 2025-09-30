@@ -16,7 +16,8 @@ const OPENAI_REQUIRED_TYPES = new Set([
   'vocabulary',
   'title',
   'theme',
-  'summary'
+  'summary',
+  'implicit'
 ]);
 
 function snapToStep(value) {
@@ -93,7 +94,8 @@ const SUPPORTED_TYPES = new Set([
   'title',
   'theme',
   'summary',
-  'irrelevant'
+  'irrelevant',
+  'implicit'
 ]);
 
 router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res) => {
@@ -259,6 +261,23 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
 
           break;
         }
+        case 'implicit': {
+          const cached = await aiService.fetchCached(documentId, 'implicit', amount, {
+            excludeIds: Array.from(usedProblemIds),
+            userId: req.user.id
+          });
+          addedForType += appendProblems(cached);
+          let remaining = amount - addedForType;
+
+          if (remaining > 0) {
+            const generatedBatch = await aiService.generateImplicit(documentId, remaining);
+            const savedBatch = await aiService.saveProblems(documentId, 'implicit', generatedBatch, { docTitle });
+            const usable = Array.isArray(savedBatch) && savedBatch.length ? savedBatch : generatedBatch;
+            addedForType += appendProblems(usable);
+          }
+
+          break;
+        }
         case 'order': {
           const generated = buildOrderProblems(context, amount, { orderDifficulty });
           addedForType += appendProblems(generated);
@@ -293,7 +312,7 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
       return res.status(503).json({ message: 'Failed to build a valid problem set.' });
     }
 
-    const exposureWhitelist = new Set(['blank', 'grammar', 'vocabulary', 'title', 'theme', 'summary']);
+    const exposureWhitelist = new Set(['blank', 'grammar', 'vocabulary', 'title', 'theme', 'summary', 'implicit']);
     const exposureIds = [...new Set(normalizedProblems
       .filter((problem) => problem && exposureWhitelist.has(problem.type))
       .map((problem) => Number(problem.id))

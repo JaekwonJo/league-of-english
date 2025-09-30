@@ -33,6 +33,11 @@
 - Client-side linting and automated tests are missing, so React countdown and loading widgets rely on manual checks.
 - Order and insertion problem types are still rule-based; Wolgo-aligned OpenAI prompts plus validators are required before we retire the scripted path.
 
+## Resolved (2025-10-02 - implicit inference deterministic manual)
+- Shipped the K-CSAT Implicit Master spec (`docs/problem-templates/implicit-master.md`, `implicit_problem_manual.md`, `problem manual/implicit_meaning_manual.md`) so 함축적 의미 추론도 다른 유형처럼 결정형으로 재현돼요.
+- Added `generateImplicit` to the AI problem service + routes so `implicit` 타입이 OpenAI로 생성/저장되고, CSAT 세트·스마트 출제에서도 바로 고를 수 있어요.
+- Updated `problem-templates.json` 프롬프트와 expose/캐시 로직까지 묶어 `출처│`·결함 태그·노출 차단 규칙을 그대로 따르게 했어요.
+
 ## Resolved (2025-10-01 - docs nickname cleanup)
 - Replaced the personal nickname with `LoE관리자` across status docs to keep published materials professional and avoid leaking DC forum handles.
 - Updated README and CLAUDE overview so future contributors see the new naming instantly.

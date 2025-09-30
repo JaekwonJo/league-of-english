@@ -13,15 +13,18 @@ const GRAMMAR_MANUAL_PATH = path.join(__dirname, "..", "..", "problem manual", "
 const TITLE_MANUAL_PATH = path.join(__dirname, "..", "..", "docs", "problem-templates", "title-master.md");
 const BLANK_MANUAL_PATH = path.join(__dirname, "..", "..", "docs", "problem-templates", "blank-master.md");
 const TOPIC_MANUAL_PATH = path.join(__dirname, "..", "..", "docs", "problem-templates", "topic-master.md");
+const IMPLICIT_MANUAL_PATH = path.join(__dirname, "..", "..", "docs", "problem-templates", "implicit-master.md");
 let cachedGrammarManual = null;
 let cachedTitleManual = null;
 let cachedBlankManual = null;
 let cachedTopicManual = null;
+let cachedImplicitManual = null;
 
 const BLANK_QUESTION = "\ub2e4\uc74c \uae00\uc758 \ube48\uce78\uc5d0 \ub4e4\uc5b4\uac08 \ub9d0\ub85c \uac00\uc7a5 \uc801\uc808\ud55c \uac83\uc744 \uace0\ub974\uc2dc\uc624.";
 const BLANK_DEFINITION_QUESTION = "\ub2e4\uc74c \uae00\uc758 \ube48\uce78\uc5d0 \ub4e4\uc5b4\uac08 \ub2e8\uc5b4\uc758 \uc601\uc601 \ud480\uc774\ub85c \uac00\uc7a5 \uc801\uc808\ud55c \uac83\uc744 \uace0\ub974\uc2dc\uc624.";
 const CIRCLED_DIGITS = ['\u2460', '\u2461', '\u2462', '\u2463', '\u2464'];
 const TOPIC_QUESTION = "\ub2e4\uc74c \uae00\uc758 \uc8fc\uc81c\ub85c \uac00\uc7a5 \uc801\uc808\ud55c \uac83\uc744 \uace0\ub974\uc2dc\uc624.";
+const IMPLICIT_QUESTION = "\ub2e4\uc74c \uae00\uc5d0\uc11c \ubc11\uc904 \uce5c \ubd80\ubd84\uc774 \uc758\ubbf8\ud558\ub294 \ubc14\ub85c \uac00\uc7a5 \uc801\uc808\ud55c \uac83\uc740?";
 
 function containsHangul(text = "") {
   return /[가-힣]/.test(String(text));
@@ -122,6 +125,19 @@ function readTopicManual(limit = 1600) {
   }
   if (!cachedTopicManual) return "";
   return cachedTopicManual.slice(0, limit);
+}
+
+function readImplicitManual(limit = 1800) {
+  if (cachedImplicitManual === null) {
+    try {
+      cachedImplicitManual = fs.readFileSync(IMPLICIT_MANUAL_PATH, "utf8");
+    } catch (error) {
+      console.warn("[aiProblemService] failed to load implicit manual:", error?.message || error);
+      cachedImplicitManual = "";
+    }
+  }
+  if (!cachedImplicitManual) return "";
+  return cachedImplicitManual.slice(0, limit);
 }
 
 function shuffleUnique(source, size) {
@@ -946,6 +962,152 @@ class AIProblemService {
 
   async generateTopic(documentId, count = 5) {
     return this.generateTheme(documentId, count);
+  }
+
+  async generateImplicit(documentId, count = 5) {
+    const { document, passages } = await this.getPassages(documentId);
+    const docTitle = document?.title || `Document ${documentId}`;
+    const results = [];
+    const manualExcerpt = readImplicitManual(1800);
+
+    if (!this.getOpenAI()) {
+      throw new Error("AI generator unavailable for implicit problems");
+    }
+
+    const validateUnderline = (text) => {
+      if (!text) return false;
+      const matches = String(text).match(/<u[\s\S]*?<\/u>/g);
+      return Array.isArray(matches) && matches.length === 1;
+    };
+
+    for (let i = 0; i < count; i += 1) {
+      const passage = passages[i % passages.length];
+      let success = false;
+      let attempts = 0;
+
+      while (!success && attempts < 3) {
+        attempts += 1;
+        try {
+          const prompt = [
+            "You are a deterministic K-CSAT implicit meaning inference item writer.",
+            "Follow the style contract exactly. Question text must remain Korean.",
+            manualExcerpt,
+            `Passage (preserve sentences; wrap exactly one span with <u>...</u>):\n${clipText(passage, 1500)}`,
+            "",
+            "Return raw JSON only with this schema:",
+            "{",
+            "  \"type\": \"implicit\",",
+            `  \"question\": \"${IMPLICIT_QUESTION}\",`,
+            "  \"text\": \"English passage with <u>target</u>\",",
+            "  \"options\": [",
+            "    \"\\u2460 한국어 보기\",",
+            "    \"\\u2461 한국어 보기\",",
+            "    \"\\u2462 한국어 보기\",",
+            "    \"\\u2463 한국어 보기\",",
+            "    \"\\u2464 한국어 보기\"",
+            "  ],",
+            "  \"correctAnswer\": 3,",
+            "  \"explanation\": \"한국어 해설\",",
+            "  \"sourceLabel\": \"\\ucd9c\\ucc98│기관 연도 회차 문항 (pXX)\",",
+            "  \"implicitType\": \"I-M|I-A|I-X|I-E|I-R|open-set\",",
+            "  \"defectTags\": [\"focus-shift\", \"polarity-flip\", \"scope-shift\", \"fact-error\", \"relation-flip\", \"definition-trivial\"],",
+            "}",
+            "Rules:",
+            "- Underline exactly one contiguous span with <u>...</u> inside text.",
+            "- Question must remain exactly in Korean as provided.",
+            "- Provide five Korean options labelled with circled digits (\\u2460-\\u2464).",
+            "- Options must be academic/neutral Korean sentences or noun phrases (no slang).",
+            "- Exactly one option must match the passage's implicit message, polarity, and scope.",
+            "- Each distractor must embody a distinct defect from {focus-shift, polarity-flip, scope-shift, fact-error, relation-flip, definition-trivial}.",
+            "- Explanation must be Korean and cite the discourse cues plus at least one distractor defect.",
+            "- sourceLabel must start with '출처│'.",
+            "- Respond with JSON only (no Markdown fences)."
+          ].filter(Boolean).join("\n");
+
+          const response = await this.callChatCompletion({
+            model: "gpt-4o-mini",
+            temperature: 0.4,
+            max_tokens: 540,
+            messages: [{ role: "user", content: prompt }]
+          }, { label: 'implicit' });
+
+          const payload = JSON.parse(stripJsonFences(response.choices?.[0]?.message?.content || ""));
+          const question = String(payload.question || '').trim();
+          if (question !== IMPLICIT_QUESTION) {
+            throw new Error(`unexpected implicit question: ${question}`);
+          }
+
+          const text = String(payload.text || '').trim();
+          if (!validateUnderline(text)) {
+            throw new Error('implicit text must contain exactly one <u>...</u> span');
+          }
+
+          const options = Array.isArray(payload.options)
+            ? payload.options.map((opt) => String(opt || '').trim()).filter(Boolean)
+            : [];
+          if (options.length !== CIRCLED_DIGITS.length) {
+            throw new Error('implicit options must contain 5 entries');
+          }
+          options.forEach((option, index) => {
+            if (!option.startsWith(CIRCLED_DIGITS[index])) {
+              throw new Error(`implicit option ${index + 1} missing circled digit`);
+            }
+            if (!containsHangul(option)) {
+              throw new Error(`implicit option ${index + 1} must be Korean`);
+            }
+          });
+
+          const answer = Number(payload.correctAnswer || payload.answer);
+          if (!Number.isInteger(answer) || answer < 1 || answer > CIRCLED_DIGITS.length) {
+            throw new Error('invalid implicit correctAnswer');
+          }
+
+          const explanation = String(payload.explanation || '').trim();
+          if (!explanation || !containsHangul(explanation)) {
+            throw new Error('implicit explanation must be Korean');
+          }
+
+          const sourceLabel = ensureSourceLabel(payload.sourceLabel, { docTitle });
+
+          const metadata = {
+            documentTitle: docTitle,
+            generator: 'openai'
+          };
+          if (payload.implicitType) {
+            metadata.implicitType = String(payload.implicitType).trim();
+          }
+          if (Array.isArray(payload.defectTags)) {
+            const tags = payload.defectTags
+              .map((tag) => String(tag || '').trim())
+              .filter((tag) => tag.length > 0);
+            if (tags.length) {
+              metadata.defectTags = tags;
+            }
+          }
+
+          results.push({
+            id: payload.id || `implicit_ai_${Date.now()}_${results.length}`,
+            type: 'implicit',
+            question,
+            text,
+            options,
+            answer: String(answer),
+            correctAnswer: String(answer),
+            explanation,
+            sourceLabel,
+            metadata
+          });
+          success = true;
+        } catch (error) {
+          console.warn("[ai-implicit] generation failed:", error?.message || error);
+          if (attempts >= 3) {
+            throw new Error(`[ai-implicit] generation failed after retries: ${error?.message || error}`);
+          }
+        }
+      }
+    }
+
+    return results;
   }
 
   async generateSummary(documentId, count = 5) {
