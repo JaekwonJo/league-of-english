@@ -11,8 +11,18 @@ try {
 
 const GRAMMAR_MANUAL_PATH = path.join(__dirname, "..", "..", "problem manual", "grammar_problem_manual.md");
 const TITLE_MANUAL_PATH = path.join(__dirname, "..", "..", "docs", "problem-templates", "title-master.md");
+const BLANK_MANUAL_PATH = path.join(__dirname, "..", "..", "docs", "problem-templates", "blank-master.md");
 let cachedGrammarManual = null;
 let cachedTitleManual = null;
+let cachedBlankManual = null;
+
+const BLANK_QUESTION = "\ub2e4\uc74c \uae00\uc758 \ube48\uce78\uc5d0 \ub4e4\uc5b4\uac08 \ub9d0\ub85c \uac00\uc7a5 \uc801\uc808\ud55c \uac83\uc744 \uace0\ub974\uc2dc\uc624.";
+const BLANK_DEFINITION_QUESTION = "\ub2e4\uc74c \uae00\uc758 \ube48\uce78\uc5d0 \ub4e4\uc5b4\uac08 \ub2e8\uc5b4\uc758 \uc601\uc601 \ud480\uc774\ub85c \uac00\uc7a5 \uc801\uc808\ud55c \uac83\uc744 \uace0\ub974\uc2dc\uc624.";
+const CIRCLED_DIGITS = ['\u2460', '\u2461', '\u2462', '\u2463', '\u2464'];
+
+function containsHangul(text = "") {
+  return /[가-힣]/.test(String(text));
+}
 
 const {
   getManualExcerpt: getSummaryManualExcerpt,
@@ -83,6 +93,19 @@ function readTitleManual(limit = 1600) {
   }
   if (!cachedTitleManual) return "";
   return cachedTitleManual.slice(0, limit);
+}
+
+function readBlankManual(limit = 2000) {
+  if (cachedBlankManual === null) {
+    try {
+      cachedBlankManual = fs.readFileSync(BLANK_MANUAL_PATH, "utf8");
+    } catch (error) {
+      console.warn("[aiProblemService] failed to load blank manual:", error?.message || error);
+      cachedBlankManual = "";
+    }
+  }
+  if (!cachedBlankManual) return "";
+  return cachedBlankManual.slice(0, limit);
 }
 
 function shuffleUnique(source, size) {
@@ -494,8 +517,8 @@ class AIProblemService {
     if (!this.getOpenAI()) {
       throw new Error("AI generator unavailable for blank problems");
     }
-
-    const question = "\ub2e4\uc74c \uae00\uc758 \ube48\uce78\uc5d0 \uc801\uc808\ud55c \ub9d0\uc744 \uace0\ub974\uc2dc\uc624.";
+    const manualExcerpt = readBlankManual(2000);
+    const allowedQuestions = [BLANK_QUESTION, BLANK_DEFINITION_QUESTION];
 
     for (let i = 0; i < count; i += 1) {
       const passage = passages[i % passages.length];
@@ -505,22 +528,38 @@ class AIProblemService {
         attempts += 1;
         try {
           const prompt = [
-            "You are a CSAT English cloze item writer.",
-            "Create exactly one four-option multiple-choice question.",
+            "You are a deterministic K-CSAT English cloze item writer.",
+            "Follow the style contract exactly. Question text must remain in Korean.",
+            manualExcerpt,
+            `Passage (preserve line breaks):\n${clipText(passage, 1200)}`,
             "",
-            `Passage:\n${clipText(passage, 900)}`,
-            "",
-            "Return JSON only:",
+            "Return raw JSON only with this schema:",
             "{",
             "  \"type\": \"blank\",",
-            `  \"question\": \"${question}\",`,
-            "  \"text\": \"... one blank ...\",",
-            "  \"options\": [\"option1\", \"option2\", \"option3\", \"option4\"],",
-            "  \"correctAnswer\": 2,",
-            "  \"explanation\": \"Korean rationale\",",
-            "  \"sourceLabel\": \"\\ucd9c\\ucc98: ...\"",
-            "}"
-          ].join("\n");
+            "  \"question\": \"한국어 지시문 두 가지 중 하나\",",
+            "  \"text\": \"English sentence/paragraph containing ____ (or similar placeholder)\",",
+            "  \"options\": [",
+            "    \"\\u2460 option\",",
+            "    \"\\u2461 option\",",
+            "    \"\\u2462 option\",",
+            "    \"\\u2463 option\",",
+            "    \"\\u2464 option\"",
+            "  ],",
+            "  \"correctAnswer\": 3,",
+            "  \"explanation\": \"한국어 해설\",",
+            "  \"sourceLabel\": \"\\ucd9c\\ucc98\u2502기관 연도 회차 문항 (pXX)\",",
+            "  \"blankType\": \"general|definition|paraphrase|insertion\"",
+            "}",
+            "Rules:",
+            "- Choose question from the allowed list: \"${BLANK_QUESTION}\" or \"${BLANK_DEFINITION_QUESTION}\".",
+            "- Exactly one blank placeholder must appear in 'text' (e.g., ____ or (    )).",
+            "- Provide five options labelled with circled digits (\\u2460-\\u2464).",
+            "- Options must be plausible English completions. For definition type, options must be concise English definitions.",
+            "- Exactly one option must satisfy the passage's logic, polarity, and collocation; each distractor must embody a distinct defect (narrow, broad, detail, counter-claim, metaphor-literal, role-swap, collocation break, definition error).",
+            "- Write the explanation in Korean summarising why the correct option fits and naming at least one defect among the distractors.",
+            "- sourceLabel must start with '출처│'.",
+            "- Respond with JSON only (no Markdown fences)."
+          ].filter(Boolean).join("\n");
 
           const response = await this.callChatCompletion({
             model: "gpt-4o-mini",
@@ -529,30 +568,56 @@ class AIProblemService {
             messages: [{ role: "user", content: prompt }]
           }, { label: 'blank' });
           const payload = JSON.parse(stripJsonFences(response.choices?.[0]?.message?.content || ""));
-          const options = Array.isArray(payload.options)
-            ? payload.options.map((opt) => String(opt || "").trim())
-            : [];
-          const answer = Number(payload.correctAnswer || payload.answer);
-          if (options.length === 4 && Number.isInteger(answer) && answer >= 1 && answer <= 4) {
-            results.push({
-              id: payload.id || `blank_ai_${Date.now()}_${results.length}`,
-              type: "blank",
-              question,
-              text: payload.text || payload.passage || passage,
-              options,
-              answer: String(answer),
-              correctAnswer: String(answer),
-              explanation: String(payload.explanation || "").trim(),
-              sourceLabel: ensureSourceLabel(payload.sourceLabel, { docTitle }),
-              metadata: {
-                documentTitle: docTitle,
-                generator: 'openai'
-              }
-            });
-            assigned = true;
-          } else {
-            throw new Error("invalid blank structure");
+          const question = String(payload.question || '').trim();
+          if (!allowedQuestions.includes(question)) {
+            throw new Error(`unexpected blank question: ${question}`);
           }
+          const text = String(payload.text || '').trim();
+          if (!text || !/(____|__|\(\s*\)|\[\s*\]|blank)/i.test(text)) {
+            throw new Error('blank text missing placeholder');
+          }
+          const options = Array.isArray(payload.options)
+            ? payload.options.map((opt) => String(opt || '').trim()).filter(Boolean)
+            : [];
+          if (options.length !== CIRCLED_DIGITS.length) {
+            throw new Error('blank options must contain 5 entries');
+          }
+          options.forEach((option, index) => {
+            if (!option.startsWith(CIRCLED_DIGITS[index])) {
+              throw new Error(`blank option ${index + 1} missing circled digit`);
+            }
+          });
+          const answer = Number(payload.correctAnswer || payload.answer);
+          if (!Number.isInteger(answer) || answer < 1 || answer > CIRCLED_DIGITS.length) {
+            throw new Error('invalid blank correctAnswer');
+          }
+          const explanation = String(payload.explanation || '').trim();
+          if (!explanation || !containsHangul(explanation)) {
+            throw new Error('blank explanation must be Korean');
+          }
+          const sourceLabel = ensureSourceLabel(payload.sourceLabel, { docTitle });
+
+          const metadata = {
+            documentTitle: docTitle,
+            generator: 'openai'
+          };
+          if (payload.blankType) {
+            metadata.blankType = String(payload.blankType).trim();
+          }
+
+          results.push({
+            id: payload.id || `blank_ai_${Date.now()}_${results.length}`,
+            type: 'blank',
+            question,
+            text,
+            options,
+            answer: String(answer),
+            correctAnswer: String(answer),
+            explanation,
+            sourceLabel,
+            metadata
+          });
+          assigned = true;
         } catch (error) {
           console.warn("[ai-blank] generation failed:", error?.message || error);
           if (attempts >= 3) {

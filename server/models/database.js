@@ -101,6 +101,15 @@ class Database {
           FOREIGN KEY (document_id) REFERENCES documents(id)
         )`,
 
+        // problem_exposures (유저별 문제 노출 기록)
+        `CREATE TABLE IF NOT EXISTS problem_exposures (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL,
+          problem_id INTEGER NOT NULL,
+          exposed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(user_id, problem_id)
+        )`,
+
         // study_records
         `CREATE TABLE IF NOT EXISTS study_records (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -372,4 +381,3 @@ class Database {
 
 const database = new Database();
 module.exports = database;
-
