@@ -854,9 +854,7 @@ class AIProblemService {
           if (!validation.valid) {
             throw new Error(`summary validation issues: ${validation.issues.join(',')}`);
           }
-          if (!problem.sourceLabel) {
-            problem.sourceLabel = `\ucd9c\ucc98: ${docTitle}`;
-          }
+          problem.sourceLabel = ensureSourceLabel(problem.sourceLabel, { docTitle });
           problem.metadata = problem.metadata || {};
           problem.metadata.documentId = documentId;
           results.push(problem);

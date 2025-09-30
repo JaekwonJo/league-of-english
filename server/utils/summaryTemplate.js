@@ -2,11 +2,19 @@
 const path = require('path');
 
 const TEMPLATE_PATH = path.join(__dirname, '..', '..', 'docs', 'problem-templates', 'summary-two-blank.md');
-const SUMMARY_QUESTION = "\ub2e4\uc74c \uae00\uc744 \uc77d\uace0 (A), (B)\uc5d0 \ub4e4\uc5b4\uac08 \ub9d0\ub85c \uac00\uc7a5 \uc801\uc808\ud55c \uac83\uc744 \uace0\ub974\uc2dc\uc624.";
+const SUMMARY_QUESTION = "\ub2e4\uc74c \uae00\uc758 \ub0b4\uc6a9\uc744 \ud55c \ubb38\uc7a5\uc73c\ub85c \uc694\uc57d\ud558\uace0\uc790 \ud55c\ub2e4. \ube48\uce78 (A), (B)\uc5d0 \ub4e4\uc5b4\uac08 \ub9d0\ub85c \uac00\uc7a5 \uc801\uc808\ud55c \uac83\uc744 \uace0\ub974\uc2dc\uc624.";
 const CIRCLED_DIGITS = ["\u2460", "\u2461", "\u2462", "\u2463", "\u2464"];
 const EN_DASH = "\u2013";
 
 let cachedTemplate = null;
+
+function countWords(text = "") {
+  return String(text)
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .length;
+}
 
 function clip(text, limit = 1800) {
   if (!text) return "";
@@ -28,43 +36,41 @@ function getManualExcerpt(limit = 3600) {
   return cachedTemplate.slice(0, limit);
 }
 
-function buildPrompt({ passage, docTitle, manualExcerpt }) {
+function buildPrompt({ passage, docTitle, manualExcerpt, variantTag }) {
   const clippedPassage = clip(passage, 1800);
   const manualBlock = manualExcerpt ? `Summary template (Korean excerpt):\n${manualExcerpt}\n\n` : "";
+  const variantLine = variantTag ? `Variant seed: ${variantTag}` : "";
   return [
     "You are an expert CSAT English item writer. Produce exactly ONE summary question with two blanks (A) and (B).",
     manualBlock,
+    variantLine,
     `Passage title: ${docTitle}`,
     `Passage (preserve line breaks):\n${clippedPassage}`,
     "",
-    "Return JSON only with the following schema:",
+    "Return raw JSON only with this schema:",
     "{",
     `  \"type\": \"summary\",`,
     `  \"question\": \"${SUMMARY_QUESTION}\",`,
-    "  \"passage\": \"original English passage (optional)\",",
-    "  \"summarySentence\": \"(A) ... (B) ...\",",
+    "  \"summarySentence\": \"... (A) ... (B) ....\",",
     "  \"options\": [",
-    "    \"\\u2460 phrase \\u2013 phrase\",",
-    "    \"\\u2461 phrase \\u2013 phrase\",",
-    "    \"\\u2462 phrase \\u2013 phrase\",",
-    "    \"\\u2463 phrase \\u2013 phrase\",",
-    "    \"\\u2464 phrase \\u2013 phrase\"",
+    "    \"\\u2460 phrase_A \\u2013 phrase_B\",",
+    "    \"\\u2461 ...\",",
+    "    \"\\u2462 ...\",",
+    "    \"\\u2463 ...\",",
+    "    \"\\u2464 ...\"",
     "  ],",
     "  \"correctAnswer\": 3,",
-    "  \"explanation\": \"Korean rationale\",",
-    "  \"sourceLabel\": \"\\ucd9c\\ucc98: 2024\\ub144 9\\uc6d4 \\uace0\\ub144 ...\",",
-    "  \"summaryPattern\": \"pattern description\",",
-    "  \"keywords\": [\"keyword1\", \"keyword2\"],",
-    "  \"difficulty\": \"basic\"",
+    "  \"explanation\": \"한국어 해설\",",
+    "  \"sourceLabel\": \"\\ucd9c\\ucc98\u2502기관 연도 회차 문항 (pXX)\"",
     "}",
     "Rules:",
-    "- Keep (A) and (B) exactly in uppercase within parentheses.",
-    "- Provide five options labelled with circled digits (\\u2460-\\u2464) joined by an en dash (\\u2013).",
-    "- Options must be concise English phrases that plausibly complete the blanks.",
-    "- Ensure exactly one correct option; distractors must be plausible yet incorrect.",
-    "- Write the explanation in Korean referencing the passage.",
-    "- Include a `sourceLabel` that starts with \"\\ucd9c\\ucc98:\" and briefly cites the origin (e.g., exam, month, page).",
-    "- Respond with raw JSON only (no Markdown fences)."
+    "- SummarySentence must be a single English sentence (18-35 words) ending with a period and containing (A) and (B) exactly once.",
+    "- Provide five options labelled with circled digits (\\u2460-\\u2464). Each option is an English pair 'phrase_A \\u2013 phrase_B'.",
+    "- Each phrase must be 1-4 words, grammatically valid, and collocationally natural with its partner.",
+    "- Exactly one option must satisfy the passage's logic and polarity; the other four must contain distinct defects (narrow, broad, detail, counter-claim, metaphor-literal, role-swap, collocation break, definition).",
+    "- Write the explanation in Korean summarising the reason (A)-(B) is correct and naming the main defect of at least one distractor.",
+    "- sourceLabel must start with '출처│'.",
+    "- Respond with JSON only (no Markdown fences)."
   ].filter(Boolean).join('\n');
 }
 
@@ -111,25 +117,34 @@ function normalizeOptions(options) {
   for (let index = 0; index < CIRCLED_DIGITS.length; index += 1) {
     const base = flat[index];
     if (!base) return null;
-    let text = String(base)
-      .replace(/^[\u2460-\u2468]\s*/, "")
-      .replace(/^[0-9]+\.?\s*/, "")
-      .replace(/^[A-E]\.?\s*/i, "")
-      .trim();
-    if (!text) return null;
+    let textValue = String(base).trim();
 
-    if (text.includes(EN_DASH)) {
-      text = text.replace(/\s*[-\u2013\u2014]\s*/, ` ${EN_DASH} `);
+    textValue = textValue.replace(/^[\u2460-\u2468]\s*/, '');
+    textValue = textValue.replace(/^([A-E])([.)-])(?=\S)/i, (_, letter) => letter.toUpperCase());
+    textValue = textValue.replace(/^[0-9]+[.)]?\s*/, '');
+    textValue = textValue.replace(/^([A-E])(?:[.)-]\s*|\s+)/i, '');
+    textValue = textValue.trim();
+
+    if (!textValue) return null;
+
+    if (/^[a-z]/.test(textValue)) {
+      textValue = textValue.charAt(0).toUpperCase() + textValue.slice(1);
+    }
+
+    textValue = textValue.replace(/\s{2,}/g, ' ');
+
+    if (/[-\u2013\u2014]/.test(textValue)) {
+      textValue = textValue.replace(/\s*[-\u2013\u2014]\s*/, ` ${EN_DASH} `);
     } else {
-      const parts = text
+      const parts = textValue
         .split(/[-\u2013\u2014]/)
         .map((part) => part.trim())
         .filter(Boolean);
       if (parts.length < 2) return null;
-      text = `${parts[0]} ${EN_DASH} ${parts[1]}`;
+      textValue = `${parts[0]} ${EN_DASH} ${parts[1]}`;
     }
 
-    sanitized.push(`${CIRCLED_DIGITS[index]} ${text}`);
+    sanitized.push(`${CIRCLED_DIGITS[index]} ${textValue}`);
   }
 
   return sanitized;
@@ -199,20 +214,24 @@ function coerceSummaryProblem(raw, context) {
     if (keywords.length) metadata.keywords = keywords;
   }
 
-  const difficulty = String(raw.difficulty || "").trim().toLowerCase();
-  if (difficulty) metadata.difficulty = difficulty;
+  const reportedDifficulty = String(raw.difficulty || '').trim().toLowerCase();
+  if (reportedDifficulty && reportedDifficulty !== 'advanced') {
+    metadata.reportedDifficulty = reportedDifficulty;
+  }
+  metadata.difficulty = 'advanced';
 
   const problem = {
     id: raw.id || `summary_ai_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
     type: 'summary',
     question: SUMMARY_QUESTION,
-    mainText: String(raw.passage || context.passage || "").trim(),
+    mainText: String(raw.passage || context.passage || '').trim(),
     summarySentence,
     options,
     answer: String(correct),
     correctAnswer: String(correct),
     explanation,
     sourceLabel,
+    difficulty: 'advanced',
     metadata
   };
 
@@ -237,6 +256,13 @@ function validateSummaryProblem(problem) {
   if (!sentence || sentence.indexOf('(A)') === -1 || sentence.indexOf('(B)') === -1) {
     issues.push('summary_sentence_blanks');
   }
+  const summaryWordCount = countWords(sentence.replace(/[().]/g, ' '));
+  if (summaryWordCount < 18 || summaryWordCount > 35) {
+    issues.push('summary_sentence_length');
+  }
+  if (!/[.]\s*$/.test(sentence)) {
+    issues.push('summary_sentence_terminal');
+  }
 
   const options = Array.isArray(problem.options) ? problem.options : [];
   if (options.length !== CIRCLED_DIGITS.length) {
@@ -250,14 +276,34 @@ function validateSummaryProblem(problem) {
       if (text.indexOf(EN_DASH) === -1) {
         issues.push(`option_${index + 1}_dash`);
       }
+      const pair = text
+        .slice(CIRCLED_DIGITS[index].length)
+        .trim();
+      const [rawLeft, rawRight] = pair.split(EN_DASH).map((part) => (part ? part.trim() : ''));
+      if (!rawLeft || !rawRight) {
+        issues.push(`option_${index + 1}_pair`);
+      } else {
+        const leftWords = countWords(rawLeft);
+        const rightWords = countWords(rawRight);
+        if (leftWords === 0 || leftWords > 4) {
+          issues.push(`option_${index + 1}_left_wordcount`);
+        }
+        if (rightWords === 0 || rightWords > 4) {
+          issues.push(`option_${index + 1}_right_wordcount`);
+        }
+      }
     });
   }
 
   if (!problem.answer) issues.push('answer_missing');
-  if (!problem.explanation) issues.push('explanation_missing');
+  if (!problem.explanation) {
+    issues.push('explanation_missing');
+  } else if (!/[가-힣]/.test(problem.explanation)) {
+    issues.push('explanation_language');
+  }
 
   const source = String(problem.sourceLabel || "").trim();
-  if (!source.startsWith("\ucd9c\ucc98:")) issues.push('source_missing');
+  if (!source.startsWith("\ucd9c\ucc98\u2502")) issues.push('source_missing');
 
   return { valid: issues.length === 0, issues };
 }
@@ -266,6 +312,7 @@ module.exports = {
   SUMMARY_QUESTION,
   CIRCLED_DIGITS,
   EN_DASH,
+  countWords,
   getManualExcerpt,
   buildPrompt,
   coerceSummaryProblem,
