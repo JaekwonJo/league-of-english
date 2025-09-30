@@ -1,3 +1,24 @@
+## 2025-10-06 (blank 원문 누락 재발 방지)
+- Error: 빈칸 문제가 가끔 축약 지문으로 저장돼 학생 화면에서 일부 문장만 노출되었어요.
+- Cause: 구 캐시 항목에 원문 길이 메타가 없어 `_acceptCachedProblem`이 단문을 걸러내지 못했습니다.
+- Fix: `_normalizeBlankPayload`가 전체 문장 수·글자 수를 저장하고, `_acceptCachedProblem`이 기준 미달 지문을 즉시 폐기해 재생성하도록 바꿨습니다.
+- Files: server/services/aiProblemService.js, server/routes/problem.routes.js, server/models/database.js, client/src/components/study/ProblemDisplay.js, docs/PROJECT_STATE.md.
+- Verification: `npm test`, `npm run lint`, 로컬 스터디 세션에서 10문항 생성 후 지문 길이/복습 대기열 노출 수동 확인.
+
+## 2025-10-04 (blank 해설 강화 + 재출제 회전 + PDF 내보내기)
+- Issue: 빈칸 문제가 원문을 축약하거나 해설이 한 줄로 끝나는 경우가 많았고, 틀린 문제도 다시는 등장하지 않아 복습 루프가 끊겼어요. 또한 관리자용 PDF 추출 기능이 없어 매번 스크린샷으로 묶어야 했습니다.
+- Cause: `_normalizeBlankPayload`가 해설 길이·오답 사유를 느슨하게 허용했고, `problem_exposures`에는 정답 여부가 저장되지 않아 캐시 차단만 수행했습니다. PDF 생성 루트도 없었습니다.
+- Fix: blank 프롬프트/정규화 규칙을 강화해 전체 지문과 3문장 이상 해설·모든 오답 결함을 필수화하고, exposures 테이블에 `last_result`/카운트를 추가해 틀린 문제는 쿨다운 후 확률적으로 재출제되게 했습니다. `/problems/export/pdf` 엔드포인트와 React 모달을 추가해 최대 100문제를 한글 폰트로 내보내도록 했고, 로딩 스피너 메시지·명언도 확장했습니다.
+- Files: server/services/aiProblemService.js, server/services/studyService.js, server/models/database.js, server/routes/problem.routes.js, server/utils/pdfExporter.js, client/src/pages/StudyPage.js, client/src/components/study/StudyConfig.js, client/src/services/api.service.js, client/src/pages/StudyPage.js (로딩 문구), server/tests/aiProblemService.test.js, package.json (pdfkit).
+- Verification: `npm test`, `npm run lint`, 로컬 StudyPage에서 빈칸 5문항 재생성 + 복습 모드 확인, PDF 다운로드 링크로 한글 문구/빈칸 지문 포함 여부 확인.
+
+## 2025-10-03 (study scoring + stats rollout)
+- Issue: 학생들이 문제를 풀어도 점수·티어·랭킹이 갱신되지 않고, 통계 페이지도 비어 있어서 학습 성과를 확인할 수 없었습니다.
+- Cause: `study_records` 테이블은 존재했지만 결과를 적재하는 API가 없고, 프런트는 로컬에서만 정답률을 계산해 즉시 폐기했습니다.
+- Fix: `studyService`를 도입해 `POST /problems/submit`이 학습 결과를 저장하고 점수를 재계산하도록 하고, `GET /problems/stats`로 유형별 정답률/주간 학습 횟수를 반환하게 했어요. React `useStudySession`/`StudyResult`는 새 API를 호출해 획득 LP, 누적 LP, 유형별 성과를 보여줍니다.
+- Files: server/services/studyService.js, server/utils/tierUtils.js, server/routes/problem.routes.js, server/routes/ranking.routes.js, client/src/hooks/useStudySession.js, client/src/components/study/StudyResult.js, client/src/pages/StudyPage.js, server/tests/aiProblemService.test.js, PROJECT_STATE.md, BUILDLOG.md.
+- Verification: `npm test --silent` (node:test suite)와 로컬 스터디 세션으로 LP/통계 UI를 수동 확인했습니다.
+
 ## 2025-10-02 (implicit inference deterministic launch)
 - Issue: 함축적 의미 추론 문제가 옛 모의고사 PDF에만 의존해 자동 생성/QA가 불가능했어요.
 - Cause: 매뉴얼이 스캔본 수준에 머물러 있고, API 파이프라인에 `implicit` 유형이 연결되지 않았습니다.
@@ -178,6 +199,19 @@
 - Files touched: `server/models/database.js`, `server/routes/membership.routes.js`, `server/server.js`, `client/src/services/api.service.js`, `client/src/pages/ProfilePage.js`.
 - Verification: Code review for duplicate/expired coupon paths; follow-up manual redemption test planned when dev server is running.
 
+## 2025-09-30 (PM)
+- Issue: 빈칸 생성기가 구형 매뉴얼에 묶여 숫자형 보기·빈칸 누락으로 `/generate/csat-set`이 반복 500을 반환했습니다.
+- Root cause: `generateBlank` 프롬프트/검증 로직이 문서 `docs/problem-templates/blank-master.md`에 고정돼 있었고, OpenAI 응답 구조를 강하게 검사하지 않았습니다.
+- Fix: Claude × ChatGPT 통합 빈칸 메뉴얼(`problem manual/빈칸_메뉴얼_GPTxClaude.md`)을 새 프롬프트/검증의 단일 소스로 사용하고, JSON 스키마·패밀리·전략·숫자 철자화·단일 `____` 플래그 검사를 전면 재작성했습니다.
+- Files touched: `server/services/aiProblemService.js`, `docs/problem-templates/blank-master.md`, `PROJECT_STATE.md`.
+- Verification: `node --test server/tests` 전체 통과, `node - <<'NODE'
+const svc = require('./server/services/aiProblemService');
+(async () => {
+  const problems = await svc.generateBlank(58, 5);
+  console.log(problems.map(p => [p.metadata.blankFamily, p.metadata.blankStrategy, /__/g.test(p.text)]));
+})();
+NODE` 로 5문항 생성 결과 (가족/전략 태그·한글 해설·단일 빈칸) 확인.
+
 ## 2025-09-24 (PM)
 - Issue: The stats page was still a placeholder, so students could not review their performance.
 - Root cause: `study_records` aggregation API was missing and the React StatsPage only showed dummy text.
@@ -226,3 +260,9 @@
 - Fix: refactored `InsertionProblemGenerator2` to render full passages then convert markers and choices to circled numbers (①~⑤).
 - Files: `server/utils/insertionProblemGenerator2.js`, regenerated `generated_insertion_problems.json`, docs (`PROJECT_STATE.md`, `README.md`).
 - Verification: ran `node generate_insertion_problems.js`, reviewed problems 5·19·21 in study preview for correct layout and numbering.
+## 2025-10-05 (review queue UX + admin problem library)
+- Issue: 저장된 빈칸 일부가 짧은 축약본이라 품질이 들쑥날쑥했고, 학생이 틀린 문제를 다시 풀 경로가 없으며, 관리자도 문제 캐시를 UI로 살필 수 없었습니다.
+- Cause: 과거 캐시된 blank 문제는 원문 길이 검증이 없어 통과했고, `/problems/review-queue` API가 존재하지 않아 오답 복습 흐름이 끊겼습니다. 관리자 화면도 문서/업로드만 다뤄 문제 라이브러리를 노출하지 않았어요.
+- Fix: `_normalizeBlankPayload`와 `_acceptCachedProblem`에 원문 길이/문장수 검증을 추가해 축약본을 차단하고, `/problems/review-queue`·`/problems/review-session`을 도입해 Home/Profile/StudyPage에서 복습 대기열을 노출했습니다. `useStudySession`은 `startManualSession`을 받아 오답 세트를 즉시 시작하고, AdminPage에는 ProblemLibrary 컴포넌트로 문항 열람·유형별 PDF 내보내기(최대 100문) 기능을 붙였습니다.
+- Files: server/services/aiProblemService.js, server/routes/problem.routes.js, client/src/hooks/useStudySession.js, client/src/pages/StudyPage.js, client/src/pages/HomePage.js, client/src/pages/ProfilePage.js, client/src/pages/AdminPage.js, client/src/components/study/StudyConfig.js, client/src/components/admin/ProblemLibrary.js, client/src/services/api.service.js, PROJECT_STATE.md, BUILDLOG.md.
+- Verification: `npm test`, `npm run lint`, 로컬에서 복습 대기열 자동 시작/수동 시작 흐름 확인, Admin ProblemLibrary에서 PDF 다운로드 테스트 및 blank 캐시 필터링 확인.
