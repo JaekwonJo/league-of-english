@@ -10,7 +10,9 @@ try {
 }
 
 const GRAMMAR_MANUAL_PATH = path.join(__dirname, "..", "..", "problem manual", "grammar_problem_manual.md");
+const TITLE_MANUAL_PATH = path.join(__dirname, "..", "..", "docs", "problem-templates", "title-master.md");
 let cachedGrammarManual = null;
+let cachedTitleManual = null;
 
 const {
   getManualExcerpt: getSummaryManualExcerpt,
@@ -68,6 +70,19 @@ function readGrammarManual(limit = 2000) {
   }
   if (!cachedGrammarManual) return "";
   return cachedGrammarManual.slice(0, limit);
+}
+
+function readTitleManual(limit = 1600) {
+  if (cachedTitleManual === null) {
+    try {
+      cachedTitleManual = fs.readFileSync(TITLE_MANUAL_PATH, "utf8");
+    } catch (error) {
+      console.warn("[aiProblemService] failed to load title manual:", error?.message || error);
+      cachedTitleManual = "";
+    }
+  }
+  if (!cachedTitleManual) return "";
+  return cachedTitleManual.slice(0, limit);
 }
 
 function shuffleUnique(source, size) {
@@ -631,6 +646,7 @@ class AIProblemService {
     const docTitle = document?.title || `Document ${documentId}`;
     const question = "\ub2e4\uc74c \uae00\uc758 \uc81c\ubaa9\uc73c\ub85c \uc801\uc808\ud55c \uac83\uc744 \uace0\ub974\uc2dc\uc624.";
     const results = [];
+    const manualExcerpt = readTitleManual(1600);
 
     if (!this.getOpenAI()) {
       throw new Error("AI generator unavailable for title problems");
@@ -644,19 +660,23 @@ class AIProblemService {
         attempts += 1;
         try {
           const prompt = [
-            "You are a CSAT English main-idea/title item writer.",
-            `Passage:\n${clipText(passage, 1200)}`,
+            "You are a deterministic KSAT English title item writer.",
+            "Follow the style contract exactly. The question text must remain Korean.",
+            `Passage (retain sentences):\n${clipText(passage, 1400)}`,
             "",
-            "Return JSON only:",
+            "Title construction contract (truncated):",
+            manualExcerpt,
+            "",
+            "Return JSON only with this exact shape:",
             "{",
             "  \"type\": \"title\",",
             `  \"question\": \"${question}\",`,
-            "  \"options\": [\"option1\", \"option2\", \"option3\", \"option4\"],",
-            "  \"correctAnswer\": 2,",
-            "  \"explanation\": \"Korean rationale\",",
-            "  \"sourceLabel\": \"\\ucd9c\\ucc98: ...\"",
+            "  \"options\": [\"Title option 1\", \"Title option 2\", \"Title option 3\", \"Title option 4\", \"Title option 5\"],",
+            "  \"correctAnswer\": 3,",
+            "  \"explanation\": \"한국어로 논지/오답 결함을 설명\",",
+            "  \"sourceLabel\": \"\\ucd9c\\ucc98│기관 연도 회차 문항 (pXX)\"",
             "}"
-          ].join("\n");
+          ].filter(Boolean).join("\n");
 
           const response = await this.callChatCompletion({
             model: "gpt-4o-mini",
@@ -666,29 +686,46 @@ class AIProblemService {
           }, { label: 'title' });
           const payload = JSON.parse(stripJsonFences(response.choices?.[0]?.message?.content || ""));
           const options = Array.isArray(payload.options)
-            ? payload.options.map((opt) => String(opt || "").trim())
+            ? payload.options.map((opt) => String(opt || "").trim()).filter(Boolean)
             : [];
           const answer = Number(payload.correctAnswer || payload.answer);
-          if (options.length === 4 && Number.isInteger(answer) && answer >= 1 && answer <= 4) {
-            results.push({
-              id: payload.id || `title_ai_${Date.now()}_${results.length}`,
-              type: "title",
-              question,
-              text: passage,
-              options,
-              answer: String(answer),
-              correctAnswer: String(answer),
-              explanation: String(payload.explanation || "").trim(),
-              sourceLabel: ensureSourceLabel(payload.sourceLabel, { docTitle }),
-              metadata: {
-                documentTitle: docTitle,
-                generator: 'openai'
-              }
-            });
-            success = true;
-          } else {
-            throw new Error("invalid title structure");
+          const explanation = String(payload.explanation || "").trim();
+          const sourceLabel = ensureSourceLabel(payload.sourceLabel, { docTitle });
+
+          const isValidWordCount = (text) => {
+            const words = text.split(/\s+/).filter(Boolean);
+            return words.length >= 6 && words.length <= 12;
+          };
+
+          if (options.length !== 5) {
+            throw new Error("title options must contain 5 entries");
           }
+          if (options.some((opt) => !isValidWordCount(opt))) {
+            throw new Error("title options must be 6-12 words");
+          }
+          if (!Number.isInteger(answer) || answer < 1 || answer > 5) {
+            throw new Error("invalid title answer index");
+          }
+          if (!/[가-힣]/.test(explanation)) {
+            throw new Error("title explanation must be in Korean");
+          }
+
+          results.push({
+            id: payload.id || `title_ai_${Date.now()}_${results.length}`,
+            type: "title",
+            question,
+            text: passage,
+            options,
+            answer: String(answer),
+            correctAnswer: String(answer),
+            explanation,
+            sourceLabel,
+            metadata: {
+              documentTitle: docTitle,
+              generator: 'openai'
+            }
+          });
+          success = true;
         } catch (error) {
           console.warn("[ai-title] generation failed:", error?.message || error);
           if (attempts >= 3) {

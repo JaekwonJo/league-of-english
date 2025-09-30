@@ -47,6 +47,10 @@
 - Confirmed `npm test` (Node test runner) and `npm run lint` succeed on Windows/WSL after the earlier script + ESLint config fixes.
 - Captured follow-up priorities (loading UI QA, manual propagation, client lint/tests) so the team knows where to focus next.
 
+## Resolved (2025-10-02 - deterministic title manual)
+- Added the K-CSAT Title Master deterministic manual (`docs/problem-templates/title-master.md`, `title_problem_manual.md`, `problem manual/title_problem_manual.md`) covering Style Contract, variation engine, 오답 유형, 루브릭.
+- Updated the OpenAI title generator prompt/validation so it consumes the manual snippet, enforces 5 options(6~12 words), Korean question text, and Korean rationale.
+
 ## Resolved (2025-09-30 - doc sync + CLI verification)
 - Re-read PROJECT_STATE.md, README.md, and BUILDLOG.md, then re-ran `npm test` and `npm run lint` to capture the current failure messages so the status docs stay actionable while the fixes are pending.
 - Recorded the exact Windows glob error and ESLint config gap inside the status docs to guide whoever tackles the automation backlog next.
