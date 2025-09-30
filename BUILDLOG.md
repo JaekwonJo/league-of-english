@@ -19,10 +19,10 @@
 - Files: server/services/aiProblemService.js, server/tests/aiProblemService.test.js, PROJECT_STATE.md, README.md.
 - Verification: `npm test`, `npm run lint`.
 
-## 2025-09-30 (grammar manual v6.0 + study queue UX sync)
+## 2025-09-30 (grammar manual v7.0 + study queue UX sync)
 - Issue: The grammar manual still referenced the older Master spec and docs kept warning about failing npm scripts even after the fixes landed, so downstream generators risked pulling stale guidance while devs hesitated to trust the tooling.
 - Cause: After shipping the countdown UI and updating scripts, we forgot to refresh the manuals/docs together, leaving contributors without a single source of truth.
-- Fix: Replaced both `grammar_problem_manual.md` files with Master v6.0, revised PROJECT_STATE/README to call out the new priorities, and logged the countdown QA + manual propagation tasks.
+- Fix: Replaced both `grammar_problem_manual.md` files with Master v7.0 (Style Contract + Variation Engine), revised PROJECT_STATE/README to call out the new priorities, and logged the countdown QA + manual propagation tasks.
 - Files: grammar_problem_manual.md, problem manual/grammar_problem_manual.md, PROJECT_STATE.md, README.md, BUILDLOG.md.
 - Verification: `npm test`, `npm run lint` on Windows/WSL shell (both pass).
 
@@ -177,4 +177,3 @@
 - Fix: refactored `InsertionProblemGenerator2` to render full passages then convert markers and choices to circled numbers (①~⑤).
 - Files: `server/utils/insertionProblemGenerator2.js`, regenerated `generated_insertion_problems.json`, docs (`PROJECT_STATE.md`, `README.md`).
 - Verification: ran `node generate_insertion_problems.js`, reviewed problems 5·19·21 in study preview for correct layout and numbering.
-
