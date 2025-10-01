@@ -6,7 +6,7 @@
       "nameKr": "아이언",
       "minLP": 0,
       "maxLP": 999,
-      "color": "#71717A",
+      "color": "var(--color-slate-500)",
       "icon": "⚔️",
       "badge": "/badges/iron.svg",
       "features": {
@@ -25,7 +25,7 @@
       "nameKr": "브론즈",
       "minLP": 1000,
       "maxLP": 1999,
-      "color": "#92400E",
+      "color": "var(--color-bronze-500)",
       "icon": "🛡️",
       "badge": "/badges/bronze.svg",
       "features": {
@@ -44,13 +44,13 @@
       "nameKr": "실버",
       "minLP": 2000,
       "maxLP": 2999,
-      "color": "#6B7280",
+      "color": "var(--color-slate-400)",
       "icon": "⚔️",
       "badge": "/badges/silver.svg",
       "features": {
         "profileBadge": true,
         "borderEffect": true,
-        "borderColor": "#C0C0C0",
+        "borderColor": "var(--color-slate-300)",
         "specialEffect": false
       },
       "rewards": {
@@ -64,13 +64,13 @@
       "nameKr": "골드",
       "minLP": 3000,
       "maxLP": 4999,
-      "color": "#EAB308",
+      "color": "var(--color-gold-500)",
       "icon": "👑",
       "badge": "/badges/gold.svg",
       "features": {
         "profileBadge": true,
         "borderEffect": true,
-        "borderColor": "#FFD700",
+        "borderColor": "var(--color-gold-200)",
         "specialEffect": false
       },
       "rewards": {
@@ -84,13 +84,13 @@
       "nameKr": "플래티넘",
       "minLP": 5000,
       "maxLP": 9999,
-      "color": "#14B8A6",
+      "color": "var(--teal-accent)",
       "icon": "💎",
       "badge": "/badges/platinum.svg",
       "features": {
         "profileBadge": true,
         "borderEffect": true,
-        "borderColor": "#14B8A6",
+        "borderColor": "var(--teal-accent)",
         "specialEffect": true,
         "effectType": "glow"
       },
@@ -105,13 +105,13 @@
       "nameKr": "다이아몬드",
       "minLP": 10000,
       "maxLP": 29999,
-      "color": "#60A5FA",
+      "color": "var(--accent-primary-light)",
       "icon": "💠",
       "badge": "/badges/diamond.svg",
       "features": {
         "profileBadge": true,
         "borderEffect": true,
-        "borderColor": "#60A5FA",
+        "borderColor": "var(--accent-primary-light)",
         "specialEffect": true,
         "effectType": "sparkle"
       },
@@ -126,13 +126,13 @@
       "nameKr": "마스터",
       "minLP": 30000,
       "maxLP": 99999,
-      "color": "#A855F7",
+      "color": "var(--color-purple-400)",
       "icon": "🏆",
       "badge": "/badges/master.svg",
       "features": {
         "profileBadge": true,
         "borderEffect": true,
-        "borderColor": "#A855F7",
+        "borderColor": "var(--color-purple-400)",
         "specialEffect": true,
         "effectType": "rainbow"
       },
@@ -147,13 +147,13 @@
       "nameKr": "챌린저",
       "minLP": 100000,
       "maxLP": -1,
-      "color": "#EF4444",
+      "color": "var(--danger)",
       "icon": "🔥",
       "badge": "/badges/challenger.svg",
       "features": {
         "profileBadge": true,
         "borderEffect": true,
-        "borderColor": "#EF4444",
+        "borderColor": "var(--danger)",
         "specialEffect": true,
         "effectType": "fire"
       },

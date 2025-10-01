@@ -2,7 +2,7 @@
  * StudyPage: 학습 문제를 구성하고 푸는 메인 페이지
  */
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import StudyConfig from "../components/study/StudyConfig";
 import ProblemDisplay from "../components/study/ProblemDisplay";
@@ -512,6 +512,15 @@ const ReviewModeView = ({ results, onBack, onRestart }) => {
 
 const StudyPage = () => {
   const { user, updateUser } = useAuth();
+  const initialFocusType = useMemo(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const focus = params.get('focus');
+      return focus ? focus.trim() : null;
+    } catch (error) {
+      return null;
+    }
+  }, []);
   const [loadingFlashcards, setLoadingFlashcards] = useState([]);
   const [reviewPreview, setReviewPreview] = useState({ total: 0, problems: [] });
   const [reviewPreviewLoading, setReviewPreviewLoading] = useState(false);
@@ -561,6 +570,21 @@ const StudyPage = () => {
       /* noop */
     }
   }, []);
+
+  useEffect(() => {
+    if (!initialFocusType) return;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.has('focus')) {
+        params.delete('focus');
+        const next = params.toString();
+        const base = `${window.location.pathname}${next ? `?${next}` : ''}`;
+        window.history.replaceState({}, '', base);
+      }
+    } catch (error) {
+      /* noop */
+    }
+  }, [initialFocusType]);
 
   const refreshReviewPreview = useCallback(async () => {
     try {
@@ -646,6 +670,7 @@ const StudyPage = () => {
       return (
         <StudyConfig
           onStart={startStudy}
+          initialFocusType={initialFocusType}
           headerSlot={(
             <ReviewCallout
               total={reviewPreview.total}

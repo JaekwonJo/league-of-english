@@ -240,7 +240,7 @@ const DocumentAnalysis = ({ document, onClose }) => {
                 />
 
                 <AnalysisSection
-                  title="✏️ 어법·어휘 포인트"
+                  title="✏️ 어법 포인트"
                   content={
                     <ul style={analysisStyles.list}>
                       {analysis.grammarPoints?.map((point, index) => (

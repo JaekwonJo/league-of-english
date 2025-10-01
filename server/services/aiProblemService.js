@@ -7,6 +7,7 @@ const underlined = require("./ai-problem/underlined");
 const vocabulary = require("./ai-problem/vocabulary");
 const title = require("./ai-problem/title");
 const topic = require("./ai-problem/topic");
+const { logImplicitAttempt } = require("../utils/generationLogger");
 
 const {
   CIRCLED_DIGITS,
@@ -74,13 +75,14 @@ try {
 
 const GRAMMAR_MANUAL_PATH = path.join(__dirname, "..", "..", "problem manual", "grammar_problem_manual.md");
 const VOCABULARY_MANUAL_PATH = path.join(__dirname, "..", "..", "problem manual", "vocabulary_problem_manual.md");
+const EXTERNAL_GRAMMAR_MANUAL_PATH = '/mnt/c/Users/jaekw/Documents/웹앱문제출제메뉴얼📘 chatgpt5 전용어법문제제작통합메뉴얼.md';
+const EXTERNAL_VOCABULARY_MANUAL_PATH = '/mnt/c/Users/jaekw/Documents/웹앱문제출제메뉴얼📘 chatgpt5 전용어휘문제제작통합메뉴얼.txt';
 const TITLE_MANUAL_PATH = path.join(__dirname, "..", "..", "docs", "problem-templates", "title-master.md");
 const BLANK_MANUAL_PATH = path.join(__dirname, "..", "..", "problem manual", "빈칸_메뉴얼_GPTxClaude.md");
 const TOPIC_MANUAL_PATH = path.join(__dirname, "..", "..", "docs", "problem-templates", "topic-master.md");
 const IMPLICIT_MANUAL_PATH = path.join(__dirname, "..", "..", "docs", "problem-templates", "implicit-master.md");
 const IRRELEVANT_MANUAL_PATH = path.join(__dirname, "..", "..", "docs", "problem-templates", "irrelevant-master.md");
-let cachedGrammarManual = null;
-let cachedVocabularyManual = null;
+const manualCache = new Map();
 let cachedTitleManual = null;
 let cachedBlankManual = null;
 let cachedTopicManual = null;
@@ -101,30 +103,44 @@ const IRRELEVANT_QUESTION_VARIANTS = [
   "\ub2e4\uc74c \uae00\uc758 \ud750\ub984\uc0c1, \ubc11\uc904 \uce5c (A)\uc640 \uad00\ub828\uc774 \uc5c6\ub294 \uac83\uc740?"
 ];
 
-function readGrammarManual(limit = 2000) {
-  if (cachedGrammarManual === null) {
-    try {
-      cachedGrammarManual = fs.readFileSync(GRAMMAR_MANUAL_PATH, 'utf8');
-    } catch (error) {
-      console.warn('[aiProblemService] failed to load grammar manual:', error?.message || error);
-      cachedGrammarManual = '';
+function loadManualContent(cacheKey, candidates, label) {
+  if (!manualCache.has(cacheKey)) {
+    let content = '';
+    for (const candidate of candidates) {
+      if (!candidate) continue;
+      try {
+        if (fs.existsSync(candidate)) {
+          content = fs.readFileSync(candidate, 'utf8');
+          break;
+        }
+      } catch (error) {
+        console.warn(`[aiProblemService] failed to read ${label} manual candidate`, candidate, ':', error?.message || error);
+      }
     }
+    if (!content) {
+      console.warn(`[aiProblemService] no ${label} manual found in candidates:`, candidates.filter(Boolean).join(', '));
+    }
+    manualCache.set(cacheKey, content || '');
   }
-  if (!cachedGrammarManual) return '';
-  return cachedGrammarManual.slice(0, limit);
+  return manualCache.get(cacheKey) || '';
+}
+
+function readGrammarManual(limit = 2000) {
+  const content = loadManualContent('grammar', [
+    process.env.LOE_GRAMMAR_MANUAL_PATH,
+    EXTERNAL_GRAMMAR_MANUAL_PATH,
+    GRAMMAR_MANUAL_PATH
+  ], 'grammar');
+  return content ? content.slice(0, limit) : '';
 }
 
 function readVocabularyManual(limit = 2000) {
-  if (cachedVocabularyManual === null) {
-    try {
-      cachedVocabularyManual = fs.readFileSync(VOCABULARY_MANUAL_PATH, 'utf8');
-    } catch (error) {
-      console.warn('[aiProblemService] failed to load vocabulary manual:', error?.message || error);
-      cachedVocabularyManual = '';
-    }
-  }
-  if (!cachedVocabularyManual) return '';
-  return cachedVocabularyManual.slice(0, limit);
+  const content = loadManualContent('vocabulary', [
+    process.env.LOE_VOCABULARY_MANUAL_PATH,
+    EXTERNAL_VOCABULARY_MANUAL_PATH,
+    VOCABULARY_MANUAL_PATH
+  ], 'vocabulary');
+  return content ? content.slice(0, limit) : '';
 }
 
 function readTitleManual(limit = 1600) {
@@ -929,10 +945,14 @@ class AIProblemService {
 
       while (!success && attempts < 3) {
         attempts += 1;
+        const attemptStartedAt = Date.now();
+        let variantTag = '';
         try {
           const failureReminder = lastFailure
             ? `Previous attempt failed because: ${lastFailure}. Fix that issue without changing other requirements.`
             : '';
+
+          variantTag = `implicit_${documentId}_${i}_${Date.now()}_${attempts}`;
 
           const prompt = [
             "You are a deterministic K-CSAT implicit meaning inference item writer.",
@@ -941,6 +961,7 @@ class AIProblemService {
             `Passage (preserve sentences; wrap exactly one span with <u>...</u>):\n${clipText(passage, 1500)}`,
             "",
             failureReminder,
+            variantTag ? `VariantTag: ${variantTag}` : '',
             "Return raw JSON only with this schema:",
             "{",
             "  \"type\": \"implicit\",",
@@ -972,6 +993,14 @@ class AIProblemService {
             "- sourceLabel must start with '출처│'.",
             "- Respond with JSON only (no Markdown fences)."
           ].filter(Boolean).join("\n");
+
+          logImplicitAttempt({
+            documentId,
+            passageIndex: i,
+            attempt: attempts,
+            status: 'start',
+            variantTag
+          });
 
           const response = await this.callChatCompletion({
             model: "gpt-4o-mini",
@@ -1038,6 +1067,9 @@ class AIProblemService {
               metadata.defectTags = tags;
             }
           }
+          if (variantTag) {
+            metadata.variantTag = metadata.variantTag || variantTag;
+          }
 
           results.push({
             id: payload.id || `implicit_ai_${Date.now()}_${results.length}`,
@@ -1052,11 +1084,28 @@ class AIProblemService {
             sourceLabel,
             metadata
           });
+          logImplicitAttempt({
+            documentId,
+            passageIndex: i,
+            attempt: attempts,
+            status: 'success',
+            variantTag,
+            durationMs: Date.now() - attemptStartedAt
+          });
           success = true;
         } catch (error) {
           const failureMessage = error?.message || error;
           console.warn("[ai-implicit] generation failed:", failureMessage);
           lastFailure = String(failureMessage || '').slice(0, 160);
+          logImplicitAttempt({
+            documentId,
+            passageIndex: i,
+            attempt: attempts,
+            status: 'retry',
+            variantTag,
+            durationMs: Date.now() - attemptStartedAt,
+            message: String(failureMessage || '')
+          });
           if (attempts >= 3) {
             throw new Error(`[ai-implicit] generation failed after retries: ${error?.message || error}`);
           }

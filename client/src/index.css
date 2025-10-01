@@ -138,6 +138,7 @@
   --color-amber-400: #FBBF24;
   --color-amber-300: #FACC15;
   --color-amber-100: #FEF3C7;
+  --color-bronze-500: #92400E;
   --color-red-600: #DC2626;
   --color-red-500: #EF4444;
   --color-red-400: #F87171;
@@ -307,6 +308,7 @@
   --color-amber-400: #FBBF24;
   --color-amber-300: #FDE047;
   --color-amber-100: rgba(250, 204, 21, 0.25);
+  --color-bronze-500: #FDBA74;
   --color-red-600: #F87171;
   --color-red-500: #FCA5A5;
   --color-red-400: #FECACA;

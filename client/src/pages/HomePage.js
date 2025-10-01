@@ -159,7 +159,8 @@ const HomePage = () => {
         <h2 style={styles.sectionTitle}>바로 시작하기</h2>
         <div style={styles.quickGrid}>
           <QuickButton label="CSAT 세트 생성" description="문제 5세트를 바로 생성" onClick={() => (window.location.href = '/study')} />
-          <QuickButton label="어법·어휘 훈련" description="밑줄 어법·어휘 문제 연습하기" onClick={() => (window.location.href = '/vocabulary')} />
+          <QuickButton label="어법 훈련" description="밑줄 어법 문제를 집중 연습" onClick={() => (window.location.href = '/study?focus=grammar')} />
+          <QuickButton label="어휘 훈련" description="(A)(B)(C) 어휘 조합 연습" onClick={() => (window.location.href = '/vocabulary')} />
           <QuickButton label="문서 업로드" description="새 교재를 등록하고 분석" onClick={() => (window.location.href = '/admin')} />
         </div>
       </section>

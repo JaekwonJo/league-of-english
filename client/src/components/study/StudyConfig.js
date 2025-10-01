@@ -36,7 +36,7 @@ const sanitizeTypeCounts = (rawTypes = {}) => {
   return normalized;
 };
 
-const StudyConfig = ({ onStart }) => {
+const StudyConfig = ({ onStart, headerSlot = null, initialFocusType = null }) => {
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [config, setConfig] = useState({
@@ -102,6 +102,20 @@ const StudyConfig = ({ onStart }) => {
     });
   };
 
+  useEffect(() => {
+    if (!initialFocusType) return;
+    if (!TYPE_KEYS.includes(initialFocusType)) return;
+    updateTypes((current) => {
+      const hasSelection = Object.values(current).some((value) => Number(value) > 0);
+      if (hasSelection) return current;
+      const preset = TYPE_KEYS.reduce((acc, key) => {
+        acc[key] = key === initialFocusType ? PROBLEM_STEP : 0;
+        return acc;
+      }, {});
+      return preset;
+    });
+  }, [initialFocusType]);
+
   const handleDocumentChange = (event) => {
     const value = event.target.value ? Number(event.target.value) : null;
     setConfig((prev) => ({ ...prev, documentId: value }));
@@ -165,8 +179,10 @@ const StudyConfig = ({ onStart }) => {
     <div style={styles.container}>
       <h1 style={styles.title}>학습 설정</h1>
 
+      {headerSlot && <div style={styles.headerSlot}>{headerSlot}</div>}
+
       <div style={styles.section}>
-        <h3 style={styles.sectionTitle}>자료 선택</h3>
+        <h3 style={{ ...styles.sectionTitle, marginBottom: '12px' }}>자료 선택</h3>
         <select
           style={styles.select}
           value={config.documentId || ''}
@@ -183,7 +199,15 @@ const StudyConfig = ({ onStart }) => {
       </div>
 
       <div style={styles.section}>
-        <h3 style={styles.sectionTitle}>문항 종류 (선택 {totalProblems} / {MAX_TOTAL_PROBLEMS})</h3>
+        <div style={styles.sectionTitleRow}>
+          <h3 style={styles.sectionTitle}>문항 종류</h3>
+          <div style={styles.countBadge}>
+            <span style={styles.countLabel}>선택</span>
+            <span style={styles.countNumber}>{totalProblems}</span>
+            <span style={styles.countDivider}>/</span>
+            <span style={styles.countMax}>{MAX_TOTAL_PROBLEMS}</span>
+          </div>
+        </div>
         <p style={styles.typeHint}>각 문항은 5문제 단위로 조절되며, 한 번에 최대 20문제까지 풀 수 있어요.</p>
         <div style={styles.typeGrid}>
           {Object.entries(problemTypes.problemTypes).map(([type, info]) => {
@@ -257,14 +281,17 @@ const styles = {
     margin: '0 auto',
     padding: '32px',
     minHeight: '100vh',
-    background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
-    color: '#F8FAFC',
+    background: 'linear-gradient(135deg, var(--color-slate-900) 0%, var(--color-slate-650) 100%)',
+    color: 'var(--surface-soft-solid)',
   },
   title: {
     fontSize: '36px',
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: '36px',
+  },
+  headerSlot: {
+    marginBottom: '24px'
   },
   section: {
     background: 'rgba(30, 41, 59, 0.82)',
@@ -274,10 +301,53 @@ const styles = {
     boxShadow: '0 20px 40px rgba(15, 23, 42, 0.6)',
     border: '1px solid rgba(148, 163, 184, 0.15)',
   },
+  sectionTitleRow: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: '16px',
+    marginBottom: '14px',
+  },
   sectionTitle: {
     fontSize: '20px',
     fontWeight: 700,
-    marginBottom: '12px',
+    margin: 0,
+  },
+  countBadge: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '6px 16px',
+    borderRadius: '999px',
+    background: 'linear-gradient(135deg, rgba(96, 165, 250, 0.25) 0%, rgba(129, 140, 248, 0.35) 100%)',
+    border: '1px solid rgba(148, 163, 184, 0.35)',
+    boxShadow: '0 10px 24px rgba(59, 130, 246, 0.25)',
+    color: 'var(--border-subtle)',
+    minWidth: '160px',
+    justifyContent: 'center',
+  },
+  countLabel: {
+    fontSize: '12px',
+    letterSpacing: '0.4px',
+    textTransform: 'uppercase',
+    color: 'var(--color-slate-300)',
+  },
+  countNumber: {
+    fontSize: '20px',
+    fontWeight: 800,
+    color: 'var(--surface-soft-solid)',
+    textShadow: '0 0 12px rgba(96, 165, 250, 0.55)',
+  },
+  countDivider: {
+    fontSize: '16px',
+    fontWeight: 700,
+    color: 'var(--color-slate-300)',
+    opacity: 0.9,
+  },
+  countMax: {
+    fontSize: '16px',
+    fontWeight: 600,
+    color: 'var(--border-subtle)',
   },
   select: {
     width: '100%',
@@ -286,11 +356,11 @@ const styles = {
     borderRadius: '10px',
     border: '2px solid rgba(148, 163, 184, 0.25)',
     background: 'rgba(15, 23, 42, 0.9)',
-    color: '#F8FAFC',
+    color: 'var(--surface-soft-solid)',
   },
   typeHint: {
     fontSize: '13px',
-    color: '#94A3B8',
+    color: 'var(--color-slate-400)',
     marginBottom: '18px',
   },
   typeGrid: {
@@ -321,12 +391,12 @@ const styles = {
   },
   typeDescription: {
     fontSize: '13px',
-    color: '#CBD5F5',
+    color: 'var(--color-slate-300)',
     marginTop: '2px',
   },
   instruction: {
     fontSize: '12px',
-    color: '#A5B4FC',
+    color: 'var(--violet-lighter)',
     lineHeight: 1.5,
   },
   typeControls: {
@@ -341,7 +411,7 @@ const styles = {
     borderRadius: '10px',
     border: '2px solid rgba(148, 163, 184, 0.35)',
     background: 'rgba(30, 41, 59, 0.8)',
-    color: '#F8FAFC',
+    color: 'var(--surface-soft-solid)',
     fontSize: '22px',
     fontWeight: 'bold',
     cursor: 'pointer',
@@ -353,7 +423,7 @@ const styles = {
     borderRadius: '10px',
     border: '2px solid rgba(148, 163, 184, 0.35)',
     background: 'rgba(15, 23, 42, 0.9)',
-    color: '#F8FAFC',
+    color: 'var(--surface-soft-solid)',
     fontSize: '18px',
     fontWeight: 'bold',
   },
@@ -367,8 +437,8 @@ const styles = {
     padding: '12px 24px',
     borderRadius: '12px',
     border: 'none',
-    background: 'linear-gradient(135deg, #DC2626 0%, #B91C1C 100%)',
-    color: '#ffffff',
+    background: 'linear-gradient(135deg, var(--danger-strong) 0%, var(--danger-stronger) 100%)',
+    color: 'var(--text-on-accent)',
     fontWeight: 600,
     cursor: 'pointer',
     boxShadow: '0 12px 24px rgba(220, 38, 38, 0.35)',
@@ -377,8 +447,8 @@ const styles = {
     padding: '14px 36px',
     borderRadius: '14px',
     border: 'none',
-    background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-    color: '#FFFFFF',
+    background: 'linear-gradient(135deg, var(--success) 0%, var(--success-strong) 100%)',
+    color: 'var(--text-on-accent)',
     fontWeight: 700,
     fontSize: '18px',
     cursor: 'pointer',
@@ -386,7 +456,7 @@ const styles = {
     transition: 'transform 0.2s ease',
   },
   startButtonDisabled: {
-    background: 'linear-gradient(135deg, #475569 0%, #1E293B 100%)',
+    background: 'linear-gradient(135deg, var(--color-slate-600) 0%, var(--color-slate-650) 100%)',
     cursor: 'not-allowed',
     boxShadow: 'none',
     opacity: 0.6,
