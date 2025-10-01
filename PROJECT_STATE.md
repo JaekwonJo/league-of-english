@@ -26,9 +26,9 @@
 - 관리자 페이지에 문제 라이브러리 뷰가 생겨 저장된 문제를 유형별로 훑어보고, 원하는 조합만 PDF로 내보낼 수 있어요.
 
 ## Next 3 (priority)
-1. **Automate regression tests for blank & review logic.** `_normalizeBlankPayload`와 `_acceptCachedProblem`의 길이/문장 검증, `listReviewQueueForUser`/`startManualSession` 흐름을 커버하는 테스트를 추가합니다.
-2. **Polish review UX.** 복습 대기열 카드의 모바일 대응, 빈 상태 메시지 로직, ReviewCallout 내 재시도 시나리오(실패 알림 대신 인라인 피드백)를 정리해요.
-3. **Problem library enhancements.** 문항 검색/필터(난도, 생성일)와 관리자 메모 필드를 추가하고, PDF 내보내기 내역을 기록하는 히스토리 뷰를 설계합니다.
+1. **Automate blank & review regression tests.** `_normalizeBlankPayload`/`_acceptCachedProblem` 길이·문장 검증과 `listReviewQueueForUser`/`startManualSession` 플로우를 Node 테스트로 고정해 최근 가드를 되돌리는 회귀를 막아요.
+2. **Instrument blank regeneration monitoring.** 빈칸 재생성 루프 길이, 실패 사유, 큐 대기 시간을 로깅·알림으로 묶어 지금처럼 서버 로그를 수동으로 살피지 않아도 되게 만들어요.
+3. **Surface review requeue controls.** 하드코딩된 재출제 확률을 설정 파일과 관리자 UI에서 조정할 수 있게 바꿔 학생/반별 복습 강도를 맞춤화해요.
 
 ## Known issues
 - 재출제 확률이 하드코딩 상태라 학습 데이터를 보고 동적으로 조정하거나 관리자 UI에서 수정할 수 있게 해야 합니다.
