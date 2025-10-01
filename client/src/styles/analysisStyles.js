@@ -10,8 +10,8 @@ export const analysisStyles = {
     textAlign: 'center'
   },
   backButton: {
-    background: '#6366f1',
-    color: 'white',
+    background: 'var(--indigo)',
+    color: 'var(--text-on-accent)',
     border: 'none',
     borderRadius: '8px',
     padding: '10px 16px',
@@ -23,12 +23,12 @@ export const analysisStyles = {
     gap: '8px'
   },
   title: {
-    color: '#1f2937',
+    color: 'var(--color-slate-800)',
     fontSize: '2rem',
     margin: '0 0 10px 0'
   },
   subtitle: {
-    color: '#6b7280',
+    color: 'var(--color-slate-500)',
     fontSize: '1.1rem',
     margin: 0
   },
@@ -38,29 +38,29 @@ export const analysisStyles = {
     alignItems: 'center',
     justifyContent: 'center',
     padding: '80px 20px',
-    color: '#6b7280'
+    color: 'var(--color-slate-500)'
   },
   spinner: {
     width: '40px',
     height: '40px',
-    border: '4px solid #e5e7eb',
-    borderTop: '4px solid #6366f1',
+    border: '4px solid var(--border-muted)',
+    borderTop: '4px solid var(--indigo)',
     borderRadius: '50%',
     animation: 'spin 1s linear infinite',
     marginBottom: '20px'
   },
   error: {
-    background: '#fef2f2',
-    border: '1px solid #fecaca',
+    background: 'var(--danger-surface)',
+    border: '1px solid var(--danger-border)',
     borderRadius: '12px',
     padding: '20px',
     textAlign: 'center',
-    color: '#dc2626',
+    color: 'var(--danger-strong)',
     margin: '20px 0'
   },
   retryButton: {
-    background: '#dc2626',
-    color: 'white',
+    background: 'var(--danger-strong)',
+    color: 'var(--text-on-accent)',
     border: 'none',
     borderRadius: '8px',
     padding: '10px 20px',
@@ -71,7 +71,7 @@ export const analysisStyles = {
   emptyState: {
     textAlign: 'center',
     padding: '80px 20px',
-    color: '#6b7280'
+    color: 'var(--color-slate-500)'
   },
   grid: {
     display: 'grid',
@@ -80,19 +80,19 @@ export const analysisStyles = {
     marginTop: '20px'
   },
   card: {
-    background: 'white',
+    background: 'var(--surface-card)',
     borderRadius: '16px',
     padding: '24px',
     boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
     cursor: 'pointer',
     transition: 'all 0.3s ease',
-    border: '1px solid #e5e7eb'
+    border: '1px solid var(--border-muted)'
   },
   cardHeader: {
     marginBottom: '16px'
   },
   cardTitle: {
-    color: '#1f2937',
+    color: 'var(--color-slate-800)',
     fontSize: '1.1rem',
     fontWeight: 'bold',
     margin: '0 0 12px 0',
@@ -105,22 +105,22 @@ export const analysisStyles = {
     flexWrap: 'wrap'
   },
   badge: {
-    background: '#6366f1',
-    color: 'white',
+    background: 'var(--indigo)',
+    color: 'var(--text-on-accent)',
     padding: '4px 12px',
     borderRadius: '12px',
     fontSize: '12px',
     fontWeight: 'bold'
   },
   meta: {
-    color: '#6b7280',
+    color: 'var(--color-slate-500)',
     fontSize: '14px'
   },
   cardContent: {
     marginBottom: '16px'
   },
   summary: {
-    color: '#374151',
+    color: 'var(--color-slate-700)',
     lineHeight: '1.6',
     fontSize: '14px',
     margin: 0,
@@ -130,31 +130,31 @@ export const analysisStyles = {
     overflow: 'hidden'
   },
   cardFooter: {
-    borderTop: '1px solid #e5e7eb',
+    borderTop: '1px solid var(--border-muted)',
     paddingTop: '12px'
   },
   date: {
-    color: '#9ca3af',
+    color: 'var(--color-slate-400)',
     fontSize: '12px'
   },
   detailContainer: {
-    background: 'white',
+    background: 'var(--surface-card)',
     borderRadius: '16px',
     boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
     overflow: 'hidden'
   },
   documentInfo: {
-    background: '#f8fafc',
+    background: 'var(--surface-soft-solid)',
     padding: '24px',
-    borderBottom: '1px solid #e5e7eb'
+    borderBottom: '1px solid var(--border-muted)'
   },
   documentTitle: {
-    color: '#1f2937',
+    color: 'var(--color-slate-800)',
     fontSize: '1.4rem',
     margin: '0 0 8px 0'
   },
   documentMeta: {
-    color: '#6b7280',
+    color: 'var(--color-slate-500)',
     fontSize: '14px',
     margin: 0
   },
@@ -165,14 +165,14 @@ export const analysisStyles = {
     marginBottom: '32px'
   },
   sectionTitle: {
-    color: '#1f2937',
+    color: 'var(--color-slate-800)',
     fontSize: '1.2rem',
     marginBottom: '16px',
     paddingBottom: '8px',
-    borderBottom: '2px solid #e5e7eb'
+    borderBottom: '2px solid var(--border-muted)'
   },
   sectionContent: {
-    color: '#374151',
+    color: 'var(--color-slate-700)',
     lineHeight: '1.7',
     fontSize: '15px'
   },
@@ -189,10 +189,10 @@ export const analysisStyles = {
     gap: '12px'
   },
   vocabularyCard: {
-    background: '#f1f5f9',
+    background: 'var(--surface-soft-strong)',
     padding: '16px',
     borderRadius: '12px',
-    border: '1px solid #e2e8f0'
+    border: '1px solid var(--border-subtle)'
   },
   questionList: {
     paddingLeft: '24px',
@@ -213,7 +213,7 @@ export const analysisStyles = {
   },
 
   clickHint: {
-    color: '#6366f1',
+    color: 'var(--indigo)',
     fontSize: '0.9rem',
     fontWeight: '500'
   },
@@ -223,18 +223,18 @@ export const analysisStyles = {
     flexDirection: 'column',
     alignItems: 'center',
     padding: '60px 20px',
-    color: '#6b7280'
+    color: 'var(--color-slate-500)'
   },
 
   errorContainer: {
     textAlign: 'center',
     padding: '40px 20px',
-    color: '#dc2626'
+    color: 'var(--danger-strong)'
   },
 
   secondaryRetryButton: {
-    background: '#dc2626',
-    color: 'white',
+    background: 'var(--danger-strong)',
+    color: 'var(--text-on-accent)',
     border: 'none',
     borderRadius: '8px',
     padding: '10px 20px',
@@ -245,12 +245,12 @@ export const analysisStyles = {
   compactEmptyState: {
     textAlign: 'center',
     padding: '60px 20px',
-    color: '#6b7280'
+    color: 'var(--color-slate-500)'
   },
 
   analyzeButton: {
-    background: '#10b981',
-    color: 'white',
+    background: 'var(--success)',
+    color: 'var(--text-on-accent)',
     border: 'none',
     borderRadius: '8px',
     padding: '12px 24px',
@@ -268,9 +268,9 @@ export const analysisStyles = {
   },
 
   passageCard: {
-    background: 'white',
+    background: 'var(--surface-card)',
     borderRadius: '12px',
-    border: '1px solid #e5e7eb',
+    border: '1px solid var(--border-muted)',
     overflow: 'hidden',
     cursor: 'pointer',
     transition: 'all 0.2s ease'
@@ -278,16 +278,16 @@ export const analysisStyles = {
 
   passageHeader: {
     padding: '16px',
-    borderBottom: '1px solid #f3f4f6',
+    borderBottom: '1px solid var(--surface-soft-muted)',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    background: '#f8fafc'
+    background: 'var(--surface-soft-solid)'
   },
 
   passageBadge: {
-    background: '#dcfce7',
-    color: '#16a34a',
+    background: 'var(--success-surface-strong)',
+    color: 'var(--success-strong)',
     padding: '4px 8px',
     borderRadius: '6px',
     fontSize: '0.8rem',
@@ -296,16 +296,16 @@ export const analysisStyles = {
 
   passagePreview: {
     padding: '16px',
-    color: '#4b5563',
+    color: 'var(--color-slate-600)',
     fontSize: '0.9rem',
     lineHeight: '1.5'
   },
 
   passageFooter: {
     padding: '12px 16px',
-    background: '#f9fafb',
-    borderTop: '1px solid #f3f4f6',
-    color: '#6366f1',
+    background: 'var(--surface-soft-shell)',
+    borderTop: '1px solid var(--surface-soft-muted)',
+    color: 'var(--indigo)',
     fontSize: '0.9rem',
     fontWeight: '500'
   },
@@ -316,39 +316,39 @@ export const analysisStyles = {
   },
 
   originalText: {
-    background: '#f8fafc',
-    border: '1px solid #e2e8f0',
+    background: 'var(--surface-soft-solid)',
+    border: '1px solid var(--border-subtle)',
     borderRadius: '8px',
     padding: '20px',
     fontSize: '1rem',
     lineHeight: '1.7',
-    color: '#1f2937',
+    color: 'var(--color-slate-800)',
     marginBottom: '20px'
   },
 
   studyGuide: {
-    background: '#f0f9ff',
-    border: '1px solid #0ea5e9',
+    background: 'var(--info-surface)',
+    border: '1px solid var(--info)',
     borderRadius: '8px',
     padding: '16px',
-    color: '#1f2937',
+    color: 'var(--color-slate-800)',
     lineHeight: '1.6'
   },
 
   word: {
     fontWeight: 'bold',
-    color: '#1e40af',
+    color: 'var(--color-slate-650)',
     marginBottom: '4px'
   },
 
   meaning: {
-    color: '#64748b',
+    color: 'var(--color-slate-500)',
     fontSize: '0.9rem'
   },
 
   vocabularyItem: {
-    background: '#f1f5f9',
-    border: '1px solid #e2e8f0',
+    background: 'var(--surface-soft-strong)',
+    border: '1px solid var(--border-subtle)',
     borderRadius: '8px',
     padding: '12px',
     display: 'flex',

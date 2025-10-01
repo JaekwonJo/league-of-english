@@ -121,28 +121,28 @@ const styles = {
     gap: '15px'
   },
   sentenceCard: {
-    background: '#f8fafc',
+    background: 'var(--surface-soft-solid)',
     borderRadius: '10px',
     padding: '15px',
-    border: '1px solid #e2e8f0'
+    border: '1px solid var(--border-subtle)'
   },
   sentenceEnglish: {
     fontSize: '16px',
-    color: '#1f2937',
+    color: 'var(--color-slate-800)',
     marginBottom: '10px',
     fontWeight: '500'
   },
   sentenceTranslation: {
     fontSize: '14px',
-    color: '#475569',
+    color: 'var(--color-slate-600)',
     marginBottom: '8px'
   },
   sentenceMeaning: {
     fontSize: '14px',
-    color: '#64748b'
+    color: 'var(--color-slate-500)'
   },
   deepAnalysisBox: {
-    background: '#f1f5f9',
+    background: 'var(--surface-soft-strong)',
     borderRadius: '10px',
     padding: '20px',
     display: 'flex',
@@ -155,32 +155,32 @@ const styles = {
     gap: '15px'
   },
   expressionCard: {
-    background: '#fff',
-    border: '2px solid #e2e8f0',
+    background: 'var(--surface-card)',
+    border: '2px solid var(--border-subtle)',
     borderRadius: '10px',
     padding: '15px'
   },
   expressionTitle: {
     fontSize: '16px',
     fontWeight: 'bold',
-    color: '#1f2937',
+    color: 'var(--color-slate-800)',
     marginBottom: '8px'
   },
   expressionMeaning: {
     fontSize: '14px',
-    color: '#475569',
+    color: 'var(--color-slate-600)',
     marginBottom: '10px'
   },
   backgroundBox: {
-    background: '#fef3c7',
+    background: 'var(--warning-surface)',
     borderRadius: '10px',
     padding: '15px',
-    border: '1px solid #fbbf24',
+    border: '1px solid var(--warning)',
     marginTop: '10px'
   },
   comprehensiveBox: {
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    color: 'white',
+    background: 'linear-gradient(135deg, var(--indigo) 0%, var(--indigo-strong) 100%)',
+    color: 'var(--text-on-accent)',
     borderRadius: '15px',
     padding: '20px',
     display: 'flex',

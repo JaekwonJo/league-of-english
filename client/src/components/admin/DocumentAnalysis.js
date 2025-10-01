@@ -301,7 +301,7 @@ const analysisStyles = {
     zIndex: 1000
   },
   modalContent: {
-    background: 'white',
+    background: 'var(--surface-card)',
     borderRadius: '20px',
     width: '90%',
     maxWidth: '800px',
@@ -315,10 +315,10 @@ const analysisStyles = {
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: '20px 30px',
-    borderBottom: '1px solid #e2e8f0'
+    borderBottom: '1px solid var(--border-subtle)'
   },
   title: {
-    color: '#1f2937',
+    color: 'var(--color-slate-800)',
     margin: 0,
     fontSize: '1.5rem'
   },
@@ -327,21 +327,21 @@ const analysisStyles = {
     border: 'none',
     fontSize: '20px',
     cursor: 'pointer',
-    color: '#6b7280',
+    color: 'var(--color-slate-500)',
     padding: '5px'
   },
   documentInfo: {
     padding: '20px 30px',
-    borderBottom: '1px solid #e2e8f0',
-    background: '#f8fafc'
+    borderBottom: '1px solid var(--border-subtle)',
+    background: 'var(--surface-soft-solid)'
   },
   documentTitle: {
-    color: '#1f2937',
+    color: 'var(--color-slate-800)',
     margin: '0 0 5px 0',
     fontSize: '1.1rem'
   },
   documentMeta: {
-    color: '#6b7280',
+    color: 'var(--color-slate-500)',
     margin: 0,
     fontSize: '14px'
   },
@@ -356,13 +356,13 @@ const analysisStyles = {
     alignItems: 'center',
     justifyContent: 'center',
     padding: '60px 30px',
-    color: '#6b7280'
+    color: 'var(--color-slate-500)'
   },
   spinner: {
     width: '40px',
     height: '40px',
-    border: '4px solid #e2e8f0',
-    borderTop: '4px solid #3b82f6',
+    border: '4px solid var(--border-subtle)',
+    borderTop: '4px solid var(--accent-primary)',
     borderRadius: '50%',
     animation: 'spin 1s linear infinite',
     marginBottom: '20px'
@@ -370,11 +370,11 @@ const analysisStyles = {
   error: {
     padding: '30px',
     textAlign: 'center',
-    color: '#ef4444'
+    color: 'var(--danger)'
   },
   retryButton: {
-    background: '#3b82f6',
-    color: 'white',
+    background: 'var(--accent-primary)',
+    color: 'var(--text-on-accent)',
     border: 'none',
     borderRadius: '10px',
     padding: '10px 20px',
@@ -382,8 +382,8 @@ const analysisStyles = {
     marginTop: '15px'
   },
   cachedBadge: {
-    background: '#e0f2fe',
-    color: '#0284c7',
+    background: 'var(--accent-primary-muted)',
+    color: 'var(--info-strong)',
     padding: '8px 16px',
     borderRadius: '20px',
     fontSize: '14px',
@@ -394,12 +394,12 @@ const analysisStyles = {
     marginBottom: '25px'
   },
   sectionTitle: {
-    color: '#1f2937',
+    color: 'var(--color-slate-800)',
     fontSize: '1.1rem',
     marginBottom: '12px'
   },
   sectionContent: {
-    color: '#374151',
+    color: 'var(--color-slate-700)',
     lineHeight: '1.6'
   },
   list: {
@@ -415,7 +415,7 @@ const analysisStyles = {
     gap: '10px'
   },
   vocabularyCard: {
-    background: '#f1f5f9',
+    background: 'var(--surface-soft-strong)',
     padding: '12px',
     borderRadius: '8px',
     display: 'flex',
@@ -435,31 +435,31 @@ const analysisStyles = {
     gap: '15px'
   },
   sentenceCard: {
-    background: '#f8fafc',
+    background: 'var(--surface-soft-solid)',
     borderRadius: '10px',
     padding: '15px',
-    border: '1px solid #e2e8f0'
+    border: '1px solid var(--border-subtle)'
   },
   sentenceEnglish: {
     fontSize: '16px',
-    color: '#1f2937',
+    color: 'var(--color-slate-800)',
     marginBottom: '10px',
     fontWeight: '500',
     lineHeight: '1.6'
   },
   sentenceTranslation: {
     fontSize: '14px',
-    color: '#475569',
+    color: 'var(--color-slate-600)',
     marginBottom: '8px',
     lineHeight: '1.5'
   },
   sentenceMeaning: {
     fontSize: '14px',
-    color: '#64748b',
+    color: 'var(--color-slate-500)',
     lineHeight: '1.5'
   },
   deepAnalysisBox: {
-    background: '#f1f5f9',
+    background: 'var(--surface-soft-strong)',
     borderRadius: '10px',
     padding: '20px',
     display: 'flex',
@@ -475,43 +475,43 @@ const analysisStyles = {
     gap: '15px'
   },
   expressionCard: {
-    background: '#fff',
-    border: '2px solid #e2e8f0',
+    background: 'var(--surface-card)',
+    border: '2px solid var(--border-subtle)',
     borderRadius: '10px',
     padding: '15px'
   },
   expressionTitle: {
     fontSize: '16px',
     fontWeight: 'bold',
-    color: '#1f2937',
+    color: 'var(--color-slate-800)',
     marginBottom: '8px'
   },
   expressionMeaning: {
     fontSize: '14px',
-    color: '#475569',
+    color: 'var(--color-slate-600)',
     marginBottom: '10px'
   },
   wordList: {
     fontSize: '13px',
-    color: '#64748b',
+    color: 'var(--color-slate-500)',
     marginBottom: '5px'
   },
   wordLabel: {
     fontWeight: '600',
-    color: '#475569'
+    color: 'var(--color-slate-600)'
   },
   examplesBox: {
     marginBottom: '15px'
   },
   backgroundBox: {
-    background: '#fef3c7',
+    background: 'var(--warning-surface)',
     borderRadius: '10px',
     padding: '15px',
-    border: '1px solid #fbbf24'
+    border: '1px solid var(--warning)'
   },
   comprehensiveBox: {
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    color: 'white',
+    background: 'linear-gradient(135deg, var(--indigo) 0%, var(--indigo-strong) 100%)',
+    color: 'var(--text-on-accent)',
     borderRadius: '15px',
     padding: '20px',
     display: 'flex',

@@ -17,10 +17,10 @@ class Logger {
       : LOG_LEVELS.DEBUG;
     
     this.colors = {
-      debug: '#9CA3AF',
-      info: '#3B82F6',
-      warn: '#F59E0B',
-      error: '#EF4444'
+      debug: 'var(--color-slate-400)',
+      info: 'var(--accent-primary)',
+      warn: 'var(--warning-strong)',
+      error: 'var(--danger)'
     };
   }
 

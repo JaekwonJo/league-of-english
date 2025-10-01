@@ -901,12 +901,12 @@ class AIProblemService {
         return null;
       }
 
-      const pattern = new RegExp(escapeRegExp(cleanTarget));
+      const pattern = new RegExp(escapeRegExp(cleanTarget).replace(/\s+/g, '\\s+'), 'i');
       if (!pattern.test(rawText)) {
         return null;
       }
 
-      return rawText.replace(pattern, `<u>${cleanTarget}</u>`);
+      return rawText.replace(pattern, (match) => `<u>${match}</u>`);
     };
 
     const isValidEnglishOption = (value) => {
@@ -925,16 +925,22 @@ class AIProblemService {
       const passage = passages[i % passages.length];
       let success = false;
       let attempts = 0;
+      let lastFailure = '';
 
       while (!success && attempts < 3) {
         attempts += 1;
         try {
+          const failureReminder = lastFailure
+            ? `Previous attempt failed because: ${lastFailure}. Fix that issue without changing other requirements.`
+            : '';
+
           const prompt = [
             "You are a deterministic K-CSAT implicit meaning inference item writer.",
             "Follow the style contract exactly. Question text must remain Korean.",
             manualExcerpt,
             `Passage (preserve sentences; wrap exactly one span with <u>...</u>):\n${clipText(passage, 1500)}`,
             "",
+            failureReminder,
             "Return raw JSON only with this schema:",
             "{",
             "  \"type\": \"implicit\",",
@@ -1048,7 +1054,9 @@ class AIProblemService {
           });
           success = true;
         } catch (error) {
-          console.warn("[ai-implicit] generation failed:", error?.message || error);
+          const failureMessage = error?.message || error;
+          console.warn("[ai-implicit] generation failed:", failureMessage);
+          lastFailure = String(failureMessage || '').slice(0, 160);
           if (attempts >= 3) {
             throw new Error(`[ai-implicit] generation failed after retries: ${error?.message || error}`);
           }

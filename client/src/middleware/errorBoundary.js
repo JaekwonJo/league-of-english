@@ -117,11 +117,11 @@ const styles = {
     justifyContent: 'center',
     alignItems: 'center',
     minHeight: '100vh',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    background: 'linear-gradient(135deg, var(--indigo) 0%, var(--indigo-strong) 100%)',
     padding: '20px'
   },
   errorBox: {
-    background: 'white',
+    background: 'var(--surface-card)',
     borderRadius: '20px',
     padding: '40px',
     maxWidth: '600px',
@@ -130,20 +130,20 @@ const styles = {
   },
   title: {
     fontSize: '28px',
-    color: '#111827',
+    color: 'var(--color-slate-850)',
     marginBottom: '20px',
     textAlign: 'center'
   },
   message: {
     fontSize: '16px',
-    color: '#6B7280',
+    color: 'var(--color-slate-500)',
     textAlign: 'center',
     marginBottom: '30px'
   },
   details: {
     marginBottom: '30px',
     padding: '20px',
-    background: '#F3F4F6',
+    background: 'var(--surface-soft-muted)',
     borderRadius: '10px'
   },
   summary: {
@@ -153,7 +153,7 @@ const styles = {
   },
   errorText: {
     fontSize: '12px',
-    color: '#EF4444',
+    color: 'var(--danger)',
     overflow: 'auto',
     maxHeight: '200px'
   },
@@ -164,8 +164,8 @@ const styles = {
   },
   button: {
     padding: '12px 24px',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    color: 'white',
+    background: 'linear-gradient(135deg, var(--indigo) 0%, var(--indigo-strong) 100%)',
+    color: 'var(--text-on-accent)',
     border: 'none',
     borderRadius: '10px',
     fontSize: '16px',
@@ -174,8 +174,8 @@ const styles = {
   },
   buttonSecondary: {
     padding: '12px 24px',
-    background: '#F3F4F6',
-    color: '#111827',
+    background: 'var(--surface-soft-muted)',
+    color: 'var(--color-slate-850)',
     border: 'none',
     borderRadius: '10px',
     fontSize: '16px',

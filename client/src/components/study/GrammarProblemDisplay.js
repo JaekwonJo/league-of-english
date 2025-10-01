@@ -3,7 +3,7 @@ import { orderStyles } from "./problemDisplayStyles";
 
 const underlineStyle = {
   textDecoration: "underline",
-  textDecorationColor: "#fbbf24",
+  textDecorationColor: "var(--warning)",
   textDecorationThickness: "3px",
   fontWeight: "bold",
   backgroundColor: "rgba(251, 191, 36, 0.2)",
@@ -104,17 +104,17 @@ const GrammarProblemDisplay = ({ problem, onAnswer, userAnswer, showResult }) =>
       if (correctSet.has(choiceNumber)) {
         return {
           ...baseStyle,
-          background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-          borderColor: "#10b981",
-          color: "white"
+          background: "linear-gradient(135deg, var(--success) 0%, var(--success-strong) 100%)",
+          borderColor: "var(--success)",
+          color: 'var(--text-on-accent)'
         };
       }
       if (selectedSet.has(choiceNumber) && !correctSet.has(choiceNumber)) {
         return {
           ...baseStyle,
-          background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)",
-          borderColor: "#dc2626",
-          color: "white"
+          background: "linear-gradient(135deg, var(--danger-strong) 0%, var(--danger-stronger) 100%)",
+          borderColor: "var(--danger-strong)",
+          color: 'var(--text-on-accent)'
         };
       }
       return baseStyle;
@@ -151,7 +151,16 @@ const GrammarProblemDisplay = ({ problem, onAnswer, userAnswer, showResult }) =>
     selected.length === correctAnswers.length &&
     selected.every((value, idx) => value === correctAnswers[idx]);
 
-  const sourceLabel = problem.sourceLabel || problem.source;
+  const rawSourceLabel = problem.sourceLabel || problem.source;
+  const sourceLabel = (() => {
+    if (!rawSourceLabel) return '';
+    const trimmed = String(rawSourceLabel).trim();
+    if (!trimmed) return '';
+    const cleaned = trimmed.replace(/^\s*(출처|Source)\s*[:\u2502|]?\s*/iu, '').trim();
+    if (!cleaned) return '';
+    const hasPrefix = /^\s*(출처|Source)\s*[:\u2502|]?/iu.test(trimmed);
+    return hasPrefix ? `출처│${cleaned}` : cleaned;
+  })();
   const questionText = problem.question || (isMultiSelect
     ? "Q. Select all of the sentences that are grammatically correct."
     : "Q. Select the sentence that is grammatically incorrect.");
@@ -159,8 +168,8 @@ const GrammarProblemDisplay = ({ problem, onAnswer, userAnswer, showResult }) =>
   return (
     <>
       {sourceLabel && (
-        <div style={{ fontSize: "14px", color: "#6b7280", marginBottom: "10px", fontStyle: "italic" }}>
-          Source: {sourceLabel}
+        <div style={{ fontSize: "14px", color: "var(--color-slate-500)", marginBottom: "10px", fontStyle: "italic" }}>
+          {sourceLabel.startsWith('출처') ? sourceLabel : `출처: ${sourceLabel}`}
         </div>
       )}
 
@@ -175,7 +184,7 @@ const GrammarProblemDisplay = ({ problem, onAnswer, userAnswer, showResult }) =>
       <div style={{ marginBottom: "20px" }}>
         <div style={orderStyles.sentencesLabel}>{selectionLabel}</div>
         {choiceList.length === 0 ? (
-          <div style={{ color: "#dc2626", padding: "12px 0" }}>
+          <div style={{ color: "var(--danger-strong)", padding: "12px 0" }}>
             Options are not available. Please contact the administrator.
           </div>
         ) : (
@@ -200,9 +209,9 @@ const GrammarProblemDisplay = ({ problem, onAnswer, userAnswer, showResult }) =>
             style={{
               ...orderStyles.orderGivenText,
               background: isCorrectSelection
-                ? "linear-gradient(135deg, #10b981 0%, #059669 100%)"
-                : "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)",
-              color: "white"
+                ? "linear-gradient(135deg, var(--success) 0%, var(--success-strong) 100%)"
+                : "linear-gradient(135deg, var(--danger-strong) 0%, var(--danger-stronger) 100%)",
+              color: 'var(--text-on-accent)'
             }}
           >
             <div style={{ fontSize: "16px", fontWeight: "bold", marginBottom: "10px" }}>

@@ -12,11 +12,11 @@
     "maxPassagesPerRow": 10,
     "animationDuration": "0.2s",
     "colors": {
-      "selected": "#3b82f6",
-      "analyzed": "#10b981",
-      "pending": "#f1f5f9",
-      "error": "#ef4444",
-      "warning": "#fbbf24"
+      "selected": "var(--accent-primary)",
+      "analyzed": "var(--success)",
+      "pending": "var(--surface-soft-strong)",
+      "error": "var(--danger)",
+      "warning": "var(--warning)"
     }
   },
   "analysis": {

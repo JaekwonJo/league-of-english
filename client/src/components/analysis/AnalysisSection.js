@@ -14,12 +14,12 @@ const styles = {
     marginBottom: '25px'
   },
   sectionTitle: {
-    color: '#1f2937',
+    color: 'var(--color-slate-800)',
     fontSize: '1.1rem',
     marginBottom: '12px'
   },
   sectionContent: {
-    color: '#374151',
+    color: 'var(--color-slate-700)',
     lineHeight: '1.6'
   }
 };

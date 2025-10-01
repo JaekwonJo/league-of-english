@@ -77,16 +77,16 @@ const styles = {
   left: { minWidth: 90 },
   center: { flex: 1 },
   right: { minWidth: 90, textAlign: 'right' },
-  timer: { color: '#E2E8F0', fontWeight: 700 },
-  rank: { color: '#E2E8F0', fontWeight: 700 },
-  lightText: { color: '#94A3B8' },
-  tierLine: { display: 'flex', justifyContent: 'space-between', color: '#CBD5E1', marginBottom: 6 },
+  timer: { color: 'var(--border-subtle)', fontWeight: 700 },
+  rank: { color: 'var(--border-subtle)', fontWeight: 700 },
+  lightText: { color: 'var(--color-slate-400)' },
+  tierLine: { display: 'flex', justifyContent: 'space-between', color: 'var(--color-slate-350)', marginBottom: 6 },
   tierName: { fontWeight: 700 },
   points: { fontWeight: 700 },
   progressWrap: {},
   progressBarBg: { background: 'rgba(148,163,184,0.2)', height: 8, borderRadius: 8, overflow: 'hidden' },
-  progressBarFill: { background: 'linear-gradient(90deg, #22C55E, #3B82F6)', height: '100%' },
-  progressLabel: { marginTop: 6, fontSize: 12, color: '#94A3B8' }
+  progressBarFill: { background: 'linear-gradient(90deg, var(--success), var(--accent-primary))', height: '100%' },
+  progressLabel: { marginTop: 6, fontSize: 12, color: 'var(--color-slate-400)' }
 };
 
 export default ScoreHUD;

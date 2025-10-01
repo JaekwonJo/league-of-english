@@ -1,3 +1,9 @@
+## 2025-10-07 (theme palette + implicit underline fallback)
+- Issue: 다크 모드에서 관리자/통계 등 일부 화면은 고정 HEX 색상 때문에 배경과 대비가 맞지 않았고, 함축 추론 생성기가 `<u>` 태그를 누락하면 세트 생성이 계속 실패했어요.
+- Fix: CSS 변수 팔레트를 확장해 StudyResult·Ranking·Analysis·Admin 등 전 화면이 라이트/다크 테마를 공유하도록 리팩터링하고, `generateImplicit`가 `targetSpan`으로 밑줄을 복원하며 실패 사유를 프롬프트에 전달하게 만들었어요.
+- Files: client/src/index.css, client/src/components/study/StudyResult.js, client/src/components/study/ProblemDisplay.js, client/src/styles/adminStyles.js, client/src/styles/analysisStyles.js, client/src/config/*.json, server/services/aiProblemService.js, server/tests/aiProblemService.test.js 등.
+- Verification: `npm test` (pass, 16 tests).
+
 ## 2025-10-07 (implicit targetSpan + light/dark theme toggle)
 - Issue: 함축 추론 API가 `<u>`를 누락하면 여전히 세트가 실패했고, 대시보드/학습 화면은 다크 테마가 없어 밤에 보기 어려웠어요. 복습 문구도 어두운 배경에서 잘 안 보였습니다.
 - Fix: OpenAI 응답에 `targetSpan`을 강제해 `<u>`가 빠져도 코드에서 동일 구절을 찾아 자동 밑줄로 보정하고, 회귀 테스트를 추가했어요. 동시에 테마 컨텍스트를 도입해 라이트/다크 모드를 토글할 수 있게 했고, 홈/학습/프로필 UI 색상과 복습 문구 대비, 스크롤-탑 버튼을 정비했습니다.

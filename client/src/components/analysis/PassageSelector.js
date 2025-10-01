@@ -37,7 +37,7 @@ const PassageSelector = ({
 const styles = {
   passageSelector: {
     padding: '20px 30px',
-    borderBottom: '1px solid #e2e8f0'
+    borderBottom: '1px solid var(--border-subtle)'
   },
   passageGrid: {
     display: 'grid',
@@ -46,7 +46,7 @@ const styles = {
   },
   passageButton: {
     padding: '10px',
-    background: '#f1f5f9',
+    background: 'var(--surface-soft-strong)',
     border: '2px solid transparent',
     borderRadius: '8px',
     cursor: 'pointer',
@@ -54,13 +54,13 @@ const styles = {
     transition: 'all 0.2s'
   },
   passageButtonSelected: {
-    background: '#3b82f6',
-    color: 'white',
-    borderColor: '#2563eb'
+    background: 'var(--accent-primary)',
+    color: 'var(--text-on-accent)',
+    borderColor: 'var(--accent-primary-strong)'
   },
   passageButtonAnalyzed: {
-    background: '#10b981',
-    color: 'white'
+    background: 'var(--success)',
+    color: 'var(--text-on-accent)'
   },
   checkMark: {
     position: 'absolute',

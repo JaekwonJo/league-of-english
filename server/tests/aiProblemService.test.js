@@ -710,7 +710,7 @@ test('generateImplicit restores underline when targetSpan is provided', async ()
             type: 'implicit',
             question: IMPLICIT_QUESTION_TEXT,
             text: 'Students realised that the quiet nod from the mentor signalled full approval.',
-            targetSpan: 'the quiet nod',
+            targetSpan: 'The   quiet  nod  ',
             options: [
               '① A gentle subtle cue indicating full endorsement',
               '② A sarcastic pointed gesture masking disapproval',

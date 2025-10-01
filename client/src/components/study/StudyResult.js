@@ -3,29 +3,124 @@ import { useAuth } from '../../contexts/AuthContext';
 import { api } from '../../services/api.service';
 import tierConfig from '../../config/tierConfig.json';
 
-const StudyResult = ({ results, onRestart, onHome }) => {
+const palette = {
+  success: 'var(--success)',
+  successGradient: 'var(--success-gradient)',
+  successGradientStrong: 'var(--success-gradient-strong)',
+  successGradientDeep: 'var(--success-gradient-deep)',
+  accent: 'var(--accent-primary)',
+  accentGradient: 'var(--accent-hero-gradient)',
+  warning: 'var(--warning-strong)',
+  warningGradient: 'var(--warning-gradient)',
+  warningGradientStrong: 'var(--warning-gradient-strong)',
+  danger: 'var(--danger)',
+  dangerGradient: 'var(--danger-gradient)',
+  slateGradient: 'var(--slate-gradient)',
+  slateSoftGradient: 'var(--slate-soft-gradient)',
+  info: 'var(--info)',
+  infoSoft: 'var(--info-soft)',
+  infoGradient: 'var(--info-gradient)',
+  gold: 'var(--color-gold-200)',
+  orange: 'var(--color-orange-500)',
+  championGradient: 'var(--champion-gradient)',
+  championRadial: 'var(--champion-radial)',
+  textInverse: 'var(--text-on-accent)',
+  textMuted: 'var(--color-slate-400)',
+  textSubtle: 'var(--color-slate-350)',
+  textHighlight: 'var(--color-slate-75)',
+  borderSoft: 'var(--border-subtle)',
+  borderMuted: 'var(--border-muted)',
+  accentBadge: 'var(--accent-badge-text)',
+  accentPale: 'var(--accent-primary-pale)',
+  dangerSoft: 'var(--danger-soft)',
+  dangerStronger: 'var(--danger-stronger)',
+  surfaceOverlay: 'var(--surface-translucent-strong)',
+  surfaceGlass: 'var(--surface-translucent)',
+  glassBorder: 'var(--glass-border)'
+};
+
+const StudyResult = ({ results, onRestart, onReview, onHome }) => {
   const { user } = useAuth();
   const [showAnimation, setShowAnimation] = useState(false);
   const [currentLpCount, setCurrentLpCount] = useState(0);
-  
+  const ensureNumber = (value, fallback = 0) => {
+    const num = Number(value);
+    return Number.isFinite(num) ? num : fallback;
+  };
+
+  const fallbackSummary = {
+    total: ensureNumber(results?.totalProblems, 0),
+    correct: ensureNumber(results?.totalCorrect, 0),
+    accuracy: ensureNumber(results?.accuracy, 0),
+    pointsDelta: ensureNumber(results?.earnedPoints, 0),
+    totalPoints: ensureNumber(user?.points, 0)
+  };
+  fallbackSummary.incorrect = Math.max(0, fallbackSummary.total - fallbackSummary.correct);
+
+  const summaryRaw = results?.summary || {};
+  const summary = {
+    total: ensureNumber(summaryRaw.total, fallbackSummary.total),
+    correct: ensureNumber(summaryRaw.correct, fallbackSummary.correct),
+    incorrect: ensureNumber(summaryRaw.incorrect, fallbackSummary.incorrect),
+    accuracy: ensureNumber(summaryRaw.accuracy, fallbackSummary.accuracy),
+    pointsDelta: ensureNumber(summaryRaw.pointsDelta, fallbackSummary.pointsDelta),
+    totalPoints: ensureNumber(summaryRaw.totalPoints, fallbackSummary.totalPoints)
+  };
+
+  const pointsDelta = summary.pointsDelta;
+  const totalPointsAfter = summary.totalPoints;
+  const totalProblems = summary.total;
+  const totalCorrect = summary.correct;
+  const totalIncorrect = summary.incorrect;
+  const totalTimeSeconds = ensureNumber(results?.totalTime, 0);
+  const perTypeStats = Array.isArray(results?.stats?.perType) ? results.stats.perType : [];
+
   useEffect(() => {
     setShowAnimation(true);
-    // LP 카운팅 애니메이션
-    const lpIncrement = Math.max(1, Math.floor(results.earnedPoints / 50));
+    setCurrentLpCount(0);
+    if (!pointsDelta) {
+      setCurrentLpCount(0);
+      return undefined;
+    }
+    const step = Math.max(1, Math.floor(Math.abs(pointsDelta) / 50));
+    const direction = pointsDelta >= 0 ? 1 : -1;
+
     const interval = setInterval(() => {
-      setCurrentLpCount(prev => {
-        if (prev >= results.earnedPoints) {
+      setCurrentLpCount((prev) => {
+        const next = prev + direction * step;
+        if ((direction > 0 && next >= pointsDelta) || (direction < 0 && next <= pointsDelta)) {
           clearInterval(interval);
-          return results.earnedPoints;
+          return pointsDelta;
         }
-        return Math.min(prev + lpIncrement, results.earnedPoints);
+        return next;
       });
     }, 30);
-    return () => clearInterval(interval);
-  }, [results.earnedPoints]);
 
-  const getTierInfo = () => {
-    const points = user?.points || 0;
+    return () => clearInterval(interval);
+  }, [pointsDelta]);
+
+  const typeLabelMap = {
+    blank: '빈칸',
+    order: '순서 배열',
+    insertion: '문장 삽입',
+    grammar: '어법',
+    vocabulary: '어휘',
+    title: '제목',
+    theme: '주제',
+    summary: '요약',
+    implicit: '함축 의미',
+    irrelevant: '무관 문장'
+  };
+
+  const formatTypeLabel = (type) => typeLabelMap[type] || type;
+
+  const formatLpDelta = (value) => {
+    if (!value) return '0';
+    return value > 0 ? `+${value}` : `${value}`;
+  };
+
+  const getTierInfo = (pointsOverride) => {
+    const points = pointsOverride !== undefined ? pointsOverride : user?.points || 0;
     return tierConfig.tiers.find(tier => 
       points >= tier.minLP && (tier.maxLP === -1 || points <= tier.maxLP)
     ) || tierConfig.tiers[0];
@@ -33,42 +128,48 @@ const StudyResult = ({ results, onRestart, onHome }) => {
 
   const getResultInfo = (accuracy) => {
     const acc = parseFloat(accuracy);
-    if (acc >= 90) return {
-      grade: 'A+',
-      color: '#10B981',
-      bgColor: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-      message: '🎉 축하합니다! 완벽한 성과입니다!',
-      effect: 'celebration',
-      emoji: '🎊✨🏆'
-    };
-    if (acc >= 80) return {
-      grade: 'A',
-      color: '#3B82F6',
-      bgColor: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
-      message: '👏 잘했어요! 훌륭한 실력입니다!',
-      effect: 'good',
-      emoji: '👍🌟💪'
-    };
-    if (acc >= 50) return {
-      grade: 'B',
-      color: '#F59E0B',
-      bgColor: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
-      message: '📈 좋아요! 조금만 더 노력하면 완벽해요!',
-      effect: 'encourage',
-      emoji: '💪📚🎯'
-    };
+    if (acc >= 90) {
+      return {
+        grade: 'A+',
+        color: palette.success,
+        bgColor: palette.successGradient,
+        message: '🎉 축하합니다! 완벽한 성과입니다!',
+        effect: 'celebration',
+        emoji: '🎊✨🏆'
+      };
+    }
+    if (acc >= 80) {
+      return {
+        grade: 'A',
+        color: palette.accent,
+        bgColor: palette.accentGradient,
+        message: '👏 잘했어요! 훌륭한 실력입니다!',
+        effect: 'good',
+        emoji: '👍🌟💪'
+      };
+    }
+    if (acc >= 50) {
+      return {
+        grade: 'B',
+        color: palette.warning,
+        bgColor: palette.warningGradientStrong,
+        message: '📈 좋아요! 조금만 더 노력하면 완벽해요!',
+        effect: 'encourage',
+        emoji: '💪📚🎯'
+      };
+    }
     return {
       grade: 'C',
-      color: '#EF4444',
-      bgColor: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
+      color: palette.danger,
+      bgColor: palette.dangerGradient,
       message: '🤗 괜찮아요! 다시 도전해서 실력을 늘려보아요!',
       effect: 'comfort',
       emoji: '🤗💝🌈'
     };
   };
 
-  const resultInfo = getResultInfo(results.accuracy);
-  const tierInfo = getTierInfo();
+  const resultInfo = getResultInfo(summary.accuracy);
+  const tierInfo = getTierInfo(totalPointsAfter);
   const detailResults = (results?.studyResults || results?.problems || []).map((item) => ({
     userAnswer: item.userAnswer ?? item.answer ?? '',
     correctAnswer: item.correctAnswer ?? item.problem?.answer ?? '',
@@ -78,6 +179,13 @@ const StudyResult = ({ results, onRestart, onHome }) => {
   const [myRank, setMyRank] = useState(null);
   const [nearby, setNearby] = useState([]);
   const [rankError, setRankError] = useState(null);
+
+  useEffect(() => {
+    if (results?.rank) {
+      setMyRank(results.rank);
+    }
+  }, [results?.rank]);
+
   useEffect(() => {
     const load = async () => {
       try {
@@ -118,15 +226,15 @@ const StudyResult = ({ results, onRestart, onHome }) => {
         {/* 랭킹 섹션 */}
         <div style={{ marginBottom: '32px' }}>
           <div style={styles.sectionTitle}>🏆 랭킹</div>
-          {rankError && <div style={{ color: '#ef4444', textAlign: 'center' }}>{rankError}</div>}
+          {rankError && <div style={{ color: palette.danger, textAlign: 'center' }}>{rankError}</div>}
           {!rankError && (
             <div style={styles.rankPanel}>
               <div style={styles.myRankBox}>
-                <div style={{ fontSize: '14px', color: '#94A3B8' }}>내 랭킹</div>
-                <div style={{ fontSize: '22px', color: '#F8FAFC', fontWeight: 800 }}>
+                <div style={{ fontSize: '14px', color: palette.textMuted }}>내 랭킹</div>
+                <div style={{ fontSize: '22px', color: palette.textHighlight, fontWeight: 800 }}>
                   {myRank?.rank ? `#${myRank.rank}` : '-'} · {(myRank?.points || 0).toLocaleString()} LP
                 </div>
-                <div style={{ fontSize: '13px', color: '#94A3B8' }}>
+                <div style={{ fontSize: '13px', color: palette.textMuted }}>
                   티어: {myRank?.tier?.nameKr || myRank?.tier?.name || '-'}
                   {myRank?.nextTier && (
                     <>
@@ -136,18 +244,18 @@ const StudyResult = ({ results, onRestart, onHome }) => {
                 </div>
               </div>
               <div style={styles.nearbyBox}>
-                <div style={{ fontSize: '14px', color: '#94A3B8', marginBottom: 6 }}>주변 랭킹</div>
+              <div style={{ fontSize: '14px', color: palette.textMuted, marginBottom: 6 }}>주변 랭킹</div>
                 {nearby.length === 0 ? (
-                  <div style={{ color: '#94A3B8' }}>데이터 없음</div>
+                  <div style={{ color: palette.textMuted }}>데이터 없음</div>
                 ) : (
                   <div>
                     {nearby.map(u => (
                       <div key={u.id} style={styles.nearbyRow}>
-                        <div style={{ width: 60, color: '#CBD5E1' }}>#{u.rank}</div>
-                        <div style={{ flex: 1, color: u.isMe ? '#22C55E' : '#E2E8F0', fontWeight: u.isMe ? 700 : 500 }}>
+                        <div style={{ width: 60, color: palette.textSubtle }}>#{u.rank}</div>
+                        <div style={{ flex: 1, color: u.isMe ? palette.success : 'var(--color-slate-200)', fontWeight: u.isMe ? 700 : 500 }}>
                           {u.isMe ? '나' : (u.name || u.id)}
                         </div>
-                        <div style={{ minWidth: 90, textAlign: 'right', color: '#E2E8F0' }}>{(u.points || 0).toLocaleString()} LP</div>
+                        <div style={{ minWidth: 90, textAlign: 'right', color: 'var(--color-slate-200)' }}>{(u.points || 0).toLocaleString()} LP</div>
                       </div>
                     ))}
                   </div>
@@ -206,7 +314,17 @@ const StudyResult = ({ results, onRestart, onHome }) => {
                     {tierInfo.nameKr}
                   </h3>
                   <div style={styles.tierPoints}>
-                    {user?.points?.toLocaleString() || 0} LP
+                    {totalPointsAfter.toLocaleString()} LP
+                    {pointsDelta !== 0 && (
+                      <span
+                        style={{
+                          ...styles.tierDelta,
+                          color: pointsDelta >= 0 ? palette.infoSoft : palette.dangerSoft
+                        }}
+                      >
+                        {' '}({formatLpDelta(pointsDelta)} LP)
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -219,24 +337,46 @@ const StudyResult = ({ results, onRestart, onHome }) => {
           <div style={styles.statBox}>
             <div style={styles.statIcon}>✅</div>
             <div style={styles.statLabel}>정답</div>
-            <div style={styles.statValue}>{results.totalCorrect}개</div>
+            <div style={styles.statValue}>{totalCorrect}개</div>
           </div>
           <div style={styles.statBox}>
             <div style={styles.statIcon}>❌</div>
             <div style={styles.statLabel}>오답</div>
-            <div style={styles.statValue}>{results.totalProblems - results.totalCorrect}개</div>
+            <div style={styles.statValue}>{totalIncorrect}개</div>
           </div>
           <div style={styles.statBox}>
             <div style={styles.statIcon}>⏱️</div>
             <div style={styles.statLabel}>시간</div>
-            <div style={styles.statValue}>{Math.floor(results.totalTime / 60)}분 {results.totalTime % 60}초</div>
+            <div style={styles.statValue}>{Math.floor(totalTimeSeconds / 60)}분 {totalTimeSeconds % 60}초</div>
           </div>
           <div style={styles.statBox}>
             <div style={styles.statIcon}>💎</div>
             <div style={styles.statLabel}>LP 획득</div>
-            <div style={styles.statValue}>+{currentLpCount}</div>
+            <div style={styles.statValue}>{formatLpDelta(currentLpCount)}</div>
           </div>
         </div>
+
+        {perTypeStats.length > 0 && (
+          <div style={styles.typeStats}>
+            <h3 style={styles.sectionTitle}>📊 유형별 정답률</h3>
+            <div style={styles.typeTable}>
+              <div style={{ ...styles.typeRow, ...styles.typeHeader }}>
+                <span>유형</span>
+                <span>정답</span>
+                <span>오답</span>
+                <span>정답률</span>
+              </div>
+              {perTypeStats.map((entry) => (
+                <div key={entry.type} style={styles.typeRow}>
+                  <span>{formatTypeLabel(entry.type)}</span>
+                  <span>{entry.correct.toLocaleString()}문</span>
+                  <span>{entry.incorrect.toLocaleString()}문</span>
+                  <span>{ensureNumber(entry.accuracy, 0).toFixed(1)}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* 문제별 상세 결과 */}
         <div style={styles.problemResults}>
@@ -270,6 +410,16 @@ const StudyResult = ({ results, onRestart, onHome }) => {
 
         {/* 액션 버튼 */}
         <div style={styles.actions}>
+          {typeof onReview === 'function' && (
+            <button 
+              style={styles.reviewButton}
+              onClick={onReview}
+              onMouseOver={(e) => e.target.style.transform = 'translateY(-2px)'}
+              onMouseOut={(e) => e.target.style.transform = 'translateY(0)'}
+            >
+              🔁 복습하기
+            </button>
+          )}
           <button 
             style={styles.restartButton} 
             onClick={onRestart}
@@ -296,7 +446,7 @@ const styles = {
   container: {
     position: 'relative',
     minHeight: '100vh',
-    background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
+    background: palette.slateGradient,
     padding: '20px',
     overflow: 'hidden'
   },
@@ -310,17 +460,17 @@ const styles = {
     zIndex: 1
   },
   celebrationBg: {
-    background: 'radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%)',
+    background: 'radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, transparent 70%)',
     animation: 'pulse 2s infinite'
   },
   goodBg: {
-    background: 'radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%)'
+    background: 'radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, transparent 70%)'
   },
   encourageBg: {
-    background: 'radial-gradient(circle, rgba(245, 158, 11, 0.1) 0%, transparent 70%)'
+    background: 'radial-gradient(circle, rgba(245, 158, 11, 0.12) 0%, transparent 70%)'
   },
   comfortBg: {
-    background: 'radial-gradient(circle, rgba(239, 68, 68, 0.1) 0%, transparent 70%)'
+    background: 'radial-gradient(circle, rgba(239, 68, 68, 0.12) 0%, transparent 70%)'
   },
   effectEmojis: {
     position: 'absolute',
@@ -339,12 +489,12 @@ const styles = {
     zIndex: 10,
     maxWidth: '900px',
     margin: '0 auto',
-    background: 'rgba(30, 41, 59, 0.95)',
+    background: palette.surfaceOverlay,
     backdropFilter: 'blur(20px)',
     borderRadius: '25px',
     padding: '40px',
-    boxShadow: '0 25px 50px rgba(0, 0, 0, 0.3)',
-    border: '1px solid rgba(248, 250, 252, 0.1)',
+    boxShadow: '0 25px 50px rgba(15, 23, 42, 0.35)',
+    border: '1px solid var(--glass-border)',
     opacity: 0,
     transform: 'translateY(50px)'
   },
@@ -367,25 +517,26 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
-    boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)'
+    boxShadow: '0 20px 40px rgba(15, 23, 42, 0.3)'
   },
   grade: {
     fontSize: '4rem',
     fontWeight: 'bold',
-    color: 'white',
-    textShadow: '0 4px 8px rgba(0, 0, 0, 0.3)'
+    color: palette.textInverse,
+    textShadow: '0 4px 8px rgba(15, 23, 42, 0.35)'
   },
   accuracy: {
     fontSize: '1.5rem',
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontWeight: 'bold'
+    color: palette.textInverse,
+    fontWeight: 'bold',
+    opacity: 0.9
   },
   message: {
     fontSize: '1.5rem',
-    color: '#F8FAFC',
+    color: palette.textInverse,
     fontWeight: 'bold',
     textAlign: 'center',
-    textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
+    textShadow: '0 2px 4px rgba(15, 23, 42, 0.35)'
   },
   detailStats: {
     display: 'grid',
@@ -394,11 +545,11 @@ const styles = {
     marginBottom: '40px'
   },
   statBox: {
-    background: 'rgba(51, 65, 85, 0.8)',
+    background: palette.surfaceGlass,
     borderRadius: '15px',
     padding: '20px',
     textAlign: 'center',
-    border: '1px solid rgba(248, 250, 252, 0.1)',
+    border: '1px solid var(--glass-border)',
     backdropFilter: 'blur(10px)'
   },
   statIcon: {
@@ -406,12 +557,12 @@ const styles = {
     marginBottom: '10px'
   },
   statLabel: {
-    color: '#94A3B8',
+    color: palette.textMuted,
     fontSize: '0.9rem',
     marginBottom: '5px'
   },
   statValue: {
-    color: '#F8FAFC',
+    color: palette.textHighlight,
     fontSize: '1.5rem',
     fontWeight: 'bold'
   },
@@ -419,33 +570,33 @@ const styles = {
     marginBottom: '40px'
   },
   sectionTitle: {
-    color: '#F8FAFC',
+    color: palette.textHighlight,
     fontSize: '1.5rem',
     marginBottom: '25px',
     textAlign: 'center'
   },
   rankPanel: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 },
-  myRankBox: { background: 'rgba(51, 65, 85, 0.8)', borderRadius: 12, padding: 16, border: '1px solid rgba(248, 250, 252, 0.1)' },
-  nearbyBox: { background: 'rgba(51, 65, 85, 0.8)', borderRadius: 12, padding: 16, border: '1px solid rgba(248, 250, 252, 0.1)' },
-  nearbyRow: { display: 'flex', alignItems: 'center', padding: '6px 0', borderBottom: '1px dashed rgba(148,163,184,0.2)' },
+  myRankBox: { background: palette.surfaceGlass, borderRadius: 12, padding: 16, border: '1px solid var(--glass-border)' },
+  nearbyBox: { background: palette.surfaceGlass, borderRadius: 12, padding: 16, border: '1px solid var(--glass-border)' },
+  nearbyRow: { display: 'flex', alignItems: 'center', padding: '6px 0', borderBottom: '1px dashed var(--glass-border)' },
   problemGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
     gap: '20px'
   },
   problemCard: {
-    background: 'rgba(51, 65, 85, 0.8)',
+    background: palette.surfaceGlass,
     borderRadius: '15px',
     padding: '20px',
-    border: '1px solid rgba(248, 250, 252, 0.1)',
+    border: '1px solid var(--glass-border)',
     backdropFilter: 'blur(10px)'
   },
   correctCard: {
-    borderLeftColor: '#10B981',
+    borderLeftColor: palette.success,
     borderLeftWidth: '4px'
   },
   wrongCard: {
-    borderLeftColor: '#EF4444',
+    borderLeftColor: palette.danger,
     borderLeftWidth: '4px'
   },
   problemHeader: {
@@ -455,21 +606,21 @@ const styles = {
     marginBottom: '15px'
   },
   problemNum: {
-    color: '#F8FAFC',
+    color: palette.textHighlight,
     fontWeight: 'bold',
     fontSize: '1.1rem'
   },
   correctBadge: {
-    background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-    color: 'white',
+    background: palette.successGradient,
+    color: palette.textInverse,
     padding: '5px 12px',
     borderRadius: '15px',
     fontSize: '0.8rem',
     fontWeight: 'bold'
   },
   wrongBadge: {
-    background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
-    color: 'white',
+    background: palette.dangerGradient,
+    color: palette.textInverse,
     padding: '5px 12px',
     borderRadius: '15px',
     fontSize: '0.8rem',
@@ -479,34 +630,47 @@ const styles = {
     fontSize: '0.9rem'
   },
   problemLabel: {
-    color: '#94A3B8',
+    color: palette.textMuted,
     marginBottom: '5px'
   },
   problemAnswer: {
-    color: '#F8FAFC',
+    color: palette.textHighlight,
     fontWeight: 'bold',
     marginBottom: '10px',
     padding: '8px 12px',
-    background: 'rgba(30, 41, 59, 0.6)',
+    background: palette.surfaceGlass,
     borderRadius: '8px'
   },
   correctAnswer: {
-    color: '#10B981',
+    color: palette.success,
     fontWeight: 'bold',
     padding: '8px 12px',
-    background: 'rgba(16, 185, 129, 0.1)',
+    background: 'var(--success-surface-strong)',
     borderRadius: '8px',
-    border: '1px solid rgba(16, 185, 129, 0.3)'
+    border: '1px solid var(--success-soft)'
   },
   actions: {
     display: 'flex',
     gap: '20px',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    flexWrap: 'wrap'
+  },
+  reviewButton: {
+    padding: '15px 30px',
+    background: palette.infoGradient,
+    color: palette.textInverse,
+    border: 'none',
+    borderRadius: '15px',
+    fontSize: '1.1rem',
+    fontWeight: 'bold',
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    boxShadow: '0 12px 24px rgba(37, 99, 235, 0.25)'
   },
   restartButton: {
     padding: '15px 30px',
-    background: 'linear-gradient(135deg, #374151 0%, #1F2937 100%)',
-    color: '#F8FAFC',
+    background: palette.slateSoftGradient,
+    color: palette.textInverse,
     border: 'none',
     borderRadius: '15px',
     fontSize: '1.1rem',
@@ -517,15 +681,15 @@ const styles = {
   },
   homeButton: {
     padding: '15px 30px',
-    background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-    color: 'white',
+    background: palette.successGradientDeep,
+    color: palette.textInverse,
     border: 'none',
     borderRadius: '15px',
     fontSize: '1.1rem',
     fontWeight: 'bold',
     cursor: 'pointer',
     transition: 'all 0.3s ease',
-    boxShadow: '0 8px 20px rgba(5, 150, 105, 0.4)'
+    boxShadow: '0 8px 20px rgba(5, 150, 105, 0.35)'
   },
   // 티어 관련 스타일
   tierSection: {
@@ -534,7 +698,7 @@ const styles = {
   },
   challengerContainer: {
     position: 'relative',
-    background: 'linear-gradient(135deg, rgba(25, 25, 25, 0.95) 0%, rgba(40, 25, 10, 0.9) 25%, rgba(25, 25, 25, 0.95) 50%, rgba(40, 25, 10, 0.9) 75%, rgba(25, 25, 25, 0.95) 100%)',
+    background: palette.championGradient,
     border: '3px solid transparent',
     borderRadius: '20px',
     padding: '30px',
@@ -546,8 +710,8 @@ const styles = {
     position: 'absolute',
     top: '15px',
     right: '15px',
-    background: 'linear-gradient(45deg, #8B0000, #FF0000, #FF4500, #FFD700)',
-    color: 'white',
+    background: palette.championGradient,
+    color: palette.textInverse,
     padding: '8px 16px',
     borderRadius: '20px',
     fontSize: '11px',
@@ -572,7 +736,7 @@ const styles = {
     position: 'absolute',
     width: '4px',
     height: '4px',
-    background: 'radial-gradient(circle, #FFD700, transparent)',
+    background: palette.championRadial,
     borderRadius: '50%',
     animation: 'challengerParticles 3s ease-in-out infinite',
     top: '80%'
@@ -594,7 +758,7 @@ const styles = {
     fontFamily: 'Cinzel, Times New Roman, serif',
     letterSpacing: '2px',
     textTransform: 'uppercase',
-    color: '#FFD700',
+    color: palette.gold,
     textShadow: '0 0 5px rgba(255, 215, 0, 0.8), 0 0 15px rgba(255, 215, 0, 0.6), 0 0 25px rgba(255, 215, 0, 0.4)',
     animation: 'challengerTextGlow 2.5s ease-in-out infinite',
     margin: '0 0 15px 0',
@@ -603,7 +767,7 @@ const styles = {
   challengerPoints: {
     fontSize: '18px',
     fontWeight: 'bold',
-    background: 'linear-gradient(90deg, #FFD700, #FF7B00, #FFD700)',
+    background: 'linear-gradient(90deg, var(--color-gold-200), var(--color-orange-500), var(--color-gold-200))',
     backgroundClip: 'text',
     WebkitBackgroundClip: 'text',
     WebkitTextFillColor: 'transparent',
@@ -611,12 +775,12 @@ const styles = {
     animation: 'challengerTextGlow 3s ease-in-out infinite'
   },
   tierCard: {
-    background: 'rgba(51, 65, 85, 0.8)',
+    background: palette.surfaceGlass,
     backdropFilter: 'blur(20px)',
     borderRadius: '20px',
     padding: '25px',
     border: '3px solid',
-    borderColor: '#3B82F6',
+    borderColor: palette.accent,
     position: 'relative',
     overflow: 'hidden',
     transition: 'all 0.5s ease'
@@ -638,13 +802,37 @@ const styles = {
     textShadow: '0 0 15px currentColor'
   },
   tierPoints: {
-    fontSize: '16px',
+    fontSize: '18px',
     fontWeight: '700',
-    background: 'linear-gradient(135deg, #F59E0B 0%, #EF4444 100%)',
-    backgroundClip: 'text',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-    textShadow: '0 0 15px rgba(245, 158, 11, 0.5)'
+    color: palette.textHighlight
+  },
+  tierDelta: {
+    fontSize: '14px',
+    marginLeft: '6px',
+    color: palette.info
+  },
+  typeStats: {
+    marginTop: 32
+  },
+  typeTable: {
+    marginTop: 12,
+    borderRadius: 12,
+    overflow: 'hidden',
+    border: '1px solid var(--glass-border)'
+  },
+  typeRow: {
+    display: 'grid',
+    gridTemplateColumns: '2fr 1fr 1fr 1fr',
+    padding: '12px 16px',
+    background: palette.surfaceGlass,
+    color: palette.textHighlight,
+    fontSize: 14,
+    borderBottom: '1px solid var(--glass-border)'
+  },
+  typeHeader: {
+    background: palette.accentGradient,
+    color: palette.textInverse,
+    fontWeight: 700
   }
 };
 

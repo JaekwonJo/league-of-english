@@ -290,9 +290,9 @@ const styles = {
     maxWidth: '1200px',
     margin: '0 auto',
     padding: '20px',
-    background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
+    background: 'linear-gradient(135deg, var(--color-slate-900) 0%, var(--color-slate-650) 100%)',
     minHeight: '100vh',
-    color: '#F8FAFC'
+    color: 'var(--surface-soft-solid)'
   },
   loading: {
     display: 'flex',
@@ -304,8 +304,8 @@ const styles = {
   spinner: {
     width: '40px',
     height: '40px',
-    border: '4px solid #f3f4f6',
-    borderTop: '4px solid #667eea',
+    border: '4px solid var(--surface-soft-muted)',
+    borderTop: '4px solid var(--indigo)',
     borderRadius: '50%',
     animation: 'spin 1s linear infinite'
   },
@@ -313,7 +313,7 @@ const styles = {
     fontSize: '36px',
     textAlign: 'center',
     marginBottom: '30px',
-    background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+    background: 'var(--warning-gradient-strong)',
     WebkitBackgroundClip: 'text',
     WebkitTextFillColor: 'transparent',
     fontWeight: 'bold'
@@ -327,7 +327,7 @@ const styles = {
   tab: {
     padding: '12px 24px',
     background: 'rgba(30, 41, 59, 0.8)',
-    color: '#94A3B8',
+    color: 'var(--color-slate-400)',
     border: 'none',
     borderRadius: '12px',
     cursor: 'pointer',
@@ -336,8 +336,8 @@ const styles = {
     transition: 'all 0.3s ease'
   },
   tabActive: {
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    color: '#F8FAFC'
+    background: 'linear-gradient(135deg, var(--indigo) 0%, var(--indigo-strong) 100%)',
+    color: 'var(--surface-soft-solid)'
   },
   content: {
     background: 'rgba(30, 41, 59, 0.8)',
@@ -350,7 +350,7 @@ const styles = {
     fontSize: '24px',
     marginBottom: '25px',
     textAlign: 'center',
-    color: '#F8FAFC'
+    color: 'var(--surface-soft-solid)'
   },
   leaderboard: {
     width: '100%'
@@ -371,7 +371,7 @@ const styles = {
     transition: 'all 0.3s ease'
   },
   myRankingItem: {
-    border: '2px solid #10B981',
+    border: '2px solid var(--success)',
     boxShadow: '0 8px 25px rgba(16, 185, 129, 0.3)'
   },
   topRanker: {
@@ -390,7 +390,7 @@ const styles = {
   rank: {
     fontSize: '18px',
     fontWeight: 'bold',
-    color: '#94A3B8',
+    color: 'var(--color-slate-400)',
     minWidth: '40px'
   },
   userInfo: {
@@ -401,18 +401,18 @@ const styles = {
   userName: {
     fontSize: '16px',
     fontWeight: 'bold',
-    color: '#F8FAFC',
+    color: 'var(--surface-soft-solid)',
     display: 'flex',
     alignItems: 'center',
     gap: '8px'
   },
   userDetails: {
     fontSize: '12px',
-    color: '#94A3B8'
+    color: 'var(--color-slate-400)'
   },
   youBadge: {
-    background: '#10B981',
-    color: 'white',
+    background: 'var(--success)',
+    color: 'var(--text-on-accent)',
     fontSize: '10px',
     padding: '2px 6px',
     borderRadius: '4px',
@@ -432,12 +432,12 @@ const styles = {
   tierName: {
     fontSize: '14px',
     fontWeight: 'bold',
-    color: '#F8FAFC'
+    color: 'var(--surface-soft-solid)'
   },
   points: {
     fontSize: '14px',
     fontWeight: 'bold',
-    color: '#F59E0B'
+    color: 'var(--warning-strong)'
   },
   myRankSection: {
     width: '100%'
@@ -447,7 +447,7 @@ const styles = {
     borderRadius: '16px',
     padding: '25px',
     marginBottom: '25px',
-    border: '2px solid #10B981'
+    border: '2px solid var(--success)'
   },
   myRankHeader: {
     display: 'flex',
@@ -458,11 +458,11 @@ const styles = {
   myRankName: {
     fontSize: '20px',
     fontWeight: 'bold',
-    color: '#F8FAFC'
+    color: 'var(--surface-soft-solid)'
   },
   myRankPoints: {
     fontSize: '16px',
-    color: '#F59E0B',
+    color: 'var(--warning-strong)',
     fontWeight: 'bold'
   },
   myTierBadge: {
@@ -472,7 +472,7 @@ const styles = {
   myTierName: {
     fontSize: '14px',
     fontWeight: 'bold',
-    color: '#F8FAFC',
+    color: 'var(--surface-soft-solid)',
     marginTop: '5px'
   },
   progressSection: {
@@ -483,11 +483,11 @@ const styles = {
     justifyContent: 'space-between',
     marginBottom: '10px',
     fontSize: '14px',
-    color: '#94A3B8'
+    color: 'var(--color-slate-400)'
   },
   progressBar: {
     height: '10px',
-    background: '#374151',
+    background: 'var(--color-slate-700)',
     borderRadius: '5px',
     overflow: 'hidden'
   },
@@ -506,18 +506,18 @@ const styles = {
   noRankTitle: {
     fontSize: '24px',
     fontWeight: 'bold',
-    color: '#F8FAFC',
+    color: 'var(--surface-soft-solid)',
     marginBottom: '10px'
   },
   noRankDescription: {
     fontSize: '16px',
-    color: '#94A3B8',
+    color: 'var(--color-slate-400)',
     marginBottom: '30px'
   },
   startButton: {
     padding: '15px 30px',
-    background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-    color: 'white',
+    background: 'linear-gradient(135deg, var(--success-strong) 0%, var(--success-deep) 100%)',
+    color: 'var(--text-on-accent)',
     border: 'none',
     borderRadius: '12px',
     fontSize: '16px',
@@ -551,15 +551,15 @@ const styles = {
   tierCardName: {
     fontSize: '16px',
     fontWeight: 'bold',
-    color: '#F8FAFC'
+    color: 'var(--surface-soft-solid)'
   },
   tierCardCount: {
     fontSize: '14px',
-    color: '#94A3B8'
+    color: 'var(--color-slate-400)'
   },
   tierProgressBar: {
     height: '6px',
-    background: '#374151',
+    background: 'var(--color-slate-700)',
     borderRadius: '3px',
     overflow: 'hidden'
   },

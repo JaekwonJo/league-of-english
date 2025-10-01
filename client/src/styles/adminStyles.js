@@ -12,7 +12,7 @@ export const adminStyles = {
     marginBottom: '30px'
   },
   title: {
-    color: '#1f2937',
+    color: 'var(--color-slate-800)',
     margin: 0,
     fontSize: '2rem'
   },
@@ -21,8 +21,8 @@ export const adminStyles = {
     gap: '10px'
   },
   primaryButton: {
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    color: 'white',
+    background: 'var(--indigo-gradient)',
+    color: 'var(--text-on-accent)',
     border: 'none',
     borderRadius: '12px',
     padding: '12px 24px',
@@ -33,9 +33,9 @@ export const adminStyles = {
     boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)'
   },
   secondaryButton: {
-    background: 'white',
-    color: '#667eea',
-    border: '2px solid #667eea',
+    background: 'var(--surface-card)',
+    color: 'var(--indigo)',
+    border: '2px solid var(--indigo)',
     borderRadius: '12px',
     padding: '10px 22px',
     fontSize: '14px',
@@ -44,26 +44,26 @@ export const adminStyles = {
     transition: 'all 0.3s'
   },
   card: {
-    background: 'white',
+    background: 'var(--surface-card)',
     borderRadius: '20px',
     padding: '30px',
     boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)'
   },
   cardTitle: {
-    color: '#1f2937',
+    color: 'var(--color-slate-800)',
     marginBottom: '25px',
     fontSize: '1.5rem'
   },
   loading: {
     textAlign: 'center',
     padding: '50px',
-    color: '#9ca3af',
+    color: 'var(--color-slate-400)',
     fontSize: '18px'
   },
   emptyState: {
     textAlign: 'center',
     padding: '50px',
-    color: '#9ca3af',
+    color: 'var(--color-slate-400)',
     fontSize: '18px'
   },
   documentsGrid: {
@@ -72,10 +72,10 @@ export const adminStyles = {
     gap: '20px'
   },
   documentCard: {
-    background: '#f8fafc',
+    background: 'var(--surface-soft-solid)',
     borderRadius: '15px',
     padding: '20px',
-    border: '1px solid #e2e8f0',
+    border: '1px solid var(--border-subtle)',
     transition: 'all 0.3s'
   },
   documentHeader: {
@@ -85,7 +85,7 @@ export const adminStyles = {
     marginBottom: '15px'
   },
   documentTitle: {
-    color: '#1f2937',
+    color: 'var(--color-slate-800)',
     fontSize: '16px',
     fontWeight: 'bold',
     margin: 0,
@@ -97,32 +97,33 @@ export const adminStyles = {
     gap: '5px'
   },
   analyzeButton: {
-    background: '#3b82f6',
+    background: 'var(--accent-primary)',
     border: 'none',
     borderRadius: '8px',
     padding: '6px 8px',
     cursor: 'pointer',
     fontSize: '14px',
-    color: 'white',
+    color: 'var(--text-on-accent)',
     transition: 'all 0.3s'
   },
   editButton: {
-    background: '#fbbf24',
+    background: 'var(--warning)',
     border: 'none',
     borderRadius: '8px',
     padding: '6px 8px',
     cursor: 'pointer',
     fontSize: '14px',
+    color: 'var(--text-on-accent)',
     transition: 'all 0.3s'
   },
   deleteButton: {
-    background: '#ef4444',
+    background: 'var(--danger)',
     border: 'none',
     borderRadius: '8px',
     padding: '6px 8px',
     cursor: 'pointer',
     fontSize: '14px',
-    color: 'white',
+    color: 'var(--text-on-accent)',
     transition: 'all 0.3s'
   },
   documentMeta: {
@@ -132,24 +133,24 @@ export const adminStyles = {
     marginBottom: '10px'
   },
   badge: {
-    background: '#667eea',
-    color: 'white',
+    background: 'var(--indigo)',
+    color: 'var(--text-on-accent)',
     padding: '4px 12px',
     borderRadius: '20px',
     fontSize: '12px',
     fontWeight: 'bold'
   },
   meta: {
-    color: '#6b7280',
+    color: 'var(--color-slate-500)',
     fontSize: '14px'
   },
   documentFooter: {
-    borderTop: '1px solid #e2e8f0',
+    borderTop: '1px solid var(--border-subtle)',
     paddingTop: '10px',
     marginTop: '15px'
   },
   date: {
-    color: '#9ca3af',
+    color: 'var(--color-slate-400)',
     fontSize: '12px'
   },
   modal: {
@@ -158,14 +159,14 @@ export const adminStyles = {
     left: 0,
     right: 0,
     bottom: 0,
-    background: 'rgba(0, 0, 0, 0.5)',
+    background: 'rgba(15, 23, 42, 0.55)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1000
   },
   modalContent: {
-    background: 'white',
+    background: 'var(--surface-card)',
     borderRadius: '20px',
     padding: '30px',
     width: '90%',
@@ -174,7 +175,7 @@ export const adminStyles = {
     overflow: 'auto'
   },
   modalTitle: {
-    color: '#1f2937',
+    color: 'var(--color-slate-800)',
     marginBottom: '25px',
     fontSize: '1.4rem'
   },
@@ -194,26 +195,26 @@ export const adminStyles = {
     gap: '15px'
   },
   label: {
-    color: '#374151',
+    color: 'var(--color-slate-700)',
     fontWeight: 'bold',
     fontSize: '14px'
   },
   input: {
     padding: '12px 16px',
-    border: '1px solid #d1d5db',
+    border: '1px solid var(--border-light)',
     borderRadius: '10px',
     fontSize: '14px',
     transition: 'all 0.3s'
   },
   fileInput: {
     padding: '10px',
-    border: '2px dashed #d1d5db',
+    border: '2px dashed var(--border-light)',
     borderRadius: '10px',
     fontSize: '14px',
     cursor: 'pointer'
   },
   fileHelp: {
-    color: '#6b7280',
+    color: 'var(--color-slate-500)',
     fontSize: '12px'
   },
   modalButtons: {
@@ -223,8 +224,8 @@ export const adminStyles = {
     marginTop: '10px'
   },
   cancelButton: {
-    background: '#f3f4f6',
-    color: '#6b7280',
+    background: 'var(--surface-soft-muted)',
+    color: 'var(--color-slate-500)',
     border: 'none',
     borderRadius: '10px',
     padding: '12px 24px',
@@ -232,8 +233,8 @@ export const adminStyles = {
     fontWeight: 'bold'
   },
   submitButton: {
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    color: 'white',
+    background: 'var(--indigo-gradient)',
+    color: 'var(--text-on-accent)',
     border: 'none',
     borderRadius: '10px',
     padding: '12px 24px',
@@ -245,8 +246,8 @@ export const adminStyles = {
   },
   categoryTag: {
     display: 'inline-block',
-    background: '#e5e7eb',
-    color: '#374151',
+    background: 'var(--border-muted)',
+    color: 'var(--color-slate-700)',
     padding: '6px 12px',
     borderRadius: '20px',
     margin: '4px',
@@ -257,8 +258,8 @@ export const adminStyles = {
     gap: '10px'
   },
   addButton: {
-    background: '#10b981',
-    color: 'white',
+    background: 'var(--success)',
+    color: 'var(--text-on-accent)',
     border: 'none',
     borderRadius: '10px',
     padding: '12px 20px',

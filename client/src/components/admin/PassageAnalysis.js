@@ -111,7 +111,7 @@ const PassageAnalysis = ({ document, onClose }) => {
                   </select>
                   <input id="groupsField" placeholder="그룹을 ,로 구분 입력" style={{ padding:'8px 10px', borderRadius:8, display:'none' }} />
                   <button
-                    style={{ ...styles.analyzeButton, background: '#10b981' }}
+                    style={{ ...styles.analyzeButton, background: 'var(--success)' }}
                     onClick={async () => {
                       try {
                         const scope = document.querySelector('#scope').value;
@@ -126,7 +126,7 @@ const PassageAnalysis = ({ document, onClose }) => {
                   >
                     저장하기(공개)
                   </button>
-                  <button style={{ ...styles.analyzeButton, background: '#6b7280' }} onClick={() => window.print()}>내보내기(PDF)</button>
+                  <button style={{ ...styles.analyzeButton, background: 'var(--color-slate-500)' }} onClick={() => window.print()}>내보내기(PDF)</button>
                 </>
               )}
             </div>
@@ -235,45 +235,45 @@ const Section = ({ title, content }) => (
 
 const styles = {
   modal: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 },
-  modalContent: { background: 'white', borderRadius: 20, width: '90%', maxWidth: 1200, height: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' },
-  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 30px', borderBottom: '1px solid #e2e8f0' },
-  title: { color: '#1f2937', margin: 0, fontSize: '1.5rem' },
-  closeButton: { background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: '#6b7280', padding: 5 },
-  documentInfo: { padding: '15px 30px', borderBottom: '1px solid #e2e8f0', background: '#f8fafc' },
-  documentTitle: { color: '#1f2937', margin: '0 0 5px 0', fontSize: '1.1rem' },
-  documentMeta: { color: '#6b7280', margin: 0, fontSize: 14 },
-  passageSelector: { padding: '20px 30px', borderBottom: '1px solid #e2e8f0' },
+  modalContent: { background: 'var(--surface-card)', borderRadius: 20, width: '90%', maxWidth: 1200, height: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' },
+  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 30px', borderBottom: '1px solid var(--border-subtle)' },
+  title: { color: 'var(--color-slate-800)', margin: 0, fontSize: '1.5rem' },
+  closeButton: { background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: 'var(--color-slate-500)', padding: 5 },
+  documentInfo: { padding: '15px 30px', borderBottom: '1px solid var(--border-subtle)', background: 'var(--surface-soft-solid)' },
+  documentTitle: { color: 'var(--color-slate-800)', margin: '0 0 5px 0', fontSize: '1.1rem' },
+  documentMeta: { color: 'var(--color-slate-500)', margin: 0, fontSize: 14 },
+  passageSelector: { padding: '20px 30px', borderBottom: '1px solid var(--border-subtle)' },
   passageGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(50px, 1fr))', gap: 10 },
-  passageButton: { padding: 10, background: '#f1f5f9', border: '2px solid transparent', borderRadius: 8, cursor: 'pointer', position: 'relative', transition: 'all .2s' },
-  passageButtonSelected: { background: '#3b82f6', color: 'white', borderColor: '#2563eb' },
-  passageButtonAnalyzed: { background: '#10b981', color: 'white' },
+  passageButton: { padding: 10, background: 'var(--surface-soft-strong)', border: '2px solid transparent', borderRadius: 8, cursor: 'pointer', position: 'relative', transition: 'all .2s' },
+  passageButtonSelected: { background: 'var(--accent-primary)', color: 'var(--text-on-accent)', borderColor: 'var(--accent-primary-strong)' },
+  passageButtonAnalyzed: { background: 'var(--success)', color: 'var(--text-on-accent)' },
   checkMark: { position: 'absolute', top: 2, right: 4, fontSize: 12 },
   content: { flex: 1, padding: '20px 30px', overflow: 'auto' },
   passageHeader: { display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 },
-  analyzeButton: { background: '#3b82f6', color: 'white', border: 'none', borderRadius: 10, padding: '10px 20px', cursor: 'pointer', fontSize: 14 },
-  loading: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 30px', color: '#6b7280' },
-  spinner: { width: 40, height: 40, border: '4px solid #e2e8f0', borderTop: '4px solid #3b82f6', borderRadius: '50%', animation: 'spin 1s linear infinite', marginBottom: 20 },
-  error: { padding: 30, textAlign: 'center', color: '#ef4444' },
+  analyzeButton: { background: 'var(--accent-primary)', color: 'var(--text-on-accent)', border: 'none', borderRadius: 10, padding: '10px 20px', cursor: 'pointer', fontSize: 14 },
+  loading: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 30px', color: 'var(--color-slate-500)' },
+  spinner: { width: 40, height: 40, border: '4px solid var(--border-subtle)', borderTop: '4px solid var(--accent-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite', marginBottom: 20 },
+  error: { padding: 30, textAlign: 'center', color: 'var(--danger)' },
   analysisContent: { display: 'flex', flexDirection: 'column', gap: 20 },
   section: { marginBottom: 25 },
-  sectionTitle: { color: '#1f2937', fontSize: '1.1rem', marginBottom: 12 },
-  sectionContent: { color: '#374151', lineHeight: 1.6 },
+  sectionTitle: { color: 'var(--color-slate-800)', fontSize: '1.1rem', marginBottom: 12 },
+  sectionContent: { color: 'var(--color-slate-700)', lineHeight: 1.6 },
   sentenceContainer: { display: 'flex', flexDirection: 'column', gap: 15 },
-  sentenceCard: { background: '#f8fafc', borderRadius: 10, padding: 15, border: '1px solid #e2e8f0' },
-  sentenceEnglish: { fontSize: 16, color: '#1f2937', marginBottom: 10, fontWeight: 500 },
-  sentenceTranslation: { fontSize: 14, color: '#475569', marginBottom: 8 },
-  sentenceMeaning: { fontSize: 14, color: '#64748b' },
-  deepAnalysisBox: { background: '#f1f5f9', borderRadius: 10, padding: 20, display: 'flex', flexDirection: 'column', gap: 15 },
+  sentenceCard: { background: 'var(--surface-soft-solid)', borderRadius: 10, padding: 15, border: '1px solid var(--border-subtle)' },
+  sentenceEnglish: { fontSize: 16, color: 'var(--color-slate-800)', marginBottom: 10, fontWeight: 500 },
+  sentenceTranslation: { fontSize: 14, color: 'var(--color-slate-600)', marginBottom: 8 },
+  sentenceMeaning: { fontSize: 14, color: 'var(--color-slate-500)' },
+  deepAnalysisBox: { background: 'var(--surface-soft-strong)', borderRadius: 10, padding: 20, display: 'flex', flexDirection: 'column', gap: 15 },
   expressionGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 15 },
-  expressionCard: { background: '#fff', border: '2px solid #e2e8f0', borderRadius: 10, padding: 15 },
-  expressionTitle: { fontSize: 16, fontWeight: 'bold', color: '#1f2937', marginBottom: 8 },
-  expressionMeaning: { fontSize: 14, color: '#475569', marginBottom: 10 },
-  backgroundBox: { background: '#fef3c7', borderRadius: 10, padding: 15, border: '1px solid #fbbf24', marginTop: 10 },
-  comprehensiveBox: { background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white', borderRadius: 15, padding: 20, display: 'flex', flexDirection: 'column', gap: 12 },
-  footer: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 30px', borderTop: '1px solid #e2e8f0' },
-  prevButton: { background: '#6b7280', color: 'white', border: 'none', borderRadius: 10, padding: '10px 20px', cursor: 'pointer' },
-  nextButton: { background: '#3b82f6', color: 'white', border: 'none', borderRadius: 10, padding: '10px 20px', cursor: 'pointer' },
-  pageInfo: { color: '#6b7280', fontSize: 14 }
+  expressionCard: { background: 'var(--surface-card)', border: '2px solid var(--border-subtle)', borderRadius: 10, padding: 15 },
+  expressionTitle: { fontSize: 16, fontWeight: 'bold', color: 'var(--color-slate-800)', marginBottom: 8 },
+  expressionMeaning: { fontSize: 14, color: 'var(--color-slate-600)', marginBottom: 10 },
+  backgroundBox: { background: 'var(--warning-surface)', borderRadius: 10, padding: 15, border: '1px solid var(--warning)', marginTop: 10 },
+  comprehensiveBox: { background: 'linear-gradient(135deg, var(--indigo) 0%, var(--indigo-strong) 100%)', color: 'var(--text-on-accent)', borderRadius: 15, padding: 20, display: 'flex', flexDirection: 'column', gap: 12 },
+  footer: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 30px', borderTop: '1px solid var(--border-subtle)' },
+  prevButton: { background: 'var(--color-slate-500)', color: 'var(--text-on-accent)', border: 'none', borderRadius: 10, padding: '10px 20px', cursor: 'pointer' },
+  nextButton: { background: 'var(--accent-primary)', color: 'var(--text-on-accent)', border: 'none', borderRadius: 10, padding: '10px 20px', cursor: 'pointer' },
+  pageInfo: { color: 'var(--color-slate-500)', fontSize: 14 }
 };
 
 // inject keyframes

@@ -59,7 +59,7 @@ const DocumentCard = ({ document: doc, onEdit, onDelete, onAnalyze, onPassageAna
           </button>
           {onPassageAnalyze && (
             <button 
-              style={{...adminStyles.analyzeButton, background: '#10b981'}}
+              style={{...adminStyles.analyzeButton, background: 'var(--success)'}}
               onClick={() => onPassageAnalyze(doc)}
               title="개별 지문 분석"
             >

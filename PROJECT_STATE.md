@@ -25,11 +25,13 @@
 - `problem_exposures`가 정답/오답을 추적하며 틀린 문제는 쿨다운 후 확률적으로 재출제되고, 맞힌 문제는 자동 제외돼요.
 - 홈·프로필·학습 설정 화면에 “복습 대기열” 카드가 추가되어 최근 오답과 바로가기 버튼을 한눈에 볼 수 있습니다.
 - 관리자 페이지에 문제 라이브러리 뷰가 생겨 저장된 문제를 유형별로 훑어보고, 원하는 조합만 PDF로 내보낼 수 있어요.
+- 라이트/다크 테마 토글이 모든 주요 화면(랭킹·통계·관리자 포함)에 적용되어, CSS 변수 기반 팔레트만 조정해도 색상을 일괄 변경할 수 있습니다.
+- 함축 추론 생성기가 `<u>` 태그를 빼먹은 응답도 `targetSpan`을 활용해 자동 보정하고, 실패 사유를 프롬프트에 즉시 전달해 재시도 품질을 높였습니다.
 
 ## Next 3 (priority)
-1. **Automate blank & review regression tests.** `_normalizeBlankPayload`/`_acceptCachedProblem` 길이·문장 검증과 `listReviewQueueForUser`/`startManualSession` 플로우를 Node 테스트로 고정해 최근 가드를 되돌리는 회귀를 막아요.
-2. **Instrument blank regeneration monitoring.** 빈칸 재생성 루프 길이, 실패 사유, 큐 대기 시간을 로깅·알림으로 묶어 지금처럼 서버 로그를 수동으로 살피지 않아도 되게 만들어요.
-3. **Surface review requeue controls.** 하드코딩된 재출제 확률을 설정 파일과 관리자 UI에서 조정할 수 있게 바꿔 학생/반별 복습 강도를 맞춤화해요.
+1. **테마 토큰 스냅샷 테스트 도입.** 주요 컴포넌트(StudyResult, Admin, Analysis)가 CSS 변수를 계속 지키는지 Jest/RTL로 스냅샷을 만들어 회귀를 막아요.
+2. **색상 설정 중앙 집중화.** `tierConfig`·`appConfig` 등 남은 JSON 컬러를 CSS 변수/팔레트 키로 치환해 다크 모드에서 튀는 색상을 없애요.
+3. **隐含 추론 모니터링 강화.** `generateImplicit` 재시도 사유와 성공률을 로그/알림으로 묶어 `<u>` 보정 실패가 다시 늘어나는 즉시 대응할 수 있게 만들어요.
 
 ## Known issues
 - 재출제 확률이 하드코딩 상태라 학습 데이터를 보고 동적으로 조정하거나 관리자 UI에서 수정할 수 있게 해야 합니다.
@@ -37,11 +39,18 @@
 - Blank 검증이 더 엄격해지면서 재생성 루프가 늘어났는데, 모니터링 알림이 없어 서버 로그를 수동으로 확인해야 합니다.
 - Order/Insertion 유형은 아직 rule-based라 OpenAI 검증형 프롬프트로 교체해 파이프라인을 통합해야 합니다.
 - Score HUD/홈 대시보드가 새 점수로 즉시 리프레시되지 않아 학생이 LP 상승을 바로 확인하지 못합니다.
+- 티어·배지 컬러 설정이 여전히 HEX 기반이라 다크 모드에서 대비를 조정하려면 JSON을 직접 고쳐야 합니다.
+- 프론트엔드에 라이트/다크 회귀 테스트가 없어 향후 refactor 시 CSS 변수 누락을 즉시 잡지 못합니다.
 
 ## Resolved (2025-10-06 - blank passage truncation guard)
 - `_normalizeBlankPayload`가 원문 전체 단락 길이와 문장 수를 저장·검증해 잘린 지문이 캐시에 남지 않도록 차단했습니다.
 - `_acceptCachedProblem`이 축약본/의도치 않은 단문을 자동 폐기하고, 필요 시 즉시 재생성 루프에 넣어 빈칸 품질을 유지합니다.
 - 문제 저장 시 원문 길이 메타를 기록해 관리자 라이브러리에서도 축약 여부를 한눈에 확인할 수 있게 했습니다.
+
+## Resolved (2025-10-07 - implicit underline guard + full theme tokens)
+- 함축 추론 생성기에 `targetSpan` 기반 보정과 실패 사유 피드백을 추가해 `<u>` 누락으로 세트 생성이 막히던 문제를 해결했습니다.
+- StudyResult/Ranking/Analysis/관리자 UI 등 전 화면을 CSS 변수 팔레트로 리팩터링해 라이트·다크 테마가 일관되게 적용됩니다.
+- `problemTypes.json`/`analysis.config.json`/UI 설정을 CSS 변수로 치환해 문서 기반 색상 정의도 토글에 맞춰 변하도록 정리했습니다.
 
 ## Resolved (2025-10-05 - review queue & problem library)
 - 홈/프로필/StudyPage 설정 화면에 복습 대기열 카드와 자동 시작 플로우를 붙여 틀린 문제를 바로 다시 풀 수 있게 했습니다.

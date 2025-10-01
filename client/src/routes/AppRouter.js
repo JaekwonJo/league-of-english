@@ -130,16 +130,16 @@ const styles = {
   spinner: {
     width: '40px',
     height: '40px',
-    border: '4px solid #f3f4f6',
-    borderTop: '4px solid #667eea',
+    border: '4px solid var(--surface-soft-muted)',
+    borderTop: '4px solid var(--indigo)',
     borderRadius: '50%',
     animation: 'spin 1s linear infinite'
   },
   button: {
     marginTop: '20px',
     padding: '12px 24px',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    color: 'white',
+    background: 'linear-gradient(135deg, var(--indigo) 0%, var(--indigo-strong) 100%)',
+    color: 'var(--text-on-accent)',
     border: 'none',
     borderRadius: '10px',
     fontSize: '16px',

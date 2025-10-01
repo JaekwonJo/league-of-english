@@ -237,7 +237,7 @@ const ProfilePage = () => {
           {statsLoading ? (
             <div style={styles.statsMessage}>데이터를 차곡차곡 불러오고 있어요… ⏳</div>
           ) : statsError ? (
-            <div style={{ ...styles.statsMessage, color: '#f87171' }}>{statsError}</div>
+            <div style={{ ...styles.statsMessage, color: 'var(--danger-soft)' }}>{statsError}</div>
           ) : (
             <div style={styles.statsGrid}>
               {statCards.map((card) => (
@@ -390,7 +390,7 @@ const TypeAccuracyRow = ({ entry, tierInfo }) => {
 const styles = {
   container: {
     minHeight: '100vh',
-    background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0F172A 100%)',
+    background: 'linear-gradient(135deg, var(--color-slate-900) 0%, var(--color-slate-650) 50%, var(--color-slate-900) 100%)',
     position: 'relative',
     overflow: 'hidden'
   },
@@ -419,7 +419,7 @@ const styles = {
   pageTitle: {
     fontSize: '48px',
     fontWeight: '900',
-    background: 'linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%)',
+    background: 'linear-gradient(135deg, var(--surface-soft-solid) 0%, var(--border-subtle) 100%)',
     backgroundClip: 'text',
     WebkitBackgroundClip: 'text',
     WebkitTextFillColor: 'transparent',
@@ -449,7 +449,7 @@ const styles = {
     marginBottom: '40px',
     boxShadow: '0 25px 50px rgba(0, 0, 0, 0.3)',
     border: '2px solid',
-    borderColor: '#3B82F6',
+    borderColor: 'var(--accent-primary)',
     position: 'relative',
     overflow: 'hidden'
   },
@@ -482,7 +482,7 @@ const styles = {
   pointsDisplay: {
     fontSize: '28px',
     fontWeight: '800',
-    background: 'linear-gradient(135deg, #F59E0B 0%, #EF4444 100%)',
+    background: 'linear-gradient(135deg, var(--warning-strong) 0%, var(--danger) 100%)',
     backgroundClip: 'text',
     WebkitBackgroundClip: 'text',
     WebkitTextFillColor: 'transparent',
@@ -497,7 +497,7 @@ const styles = {
     alignItems: 'center',
     marginBottom: '15px',
     fontSize: '16px',
-    color: '#CBD5E1',
+    color: 'var(--color-slate-350)',
     fontWeight: '600'
   },
   progressBar: {
@@ -510,7 +510,7 @@ const styles = {
   progressFill: {
     height: '100%',
     borderRadius: '6px',
-    background: 'linear-gradient(90deg, #3B82F6, #8B5CF6)',
+    background: 'linear-gradient(90deg, var(--accent-primary), var(--violet-soft))',
     transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
     boxShadow: '0 0 20px rgba(59, 130, 246, 0.6)'
   },
@@ -538,7 +538,7 @@ const styles = {
     padding: '18px',
     borderRadius: '16px',
     background: 'rgba(15, 23, 42, 0.6)',
-    color: '#CBD5E1',
+    color: 'var(--color-slate-350)',
     textAlign: 'center'
   },
   reviewQueueSection: {
@@ -617,7 +617,7 @@ const styles = {
     padding: '4px 10px',
     borderRadius: '999px',
     background: 'rgba(99, 102, 241, 0.2)',
-    color: '#4338CA',
+    color: 'var(--indigo-deep)',
     fontSize: '12px',
     fontWeight: 700
   },
@@ -649,11 +649,11 @@ const styles = {
     padding: '22px',
     textAlign: 'center',
     transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-    color: '#E2E8F0'
+    color: 'var(--border-subtle)'
   },
   profileStatLabel: {
     fontSize: '14px',
-    color: '#A5B4FC',
+    color: 'var(--violet-lighter)',
     marginBottom: '12px'
   },
   profileStatValue: {
@@ -664,7 +664,7 @@ const styles = {
   profileStatSuffix: {
     fontSize: '16px',
     marginLeft: '4px',
-    color: '#CBD5E1'
+    color: 'var(--color-slate-350)'
   },
   typeSection: {
     marginTop: '40px'
@@ -684,7 +684,7 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     fontWeight: 700,
-    color: '#E2E8F0',
+    color: 'var(--border-subtle)',
     marginBottom: '10px'
   },
   typeBar: {
@@ -703,7 +703,7 @@ const styles = {
     gap: '12px',
     marginTop: '10px',
     fontSize: '13px',
-    color: '#CBD5E1'
+    color: 'var(--color-slate-350)'
   },
   infoCard: {
     background: 'rgba(51, 65, 85, 0.8)',
@@ -750,7 +750,7 @@ const styles = {
   membershipTitle: {
     fontSize: '20px',
     fontWeight: 700,
-    color: '#f8fafc'
+    color: 'var(--surface-soft-solid)'
   },
   membershipText: {
     fontSize: '14px',
@@ -765,12 +765,12 @@ const styles = {
   membershipLabel: {
     display: 'block',
     fontSize: '13px',
-    color: '#cbd5f5'
+    color: 'var(--color-slate-300)'
   },
   membershipValue: {
     fontSize: '18px',
     fontWeight: 700,
-    color: '#f1f5f9'
+    color: 'var(--surface-soft-strong)'
   },
   couponForm: {
     display: 'flex',
@@ -787,14 +787,14 @@ const styles = {
     borderRadius: '12px',
     border: '1px solid rgba(148, 163, 184, 0.4)',
     background: 'rgba(15, 23, 42, 0.4)',
-    color: '#e2e8f0',
+    color: 'var(--border-subtle)',
     padding: '12px 16px',
     fontSize: '14px'
   },
   couponButton: {
     borderRadius: '12px',
-    background: 'linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)',
-    color: '#ffffff',
+    background: 'linear-gradient(135deg, var(--accent-primary-light) 0%, var(--accent-primary) 100%)',
+    color: 'var(--text-on-accent)',
     padding: '12px 18px',
     border: 'none',
     fontWeight: 600,
@@ -808,15 +808,15 @@ const styles = {
   },
   redeemSuccess: {
     background: 'rgba(34, 197, 94, 0.15)',
-    color: '#34d399'
+    color: 'var(--success-soft)'
   },
   redeemError: {
     background: 'rgba(248, 113, 113, 0.15)',
-    color: '#f87171'
+    color: 'var(--danger-soft)'
   },
   redeemInfo: {
     background: 'rgba(96, 165, 250, 0.15)',
-    color: '#60a5fa'
+    color: 'var(--accent-primary-light)'
   },
   teacherCard: {
     background: 'rgba(15, 23, 42, 0.65)',
@@ -835,7 +835,7 @@ const styles = {
   },
   teacherButton: {
     borderRadius: '12px',
-    background: 'linear-gradient(135deg, #4ade80 0%, #22c55e 100%)',
+    background: 'linear-gradient(135deg, var(--success-lighter) 0%, var(--success) 100%)',
     color: 'var(--text-primary)',
     padding: '10px 16px',
     border: 'none',
@@ -867,7 +867,7 @@ const styles = {
     background: 'rgba(148, 163, 184, 0.25)',
     borderRadius: '12px',
     padding: '6px 12px',
-    color: '#e2e8f0',
+    color: 'var(--border-subtle)',
     fontSize: '12px',
     fontWeight: 600
   },
@@ -879,7 +879,7 @@ const styles = {
   codeDeactivateButton: {
     borderRadius: '10px',
     background: 'rgba(248, 113, 113, 0.15)',
-    color: '#f87171',
+    color: 'var(--danger-soft)',
     padding: '8px 14px',
     border: '1px solid rgba(248, 113, 113, 0.4)',
     cursor: 'pointer'
@@ -893,7 +893,7 @@ const styles = {
     margin: 0,
     fontSize: '16px',
     fontWeight: 600,
-    color: '#f8fafc'
+    color: 'var(--surface-soft-solid)'
   },
   teacherStudentList: {
     listStyle: 'none',
@@ -932,11 +932,11 @@ const styles = {
     margin: 0,
     fontSize: '18px',
     fontWeight: 700,
-    color: '#f8fafc'
+    color: 'var(--surface-soft-solid)'
   },
   analyticsButton: {
     borderRadius: '12px',
-    background: 'linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)',
+    background: 'linear-gradient(135deg, var(--info-soft) 0%, var(--info) 100%)',
     color: 'var(--text-primary)',
     padding: '10px 16px',
     border: 'none',
@@ -967,12 +967,12 @@ const styles = {
     borderRadius: '10px',
     border: '1px solid rgba(148, 163, 184, 0.4)',
     background: 'rgba(15, 23, 42, 0.4)',
-    color: '#e2e8f0',
+    color: 'var(--border-subtle)',
     padding: '8px 12px',
     fontSize: '14px'
   },
   analyticsError: {
-    color: '#f87171',
+    color: 'var(--danger-soft)',
     fontSize: '14px',
     margin: 0
   },
@@ -1003,7 +1003,7 @@ const styles = {
   },
   analyticsSummaryValue: {
     fontSize: '18px',
-    color: '#f8fafc',
+    color: 'var(--surface-soft-solid)',
     fontWeight: 700
   },
   analyticsTableWrapper: {
@@ -1034,7 +1034,7 @@ const styles = {
   analyticsTableCell: {
     padding: '12px 16px',
     fontSize: '13px',
-    color: '#e2e8f0',
+    color: 'var(--border-subtle)',
     borderBottom: '1px solid rgba(148, 163, 184, 0.08)'
   },
   analyticsTwoColumn: {
@@ -1053,7 +1053,7 @@ const styles = {
   analyticsPanelTitle: {
     margin: 0,
     fontSize: '14px',
-    color: '#f1f5f9',
+    color: 'var(--surface-soft-strong)',
     fontWeight: 600
   },
   analyticsList: {
@@ -1069,7 +1069,7 @@ const styles = {
     justifyContent: 'space-between',
     gap: '12px',
     fontSize: '13px',
-    color: '#e2e8f0',
+    color: 'var(--border-subtle)',
     background: 'rgba(15, 23, 42, 0.4)',
     borderRadius: '10px',
     padding: '8px 12px'
@@ -1091,7 +1091,7 @@ const styles = {
   analyticsDetailTitle: {
     margin: 0,
     fontSize: '16px',
-    color: '#f8fafc',
+    color: 'var(--surface-soft-solid)',
     fontWeight: 700
   },
   analyticsDetailClose: {
@@ -1127,14 +1127,14 @@ const styles = {
     borderRadius: '12px',
     border: '1px solid rgba(148, 163, 184, 0.4)',
     background: 'rgba(15, 23, 42, 0.4)',
-    color: '#e2e8f0',
+    color: 'var(--border-subtle)',
     padding: '12px 16px',
     fontSize: '14px'
   },
   studentJoinButton: {
     borderRadius: '12px',
-    background: 'linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)',
-    color: '#ffffff',
+    background: 'linear-gradient(135deg, var(--info-soft) 0%, var(--info) 100%)',
+    color: 'var(--text-on-accent)',
     padding: '12px 18px',
     border: 'none',
     fontWeight: 600,
@@ -1252,7 +1252,7 @@ const MembershipCard = () => {
       {loading ? (
         <p style={styles.membershipText}>멤버십 정보를 불러오는 중이에요...</p>
       ) : error ? (
-        <p style={{ ...styles.membershipText, color: '#f87171' }}>{error}</p>
+        <p style={{ ...styles.membershipText, color: 'var(--danger-soft)' }}>{error}</p>
       ) : (
         <div style={styles.membershipSummary}>
           <div>
@@ -1382,7 +1382,7 @@ const TeacherSection = () => {
         <button type="button" style={styles.teacherButton} onClick={handleGenerate}>새 코드 만들기</button>
       </div>
 
-      {error && <p style={{ ...styles.membershipText, color: '#f87171' }}>{error}</p>}
+      {error && <p style={{ ...styles.membershipText, color: 'var(--danger-soft)' }}>{error}</p>}
 
       {loading ? (
         <p style={styles.membershipText}>반 코드 정보를 불러오는 중이에요...</p>

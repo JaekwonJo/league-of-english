@@ -18,7 +18,7 @@ const styles = {
     margin: '0 auto'
   },
   card: {
-    background: 'white',
+    background: 'var(--surface-card)',
     borderRadius: '20px',
     padding: '30px',
     marginTop: '20px',

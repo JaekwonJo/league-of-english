@@ -12,7 +12,7 @@
       },
       "aiGenerated": true,
       "icon": "🧩",
-      "color": "#3B82F6",
+      "color": "var(--accent-primary)",
       "instruction": "다음 글의 빈칸에 들어갈 말로 가장 적절한 것을 고르세요."
     },
     "order": {
@@ -28,7 +28,7 @@
       "aiGenerated": false,
       "ruleGenerated": true,
       "icon": "🔀",
-      "color": "#8B5CF6",
+      "color": "var(--violet-soft)",
       "instruction": "주어진 문장들의 올바른 순서를 고르세요.",
       "options": {
         "basic": [
@@ -61,7 +61,7 @@
       "aiGenerated": false,
       "ruleGenerated": true,
       "icon": "🧱",
-      "color": "#10B981",
+      "color": "var(--success)",
       "instruction": "글의 흐름에 따라 주어진 문장이 들어가기에 가장 적절한 위치를 고르세요."
     },
     "grammar": {
@@ -76,7 +76,7 @@
       },
       "aiGenerated": true,
       "icon": "📝",
-      "color": "#F59E0B",
+      "color": "var(--warning-strong)",
       "instruction": "다음 글의 밑줄 친 부분 중 어법·어휘가 잘못된 한 곳을 고르세요."
     },
     "title": {
@@ -91,7 +91,7 @@
       },
       "aiGenerated": true,
       "icon": "🏷️",
-      "color": "#14B8A6",
+      "color": "var(--teal-accent)",
       "instruction": "다음 글의 제목으로 가장 적절한 것을 고르세요."
     },
     "theme": {
@@ -106,7 +106,7 @@
       },
       "aiGenerated": true,
       "icon": "🗝️",
-      "color": "#EC4899",
+      "color": "var(--pink-accent)",
       "instruction": "다음 글의 주제로 가장 적절한 것을 고르세요."
     },
     "summary": {
@@ -121,7 +121,7 @@
       },
       "aiGenerated": true,
       "icon": "🧠",
-      "color": "#6366F1",
+      "color": "var(--indigo)",
       "instruction": "다음 글의 내용과 가장 유사한 요약을 고르세요."
     },
     "irrelevant": {
@@ -136,7 +136,7 @@
       },
       "aiGenerated": true,
       "icon": "🚫",
-      "color": "#9333EA",
+      "color": "var(--violet)",
       "instruction": "글 전체의 흐름을 살펴보고 주제와 맞지 않는 문장을 고르세요."
     },
     "implicit": {
@@ -151,7 +151,7 @@
       },
       "aiGenerated": true,
       "icon": "💡",
-      "color": "#2563EB",
+      "color": "var(--accent-primary-strong)",
       "instruction": "주요 단서를 바탕으로 글쓴이가 암묵적으로 전달하는 메시지를 추론하세요."
     }
   },

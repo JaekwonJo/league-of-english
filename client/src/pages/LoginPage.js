@@ -179,7 +179,7 @@ const styles = {
     justifyContent: 'center',
     alignItems: 'center',
     minHeight: '100vh',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    background: 'linear-gradient(135deg, var(--indigo) 0%, var(--indigo-strong) 100%)',
     padding: '20px'
   },
   loginBox: {
@@ -202,13 +202,13 @@ const styles = {
     display: 'block'
   },
   title: {
-    color: '#fff',
+    color: 'var(--text-on-accent)',
     fontSize: '28px',
     margin: '10px 0',
     fontWeight: 'bold'
   },
   subtitle: {
-    color: '#9CA3AF',
+    color: 'var(--color-slate-400)',
     fontSize: '14px',
     margin: 0
   },
@@ -222,7 +222,7 @@ const styles = {
     borderRadius: '10px',
     border: '1px solid rgba(255, 255, 255, 0.1)',
     background: 'rgba(255, 255, 255, 0.05)',
-    color: '#fff',
+    color: 'var(--text-on-accent)',
     fontSize: '14px',
     outline: 'none',
     transition: 'all 0.3s'
@@ -231,8 +231,8 @@ const styles = {
     padding: '14px',
     borderRadius: '10px',
     border: 'none',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    color: '#fff',
+    background: 'linear-gradient(135deg, var(--indigo) 0%, var(--indigo-strong) 100%)',
+    color: 'var(--text-on-accent)',
     fontSize: '16px',
     fontWeight: 'bold',
     cursor: 'pointer',
@@ -242,7 +242,7 @@ const styles = {
   error: {
     background: 'rgba(239, 68, 68, 0.1)',
     border: '1px solid rgba(239, 68, 68, 0.3)',
-    color: '#EF4444',
+    color: 'var(--danger)',
     padding: '10px',
     borderRadius: '8px',
     fontSize: '14px',
@@ -255,14 +255,14 @@ const styles = {
     borderTop: '1px solid rgba(255, 255, 255, 0.1)'
   },
   toggleText: {
-    color: '#9CA3AF',
+    color: 'var(--color-slate-400)',
     fontSize: '14px',
     marginRight: '8px'
   },
   toggleButton: {
     background: 'none',
     border: 'none',
-    color: '#667eea',
+    color: 'var(--indigo)',
     fontSize: '14px',
     fontWeight: 'bold',
     cursor: 'pointer',

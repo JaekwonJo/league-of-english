@@ -59,7 +59,7 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: '100vh',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+    background: 'linear-gradient(135deg, var(--indigo) 0%, var(--indigo-strong) 100%)'
   },
   spinner: {
     width: '60px',
@@ -70,7 +70,7 @@ const styles = {
     animation: 'spin 1s linear infinite'
   },
   loadingText: {
-    color: 'white',
+    color: 'var(--text-on-accent)',
     fontSize: '32px',
     marginTop: '30px',
     marginBottom: '10px'

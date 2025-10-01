@@ -7,14 +7,14 @@ export const problemDisplayStyles = {
     maxWidth: '860px',
     margin: '0 auto',
     padding: '24px',
-    color: '#E2E8F0'
+    color: 'var(--border-subtle)'
   },
   header: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: '20px',
-    color: '#94A3B8'
+    color: 'var(--color-slate-400)'
   },
   progress: {
     fontSize: '18px',
@@ -25,8 +25,8 @@ export const problemDisplayStyles = {
     fontWeight: 600
   },
   problemCard: {
-    background: 'linear-gradient(135deg, #111827 0%, #0f172a 100%)',
-    color: '#E5E7EB',
+    background: 'linear-gradient(135deg, var(--color-slate-850) 0%, var(--color-slate-900) 100%)',
+    color: 'var(--border-muted)',
     borderRadius: '20px',
     padding: '32px',
     marginBottom: '20px',
@@ -42,9 +42,9 @@ export const problemDisplayStyles = {
   },
   navButton: {
     padding: '12px 24px',
-    background: '#1F2937',
-    color: '#CBD5F5',
-    border: '1px solid #334155',
+    background: 'var(--color-slate-800)',
+    color: 'var(--color-slate-300)',
+    border: '1px solid var(--color-slate-700)',
     borderRadius: '10px',
     fontSize: '16px',
     fontWeight: 600,
@@ -53,8 +53,8 @@ export const problemDisplayStyles = {
   },
   nextButton: {
     padding: '12px 28px',
-    background: 'linear-gradient(135deg, #6366F1 0%, #7C3AED 100%)',
-    color: '#FFFFFF',
+    background: 'linear-gradient(135deg, var(--indigo) 0%, var(--violet) 100%)',
+    color: 'var(--text-on-accent)',
     border: 'none',
     borderRadius: '12px',
     fontSize: '16px',
@@ -64,8 +64,8 @@ export const problemDisplayStyles = {
   },
   finishButton: {
     padding: '14px 32px',
-    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-    color: '#FFFFFF',
+    background: 'linear-gradient(135deg, var(--success) 0%, var(--success-strong) 100%)',
+    color: 'var(--text-on-accent)',
     border: 'none',
     borderRadius: '12px',
     fontSize: '17px',
@@ -75,18 +75,18 @@ export const problemDisplayStyles = {
   },
   missingOptions: {
     padding: '12px 0',
-    color: '#F87171',
+    color: 'var(--danger-soft)',
     fontSize: '14px'
   },
   underlineSpan: {
     textDecoration: 'underline',
-    textDecorationColor: '#fbbf24',
+    textDecorationColor: 'var(--warning)',
     textDecorationThickness: '3px',
     fontWeight: 'bold',
     backgroundColor: 'rgba(251, 191, 36, 0.2)',
     padding: '2px 4px',
     borderRadius: '4px',
-    color: '#F8FAFC'
+    color: 'var(--surface-soft-solid)'
   }
 };
 
@@ -97,38 +97,38 @@ export const orderStyles = {
     boxShadow: '0 30px 50px rgba(30, 64, 175, 0.25)'
   },
   orderTitleSection: {
-    background: 'linear-gradient(135deg, #1F2937 0%, #111827 100%)',
-    color: '#E5E7EB',
+    background: 'linear-gradient(135deg, var(--color-slate-800) 0%, var(--color-slate-850) 100%)',
+    color: 'var(--border-muted)',
     padding: '14px 20px',
     borderRadius: '12px',
     marginBottom: '10px',
     fontSize: '15px',
     fontWeight: 600,
-    border: '1px solid #334155'
+    border: '1px solid var(--color-slate-700)'
   },
   orderNumberSection: {
-    background: 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)',
-    color: '#CBD5E1',
+    background: 'linear-gradient(135deg, var(--color-slate-650) 0%, var(--color-slate-900) 100%)',
+    color: 'var(--color-slate-350)',
     padding: '12px 20px',
     borderRadius: '10px',
     marginBottom: '10px',
     fontSize: '14px',
     fontWeight: 600,
-    border: '1px solid #475569'
+    border: '1px solid var(--color-slate-600)'
   },
   orderSourceSection: {
-    background: 'linear-gradient(135deg, #334155 0%, #1E293B 100%)',
-    color: '#94A3B8',
+    background: 'linear-gradient(135deg, var(--color-slate-700) 0%, var(--color-slate-650) 100%)',
+    color: 'var(--color-slate-400)',
     padding: '12px 20px',
     borderRadius: '10px',
     marginBottom: '16px',
     fontSize: '14px',
     fontWeight: 600,
-    border: '1px solid #475569'
+    border: '1px solid var(--color-slate-600)'
   },
   orderInstruction: {
-    background: 'linear-gradient(135deg, #0F172A 0%, #111827 100%)',
-    color: '#F8FAFC',
+    background: 'linear-gradient(135deg, var(--color-slate-900) 0%, var(--color-slate-850) 100%)',
+    color: 'var(--surface-soft-solid)',
     padding: '20px',
     borderRadius: '16px',
     fontSize: '18px',
@@ -141,8 +141,8 @@ export const orderStyles = {
     marginBottom: '24px'
   },
   orderGivenText: {
-    background: 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)',
-    color: '#E2E8F0',
+    background: 'linear-gradient(135deg, var(--color-slate-650) 0%, var(--color-slate-900) 100%)',
+    color: 'var(--border-subtle)',
     border: '1px solid rgba(71, 85, 105, 0.6)',
     boxShadow: '0 15px 30px rgba(15, 23, 42, 0.35)',
     padding: '22px',
@@ -155,30 +155,30 @@ export const orderStyles = {
     fontSize: '15px',
     fontWeight: 600,
     marginBottom: '12px',
-    color: '#94A3B8'
+    color: 'var(--color-slate-400)'
   },
   sentencesLabel: {
     fontSize: '16px',
     fontWeight: 600,
     marginBottom: '14px',
-    color: '#94A3B8',
+    color: 'var(--color-slate-400)',
     textAlign: 'left'
   },
   orderSentence: {
-    background: 'linear-gradient(135deg, #334155 0%, #1E293B 100%)',
-    color: '#E2E8F0',
+    background: 'linear-gradient(135deg, var(--color-slate-700) 0%, var(--color-slate-650) 100%)',
+    color: 'var(--border-subtle)',
     padding: '16px',
     borderRadius: '10px',
     marginBottom: '12px',
-    border: '1px solid #475569',
+    border: '1px solid var(--color-slate-600)',
     boxShadow: '0 12px 24px rgba(15, 23, 42, 0.3)',
     textAlign: 'left',
     whiteSpace: 'pre-line'
   },
   multipleChoiceButton: {
     width: '100%',
-    background: 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)',
-    color: '#E2E8F0',
+    background: 'linear-gradient(135deg, var(--color-slate-650) 0%, var(--color-slate-900) 100%)',
+    color: 'var(--border-subtle)',
     padding: '14px 20px',
     borderRadius: '10px',
     marginBottom: '10px',
@@ -193,9 +193,9 @@ export const orderStyles = {
     transition: 'all 0.25s ease'
   },
   multipleChoiceSelected: {
-    background: 'linear-gradient(135deg, #6366F1 0%, #7C3AED 100%)',
-    borderColor: '#6366F1',
-    color: '#FFFFFF',
+    background: 'linear-gradient(135deg, var(--indigo) 0%, var(--violet) 100%)',
+    borderColor: 'var(--indigo)',
+    color: 'var(--text-on-accent)',
     transform: 'translateY(-2px)',
     boxShadow: '0 16px 30px rgba(99, 102, 241, 0.45)'
   }

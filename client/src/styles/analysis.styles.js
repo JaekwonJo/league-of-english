@@ -10,14 +10,14 @@ export const modalStyles = {
     left: 0,
     right: 0,
     bottom: 0,
-    background: 'rgba(0, 0, 0, 0.5)',
+    background: 'rgba(15, 23, 42, 0.55)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1000
   },
   modalContent: {
-    background: 'white',
+    background: 'var(--surface-card)',
     borderRadius: '20px',
     width: '90%',
     maxWidth: '1200px',
@@ -34,10 +34,10 @@ export const headerStyles = {
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     padding: '20px 30px',
-    borderBottom: '1px solid #e2e8f0'
+    borderBottom: '1px solid var(--border-subtle)'
   },
   title: {
-    color: '#1f2937',
+    color: 'var(--color-slate-800)',
     margin: '0 0 10px 0',
     fontSize: '1.5rem'
   },
@@ -46,19 +46,19 @@ export const headerStyles = {
     border: 'none',
     fontSize: '20px',
     cursor: 'pointer',
-    color: '#6b7280',
+    color: 'var(--color-slate-500)',
     padding: '5px'
   },
   documentInfo: {
     marginTop: '10px'
   },
   documentTitle: {
-    color: '#1f2937',
+    color: 'var(--color-slate-800)',
     margin: '0 0 5px 0',
     fontSize: '1.1rem'
   },
   documentMeta: {
-    color: '#6b7280',
+    color: 'var(--color-slate-500)',
     margin: 0,
     fontSize: '14px'
   }
@@ -77,8 +77,8 @@ export const contentStyles = {
     marginBottom: '20px'
   },
   analyzeButton: {
-    background: '#3b82f6',
-    color: 'white',
+    background: 'var(--accent-primary)',
+    color: 'var(--text-on-accent)',
     border: 'none',
     borderRadius: '10px',
     padding: '10px 20px',
@@ -94,13 +94,13 @@ export const loadingStyles = {
     alignItems: 'center',
     justifyContent: 'center',
     padding: '60px 30px',
-    color: '#6b7280'
+    color: 'var(--color-slate-500)'
   },
   spinner: {
     width: '40px',
     height: '40px',
-    border: '4px solid #e2e8f0',
-    borderTop: '4px solid #3b82f6',
+    border: '4px solid var(--border-subtle)',
+    borderTop: '4px solid var(--accent-primary)',
     borderRadius: '50%',
     animation: 'spin 1s linear infinite',
     marginBottom: '20px'
@@ -111,16 +111,16 @@ export const statusStyles = {
   error: {
     padding: '30px',
     textAlign: 'center',
-    color: '#ef4444'
+    color: 'var(--danger)'
   },
   info: {
     padding: '30px',
     textAlign: 'center',
-    color: '#6b7280'
+    color: 'var(--color-slate-500)'
   },
   cachedBadge: {
-    background: '#e0f2fe',
-    color: '#0284c7',
+    background: 'var(--accent-primary-muted)',
+    color: 'var(--info-strong)',
     padding: '8px 16px',
     borderRadius: '20px',
     fontSize: '14px',
@@ -135,26 +135,26 @@ export const navigationStyles = {
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: '20px 30px',
-    borderTop: '1px solid #e2e8f0'
+    borderTop: '1px solid var(--border-subtle)'
   },
   prevButton: {
-    background: '#6b7280',
-    color: 'white',
+    background: 'var(--color-slate-500)',
+    color: 'var(--text-on-accent)',
     border: 'none',
     borderRadius: '10px',
     padding: '10px 20px',
     cursor: 'pointer'
   },
   nextButton: {
-    background: '#3b82f6',
-    color: 'white',
+    background: 'var(--accent-primary)',
+    color: 'var(--text-on-accent)',
     border: 'none',
     borderRadius: '10px',
     padding: '10px 20px',
     cursor: 'pointer'
   },
   pageInfo: {
-    color: '#6b7280',
+    color: 'var(--color-slate-500)',
     fontSize: '14px'
   }
 };
