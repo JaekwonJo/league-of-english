@@ -1,6 +1,69 @@
 ﻿const fs = require("fs");
 const path = require("path");
 const database = require("../models/database");
+const shared = require("./ai-problem/shared");
+const blank = require("./ai-problem/blank");
+const underlined = require("./ai-problem/underlined");
+const vocabulary = require("./ai-problem/vocabulary");
+const title = require("./ai-problem/title");
+const topic = require("./ai-problem/topic");
+
+const {
+  CIRCLED_DIGITS,
+  SOURCE_PREFIX_REGEX,
+  UNDERLINE_PATTERN,
+  containsHangul,
+  stripTags,
+  normalizeWhitespace,
+  escapeRegex,
+  stripJsonFences,
+  clipText,
+  normalizeQuestionKey,
+  countSentences,
+  replaceDigitsWithWords,
+  countWords,
+  isEnglishPhrase,
+  labelToIndex,
+  ensureSourceLabel,
+  isPlaceholderSourceLabel
+} = shared;
+
+const {
+  BLANK_PLACEHOLDER_REGEX,
+  BLANK_OPTION_MIN_WORDS,
+  BLANK_OPTION_MAX_WORDS,
+  MIN_BLANK_TEXT_LENGTH,
+  MIN_BLANK_SENTENCE_COUNT,
+  buildBlankPrompt,
+  deriveBlankDirectives,
+  normalizeBlankPayload
+} = blank;
+
+const {
+  normalizeUnderlinedOptions,
+  rebuildUnderlinesFromOptions,
+  normalizeOptionStatus
+} = underlined;
+
+const {
+  VOCAB_BASE_QUESTION,
+  VOCAB_JSON_BLUEPRINT,
+  VOCAB_MIN_EXPLANATION_LENGTH,
+  VOCAB_MIN_EXPLANATION_SENTENCES,
+  normalizeVocabularyPayload
+} = vocabulary;
+
+const {
+  buildTitlePrompt,
+  normalizeTitlePayload,
+  validateTitleProblem
+} = title;
+
+const {
+  buildTopicPrompt,
+  normalizeTopicPayload,
+  validateTopicProblem
+} = topic;
 
 let OpenAI = null;
 try {
@@ -10,27 +73,123 @@ try {
 }
 
 const GRAMMAR_MANUAL_PATH = path.join(__dirname, "..", "..", "problem manual", "grammar_problem_manual.md");
+const VOCABULARY_MANUAL_PATH = path.join(__dirname, "..", "..", "problem manual", "vocabulary_problem_manual.md");
 const TITLE_MANUAL_PATH = path.join(__dirname, "..", "..", "docs", "problem-templates", "title-master.md");
-const BLANK_MANUAL_PATH = path.join(__dirname, "..", "..", "docs", "problem-templates", "blank-master.md");
+const BLANK_MANUAL_PATH = path.join(__dirname, "..", "..", "problem manual", "빈칸_메뉴얼_GPTxClaude.md");
 const TOPIC_MANUAL_PATH = path.join(__dirname, "..", "..", "docs", "problem-templates", "topic-master.md");
 const IMPLICIT_MANUAL_PATH = path.join(__dirname, "..", "..", "docs", "problem-templates", "implicit-master.md");
 const IRRELEVANT_MANUAL_PATH = path.join(__dirname, "..", "..", "docs", "problem-templates", "irrelevant-master.md");
 let cachedGrammarManual = null;
+let cachedVocabularyManual = null;
 let cachedTitleManual = null;
 let cachedBlankManual = null;
 let cachedTopicManual = null;
 let cachedImplicitManual = null;
 let cachedIrrelevantManual = null;
 
-const BLANK_QUESTION = "\ub2e4\uc74c \uae00\uc758 \ube48\uce78\uc5d0 \ub4e4\uc5b4\uac08 \ub9d0\ub85c \uac00\uc7a5 \uc801\uc808\ud55c \uac83\uc744 \uace0\ub974\uc2dc\uc624.";
-const BLANK_DEFINITION_QUESTION = "\ub2e4\uc74c \uae00\uc758 \ube48\uce78\uc5d0 \ub4e4\uc5b4\uac08 \ub2e8\uc5b4\uc758 \uc601\uc601 \ud480\uc774\ub85c \uac00\uc7a5 \uc801\uc808\ud55c \uac83\uc744 \uace0\ub974\uc2dc\uc624.";
-const CIRCLED_DIGITS = ['\u2460', '\u2461', '\u2462', '\u2463', '\u2464'];
+const EXPOSURE_MIN_INCORRECT_RETRY_MINUTES = 20;
+const EXPOSURE_BASE_RETRY_PROBABILITY = 0.45;
+const EXPOSURE_RETRY_BONUS_PER_MISS = 0.12;
+const EXPOSURE_FETCH_MULTIPLIER = 4;
 const TOPIC_QUESTION = "\ub2e4\uc74c \uae00\uc758 \uc8fc\uc81c\ub85c \uac00\uc7a5 \uc801\uc808\ud55c \uac83\uc744 \uace0\ub974\uc2dc\uc624.";
 const IMPLICIT_QUESTION = "\ub2e4\uc74c \uae00\uc5d0\uc11c \ubc11\uc904 \uce5c \ubd80\ubd84\uc774 \uc758\ubbf8\ud558\ub294 \ubc14\ub85c \uac00\uc7a5 \uc801\uc808\ud55c \uac83\uc740?";
 const IRRELEVANT_QUESTION = "\ub2e4\uc74c \uae00\uc5d0\uc11c \uc804\uccb4 \ud750\ub984\uacfc \uad00\uacc4 \uc5c6\ub294 \ubb38\uc7a5\uc740?";
+const IRRELEVANT_QUESTION_VARIANTS = [
+  IRRELEVANT_QUESTION,
+  "\ub2e4\uc74c \uae00\uc5d0\uc11c \uc804\uccb4 \ud750\ub984\uacfc \uad00\uacc4\uc5c6\ub294 \ubb38\uc7a5\uc740?",
+  "\ub2e4\uc74c \uae00\uc758 \uc804\uccb4\uc801\uc778 \ud750\ub984\uc5d0\uc11c \ubb38\ub9e5\uc0c1 \uc5b4\uc11c\ud55c \ubd80\ubd84\uc774 \uc788\ub294 \ubb38\uc7a5\uc740?",
+  "\ub2e4\uc74c \uae00\uc758 \ud750\ub984\uc0c1, \ubc11\uc904 \uce5c (A)\uc640 \uad00\ub828\uc774 \uc5c6\ub294 \uac83\uc740?"
+];
 
-function containsHangul(text = "") {
-  return /[가-힣]/.test(String(text));
+function readGrammarManual(limit = 2000) {
+  if (cachedGrammarManual === null) {
+    try {
+      cachedGrammarManual = fs.readFileSync(GRAMMAR_MANUAL_PATH, 'utf8');
+    } catch (error) {
+      console.warn('[aiProblemService] failed to load grammar manual:', error?.message || error);
+      cachedGrammarManual = '';
+    }
+  }
+  if (!cachedGrammarManual) return '';
+  return cachedGrammarManual.slice(0, limit);
+}
+
+function readVocabularyManual(limit = 2000) {
+  if (cachedVocabularyManual === null) {
+    try {
+      cachedVocabularyManual = fs.readFileSync(VOCABULARY_MANUAL_PATH, 'utf8');
+    } catch (error) {
+      console.warn('[aiProblemService] failed to load vocabulary manual:', error?.message || error);
+      cachedVocabularyManual = '';
+    }
+  }
+  if (!cachedVocabularyManual) return '';
+  return cachedVocabularyManual.slice(0, limit);
+}
+
+function readTitleManual(limit = 1600) {
+  if (cachedTitleManual === null) {
+    try {
+      cachedTitleManual = fs.readFileSync(TITLE_MANUAL_PATH, 'utf8');
+    } catch (error) {
+      console.warn('[aiProblemService] failed to load title manual:', error?.message || error);
+      cachedTitleManual = '';
+    }
+  }
+  if (!cachedTitleManual) return '';
+  return cachedTitleManual.slice(0, limit);
+}
+
+function readBlankManual(limit = 2000) {
+  if (cachedBlankManual === null) {
+    try {
+      cachedBlankManual = fs.readFileSync(BLANK_MANUAL_PATH, 'utf8');
+    } catch (error) {
+      console.warn('[aiProblemService] failed to load blank manual:', error?.message || error);
+      cachedBlankManual = '';
+    }
+  }
+  if (!cachedBlankManual) return '';
+  return cachedBlankManual.slice(0, limit);
+}
+
+function readTopicManual(limit = 1600) {
+  if (cachedTopicManual === null) {
+    try {
+      cachedTopicManual = fs.readFileSync(TOPIC_MANUAL_PATH, 'utf8');
+    } catch (error) {
+      console.warn('[aiProblemService] failed to load topic manual:', error?.message || error);
+      cachedTopicManual = '';
+    }
+  }
+  if (!cachedTopicManual) return '';
+  return cachedTopicManual.slice(0, limit);
+}
+
+function readImplicitManual(limit = 1800) {
+  if (cachedImplicitManual === null) {
+    try {
+      cachedImplicitManual = fs.readFileSync(IMPLICIT_MANUAL_PATH, 'utf8');
+    } catch (error) {
+      console.warn('[aiProblemService] failed to load implicit manual:', error?.message || error);
+      cachedImplicitManual = '';
+    }
+  }
+  if (!cachedImplicitManual) return '';
+  return cachedImplicitManual.slice(0, limit);
+}
+
+function readIrrelevantManual(limit = 2000) {
+  if (cachedIrrelevantManual === null) {
+    try {
+      cachedIrrelevantManual = fs.readFileSync(IRRELEVANT_MANUAL_PATH, 'utf8');
+    } catch (error) {
+      console.warn('[aiProblemService] failed to load irrelevant manual:', error?.message || error);
+      cachedIrrelevantManual = '';
+    }
+  }
+  if (!cachedIrrelevantManual) return '';
+  return cachedIrrelevantManual.slice(0, limit);
 }
 
 const {
@@ -45,397 +204,11 @@ const {
   validateGrammarProblem,
   CIRCLED_DIGITS: GRAMMAR_DIGITS,
   BASE_QUESTION,
-  MULTI_QUESTION
+  MULTI_QUESTION,
+  GRAMMAR_MIN_EXPLANATION_LENGTH,
+  GRAMMAR_MIN_EXPLANATION_SENTENCES
 } = require("../utils/eobeopTemplate");
 
-const SOURCE_PREFIX_REGEX = /^\s*(?:\ucd9c\ucc98|Source)\s*[:\u2502-]?\s*/iu;
-const UNDERLINE_PATTERN = /<u[\s\S]*?<\/u>/gi;
-
-function stripTags(text = "") {
-  return String(text).replace(/<[^>]+>/g, "");
-}
-
-function normalizeWhitespace(text = "") {
-  return String(text).replace(/\s+/g, " ").trim();
-}
-
-function escapeRegex(text = "") {
-  return String(text).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function stripJsonFences(text) {
-  if (!text) return "";
-  return String(text)
-    .replace(/```json\s*/gi, "")
-    .replace(/```/g, "")
-    .trim();
-}
-
-function clipText(text, limit = 1800) {
-  if (!text) return "";
-  const clean = String(text).replace(/\s+/g, " ").trim();
-  if (clean.length <= limit) return clean;
-  return `${clean.slice(0, limit)} \u2026`;
-}
-
-function readGrammarManual(limit = 2000) {
-  if (cachedGrammarManual === null) {
-    try {
-      cachedGrammarManual = fs.readFileSync(GRAMMAR_MANUAL_PATH, "utf8");
-    } catch (error) {
-      console.warn("[aiProblemService] failed to load grammar manual:", error?.message || error);
-      cachedGrammarManual = "";
-    }
-  }
-  if (!cachedGrammarManual) return "";
-  return cachedGrammarManual.slice(0, limit);
-}
-
-function readTitleManual(limit = 1600) {
-  if (cachedTitleManual === null) {
-    try {
-      cachedTitleManual = fs.readFileSync(TITLE_MANUAL_PATH, "utf8");
-    } catch (error) {
-      console.warn("[aiProblemService] failed to load title manual:", error?.message || error);
-      cachedTitleManual = "";
-    }
-  }
-  if (!cachedTitleManual) return "";
-  return cachedTitleManual.slice(0, limit);
-}
-
-function readBlankManual(limit = 2000) {
-  if (cachedBlankManual === null) {
-    try {
-      cachedBlankManual = fs.readFileSync(BLANK_MANUAL_PATH, "utf8");
-    } catch (error) {
-      console.warn("[aiProblemService] failed to load blank manual:", error?.message || error);
-      cachedBlankManual = "";
-    }
-  }
-  if (!cachedBlankManual) return "";
-  return cachedBlankManual.slice(0, limit);
-}
-
-function readTopicManual(limit = 1600) {
-  if (cachedTopicManual === null) {
-    try {
-      cachedTopicManual = fs.readFileSync(TOPIC_MANUAL_PATH, "utf8");
-    } catch (error) {
-      console.warn("[aiProblemService] failed to load topic manual:", error?.message || error);
-      cachedTopicManual = "";
-    }
-  }
-  if (!cachedTopicManual) return "";
-  return cachedTopicManual.slice(0, limit);
-}
-
-function readImplicitManual(limit = 1800) {
-  if (cachedImplicitManual === null) {
-    try {
-      cachedImplicitManual = fs.readFileSync(IMPLICIT_MANUAL_PATH, "utf8");
-    } catch (error) {
-      console.warn("[aiProblemService] failed to load implicit manual:", error?.message || error);
-      cachedImplicitManual = "";
-    }
-  }
-  if (!cachedImplicitManual) return "";
-  return cachedImplicitManual.slice(0, limit);
-}
-
-function readIrrelevantManual(limit = 2000) {
-  if (cachedIrrelevantManual === null) {
-    try {
-      cachedIrrelevantManual = fs.readFileSync(IRRELEVANT_MANUAL_PATH, "utf8");
-    } catch (error) {
-      console.warn("[aiProblemService] failed to load irrelevant manual:", error?.message || error);
-      cachedIrrelevantManual = "";
-    }
-  }
-  if (!cachedIrrelevantManual) return "";
-  return cachedIrrelevantManual.slice(0, limit);
-}
-
-function shuffleUnique(source, size) {
-  const arr = Array.isArray(source) ? [...source] : [];
-  for (let i = arr.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr.slice(0, size);
-}
-
-function normalizeGrammarOptions(options = []) {
-  if (!Array.isArray(options)) return [];
-  const normalized = [];
-  for (let i = 0; i < 5 && i < options.length; i += 1) {
-    let text = options[i];
-    if (text && typeof text === "object") {
-      text = text.text || text.value || text.content;
-    }
-    if (typeof text !== "string") {
-      normalized.push("");
-      continue;
-    }
-    let clean = text.trim();
-    clean = clean.replace(/^[\u2460-\u2468]\s*/, "").trim();
-    if (!clean.startsWith("<u>")) {
-      const numericEnumerator = clean.match(/^\s*\(?\d{1,2}\s*[\).:-]\s+/);
-      if (numericEnumerator) {
-        clean = clean.slice(numericEnumerator[0].length).trim();
-      }
-      const letterWithPunctuation = clean.match(/^\s*(?:\(?\s*[A-E]\s*[\).:-])\s+/i);
-      if (letterWithPunctuation) {
-        clean = clean.slice(letterWithPunctuation[0].length).trim();
-      } else {
-        const letterBeforeUnderline = clean.match(/^\s*(?:\(?\s*[A-E]\s+)(?=<u>)/i);
-        if (letterBeforeUnderline) {
-          clean = clean.slice(letterBeforeUnderline[0].length).trim();
-        }
-      }
-    }
-    if (!clean.includes("<u>")) {
-      normalized.push("");
-      continue;
-    }
-    normalized.push(`${GRAMMAR_DIGITS[i]} ${clean}`);
-  }
-  while (normalized.length < 5) {
-    normalized.push("");
-  }
-  return normalized;
-}
-
-function extractOptionUnderlines(options = [], failureReasons = null) {
-  if (!Array.isArray(options)) return [];
-  const segments = [];
-  for (let i = 0; i < options.length; i += 1) {
-    const text = typeof options[i] === "string" ? options[i] : "";
-    const match = text.match(/<u[\s\S]*?>([\s\S]*?)<\/u>/i);
-    if (!match || !match[1]) {
-      if (failureReasons) {
-        failureReasons.push(`옵션 ${i + 1}에 밑줄 구간이 없음`);
-      }
-      return [];
-    }
-    segments.push(match[1]);
-  }
-  return segments;
-}
-
-const HYPHEN_VARIANTS = ['-', '\u2010', '\u2011', '\u2012', '\u2013', '\u2014', '\u2212'];
-const HYPHEN_VARIANT_SET = new Set(HYPHEN_VARIANTS);
-
-function isAlphabetic(char) {
-  return /^[A-Za-z]$/.test(char || '');
-}
-
-function rangeOverlaps(used, start, end) {
-  if (!used) return false;
-  for (let i = start; i < end; i += 1) {
-    if (used[i]) return true;
-  }
-  return false;
-}
-
-function markRangeUsed(used, start, end) {
-  if (!used) return;
-  for (let i = start; i < end; i += 1) {
-    used[i] = true;
-  }
-}
-
-function expandToWordBoundaries(plain, start, end) {
-  let newStart = start;
-  let newEnd = end;
-  while (newStart > 0 && isAlphabetic(plain[newStart - 1]) && isAlphabetic(plain[newStart])) {
-    newStart -= 1;
-  }
-  while (newEnd < plain.length && isAlphabetic(plain[newEnd - 1]) && isAlphabetic(plain[newEnd])) {
-    newEnd += 1;
-  }
-  return { start: newStart, end: newEnd };
-}
-
-function buildNormalizedMap(text) {
-  const chars = [];
-  const map = [];
-  for (let i = 0; i < text.length; i += 1) {
-    const ch = text[i];
-    if (/\s/.test(ch)) continue;
-    if (HYPHEN_VARIANT_SET.has(ch)) continue;
-    chars.push(ch.toLowerCase());
-    map.push(i);
-  }
-  return {
-    text: chars.join(''),
-    map
-  };
-}
-
-function findNormalizedMatch(normalized, segment, startOffset, allowSuffix = false) {
-  const { text } = normalized;
-  let offset = startOffset;
-  while (offset <= text.length - segment.length) {
-    const idx = text.indexOf(segment, offset);
-    if (idx === -1) break;
-    return { index: idx, length: segment.length };
-  }
-  if (!allowSuffix) {
-    return { index: -1, length: 0 };
-  }
-  const suffixPattern = new RegExp(`${escapeRegex(segment)}[a-z]{1,3}`, 'i');
-  const slice = text.slice(startOffset);
-  const match = slice.match(suffixPattern);
-  if (!match || typeof match.index !== 'number') {
-    return { index: -1, length: 0 };
-  }
-  return {
-    index: startOffset + match.index,
-    length: match[0].length
-  };
-}
-
-function locateSegmentRange({
-  plain,
-  normalized,
-  normalizedCursor,
-  rawSegment,
-  used,
-  failureReasons
-}) {
-  const cleaned = normalizeWhitespace(stripTags(rawSegment || ''));
-  if (!cleaned) {
-    if (failureReasons) failureReasons.push('옵션 밑줄이 비어 있음');
-    return null;
-  }
-
-  const punctuationTrimmed = cleaned.replace(/[.,;:!?"']+$/u, '').trim();
-  const candidateSegments = [cleaned];
-  if (punctuationTrimmed && punctuationTrimmed !== cleaned) {
-    candidateSegments.push(punctuationTrimmed);
-  }
-
-  const normalizedSegments = candidateSegments
-    .map((candidate) => ({
-      original: candidate,
-      normalized: candidate
-        .replace(/[\s]+/g, '')
-        .replace(new RegExp(`[${HYPHEN_VARIANTS.join('')}]`, 'g'), '')
-        .toLowerCase()
-    }))
-    .filter((item) => item.normalized.length > 0);
-
-  if (!normalizedSegments.length) {
-    if (failureReasons) failureReasons.push(`본문에서 "${cleaned}" 위치를 찾을 수 없음`);
-    return null;
-  }
-
-  const searchOffsets = [normalizedCursor.current, 0];
-
-  for (const segment of normalizedSegments) {
-    const allowSuffix = segment.normalized.length >= 4;
-    for (const baseOffset of searchOffsets) {
-      let offset = baseOffset;
-      while (offset <= normalized.text.length - segment.normalized.length) {
-        const { index, length } = findNormalizedMatch(normalized, segment.normalized, offset, allowSuffix);
-        if (index === -1) {
-          break;
-        }
-
-        const plainStart = normalized.map[index];
-        const plainEnd = normalized.map[index + length - 1] + 1;
-        const expanded = expandToWordBoundaries(plain, plainStart, plainEnd);
-
-        if (rangeOverlaps(used, expanded.start, expanded.end)) {
-          offset = index + 1;
-          continue;
-        }
-
-        markRangeUsed(used, expanded.start, expanded.end);
-        normalizedCursor.current = Math.max(normalizedCursor.current, index + length);
-        return {
-          start: expanded.start,
-          end: expanded.end
-        };
-      }
-    }
-  }
-
-  if (failureReasons) {
-    failureReasons.push(`본문에서 "${cleaned}" 위치를 찾을 수 없음`);
-  }
-  return null;
-}
-
-function rebuildUnderlinesFromOptions(mainText, options = [], failureReasons = null) {
-  if (!mainText) return null;
-  const segments = extractOptionUnderlines(options, failureReasons);
-  if (segments.length !== 5) return null;
-
-  const plain = String(mainText).replace(/<\/?u[^>]*>/gi, '');
-  const normalized = buildNormalizedMap(plain);
-  const normalizedCursor = { current: 0 };
-  const used = new Array(plain.length).fill(false);
-  const ranges = [];
-
-  for (let i = 0; i < segments.length; i += 1) {
-    const range = locateSegmentRange({
-      plain,
-      normalized,
-      normalizedCursor,
-      rawSegment: segments[i],
-      used,
-      failureReasons
-    });
-    if (!range) {
-      return null;
-    }
-    ranges.push(range);
-  }
-
-  const sorted = ranges
-    .map((range, index) => ({ ...range, index }))
-    .sort((a, b) => a.start - b.start);
-
-  const rebuiltParts = [];
-  let cursor = 0;
-  for (const item of sorted) {
-    rebuiltParts.push(plain.slice(cursor, item.start));
-    rebuiltParts.push(`<u>${plain.slice(item.start, item.end)}</u>`);
-    cursor = item.end;
-  }
-  rebuiltParts.push(plain.slice(cursor));
-
-  const rebuilt = rebuiltParts.join('');
-  const rebuiltCount = (rebuilt.match(UNDERLINE_PATTERN) || []).length;
-  if (rebuiltCount !== 5) {
-    if (failureReasons) failureReasons.push(`복원 후에도 밑줄이 ${rebuiltCount}개`);
-    return null;
-  }
-
-  const updatedOptions = ranges.map((range, index) => {
-    const snippet = plain.slice(range.start, range.end);
-    return `${GRAMMAR_DIGITS[index]} <u>${snippet}</u>`;
-  });
-
-  return {
-    mainText: rebuilt,
-    options: updatedOptions
-  };
-}
-
-function ensureSourceLabel(raw, context) {
-  const value = String(raw || "").trim();
-  if (value) {
-    const normalized = value.replace(SOURCE_PREFIX_REGEX, "\ucd9c\ucc98\u2502").trim();
-    if (normalized.startsWith("\ucd9c\ucc98\u2502")) {
-      return normalized;
-    }
-  }
-  const docTitle = String((context && context.docTitle) || "").trim();
-  return docTitle ? `\ucd9c\ucc98\u2502${docTitle}` : "\ucd9c\ucc98\u2502LoE Source";
-}
 
 class AIProblemService {
   constructor() {
@@ -510,9 +283,9 @@ class AIProblemService {
     for (const problemId of uniqueIds) {
       try {
         await database.run(
-          'INSERT INTO problem_exposures (user_id, problem_id, first_seen_at, last_seen_at, exposure_count) ' +
-            'VALUES (?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 1) ' +
-            'ON CONFLICT(user_id, problem_id) DO UPDATE SET last_seen_at = CURRENT_TIMESTAMP, exposure_count = exposure_count + 1',
+          'INSERT INTO problem_exposures (user_id, problem_id, first_seen_at, last_seen_at, exposure_count, last_result) ' +
+            "VALUES (?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 1, 'pending') " +
+            "ON CONFLICT(user_id, problem_id) DO UPDATE SET last_seen_at = CURRENT_TIMESTAMP, exposure_count = problem_exposures.exposure_count + 1, last_result = 'pending'",
           [numericUserId, problemId]
         );
         updated += 1;
@@ -561,191 +334,406 @@ class AIProblemService {
   async generateBlank(documentId, count = 5) {
     const { document, passages } = await this.getPassages(documentId);
     const docTitle = document?.title || `Document ${documentId}`;
-    const results = [];
+
     if (!this.getOpenAI()) {
       throw new Error("AI generator unavailable for blank problems");
     }
-    const manualExcerpt = readBlankManual(2000);
-    const allowedQuestions = [BLANK_QUESTION, BLANK_DEFINITION_QUESTION];
+
+    const manualExcerpt = readBlankManual(2400);
+    const results = [];
 
     for (let i = 0; i < count; i += 1) {
       const passage = passages[i % passages.length];
-      let attempts = 0;
-      let assigned = false;
-      while (!assigned && attempts < 3) {
-        attempts += 1;
-        try {
-          const prompt = [
-            "You are a deterministic K-CSAT English cloze item writer.",
-            "Follow the style contract exactly. Question text must remain in Korean.",
-            manualExcerpt,
-            `Passage (preserve line breaks):\n${clipText(passage, 1200)}`,
-            "",
-            "Return raw JSON only with this schema:",
-            "{",
-            "  \"type\": \"blank\",",
-            "  \"question\": \"한국어 지시문 두 가지 중 하나\",",
-            "  \"text\": \"English sentence/paragraph containing ____ (or similar placeholder)\",",
-            "  \"options\": [",
-            "    \"\\u2460 option\",",
-            "    \"\\u2461 option\",",
-            "    \"\\u2462 option\",",
-            "    \"\\u2463 option\",",
-            "    \"\\u2464 option\"",
-            "  ],",
-            "  \"correctAnswer\": 3,",
-            "  \"explanation\": \"한국어 해설\",",
-            "  \"sourceLabel\": \"\\ucd9c\\ucc98\u2502기관 연도 회차 문항 (pXX)\",",
-            "  \"blankType\": \"general|definition|paraphrase|insertion\"",
-            "}",
-            "Rules:",
-            "- Choose question from the allowed list: \"${BLANK_QUESTION}\" or \"${BLANK_DEFINITION_QUESTION}\".",
-            "- Exactly one blank placeholder must appear in 'text' (e.g., ____ or (    )).",
-            "- Provide five options labelled with circled digits (\\u2460-\\u2464).",
-            "- Options must be plausible English completions. For definition type, options must be concise English definitions.",
-            "- Exactly one option must satisfy the passage's logic, polarity, and collocation; each distractor must embody a distinct defect (narrow, broad, detail, counter-claim, metaphor-literal, role-swap, collocation break, definition error).",
-            "- Write the explanation in Korean summarising why the correct option fits and naming at least one defect among the distractors.",
-            "- sourceLabel must start with '출처│'.",
-            "- Respond with JSON only (no Markdown fences)."
-          ].filter(Boolean).join("\n");
+      let attempt = 0;
+      let lastFailure = '';
+      let normalized = null;
 
+      while (attempt < 6 && !normalized) {
+        attempt += 1;
+        const extraDirectives = deriveBlankDirectives(lastFailure);
+        const prompt = buildBlankPrompt({
+          passage,
+          manualExcerpt,
+          extraDirectives
+        });
+
+        try {
           const response = await this.callChatCompletion({
             model: "gpt-4o-mini",
-            temperature: 0.45,
-            max_tokens: 520,
+            temperature: 0.35,
+            max_tokens: 820,
             messages: [{ role: "user", content: prompt }]
           }, { label: 'blank' });
-          const payload = JSON.parse(stripJsonFences(response.choices?.[0]?.message?.content || ""));
-          const question = String(payload.question || '').trim();
-          if (!allowedQuestions.includes(question)) {
-            throw new Error(`unexpected blank question: ${question}`);
-          }
-          const text = String(payload.text || '').trim();
-          if (!text || !/(____|__|\(\s*\)|\[\s*\]|blank)/i.test(text)) {
-            throw new Error('blank text missing placeholder');
-          }
-          const options = Array.isArray(payload.options)
-            ? payload.options.map((opt) => String(opt || '').trim()).filter(Boolean)
-            : [];
-          if (options.length !== CIRCLED_DIGITS.length) {
-            throw new Error('blank options must contain 5 entries');
-          }
-          options.forEach((option, index) => {
-            if (!option.startsWith(CIRCLED_DIGITS[index])) {
-              throw new Error(`blank option ${index + 1} missing circled digit`);
-            }
-          });
-          const answer = Number(payload.correctAnswer || payload.answer);
-          if (!Number.isInteger(answer) || answer < 1 || answer > CIRCLED_DIGITS.length) {
-            throw new Error('invalid blank correctAnswer');
-          }
-          const explanation = String(payload.explanation || '').trim();
-          if (!explanation || !containsHangul(explanation)) {
-            throw new Error('blank explanation must be Korean');
-          }
-          const sourceLabel = ensureSourceLabel(payload.sourceLabel, { docTitle });
 
-          const metadata = {
-            documentTitle: docTitle,
-            generator: 'openai'
-          };
-          if (payload.blankType) {
-            metadata.blankType = String(payload.blankType).trim();
-          }
-
-          results.push({
-            id: payload.id || `blank_ai_${Date.now()}_${results.length}`,
-            type: 'blank',
-            question,
-            text,
-            options,
-            answer: String(answer),
-            correctAnswer: String(answer),
-            explanation,
-            sourceLabel,
-            metadata
+          const content = response.choices?.[0]?.message?.content || '';
+          const payload = JSON.parse(stripJsonFences(content));
+          normalized = normalizeBlankPayload(payload, {
+            docTitle,
+            passage,
+            rawContent: content
           });
-          assigned = true;
         } catch (error) {
-          console.warn("[ai-blank] generation failed:", error?.message || error);
-          if (attempts >= 3) {
-            throw new Error(`[ai-blank] generation failed after retries: ${error?.message || error}`);
+          lastFailure = String(error?.message || '');
+          console.warn('[ai-blank] generation failed:', lastFailure);
+          if (attempt >= 4) {
+            throw new Error(`[ai-blank] generation failed after retries: ${lastFailure}`);
           }
         }
+      }
+
+      if (normalized) {
+        results.push({
+          ...normalized,
+          id: normalized.id || `blank_ai_${Date.now()}_${results.length}`
+        });
       }
     }
 
     return results;
   }
 
+  _deriveEobeopDirectives(lastFailure = '', mode = 'grammar') {
+    const rawMessage = String(lastFailure || '');
+    const message = rawMessage.toLowerCase();
+    if (!rawMessage) return [];
+    const directives = [];
+    if (message.includes('underline') || message.includes('밑줄')) {
+      directives.push('- Underline exactly five segments with <u>...</u> in both the passage and each option.');
+    }
+    if (message.includes('option') && message.includes('5')) {
+      directives.push('- Provide exactly five options labelled with the circled digits ①-⑤.');
+    }
+    if (message.includes('reason')) {
+      directives.push('- Fill the "reason" field for every option (정답 포함) with a concise Korean sentence.');
+    }
+    if (message.includes('korean')) {
+      directives.push('- Keep the explanation and option reasons entirely in Korean.');
+    }
+    if (message.includes('correct') && message.includes('count')) {
+      directives.push('- Ensure the number of incorrect options matches the correctAnswer(s) list.');
+    }
+    if (message.includes('question') && message.includes('unexpected')) {
+      directives.push(`- Use the fixed Korean question text for ${mode === 'vocabulary' ? '어휘' : '어법'} items.`);
+    }
+    if (message.includes('passage') && message.includes('missing')) {
+      directives.push('- Return the full original passage verbatim; do not summarise or delete sentences.');
+    }
+    if (message.includes('찾을 수 없음') || message.includes('segment') || message.includes('위치')) {
+      directives.push('- Copy each underlined snippet exactly as it appears in the passage (no paraphrasing or trimming).');
+    }
+    const missingSnippetRegex = /"([^"]+)"\s*위치를? 찾을 수 없음/gi;
+    const snippetDirectives = new Set();
+    let snippetMatch;
+    while ((snippetMatch = missingSnippetRegex.exec(rawMessage)) !== null) {
+      const snippet = snippetMatch[1].trim();
+      if (snippet.length) {
+        snippetDirectives.add(`- Use the exact phrase "${snippet}" in both the passage and the matching option; do not replace or modify this wording.`);
+      }
+    }
+    directives.push(...snippetDirectives);
+    if (message.includes('explanation') || message.includes('too short')) {
+      directives.push('- Write the explanation in at least 세 문장, covering 핵심 논지 · 정답 근거 · 두 개 이상 오답의 결함.');
+    }
+    return directives;
+  }
+
+  _normalizeGrammarPayload(payload, context = {}) {
+    if (!payload || typeof payload !== 'object') {
+      throw new Error('grammar payload missing');
+    }
+
+    const docTitle = context.docTitle;
+    const rawQuestion = String(payload.question || '').trim() || BASE_QUESTION;
+    const normalizedKey = normalizeQuestionKey(rawQuestion);
+    const baseKey = normalizeQuestionKey(BASE_QUESTION);
+    const multiKey = normalizeQuestionKey(MULTI_QUESTION);
+
+    let normalizedType = 'grammar';
+    if (String(payload.type || '').toLowerCase() === 'grammar_multi' || normalizedKey === multiKey || String(payload.questionVariant || '').toLowerCase() === 'multi' || (Array.isArray(payload.correctAnswers) && payload.correctAnswers.length >= 2)) {
+      normalizedType = 'grammar_multi';
+    }
+    const expectedQuestion = normalizedType === 'grammar_multi' ? MULTI_QUESTION : BASE_QUESTION;
+    if (![baseKey, multiKey].includes(normalizedKey)) {
+      throw new Error('unexpected grammar question');
+    }
+    const question = expectedQuestion;
+
+    const originalPassageRaw = context.passage
+      ? String(context.passage)
+      : String(payload.originalPassage || payload.sourcePassage || '').trim();
+    let mainText = String(payload.passage || payload.text || payload.mainText || originalPassageRaw || '').trim();
+    if (!mainText) {
+      throw new Error('grammar passage missing');
+    }
+
+    const failureReasons = Array.isArray(context.failureReasons) ? context.failureReasons : [];
+    const reasonSuffix = () => (failureReasons.length ? ` :: ${failureReasons.join('; ')}` : '');
+    const optionsInfo = normalizeUnderlinedOptions(payload.options || [], failureReasons);
+
+    let underlineCount = (mainText.match(UNDERLINE_PATTERN) || []).length;
+    if (underlineCount !== 5) {
+      const rebuilt = rebuildUnderlinesFromOptions(mainText, optionsInfo.formatted, failureReasons);
+      if (!rebuilt) {
+        throw new Error(`passage underline count mismatch (${underlineCount})${reasonSuffix()}`);
+      }
+      mainText = rebuilt.mainText;
+    }
+
+    underlineCount = (mainText.match(UNDERLINE_PATTERN) || []).length;
+    if (underlineCount !== 5) {
+      throw new Error(`grammar passage must contain exactly five underlined segments${reasonSuffix()}`);
+    }
+
+    const answerCandidates = [];
+    const answerKeys = ['correctAnswers', 'answers', 'answer', 'correctAnswer'];
+    answerKeys.forEach((key) => {
+      const value = payload[key];
+      if (value === undefined || value === null) return;
+      if (Array.isArray(value)) {
+        value.forEach((item) => {
+          const num = parseInt(item, 10);
+          if (Number.isInteger(num)) {
+            answerCandidates.push(num);
+          }
+        });
+      } else {
+        String(value)
+          .split(/[\s,]+/)
+          .filter(Boolean)
+          .forEach((token) => {
+            const num = parseInt(token, 10);
+            if (Number.isInteger(num)) {
+              answerCandidates.push(num);
+            }
+          });
+      }
+    });
+
+    if (Array.isArray(payload.answerIndices)) {
+      payload.answerIndices.forEach((idx) => {
+        const num = parseInt(idx, 10);
+        if (Number.isInteger(num)) {
+          answerCandidates.push(num);
+        }
+      });
+    }
+
+    optionsInfo.statuses.forEach((status, index) => {
+      if (status === 'incorrect') {
+        answerCandidates.push(index + 1);
+      }
+    });
+
+    const uniqueAnswers = [...new Set(answerCandidates.filter((num) => Number.isInteger(num) && num >= 1 && num <= CIRCLED_DIGITS.length))].sort((a, b) => a - b);
+    const minCorrect = normalizedType === 'grammar_multi' ? 2 : 1;
+    if (uniqueAnswers.length < minCorrect) {
+      throw new Error('grammar answer missing');
+    }
+    if (normalizedType === 'grammar' && uniqueAnswers.length !== 1) {
+      throw new Error('grammar requires exactly one incorrect option');
+    }
+
+    optionsInfo.statuses.forEach((status, index) => {
+      if (!status) return;
+      const isAnswer = uniqueAnswers.includes(index + 1);
+      if (status === 'incorrect' && !isAnswer) {
+        throw new Error('grammar option status conflicts with answer set');
+      }
+      if (status === 'correct' && isAnswer && normalizedType === 'grammar') {
+        throw new Error('grammar answer status must be incorrect');
+      }
+    });
+
+    const explanation = String(payload.explanation || '').trim();
+    if (!explanation || !containsHangul(explanation)) {
+      throw new Error('grammar explanation must be Korean');
+    }
+    if (explanation.length < GRAMMAR_MIN_EXPLANATION_LENGTH || countSentences(explanation) < GRAMMAR_MIN_EXPLANATION_SENTENCES) {
+      throw new Error('grammar explanation too short');
+    }
+
+    const sourceLabel = ensureSourceLabel(payload.sourceLabel || payload.source, { docTitle });
+
+    const reasonMap = { ...optionsInfo.reasons };
+    const tagMap = { ...optionsInfo.tags };
+    const statusList = [...optionsInfo.statuses];
+
+    const reasonCandidates = [
+      payload.distractorReasons,
+      payload.optionReasons,
+      payload.optionComments,
+      payload.optionRationales,
+      payload.distractors
+    ];
+
+    reasonCandidates.forEach((collection) => {
+      if (!Array.isArray(collection)) return;
+      collection.forEach((entry) => {
+        if (!entry || typeof entry !== 'object') return;
+        const idx = labelToIndex(entry.label || entry.id || entry.option || entry.choice || entry.index, null);
+        if (idx === null || idx < 0 || idx >= CIRCLED_DIGITS.length) return;
+        const marker = CIRCLED_DIGITS[idx];
+        const reasonText = entry.reason || entry.rationale || entry.comment || entry.explanation;
+        if (reasonText) {
+          reasonMap[marker] = String(reasonText).trim();
+        }
+        const tagText = entry.tag || entry.errorType || entry.defect || entry.category;
+        if (tagText && !tagMap[marker]) {
+          tagMap[marker] = String(tagText).trim();
+        }
+        const status = normalizeOptionStatus(entry.status || entry.role || entry.correctness);
+        if (status && !statusList[idx]) {
+          statusList[idx] = status;
+        }
+      });
+    });
+
+    for (let i = 0; i < CIRCLED_DIGITS.length; i += 1) {
+      const marker = CIRCLED_DIGITS[i];
+      const reasonText = reasonMap[marker] ? String(reasonMap[marker]).trim() : '';
+      if (!reasonText || !containsHangul(reasonText) || reasonText.length < 6) {
+        throw new Error('grammar option reasons incomplete');
+      }
+    }
+
+    const normalizedMain = normalizeWhitespace(stripTags(mainText));
+    if (originalPassageRaw) {
+      const normalizedOriginal = normalizeWhitespace(stripTags(originalPassageRaw));
+      if (normalizedOriginal && normalizedMain.length + 60 < normalizedOriginal.length) {
+        throw new Error('grammar passage truncated');
+      }
+    }
+
+    const answerValue = uniqueAnswers.length === 1 ? String(uniqueAnswers[0]) : uniqueAnswers.join(',');
+
+    const metadata = {
+      documentTitle: docTitle,
+      generator: 'openai',
+      grammarPoint: payload.grammarPoint || payload.grammarFocus || undefined,
+      trapPattern: payload.trapPattern || payload.trap || payload.pattern || undefined,
+      difficulty: payload.difficulty || payload.level || 'csat-advanced',
+      variantTag: payload.variantTag || payload.variant || undefined,
+      optionReasons: reasonMap,
+      optionTags: Object.keys(tagMap).length ? tagMap : undefined,
+      optionStatuses: statusList.some((item) => item) ? statusList : undefined
+    };
+
+    const normalizedOriginal = originalPassageRaw ? normalizeWhitespace(originalPassageRaw) : '';
+    if (normalizedOriginal) {
+      metadata.originalPassageLength = normalizedOriginal.length;
+      const sentenceCount = countSentences(normalizedOriginal);
+      if (sentenceCount) {
+        metadata.originalSentenceCount = sentenceCount;
+      }
+    }
+
+    return {
+      id: payload.id || `grammar_ai_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+      type: normalizedType,
+      question,
+      mainText,
+      passage: mainText,
+      originalPassage: originalPassageRaw ? normalizeWhitespace(originalPassageRaw) : undefined,
+      options: optionsInfo.formatted,
+      answer: answerValue,
+      correctAnswer: answerValue,
+      explanation,
+      sourceLabel,
+      difficulty: 'csat-advanced',
+      metadata
+    };
+  }
+
+  _normalizeVocabularyPayload(payload, context = {}) {
+    return normalizeVocabularyPayload(payload, context);
+  }
+
+  _normalizeBlankPayload(payload, context = {}) {
+    return normalizeBlankPayload(payload, context);
+  }
+
   async generateVocab(documentId, count = 5) {
     const { document, passages } = await this.getPassages(documentId);
     const docTitle = document?.title || `Document ${documentId}`;
-    const question = "\ub2e4\uc74c \uae00\uc758 \ube7c\ub9ac\uae30 \ub41c \ub2e8\uc5b4\uc640 \uc758\ubbf8\uc0ac\uac74 \uac00\uc7a5 \uac19\uc740 \ub2e8\uc5b4\ub97c \uace0\ub974\uc2dc\uc624.";
     const results = [];
 
     if (!this.getOpenAI()) {
       throw new Error("AI generator unavailable for vocabulary problems");
     }
+    const manualExcerpt = readVocabularyManual(2400);
 
     for (let i = 0; i < count; i += 1) {
       const passage = passages[i % passages.length];
-      let success = false;
-      let attempts = 0;
-      while (!success && attempts < 3) {
-        attempts += 1;
+      if (!passage) continue;
+      let attempt = 0;
+      let normalized = null;
+      let lastFailure = '';
+      while (attempt < 6 && !normalized) {
+        attempt += 1;
+        const failureReasons = [];
         try {
-          const prompt = [
-            "You are a CSAT synonym vocabulary item writer.",
-            `Passage:\n${clipText(passage, 900)}`,
-            "",
-            "Return JSON only:",
-            "{",
-            "  \"type\": \"vocabulary\",",
-            `  \"question\": \"${question}\",`,
-            "  \"text\": \"... <u>target</u> ...\",",
-            "  \"options\": [\"option1\", \"option2\", \"option3\", \"option4\"],",
-            "  \"correctAnswer\": 1,",
-            "  \"explanation\": \"Korean rationale\",",
-            "  \"sourceLabel\": \"\\ucd9c\\ucc98: ...\"",
-            "}"
-          ].join("\n");
+          const variantTag = `doc${documentId}_v${i}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+          const promptSections = [
+            'You are a deterministic K-CSAT English vocabulary (어휘 적절성) item writer.',
+            'Follow the dedicated vocabulary manual exactly and keep the 한국어 질문 문구 그대로.',
+            '',
+            `Passage title: ${docTitle}`,
+            `Passage (retain all sentences verbatim; replace target expressions with (A)/(B)/(C) slots and bracketed choices like "(A) [resolved / raised]"):\n${clipText(passage, 1600)}`,
+            '',
+            'Manual excerpt (truncated):',
+            manualExcerpt,
+            '',
+            'Return raw JSON only with this structure:',
+            VOCAB_JSON_BLUEPRINT.replace('"variantTag": "V-103"', `"variantTag": "${variantTag}"`),
+            '',
+            'Generation requirements:',
+            '- Provide a slots array where each entry describes one blank label (예: "A"), exactly two choices, the 0-based correctIndex, and optionally a short Korean explanation.',
+            '- In the passage string, show each blank as "(Label) [choice1 / choice2]" with the correct choice listed first.',
+            '- Provide exactly five options labelled with circled digits (①-⑤); each option must list the selected choices for (A)-(C) joined with " - ".',
+            '- correctAnswer must be the 1-based index of the unique option whose combination matches every slot\'s correct choice.',
+            '- Explanation must be in Korean with 최소 세 문장, 빈칸별 정답 근거와 대표 오답 결함을 모두 언급.',
+            '- Source label must start with "출처│" and avoid placeholder text.',
+            '- Respond with JSON only (no Markdown fences).'
+          ];
+
+          const additionalDirectives = this._deriveEobeopDirectives(lastFailure, 'vocabulary');
+          if (additionalDirectives.length) {
+            promptSections.push('', 'Additional fixes based on the previous attempt:', ...additionalDirectives);
+          }
+
+          const prompt = promptSections.filter(Boolean).join('\n');
 
           const response = await this.callChatCompletion({
             model: "gpt-4o-mini",
-            temperature: 0.4,
-            max_tokens: 520,
+            temperature: 0.3,
+            max_tokens: 880,
             messages: [{ role: "user", content: prompt }]
           }, { label: 'vocabulary' });
-          const payload = JSON.parse(stripJsonFences(response.choices?.[0]?.message?.content || ""));
-          const options = Array.isArray(payload.options)
-            ? payload.options.map((opt) => String(opt || "").trim())
-            : [];
-          const answer = Number(payload.correctAnswer || payload.answer);
-          if (options.length === 4 && Number.isInteger(answer) && answer >= 1 && answer <= 4) {
-            results.push({
-              id: payload.id || `vocab_ai_${Date.now()}_${results.length}`,
-              type: "vocabulary",
-              question,
-              text: payload.text || passage,
-              options,
-              answer: String(answer),
-              correctAnswer: String(answer),
-              explanation: String(payload.explanation || "").trim(),
-              sourceLabel: ensureSourceLabel(payload.sourceLabel, { docTitle }),
-              metadata: {
-                documentTitle: docTitle,
-                generator: 'openai'
-              }
-            });
-            success = true;
-          } else {
-            throw new Error("invalid vocabulary structure");
+
+          const content = response.choices?.[0]?.message?.content || '';
+          const payload = JSON.parse(stripJsonFences(content));
+          normalized = this._normalizeVocabularyPayload(payload, {
+            docTitle,
+            passage,
+            index: results.length,
+            failureReasons
+          });
+
+          if (normalized) {
+            normalized.id = normalized.id || `vocab_ai_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+            results.push(normalized);
           }
         } catch (error) {
-          console.warn("[ai-vocab] generation failed:", error?.message || error);
-          if (attempts >= 3) {
-            throw new Error(`[ai-vocab] generation failed after retries: ${error?.message || error}`);
+          const baseMessage = String(error?.message || '') || 'unknown vocabulary failure';
+          const reasonDetails = failureReasons
+            .map((reason) => String(reason || '').trim())
+            .filter((reason) => reason.length > 0);
+          const uniqueDetails = [...new Set(reasonDetails)];
+          const detailSuffix = uniqueDetails.length ? ` :: ${uniqueDetails.join('; ')}` : '';
+          lastFailure = `${baseMessage}${detailSuffix}`;
+          console.warn('[ai-vocab] generation failed:', lastFailure);
+          if (attempt >= 6) {
+            throw new Error(`[ai-vocab] generation failed after retries: ${lastFailure}`);
           }
         }
       }
@@ -757,9 +745,8 @@ class AIProblemService {
   async generateTitle(documentId, count = 5) {
     const { document, passages } = await this.getPassages(documentId);
     const docTitle = document?.title || `Document ${documentId}`;
-    const question = "\ub2e4\uc74c \uae00\uc758 \uc81c\ubaa9\uc73c\ub85c \uc801\uc808\ud55c \uac83\uc744 \uace0\ub974\uc2dc\uc624.";
+    const manualExcerpt = readTitleManual(2000);
     const results = [];
-    const manualExcerpt = readTitleManual(1600);
 
     if (!this.getOpenAI()) {
       throw new Error("AI generator unavailable for title problems");
@@ -767,82 +754,45 @@ class AIProblemService {
 
     for (let i = 0; i < count; i += 1) {
       const passage = passages[i % passages.length];
-      let success = false;
-      let attempts = 0;
-      while (!success && attempts < 3) {
-        attempts += 1;
-        try {
-          const prompt = [
-            "You are a deterministic KSAT English title item writer.",
-            "Follow the style contract exactly. The question text must remain Korean.",
-            `Passage (retain sentences):\n${clipText(passage, 1400)}`,
-            "",
-            "Title construction contract (truncated):",
-            manualExcerpt,
-            "",
-            "Return JSON only with this exact shape:",
-            "{",
-            "  \"type\": \"title\",",
-            `  \"question\": \"${question}\",`,
-            "  \"options\": [\"Title option 1\", \"Title option 2\", \"Title option 3\", \"Title option 4\", \"Title option 5\"],",
-            "  \"correctAnswer\": 3,",
-            "  \"explanation\": \"한국어로 논지/오답 결함을 설명\",",
-            "  \"sourceLabel\": \"\\ucd9c\\ucc98│기관 연도 회차 문항 (pXX)\"",
-            "}"
-          ].filter(Boolean).join("\n");
+      if (!passage) continue;
+      let attempt = 0;
+      let normalized = null;
+      let lastFailure = '';
 
+      while (attempt < 4 && !normalized) {
+        attempt += 1;
+        const variantTag = `title_${documentId}_${i}_${Date.now()}_${attempt}`;
+        try {
+          const prompt = buildTitlePrompt({
+            passage,
+            manualExcerpt,
+            docTitle,
+            variantTag,
+            failureReason: lastFailure
+          });
           const response = await this.callChatCompletion({
             model: "gpt-4o-mini",
-            temperature: 0.45,
-            max_tokens: 520,
+            temperature: 0.35,
+            max_tokens: 720,
             messages: [{ role: "user", content: prompt }]
           }, { label: 'title' });
-          const payload = JSON.parse(stripJsonFences(response.choices?.[0]?.message?.content || ""));
-          const options = Array.isArray(payload.options)
-            ? payload.options.map((opt) => String(opt || "").trim()).filter(Boolean)
-            : [];
-          const answer = Number(payload.correctAnswer || payload.answer);
-          const explanation = String(payload.explanation || "").trim();
-          const sourceLabel = ensureSourceLabel(payload.sourceLabel, { docTitle });
 
-          const isValidWordCount = (text) => {
-            const words = text.split(/\s+/).filter(Boolean);
-            return words.length >= 6 && words.length <= 12;
-          };
-
-          if (options.length !== 5) {
-            throw new Error("title options must contain 5 entries");
-          }
-          if (options.some((opt) => !isValidWordCount(opt))) {
-            throw new Error("title options must be 6-12 words");
-          }
-          if (!Number.isInteger(answer) || answer < 1 || answer > 5) {
-            throw new Error("invalid title answer index");
-          }
-          if (!/[가-힣]/.test(explanation)) {
-            throw new Error("title explanation must be in Korean");
-          }
-
-          results.push({
-            id: payload.id || `title_ai_${Date.now()}_${results.length}`,
-            type: "title",
-            question,
-            text: passage,
-            options,
-            answer: String(answer),
-            correctAnswer: String(answer),
-            explanation,
-            sourceLabel,
-            metadata: {
-              documentTitle: docTitle,
-              generator: 'openai'
-            }
+          const content = response.choices?.[0]?.message?.content || '';
+          const payload = JSON.parse(stripJsonFences(content));
+          normalized = normalizeTitlePayload(payload, {
+            docTitle,
+            passage,
+            variantTag
           });
-          success = true;
+
+          if (normalized) {
+            results.push(normalized);
+          }
         } catch (error) {
-          console.warn("[ai-title] generation failed:", error?.message || error);
-          if (attempts >= 3) {
-            throw new Error(`[ai-title] generation failed after retries: ${error?.message || error}`);
+          lastFailure = String(error?.message || '').trim() || 'unknown title failure';
+          console.warn('[ai-title] generation failed:', lastFailure);
+          if (attempt >= 4) {
+            throw new Error(`[ai-title] generation failed after retries: ${lastFailure}`);
           }
         }
       }
@@ -854,120 +804,53 @@ class AIProblemService {
   async generateTheme(documentId, count = 5) {
     const { document, passages } = await this.getPassages(documentId);
     const docTitle = document?.title || `Document ${documentId}`;
+    const manualExcerpt = readTopicManual(1800);
     const results = [];
+
     if (!this.getOpenAI()) {
       throw new Error("AI generator unavailable for theme problems");
     }
-    const manualExcerpt = readTopicManual(1600);
-
-    const isValidWordCount = (text) => {
-      const words = String(text || '')
-        .trim()
-        .split(/\s+/)
-        .filter(Boolean);
-      return words.length >= 6 && words.length <= 14;
-    };
 
     for (let i = 0; i < count; i += 1) {
       const passage = passages[i % passages.length];
-      let success = false;
-      let attempts = 0;
-      while (!success && attempts < 3) {
-        attempts += 1;
-        try {
-          const prompt = [
-            "You are a deterministic K-CSAT English topic item writer.",
-            "Follow the style contract exactly. Question text must remain Korean.",
-            manualExcerpt,
-            `Passage (preserve line breaks):\n${clipText(passage, 1400)}`,
-            "",
-            "Return raw JSON only with this schema:",
-            "{",
-            "  \"type\": \"theme\",",
-            `  \"question\": \"${TOPIC_QUESTION}\",`,
-            "  \"options\": [",
-            "    \"\\u2460 option\",",
-            "    \"\\u2461 option\",",
-            "    \"\\u2462 option\",",
-            "    \"\\u2463 option\",",
-            "    \"\\u2464 option\"",
-            "  ],",
-            "  \"correctAnswer\": 3,",
-            "  \"explanation\": \"한국어 해설\",",
-            "  \"sourceLabel\": \"\\ucd9c\\ucc98\u2502기관 연도 회차 문항 (pXX)\",",
-            "  \"topicType\": \"core|narrow|broad|detail|counter|role-swap|metaphor|scope|half-truth\"",
-            "}",
-            "Rules:",
-            "- Provide five English options labelled with circled digits (\\u2460-\\u2464).",
-            "- Each option must be a 6-14 word academic/neutral phrase or sentence.",
-            "- Exactly one option must match the passage's thesis (message) and scope (audience/domain).",
-            "- Each distractor must contain a distinct defect (narrow, broad, detail, counter-claim, role-swap, metaphor-literal, scope error, half-truth).",
-            "- Write the explanation in Korean summarising why the correct option fits and naming at least one defect among the distractors.",
-            "- sourceLabel must start with '출처│'.",
-            "- Respond with JSON only (no Markdown fences)."
-          ].filter(Boolean).join("\n");
+      if (!passage) continue;
+      let attempt = 0;
+      let normalized = null;
+      let lastFailure = '';
 
+      while (attempt < 4 && !normalized) {
+        attempt += 1;
+        const variantTag = `theme_${documentId}_${i}_${Date.now()}_${attempt}`;
+        try {
+          const prompt = buildTopicPrompt({
+            passage,
+            manualExcerpt,
+            docTitle,
+            variantTag,
+            failureReason: lastFailure
+          });
           const response = await this.callChatCompletion({
             model: "gpt-4o-mini",
-            temperature: 0.4,
-            max_tokens: 520,
+            temperature: 0.32,
+            max_tokens: 720,
             messages: [{ role: "user", content: prompt }]
           }, { label: 'theme' });
-          const payload = JSON.parse(stripJsonFences(response.choices?.[0]?.message?.content || ""));
-          const question = String(payload.question || '').trim();
-          if (question !== TOPIC_QUESTION) {
-            throw new Error(`unexpected topic question: ${question}`);
-          }
-          const options = Array.isArray(payload.options)
-            ? payload.options.map((opt) => String(opt || '').trim()).filter(Boolean)
-            : [];
-          if (options.length !== CIRCLED_DIGITS.length) {
-            throw new Error('topic options must contain 5 entries');
-          }
-          options.forEach((option, index) => {
-            if (!option.startsWith(CIRCLED_DIGITS[index])) {
-              throw new Error(`topic option ${index + 1} missing circled digit`);
-            }
-            const value = option.slice(CIRCLED_DIGITS[index].length).trim();
-            if (!isValidWordCount(value)) {
-              throw new Error(`topic option ${index + 1} must be 6-14 words`);
-            }
-          });
-          const answer = Number(payload.correctAnswer || payload.answer);
-          if (!Number.isInteger(answer) || answer < 1 || answer > CIRCLED_DIGITS.length) {
-            throw new Error('invalid topic correctAnswer');
-          }
-          const explanation = String(payload.explanation || '').trim();
-          if (!explanation || !containsHangul(explanation)) {
-            throw new Error('topic explanation must be Korean');
-          }
-          const sourceLabel = ensureSourceLabel(payload.sourceLabel, { docTitle });
 
-          const metadata = {
-            documentTitle: docTitle,
-            generator: 'openai'
-          };
-          if (payload.topicType) {
-            metadata.topicType = String(payload.topicType).trim();
-          }
-
-          results.push({
-            id: payload.id || `theme_ai_${Date.now()}_${results.length}`,
-            type: 'theme',
-            question,
-            text: passage,
-            options,
-            answer: String(answer),
-            correctAnswer: String(answer),
-            explanation,
-            sourceLabel,
-            metadata
+          const content = response.choices?.[0]?.message?.content || '';
+          const payload = JSON.parse(stripJsonFences(content));
+          normalized = normalizeTopicPayload(payload, {
+            docTitle,
+            passage,
+            variantTag
           });
-          success = true;
+          if (normalized) {
+            results.push(normalized);
+          }
         } catch (error) {
-          console.warn("[ai-theme] generation failed:", error?.message || error);
-          if (attempts >= 3) {
-            throw new Error(`[ai-theme] generation failed after retries: ${error?.message || error}`);
+          lastFailure = String(error?.message || '').trim() || 'unknown topic failure';
+          console.warn('[ai-theme] generation failed:', lastFailure);
+          if (attempt >= 4) {
+            throw new Error(`[ai-theme] generation failed after retries: ${lastFailure}`);
           }
         }
       }
@@ -996,6 +879,34 @@ class AIProblemService {
       return Array.isArray(matches) && matches.length === 1;
     };
 
+    const coerceSingleUnderline = (text) => {
+      if (!text) return null;
+      let count = 0;
+      const sanitized = String(text).replace(/<u[^>]*>([\s\S]*?)<\/u>/g, (match, inner) => {
+        count += 1;
+        if (count === 1) {
+          return `<u>${inner}</u>`;
+        }
+        return inner;
+      });
+      if (count === 0) {
+        return null;
+      }
+      return sanitized;
+    };
+
+    const isValidEnglishOption = (value) => {
+      if (!value) return false;
+      if (containsHangul(value)) return false;
+      const cleaned = value.replace(/[’]/g, "'").replace(/[“”]/g, '"').trim();
+      if (!cleaned) return false;
+      const wordCount = countWords(cleaned);
+      if (wordCount < 6 || wordCount > 18) {
+        return false;
+      }
+      return /^[A-Za-z][A-Za-z\s.,'"()\-:;!?]*$/.test(cleaned);
+    };
+
     for (let i = 0; i < count; i += 1) {
       const passage = passages[i % passages.length];
       let success = false;
@@ -1016,11 +927,11 @@ class AIProblemService {
             `  \"question\": \"${IMPLICIT_QUESTION}\",`,
             "  \"text\": \"English passage with <u>target</u>\",",
             "  \"options\": [",
-            "    \"\\u2460 한국어 보기\",",
-            "    \"\\u2461 한국어 보기\",",
-            "    \"\\u2462 한국어 보기\",",
-            "    \"\\u2463 한국어 보기\",",
-            "    \"\\u2464 한국어 보기\"",
+            "    \"\\u2460 English option\",",
+            "    \"\\u2461 English option\",",
+            "    \"\\u2462 English option\",",
+            "    \"\\u2463 English option\",",
+            "    \"\\u2464 English option\"",
             "  ],",
             "  \"correctAnswer\": 3,",
             "  \"explanation\": \"한국어 해설\",",
@@ -1031,8 +942,8 @@ class AIProblemService {
             "Rules:",
             "- Underline exactly one contiguous span with <u>...</u> inside text.",
             "- Question must remain exactly in Korean as provided.",
-            "- Provide five Korean options labelled with circled digits (\\u2460-\\u2464).",
-            "- Options must be academic/neutral Korean sentences or noun phrases (no slang).",
+            "- Provide five English options labelled with circled digits (\\u2460-\\u2464).",
+            "- Options must be academic or neutral English sentences/phrases (6-18 words, no numerals).",
             "- Exactly one option must match the passage's implicit message, polarity, and scope.",
             "- Each distractor must embody a distinct defect from {focus-shift, polarity-flip, scope-shift, fact-error, relation-flip, definition-trivial}.",
             "- Explanation must be Korean and cite the discourse cues plus at least one distractor defect.",
@@ -1053,7 +964,11 @@ class AIProblemService {
             throw new Error(`unexpected implicit question: ${question}`);
           }
 
-          const text = String(payload.text || '').trim();
+          const coercedText = coerceSingleUnderline(payload.text || '');
+          if (!coercedText) {
+            throw new Error('implicit text must contain exactly one <u>...</u> span');
+          }
+          const text = String(coercedText).trim();
           if (!validateUnderline(text)) {
             throw new Error('implicit text must contain exactly one <u>...</u> span');
           }
@@ -1068,8 +983,9 @@ class AIProblemService {
             if (!option.startsWith(CIRCLED_DIGITS[index])) {
               throw new Error(`implicit option ${index + 1} missing circled digit`);
             }
-            if (!containsHangul(option)) {
-              throw new Error(`implicit option ${index + 1} must be Korean`);
+            const value = option.slice(CIRCLED_DIGITS[index].length).trim();
+            if (!isValidEnglishOption(value)) {
+              throw new Error(`implicit option ${index + 1} must be an academic English phrase (6-18 words)`);
             }
           });
 
@@ -1106,6 +1022,7 @@ class AIProblemService {
             type: 'implicit',
             question,
             text,
+            mainText: text,
             options,
             answer: String(answer),
             correctAnswer: String(answer),
@@ -1200,7 +1117,7 @@ class AIProblemService {
 
           const payload = JSON.parse(stripJsonFences(response.choices?.[0]?.message?.content || ""));
           const question = String(payload.question || '').trim();
-          if (question !== IRRELEVANT_QUESTION) {
+          if (!IRRELEVANT_QUESTION_VARIANTS.includes(question)) {
             throw new Error(`unexpected irrelevant question: ${question}`);
           }
 
@@ -1333,130 +1250,33 @@ class AIProblemService {
   }
 
   formatGrammarProblem(raw, context) {
-    if (!raw || typeof raw !== "object") return null;
-
-    const rawType = typeof raw.type === "string" ? raw.type.trim().toLowerCase() : "";
-    const declaredAnswers = Array.isArray(raw.correctAnswers)
-      ? raw.correctAnswers
-      : Array.isArray(raw.answers)
-        ? raw.answers
-        : null;
-    const isMulti = rawType === 'grammar_multi' || (declaredAnswers && declaredAnswers.length >= 2);
-    const normalizedType = isMulti ? 'grammar_multi' : 'grammar';
-    const expectedQuestion = normalizedType === 'grammar_multi' ? MULTI_QUESTION : BASE_QUESTION;
-    const questionText = String(raw.question || '').trim();
-    const question = questionText || expectedQuestion;
-    const originalPassage = String(context.originalPassage ?? context.passage ?? '').trim();
-    let mainText = String(raw.passage || raw.text || raw.mainText || context.passage || '').trim();
-    let options = normalizeGrammarOptions(raw.options || raw.choices || []);
     const failureReasons = Array.isArray(context?.failureReasons) ? context.failureReasons : null;
-
-    const reject = (reason) => {
-      if (failureReasons) failureReasons.push(reason);
+    try {
+      return this._normalizeGrammarPayload(raw, context || {});
+    } catch (error) {
+      if (failureReasons) {
+        failureReasons.push(String(error?.message || error));
+      }
       return null;
-    };
-
-    if (options.length !== 5 || options.some((opt) => !opt)) {
-      return reject('선택지가 5개 미만이거나 형식이 맞지 않음');
     }
-    let underlineCount = (mainText.match(UNDERLINE_PATTERN) || []).length;
-    if (underlineCount !== 5) {
-      const rebuilt = rebuildUnderlinesFromOptions(mainText, options, failureReasons);
-      if (rebuilt) {
-        mainText = rebuilt.mainText;
-        options = rebuilt.options;
-        underlineCount = 5;
-      } else {
-        return reject(`본문의 밑줄 수(${underlineCount})가 5가 아님 (옵션 기반 보정 실패)`);
-      }
-    }
-
-    const answerKeys = ['correctAnswers', 'answers', 'answer', 'correctAnswer'];
-    let answers = [];
-    for (const key of answerKeys) {
-      if (raw[key] !== undefined && raw[key] !== null) {
-        const value = Array.isArray(raw[key]) ? raw[key] : String(raw[key]).split(/[\s,]+/);
-        answers = value
-          .map((token) => parseInt(String(token).trim(), 10))
-          .filter((num) => Number.isInteger(num) && num >= 1 && num <= 5);
-        if (answers.length) break;
-      }
-    }
-
-    const uniqueAnswers = [...new Set(answers)].sort((a, b) => a - b);
-    const minCorrect = isMulti ? 2 : 1;
-    if (uniqueAnswers.length < minCorrect) {
-      return reject(`정답 번호가 ${minCorrect}개 미만(${uniqueAnswers.length}개)`);
-    }
-
-    const explanation = String(raw.explanation || '').trim();
-    const sourceLabel = ensureSourceLabel(raw.sourceLabel || raw.source, context);
-    const normalizedQuestion = question === expectedQuestion ? question : expectedQuestion;
-
-    const validation = validateGrammarProblem({
-      type: normalizedType,
-      question: normalizedQuestion,
-      passage: mainText,
-      mainText,
-      options,
-      explanation,
-      sourceLabel,
-      correctAnswers: uniqueAnswers
-    }, { minCorrect });
-
-    if (!validation.valid) {
-      console.warn('[ai-grammar] validation issues:', validation.issues);
-      return reject(`검증 실패: ${validation.issues.join('; ')}`);
-    }
-
-    const answerValue = validation.answers.length === 1
-      ? String(validation.answers[0])
-      : validation.answers.join(',');
-
-    const metadata = {
-      documentTitle: context.docTitle,
-      passageIndex: context.index + 1,
-      generator: 'openai',
-      correctCount: validation.answers.length
-    };
-    if (raw.grammarPoint) {
-      metadata.grammarPoint = raw.grammarPoint;
-    }
-    if (originalPassage) {
-      metadata.originalPassage = originalPassage;
-    }
-
-    return {
-      id: raw.id || `grammar_ai_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
-      type: normalizedType,
-      question: normalizedQuestion,
-      mainText,
-      passage: mainText,
-      originalPassage: originalPassage || undefined,
-      options,
-      answer: answerValue,
-      correctAnswer: answerValue,
-      explanation,
-      sourceLabel,
-      difficulty: 'csat-advanced',
-      metadata
-    };
   }
 
   async generateGrammar(documentId, count = 5) {
     const { document, passages } = await this.getPassages(documentId);
     if (!this.getOpenAI()) throw new Error("AI generator unavailable for grammar problems");
-    const manualExcerpt = readGrammarManual(2000);
+    const manualExcerpt = readGrammarManual(2400);
     const docTitle = document?.title || `Document ${documentId}`;
     const results = [];
 
     for (let i = 0; i < count; i += 1) {
       const passage = passages[i % passages.length];
       if (!passage) continue;
-      let success = false;
-      let attempts = 0;
-      while (!success && attempts < 3) {
-        attempts += 1;
+      let attempt = 0;
+      let normalized = null;
+      let lastFailure = '';
+      while (attempt < 4 && !normalized) {
+        attempt += 1;
+        const failureReasons = [];
         try {
           const variantTag = `doc${documentId}_p${i}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
           const prompt = buildGrammarPrompt({
@@ -1465,7 +1285,8 @@ class AIProblemService {
             passageIndex: i,
             difficulty: "advanced",
             manualExcerpt,
-            variantTag
+            variantTag,
+            extraDirectives: this._deriveEobeopDirectives(lastFailure, 'grammar')
           });
           const response = await this.callChatCompletion({
             model: "gpt-4o-mini",
@@ -1473,30 +1294,397 @@ class AIProblemService {
             max_tokens: 900,
             messages: [{ role: "user", content: prompt }]
           }, { label: 'grammar' });
-          const payload = JSON.parse(stripJsonFences(response.choices?.[0]?.message?.content || ""));
-          const failureReasons = [];
-          const problem = this.formatGrammarProblem(payload, {
+          const content = response.choices?.[0]?.message?.content || '';
+          const payload = JSON.parse(stripJsonFences(content));
+          normalized = this._normalizeGrammarPayload(payload, {
             docTitle,
             passage,
             index: results.length,
             failureReasons
           });
-          if (!problem) {
-            const detail = failureReasons.length ? `: ${failureReasons.join(' | ')}` : '';
-            throw new Error(`grammar formatting failed${detail}`);
+          if (normalized) {
+            normalized.id = normalized.id || `grammar_ai_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+            results.push(normalized);
           }
-          results.push(problem);
-          success = true;
         } catch (error) {
-          console.warn("[ai-grammar] generation failed:", error?.message || error);
-          if (attempts >= 3) {
-            throw error;
+          const baseMessage = String(error?.message || '') || 'unknown grammar failure';
+          const reasonDetails = failureReasons
+            .map((reason) => String(reason || '').trim())
+            .filter((reason) => reason.length > 0);
+          const uniqueDetails = [...new Set(reasonDetails)];
+          const detailSuffix = uniqueDetails.length ? ` :: ${uniqueDetails.join('; ')}` : '';
+          lastFailure = `${baseMessage}${detailSuffix}`;
+          console.warn("[ai-grammar] generation failed:", lastFailure);
+          if (attempt >= 6) {
+            throw new Error(`[ai-grammar] generation failed after retries: ${lastFailure}`);
           }
         }
       }
     }
 
     return results;
+  }
+
+  _acceptCachedProblem(type, problem) {
+    if (!problem || typeof problem !== 'object') {
+      return false;
+    }
+    if (type === 'summary') {
+      const validation = validateSummaryProblem(problem);
+      if (!validation.valid) {
+        return false;
+      }
+    }
+    if (type === 'title') {
+      const validation = validateTitleProblem(problem);
+      if (!validation.valid) {
+        return false;
+      }
+    }
+    if (type === 'theme' || type === 'topic') {
+      const validation = validateTopicProblem(problem);
+      if (!validation.valid) {
+        return false;
+      }
+    }
+    if (type === 'blank') {
+      const passage = normalizeWhitespace(problem.mainText || problem.text || '');
+      if (!passage || passage.length < MIN_BLANK_TEXT_LENGTH) {
+        return false;
+      }
+      const metadata = problem.metadata && typeof problem.metadata === 'object' ? problem.metadata : {};
+      const originalLength = Number(metadata.originalPassageLength) || 0;
+      if (originalLength && passage.length + 80 < originalLength) {
+        return false;
+      }
+      if (!originalLength && passage.length < MIN_BLANK_TEXT_LENGTH + 80) {
+        return false;
+      }
+      if (countSentences(passage) < MIN_BLANK_SENTENCE_COUNT) {
+        return false;
+      }
+      if (!BLANK_PLACEHOLDER_REGEX.test(passage)) {
+        return false;
+      }
+      const options = Array.isArray(problem.options) ? problem.options : [];
+      if (options.length !== CIRCLED_DIGITS.length) {
+        return false;
+      }
+      for (let i = 0; i < options.length; i += 1) {
+        const marker = CIRCLED_DIGITS[i];
+        const optionText = String(options[i] || '').trim();
+        if (!optionText.startsWith(marker)) {
+          return false;
+        }
+        const value = optionText.slice(marker.length).trim();
+        if (!value) {
+          return false;
+        }
+        if (!isEnglishPhrase(value)) {
+          return false;
+        }
+        if (/\d/.test(value)) {
+          return false;
+        }
+        const wordCount = countWords(value);
+        if (wordCount < BLANK_OPTION_MIN_WORDS || wordCount > BLANK_OPTION_MAX_WORDS) {
+          return false;
+        }
+      }
+    }
+    if (type === 'grammar' || type === 'grammar_multi') {
+      const passage = String(problem.mainText || problem.passage || problem.text || '').trim();
+      if (!passage) return false;
+      if ((passage.match(UNDERLINE_PATTERN) || []).length !== 5) {
+        return false;
+      }
+      const options = Array.isArray(problem.options) ? problem.options : [];
+      if (options.length !== CIRCLED_DIGITS.length) {
+        return false;
+      }
+      for (let i = 0; i < options.length; i += 1) {
+        const expected = CIRCLED_DIGITS[i];
+        const optionText = String(options[i] || '').trim();
+        if (!optionText.startsWith(expected)) {
+          return false;
+        }
+        if (!/<u[\s\S]*?<\/u>/.test(optionText)) {
+          return false;
+        }
+      }
+      const explanation = String(problem.explanation || '').trim();
+      if (!containsHangul(explanation) || explanation.length < GRAMMAR_MIN_EXPLANATION_LENGTH) {
+        return false;
+      }
+      const sourceLabel = String(problem.sourceLabel || '').trim();
+      if (!sourceLabel.startsWith('출처│')) {
+        return false;
+      }
+      const metadata = problem.metadata && typeof problem.metadata === 'object' ? problem.metadata : {};
+      if (!metadata.optionReasons || Object.keys(metadata.optionReasons).length !== CIRCLED_DIGITS.length) {
+        return false;
+      }
+    }
+    if (type === 'vocabulary') {
+      const passage = String(problem.mainText || problem.passage || problem.text || '').trim();
+      if (!passage) return false;
+      if (!/\(A\)/.test(passage)) {
+        return false;
+      }
+
+      const options = Array.isArray(problem.options) ? problem.options : [];
+      if (options.length !== CIRCLED_DIGITS.length) {
+        return false;
+      }
+
+      const metadata = problem.metadata && typeof problem.metadata === 'object' ? problem.metadata : {};
+      const slots = Array.isArray(metadata.vocabSlots) ? metadata.vocabSlots : [];
+      const combinationIndices = Array.isArray(metadata.optionCombinationIndices) ? metadata.optionCombinationIndices : [];
+      if (!slots.length || combinationIndices.length !== options.length) {
+        return false;
+      }
+
+      const slotCount = slots.length;
+      const slotChoiceMaps = slots.map((slot) => {
+        if (!slot || typeof slot !== 'object') {
+          return null;
+        }
+        const label = String(slot.label || '').trim();
+        if (!/^[A-Z]$/.test(label)) {
+          return null;
+        }
+        const choices = Array.isArray(slot.choices) ? slot.choices.map((choice) => String(choice || '').trim()).filter(Boolean) : [];
+        if (choices.length < 2) {
+          return null;
+        }
+        const correctIndex = Number.isInteger(slot.correctIndex) ? slot.correctIndex : -1;
+        if (correctIndex < 0 || correctIndex >= choices.length) {
+          return null;
+        }
+        if (!new RegExp(`\\(${label}\\)`).test(passage)) {
+          return null;
+        }
+        const normalizedChoices = choices.map((choice) => choice.replace(/\s+/g, ' ').trim());
+        const choiceMap = new Map();
+        normalizedChoices.forEach((choice, idx) => {
+          choiceMap.set(choice, idx);
+        });
+        return { label, choices, normalizedChoices, correctIndex, choiceMap };
+      });
+
+      if (slotChoiceMaps.some((entry) => entry === null)) {
+        return false;
+      }
+
+      const optionCombinationIndices = combinationIndices.map((combo) => {
+        if (!Array.isArray(combo) || combo.length !== slotCount) {
+          return null;
+        }
+        return combo.map((value) => {
+          const index = parseInt(value, 10);
+          return Number.isInteger(index) ? index : null;
+        });
+      });
+
+      if (optionCombinationIndices.some((combo) => !combo || combo.some((index, slotIdx) => index === null || index < 0 || index >= slotChoiceMaps[slotIdx].choices.length))) {
+        return false;
+      }
+
+      for (let i = 0; i < options.length; i += 1) {
+        const optionText = String(options[i] || '').trim();
+        if (!optionText.startsWith(CIRCLED_DIGITS[i])) {
+          return false;
+        }
+        const body = optionText.slice(CIRCLED_DIGITS[i].length).trim();
+        if (!body) {
+          return false;
+        }
+        const parts = body.split(/\s*-\s*/).map((part) => part.replace(/\s+/g, ' ').trim()).filter(Boolean);
+        if (parts.length !== slotCount) {
+          return false;
+        }
+        const combination = optionCombinationIndices[i];
+        for (let slotIdx = 0; slotIdx < slotCount; slotIdx += 1) {
+          const slot = slotChoiceMaps[slotIdx];
+          const choiceIndex = combination[slotIdx];
+          const expected = slot.choices[choiceIndex];
+          if (!expected || parts[slotIdx].replace(/\s+/g, ' ').trim() !== expected.replace(/\s+/g, ' ').trim()) {
+            return false;
+          }
+        }
+      }
+
+      const explanation = String(problem.explanation || '').trim();
+      if (!containsHangul(explanation) || explanation.length < VOCAB_MIN_EXPLANATION_LENGTH || countSentences(explanation) < VOCAB_MIN_EXPLANATION_SENTENCES) {
+        return false;
+      }
+
+      const sourceLabel = String(problem.sourceLabel || '').trim();
+      if (!sourceLabel.startsWith('출처│')) {
+        return false;
+      }
+
+      const answerIndex = Number.parseInt(problem.correctAnswer || problem.answer, 10);
+      if (!Number.isInteger(answerIndex) || answerIndex < 1 || answerIndex > options.length) {
+        return false;
+      }
+
+      const correctCombination = optionCombinationIndices[answerIndex - 1];
+      if (!correctCombination) {
+        return false;
+      }
+      for (let slotIdx = 0; slotIdx < slotCount; slotIdx += 1) {
+        const slot = slotChoiceMaps[slotIdx];
+        if (correctCombination[slotIdx] !== slot.correctIndex) {
+          return false;
+        }
+      }
+    }
+    if (type === 'implicit') {
+      const passage = String(problem.text || problem.mainText || '').trim();
+      if (!passage) return false;
+      if ((passage.match(UNDERLINE_PATTERN) || []).length !== 1) {
+        return false;
+      }
+      const options = Array.isArray(problem.options) ? problem.options : [];
+      if (options.length !== CIRCLED_DIGITS.length) {
+        return false;
+      }
+      const isValidEnglishOption = (value) => {
+        if (!value) return false;
+        if (containsHangul(value)) return false;
+        const cleaned = value.replace(/[’]/g, "'").replace(/[“”]/g, '"').trim();
+        if (!cleaned) return false;
+        const wordCount = countWords(cleaned);
+        if (wordCount < 6 || wordCount > 18) {
+          return false;
+        }
+        return /^[A-Za-z][A-Za-z\s.,'"()\-:;!?]*$/.test(cleaned);
+      };
+      for (let i = 0; i < options.length; i += 1) {
+        const expected = CIRCLED_DIGITS[i];
+        const optionText = String(options[i] || '').trim();
+        if (!optionText.startsWith(expected)) {
+          return false;
+        }
+        const value = optionText.slice(expected.length).trim();
+        if (!isValidEnglishOption(value)) {
+          return false;
+        }
+      }
+      const explanation = String(problem.explanation || '').trim();
+      if (!containsHangul(explanation) || explanation.length < 60 || countSentences(explanation) < 2) {
+        return false;
+      }
+      const sourceLabel = String(problem.sourceLabel || '').trim();
+      if (!sourceLabel.startsWith('출처│')) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  async listReviewQueueForUser(userId, options = {}) {
+    const numericUserId = Number(userId);
+    if (!Number.isInteger(numericUserId) || numericUserId <= 0) {
+      return { total: 0, problems: [] };
+    }
+
+    const limit = Math.max(parseInt(options.limit, 10) || 0, 0) || 20;
+    const fetchLimit = Math.max(limit * 4, limit);
+
+    const rows = await database.all(
+      'SELECT p.*, pe.last_result AS exposure_last_result, pe.correct_count AS exposure_correct_count, pe.incorrect_count AS exposure_incorrect_count, pe.last_answered_at AS exposure_last_answered_at, pe.last_seen_at AS exposure_last_seen_at ' +
+        'FROM problem_exposures pe ' +
+        'JOIN problems p ON p.id = pe.problem_id ' +
+        "WHERE pe.user_id = ? AND pe.last_result = 'incorrect' " +
+        'ORDER BY datetime(pe.last_answered_at) DESC, pe.id DESC ' +
+        'LIMIT ?'
+      , [numericUserId, fetchLimit]
+    );
+
+    const mapped = rows
+      .map((row) => this._mapDbProblem(row))
+      .filter((problem) => problem && this._acceptCachedProblem(problem.type, problem));
+
+    const totalRow = await database.get(
+      "SELECT COUNT(*) AS total FROM problem_exposures WHERE user_id = ? AND last_result = 'incorrect'",
+      [numericUserId]
+    );
+
+    const total = Number(totalRow?.total) || mapped.length;
+    return {
+      total,
+      problems: mapped.slice(0, limit)
+    };
+  }
+
+  async getProblemsByIds(ids = [], options = {}) {
+    const numericIds = [...new Set((Array.isArray(ids) ? ids : [])
+      .map((id) => Number(id))
+      .filter((num) => Number.isInteger(num) && num > 0))];
+    if (!numericIds.length) {
+      return [];
+    }
+
+    const placeholders = numericIds.map(() => '?').join(',');
+    const rows = await database.all(
+      `SELECT p.*, pe.last_result AS exposure_last_result, pe.correct_count AS exposure_correct_count, pe.incorrect_count AS exposure_incorrect_count, pe.last_answered_at AS exposure_last_answered_at, pe.last_seen_at AS exposure_last_seen_at
+         FROM problems p
+         LEFT JOIN problem_exposures pe ON pe.problem_id = p.id AND pe.user_id = ?
+        WHERE p.id IN (${placeholders})`,
+      [Number(options.userId) || 0, ...numericIds]
+    );
+
+    const problems = rows
+      .map((row) => this._mapDbProblem(row))
+      .filter((problem) => problem && this._acceptCachedProblem(problem.type, problem));
+
+    const ordered = numericIds
+      .map((id) => problems.find((problem) => Number(problem.id) === id))
+      .filter((problem) => problem);
+
+    return ordered;
+  }
+
+  _decideExposure(exposure) {
+    if (!exposure || typeof exposure !== 'object') {
+      return 'allow';
+    }
+    const normalizedResult = exposure.lastResult ? String(exposure.lastResult).toLowerCase() : '';
+    if (normalizedResult === 'pending') {
+      return 'skip';
+    }
+    if (normalizedResult === 'correct') {
+      return 'skip';
+    }
+    if (normalizedResult === 'incorrect') {
+      const incorrectCount = Math.max(1, Number(exposure.incorrectCount) || 1);
+      let timestamp = Number.NaN;
+      if (exposure.lastAnsweredAt) {
+        const parsed = Date.parse(String(exposure.lastAnsweredAt).replace(/\s$/, ''));
+        if (Number.isFinite(parsed)) {
+          timestamp = parsed;
+        }
+      }
+      if (Number.isFinite(timestamp)) {
+        const elapsed = Date.now() - timestamp;
+        if (elapsed < EXPOSURE_MIN_INCORRECT_RETRY_MINUTES * 60 * 1000) {
+          return 'skip';
+        }
+      }
+      const probability = Math.min(0.92, EXPOSURE_BASE_RETRY_PROBABILITY + (incorrectCount - 1) * EXPOSURE_RETRY_BONUS_PER_MISS);
+      if (Math.random() <= probability) {
+        return 'allow';
+      }
+      return 'defer';
+    }
+
+    if (!normalizedResult) {
+      return 'allow';
+    }
+
+    return 'skip';
   }
 
   _parseJson(value, fallback) {
@@ -1540,6 +1728,12 @@ class AIProblemService {
       return null;
     }
 
+    const noteText = Object.prototype.hasOwnProperty.call(row, 'note_text')
+      ? row.note_text
+      : Object.prototype.hasOwnProperty.call(row, 'note')
+        ? row.note
+        : undefined;
+
     const problem = {
       id: row.id ? String(row.id) : undefined,
       type: row.type || 'generic',
@@ -1553,6 +1747,10 @@ class AIProblemService {
       metadata: metadata && typeof metadata === 'object' ? metadata : undefined
     };
 
+    if (noteText !== undefined) {
+      problem.note = noteText ? String(noteText).trim() : '';
+    }
+
     if (metadata && typeof metadata === 'object') {
       if (metadata.sourceLabel && !problem.sourceLabel) {
         problem.sourceLabel = metadata.sourceLabel;
@@ -1562,6 +1760,39 @@ class AIProblemService {
       }
       if (metadata.originalPassage && !problem.originalPassage) {
         problem.originalPassage = metadata.originalPassage;
+      }
+      if (problem.type === 'summary') {
+        const summarySentence = metadata.summarySentence || metadata.summary_sentence;
+        if (summarySentence && !problem.summarySentence) {
+          problem.summarySentence = String(summarySentence).trim();
+        }
+        const summarySentenceKor = metadata.summarySentenceKor || metadata.summary_sentence_kor;
+        if (summarySentenceKor && !problem.summarySentenceKor) {
+          problem.summarySentenceKor = String(summarySentenceKor).trim();
+        }
+        if (Array.isArray(metadata.keywords) && metadata.keywords.length && !problem.keywords) {
+          problem.keywords = metadata.keywords.map((kw) => String(kw).trim()).filter((kw) => kw.length);
+        }
+        if (metadata.summaryPattern && !problem.summaryPattern) {
+          problem.summaryPattern = String(metadata.summaryPattern).trim();
+        }
+      }
+    }
+
+    if (
+      Object.prototype.hasOwnProperty.call(row, 'exposure_last_result')
+      || Object.prototype.hasOwnProperty.call(row, 'exposure_last_answered_at')
+    ) {
+      const exposure = {
+        lastResult: row.exposure_last_result || null,
+        lastAnsweredAt: row.exposure_last_answered_at || null,
+        lastSeenAt: row.exposure_last_seen_at || null,
+        incorrectCount: Number(row.exposure_incorrect_count) || 0,
+        correctCount: Number(row.exposure_correct_count) || 0
+      };
+      const hasData = exposure.lastResult || exposure.lastAnsweredAt || exposure.lastSeenAt;
+      if (hasData) {
+        problem.exposure = exposure;
       }
     }
 
@@ -1580,7 +1811,7 @@ class AIProblemService {
 
     const userId = Number(options.userId);
     const params = [];
-    let query = 'SELECT p.* FROM problems p';
+    let query = 'SELECT p.*, pe.last_result AS exposure_last_result, pe.correct_count AS exposure_correct_count, pe.incorrect_count AS exposure_incorrect_count, pe.last_answered_at AS exposure_last_answered_at, pe.last_seen_at AS exposure_last_seen_at FROM problems p';
 
     if (Number.isInteger(userId) && userId > 0) {
       query += ' LEFT JOIN problem_exposures pe ON pe.problem_id = p.id AND pe.user_id = ?';
@@ -1596,17 +1827,87 @@ class AIProblemService {
       params.push(...excludeIds);
     }
 
-    if (Number.isInteger(userId) && userId > 0) {
-      query += ' AND pe.problem_id IS NULL';
-    }
-
-    const fetchCount = Math.max(requested * 2, requested);
+    const fetchCount = Math.max(requested * EXPOSURE_FETCH_MULTIPLIER, requested);
     query += ' ORDER BY RANDOM() LIMIT ?';
     params.push(fetchCount);
 
     const rows = await database.all(query, params);
-    const problems = rows.map((row) => this._mapDbProblem(row)).filter(Boolean);
-    return problems.slice(0, requested);
+    const mapped = rows
+      .map((row) => this._mapDbProblem(row))
+      .filter((problem) => this._acceptCachedProblem(type, problem));
+
+    if (!mapped.length) {
+      return [];
+    }
+
+    const allowList = [];
+    const deferred = [];
+    mapped.forEach((problem) => {
+      const decision = this._decideExposure(problem?.exposure);
+      if (decision === 'allow') {
+        allowList.push(problem);
+      } else if (decision === 'defer') {
+        deferred.push(problem);
+      }
+    });
+
+    let final = allowList.slice(0, requested);
+    if (final.length < requested && deferred.length) {
+      const need = requested - final.length;
+      final = final.concat(deferred.slice(0, need));
+    }
+
+    return final.slice(0, requested);
+  }
+
+  async listProblemsForExport(options = {}) {
+    const documentId = Number(options.documentId) || null;
+    const limit = Math.min(Math.max(parseInt(options.limit, 10) || 40, 1), 200);
+    const types = Array.isArray(options.types)
+      ? options.types.map((type) => String(type || '').trim()).filter((type) => type.length)
+      : [];
+    const difficulties = Array.isArray(options.difficulties)
+      ? options.difficulties.map((level) => String(level || '').trim().toLowerCase()).filter((level) => level.length)
+      : [];
+    const aiOnly = options.includeGeneratedOnly !== false;
+    const randomize = options.randomize !== false;
+
+    const params = [];
+    let query = 'SELECT p.*, pn.note AS note_text FROM problems p LEFT JOIN problem_notes pn ON pn.problem_id = p.id';
+
+    const filters = [];
+    if (documentId) {
+      filters.push('p.document_id = ?');
+      params.push(documentId);
+    }
+    if (types.length) {
+      const placeholders = types.map(() => '?').join(',');
+      filters.push(`p.type IN (${placeholders})`);
+      params.push(...types);
+    }
+    if (difficulties.length) {
+      const placeholders = difficulties.map(() => '?').join(',');
+      filters.push(`LOWER(p.difficulty) IN (${placeholders})`);
+      params.push(...difficulties);
+    }
+    if (aiOnly) {
+      filters.push('p.is_ai_generated = 1');
+    }
+
+    if (filters.length) {
+      query += ` WHERE ${filters.join(' AND ')}`;
+    }
+
+    query += randomize
+      ? ' ORDER BY RANDOM()'
+      : ' ORDER BY datetime(p.created_at) DESC, p.id DESC';
+    query += ' LIMIT ?';
+    params.push(limit);
+
+    const rows = await database.all(query, params);
+    return rows
+      .map((row) => this._mapDbProblem(row))
+      .filter((problem) => problem);
   }
 
   async saveProblems(documentId, type, problems = [], context = {}) {
@@ -1628,6 +1929,26 @@ class AIProblemService {
       }
       if (!baseMetadata.generator) {
         baseMetadata.generator = 'openai';
+      }
+
+      if (type === 'summary') {
+        if (item.summarySentence && !baseMetadata.summarySentence) {
+          baseMetadata.summarySentence = String(item.summarySentence).trim();
+        }
+        if (item.summarySentenceKor && !baseMetadata.summarySentenceKor) {
+          baseMetadata.summarySentenceKor = String(item.summarySentenceKor).trim();
+        }
+        if (!baseMetadata.summaryPattern && item.summaryPattern) {
+          baseMetadata.summaryPattern = String(item.summaryPattern).trim();
+        }
+        if (!baseMetadata.keywords && Array.isArray(item.keywords)) {
+          const keywords = item.keywords
+            .map((kw) => String(kw).trim())
+            .filter((kw) => kw.length);
+          if (keywords.length) {
+            baseMetadata.keywords = keywords;
+          }
+        }
       }
 
       const optionArray = Array.isArray(item.options)
@@ -1706,9 +2027,88 @@ class AIProblemService {
       saved.push(savedProblem);
     }
 
+    if (saved.length) {
+      await this._pruneProblemCache(documentId, type, 1000);
+    }
+
     return saved;
+  }
+
+  async saveProblemNote(problemId, userId, noteText = '') {
+    const numericProblemId = Number(problemId);
+    if (!Number.isInteger(numericProblemId) || numericProblemId <= 0) {
+      throw new Error('잘못된 problemId 입니다.');
+    }
+
+    const trimmedNote = typeof noteText === 'string' ? noteText.trim() : '';
+    const updater = Number(userId) || null;
+
+    await database.run(
+      'INSERT INTO problem_notes (problem_id, note, updated_by, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP) ' +
+        'ON CONFLICT(problem_id) DO UPDATE SET note = excluded.note, updated_by = excluded.updated_by, updated_at = CURRENT_TIMESTAMP',
+      [numericProblemId, trimmedNote, updater]
+    );
+
+    const row = await database.get(
+      'SELECT p.*, pn.note AS note_text FROM problems p LEFT JOIN problem_notes pn ON pn.problem_id = p.id WHERE p.id = ?',
+      [numericProblemId]
+    );
+
+    return this._mapDbProblem(row);
+  }
+
+  async recordExportHistory(payload = {}) {
+    const userId = Number(payload.userId);
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return;
+    }
+
+    const documentId = Number(payload.documentId) || null;
+    const types = Array.isArray(payload.types) ? payload.types : [];
+    const counts = payload.counts && typeof payload.counts === 'object' ? payload.counts : {};
+    const problemIds = Array.isArray(payload.problemIds)
+      ? payload.problemIds.map((id) => Number(id)).filter((id) => Number.isInteger(id) && id > 0)
+      : [];
+    const total = Number(payload.total) || problemIds.length || 0;
+    const includeSolutions = payload.includeSolutions !== false ? 1 : 0;
+
+    try {
+      await database.run(
+        'INSERT INTO problem_export_history (user_id, document_id, types, counts, problem_ids, total, include_solutions, created_at) ' +
+          'VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)',
+        [
+          userId,
+          documentId,
+          JSON.stringify(types),
+          JSON.stringify(counts),
+          JSON.stringify(problemIds),
+          total,
+          includeSolutions
+        ]
+      );
+    } catch (error) {
+      console.warn('[aiProblemService] failed to record export history:', error?.message || error);
+    }
+  }
+
+  async _pruneProblemCache(documentId, type, maxCount = 1000) {
+    if (!Number.isInteger(maxCount) || maxCount <= 0) return;
+    try {
+      const rows = await database.all(
+        'SELECT id FROM problems WHERE document_id = ? AND type = ? ORDER BY datetime(created_at) DESC, id DESC',
+        [documentId, type]
+      );
+      if (!Array.isArray(rows) || rows.length <= maxCount) {
+        return;
+      }
+      const excess = rows.slice(maxCount).map((row) => Number(row.id)).filter((id) => Number.isInteger(id) && id > 0);
+      if (!excess.length) return;
+      const placeholders = excess.map(() => '?').join(',');
+      await database.run(`DELETE FROM problems WHERE id IN (${placeholders})`, excess);
+    } catch (error) {
+      console.warn('[aiProblemService] prune cache failed:', error?.message || error);
+    }
   }
 }
 
 module.exports = new AIProblemService();
-

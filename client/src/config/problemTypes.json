@@ -141,7 +141,7 @@
     },
     "implicit": {
       "id": "implicit",
-      "name": "암묵 추론",
+      "name": "함축 추론",
       "description": "직접적으로 쓰이지 않은 내용을 추론",
       "points": 3,
       "difficulty": {
