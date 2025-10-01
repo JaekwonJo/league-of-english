@@ -1,7 +1,8 @@
 ## 2025-10-07 (theme palette + implicit underline fallback)
-- Issue: 다크 모드에서 관리자/통계 등 일부 화면은 고정 HEX 색상 때문에 배경과 대비가 맞지 않았고, 함축 추론 생성기가 `<u>` 태그를 누락하면 세트 생성이 계속 실패했어요.
-- Fix: CSS 변수 팔레트를 확장해 StudyResult·Ranking·Analysis·Admin 등 전 화면이 라이트/다크 테마를 공유하도록 리팩터링하고, `generateImplicit`가 `targetSpan`으로 밑줄을 복원하며 실패 사유를 프롬프트에 전달하게 만들었어요.
-- Files: client/src/index.css, client/src/components/study/StudyResult.js, client/src/components/study/ProblemDisplay.js, client/src/styles/adminStyles.js, client/src/styles/analysisStyles.js, client/src/config/*.json, server/services/aiProblemService.js, server/tests/aiProblemService.test.js 등.
+- Issue: 다크 모드에서 관리자/통계 화면이 고정 HEX 색상 때문에 대비가 깨지고, 함축 추론 생성은 `<u>` 누락으로 세트 생성이 반복 실패했어요.
+- Cause: 스타일이 컴포넌트별로 하드코딩돼 있었고, `generateImplicit`는 `targetSpan`을 활용하지 못했습니다.
+- Fix: CSS 변수 팔레트를 전면 도입해 모든 화면이 라이트/다크를 공유하고, `generateImplicit`가 `targetSpan`으로 밑줄을 복구하며 실패 메시지를 다음 프롬프트에 전달하게 했어요.
+- Files: client/src/index.css, StudyResult/ProblemDisplay 등 주요 UI, `server/services/aiProblemService.js`, `server/tests/aiProblemService.test.js` 외 문서 3종.
 - Verification: `npm test` (pass, 16 tests).
 
 ## 2025-10-07 (implicit targetSpan + light/dark theme toggle)
