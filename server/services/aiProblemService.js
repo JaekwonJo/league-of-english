@@ -879,20 +879,34 @@ class AIProblemService {
       return Array.isArray(matches) && matches.length === 1;
     };
 
-    const coerceSingleUnderline = (text) => {
-      if (!text) return null;
+    const escapeRegExp = (value) => String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    const coerceSingleUnderline = (text, targetSpan) => {
+      const rawText = String(text || '');
       let count = 0;
-      const sanitized = String(text).replace(/<u[^>]*>([\s\S]*?)<\/u>/g, (match, inner) => {
+      const sanitized = rawText.replace(/<u[^>]*>([\s\S]*?)<\/u>/g, (match, inner) => {
         count += 1;
         if (count === 1) {
           return `<u>${inner}</u>`;
         }
         return inner;
       });
-      if (count === 0) {
+
+      if (count > 0) {
+        return sanitized;
+      }
+
+      const cleanTarget = String(targetSpan || '').trim();
+      if (!cleanTarget) {
         return null;
       }
-      return sanitized;
+
+      const pattern = new RegExp(escapeRegExp(cleanTarget));
+      if (!pattern.test(rawText)) {
+        return null;
+      }
+
+      return rawText.replace(pattern, `<u>${cleanTarget}</u>`);
     };
 
     const isValidEnglishOption = (value) => {
@@ -926,6 +940,7 @@ class AIProblemService {
             "  \"type\": \"implicit\",",
             `  \"question\": \"${IMPLICIT_QUESTION}\",`,
             "  \"text\": \"English passage with <u>target</u>\",",
+            "  \"targetSpan\": \"Exact English text that must be underlined\",",
             "  \"options\": [",
             "    \"\\u2460 English option\",",
             "    \"\\u2461 English option\",",
@@ -941,6 +956,7 @@ class AIProblemService {
             "}",
             "Rules:",
             "- Underline exactly one contiguous span with <u>...</u> inside text.",
+            "- targetSpan must match the exact English text that is underlined.",
             "- Question must remain exactly in Korean as provided.",
             "- Provide five English options labelled with circled digits (\\u2460-\\u2464).",
             "- Options must be academic or neutral English sentences/phrases (6-18 words, no numerals).",
@@ -964,7 +980,7 @@ class AIProblemService {
             throw new Error(`unexpected implicit question: ${question}`);
           }
 
-          const coercedText = coerceSingleUnderline(payload.text || '');
+          const coercedText = coerceSingleUnderline(payload.text || '', payload.targetSpan);
           if (!coercedText) {
             throw new Error('implicit text must contain exactly one <u>...</u> span');
           }

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import * as LucideIcons from 'lucide-react';
 import routesConfig from '../../config/routes.config.json';
 import uiConfig from '../../config/ui.config.json';
@@ -7,6 +8,7 @@ import uiConfig from '../../config/ui.config.json';
 const MainLayout = ({ children, currentPath }) => {
   const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const { theme, toggleTheme } = useTheme();
 
   const getRoleLabel = (role) => {
     const roleMap = {
@@ -77,6 +79,11 @@ const MainLayout = ({ children, currentPath }) => {
             )}
           </div>
 
+          <button type="button" style={styles.themeToggle} onClick={toggleTheme}>
+            {theme === 'dark' ? <LucideIcons.Sun size={18} /> : <LucideIcons.Moon size={18} />}
+            {sidebarOpen && <span>{theme === 'dark' ? '라이트 모드' : '다크 모드'}</span>}
+          </button>
+
           <button style={styles.logoutButton} onClick={handleLogout}>
             <LucideIcons.LogOut size={20} />
             {sidebarOpen && <span>로그아웃</span>}
@@ -108,15 +115,15 @@ const styles = {
   container: {
     display: 'flex',
     minHeight: '100vh',
-    background: '#F9FAFB'
+    background: 'var(--app-background)'
   },
   sidebar: {
     position: 'fixed',
     top: 0,
     left: 0,
     height: '100vh',
-    background: 'linear-gradient(135deg, #1F2937 0%, #111827 100%)',
-    color: 'white',
+    background: 'var(--sidebar-gradient)',
+    color: 'var(--sidebar-text-primary)',
     transition: 'width 0.3s ease',
     display: 'flex',
     flexDirection: 'column',
@@ -127,7 +134,7 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '10px',
-    borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+    borderBottom: '1px solid var(--sidebar-divider)'
   },
   logoIcon: {
     fontSize: '32px'
@@ -149,7 +156,7 @@ const styles = {
     gap: '12px',
     padding: '12px 15px',
     background: 'transparent',
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: 'var(--sidebar-text-muted)',
     border: 'none',
     borderRadius: '10px',
     cursor: 'pointer',
@@ -159,12 +166,12 @@ const styles = {
     width: '100%'
   },
   navItemActive: {
-    background: 'rgba(255, 255, 255, 0.1)',
-    color: 'white'
+    background: 'var(--sidebar-active-bg)',
+    color: 'var(--sidebar-active-text)'
   },
   userSection: {
     padding: '20px',
-    borderTop: '1px solid rgba(255, 255, 255, 0.1)'
+    borderTop: '1px solid var(--sidebar-divider)'
   },
   userInfo: {
     display: 'flex',
@@ -176,7 +183,7 @@ const styles = {
     width: '40px',
     height: '40px',
     borderRadius: '50%',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    background: 'var(--sidebar-avatar-gradient)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -190,8 +197,22 @@ const styles = {
   },
   userRole: {
     fontSize: '12px',
-    color: 'rgba(255, 255, 255, 0.6)',
+    color: 'var(--sidebar-text-muted)',
     margin: 0
+  },
+  themeToggle: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    width: '100%',
+    padding: '10px 15px',
+    background: 'var(--sidebar-button-bg)',
+    color: 'var(--sidebar-button-text)',
+    border: 'none',
+    borderRadius: '10px',
+    cursor: 'pointer',
+    marginBottom: '12px',
+    transition: 'opacity 0.2s ease'
   },
   logoutButton: {
     display: 'flex',
@@ -199,8 +220,8 @@ const styles = {
     gap: '10px',
     width: '100%',
     padding: '10px 15px',
-    background: 'rgba(239, 68, 68, 0.1)',
-    color: '#EF4444',
+    background: 'var(--danger-bg)',
+    color: 'var(--danger-text)',
     border: 'none',
     borderRadius: '10px',
     cursor: 'pointer',
@@ -214,19 +235,21 @@ const styles = {
     width: '30px',
     height: '30px',
     borderRadius: '50%',
-    background: 'white',
-    border: '1px solid #E5E7EB',
+    background: 'var(--sidebar-button-bg)',
+    border: '1px solid var(--sidebar-divider)',
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    color: '#6B7280'
+    color: 'var(--sidebar-button-text)'
   },
   main: {
     flex: 1,
     transition: 'margin-left 0.3s ease',
     padding: '20px',
-    minHeight: '100vh'
+    minHeight: '100vh',
+    background: 'var(--main-background)',
+    color: 'var(--text-primary)'
   }
 };
 

@@ -2,13 +2,27 @@
  * StudyPage: 학습 문제를 구성하고 푸는 메인 페이지
  */
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import StudyConfig from "../components/study/StudyConfig";
 import ProblemDisplay from "../components/study/ProblemDisplay";
 import ScoreHUD from "../components/study/ScoreHUD";
 import StudyResult from "../components/study/StudyResult";
 import useStudySession, { formatSeconds } from "../hooks/useStudySession";
+import { api } from "../services/api.service";
+
+const TYPE_LABELS = {
+  blank: '빈칸',
+  order: '순서 배열',
+  insertion: '문장 삽입',
+  grammar: '어법',
+  vocabulary: '어휘',
+  title: '제목',
+  theme: '주제',
+  summary: '요약',
+  implicit: '함축 의미',
+  irrelevant: '무관 문장'
+};
 
 const VOCAB_FLASHCARDS = [
   { word: "construct", meaning: "구성하다, 건설하다" },
@@ -62,19 +76,117 @@ const VOCAB_FLASHCARDS = [
 
 const REVEAL_STEP_SECONDS = 3;
 
+const LOADING_SNIPPETS = [
+  {
+    type: 'message',
+    text: '지금 당신만을 위한 문제를 정성껏 빚는 중이에요. 잠시만 기다려줘요 😊'
+  },
+  {
+    type: 'quote',
+    quote: 'The future depends on what you do today.',
+    author: 'Mahatma Gandhi',
+    translation: '미래는 오늘 당신이 하는 일에 달려 있어요.'
+  },
+  {
+    type: 'message',
+    text: 'AI 선생님이 해설까지 다시 확인하고 있어요! 준비되면 바로 시작할게요 ✨'
+  },
+  {
+    type: 'quote',
+    quote: 'Success is the sum of small efforts, repeated day in and day out.',
+    author: 'Robert Collier',
+    translation: '성공은 매일 반복되는 작은 노력들의 합이에요.'
+  },
+  {
+    type: 'message',
+    text: '따뜻한 햇살처럼 마음 편한 문제 세트를 데워 오는 중이에요 ☕'
+  },
+  {
+    type: 'message',
+    text: '은하수를 건너 감성 한 스푼을 더 담고 있어요. 조금만 더 기다려줄래요? 🌌'
+  },
+  {
+    type: 'quote',
+    quote: 'It always seems impossible until it is done.',
+    author: 'Nelson Mandela',
+    translation: '끝낼 때까지는 불가능해 보여도, 결국 우리는 해내게 되어 있어요.'
+  },
+  {
+    type: 'quote',
+    quote: 'You are never too small to make a difference.',
+    author: 'Greta Thunberg',
+    translation: '어떤 마음도 작지 않아요. 당신의 노력이 변화를 만들 거예요.'
+  },
+  {
+    type: 'message',
+    text: '문제에 쓸 향기로운 단어들을 고르고 있어요. 숨 한번 크게 쉬어볼까요? 🌿'
+  },
+  {
+    type: 'message',
+    text: '조용히 집중이 내려앉을 수 있게 창문을 살짝 열어두었어요. 곧 시작해요 💫'
+  },
+  {
+    type: 'quote',
+    quote: 'Learning never exhausts the mind.',
+    author: 'Leonardo da Vinci',
+    translation: '배움은 마음을 지치게 하지 않아요. 오히려 더 단단하게 만들어 주죠.'
+  },
+  {
+    type: 'quote',
+    quote: 'Stars can’t shine without darkness.',
+    author: 'Unknown',
+    translation: '밤이 있기에 별빛이 반짝여요. 지금의 고요도 반짝임의 준비랍니다.'
+  },
+  {
+    type: 'message',
+    text: '손에 쥔 연필이 조금 더 가벼워지도록 격려를 살짝 뿌려둘게요 ✏️'
+  },
+  {
+    type: 'quote',
+    quote: 'Every day is a chance to learn something new.',
+    author: 'Unknown',
+    translation: '매일은 새로운 것을 배울 수 있는 기회예요.'
+  },
+  {
+    type: 'message',
+    text: '지금 당신에게 꼭 맞는 문장을 찾는 중이에요. 조금만 더 기다려 주세요 🌈'
+  },
+  {
+    type: 'quote',
+    quote: 'The beautiful thing about learning is that no one can take it away from you.',
+    author: 'B.B. King',
+    translation: '배움의 아름다움은 누구도 그것을 빼앗을 수 없다는 데 있어요.'
+  },
+  {
+    type: 'message',
+    text: '창문에 빗방울처럼 잔잔한 아이디어를 모으는 중이에요 ☔️'
+  }
+];
 
-const pickFlashcards = (count = 3) => {
-  const pool = [...VOCAB_FLASHCARDS];
+
+const pickFlashcards = (count = 3, excludeWords = []) => {
+  const excludeSet = new Set(excludeWords);
+  const available = VOCAB_FLASHCARDS.filter((card) => !excludeSet.has(card.word));
+  const basePool = available.length ? available : VOCAB_FLASHCARDS;
+  const pool = [...basePool];
   const picked = [];
+
   while (pool.length && picked.length < count) {
     const index = Math.floor(Math.random() * pool.length);
     picked.push(pool.splice(index, 1)[0]);
   }
-  return picked;
+
+  while (picked.length < count) {
+    const fallback = VOCAB_FLASHCARDS[Math.floor(Math.random() * VOCAB_FLASHCARDS.length)];
+    picked.push(fallback);
+  }
+
+  return picked.slice(0, count);
 };
 
-const LoadingState = ({ vocabCards = [], revealStepSeconds = REVEAL_STEP_SECONDS }) => {
+const LoadingState = ({ vocabCards = [], revealStepSeconds = REVEAL_STEP_SECONDS, onLoadMore }) => {
   const [countdowns, setCountdowns] = useState([]);
+  const [snippetIndex, setSnippetIndex] = useState(() => Math.floor(Math.random() * LOADING_SNIPPETS.length));
 
   useEffect(() => {
     if (!vocabCards.length) {
@@ -98,10 +210,30 @@ const LoadingState = ({ vocabCards = [], revealStepSeconds = REVEAL_STEP_SECONDS
     return () => clearInterval(interval);
   }, [vocabCards, revealStepSeconds]);
 
+  useEffect(() => {
+    if (!LOADING_SNIPPETS.length) return undefined;
+    const interval = setInterval(() => {
+      setSnippetIndex((prev) => (prev + 1) % LOADING_SNIPPETS.length);
+    }, 4500);
+    return () => clearInterval(interval);
+  }, []);
+
+  const activeSnippet = LOADING_SNIPPETS[snippetIndex] || null;
+
   return (
     <div style={styles.loading}>
       <div style={styles.spinner}></div>
-      <p style={styles.loadingMessage}>문제를 준비하고 있어요! 잠시만 기다려 주세요 😊</p>
+      <div style={styles.loadingSnippet}>
+        {activeSnippet?.type === 'quote' ? (
+          <>
+            <p style={styles.quoteText}>“{activeSnippet.quote}”</p>
+            <p style={styles.quoteMeta}>- {activeSnippet.author} -</p>
+            <p style={styles.quoteTranslation}>{activeSnippet.translation}</p>
+          </>
+        ) : (
+          <p style={styles.loadingMessage}>{activeSnippet?.text || '문제를 준비하고 있어요! 잠시만 기다려 주세요 😊'}</p>
+        )}
+      </div>
       {vocabCards.length > 0 && (
         <div style={styles.flashcardArea}>
           <div style={styles.flashcardTitle}>기다리는 동안 단어 미리보기✨</div>
@@ -121,6 +253,11 @@ const LoadingState = ({ vocabCards = [], revealStepSeconds = REVEAL_STEP_SECONDS
               );
             })}
           </div>
+          {typeof onLoadMore === 'function' && (
+            <button style={styles.flashcardMoreButton} onClick={onLoadMore}>
+              단어 더보기 +5
+            </button>
+          )}
         </div>
       )}
     </div>
@@ -138,6 +275,62 @@ const ErrorState = ({ message, onRetry }) => (
   </div>
 );
 
+const ReviewCallout = ({ total, problems = [], loading, refreshing, error, onRefresh, onStart }) => (
+  <div style={styles.reviewCallout}>
+    <div style={styles.reviewCalloutHeader}>
+      <div>
+        <div style={styles.reviewBadge}>복습 대기열</div>
+        <div style={styles.reviewCalloutTitle}>틀린 문제 {total || 0}문이 기다리고 있어요.</div>
+        <div style={styles.reviewCalloutSubtitle}>버튼 한 번으로 다시 찬찬히 복습해 볼까요?</div>
+      </div>
+      <div style={styles.reviewActions}>
+        <button
+          type="button"
+          style={{
+            ...styles.reviewRefreshButton,
+            ...(refreshing ? styles.reviewButtonDisabled : {})
+          }}
+          onClick={onRefresh}
+          disabled={refreshing}
+        >
+          {refreshing ? '불러오는 중…' : '새로고침'}
+        </button>
+        <button
+          type="button"
+          style={{
+            ...styles.reviewStartButton,
+            ...((loading || total <= 0) ? styles.reviewButtonDisabled : {})
+          }}
+          onClick={onStart}
+          disabled={loading || total <= 0}
+        >
+          {loading ? '준비 중...' : '복습 대기열 시작'}
+        </button>
+      </div>
+    </div>
+    {error && (
+      <div style={styles.reviewErrorBox} role="status" aria-live="polite">
+        {error}
+      </div>
+    )}
+    <div style={styles.reviewCalloutList}>
+      {problems && problems.length ? (
+        problems.map((item, index) => (
+          <div key={item.id || `preview-${index}`} style={styles.reviewPreviewItem}>
+            <div style={styles.reviewPreviewMeta}>
+              <span style={styles.reviewPreviewType}>{TYPE_LABELS[item.type] || item.type}</span>
+              {item.sourceLabel && <span style={styles.reviewPreviewSource}>{item.sourceLabel}</span>}
+            </div>
+            <div style={styles.reviewPreviewText}>{item.question || item.mainText || '문항 정보를 불러오고 있어요.'}</div>
+          </div>
+        ))
+      ) : (
+        <div style={styles.reviewEmptyPreview}>최근 틀린 문제가 없어요. 아주 잘하고 있어요! ✨</div>
+      )}
+    </div>
+  </div>
+);
+
 const StudyModeView = ({
   problems,
   answers,
@@ -149,13 +342,30 @@ const StudyModeView = ({
   onAnswer,
   onFinish,
   onRestart,
-}) => (
-  <div style={styles.studyWrapper}>
-    <div style={styles.studyHeader}>
-      <button
-        className="no-print"
-        onClick={() => {
-          if (window.confirm("학습을 처음부터 다시 시작하면 지금까지 푼 문제가 모두 초기화돼요. 계속할까요?")) onRestart();
+}) => {
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 280);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = useCallback(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  return (
+    <>
+      <div style={styles.studyWrapper}>
+        <div style={styles.studyHeader}>
+          <button
+            className="no-print"
+            onClick={() => {
+              if (window.confirm("학습을 처음부터 다시 시작하면 지금까지 푼 문제가 모두 초기화돼요. 계속할까요?")) onRestart();
         }}
         style={styles.resetButton}
       >
@@ -205,11 +415,117 @@ const StudyModeView = ({
         전체 마무리하기
       </button>
     </div>
-  </div>
-);
+      </div>
+      {showScrollTop && (
+        <button
+          type="button"
+          style={styles.scrollTopButton}
+          onClick={scrollToTop}
+          aria-label="맨 위로 이동"
+        >
+          ↑
+        </button>
+      )}
+    </>
+  );
+};
+
+const ReviewModeView = ({ results, onBack, onRestart }) => {
+  const studyResults = Array.isArray(results?.studyResults)
+    ? results.studyResults
+    : Array.isArray(results?.problems)
+      ? results.problems
+      : [];
+
+  const reviewItems = studyResults.map((entry, idx) => {
+    const baseProblem = entry.problem || {};
+    const mergedMetadata = {
+      ...(baseProblem.metadata || {}),
+      reviewOrder: idx + 1
+    };
+    if (!mergedMetadata.problemNumber) {
+      mergedMetadata.problemNumber = `${idx + 1}/${studyResults.length}`;
+    }
+    const problem = {
+      ...baseProblem,
+      metadata: mergedMetadata
+    };
+    return {
+      problem,
+      userAnswer: entry.userAnswer,
+      correctAnswer: entry.correctAnswer,
+      isCorrect: entry.isCorrect,
+      timeSpent: entry.timeSpent
+    };
+  }).filter((item) => item.problem && Object.keys(item.problem).length);
+
+  return (
+    <div style={styles.reviewWrapper}>
+      <div style={styles.reviewHeader}>
+        <button
+          style={{ ...styles.reviewNavButton, background: 'var(--accent-soft-strong)', color: 'var(--accent-strong)' }}
+          onClick={onBack}
+          onMouseOver={(e) => (e.currentTarget.style.transform = 'translateY(-2px)')}
+          onMouseOut={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
+        >
+          ⬅️ 결과로 돌아가기
+        </button>
+        <div style={styles.reviewTitle}>📘 복습 모드</div>
+        <button
+          style={{
+            ...styles.reviewNavButton,
+            background: 'var(--success-gradient)',
+            color: 'var(--text-inverse)'
+          }}
+          onClick={onRestart}
+          onMouseOver={(e) => (e.currentTarget.style.transform = 'translateY(-2px)')}
+          onMouseOut={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
+        >
+          🔄 처음부터 다시 풀기
+        </button>
+      </div>
+
+      {reviewItems.length === 0 ? (
+        <div style={styles.reviewEmpty}>복습할 문제가 아직 없어요. 먼저 문제를 풀고 다시 시도해 주세요!</div>
+      ) : (
+        <div style={styles.reviewList}>
+          {reviewItems.map((item, idx) => (
+            <ProblemDisplay
+              key={item.problem?.id || `review-${idx}`}
+              problem={item.problem}
+              problemIndex={idx}
+              totalProblems={reviewItems.length}
+              userAnswer={item.userAnswer}
+              displayMode="review"
+              reviewMeta={{
+                isCorrect: item.isCorrect,
+                timeSpent: item.timeSpent,
+                correctAnswer: item.correctAnswer
+              }}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const StudyPage = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
+  const [loadingFlashcards, setLoadingFlashcards] = useState([]);
+  const [reviewPreview, setReviewPreview] = useState({ total: 0, problems: [] });
+  const [reviewPreviewLoading, setReviewPreviewLoading] = useState(false);
+  const [reviewPreviewFetched, setReviewPreviewFetched] = useState(false);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewError, setReviewError] = useState('');
+  const [autoReviewTrigger, setAutoReviewTrigger] = useState(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('mode') === 'review';
+    } catch (error) {
+      return false;
+    }
+  });
   const {
     mode,
     problems,
@@ -226,14 +542,99 @@ const StudyPage = () => {
     handleAnswer,
     finishStudy,
     restart,
+    enterReview,
+    exitReview,
+    startManualSession,
     setError,
-  } = useStudySession(user);
+  } = useStudySession(user, updateUser);
 
-  const loadingFlashcards = useMemo(() => (loading && mode !== "study") ? pickFlashcards(5) : [], [loading, mode]);
+  const clearReviewQuery = useCallback(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.has('mode')) {
+        params.delete('mode');
+        const next = params.toString();
+        const base = `${window.location.pathname}${next ? `?${next}` : ''}`;
+        window.history.replaceState({}, '', base);
+      }
+    } catch (error) {
+      /* noop */
+    }
+  }, []);
 
+  const refreshReviewPreview = useCallback(async () => {
+    try {
+      setReviewPreviewLoading(true);
+      const response = await api.problems.reviewQueue({ limit: 3 });
+      setReviewPreview({
+        total: Number(response?.total) || 0,
+        problems: Array.isArray(response?.problems) ? response.problems.slice(0, 3) : []
+      });
+      setReviewError('');
+    } catch (error) {
+      setReviewPreview({ total: 0, problems: [] });
+      setReviewError(error?.message || '복습 대기열을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
+    } finally {
+      setReviewPreviewLoading(false);
+      setReviewPreviewFetched(true);
+    }
+  }, []);
 
-  if (loading && mode !== "study") {
-    return <LoadingState vocabCards={loadingFlashcards} />;
+  const startReviewFromQueue = useCallback(async () => {
+    if (reviewLoading) return;
+    try {
+      setReviewLoading(true);
+      setError(null);
+      const response = await api.problems.startReviewSession({ limit: 5 });
+      const problems = Array.isArray(response?.problems) ? response.problems : [];
+      if (!problems.length) {
+        setReviewError('복습할 문제가 아직 없어요! 먼저 새로운 문제를 풀어주세요.');
+        refreshReviewPreview();
+        return;
+      }
+      startManualSession(problems);
+      setReviewError('');
+      refreshReviewPreview();
+    } catch (error) {
+      const message = error?.message || '복습 세트를 준비하지 못했어요. 잠시 후 다시 시도해 주세요.';
+      setReviewError(message);
+    } finally {
+      setReviewLoading(false);
+      clearReviewQuery();
+    }
+  }, [reviewLoading, setError, startManualSession, refreshReviewPreview, clearReviewQuery]);
+  
+  useEffect(() => {
+    if (loading && mode !== "study") {
+      setLoadingFlashcards((prev) => (prev.length ? prev : pickFlashcards(5)));
+    } else if (!loading) {
+      setLoadingFlashcards([]);
+    }
+  }, [loading, mode]);
+
+  useEffect(() => {
+    if (mode === 'config' && !reviewPreviewFetched && !reviewPreviewLoading) {
+      refreshReviewPreview();
+    }
+  }, [mode, reviewPreviewFetched, reviewPreviewLoading, refreshReviewPreview]);
+
+  useEffect(() => {
+    if (autoReviewTrigger && mode === 'config' && !reviewLoading) {
+      startReviewFromQueue();
+      setAutoReviewTrigger(false);
+    }
+  }, [autoReviewTrigger, mode, reviewLoading, startReviewFromQueue]);
+
+  const handleLoadMoreFlashcards = useCallback(() => {
+    setLoadingFlashcards((prev) => {
+      const existingWords = prev.map((card) => card.word);
+      const nextBatch = pickFlashcards(5, existingWords);
+      return [...prev, ...nextBatch];
+    });
+  }, []);
+
+  if ((loading && mode !== "study") || (reviewLoading && mode === 'config')) {
+    return <LoadingState vocabCards={loadingFlashcards} onLoadMore={handleLoadMoreFlashcards} />;
   }
 
   if (error && mode !== "study") {
@@ -242,7 +643,22 @@ const StudyPage = () => {
 
   switch (mode) {
     case "config":
-      return <StudyConfig onStart={startStudy} />;
+      return (
+        <StudyConfig
+          onStart={startStudy}
+          headerSlot={(
+            <ReviewCallout
+              total={reviewPreview.total}
+              problems={reviewPreview.problems}
+              loading={reviewLoading}
+              refreshing={reviewPreviewLoading}
+              error={reviewError}
+              onRefresh={refreshReviewPreview}
+              onStart={startReviewFromQueue}
+            />
+          )}
+        />
+      );
 
     case "study":
       return (
@@ -260,8 +676,11 @@ const StudyPage = () => {
         />
       );
 
+    case "review":
+      return <ReviewModeView results={results} onBack={exitReview} onRestart={restart} />;
+
     case "result":
-      return <StudyResult results={results} onRestart={restart} onHome={() => (window.location.href = "/")} />;
+      return <StudyResult results={results} onRestart={restart} onReview={enterReview} onHome={() => (window.location.href = "/")} />;
 
     default:
       return null;
@@ -282,29 +701,53 @@ const styles = {
   spinner: {
     width: "40px",
     height: "40px",
-    border: "4px solid #f3f4f6",
-    borderTop: "4px solid #667eea",
+    border: "4px solid var(--surface-border)",
+    borderTop: "4px solid var(--accent)",
     borderRadius: "50%",
     animation: "spin 1s linear infinite",
   },
+  loadingSnippet: {
+    maxWidth: '520px',
+    background: 'var(--surface-translucent-strong)',
+    borderRadius: '18px',
+    padding: '18px 22px',
+    boxShadow: '0 16px 32px var(--surface-shadow)'
+  },
   loadingMessage: {
-    color: "#334155",
+    color: "var(--review-hint)",
     fontSize: "18px",
     fontWeight: 600,
+    margin: 0
+  },
+  quoteText: {
+    margin: 0,
+    fontSize: '18px',
+    fontWeight: 700,
+    color: 'var(--text-primary)'
+  },
+  quoteMeta: {
+    margin: '6px 0 4px',
+    fontSize: '14px',
+    color: 'var(--text-secondary)'
+  },
+  quoteTranslation: {
+    margin: 0,
+    fontSize: '14px',
+    color: 'var(--text-secondary)'
   },
   flashcardArea: {
     marginTop: "8px",
-    background: "rgba(255, 255, 255, 0.88)",
+    background: "var(--surface-translucent)",
     borderRadius: "16px",
     padding: "20px",
-    boxShadow: "0 18px 28px rgba(148, 163, 184, 0.35)",
+    boxShadow: "0 18px 28px var(--surface-shadow)",
     width: "100%",
     maxWidth: "420px",
   },
   flashcardTitle: {
     fontSize: "16px",
     fontWeight: 700,
-    color: "#0F172A",
+    color: "var(--text-primary)",
     marginBottom: "12px",
   },
   flashcardList: {
@@ -312,12 +755,23 @@ const styles = {
     flexDirection: "column",
     gap: "12px",
   },
+  flashcardMoreButton: {
+    marginTop: "16px",
+    padding: "10px 18px",
+    background: "var(--success-gradient)",
+    color: "var(--text-inverse)",
+    border: "none",
+    borderRadius: "12px",
+    fontWeight: 700,
+    cursor: "pointer",
+    boxShadow: "0 12px 24px var(--success-shadow)",
+  },
   flashcardItem: {
-    background: "#1E293B",
+    background: "var(--surface-contrast)",
     borderRadius: "12px",
     padding: "14px 16px",
-    color: "#F8FAFC",
-    boxShadow: "0 10px 20px rgba(15, 23, 42, 0.35)",
+    color: "var(--text-inverse)",
+    boxShadow: "0 10px 20px var(--surface-shadow)",
   },
   flashcardWord: {
     fontSize: "18px",
@@ -326,25 +780,147 @@ const styles = {
   },
   flashcardMeaning: {
     fontSize: "14px",
-    color: "#E2E8F0",
+    color: "var(--text-inverse)",
   },
   flashcardCountdown: {
     fontSize: "13px",
-    color: "#CBD5F5",
+    color: "var(--text-muted)",
+  },
+  reviewCallout: {
+    marginBottom: "24px",
+    padding: "24px",
+    borderRadius: "18px",
+    background: "var(--review-callout-bg)",
+    border: "1px solid var(--glass-border)",
+    boxShadow: "0 18px 40px var(--accent-shadow)",
+    color: "var(--text-primary)",
+  },
+  reviewCalloutHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: "18px",
+    flexWrap: "wrap",
+    marginBottom: "16px",
+  },
+  reviewBadge: {
+    display: "inline-block",
+    padding: "4px 12px",
+    borderRadius: "999px",
+    background: "var(--accent-soft-strong)",
+    color: "var(--accent)",
+    fontWeight: 700,
+    fontSize: "12px",
+    marginBottom: "8px",
+    letterSpacing: "0.04em",
+  },
+  reviewCalloutTitle: {
+    fontSize: "20px",
+    fontWeight: 800,
+    marginBottom: "4px",
+    color: "var(--text-primary)",
+  },
+  reviewCalloutSubtitle: {
+    fontSize: "14px",
+    color: "var(--review-hint)",
+  },
+  reviewActions: {
+    display: "flex",
+    gap: "12px",
+    alignItems: "center",
+    flexWrap: "wrap"
+  },
+  reviewRefreshButton: {
+    padding: "10px 20px",
+    borderRadius: "12px",
+    border: "1px solid var(--accent-soft-strong)",
+    background: "var(--accent-soft-strong)",
+    color: "var(--accent)",
+    fontWeight: 600,
+    cursor: "pointer",
+  },
+  reviewStartButton: {
+    padding: "12px 24px",
+    borderRadius: "12px",
+    border: "none",
+    background: "var(--success-gradient)",
+    color: "var(--text-inverse)",
+    fontWeight: 700,
+    cursor: "pointer",
+    boxShadow: "0 14px 28px var(--success-shadow)",
+  },
+  reviewButtonDisabled: {
+    opacity: 0.55,
+    cursor: "not-allowed",
+    boxShadow: "none",
+  },
+  reviewCalloutList: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px",
+  },
+  reviewErrorBox: {
+    marginBottom: "12px",
+    padding: "12px 16px",
+    borderRadius: "12px",
+    background: "var(--danger-bg)",
+    color: "var(--danger-text)",
+    fontSize: "13px",
+    lineHeight: 1.5,
+    border: "1px solid var(--danger-border)"
+  },
+  reviewPreviewItem: {
+    background: "var(--surface-translucent)",
+    borderRadius: "14px",
+    padding: "16px",
+    border: "1px solid var(--surface-border)",
+    boxShadow: "0 10px 24px var(--surface-shadow)",
+  },
+  reviewPreviewMeta: {
+    display: "flex",
+    gap: "10px",
+    alignItems: "center",
+    marginBottom: "8px",
+    flexWrap: "wrap",
+  },
+  reviewPreviewType: {
+    padding: "4px 10px",
+    borderRadius: "999px",
+    background: "var(--accent-soft)",
+    color: "var(--accent-strong)",
+    fontSize: "12px",
+    fontWeight: 700,
+  },
+  reviewPreviewSource: {
+    fontSize: "12px",
+    color: "var(--text-muted)",
+  },
+  reviewPreviewText: {
+    fontSize: "14px",
+    color: "var(--text-primary)",
+    lineHeight: 1.6,
+  },
+  reviewEmptyPreview: {
+    textAlign: "center",
+    padding: "24px",
+    borderRadius: "14px",
+    background: "var(--surface-overlay)",
+    color: "var(--review-hint)",
+    fontWeight: 600,
   },
   error: {
     textAlign: "center",
     padding: "40px",
-    background: "white",
+    background: "var(--surface-card)",
     borderRadius: "20px",
     maxWidth: "500px",
     margin: "50px auto",
-    boxShadow: "0 10px 30px rgba(0, 0, 0, 0.1)",
+    boxShadow: "0 10px 30px var(--surface-shadow)",
   },
   button: {
     padding: "12px 24px",
-    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-    color: "white",
+    background: "var(--submit-gradient)",
+    color: "var(--text-inverse)",
     border: "none",
     borderRadius: "10px",
     fontSize: "16px",
@@ -368,9 +944,9 @@ const styles = {
   resetButton: {
     padding: "10px 18px",
     borderRadius: "10px",
-    border: "1px solid #cbd5f5",
-    background: "#ffffff",
-    color: "#1f2937",
+    border: "1px solid var(--glass-border)",
+    background: "var(--surface-card)",
+    color: "var(--text-primary)",
     fontWeight: 600,
     cursor: "pointer",
   },
@@ -384,18 +960,18 @@ const styles = {
     width: "100%",
     height: "10px",
     borderRadius: "999px",
-    background: "rgba(148, 163, 184, 0.25)",
+    background: "var(--surface-border)",
     overflow: "hidden",
   },
   progressBarInner: {
     height: "100%",
-    background: "linear-gradient(135deg, #34d399 0%, #3b82f6 100%)",
+    background: "var(--progress-gradient)",
     transition: "width 0.3s ease",
   },
   progressLabels: {
     display: "flex",
     justifyContent: "space-between",
-    color: "#94A3B8",
+    color: "var(--text-muted)",
     fontSize: "14px",
     fontWeight: 600,
   },
@@ -412,25 +988,85 @@ const styles = {
     flexWrap: "wrap",
   },
   submitHint: {
-    color: "#94A3B8",
+    color: "var(--text-muted)",
     fontSize: "14px",
   },
   submitButton: {
     padding: "14px 32px",
     borderRadius: "12px",
     border: "none",
-    background: "linear-gradient(135deg, #6366f1 0%, #7c3aed 100%)",
-    color: "white",
+    background: "var(--submit-gradient)",
+    color: "var(--text-inverse)",
     fontWeight: 700,
     fontSize: "16px",
     cursor: "pointer",
-    boxShadow: "0 15px 35px rgba(99, 102, 241, 0.35)",
+    boxShadow: "0 15px 35px var(--submit-shadow)",
     transition: "opacity 0.2s ease",
   },
   submitButtonDisabled: {
     opacity: 0.5,
     cursor: "not-allowed",
     boxShadow: "none",
+  },
+  scrollTopButton: {
+    position: "fixed",
+    right: "32px",
+    bottom: "32px",
+    width: "48px",
+    height: "48px",
+    borderRadius: "50%",
+    border: "none",
+    background: "var(--scroll-top-bg)",
+    color: "var(--scroll-top-text)",
+    fontSize: "22px",
+    fontWeight: 700,
+    cursor: "pointer",
+    boxShadow: "0 12px 24px var(--accent-shadow)",
+    transition: "transform 0.2s ease, opacity 0.2s ease",
+    zIndex: 1200
+  },
+  reviewWrapper: {
+    maxWidth: "960px",
+    margin: "0 auto",
+    padding: "32px 16px 48px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "24px"
+  },
+  reviewHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "12px",
+    flexWrap: "wrap"
+  },
+  reviewTitle: {
+    fontSize: "22px",
+    fontWeight: 800,
+    color: "var(--accent-strong)"
+  },
+  reviewNavButton: {
+    padding: "12px 20px",
+    borderRadius: "12px",
+    border: "none",
+    fontWeight: 700,
+    cursor: "pointer",
+    boxShadow: "0 14px 28px var(--accent-shadow)",
+    transition: "transform 0.2s ease"
+  },
+  reviewList: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "28px"
+  },
+  reviewEmpty: {
+    textAlign: "center",
+    padding: "60px 20px",
+    borderRadius: "20px",
+    background: "var(--review-empty-bg)",
+    color: "var(--text-primary)",
+    fontWeight: 600,
+    fontSize: "18px"
   },
 };
 

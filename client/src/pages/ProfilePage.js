@@ -3,8 +3,81 @@ import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api.service';
 import tierConfig from '../config/tierConfig.json';
 
+const typeLabelMap = {
+  blank: '빈칸',
+  order: '순서 배열',
+  insertion: '문장 삽입',
+  grammar: '어법',
+  vocabulary: '어휘',
+  title: '제목',
+  theme: '주제',
+  summary: '요약',
+  implicit: '함축 의미',
+  irrelevant: '무관 문장'
+};
+
 const ProfilePage = () => {
   const { user } = useAuth();
+  const [stats, setStats] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [statsError, setStatsError] = useState(null);
+  const [reviewQueue, setReviewQueue] = useState({ total: 0, problems: [] });
+  const [reviewLoading, setReviewLoading] = useState(true);
+
+  const formatPreviewText = (text) => {
+    if (!text) return '문항 정보를 준비 중이에요.';
+    const clean = String(text).replace(/\s+/g, ' ').trim();
+    return clean.length > 120 ? `${clean.slice(0, 117)}…` : clean;
+  };
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadStats = async () => {
+      try {
+        setStatsLoading(true);
+        const data = await api.problems.stats();
+        if (isMounted) {
+          setStats(data);
+          setStatsError(null);
+        }
+      } catch (error) {
+        if (isMounted) {
+          setStatsError('학습 통계를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
+        }
+      } finally {
+        if (isMounted) {
+          setStatsLoading(false);
+        }
+      }
+    };
+
+    loadStats();
+    const loadReviewQueue = async () => {
+      try {
+        setReviewLoading(true);
+        const response = await api.problems.reviewQueue({ limit: 5 });
+        if (isMounted) {
+          setReviewQueue({
+            total: Number(response?.total) || 0,
+            problems: Array.isArray(response?.problems) ? response.problems.slice(0, 5) : []
+          });
+        }
+      } catch (error) {
+        if (isMounted) {
+          setReviewQueue({ total: 0, problems: [] });
+        }
+      } finally {
+        if (isMounted) {
+          setReviewLoading(false);
+        }
+      }
+    };
+
+    loadReviewQueue();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
   const getTierInfo = () => {
     const points = user?.points || 0;
     return tierConfig.tiers.find(tier => 
@@ -32,6 +105,22 @@ const ProfilePage = () => {
   const tierInfo = getTierInfo();
   const nextTier = getNextTier();
   const progress = calculateProgress();
+  const tierAccent = {
+    border: `1px solid ${tierInfo.color}`,
+    boxShadow: tierInfo.features.specialEffect
+      ? `0 0 30px ${tierInfo.color}66`
+      : `0 0 18px ${tierInfo.color}33`
+  };
+
+  const statCards = stats
+    ? [
+        { label: '총 학습 세션', value: stats.totalSessions ?? 0, suffix: '회' },
+        { label: '정답률', value: stats.accuracy ?? 0, suffix: '%', isPercent: true },
+        { label: '누적 문제 수', value: stats.totalProblems ?? 0, suffix: '문' },
+        { label: '누적 정답 수', value: stats.totalCorrect ?? 0, suffix: '문' },
+        { label: '최근 7일 학습', value: stats.weeklySessions ?? 0, suffix: '회' }
+      ]
+    : [];
 
   return (
     <div style={styles.container}>
@@ -143,6 +232,76 @@ const ProfilePage = () => {
           </div>
         </div>
 
+        <div style={styles.statsSection}>
+          <h3 style={styles.statsHeading}>📈 나의 학습 요약</h3>
+          {statsLoading ? (
+            <div style={styles.statsMessage}>데이터를 차곡차곡 불러오고 있어요… ⏳</div>
+          ) : statsError ? (
+            <div style={{ ...styles.statsMessage, color: '#f87171' }}>{statsError}</div>
+          ) : (
+            <div style={styles.statsGrid}>
+              {statCards.map((card) => (
+                <ProfileStatCard
+                  key={card.label}
+                  tierAccent={tierAccent}
+                  {...card}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div style={styles.reviewQueueSection}>
+          <div style={styles.reviewQueueHeader}>
+            <div>
+              <div style={styles.reviewQueueBadge}>복습 대기열</div>
+              <h3 style={styles.reviewQueueTitle}>틀린 문제 {reviewQueue.total}문이 당신을 기다리고 있어요</h3>
+              <p style={styles.reviewQueueHint}>복습을 누적하면 티어도 빠르게 올라가요. 지금 바로 도전해 볼까요?</p>
+            </div>
+            <button
+              style={{
+                ...styles.reviewQueueButton,
+                ...(reviewLoading ? styles.reviewQueueButtonDisabled : {})
+              }}
+              onClick={() => (window.location.href = '/study?mode=review')}
+              disabled={reviewLoading || reviewQueue.total === 0}
+            >
+              {reviewLoading ? '정리 중...' : reviewQueue.total > 0 ? '복습 시작하기' : '최근 오답 없음'}
+            </button>
+          </div>
+          <div style={styles.reviewQueueList}>
+            {reviewLoading ? (
+              <div style={styles.reviewQueueEmpty}>복습 카드를 모으는 중이에요… ⏳</div>
+            ) : reviewQueue.total === 0 ? (
+              <div style={styles.reviewQueueEmpty}>최근에 틀린 문제가 없어요! 꾸준한 학습이 빛나고 있네요 ✨</div>
+            ) : (
+              reviewQueue.problems.map((problem) => (
+                <div key={problem.id} style={styles.reviewQueueItem}>
+                  <div style={styles.reviewQueueItemMeta}>
+                    <span style={styles.reviewQueueType}>{typeLabelMap[problem.type] || problem.type}</span>
+                    {problem.sourceLabel && <span style={styles.reviewQueueSource}>{problem.sourceLabel}</span>}
+                    {problem.exposure?.incorrectCount && (
+                      <span style={styles.reviewQueueCount}>오답 {problem.exposure.incorrectCount}회</span>
+                    )}
+                  </div>
+                  <div style={styles.reviewQueueText}>{formatPreviewText(problem.question || problem.mainText)}</div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {!statsLoading && !statsError && stats?.perType?.length > 0 && (
+          <div style={styles.typeSection}>
+            <h3 style={styles.statsHeading}>🎯 유형별 정답률</h3>
+            <div style={styles.typeList}>
+              {stats.perType.map((entry) => (
+                <TypeAccuracyRow key={entry.type} entry={entry} tierInfo={tierInfo} />
+              ))}
+            </div>
+          </div>
+        )}
+
         <MembershipCard />
         <TeacherSection />
         <TeacherAnalyticsSection />
@@ -176,6 +335,53 @@ const ProfilePage = () => {
             )}
           </div>
         </div>
+      </div>
+    </div>
+  );
+};
+
+const ProfileStatCard = ({ label, value, suffix, tierAccent, isPercent }) => {
+  const numeric = Number(value || 0);
+  return (
+    <div
+      style={{
+        ...styles.profileStatCard,
+        ...(tierAccent || {})
+      }}
+    >
+      <div style={styles.profileStatLabel}>{label}</div>
+      <div style={styles.profileStatValue}>
+        {isPercent ? numeric.toFixed(1) : numeric.toLocaleString()}
+        {suffix && <span style={styles.profileStatSuffix}>{suffix}</span>}
+      </div>
+    </div>
+  );
+};
+
+const TypeAccuracyRow = ({ entry, tierInfo }) => {
+  const accuracy = Number(entry.accuracy || 0);
+  const correct = Number(entry.correct || 0);
+  const incorrect = Number(entry.incorrect || 0);
+  const total = Number(entry.total || 0);
+  return (
+    <div style={styles.typeRow}>
+      <div style={styles.typeHeaderRow}>
+        <span>{typeLabelMap[entry.type] || entry.type}</span>
+        <span>{accuracy.toFixed(1)}%</span>
+      </div>
+      <div style={styles.typeBar}>
+        <div
+          style={{
+            ...styles.typeBarFill,
+            width: `${accuracy}%`,
+            background: `linear-gradient(90deg, ${tierInfo.color}, ${tierInfo.color}AA)`
+          }}
+        />
+      </div>
+      <div style={styles.typeMeta}>
+        <span>정답 {correct.toLocaleString()}문</span>
+        <span>오답 {incorrect.toLocaleString()}문</span>
+        <span>총 {total.toLocaleString()}문</span>
       </div>
     </div>
   );
@@ -268,7 +474,7 @@ const styles = {
   },
   userName: {
     fontSize: '24px',
-    color: '#F8FAFC',
+    color: 'var(--text-inverse)',
     fontWeight: '700',
     marginBottom: '15px',
     textShadow: '0 2px 10px rgba(0, 0, 0, 0.5)'
@@ -314,6 +520,191 @@ const styles = {
     gap: '20px',
     marginBottom: '40px'
   },
+  statsSection: {
+    marginTop: '48px'
+  },
+  statsHeading: {
+    fontSize: '22px',
+    fontWeight: 800,
+    color: 'var(--text-inverse)',
+    marginBottom: '20px'
+  },
+  statsGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+    gap: '18px'
+  },
+  statsMessage: {
+    padding: '18px',
+    borderRadius: '16px',
+    background: 'rgba(15, 23, 42, 0.6)',
+    color: '#CBD5E1',
+    textAlign: 'center'
+  },
+  reviewQueueSection: {
+    marginTop: '30px',
+    padding: '24px',
+    borderRadius: '20px',
+    background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.18), rgba(147, 197, 253, 0.14))',
+    border: '1px solid rgba(148, 163, 184, 0.25)',
+    boxShadow: '0 20px 38px rgba(30, 64, 175, 0.18)'
+  },
+  reviewQueueHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: '20px',
+    flexWrap: 'wrap',
+    marginBottom: '16px'
+  },
+  reviewQueueBadge: {
+    display: 'inline-block',
+    padding: '4px 12px',
+    borderRadius: '999px',
+    background: 'var(--accent-soft-strong)',
+    color: 'var(--accent-badge-text)',
+    fontWeight: 700,
+    fontSize: '12px',
+    letterSpacing: '0.05em',
+    marginBottom: '10px'
+  },
+  reviewQueueTitle: {
+    margin: '0 0 8px 0',
+    fontSize: '22px',
+    fontWeight: 800,
+    color: 'var(--accent-strong)'
+  },
+  reviewQueueHint: {
+    margin: 0,
+    fontSize: '14px',
+    color: 'var(--text-secondary)'
+  },
+  reviewQueueButton: {
+    padding: '12px 26px',
+    borderRadius: '12px',
+    border: 'none',
+    background: 'var(--success-gradient)',
+    color: 'var(--text-inverse)',
+    fontWeight: 700,
+    cursor: 'pointer',
+    boxShadow: '0 18px 32px var(--success-shadow)'
+  },
+  reviewQueueButtonDisabled: {
+    opacity: 0.6,
+    cursor: 'not-allowed',
+    boxShadow: 'none'
+  },
+  reviewQueueList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '14px'
+  },
+  reviewQueueItem: {
+    padding: '18px',
+    borderRadius: '16px',
+    background: 'rgba(255, 255, 255, 0.92)',
+    border: '1px solid rgba(148, 163, 184, 0.25)',
+    boxShadow: '0 12px 30px rgba(15, 23, 42, 0.1)'
+  },
+  reviewQueueItemMeta: {
+    display: 'flex',
+    gap: '12px',
+    alignItems: 'center',
+    marginBottom: '10px',
+    flexWrap: 'wrap'
+  },
+  reviewQueueType: {
+    padding: '4px 10px',
+    borderRadius: '999px',
+    background: 'rgba(99, 102, 241, 0.2)',
+    color: '#4338CA',
+    fontSize: '12px',
+    fontWeight: 700
+  },
+  reviewQueueSource: {
+    fontSize: '12px',
+    color: 'var(--text-muted)'
+  },
+  reviewQueueCount: {
+    fontSize: '12px',
+    color: 'var(--danger-text)',
+    fontWeight: 700
+  },
+  reviewQueueText: {
+    fontSize: '14px',
+    color: 'var(--text-primary)',
+    lineHeight: 1.6
+  },
+  reviewQueueEmpty: {
+    textAlign: 'center',
+    padding: '24px',
+    borderRadius: '14px',
+    background: 'rgba(226, 232, 240, 0.65)',
+    color: 'var(--text-secondary)',
+    fontWeight: 600
+  },
+  profileStatCard: {
+    background: 'rgba(15, 23, 42, 0.72)',
+    borderRadius: '18px',
+    padding: '22px',
+    textAlign: 'center',
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+    color: '#E2E8F0'
+  },
+  profileStatLabel: {
+    fontSize: '14px',
+    color: '#A5B4FC',
+    marginBottom: '12px'
+  },
+  profileStatValue: {
+    fontSize: '32px',
+    fontWeight: 900,
+    color: 'var(--text-inverse)'
+  },
+  profileStatSuffix: {
+    fontSize: '16px',
+    marginLeft: '4px',
+    color: '#CBD5E1'
+  },
+  typeSection: {
+    marginTop: '40px'
+  },
+  typeList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px'
+  },
+  typeRow: {
+    background: 'rgba(15, 23, 42, 0.65)',
+    borderRadius: '16px',
+    padding: '18px',
+    border: '1px solid rgba(148, 163, 184, 0.25)'
+  },
+  typeHeaderRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    fontWeight: 700,
+    color: '#E2E8F0',
+    marginBottom: '10px'
+  },
+  typeBar: {
+    width: '100%',
+    height: '12px',
+    background: 'rgba(148, 163, 184, 0.25)',
+    borderRadius: '999px',
+    overflow: 'hidden'
+  },
+  typeBarFill: {
+    height: '100%',
+    borderRadius: '999px'
+  },
+  typeMeta: {
+    display: 'flex',
+    gap: '12px',
+    marginTop: '10px',
+    fontSize: '13px',
+    color: '#CBD5E1'
+  },
   infoCard: {
     background: 'rgba(51, 65, 85, 0.8)',
     backdropFilter: 'blur(10px)',
@@ -335,7 +726,7 @@ const styles = {
   },
   cardLabel: {
     fontSize: '14px',
-    color: '#94A3B8',
+    color: 'var(--text-muted)',
     fontWeight: '600',
     marginBottom: '5px',
     textTransform: 'uppercase',
@@ -343,7 +734,7 @@ const styles = {
   },
   cardValue: {
     fontSize: '18px',
-    color: '#F8FAFC',
+    color: 'var(--text-inverse)',
     fontWeight: '700'
   },
   membershipCard: {
@@ -363,7 +754,7 @@ const styles = {
   },
   membershipText: {
     fontSize: '14px',
-    color: '#94a3b8',
+    color: 'var(--text-muted)',
     margin: 0
   },
   membershipSummary: {
@@ -445,7 +836,7 @@ const styles = {
   teacherButton: {
     borderRadius: '12px',
     background: 'linear-gradient(135deg, #4ade80 0%, #22c55e 100%)',
-    color: '#0f172a',
+    color: 'var(--text-primary)',
     padding: '10px 16px',
     border: 'none',
     fontWeight: 600,
@@ -469,7 +860,7 @@ const styles = {
   },
   teacherCodeMeta: {
     margin: 0,
-    color: '#94a3b8',
+    color: 'var(--text-muted)',
     fontSize: '13px'
   },
   teacherCodeBadge: {
@@ -481,7 +872,7 @@ const styles = {
     fontWeight: 600
   },
   teacherCodeEmpty: {
-    color: '#94a3b8',
+    color: 'var(--text-muted)',
     fontSize: '13px',
     padding: '12px'
   },
@@ -546,7 +937,7 @@ const styles = {
   analyticsButton: {
     borderRadius: '12px',
     background: 'linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)',
-    color: '#0f172a',
+    color: 'var(--text-primary)',
     padding: '10px 16px',
     border: 'none',
     fontWeight: 600,
@@ -569,7 +960,7 @@ const styles = {
   },
   analyticsFilterLabel: {
     fontSize: '13px',
-    color: '#94a3b8',
+    color: 'var(--text-muted)',
     fontWeight: 600
   },
   analyticsSelect: {
@@ -586,7 +977,7 @@ const styles = {
     margin: 0
   },
   analyticsInfo: {
-    color: '#94a3b8',
+    color: 'var(--text-muted)',
     fontSize: '14px',
     margin: 0
   },
@@ -605,7 +996,7 @@ const styles = {
   },
   analyticsSummaryLabel: {
     fontSize: '12px',
-    color: '#94a3b8',
+    color: 'var(--text-muted)',
     fontWeight: 600,
     letterSpacing: '0.04em',
     textTransform: 'uppercase'
@@ -627,7 +1018,7 @@ const styles = {
   analyticsTableHead: {
     textAlign: 'left',
     fontSize: '12px',
-    color: '#94a3b8',
+    color: 'var(--text-muted)',
     textTransform: 'uppercase',
     letterSpacing: '0.04em',
     padding: '12px 16px',
@@ -706,7 +1097,7 @@ const styles = {
   analyticsDetailClose: {
     border: 'none',
     background: 'transparent',
-    color: '#94a3b8',
+    color: 'var(--text-muted)',
     fontSize: '12px',
     cursor: 'pointer',
     padding: '6px 8px'
@@ -759,7 +1150,7 @@ const styles = {
   },
   benefitsTitle: {
     fontSize: '24px',
-    color: '#F8FAFC',
+    color: 'var(--text-inverse)',
     fontWeight: '800',
     marginBottom: '25px',
     textAlign: 'center',
@@ -778,7 +1169,7 @@ const styles = {
     borderRadius: '12px',
     border: '1px solid rgba(248, 250, 252, 0.1)',
     fontSize: '16px',
-    color: '#F8FAFC',
+    color: 'var(--text-inverse)',
     fontWeight: '600'
   },
   benefitIcon: {
@@ -1027,7 +1418,9 @@ const TeacherSection = () => {
               <li key={student.id} style={styles.teacherStudentItem}>
                 <div>
                   <strong>{student.name || student.username}</strong>
-                  <p style={styles.teacherCodeMeta}>학교 {student.school || '-'} · {student.grade ? ${student.grade}학년 : '학년 정보 없음'}</p>
+                  <p style={styles.teacherCodeMeta}>
+                    학교 {student.school || '-'} · {student.grade ? `${student.grade}학년` : '학년 정보 없음'}
+                  </p>
                 </div>
                 <span style={styles.teacherCodeBadge}>등록 {student.linkedAt ? new Date(student.linkedAt).toLocaleDateString() : ''}</span>
               </li>

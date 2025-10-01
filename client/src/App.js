@@ -5,6 +5,7 @@
 
 import React, { Suspense } from 'react';
 import { AuthProvider } from './contexts/AuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import ErrorBoundary from './middleware/errorBoundary';
 import AppRouter from './routes/AppRouter';
 import logger from './utils/logger';
@@ -31,11 +32,13 @@ checkEnvironment();
 function App() {
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <Suspense fallback={<LoadingScreen />}>
-          <AppRouter />
-        </Suspense>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <Suspense fallback={<LoadingScreen />}>
+            <AppRouter />
+          </Suspense>
+        </AuthProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 }

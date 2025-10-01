@@ -1,12 +1,33 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api.service';
 import tierConfig from '../config/tierConfig.json';
+
+const typeLabelMap = {
+  blank: '빈칸',
+  order: '순서 배열',
+  insertion: '문장 삽입',
+  grammar: '어법',
+  vocabulary: '어휘',
+  title: '제목',
+  theme: '주제',
+  summary: '요약',
+  implicit: '함축 의미',
+  irrelevant: '무관 문장'
+};
 
 const HomePage = () => {
   const { user } = useAuth();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [reviewQueue, setReviewQueue] = useState({ total: 0, problems: [] });
+  const [reviewLoading, setReviewLoading] = useState(true);
+
+  const formatPreviewText = (text) => {
+    if (!text) return '문항 정보를 준비 중이에요.';
+    const clean = String(text).replace(/\s+/g, ' ').trim();
+    return clean.length > 80 ? `${clean.slice(0, 77)}…` : clean;
+  };
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -22,31 +43,55 @@ const HomePage = () => {
     };
 
     fetchStats();
+    const fetchReviewQueue = async () => {
+      try {
+        setReviewLoading(true);
+        const response = await api.problems.reviewQueue({ limit: 3 });
+        setReviewQueue({
+          total: Number(response?.total) || 0,
+          problems: Array.isArray(response?.problems) ? response.problems.slice(0, 3) : []
+        });
+      } catch (error) {
+        console.error('복습 대기열을 불러오지 못했어요.', error);
+      } finally {
+        setReviewLoading(false);
+      }
+    };
+
+    fetchReviewQueue();
   }, []);
 
-  const getTierInfo = () => {
+  const currentTier = useMemo(() => {
     const points = user?.points || 0;
-    return tierConfig.tiers.find(
-      (tier) => points >= tier.minLP && (tier.maxLP === -1 || points <= tier.maxLP)
-    ) || tierConfig.tiers[0];
-  };
+    return (
+      tierConfig.tiers.find(
+        (tier) => points >= tier.minLP && (tier.maxLP === -1 || points <= tier.maxLP)
+      ) || tierConfig.tiers[0]
+    );
+  }, [user]);
 
-  const getNextTier = () => {
-    const current = getTierInfo();
-    const index = tierConfig.tiers.findIndex((tier) => tier.id === current.id);
+  const nextTier = useMemo(() => {
+    const index = tierConfig.tiers.findIndex((tier) => tier.id === currentTier.id);
     return tierConfig.tiers[index + 1] || null;
-  };
+  }, [currentTier]);
 
-  const progressToNextTier = () => {
-    const current = getTierInfo();
-    const next = getNextTier();
-    if (!next) return 100;
-
+  const progress = useMemo(() => {
+    if (!nextTier) return 100;
     const points = user?.points || 0;
-    const range = next.minLP - current.minLP;
-    const progress = points - current.minLP;
-    return Math.min(100, Math.max(0, (progress / range) * 100));
-  };
+    const range = nextTier.minLP - currentTier.minLP;
+    const progressValue = points - currentTier.minLP;
+    return Math.min(100, Math.max(0, (progressValue / range) * 100));
+  }, [currentTier, nextTier, user]);
+
+  const tierAccent = useMemo(() => {
+    const color = currentTier.color;
+    const glow = currentTier.features.specialEffect ? `${color}80` : `${color}40`;
+    return {
+      border: `1px solid ${color}`,
+      boxShadow: `0 10px 25px ${glow}`,
+      transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+    };
+  }, [currentTier]);
 
   if (loading) {
     return (
@@ -57,9 +102,13 @@ const HomePage = () => {
     );
   }
 
-  const currentTier = getTierInfo();
-  const nextTier = getNextTier();
-  const progress = progressToNextTier();
+  const statCards = [
+    { label: '총 학습 세션', value: stats?.totalSessions ?? 0, suffix: '회' },
+    { label: '정답률', value: stats?.accuracy ?? 0, suffix: '%', isPercent: true },
+    { label: '누적 문제 수', value: stats?.totalProblems ?? 0, suffix: '문' },
+    { label: '누적 정답 수', value: stats?.totalCorrect ?? 0, suffix: '문' },
+    { label: '지난 7일 학습', value: stats?.weeklySessions ?? 0, suffix: '회' }
+  ];
 
   return (
     <div style={styles.container}>
@@ -93,10 +142,16 @@ const HomePage = () => {
       <section style={styles.section}>
         <h2 style={styles.sectionTitle}>오늘의 요약</h2>
         <div style={styles.statGrid}>
-          <StatCard label="총 학습 세션" value={stats?.totalSessions ?? 0} suffix="회" />
-          <StatCard label="정답률" value={stats?.accuracy ?? 0} suffix="%" />
-          <StatCard label="누적 문제 수" value={stats?.totalProblems ?? 0} suffix="문" />
-          <StatCard label="지난 7일 학습" value={stats?.weeklySessions ?? 0} suffix="회" />
+          {statCards.map((card) => (
+            <StatCard
+              key={card.label}
+              label={card.label}
+              value={card.value}
+              suffix={card.suffix}
+              tierAccent={tierAccent}
+              isPercent={card.isPercent}
+            />
+          ))}
         </div>
       </section>
 
@@ -108,19 +163,68 @@ const HomePage = () => {
           <QuickButton label="문서 업로드" description="새 교재를 등록하고 분석" onClick={() => (window.location.href = '/admin')} />
         </div>
       </section>
+
+      <section style={styles.section}>
+        <h2 style={styles.sectionTitle}>복습 대기열</h2>
+        <div style={styles.reviewCard}>
+          <div style={styles.reviewCardHeader}>
+            <div>
+              <div style={styles.reviewBadge}>다시 풀면 실력 업!</div>
+              <div style={styles.reviewCardTitle}>틀린 문제 {reviewQueue.total}문이 기다리고 있어요.</div>
+              <p style={styles.reviewHint}>조금씩 복습하면 기억이 단단해져요. 지금 바로 확인해 볼까요?</p>
+            </div>
+            <button
+              style={{
+                ...styles.reviewActionButton,
+                ...(reviewLoading ? styles.reviewButtonDisabled : {})
+              }}
+              onClick={() => (window.location.href = '/study?mode=review')}
+              disabled={reviewLoading || reviewQueue.total === 0}
+            >
+              {reviewLoading ? '정리 중...' : reviewQueue.total > 0 ? '복습하러 가기' : '복습할 문제 없음'}
+            </button>
+          </div>
+          <div style={styles.reviewList}>
+            {reviewLoading ? (
+              <div style={styles.reviewEmpty}>복습 카드들을 예쁘게 정렬하는 중이에요... ✨</div>
+            ) : reviewQueue.total === 0 ? (
+              <div style={styles.reviewEmpty}>최근에 틀렸던 문제가 없어요! 정말 멋져요 🦉</div>
+            ) : (
+              reviewQueue.problems.map((problem) => (
+                <div key={problem.id} style={styles.reviewItem}>
+                  <div style={styles.reviewItemMeta}>
+                    <span style={styles.reviewItemType}>{typeLabelMap[problem.type] || problem.type}</span>
+                    {problem.sourceLabel && <span style={styles.reviewItemSource}>{problem.sourceLabel}</span>}
+                  </div>
+                  <div style={styles.reviewItemText}>{formatPreviewText(problem.question || problem.mainText)}</div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </section>
     </div>
   );
 };
 
-const StatCard = ({ label, value, suffix }) => (
-  <div style={styles.statCard}>
-    <p style={styles.statLabel}>{label}</p>
-    <p style={styles.statValue}>
-      {Number(value || 0).toLocaleString()}
-      {suffix && <span style={styles.statSuffix}>{suffix}</span>}
-    </p>
-  </div>
-);
+const StatCard = ({ label, value, suffix, tierAccent, isPercent }) => {
+  const displayValue = Number(value || 0);
+  return (
+    <div
+      style={{
+        ...styles.statCard,
+        ...(tierAccent || {}),
+        background: tierAccent?.background || 'var(--surface-contrast)'
+      }}
+    >
+      <p style={styles.statLabel}>{label}</p>
+      <p style={styles.statValue}>
+        {isPercent ? displayValue.toFixed(1) : displayValue.toLocaleString()}
+        {suffix && <span style={styles.statSuffix}>{suffix}</span>}
+      </p>
+    </div>
+  );
+};
 
 const QuickButton = ({ label, description, onClick }) => (
   <button style={styles.quickButton} onClick={onClick}>
@@ -133,24 +237,25 @@ const styles = {
   container: {
     maxWidth: '1200px',
     margin: '0 auto',
-    padding: '24px'
+    padding: '24px',
+    color: 'var(--text-primary)'
   },
   title: {
     fontSize: '32px',
     fontWeight: 'bold',
     marginBottom: '8px',
-    color: '#111827'
+    color: 'var(--text-primary)'
   },
   subtitle: {
     fontSize: '16px',
-    color: '#6B7280',
+    color: 'var(--text-secondary)',
     marginBottom: '32px'
   },
   tierCard: {
-    background: '#FFFFFF',
+    background: 'var(--surface-card)',
     borderRadius: '20px',
     padding: '28px',
-    boxShadow: '0 12px 30px rgba(15, 23, 42, 0.12)',
+    boxShadow: '0 12px 30px var(--surface-shadow)',
     marginBottom: '32px'
   },
   tierHeader: {
@@ -170,7 +275,7 @@ const styles = {
   tierPoints: {
     fontSize: '18px',
     margin: '6px 0 0',
-    color: '#6B7280'
+    color: 'var(--text-secondary)'
   },
   progressBox: {
     marginTop: '20px'
@@ -179,22 +284,23 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     fontSize: '14px',
-    color: '#4B5563',
+    color: 'var(--text-secondary)',
     marginBottom: '8px'
   },
   progressBar: {
     width: '100%',
     height: '12px',
     borderRadius: '6px',
-    background: '#E5E7EB',
+    background: 'var(--surface-border)',
     overflow: 'hidden'
   },
   progressFill: {
-    height: '100%'
+    height: '100%',
+    background: 'var(--progress-gradient)'
   },
   maxTierMessage: {
     marginTop: '12px',
-    color: '#10B981',
+    color: 'var(--accent)',
     fontWeight: 600
   },
   section: {
@@ -204,7 +310,7 @@ const styles = {
     fontSize: '22px',
     fontWeight: 'bold',
     marginBottom: '20px',
-    color: '#111827'
+    color: 'var(--text-primary)'
   },
   statGrid: {
     display: 'grid',
@@ -212,26 +318,26 @@ const styles = {
     gap: '16px'
   },
   statCard: {
-    background: '#FFFFFF',
+    background: 'var(--surface-contrast)',
     borderRadius: '16px',
     padding: '20px',
-    boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)',
-    textAlign: 'center'
+    textAlign: 'center',
+    color: 'var(--text-inverse)'
   },
   statLabel: {
     fontSize: '14px',
-    color: '#6B7280',
+    color: 'var(--text-muted)',
     marginBottom: '12px'
   },
   statValue: {
     fontSize: '30px',
     fontWeight: 'bold',
-    color: '#111827'
+    color: 'var(--text-inverse)'
   },
   statSuffix: {
     fontSize: '16px',
     marginLeft: '4px',
-    color: '#6B7280'
+    color: 'var(--text-muted)'
   },
   quickGrid: {
     display: 'grid',
@@ -246,14 +352,15 @@ const styles = {
     padding: '20px',
     borderRadius: '18px',
     border: 'none',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    color: '#FFFFFF',
+    background: 'var(--submit-gradient)',
+    color: 'var(--text-inverse)',
     cursor: 'pointer',
-    boxShadow: '0 10px 28px rgba(79, 70, 229, 0.35)',
+    boxShadow: '0 10px 28px var(--submit-shadow)',
     transition: 'transform 0.2s ease'
   },
   quickDescription: {
     fontSize: '14px',
+    color: 'var(--text-inverse)',
     opacity: 0.9
   },
   loadingWrapper: {
@@ -263,15 +370,111 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     gap: '12px',
-    color: '#4B5563'
+    color: 'var(--text-secondary)'
   },
   spinner: {
     width: '48px',
     height: '48px',
     borderRadius: '50%',
-    border: '4px solid #E5E7EB',
-    borderTopColor: '#667eea',
+    border: '4px solid var(--surface-border)',
+    borderTopColor: 'var(--accent)',
     animation: 'spin 1s linear infinite'
+  },
+  reviewCard: {
+    background: 'var(--surface-card)',
+    borderRadius: '20px',
+    padding: '26px',
+    boxShadow: '0 14px 36px var(--review-shadow)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '18px'
+  },
+  reviewCardHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: '18px',
+    flexWrap: 'wrap'
+  },
+  reviewBadge: {
+    display: 'inline-block',
+    padding: '4px 12px',
+    borderRadius: '999px',
+    background: 'var(--accent-badge-bg)',
+    color: 'var(--accent-badge-text)',
+    fontWeight: 700,
+    fontSize: '12px',
+    letterSpacing: '0.05em',
+    marginBottom: '8px'
+  },
+  reviewCardTitle: {
+    fontSize: '20px',
+    fontWeight: 800,
+    marginBottom: '6px',
+    color: 'var(--accent-strong)'
+  },
+  reviewHint: {
+    fontSize: '14px',
+    color: 'var(--review-hint)',
+    margin: 0
+  },
+  reviewActionButton: {
+    padding: '12px 22px',
+    borderRadius: '12px',
+    border: 'none',
+    background: 'var(--success-gradient)',
+    color: 'var(--text-inverse)',
+    fontWeight: 700,
+    cursor: 'pointer',
+    boxShadow: '0 12px 26px var(--success-shadow)'
+  },
+  reviewButtonDisabled: {
+    opacity: 0.6,
+    cursor: 'not-allowed',
+    boxShadow: 'none'
+  },
+  reviewList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px'
+  },
+  reviewItem: {
+    padding: '16px',
+    borderRadius: '14px',
+    background: 'var(--surface-soft)',
+    border: '1px solid var(--surface-border)'
+  },
+  reviewItemMeta: {
+    display: 'flex',
+    gap: '10px',
+    alignItems: 'center',
+    marginBottom: '8px',
+    flexWrap: 'wrap'
+  },
+  reviewItemType: {
+    padding: '4px 10px',
+    borderRadius: '999px',
+    background: 'var(--accent-soft)',
+    color: 'var(--accent)',
+    fontSize: '12px',
+    fontWeight: 700
+  },
+  reviewItemSource: {
+    fontSize: '12px',
+    color: 'var(--text-muted)'
+  },
+  reviewItemText: {
+    fontSize: '14px',
+    color: 'var(--text-primary)',
+    lineHeight: 1.6
+  },
+  reviewEmpty: {
+    textAlign: 'center',
+    padding: '20px',
+    borderRadius: '14px',
+    background: 'var(--surface-overlay)',
+    color: 'var(--review-hint)',
+    fontWeight: 600
   }
 };
 
