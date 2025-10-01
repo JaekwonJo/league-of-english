@@ -171,6 +171,13 @@ function extractOptionUnderlines(options = [], failureReasons = null) {
 
 const HYPHEN_VARIANTS = ['-', '\u2010', '\u2011', '\u2012', '\u2013', '\u2014', '\u2212'];
 const HYPHEN_VARIANT_SET = new Set(HYPHEN_VARIANTS);
+const IGNORED_NORMALIZATION_CHARS = new Set([
+  ',', '.', '!', '?', ';', ':', '"', "'", '\u2018', '\u2019', '\u201c', '\u201d', '\u2026',
+  '\u00a0', '\n', '\r', '\t', '\f', '\v'
+]);
+
+['\n', '\r', '\t', '\f', '\v'].forEach((ch) => IGNORED_NORMALIZATION_CHARS.add(ch));
+
 
 function isAlphabetic(char) {
   return /^[A-Za-z]$/.test(char || '');
@@ -210,6 +217,7 @@ function buildNormalizedMap(text) {
     const ch = text[i];
     if (/\s/.test(ch)) continue;
     if (HYPHEN_VARIANT_SET.has(ch)) continue;
+    if (IGNORED_NORMALIZATION_CHARS.has(ch)) continue;
     chars.push(ch.toLowerCase());
     map.push(i);
   }
