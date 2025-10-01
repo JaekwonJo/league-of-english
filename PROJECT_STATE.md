@@ -25,34 +25,40 @@
 - `problem_exposures`가 정답/오답을 추적하며 틀린 문제는 쿨다운 후 확률적으로 재출제되고, 맞힌 문제는 자동 제외돼요.
 - 홈·프로필·학습 설정 화면에 “복습 대기열” 카드가 추가되어 최근 오답과 바로가기 버튼을 한눈에 볼 수 있습니다.
 - 관리자 페이지에 문제 라이브러리 뷰가 생겨 저장된 문제를 유형별로 훑어보고, 원하는 조합만 PDF로 내보낼 수 있어요.
-- 라이트/다크 테마 토글이 모든 주요 화면(랭킹·통계·관리자 포함)에 적용되어, CSS 변수 기반 팔레트만 조정해도 색상을 일괄 변경할 수 있습니다.
+- 라이트/다크 테마 토글이 모든 주요 화면(랭킹·통계·관리자 포함)에 적용되고, `tierConfig`·`appConfig` 같은 JSON 색상도 CSS 변수로 치환됐습니다.
 - 함축 추론 생성기가 `<u>` 태그를 빼먹은 응답도 `targetSpan`을 활용해 자동 보정하고, 실패 사유를 프롬프트에 즉시 전달해 재시도 품질을 높였습니다.
 - 어법과 어휘 문제는 각각 전용 메뉴얼·프롬프트로 생성되고, 학습/홈 화면에서도 `어법`, `어휘` 타입이 분리되어 선택·통계가 가능한 상태입니다.
 - `server/tmp/implicit-retries.log`에 함축 추론 재시도 로그가 JSONL로 누적돼 실패한 variantTag와 사유를 바로 추적할 수 있어요.
+- `analysisService`가 지문 분석본을 DB(`passage_analyses`)에 저장하고, 분석 페이지는 해당 데이터를 불러오는 API 골격을 갖췄습니다.
 
 ## Next 3 (priority)
-1. **테마 토큰 스냅샷 테스트 도입.** 주요 컴포넌트(StudyResult, Admin, Analysis)가 CSS 변수를 계속 지키는지 Jest/RTL로 스냅샷을 만들어 회귀를 막아요.
-2. **함축 추론 로그 뷰어 구축.** `implicit-retries.log`를 관리자 대시보드/CLI에서 바로 확인하고 실패 알림을 받을 수 있게 시각화해요.
-3. **ProblemLibrary 플리커 제거.** 타입 토글 시 캐시/로딩 상태를 정교화해 요약 수치가 순간적으로 뒤섞이는 문제를 해결해요.
+1. **분석 데이터 UI 연결 완성.** `analysisService`가 저장한 요약·핵심 포인트·질문 데이터를 Analysis 페이지 카드/차트에 실데이터로 표시해 “분석 자료” 요구를 충족시킵니다.
+2. **어휘 학습 루틴 고도화.** 현재 플래시카드/퀵 세트만 있는 Vocabulary 흐름을 단어장 저장·반복·스피드모드로 확장해 “단어 학습” 목표를 달성합니다.
+3. **베타 배포 파이프라인 준비.** Render/Vercel 기준 `.env` 예시, 빌드/시드 스크립트, 데이터 백업 절차를 문서화해 1주 내 베타 배포를 실행 가능하게 만듭니다.
 
 ## Known issues
-- 재출제 확률이 하드코딩 상태라 학습 데이터를 보고 동적으로 조정하거나 관리자 UI에서 수정할 수 있게 해야 합니다.
-- ProblemLibrary 타입 토글 시 이전 요약 수치가 잠시 보이는 플리커가 있어 로딩 인디케이터/캐싱 전략 보완이 필요합니다.
-- Blank 검증이 더 엄격해지면서 재생성 루프가 늘어났는데, 모니터링 알림이 없어 서버 로그를 수동으로 확인해야 합니다.
-- Order/Insertion 유형은 아직 rule-based라 OpenAI 검증형 프롬프트로 교체해 파이프라인을 통합해야 합니다.
-- Score HUD/홈 대시보드가 새 점수로 즉시 리프레시되지 않아 학생이 LP 상승을 바로 확인하지 못합니다.
-- 프론트엔드에 테마 회귀 테스트가 없어 향후 refactor 시 CSS 변수 누락을 즉시 잡기 어렵습니다.
-- 함축 추론 재시도 로그는 파일로 축적되지만, 알림·시각화가 없어 운영자에게 즉시 공유되지 않습니다.
+- Analysis 페이지가 아직 더미 카드/그래프를 쓰고 있어 DB에 저장된 분석본이 직접 표시되지 않습니다.
+- Vocabulary 학습이 플래시카드 수준에 머물러 오답 저장·반복 루프·발음 음원 같은 학습 기능이 비어 있습니다.
+- 함축 추론 생성이 `targetSpan` 없이 오면 여전히 실패하며, 괄호 강조 등 두 번째 방어 장치가 없습니다.
+- ProblemLibrary에서 유형 토글 시 이전 집계 값이 잠깐 보이는 플리커가 남아 있어 UX가 어색합니다.
+- 재출제 확률이 하드코딩이라 학생 데이터에 맞춘 동적 조정이나 관리자 설정 화면이 없습니다.
+
+## Resolved (2025-10-01 - implicit log + vocab/grammar split hardening)
+- `server/services/aiProblemService.js`가 외부 어법/어휘 메뉴얼 경로를 우선 읽어 정확한 템플릿을 적용합니다.
+- `tierConfig.json`·`appConfig.json` 색상을 CSS 변수로 통일해 라이트/다크 테마에서 대비가 유지됩니다.
+- 함축 추론 생성 로그가 `server/tmp/implicit-retries.log`에 JSONL로 남아 재시도 사유를 추적할 수 있습니다.
+- PROJECT_STATE.md·BUILDLOG.md·README.md를 최신 목표/이슈/요약으로 동기화했습니다.
 
 ## Resolved (2025-10-06 - blank passage truncation guard)
 - `_normalizeBlankPayload`가 원문 전체 단락 길이와 문장 수를 저장·검증해 잘린 지문이 캐시에 남지 않도록 차단했습니다.
 - `_acceptCachedProblem`이 축약본/의도치 않은 단문을 자동 폐기하고, 필요 시 즉시 재생성 루프에 넣어 빈칸 품질을 유지합니다.
 - 문제 저장 시 원문 길이 메타를 기록해 관리자 라이브러리에서도 축약 여부를 한눈에 확인할 수 있게 했습니다.
 
-## Resolved (2025-10-08 - grammar/vocabulary split + implicit retry log)
-- Grammar/Vocabulary 프롬프트와 메뉴얼을 완전히 분리하고, 학습/홈 UI가 `어법`, `어휘`를 개별적으로 노출하도록 정비했습니다.
-- tierConfig·appConfig 등 JSON 색상 정의를 모두 CSS 변수로 치환해 라이트/다크 테마 대비가 일관되게 유지돼요.
-- `generateImplicit`가 시도별 variantTag·실패 사유를 `server/tmp/implicit-retries.log`에 기록해 재시도 현황을 추적할 수 있습니다.
+## Resolved (2025-10-01 - grammar/vocabulary split + implicit retry log)
+- Grammar/Vocabulary 프롬프트와 메뉴얼을 분리해 `/mnt/c/...` 외부 최신본을 그대로 읽고, 학습 UI도 `어법`·`어휘` 선택을 독립시켰습니다.
+- `generateImplicit`가 `targetSpan`으로 `<u>` 구간을 자동 복원하고, 실패 사유/variantTag를 JSONL(`server/tmp/implicit-retries.log`)로 남깁니다.
+- 테마 컨텍스트와 CSS 변수 팔레트를 재정비해 `tierConfig`·`appConfig` 등 JSON 색상이 라이트/다크에서 동일하게 보입니다.
+- 복습/홈 카드가 어법·어휘 통계를 따로 보여줘 추적이 쉬워졌습니다.
 
 ## Resolved (2025-10-07 - implicit underline guard + full theme tokens)
 - 함축 추론 생성기에 `targetSpan` 기반 보정과 실패 사유 피드백을 추가해 `<u>` 누락으로 세트 생성이 막히던 문제를 해결했습니다.
