@@ -7,7 +7,9 @@ import { orderStyles } from './problemDisplayStyles';
 
 const InsertionProblemDisplay = ({ problem, userAnswer, onAnswer }) => {
   const handleChoiceClick = (choiceNumber) => {
-    onAnswer(choiceNumber);
+    if (typeof onAnswer === 'function') {
+      onAnswer(choiceNumber);
+    }
   };
 
   return (
@@ -57,6 +59,7 @@ const InsertionProblemDisplay = ({ problem, userAnswer, onAnswer }) => {
                 ...(userAnswer === choice.number ? insertionStyles.choiceSelected : {})
               }}
               onClick={() => handleChoiceClick(choice.number)}
+              disabled={typeof onAnswer !== 'function'}
             >
               <strong>{choice.symbol}</strong>
             </button>
@@ -75,7 +78,7 @@ const insertionStyles = {
     padding: '40px',
     boxShadow: '0 25px 50px rgba(0, 0, 0, 0.3)',
     border: '1px solid rgba(248, 250, 252, 0.1)',
-    color: '#F8FAFC',
+    color: 'var(--surface-soft-solid)',
     lineHeight: '1.8'
   },
   questionHeader: {
@@ -85,7 +88,7 @@ const insertionStyles = {
   questionTitle: {
     fontSize: '22px',
     fontWeight: 'bold',
-    color: '#F8FAFC',
+    color: 'var(--surface-soft-solid)',
     margin: 0
   },
   givenSentenceSection: {
@@ -98,7 +101,7 @@ const insertionStyles = {
   givenSentenceLabel: {
     fontSize: '16px',
     fontWeight: 'bold',
-    color: '#3B82F6',
+    color: 'var(--accent-primary)',
     marginBottom: '15px',
     textAlign: 'center'
   },
@@ -107,7 +110,7 @@ const insertionStyles = {
     lineHeight: '1.7',
     textAlign: 'center',
     fontWeight: '500',
-    color: '#F8FAFC'
+    color: 'var(--surface-soft-solid)'
   },
   mainTextSection: {
     marginBottom: '30px',
@@ -119,7 +122,7 @@ const insertionStyles = {
   mainText: {
     fontSize: '17px',
     lineHeight: '1.8',
-    color: '#F8FAFC',
+    color: 'var(--surface-soft-solid)',
     whiteSpace: 'pre-wrap'
   },
   choicesSection: {
@@ -137,7 +140,7 @@ const insertionStyles = {
     borderRadius: '50%',
     border: '3px solid rgba(248, 250, 252, 0.3)',
     background: 'rgba(51, 65, 85, 0.8)',
-    color: '#F8FAFC',
+    color: 'var(--surface-soft-solid)',
     fontSize: '24px',
     fontWeight: 'bold',
     cursor: 'pointer',
@@ -147,13 +150,13 @@ const insertionStyles = {
     justifyContent: 'center',
     backdropFilter: 'blur(10px)',
     ':hover': {
-      borderColor: '#3B82F6',
+      borderColor: 'var(--accent-primary)',
       background: 'rgba(59, 130, 246, 0.2)',
       transform: 'scale(1.1)'
     }
   },
   choiceSelected: {
-    borderColor: '#10B981',
+    borderColor: 'var(--success)',
     background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(5, 150, 105, 0.3))',
     boxShadow: '0 8px 25px rgba(16, 185, 129, 0.4)',
     transform: 'scale(1.1)'
@@ -168,7 +171,7 @@ const insertionStyles = {
   },
   metadataItem: {
     fontSize: '14px',
-    color: '#94A3B8',
+    color: 'var(--color-slate-400)',
     padding: '8px 16px',
     background: 'rgba(51, 65, 85, 0.6)',
     borderRadius: '20px',

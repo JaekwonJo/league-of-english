@@ -58,7 +58,8 @@ const OrderProblemDisplay = ({ problem, parsedOrderData, onAnswer, userAnswer })
                 ...orderStyles.multipleChoiceButton,
                 ...(userAnswer === choice.number ? orderStyles.multipleChoiceSelected : {})
               }}
-              onClick={() => onAnswer(choice.number)}
+              onClick={() => typeof onAnswer === 'function' && onAnswer(choice.number)}
+              disabled={typeof onAnswer !== 'function'}
             >
               <strong>{choice.symbol}</strong> {choice.value}
             </button>

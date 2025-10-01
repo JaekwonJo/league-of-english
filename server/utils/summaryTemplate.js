@@ -16,6 +16,10 @@ function countWords(text = "") {
     .length;
 }
 
+function countSentencesLocal(text = '') {
+  return (String(text || '').match(/[.!?](?=\s|$)/g) || []).length;
+}
+
 function clip(text, limit = 1800) {
   if (!text) return "";
   const clean = String(text).replace(/\s+/g, " ").trim();
@@ -300,6 +304,13 @@ function validateSummaryProblem(problem) {
     issues.push('explanation_missing');
   } else if (!/[가-힣]/.test(problem.explanation)) {
     issues.push('explanation_language');
+  } else {
+    if (problem.explanation.trim().length < 70) {
+      issues.push('explanation_short');
+    }
+    if (countSentencesLocal(problem.explanation) < 2) {
+      issues.push('explanation_sentences');
+    }
   }
 
   const source = String(problem.sourceLabel || "").trim();

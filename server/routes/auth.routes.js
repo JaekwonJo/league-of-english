@@ -3,101 +3,113 @@ const router = express.Router();
 const database = require('../models/database');
 const { generateToken, hashPassword, verifyPassword } = require('../middleware/auth');
 const { logAuthEvent, EVENT_TYPES } = require('../services/auditLogService');
+const emailVerificationService = require('../services/emailVerificationService');
 
-/**
- * POST /api/register
- * ?�원가??
- */
+// 회원가입
 router.post('/register', async (req, res) => {
-  const { username, password, email, name, school, grade, role = 'student' } = req.body;
-  
+  const {
+    username,
+    password,
+    email,
+    name,
+    school,
+    grade,
+    role = 'student',
+    verificationCode
+  } = req.body || {};
+
   try {
-    // 중복 ?�인
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+    if (!normalizedEmail) {
+      return res.status(400).json({ message: '이메일을 입력해 주세요.' });
+    }
+
+    try {
+      await emailVerificationService.verifyCode(normalizedEmail, verificationCode);
+    } catch (verificationError) {
+      return res.status(400).json({ message: verificationError.message || '이메일 인증에 실패했습니다.' });
+    }
+
+    // 아이디/이메일 중복 확인
     const existing = await database.get(
       'SELECT id FROM users WHERE username = ? OR email = ?',
-      [username, email]
+      [username, normalizedEmail]
     );
-    
+
     if (existing) {
-      return res.status(400).json({ message: '?��? 존재?�는 ?�이???�는 ?�메?�입?�다.' });
+      return res.status(400).json({ message: '이미 존재하는 아이디 또는 이메일입니다.' });
     }
-    
-    // 비�?번호 ?�싱
+
     const hashedPassword = await hashPassword(password);
-    
-    // ?�용???�성
+
     const result = await database.run(
-      `INSERT INTO users (username, password_hash, email, name, school, grade, role)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [username, hashedPassword, email, name, school, grade, role]
+      `INSERT INTO users (username, password_hash, email, name, school, grade, role, email_verified)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
+      [username, hashedPassword, normalizedEmail, name, school, grade, role]
     );
-    
+
     await logAuthEvent({
       userId: result.id || null,
       username,
       eventType: EVENT_TYPES.REGISTER,
       ipAddress: req.ip,
       userAgent: req.headers['user-agent'] || '',
-      metadata: { email, role, grade }
+      metadata: { email: normalizedEmail, role, grade }
     });
 
     res.status(201).json({
-      message: '?�원가?�이 ?�료?�었?�니??',
+      message: '회원가입이 완료되었습니다.',
       userId: result.id
     });
   } catch (error) {
-    console.error('?�원가???�류:', error);
-    res.status(500).json({ message: '?�버 ?�류가 발생?�습?�다.' });
+    console.error('[auth] register error:', error);
+    res.status(500).json({ message: '서버 오류가 발생했습니다.' });
   }
 });
 
-/**
- * POST /api/login
- * 로그??
- */
-router.post('/login', async (req, res) => {
-  const { username, password } = req.body;
-  
+// 인증 코드 전송
+router.post('/send-code', async (req, res) => {
   try {
-    // ?�용??조회 (password 컬럼 ?�용)
-    const user = await database.get(
-      'SELECT * FROM users WHERE username = ?',
-      [username]
-    );
-    
+    const { email } = req.body || {};
+    await emailVerificationService.requestVerificationCode(email);
+    res.json({ success: true, message: '이메일로 인증 코드를 보냈어요. 10분 안에 입력해 주세요!' });
+  } catch (error) {
+    console.error('[auth] send-code error:', error);
+    res.status(400).json({ success: false, message: error?.message || '인증 코드를 전송하지 못했어요.' });
+  }
+});
+
+// 로그인
+router.post('/login', async (req, res) => {
+  const { username, password } = req.body || {};
+
+  try {
+    const user = await database.get('SELECT * FROM users WHERE username = ?', [username]);
+
     if (!user) {
-      return res.status(401).json({ message: '?�이???�는 비�?번호가 ?�치?��? ?�습?�다.' });
+      return res.status(401).json({ message: '아이디 또는 비밀번호가 올바르지 않습니다.' });
     }
-    
-    // 비�?번호 ?�인
+
     let isValid = false;
     try {
       isValid = await verifyPassword(password, user.password_hash);
     } catch (bcryptError) {
-      console.error('비�?번호 검�??�류:', bcryptError);
-      // ?�시?��? ?��? 비�?번호?????�으므�?직접 비교
+      console.error('[auth] password verify error:', bcryptError);
       if (password === user.password) {
         isValid = true;
-        // 비�?번호�??�싱?�여 ?�데?�트
         const hashedPassword = await hashPassword(password);
-        await database.run(
-          'UPDATE users SET password = ? WHERE id = ?',
-          [hashedPassword, user.id]
-        );
-        console.log('비�?번호 ?�싱 ?�데?�트 ?�료:', username);
+        await database.run('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, user.id]);
       }
     }
-    
+
     if (!isValid) {
-      return res.status(401).json({ message: '?�이???�는 비�?번호가 ?�치?��? ?�습?�다.' });
+      return res.status(401).json({ message: '아이디 또는 비밀번호가 올바르지 않습니다.' });
     }
-    
-    // ?�큰 ?�성
+
     const token = generateToken(user);
-    
-    // 비�?번호 ?�거
     delete user.password_hash;
-    
+    delete user.password;
+
     await logAuthEvent({
       userId: user.id,
       username: user.username,
@@ -107,26 +119,16 @@ router.post('/login', async (req, res) => {
       metadata: { role: user.role, membership: user.membership, success: true }
     });
 
-    res.json({
-      message: '로그???�공',
-      token: token,
-      user: user
-    });
+    res.json({ message: '로그인 성공', token, user });
   } catch (error) {
-    console.error('로그???�류 ?�세:', error.message, error.stack);
-    res.status(500).json({ message: '?�버 ?�류가 발생?�습?�다.' });
+    console.error('[auth] login error:', error);
+    res.status(500).json({ message: '서버 오류가 발생했습니다.' });
   }
 });
 
-/**
- * POST /api/logout
- * 로그?�웃 (?�라?�언?�에???�큰 ??��)
- */
+// 로그아웃 (토큰 삭제만 하면 됨)
 router.post('/logout', (req, res) => {
-  res.json({ message: '로그?�웃 ?�었?�니??' });
+  res.json({ message: '로그아웃 되었습니다.' });
 });
 
 module.exports = router;
-
-
-

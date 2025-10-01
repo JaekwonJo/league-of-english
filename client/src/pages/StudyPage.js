@@ -733,13 +733,13 @@ const styles = {
   },
   loadingSnippet: {
     maxWidth: '520px',
-    background: 'var(--surface-translucent-strong)',
+    background: 'var(--surface-soft-strong)',
     borderRadius: '18px',
     padding: '18px 22px',
     boxShadow: '0 16px 32px var(--surface-shadow)'
   },
   loadingMessage: {
-    color: "var(--review-hint)",
+    color: "var(--text-primary)",
     fontSize: "18px",
     fontWeight: 600,
     margin: 0
@@ -809,7 +809,7 @@ const styles = {
   },
   flashcardCountdown: {
     fontSize: "13px",
-    color: "var(--text-muted)",
+    color: "var(--text-secondary)",
   },
   reviewCallout: {
     marginBottom: "24px",

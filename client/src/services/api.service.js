@@ -145,6 +145,31 @@ class ApiService {
     }
   }
 
+  async postForBlob(endpoint, data = {}) {
+    try {
+      const response = await fetch(`${this.baseURL}${endpoint}`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) {
+        let errorMessage = '요청 처리 실패';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch (parseError) {
+          /* ignore parse error */
+        }
+        throw new Error(errorMessage);
+      }
+
+      return await response.blob();
+    } catch (error) {
+      await this.handleError(error, `POST_BLOB ${endpoint}`);
+    }
+  }
+
   /**
    * PUT 요청
    */
@@ -226,6 +251,7 @@ export const api = {
   auth: {
     login: (credentials) => apiService.post('/auth/login', credentials),
     register: (userData) => apiService.post('/auth/register', userData),
+    sendCode: (email) => apiService.post('/auth/send-code', { email }),
     logout: () => apiService.post('/auth/logout'),
     refresh: () => apiService.post('/auth/refresh')
   },
@@ -243,7 +269,13 @@ export const api = {
     getSmartProblems: (data) => apiService.post('/get-smart-problems', data),
     submit: (data) => apiService.post('/problems/submit', data),
     history: (params) => apiService.get('/problems/history', params),
-    stats: () => apiService.get('/problems/stats')
+    stats: () => apiService.get('/problems/stats'),
+    exportPdf: (data) => apiService.postForBlob('/problems/export/pdf', data),
+    library: (params) => apiService.get('/problems/library', params),
+    reviewQueue: (params) => apiService.get('/problems/review-queue', params),
+    startReviewSession: (data) => apiService.post('/problems/review-session', data),
+    saveNote: (problemId, data) => apiService.put(`/problems/${problemId}/note`, data),
+    exportHistory: (params) => apiService.get('/problems/export/history', params)
   },
 
   // 사용자
@@ -275,20 +307,28 @@ export const api = {
   // 멤버십
   membership: {
     status: () => apiService.get('/membership/status'),
-    redeem: (code) => apiService.post('/membership/redeem', { code })
+    redeem: (code) => apiService.post('/membership/redeem', { code }),
+    request: (plan, message) => apiService.post('/membership/request', { plan, message })
   },
 
   // 문서 분석
   analysis: {
     list: () => apiService.get('/analysis/list'),
     get: (documentId) => apiService.get(`/analysis/${documentId}`),
+    getPassage: (documentId, passageNumber) => apiService.get(`/analysis/${documentId}/passage/${passageNumber}`),
+    generate: (documentId, passageNumber, count = 1) => apiService.post(`/analysis/${documentId}/analyze-passage`, { passageNumber, count }),
     status: (documentId) => apiService.get(`/analysis/status/${documentId}`),
-    delete: (documentId) => apiService.delete(`/analysis/${documentId}`)
+    delete: (documentId) => apiService.delete(`/analysis/${documentId}`),
+    feedback: {
+      submit: (documentId, passageNumber, payload) => apiService.post(`/analysis/${documentId}/passage/${passageNumber}/feedback`, payload),
+      pending: () => apiService.get('/analysis/feedback/pending'),
+      resolve: (feedbackId, status) => apiService.put(`/analysis/feedback/${feedbackId}`, { status })
+    }
   }
 };
 
 // Legacy compatibility for older bundles that call api.post(...) directly
-['get', 'post', 'put', 'delete', 'uploadFile'].forEach((method) => {
+['get', 'post', 'postForBlob', 'put', 'delete', 'uploadFile'].forEach((method) => {
   if (typeof apiService[method] === 'function') {
     api[method] = (...args) => apiService[method](...args);
   }

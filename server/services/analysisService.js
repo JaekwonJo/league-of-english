@@ -5,6 +5,18 @@
 
 const database = require('../models/database');
 const DocumentAnalyzer = require('../utils/documentAnalyzer');
+const { MAX_VARIANTS_PER_PASSAGE } = require('../utils/documentAnalyzer');
+
+const FEEDBACK_ACTIONS = {
+  HELPFUL: 'helpful',
+  REPORT: 'report'
+};
+
+const FEEDBACK_STATUS = {
+  PENDING: 'pending',
+  RESOLVED: 'resolved',
+  DISMISSED: 'dismissed'
+};
 
 class AnalysisService {
   constructor() {
@@ -49,7 +61,7 @@ class AnalysisService {
   }
 
   // Get all analyzed passages for a document
-  async getAnalyzedPassages(documentId) {
+  async getAnalyzedPassages(documentId, userId = null) {
     try {
       const rows = await database.all(
         'SELECT * FROM passage_analyses WHERE document_id = ? ORDER BY passage_number',
@@ -60,7 +72,12 @@ class AnalysisService {
         return { success: true, data: [], message: '아직 분석된 지문이 없습니다.' };
       }
 
-      const formatted = rows.map(r => this.formatPassageAnalysis(r));
+      const formatted = [];
+      for (const row of rows) {
+        const base = this.formatPassageAnalysis(row);
+        const enriched = await this._attachFeedbackMetadata(documentId, base.passageNumber, base.variants, userId);
+        formatted.push({ ...base, variants: enriched });
+      }
       return { success: true, data: formatted, total: formatted.length };
     } catch (error) {
       throw new Error(`분석된 지문 조회 실패: ${error.message}`);
@@ -70,14 +87,8 @@ class AnalysisService {
   // Analyze a single passage (admin only)
   async analyzePassage(documentId, passageNumber, userRole) {
     try {
-      if (userRole !== 'admin') {
-        throw new Error('관리자만 분석을 수행할 수 있습니다.');
-      }
-
-      // Return cached if exists
-      const existing = await this.getPassageAnalysis(documentId, passageNumber);
-      if (existing) {
-        return { success: true, data: existing, cached: true };
+      if (userRole !== 'admin' && userRole !== 'teacher') {
+        throw new Error('분석 생성을 수행하려면 교사 이상 권한이 필요합니다.');
       }
 
       const document = await database.get(
@@ -94,14 +105,30 @@ class AnalysisService {
       }
 
       const passage = passages[passageNumber - 1];
+
+      const existing = await this.getPassageAnalysis(documentId, passageNumber);
+      if (existing?.variants?.length >= MAX_VARIANTS_PER_PASSAGE) {
+        return {
+          success: true,
+          data: existing,
+          cached: true,
+          message: '이미 두 개의 분석본이 준비되어 있어요.'
+        };
+      }
+
       console.log(`[analysis] analyzing passage ${passageNumber}...`);
       const analysis = await this.analyzer.analyzeIndividualPassage(passage, passageNumber);
 
-      await this.savePassageAnalysis(documentId, passageNumber, passage, analysis);
+      const { allVariants } = await this.appendVariants(documentId, passageNumber, passage, [analysis]);
+      const enrichedVariants = await this._attachFeedbackMetadata(documentId, passageNumber, allVariants, null);
 
       return {
         success: true,
-        data: analysis,
+        data: {
+          passageNumber,
+          originalPassage: passage,
+          variants: enrichedVariants
+        },
         message: `지문 ${passageNumber} 분석이 완료되었습니다.`,
         totalPassages: passages.length,
         cached: false
@@ -111,18 +138,279 @@ class AnalysisService {
     }
   }
 
+  async generateVariants(documentId, passageNumber, count = 1, userRole, userId) {
+    if (userRole !== 'admin' && userRole !== 'teacher') {
+      throw new Error('분석 생성을 수행하려면 교사 이상 권한이 필요합니다.');
+    }
+
+    const document = await database.get(
+      'SELECT * FROM documents WHERE id = ?',
+      [documentId]
+    );
+    if (!document) {
+      throw new Error('문서를 찾을 수 없습니다.');
+    }
+
+    const passages = this.extractPassages(document.content);
+    if (passageNumber < 1 || passageNumber > passages.length) {
+      throw new Error(`유효한 지문 번호가 아닙니다. (1-${passages.length})`);
+    }
+
+    const passage = passages[passageNumber - 1];
+    const existing = await this.getPassageAnalysis(documentId, passageNumber);
+    const existingCount = existing?.variants?.length || 0;
+    if (existingCount >= MAX_VARIANTS_PER_PASSAGE) {
+      return {
+        success: true,
+        data: existing,
+        generated: [],
+        message: '이미 두 개의 분석본이 있어서 더 이상 생성할 필요가 없어요.'
+      };
+    }
+
+    const sanitizedCount = Math.min(Math.max(Number(count) || 1, 1), MAX_VARIANTS_PER_PASSAGE - existingCount);
+    const generated = [];
+
+    for (let i = 0; i < sanitizedCount; i += 1) {
+      console.log(`[analysis] generating variant ${existingCount + i + 1}/${MAX_VARIANTS_PER_PASSAGE} for passage ${passageNumber}`);
+      const analysis = await this.analyzer.analyzeIndividualPassage(passage, passageNumber);
+      generated.push(analysis);
+      await new Promise((resolve) => setTimeout(resolve, 600));
+    }
+
+    const { allVariants } = await this.appendVariants(documentId, passageNumber, passage, generated);
+    const enrichedVariants = await this._attachFeedbackMetadata(documentId, passageNumber, allVariants, userId || null);
+
+    return {
+      success: true,
+      data: {
+        passageNumber,
+        originalPassage: passage,
+        variants: enrichedVariants
+      },
+      generated,
+      message: `${generated.length}개의 분석본을 새로 만들었어요.`
+    };
+  }
+
   // Get a single passage analysis if present
-  async getPassageAnalysis(documentId, passageNumber) {
+  async getPassageAnalysis(documentId, passageNumber, userId = null) {
     try {
       const row = await database.get(
         'SELECT * FROM passage_analyses WHERE document_id = ? AND passage_number = ?',
         [documentId, passageNumber]
       );
       if (!row) return null;
-      return this.formatPassageAnalysis(row);
+      const base = this.formatPassageAnalysis(row);
+      const variants = await this._attachFeedbackMetadata(documentId, passageNumber, base.variants, userId);
+      return { ...base, variants };
     } catch (error) {
       throw new Error(`지문 분석 조회 실패: ${error.message}`);
     }
+  }
+
+  async getPassageVariants(documentId, passageNumber) {
+    return this.getPassageAnalysis(documentId, passageNumber);
+  }
+
+  async recordAnalysisView(userId, documentId, passageNumber) {
+    const user = await database.get('SELECT membership, role FROM users WHERE id = ?', [userId]);
+    if (!user) {
+      throw new Error('사용자 정보를 찾을 수 없습니다.');
+    }
+
+    const membership = String(user.membership || 'free').toLowerCase();
+    const role = String(user.role || 'student').toLowerCase();
+
+    const isUnlimited = role === 'admin' || role === 'teacher' || membership === 'premium' || membership === 'pro';
+    if (!isUnlimited) {
+      const row = await database.get(
+        `SELECT COUNT(*) AS count
+         FROM view_logs
+         WHERE user_id = ?
+           AND resource_type = 'analysis-view'
+           AND DATE(created_at) = DATE('now')`,
+        [userId]
+      );
+      const viewedToday = Number(row?.count || 0);
+      if (viewedToday >= 10) {
+        throw Object.assign(new Error('무료 회원은 하루 10개의 분석본만 열람할 수 있어요. 프리미엄으로 업그레이드하면 무제한으로 볼 수 있습니다! ✨'), {
+          code: 'ANALYSIS_VIEW_LIMIT'
+        });
+      }
+    }
+
+    await database.run(
+      `INSERT INTO view_logs (user_id, resource_type, resource_id, document_id, passage_number)
+       VALUES (?, 'analysis-view', ?, ?, ?)`,
+      [userId, `${documentId}-${passageNumber}`, documentId, passageNumber]
+    );
+  }
+
+  async submitFeedback({ documentId, passageNumber, variantIndex, userId, action, reason }) {
+    if (!Number.isInteger(variantIndex) || variantIndex < 1) {
+      throw new Error('어떤 분석본에 대한 의견인지 알 수 없어요. 다시 시도해 주세요.');
+    }
+
+    if (action === FEEDBACK_ACTIONS.HELPFUL) {
+      const existing = await database.get(
+        `SELECT id FROM analysis_feedback
+         WHERE document_id = ? AND passage_number = ? AND variant_index = ? AND user_id = ? AND action = ?`,
+        [documentId, passageNumber, variantIndex, userId, FEEDBACK_ACTIONS.HELPFUL]
+      );
+
+      if (existing) {
+        await database.run('DELETE FROM analysis_feedback WHERE id = ?', [existing.id]);
+      } else {
+        await database.run(
+          `INSERT INTO analysis_feedback (document_id, passage_number, variant_index, user_id, action, status)
+           VALUES (?, ?, ?, ?, ?, ?)`,
+          [documentId, passageNumber, variantIndex, userId, FEEDBACK_ACTIONS.HELPFUL, 'active']
+        );
+      }
+    } else if (action === FEEDBACK_ACTIONS.REPORT) {
+      const trimmedReason = String(reason || '').trim();
+      if (!trimmedReason) {
+        throw new Error('신고 사유를 입력해 주세요.');
+      }
+
+      const existing = await database.get(
+        `SELECT id FROM analysis_feedback
+         WHERE document_id = ? AND passage_number = ? AND variant_index = ? AND user_id = ? AND action = ?`,
+        [documentId, passageNumber, variantIndex, userId, FEEDBACK_ACTIONS.REPORT]
+      );
+
+      if (existing) {
+        await database.run(
+          `UPDATE analysis_feedback
+             SET reason = ?, status = ?, updated_at = CURRENT_TIMESTAMP
+           WHERE id = ?`,
+          [trimmedReason, FEEDBACK_STATUS.PENDING, existing.id]
+        );
+      } else {
+        await database.run(
+          `INSERT INTO analysis_feedback (document_id, passage_number, variant_index, user_id, action, reason, status)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [documentId, passageNumber, variantIndex, userId, FEEDBACK_ACTIONS.REPORT, trimmedReason, FEEDBACK_STATUS.PENDING]
+        );
+      }
+    } else {
+      throw new Error('지원하지 않는 피드백 종류입니다.');
+    }
+
+    const refreshed = await this.getPassageAnalysis(documentId, passageNumber, userId);
+    return {
+      success: true,
+      data: refreshed
+    };
+  }
+
+  async listPendingFeedback() {
+    const rows = await database.all(
+      `SELECT f.id, f.document_id, f.passage_number, f.variant_index, f.user_id, f.reason, f.status, f.created_at,
+              d.title AS documentTitle
+         FROM analysis_feedback f
+         LEFT JOIN documents d ON d.id = f.document_id
+        WHERE f.action = ? AND f.status = ?
+        ORDER BY f.created_at DESC
+        LIMIT 100`,
+      [FEEDBACK_ACTIONS.REPORT, FEEDBACK_STATUS.PENDING]
+    );
+    return {
+      success: true,
+      data: rows || []
+    };
+  }
+
+  async updateFeedbackStatus(feedbackId, status = FEEDBACK_STATUS.RESOLVED) {
+    const normalized = String(status || '').toLowerCase();
+    if (!Object.values(FEEDBACK_STATUS).includes(normalized)) {
+      throw new Error('지원하지 않는 상태값입니다.');
+    }
+
+    const result = await database.run(
+      `UPDATE analysis_feedback
+         SET status = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ? AND action = ?`,
+      [normalized, feedbackId, FEEDBACK_ACTIONS.REPORT]
+    );
+
+    if (!result?.changes) {
+      throw new Error('해당 신고를 찾을 수 없습니다.');
+    }
+
+    return { success: true };
+  }
+
+  async _attachFeedbackMetadata(documentId, passageNumber, variants = [], userId = null) {
+    if (!Array.isArray(variants) || variants.length === 0) {
+      return [];
+    }
+
+    const summaryMap = await this._loadFeedbackSummary(documentId, passageNumber);
+    const userMap = userId ? await this._loadUserFeedback(documentId, passageNumber, userId) : new Map();
+
+    return variants.map((variant) => {
+      const idx = variant.variantIndex;
+      const stats = summaryMap.get(idx) || { helpfulCount: 0, reportCount: 0 };
+      const user = userMap.get(idx) || { helpful: false, report: null };
+      return {
+        ...variant,
+        stats,
+        user
+      };
+    });
+  }
+
+  async _loadFeedbackSummary(documentId, passageNumber) {
+    const rows = await database.all(
+      `SELECT variant_index, action, status, COUNT(*) AS count
+         FROM analysis_feedback
+        WHERE document_id = ? AND passage_number = ?
+        GROUP BY variant_index, action, status`,
+      [documentId, passageNumber]
+    );
+
+    const map = new Map();
+    rows.forEach((row) => {
+      const idx = Number(row.variant_index);
+      if (!Number.isInteger(idx)) return;
+      const entry = map.get(idx) || { helpfulCount: 0, reportCount: 0 };
+      if (row.action === FEEDBACK_ACTIONS.HELPFUL) {
+        entry.helpfulCount += Number(row.count || 0);
+      } else if (row.action === FEEDBACK_ACTIONS.REPORT && row.status !== FEEDBACK_STATUS.DISMISSED) {
+        entry.reportCount += Number(row.count || 0);
+      }
+      map.set(idx, entry);
+    });
+    return map;
+  }
+
+  async _loadUserFeedback(documentId, passageNumber, userId) {
+    const rows = await database.all(
+      `SELECT id, variant_index, action, reason, status
+         FROM analysis_feedback
+        WHERE document_id = ? AND passage_number = ? AND user_id = ?`,
+      [documentId, passageNumber, userId]
+    );
+
+    const map = new Map();
+    rows.forEach((row) => {
+      const idx = Number(row.variant_index);
+      if (!Number.isInteger(idx)) return;
+      const entry = map.get(idx) || { helpful: false, report: null };
+      if (row.action === FEEDBACK_ACTIONS.HELPFUL) {
+        entry.helpful = true;
+      } else if (row.action === FEEDBACK_ACTIONS.REPORT) {
+        entry.report = {
+          id: row.id,
+          status: row.status,
+          reason: row.reason || ''
+        };
+      }
+      map.set(idx, entry);
+    });
+    return map;
   }
 
   // Extract passages array from stored JSON content
@@ -135,47 +423,101 @@ class AnalysisService {
     }
   }
 
-  // Persist a passage analysis
-  async savePassageAnalysis(documentId, passageNumber, passage, analysis) {
-    const dbData = this.analyzer.formatForDatabase(analysis);
-    await database.run(
-      `INSERT OR REPLACE INTO passage_analyses 
-       (document_id, passage_number, original_passage, summary, key_points, vocabulary, grammar_points, study_guide, comprehension_questions)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        documentId,
-        passageNumber,
-        passage,
-        dbData.summary,
-        dbData.key_points,
-        dbData.vocabulary,
-        dbData.grammar_points,
-        dbData.study_guide,
-        dbData.comprehension_questions
-      ]
+  // Persist variants for a passage (up to 2 slots)
+  async appendVariants(documentId, passageNumber, passage, variants = []) {
+    if (!Array.isArray(variants) || variants.length === 0) {
+      return { newVariants: [], allVariants: [] };
+    }
+
+    const existingRow = await database.get(
+      'SELECT * FROM passage_analyses WHERE document_id = ? AND passage_number = ?',
+      [documentId, passageNumber]
     );
-    console.log(`[analysis] passage ${passageNumber} analysis saved`);
+
+    let existingVariants = [];
+    if (existingRow) {
+      const formatted = this.analyzer.formatFromDatabase(existingRow);
+      existingVariants = Array.isArray(formatted.variants) ? formatted.variants : [];
+    }
+
+    const availableSlots = MAX_VARIANTS_PER_PASSAGE - existingVariants.length;
+    if (availableSlots <= 0) {
+      return { newVariants: [], allVariants: existingVariants };
+    }
+
+    const normalizedIncoming = variants
+      .slice(0, availableSlots)
+      .map((variant, index) => ({
+        ...variant,
+        variantIndex: existingVariants.length + index + 1,
+        generatedAt: variant.generatedAt || new Date().toISOString(),
+        generator: variant.generator || 'openai'
+      }));
+
+    const mergedVariants = [...existingVariants, ...normalizedIncoming];
+    const dbPayload = this.analyzer.formatForDatabase(mergedVariants);
+
+    if (existingRow) {
+      await database.run(
+        `UPDATE passage_analyses
+         SET original_passage = ?, summary = ?, key_points = ?, vocabulary = ?, grammar_points = ?, study_guide = ?, comprehension_questions = ?, variants = ?, updated_at = CURRENT_TIMESTAMP
+         WHERE document_id = ? AND passage_number = ?`,
+        [
+          passage,
+          dbPayload.summary,
+          dbPayload.key_points,
+          dbPayload.vocabulary,
+          dbPayload.grammar_points,
+          dbPayload.study_guide,
+          dbPayload.comprehension_questions,
+          dbPayload.variants,
+          documentId,
+          passageNumber
+        ]
+      );
+    } else {
+      await database.run(
+        `INSERT INTO passage_analyses
+         (document_id, passage_number, original_passage, summary, key_points, vocabulary, grammar_points, study_guide, comprehension_questions, variants)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          documentId,
+          passageNumber,
+          passage,
+          dbPayload.summary,
+          dbPayload.key_points,
+          dbPayload.vocabulary,
+          dbPayload.grammar_points,
+          dbPayload.study_guide,
+          dbPayload.comprehension_questions,
+          dbPayload.variants
+        ]
+      );
+    }
+
+    console.log(`[analysis] passage ${passageNumber} variants saved (${mergedVariants.length}/${MAX_VARIANTS_PER_PASSAGE})`);
+
+    return {
+      newVariants: normalizedIncoming,
+      allVariants: mergedVariants
+    };
   }
 
   // Convert DB row to API shape used by frontend
   formatPassageAnalysis(dbAnalysis) {
+    const formatted = this.analyzer.formatFromDatabase(dbAnalysis);
     return {
-      passageNumber: dbAnalysis.passage_number,
-      originalPassage: dbAnalysis.original_passage,
-      sentenceAnalysis: JSON.parse(dbAnalysis.key_points || '[]'),
-      deepAnalysis: JSON.parse(dbAnalysis.grammar_points || '{}'),
-      keyExpressions: JSON.parse(dbAnalysis.vocabulary || '[]'),
-      examplesAndBackground: JSON.parse(dbAnalysis.study_guide || '{}'),
-      comprehensive: JSON.parse(dbAnalysis.comprehension_questions || '{}'),
-      createdAt: dbAnalysis.created_at
+      passageNumber: formatted.passageNumber,
+      originalPassage: formatted.originalPassage,
+      variants: formatted.variants,
+      createdAt: formatted.createdAt
     };
   }
 
   // Get existing analyses or create them for all passages
-  async getOrCreateAnalysis(documentId) {
+  async getOrCreateAnalysis(documentId, userId = null) {
     try {
-      // Prefer returning passage-level analyses if present
-      const existing = await this.getAnalyzedPassages(documentId);
+      const existing = await this.getAnalyzedPassages(documentId, userId);
       if (existing.data && existing.data.length > 0) {
         return { success: true, data: existing.data, cached: true };
       }
@@ -187,12 +529,19 @@ class AnalysisService {
       if (!document) throw new Error('문서를 찾을 수 없습니다.');
 
       console.log('[analysis] running analysis for all passages...');
-      const results = await this.analyzer.analyzeIndividualPassages(document.content);
-
+      const passages = this.extractPassages(document.content);
       const saved = [];
-      for (const item of results) {
-        await this.savePassageAnalysis(documentId, item.passageNumber, item.originalPassage, item);
-        saved.push(item);
+
+      for (let index = 0; index < passages.length; index += 1) {
+        const passage = passages[index];
+        const analysis = await this.analyzer.analyzeIndividualPassage(passage, index + 1);
+        const { allVariants } = await this.appendVariants(documentId, index + 1, passage, [analysis]);
+        const enriched = await this._attachFeedbackMetadata(documentId, index + 1, allVariants, userId);
+        saved.push({
+          passageNumber: index + 1,
+          originalPassage: passage,
+          variants: enriched
+        });
       }
 
       return {

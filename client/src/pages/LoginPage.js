@@ -10,6 +10,7 @@ const LoginPage = () => {
     username: '',
     password: '',
     email: '',
+    verificationCode: '',
     name: '',
     school: '',
     grade: '1',
@@ -17,10 +18,29 @@ const LoginPage = () => {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [sendingCode, setSendingCode] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
+  const [codeCountdown, setCodeCountdown] = useState(0);
+  const [infoMessage, setInfoMessage] = useState('');
+
+  React.useEffect(() => {
+    if (!codeSent || codeCountdown <= 0) return;
+    const timer = setInterval(() => {
+      setCodeCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [codeSent, codeCountdown]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setInfoMessage('');
     setLoading(true);
 
     try {
@@ -39,7 +59,15 @@ const LoginPage = () => {
       } else {
         await api.auth.register(formData);
         setIsLogin(true);
-        setFormData({ ...formData, username: '', password: '' });
+        setFormData((prev) => ({
+          ...prev,
+          username: prev.username,
+          password: '',
+          verificationCode: ''
+        }));
+        setCodeSent(false);
+        setCodeCountdown(0);
+        setInfoMessage('회원가입이 완료되었습니다. 로그인해주세요.');
         alert('회원가입이 완료되었습니다. 로그인해주세요.');
       }
     } catch (err) {
@@ -54,6 +82,26 @@ const LoginPage = () => {
       ...formData,
       [e.target.name]: e.target.value
     });
+  };
+
+  const handleSendCode = async () => {
+    setError('');
+    setInfoMessage('');
+    if (!formData.email) {
+      setError('이메일을 먼저 입력해 주세요.');
+      return;
+    }
+    try {
+      setSendingCode(true);
+      await api.auth.sendCode(formData.email);
+      setCodeSent(true);
+      setCodeCountdown(60);
+      setInfoMessage('인증 코드를 이메일로 전송했어요. 10분 안에 입력해 주세요!');
+    } catch (err) {
+      setError(err?.message || '인증 코드를 전송하지 못했어요.');
+    } finally {
+      setSendingCode(false);
+    }
   };
 
   return (
@@ -88,16 +136,36 @@ const LoginPage = () => {
 
           {!isLogin && (
             <>
+              <div style={styles.emailRow}>
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="이메일"
+                  value={formData.email}
+                  onChange={handleChange}
+                  style={{ ...styles.input, flex: 1 }}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={handleSendCode}
+                  disabled={sendingCode || codeCountdown > 0}
+                  style={styles.codeButton}
+                >
+                  {sendingCode ? '전송 중…' : codeCountdown > 0 ? `${codeCountdown}초` : '인증코드'}
+                </button>
+              </div>
+
               <input
-                type="email"
-                name="email"
-                placeholder="이메일"
-                value={formData.email}
+                type="text"
+                name="verificationCode"
+                placeholder="이메일로 받은 인증코드"
+                value={formData.verificationCode}
                 onChange={handleChange}
                 style={styles.input}
                 required
               />
-              
+
               <input
                 type="text"
                 name="name"
@@ -143,6 +211,7 @@ const LoginPage = () => {
             </>
           )}
 
+          {infoMessage && <div style={styles.info}>{infoMessage}</div>}
           {error && <div style={styles.error}>{error}</div>}
 
           <button 
@@ -162,6 +231,13 @@ const LoginPage = () => {
             onClick={() => {
               setIsLogin(!isLogin);
               setError('');
+              setInfoMessage('');
+              setCodeSent(false);
+              setCodeCountdown(0);
+              setFormData((prev) => ({
+                ...prev,
+                verificationCode: ''
+              }));
             }}
             style={styles.toggleButton}
           >
@@ -217,6 +293,10 @@ const styles = {
     flexDirection: 'column',
     gap: '15px'
   },
+  emailRow: {
+    display: 'flex',
+    gap: '8px'
+  },
   input: {
     padding: '12px 16px',
     borderRadius: '10px',
@@ -238,6 +318,23 @@ const styles = {
     cursor: 'pointer',
     transition: 'all 0.3s',
     marginTop: '10px'
+  },
+  codeButton: {
+    background: 'var(--indigo)',
+    color: 'var(--text-on-accent)',
+    border: 'none',
+    borderRadius: '10px',
+    padding: '0 16px',
+    fontWeight: 'bold',
+    cursor: 'pointer',
+    minWidth: '110px'
+  },
+  info: {
+    background: 'rgba(99, 102, 241, 0.2)',
+    color: '#cbd5f5',
+    padding: '10px',
+    borderRadius: '10px',
+    fontSize: '14px'
   },
   error: {
     background: 'rgba(239, 68, 68, 0.1)',

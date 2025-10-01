@@ -203,6 +203,11 @@ function normaliseProblem(problem, index) {
     mainText: toCleanString(problem.mainText || problem.passage || problem.text || ''),
     metadata: buildMetadata(problem)
   };
+
+  if (Object.prototype.hasOwnProperty.call(problem, 'note')) {
+    const rawNote = typeof problem.note === 'string' ? problem.note.trim() : '';
+    normalized.note = rawNote;
+  }
   const source = toCleanString(problem.source || problem.documentTitle || (problem.metadata && problem.metadata.documentTitle) || '');
 
 const sourceLabel = toCleanString(problem.sourceLabel || problem.source_label || '');

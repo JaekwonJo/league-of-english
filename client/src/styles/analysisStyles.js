@@ -204,6 +204,249 @@ export const analysisStyles = {
     lineHeight: '1.6'
   },
 
+  variantTabs: {
+    display: 'flex',
+    gap: '12px',
+    marginBottom: '24px',
+    flexWrap: 'wrap'
+  },
+  variantTab: {
+    padding: '10px 18px',
+    borderRadius: '999px',
+    border: '1px solid var(--border-muted)',
+    background: 'var(--surface-soft-solid)',
+    color: 'var(--color-slate-500)',
+    cursor: 'pointer',
+    fontWeight: 600,
+    transition: 'all 0.2s ease'
+  },
+  variantTabActive: {
+    background: 'var(--accent-primary)',
+    color: 'var(--text-on-accent)',
+    borderColor: 'transparent',
+    boxShadow: '0 10px 18px var(--submit-shadow)'
+  },
+  variantMetaGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+    gap: '16px',
+    marginBottom: '28px'
+  },
+  metaCard: {
+    background: 'var(--surface-contrast)',
+    borderRadius: '16px',
+    padding: '20px',
+    boxShadow: '0 10px 24px rgba(15, 23, 42, 0.12)',
+    color: 'var(--text-inverse)'
+  },
+  metaTitle: {
+    fontSize: '1rem',
+    fontWeight: 700,
+    marginBottom: '12px'
+  },
+  metaList: {
+    margin: 0,
+    paddingLeft: '20px',
+    lineHeight: 1.6
+  },
+  sentenceGrid: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '18px'
+  },
+  sentenceCard: {
+    background: 'var(--surface-card)',
+    borderRadius: '18px',
+    padding: '20px',
+    boxShadow: '0 12px 32px rgba(15, 23, 42, 0.12)',
+    border: '1px solid var(--border-subtle)'
+  },
+  sentenceHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '12px'
+  },
+  sentenceEnglish: {
+    fontSize: '1.05rem',
+    fontWeight: 600,
+    color: 'var(--color-slate-800)'
+  },
+  topicBadge: {
+    padding: '4px 10px',
+    borderRadius: '8px',
+    background: 'var(--accent-badge-bg)',
+    color: 'var(--accent-badge-text)',
+    fontSize: '0.75rem',
+    fontWeight: 700
+  },
+  sentenceKorean: {
+    background: 'var(--surface-soft-solid)',
+    padding: '12px',
+    borderRadius: '12px',
+    marginBottom: '12px',
+    color: 'var(--color-slate-600)'
+  },
+  sentenceBody: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+    gap: '14px'
+  },
+  sentenceBlock: {
+    background: 'var(--surface-soft-strong)',
+    borderRadius: '12px',
+    padding: '12px',
+    border: '1px solid var(--border-muted)',
+    fontSize: '0.95rem',
+    lineHeight: 1.7,
+    color: 'var(--color-slate-600)'
+  },
+  vocabList: {
+    margin: 0,
+    paddingLeft: '18px'
+  },
+  generatorBar: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+    background: 'var(--surface-card)',
+    borderRadius: '16px',
+    padding: '18px',
+    border: '1px dashed var(--border-muted)',
+    marginTop: '18px'
+  },
+  generatorButtons: {
+    display: 'flex',
+    gap: '12px',
+    flexWrap: 'wrap'
+  },
+  generatorButton: {
+    flex: '0 0 auto',
+    padding: '10px 18px',
+    borderRadius: '999px',
+    border: 'none',
+    background: 'var(--submit-gradient)',
+    color: 'var(--text-on-accent)',
+    fontWeight: 700,
+    cursor: 'pointer',
+    boxShadow: '0 12px 24px var(--submit-shadow)'
+  },
+  generatorButtonDisabled: {
+    opacity: 0.6,
+    cursor: 'not-allowed',
+    boxShadow: 'none'
+  },
+  emptyVariant: {
+    background: 'var(--surface-card)',
+    borderRadius: '18px',
+    padding: '28px',
+    textAlign: 'center',
+    color: 'var(--color-slate-500)',
+    border: '1px dashed var(--border-muted)'
+  },
+  feedbackBar: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    marginBottom: '20px',
+    flexWrap: 'wrap'
+  },
+  feedbackButton: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '10px 18px',
+    borderRadius: '12px',
+    border: '1px solid var(--border-muted)',
+    background: 'var(--surface-soft-solid)',
+    color: 'var(--color-slate-600)',
+    cursor: 'pointer',
+    fontWeight: 600,
+    transition: 'all 0.2s ease'
+  },
+  feedbackButtonActive: {
+    background: 'var(--success-surface)',
+    borderColor: 'var(--success-strong)',
+    color: 'var(--success-strong)',
+    boxShadow: '0 6px 16px rgba(34, 197, 94, 0.25)'
+  },
+  feedbackCount: {
+    fontSize: '0.9rem',
+    color: 'var(--color-slate-500)'
+  },
+  reportButton: {
+    padding: '10px 18px',
+    borderRadius: '12px',
+    border: '1px solid var(--danger-border)',
+    background: 'var(--danger-surface)',
+    color: 'var(--danger-strong)',
+    cursor: 'pointer',
+    fontWeight: 600
+  },
+  feedbackMessage: {
+    marginTop: '8px',
+    color: 'var(--color-slate-500)'
+  },
+  modalOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: 'rgba(15, 23, 42, 0.6)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1000
+  },
+  modalContentSmall: {
+    background: 'var(--surface-card)',
+    borderRadius: '16px',
+    padding: '24px',
+    width: '90%',
+    maxWidth: '420px',
+    boxShadow: '0 16px 40px rgba(15, 23, 42, 0.25)'
+  },
+  modalTitle: {
+    marginTop: 0,
+    marginBottom: '16px',
+    fontSize: '1.2rem',
+    color: 'var(--color-slate-800)'
+  },
+  modalTextarea: {
+    width: '100%',
+    minHeight: '120px',
+    borderRadius: '12px',
+    border: '1px solid var(--border-muted)',
+    padding: '12px',
+    fontSize: '0.95rem',
+    resize: 'vertical',
+    fontFamily: 'inherit'
+  },
+  modalActions: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    gap: '12px',
+    marginTop: '18px'
+  },
+  modalPrimaryButton: {
+    background: 'var(--danger)',
+    color: 'var(--text-on-accent)',
+    border: 'none',
+    borderRadius: '10px',
+    padding: '10px 18px',
+    cursor: 'pointer',
+    fontWeight: 600
+  },
+  modalSecondaryButton: {
+    background: 'var(--surface-soft-solid)',
+    color: 'var(--color-slate-600)',
+    border: '1px solid var(--border-subtle)',
+    borderRadius: '10px',
+    padding: '10px 18px',
+    cursor: 'pointer',
+    fontWeight: 600
+  },
   // 새로운 지문별 분석을 위한 추가 스타일들
   secondaryGrid: {
     display: 'grid',

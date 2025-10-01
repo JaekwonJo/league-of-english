@@ -266,5 +266,87 @@ export const adminStyles = {
     cursor: 'pointer',
     fontWeight: 'bold',
     whiteSpace: 'nowrap'
+  },
+  feedbackSection: {
+    background: 'var(--surface-card)',
+    borderRadius: '20px',
+    padding: '24px',
+    marginTop: '30px',
+    boxShadow: '0 12px 30px rgba(15, 23, 42, 0.12)'
+  },
+  feedbackHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '20px'
+  },
+  feedbackBadge: {
+    background: 'var(--danger-surface)',
+    color: 'var(--danger-strong)',
+    padding: '6px 12px',
+    borderRadius: '999px',
+    fontWeight: 700,
+    fontSize: '0.85rem'
+  },
+  feedbackList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px'
+  },
+  feedbackItem: {
+    border: '1px solid var(--border-muted)',
+    borderRadius: '16px',
+    padding: '18px',
+    background: 'var(--surface-soft-solid)'
+  },
+  feedbackMeta: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '12px',
+    marginBottom: '12px',
+    color: 'var(--color-slate-500)'
+  },
+  feedbackReason: {
+    background: 'var(--surface-soft-strong)',
+    borderRadius: '12px',
+    padding: '12px',
+    color: 'var(--color-slate-700)',
+    lineHeight: 1.6,
+    marginBottom: '12px'
+  },
+  feedbackActions: {
+    display: 'flex',
+    gap: '10px'
+  },
+  feedbackActionResolve: {
+    background: 'var(--success)',
+    color: 'var(--text-on-accent)',
+    border: 'none',
+    borderRadius: '10px',
+    padding: '10px 16px',
+    cursor: 'pointer',
+    fontWeight: 600
+  },
+  feedbackActionDismiss: {
+    background: 'var(--surface-card)',
+    color: 'var(--color-slate-600)',
+    border: '1px solid var(--border-muted)',
+    borderRadius: '10px',
+    padding: '10px 16px',
+    cursor: 'pointer',
+    fontWeight: 600
+  },
+  feedbackEmpty: {
+    textAlign: 'center',
+    padding: '20px',
+    color: 'var(--color-slate-400)'
+  },
+  feedbackError: {
+    background: 'var(--danger-surface)',
+    border: '1px solid var(--danger-border)',
+    borderRadius: '12px',
+    color: 'var(--danger-strong)',
+    padding: '16px',
+    marginBottom: '16px'
   }
 };

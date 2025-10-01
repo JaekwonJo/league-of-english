@@ -7,6 +7,8 @@ const router = express.Router();
 const database = require('../models/database');
 const { verifyToken } = require('../middleware/auth');
 const tierConfig = require('../config/tierConfig.json');
+const { getTierInfo, getNextTier, calculateProgress } = require('../utils/tierUtils');
+const { getUserRank } = require('../services/studyService');
 
 /**
  * GET /api/ranking/leaderboard
@@ -121,35 +123,18 @@ router.get('/tier-distribution', verifyToken, async (req, res) => {
 router.get('/my-rank', verifyToken, async (req, res) => {
   try {
     const userId = req.user.id;
-    
-    // 내 순위 조회
-    const myRank = await database.get(`
-      SELECT 
-        rank,
-        points,
-        name,
-        username
-      FROM (
-        SELECT 
-          id,
-          name,
-          username,
-          points,
-          ROW_NUMBER() OVER (ORDER BY points DESC, created_at ASC) as rank
-        FROM users
-        WHERE points > 0
-      )
-      WHERE id = ?
-    `, [userId]);
+    const rankData = await getUserRank(userId);
 
-    if (!myRank) {
+    if (!rankData || (!rankData.rank && (rankData.points || 0) <= 0)) {
       return res.json({
-        rank: null,
-        message: '아직 점수가 없습니다. 문제를 풀어보세요!'
+        myRank: rankData || { rank: null, points: 0 },
+        nearbyUsers: []
       });
     }
 
-    // 내 앞뒤 순위 사용자들
+    const windowStart = Math.max(1, (rankData.rank || 1) - 2);
+    const windowEnd = (rankData.rank || 1) + 2;
+
     const nearbyUsers = await database.all(`
       SELECT 
         rank,
@@ -167,19 +152,11 @@ router.get('/my-rank', verifyToken, async (req, res) => {
       )
       WHERE rank BETWEEN ? AND ?
       ORDER BY rank
-    `, [Math.max(1, myRank.rank - 2), myRank.rank + 2]);
-
-    const tier = getTierInfo(myRank.points);
-    const nextTier = getNextTier(tier);
+    `, [windowStart, windowEnd]);
 
     res.json({
-      myRank: {
-        ...myRank,
-        tier: tier,
-        nextTier: nextTier,
-        progressToNext: nextTier ? calculateProgress(myRank.points, tier, nextTier) : 100
-      },
-      nearbyUsers: nearbyUsers.map(user => ({
+      myRank: rankData,
+      nearbyUsers: nearbyUsers.map((user) => ({
         ...user,
         tier: getTierInfo(user.points),
         isMe: user.id === userId
@@ -192,24 +169,6 @@ router.get('/my-rank', verifyToken, async (req, res) => {
 });
 
 // 유틸리티 함수들
-function getTierInfo(points) {
-  return tierConfig.tiers.find(tier => 
-    points >= tier.minLP && (tier.maxLP === -1 || points <= tier.maxLP)
-  ) || tierConfig.tiers[0];
-}
-
-function getNextTier(currentTier) {
-  const currentIndex = tierConfig.tiers.findIndex(t => t.id === currentTier.id);
-  return tierConfig.tiers[currentIndex + 1] || null;
-}
-
-function calculateProgress(points, currentTier, nextTier) {
-  if (!nextTier) return 100;
-  const range = nextTier.minLP - currentTier.minLP;
-  const progress = points - currentTier.minLP;
-  return Math.min(100, (progress / range) * 100);
-}
-
 function isRecentlyActive(lastActivity) {
   if (!lastActivity) return false;
   const threeDaysAgo = new Date();

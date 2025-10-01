@@ -60,6 +60,7 @@ class Database {
           last_reset_date DATE,
           tier VARCHAR(20) DEFAULT 'Bronze',
           points INTEGER DEFAULT 0,
+          email_verified BOOLEAN DEFAULT 0,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           is_active BOOLEAN DEFAULT 1
@@ -106,7 +107,9 @@ class Database {
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           user_id INTEGER NOT NULL,
           problem_id INTEGER NOT NULL,
-          exposed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          first_seen_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          last_seen_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          exposure_count INTEGER DEFAULT 1,
           UNIQUE(user_id, problem_id)
         )`,
 
@@ -129,6 +132,29 @@ class Database {
           user_id INTEGER NOT NULL,
           document_id INTEGER NOT NULL,
           problem_type VARCHAR(30) NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id),
+          FOREIGN KEY (document_id) REFERENCES documents(id)
+        )`,
+
+        `CREATE TABLE IF NOT EXISTS problem_notes (
+          problem_id INTEGER PRIMARY KEY,
+          note TEXT,
+          updated_by INTEGER,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (problem_id) REFERENCES problems(id),
+          FOREIGN KEY (updated_by) REFERENCES users(id)
+        )`,
+
+        `CREATE TABLE IF NOT EXISTS problem_export_history (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL,
+          document_id INTEGER,
+          types TEXT,
+          counts TEXT,
+          problem_ids TEXT,
+          total INTEGER DEFAULT 0,
+          include_solutions BOOLEAN DEFAULT 1,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (user_id) REFERENCES users(id),
           FOREIGN KEY (document_id) REFERENCES documents(id)
@@ -192,6 +218,46 @@ class Database {
           FOREIGN KEY (analysis_id) REFERENCES passage_analyses(id)
         )`,
 
+        // analysis_feedback (추천/신고 기록)
+        `CREATE TABLE IF NOT EXISTS analysis_feedback (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          document_id INTEGER NOT NULL,
+          passage_number INTEGER NOT NULL,
+          variant_index INTEGER NOT NULL,
+          user_id INTEGER NOT NULL,
+          action TEXT NOT NULL CHECK (action IN ('helpful','report')),
+          reason TEXT,
+          status TEXT DEFAULT 'pending',
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (document_id) REFERENCES documents(id),
+          FOREIGN KEY (user_id) REFERENCES users(id),
+          UNIQUE(document_id, passage_number, variant_index, user_id, action)
+        )`,
+
+        // email_verifications
+        `CREATE TABLE IF NOT EXISTS email_verifications (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          email TEXT NOT NULL,
+          code TEXT NOT NULL,
+          expires_at DATETIME NOT NULL,
+          verified INTEGER DEFAULT 0,
+          verified_at DATETIME,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`,
+
+        // membership_requests
+        `CREATE TABLE IF NOT EXISTS membership_requests (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL,
+          plan TEXT NOT NULL,
+          message TEXT,
+          status TEXT DEFAULT 'pending',
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id)
+        )`,
+
         // view_logs
         `CREATE TABLE IF NOT EXISTS view_logs (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -224,7 +290,16 @@ class Database {
         `ALTER TABLE problems ADD COLUMN sentences TEXT`,
         `ALTER TABLE problems ADD COLUMN metadata TEXT`,
         `ALTER TABLE passage_analyses ADD COLUMN published BOOLEAN DEFAULT 0`,
-        `ALTER TABLE passage_analyses ADD COLUMN visibility_scope TEXT DEFAULT 'public'`
+        `ALTER TABLE passage_analyses ADD COLUMN visibility_scope TEXT DEFAULT 'public'`,
+        `ALTER TABLE passage_analyses ADD COLUMN variants TEXT`,
+        `ALTER TABLE users ADD COLUMN email_verified BOOLEAN DEFAULT 0`,
+        `ALTER TABLE analysis_feedback ADD COLUMN status TEXT DEFAULT 'pending'`,
+        `ALTER TABLE analysis_feedback ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP`,
+        `ALTER TABLE email_verifications ADD COLUMN verified_at DATETIME`,
+        `ALTER TABLE problem_exposures ADD COLUMN last_result TEXT`,
+        `ALTER TABLE problem_exposures ADD COLUMN correct_count INTEGER DEFAULT 0`,
+        `ALTER TABLE problem_exposures ADD COLUMN incorrect_count INTEGER DEFAULT 0`,
+        `ALTER TABLE problem_exposures ADD COLUMN last_answered_at DATETIME`
       ];
 
       let errors = 0;

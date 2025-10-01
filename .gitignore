@@ -16,6 +16,10 @@ server/uploads/
 # Logs
 *.log
 logs/
+server/tmp/
+
+# Test databases
+*.sqlite
 
 # OS generated files
 .DS_Store

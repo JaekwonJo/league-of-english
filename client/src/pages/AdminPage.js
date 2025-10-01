@@ -7,6 +7,7 @@ import EditModal from '../components/admin/EditModal';
 import CategoryModal from '../components/admin/CategoryModal';
 import DocumentAnalysis from '../components/admin/DocumentAnalysis';
 import PassageAnalysis from '../components/admin/PassageAnalysisRefactored';
+import ProblemLibrary from '../components/admin/ProblemLibrary';
 
 const AdminPage = () => {
   const [documents, setDocuments] = useState([]);
@@ -28,9 +29,13 @@ const AdminPage = () => {
     grade: 1,
     file: null
   });
+  const [feedbackReports, setFeedbackReports] = useState([]);
+  const [feedbackLoading, setFeedbackLoading] = useState(false);
+  const [feedbackError, setFeedbackError] = useState(null);
 
   useEffect(() => {
     fetchDocuments();
+    fetchPendingFeedback();
   }, []);
 
   const fetchDocuments = async () => {
@@ -146,6 +151,35 @@ const AdminPage = () => {
     setShowPassageAnalysisModal(true);
   };
 
+  const fetchPendingFeedback = async () => {
+    try {
+      setFeedbackLoading(true);
+      setFeedbackError(null);
+      const response = await api.analysis.feedback.pending();
+      if (response?.success) {
+        setFeedbackReports(response.data || []);
+      } else {
+        setFeedbackError('신고 목록을 불러오지 못했습니다.');
+      }
+    } catch (error) {
+      console.error('신고 목록 조회 실패:', error);
+      setFeedbackError(error?.message || '신고 목록을 불러오는 중 문제가 발생했습니다.');
+    } finally {
+      setFeedbackLoading(false);
+    }
+  };
+
+  const handleResolveFeedback = async (feedbackId, status) => {
+    try {
+      await api.analysis.feedback.resolve(feedbackId, status);
+      await fetchPendingFeedback();
+      alert(status === 'resolved' ? '신고가 검수 완료 처리되었습니다.' : '신고가 허위 신고로 처리되었습니다.');
+    } catch (error) {
+      console.error('신고 상태 변경 실패:', error);
+      alert(error?.message || '신고 상태를 변경하는 중 문제가 발생했습니다.');
+    }
+  };
+
   return (
     <div style={adminStyles.container}>
       <div style={adminStyles.header}>
@@ -174,6 +208,51 @@ const AdminPage = () => {
         onAnalyze={handleDocumentAnalyze}
         onPassageAnalyze={handlePassageAnalyze}
       />
+
+      <ProblemLibrary documents={documents} />
+
+      <div style={adminStyles.feedbackSection}>
+        <div style={adminStyles.feedbackHeader}>
+          <h2 style={adminStyles.cardTitle}>🚨 신고된 분석본</h2>
+          <span style={adminStyles.feedbackBadge}>{feedbackReports.length}건 대기</span>
+        </div>
+        {feedbackError && <div style={adminStyles.feedbackError}>{feedbackError}</div>}
+        {feedbackLoading ? (
+          <div style={adminStyles.loading}>신고 목록을 불러오는 중이에요...</div>
+        ) : feedbackReports.length === 0 ? (
+          <div style={adminStyles.feedbackEmpty}>현재 확인해야 할 신고가 없어요. 학생들이 도움이 되는 분석본을 잘 활용하고 있군요! 😊</div>
+        ) : (
+          <div style={adminStyles.feedbackList}>
+            {feedbackReports.map((report) => (
+              <div key={report.id} style={adminStyles.feedbackItem}>
+                <div style={adminStyles.feedbackMeta}>
+                  <span>📄 {report.documentTitle || `문서 ${report.document_id}`}</span>
+                  <span>지문 {report.passage_number}</span>
+                  <span>분석본 {report.variant_index}</span>
+                  <span>{new Date(report.created_at).toLocaleString()} 신고</span>
+                </div>
+                <div style={adminStyles.feedbackReason}>{report.reason || '신고 사유가 작성되지 않았습니다.'}</div>
+                <div style={adminStyles.feedbackActions}>
+                  <button
+                    type="button"
+                    style={adminStyles.feedbackActionResolve}
+                    onClick={() => handleResolveFeedback(report.id, 'resolved')}
+                  >
+                    ✅ 검수 완료
+                  </button>
+                  <button
+                    type="button"
+                    style={adminStyles.feedbackActionDismiss}
+                    onClick={() => handleResolveFeedback(report.id, 'dismissed')}
+                  >
+                    🙅 허위 신고
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       <UploadModal
         show={showUploadModal}

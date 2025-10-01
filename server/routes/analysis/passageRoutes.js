@@ -15,7 +15,7 @@ router.get('/passages', verifyToken, async (req, res) => {
   try {
     const { documentId } = req.params;
     console.log(`[analysis] list analyzed passages - document: ${documentId}`);
-    const result = await analysisService.getAnalyzedPassages(documentId);
+    const result = await analysisService.getAnalyzedPassages(documentId, req.user.id);
     res.json(result);
   } catch (error) {
     console.error('지문 분석 조회 오류:', error);
@@ -25,21 +25,25 @@ router.get('/passages', verifyToken, async (req, res) => {
 
 /**
  * POST /api/analysis/:documentId/analyze-passage
- * Analyze a single passage (admin only)
+ * Generate up to 2 variants for a passage (teacher/admin)
  */
 router.post('/analyze-passage', verifyToken, async (req, res) => {
   try {
     const { documentId } = req.params;
-    const { passageNumber } = req.body;
+    const { passageNumber, count = 1 } = req.body || {};
     const userRole = req.user.role;
 
-    console.log(`[analysis] analyze passage request - document: ${documentId}, passage: ${passageNumber}`);
-    const result = await analysisService.analyzePassage(documentId, passageNumber, userRole);
+    if (!passageNumber) {
+      return res.status(400).json({ success: false, message: 'passageNumber가 필요합니다.' });
+    }
+
+    console.log(`[analysis] generate variants request - document: ${documentId}, passage: ${passageNumber}, count: ${count}`);
+    const result = await analysisService.generateVariants(documentId, Number(passageNumber), Number(count) || 1, userRole, req.user.id);
     res.json(result);
   } catch (error) {
     console.error('개별 지문 분석 오류:', error);
     const msg = String((error && error.message) || '');
-    const statusCode = msg.includes('관리자') ? 403
+    const statusCode = msg.includes('권한') ? 403
       : msg.includes('찾을 수 없습니다') ? 404
       : msg.includes('유효') ? 400
       : 500;
@@ -159,14 +163,49 @@ router.get('/passage/:passageNumber', verifyToken, async (req, res) => {
   try {
     const { documentId, passageNumber } = req.params;
     console.log(`[analysis] get passage analysis - document: ${documentId}, passage: ${passageNumber}`);
-    const analysis = await analysisService.getPassageAnalysis(documentId, passageNumber);
+    const analysis = await analysisService.getPassageAnalysis(documentId, passageNumber, req.user.id);
     if (!analysis) {
       return res.status(404).json({ success: false, message: '해당 지문의 분석 결과를 찾을 수 없습니다.' });
     }
-    res.json({ success: true, data: analysis, cached: true });
+    try {
+      await analysisService.recordAnalysisView(req.user.id, documentId, passageNumber);
+    } catch (limitError) {
+      if (limitError?.code === 'ANALYSIS_VIEW_LIMIT') {
+        return res.status(429).json({ success: false, message: limitError.message, code: limitError.code });
+      }
+      throw limitError;
+    }
+
+    res.json({ success: true, data: analysis, cached: Boolean(analysis?.variants?.length) });
   } catch (error) {
     console.error('지문 분석 조회 오류:', error);
     res.status(500).json({ success: false, message: '분석 결과 조회 중 오류가 발생했습니다.', error: String(error.message || error) });
+  }
+});
+
+/**
+ * POST /api/analysis/:documentId/passage/:passageNumber/feedback
+ * Submit helpful/report feedback for a passage variant
+ */
+router.post('/passage/:passageNumber/feedback', verifyToken, async (req, res) => {
+  try {
+    const { documentId, passageNumber } = req.params;
+    const { variantIndex, action, reason = '' } = req.body || {};
+    const payload = {
+      documentId: Number(documentId),
+      passageNumber: Number(passageNumber),
+      variantIndex: Number(variantIndex),
+      userId: req.user.id,
+      action,
+      reason
+    };
+
+    const result = await analysisService.submitFeedback(payload);
+    res.json(result);
+  } catch (error) {
+    console.error('분석 피드백 처리 오류:', error);
+    const message = String(error?.message || '피드백 처리 중 문제가 발생했습니다.');
+    res.status(message.includes('사유') ? 400 : 500).json({ success: false, message });
   }
 });
 

@@ -818,6 +818,51 @@ const styles = {
     background: 'rgba(96, 165, 250, 0.15)',
     color: 'var(--accent-primary-light)'
   },
+  depositBox: {
+    background: 'rgba(15, 23, 42, 0.45)',
+    borderRadius: '18px',
+    padding: '20px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+    border: '1px dashed rgba(148, 163, 184, 0.3)'
+  },
+  depositInfo: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px',
+    background: 'rgba(30, 64, 175, 0.25)',
+    borderRadius: '12px',
+    padding: '12px',
+    color: 'var(--accent-primary-light)',
+    fontWeight: 600
+  },
+  depositTextarea: {
+    width: '100%',
+    minHeight: '90px',
+    borderRadius: '12px',
+    border: '1px solid rgba(148, 163, 184, 0.4)',
+    background: 'rgba(15, 23, 42, 0.4)',
+    color: 'var(--surface-soft-solid)',
+    padding: '12px',
+    fontSize: '14px',
+    resize: 'vertical'
+  },
+  depositButtonRow: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '12px'
+  },
+  depositButton: {
+    flex: '1 1 200px',
+    borderRadius: '12px',
+    border: 'none',
+    padding: '12px',
+    background: 'linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%)',
+    color: '#fff',
+    fontWeight: 700,
+    cursor: 'pointer'
+  },
   teacherCard: {
     background: 'rgba(15, 23, 42, 0.65)',
     borderRadius: '24px',
@@ -1186,6 +1231,9 @@ const MembershipCard = () => {
   const [error, setError] = useState('');
   const [couponCode, setCouponCode] = useState('');
   const [message, setMessage] = useState(null);
+  const [requestNote, setRequestNote] = useState('');
+  const [requestFeedback, setRequestFeedback] = useState(null);
+  const [requestLoading, setRequestLoading] = useState(false);
 
   const fetchStatus = useCallback(async () => {
     if (!user) {
@@ -1235,6 +1283,24 @@ const MembershipCard = () => {
       }
     } catch (err) {
       setMessage({ type: 'error', text: err?.message || '쿠폰을 적용하지 못했어요.' });
+    }
+  };
+
+  const handleMembershipRequest = async (plan) => {
+    try {
+      setRequestLoading(true);
+      setRequestFeedback(null);
+      const response = await api.membership.request(plan, requestNote);
+      if (response?.success) {
+        setRequestFeedback({ type: 'success', text: response.message || '요청이 접수되었습니다.' });
+        setRequestNote('');
+      } else {
+        setRequestFeedback({ type: 'error', text: response?.message || '요청을 처리하지 못했어요.' });
+      }
+    } catch (err) {
+      setRequestFeedback({ type: 'error', text: err?.message || '요청을 처리하지 못했어요.' });
+    } finally {
+      setRequestLoading(false);
     }
   };
 
@@ -1300,6 +1366,56 @@ const MembershipCard = () => {
           {message.text}
         </div>
       )}
+
+      <div style={styles.depositBox}>
+        <h4 style={styles.membershipTitle}>무통장 입금 안내</h4>
+        <p style={styles.membershipText}>
+          프리미엄(월 9,900원) 또는 프로(월 19,900원)로 업그레이드하고 싶다면 아래 계좌로 입금 후 “입금 확인 요청” 버튼을 눌러 주세요.
+          {' '}입금이 확인되는 순간부터 정확히 30일(24시간 × 30)이 지나면 다음 달 결제 안내가 필요해요.
+        </p>
+        <div style={styles.depositInfo}>
+          <span>입금 계좌</span>
+          <strong>국민은행 123456-78-901234 (예금주: 이재권)</strong>
+        </div>
+        <textarea
+          style={styles.depositTextarea}
+          placeholder="입금자명, 연락처 등 관리자에게 전하고 싶은 내용을 적어 주세요."
+          value={requestNote}
+          onChange={(event) => setRequestNote(event.target.value)}
+        />
+        <div style={styles.depositButtonRow}>
+          <button
+            type="button"
+            style={styles.depositButton}
+            disabled={requestLoading}
+            onClick={() => handleMembershipRequest('premium')}
+          >
+            {requestLoading ? '요청 중...' : '프리미엄 입금 확인 요청'}
+          </button>
+          <button
+            type="button"
+            style={{ ...styles.depositButton, background: 'var(--danger)', marginLeft: '8px' }}
+            disabled={requestLoading}
+            onClick={() => handleMembershipRequest('pro')}
+          >
+            {requestLoading ? '요청 중...' : '프로 입금 확인 요청'}
+          </button>
+        </div>
+        {requestFeedback && (
+          <div
+            style={{
+              ...styles.redeemMessage,
+              ...(requestFeedback.type === 'success'
+                ? styles.redeemSuccess
+                : requestFeedback.type === 'error'
+                  ? styles.redeemError
+                  : styles.redeemInfo)
+            }}
+          >
+            {requestFeedback.text}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
