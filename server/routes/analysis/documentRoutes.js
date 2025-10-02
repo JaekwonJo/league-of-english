@@ -78,10 +78,11 @@ router.get('/:documentId', verifyToken, async (req, res) => {
 
   } catch (error) {
     console.error('문서 분석 API 오류:', error);
-    res.status(500).json({
+    const status = error?.code === 'OPENAI_MISSING' ? 503 : 500;
+    res.status(status).json({
       success: false,
-      message: '문서 분석 중 오류가 발생했습니다.',
-      error: error.message
+      message: error?.message || '문서 분석 중 오류가 발생했습니다.',
+      code: error?.code
     });
   }
 });

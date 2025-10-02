@@ -24,6 +24,23 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ message: '이메일을 입력해 주세요.' });
     }
 
+    const trimmedUsername = String(username || '').trim();
+    if (!trimmedUsername) {
+      return res.status(400).json({ message: '아이디를 입력해 주세요.' });
+    }
+
+    const trimmedName = String(name || '').trim();
+    if (!trimmedName) {
+      return res.status(400).json({ message: '이름을 입력해 주세요.' });
+    }
+
+    const normalizedSchool = String(school || '').trim() || 'League of English';
+
+    const parsedGrade = Number(grade);
+    if (!Number.isInteger(parsedGrade) || parsedGrade < 1 || parsedGrade > 3) {
+      return res.status(400).json({ message: '학년을 1~3으로 선택해 주세요.' });
+    }
+
     try {
       await emailVerificationService.verifyCode(normalizedEmail, verificationCode);
     } catch (verificationError) {
@@ -33,7 +50,7 @@ router.post('/register', async (req, res) => {
     // 아이디/이메일 중복 확인
     const existing = await database.get(
       'SELECT id FROM users WHERE username = ? OR email = ?',
-      [username, normalizedEmail]
+      [trimmedUsername, normalizedEmail]
     );
 
     if (existing) {
@@ -45,7 +62,7 @@ router.post('/register', async (req, res) => {
     const result = await database.run(
       `INSERT INTO users (username, password_hash, email, name, school, grade, role, email_verified)
        VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
-      [username, hashedPassword, normalizedEmail, name, school, grade, role]
+      [trimmedUsername, hashedPassword, normalizedEmail, trimmedName, normalizedSchool, parsedGrade, role]
     );
 
     await logAuthEvent({
@@ -63,6 +80,13 @@ router.post('/register', async (req, res) => {
     });
   } catch (error) {
     console.error('[auth] register error:', error);
+    const message = String(error?.message || '');
+    if (message.includes('UNIQUE constraint failed: users.username') || message.includes('users.email')) {
+      return res.status(400).json({ message: '이미 사용 중인 아이디 또는 이메일이에요.' });
+    }
+    if (message.includes('NOT NULL constraint failed') || message.includes('CHECK constraint failed')) {
+      return res.status(400).json({ message: '회원가입에 필요한 필드를 다시 확인해 주세요.' });
+    }
     res.status(500).json({ message: '서버 오류가 발생했습니다.' });
   }
 });

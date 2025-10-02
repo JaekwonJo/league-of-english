@@ -46,20 +46,34 @@ function getTransporter() {
 async function sendMail({ to, subject, html, text }) {
   const mailer = getTransporter();
   if (!mailer) {
-    console.warn('[emailService] 메일을 보낼 수 없어 콘솔에만 남깁니다:', { to, subject });
-    return false;
+    const error = new Error('이메일 발송 설정을 찾을 수 없어 메일을 보내지 못했어요. EMAIL_USER와 EMAIL_PASS를 점검해 주세요.');
+    error.code = 'EMAIL_TRANSPORT_UNAVAILABLE';
+    throw error;
   }
 
   const from = process.env.EMAIL_FROM || process.env.EMAIL_USER;
 
-  await mailer.sendMail({
-    from,
-    to,
-    subject,
-    html,
-    text
-  });
-  return true;
+  try {
+    const info = await mailer.sendMail({
+      from,
+      to,
+      subject,
+      html,
+      text
+    });
+    console.info('[emailService] 메일 발송 성공:', {
+      to,
+      subject,
+      messageId: info?.messageId || null
+    });
+    return info;
+  } catch (error) {
+    console.error('[emailService] 메일 발송 실패:', error);
+    const friendly = new Error('메일 발송 중 오류가 발생했어요. 이메일 환경 변수를 다시 확인해 주세요.');
+    friendly.code = 'EMAIL_SEND_FAILED';
+    friendly.cause = error;
+    throw friendly;
+  }
 }
 
 module.exports = {

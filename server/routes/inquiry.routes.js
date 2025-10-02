@@ -3,7 +3,16 @@ const router = express.Router();
 const database = require('../models/database');
 const { verifyToken, requireAdmin } = require('../middleware/auth');
 
-async function ensureTable() {
+async function ensureTable(retry = 0) {
+  if (!database.db) {
+    if (retry >= 10) {
+      console.error('[inquiries] database not ready after retries, skipping ensureTable');
+      return;
+    }
+    setTimeout(() => ensureTable(retry + 1), 200);
+    return;
+  }
+
   try {
     await database.run(`
       CREATE TABLE IF NOT EXISTS inquiries (

@@ -134,7 +134,14 @@ class AnalysisService {
         cached: false
       };
     } catch (error) {
-      throw new Error(`지문 분석 실패: ${error.message}`);
+      const message = String(error?.message || '');
+      if (message.includes('OpenAI not configured')) {
+        const friendly = 'OpenAI API 키가 아직 설정되지 않아서 분석본을 만들 수 없어요. 환경 변수 OPENAI_API_KEY를 확인해 주세요.';
+        const err = new Error(friendly);
+        err.code = 'OPENAI_MISSING';
+        throw err;
+      }
+      throw new Error(`지문 분석 실패: ${message}`);
     }
   }
 
@@ -415,12 +422,37 @@ class AnalysisService {
 
   // Extract passages array from stored JSON content
   extractPassages(content) {
+    if (!content) {
+      throw new Error('문서에 저장된 내용이 없습니다.');
+    }
+
+    // 최신 문서는 JSON 구조를 사용합니다.
     try {
       const parsed = JSON.parse(content);
-      return parsed.passages || [];
-    } catch {
-      throw new Error('문서 형식이 올바르지 않습니다.');
+      if (Array.isArray(parsed.passages) && parsed.passages.length > 0) {
+        return parsed.passages.map((passage) => String(passage || '').trim()).filter(Boolean);
+      }
+    } catch (jsonError) {
+      // fall through to legacy handling
     }
+
+    // 과거 문서는 순수 텍스트로 저장된 경우가 있어요. 문단 단위로 분리해 사용합니다.
+    const text = String(content || '').trim();
+    if (!text) {
+      throw new Error('문서에 저장된 내용이 없습니다.');
+    }
+
+    const segments = text
+      .split(/\n{2,}/)
+      .map((segment) => segment.trim())
+      .filter((segment) => segment.length > 0);
+
+    if (segments.length > 0) {
+      return segments;
+    }
+
+    // 문단 단위로 나누지 못하면 전체 텍스트를 단일 지문으로 사용합니다.
+    return [text];
   }
 
   // Persist variants for a passage (up to 2 slots)
@@ -551,7 +583,14 @@ class AnalysisService {
         cached: false
       };
     } catch (error) {
-      throw new Error(`문서 분석 실패: ${error.message}`);
+      const message = String(error?.message || '');
+      if (message.includes('OpenAI not configured')) {
+        const friendly = 'OpenAI API 키가 아직 설정되지 않아서 분석본을 만들 수 없어요. 환경 변수 OPENAI_API_KEY를 확인해 주세요.';
+        const err = new Error(friendly);
+        err.code = 'OPENAI_MISSING';
+        throw err;
+      }
+      throw new Error(`문서 분석 실패: ${message}`);
     }
   }
 }

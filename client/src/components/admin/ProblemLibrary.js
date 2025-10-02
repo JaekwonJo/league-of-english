@@ -153,18 +153,6 @@ const ProblemLibrary = ({ documents = [] }) => {
     loadHistory();
   }, [loadHistory]);
 
-  useEffect(() => {
-    if (!noteEditor.open) return undefined;
-    const handleKeydown = (event) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        closeNoteEditor();
-      }
-    };
-    window.addEventListener('keydown', handleKeydown);
-    return () => window.removeEventListener('keydown', handleKeydown);
-  }, [noteEditor.open, closeNoteEditor]);
-
   const openNoteEditor = useCallback((problem) => {
     if (!problem || !problem.id) return;
     setNoteEditor({
@@ -179,6 +167,18 @@ const ProblemLibrary = ({ documents = [] }) => {
   const closeNoteEditor = useCallback(() => {
     setNoteEditor({ open: false, problemId: null, note: '', saving: false, error: '' });
   }, []);
+
+  useEffect(() => {
+    if (!noteEditor.open) return undefined;
+    const handleKeydown = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeNoteEditor();
+      }
+    };
+    window.addEventListener('keydown', handleKeydown);
+    return () => window.removeEventListener('keydown', handleKeydown);
+  }, [noteEditor.open, closeNoteEditor]);
 
   const handleNoteChange = (value) => {
     setNoteEditor((prev) => ({ ...prev, note: value.slice(0, 1000) }));

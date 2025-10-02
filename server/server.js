@@ -4,8 +4,22 @@
 
 const express = require('express');
 const cors = require('cors');
+const fs = require('fs');
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '.env') });
+const dotenv = require('dotenv');
+
+// Load environment variables from project root first, then server/.env (if present)
+const rootEnvPath = path.join(__dirname, '..', '.env');
+if (fs.existsSync(rootEnvPath)) {
+  dotenv.config({ path: rootEnvPath });
+}
+
+const serverEnvPath = path.join(__dirname, '.env');
+if (fs.existsSync(serverEnvPath)) {
+  dotenv.config({ path: serverEnvPath });
+} else {
+  dotenv.config();
+}
 
 // Config
 const config = require('./config/server.config.json');
@@ -14,8 +28,7 @@ const config = require('./config/server.config.json');
 const database = require('./models/database');
 
 // Routes
-// Use fixed auth routes for broader DB compatibility
-const authRoutes = require('./routes/auth.routes.fixed');
+const authRoutes = require('./routes/auth.routes');
 const documentRoutes = require('./routes/document.routes');
 const problemRoutes = require('./routes/problem.routes');
 const rankingRoutes = require('./routes/ranking.routes');

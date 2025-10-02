@@ -19,7 +19,14 @@ router.get('/passages', verifyToken, async (req, res) => {
     res.json(result);
   } catch (error) {
     console.error('지문 분석 조회 오류:', error);
-    res.status(500).json({ success: false, message: '분석 결과 조회 중 오류가 발생했습니다.', error: String(error.message || error) });
+    const code = error?.code;
+    const statusCode = code === 'OPENAI_MISSING' ? 503 : 500;
+    res.status(statusCode).json({
+      success: false,
+      message: error?.message || '분석 결과 조회 중 오류가 발생했습니다.',
+      error: String(error?.message || error),
+      code
+    });
   }
 });
 
@@ -42,13 +49,15 @@ router.post('/analyze-passage', verifyToken, async (req, res) => {
     res.json(result);
   } catch (error) {
     console.error('개별 지문 분석 오류:', error);
+    const code = error?.code;
     const msg = String((error && error.message) || '');
-    const statusCode = msg.includes('권한') ? 403
+    const statusCode = code === 'OPENAI_MISSING' ? 503
+      : msg.includes('권한') ? 403
       : msg.includes('찾을 수 없습니다') ? 404
       : msg.includes('유효') ? 400
       : 500;
 
-    res.status(statusCode).json({ success: false, message: msg, error: msg });
+    res.status(statusCode).json({ success: false, message: msg, error: msg, code });
   }
 });
 
