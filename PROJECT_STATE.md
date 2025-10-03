@@ -25,6 +25,7 @@
 - `problem_exposures`가 정답/오답을 추적하며 틀린 문제는 쿨다운 후 확률적으로 재출제되고, 맞힌 문제는 자동 제외돼요.
 - 홈·프로필·학습 설정 화면에 “복습 대기열” 카드가 추가되어 최근 오답과 바로가기 버튼을 한눈에 볼 수 있습니다.
 - 관리자 페이지에 문제 라이브러리 뷰가 생겨 저장된 문제를 유형별로 훑어보고, 원하는 조합만 PDF로 내보낼 수 있어요.
+- 문서 카드의 🌐 버튼으로 전체/학교/학년/학생 단위 공개 범위를 지정할 수 있고, 학생 목록은 이 규칙에 맞춰 필터링돼요.
 - 라이트/다크 테마 토글이 모든 주요 화면(랭킹·통계·관리자 포함)에 적용되고, `tierConfig`·`appConfig` 같은 JSON 색상도 CSS 변수로 치환됐습니다.
 - 함축 추론 생성기가 `<u>` 태그를 빼먹은 응답도 `targetSpan`을 활용해 자동 보정하고, 실패 사유를 프롬프트에 즉시 전달해 재시도 품질을 높였습니다.
 - 어법과 어휘 문제는 각각 전용 메뉴얼·프롬프트로 생성되고, 학습/홈 화면에서도 `어법`, `어휘` 타입이 분리되어 선택·통계가 가능한 상태입니다.
@@ -35,18 +36,16 @@
 - 회원가입은 이메일 인증 코드를 입력해야 완료되고, 60초 쿨다운·10분 만료가 적용돼요. 프리미엄/프로 입금 요청을 보내면 관리자에게 안내 메일이 자동 발송됩니다.
 
 ## Next 3 (priority)
-1. **네이버 SMTP 전달률 복구.** Render 서버에서 이메일 인증/알림 메일이 실제로 발송되도록 `EMAIL_FROM` 형식을 `League of English <계정>`으로 맞추고, `emailService`에 실패 로그/재시도 경고를 남겨 원인(인증 오류, TLS 거절 등)을 잡아냅니다.
-2. **Render 배포 스모크 테스트 자동화.** `npm run build` 이전에 `scripts/deploy-smoke.js`(가칭)로 환경 변수, `/api/health`, SMTP 연결을 한 번에 확인해 “배포 후 로그인 불가”를 방지합니다.
+1. **AI 문제 실패율 낮추기.** 짧은 지문·비어 있는 문단 때문에 blank/grammar 생성이 중단되는 케이스를 재현하고, 사전 검증·대체 지문 로직을 보강해 학생 학습 흐름을 막지 않게 합니다.
+2. **분석본 공개/열람 흐름 완성.** 새 문서 공개 규칙을 분석본·학습 화면에도 적용해, 공개된 Variant만 학생/학부모 계정에서 자연스럽게 볼 수 있도록 만듭니다.
 3. **단어 시험 파이프라인 완성.** PDF 단어장을 업로드하면 30문항·5지선다 세트를 생성·저장하고, 학생 시험/점수/복습 통계를 남깁니다.
 
 ## Known issues
-- Render 환경에서 이메일 인증/관리자 알림 메일이 실제로 발송되지 않고 있어 회원가입이 막혀 있습니다. `EMAIL_FROM` 형식을 `<표시 이름 <계정>>`으로 고치고, SMTP 오류를 서버 로그에 남기는 추가 진단이 필요해요.
+- Blank/grammar 문제 생성이 원문 길이 부족이나 OpenAI 재시도 실패로 자주 중단돼 학습 흐름을 막습니다. 지문 검증과 재생성 전략이 필요해요.
 - Vocabulary 학습이 플래시카드 수준에 머물러 오답 저장·반복 루프·발음 음원 같은 학습 기능이 비어 있습니다.
-- 함축 추론 생성이 `targetSpan` 없이 오면 여전히 실패하며, 괄호나 다른 강조 기호로라도 밑줄을 복원하는 두 번째 방어 장치가 없습니다.
-- ProblemLibrary에서 유형 토글 시 이전 집계 값이 잠깐 보이는 플리커가 남아 있어 UX가 어색합니다.
-- 단어 시험 업로드/파싱/채점 파이프라인이 아직 구현되지 않아 단어 학습 로드맵이 멈춰 있습니다.
-- 분석본 신고/추천 로그를 처리할 관리자 화면이 단순 목록 수준이라 태그·알림 루프가 수동입니다.
-- 베타 배포 환경(Render/Vercel)의 빌드 명령이 `react-scripts` 누락으로 실패하고 있어 검증된 스크립트로 교체해야 합니다.
+- 분석본 공개 규칙이 아직 학생 UI에 연결되지 않아, 문서를 공유해도 분석 탭에서는 보이지 않습니다.
+- 문서 공유는 가능하지만 분석본·단어 시험에는 동일한 권한 체계가 적용되지 않아 일관성이 떨어집니다.
+- Render 배포는 `/api/health` 헬스 체크와 SMTP가 동시에 성공해야 통과하므로, 스모크 스크립트/문서가 필요합니다.
 
 ## Resolved (2025-10-08 - email verification + membership request + analysis feedback)
 - 회원가입에 이메일 인증 코드를 붙이고, 60초 재전송 쿨다운·10분 만료·재사용 차단 로직을 구축했습니다.
@@ -157,3 +156,10 @@
 - Integrated the Wolgo grammar template via `server/utils/eobeopTemplate.js`, removed basic/advanced fallbacks, and returned API-only grammar batches with circled options and underlined passages.
 - Rebuilt `/generate/csat-set` route to enforce 5-question steps (max 20), dispatch batched generators, and normalize responses for the React study screen.
 - Updated the study client (`useStudySession`, `StudyConfig`, `ProblemDisplay`, `GrammarProblemDisplay`) to request 5-at-once, render list mode cleanly, and support the new summary/grammar data shape.
+- Added the K-CSAT Topic Master manual (`docs/problem-templates/topic-master.md`, `theme_problem_manual.md`, `problem manual/theme_problem_manual.md`) so 주제 문제가 논지+범위 기준으로 재현 가능.
+- Hardened `generateTheme` prompt/validation: 5 options(6~14 단어), 한국어 해설, `출처│` 라벨, 오답 결함 메타태그.
+
+## Resolved (2025-10-04 - document visibility + legacy schema guard)
+- Added `document_visibility` table/API and a React 공유 모달(🌐) so 관리자가 전체/학교/학년/학생 단위로 문서를 공개할 수 있고, 학생 목록이 새 규칙을 따릅니다.
+- Students now see 관리자 공유 문서를 바로 확인할 수 있으며, 학교/학년 값이 맞지 않으면 노출되지 않습니다.
+- 회원가입 시 레거시 `users.password` NOT NULL 제약이 남아 있으면 `password_hash` 값을 그대로 채워 넣어 Render 같은 환경에서도 가입이 중단되지 않습니다.
