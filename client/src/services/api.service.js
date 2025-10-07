@@ -261,7 +261,9 @@ export const api = {
     list: (params) => apiService.get('/documents', params),
     get: (id) => apiService.get(`/documents/${id}`),
     upload: (file, data) => apiService.uploadFile('/upload-document', file, data),
-    delete: (id) => apiService.delete(`/documents/${id}`)
+    delete: (id) => apiService.delete(`/documents/${id}`),
+    getShares: (id) => apiService.get(`/documents/${id}/shares`),
+    updateShares: (id, payload) => apiService.post(`/documents/${id}/share`, payload)
   },
 
   // 문제
@@ -316,7 +318,9 @@ export const api = {
     list: () => apiService.get('/analysis/list'),
     get: (documentId) => apiService.get(`/analysis/${documentId}`),
     getPassage: (documentId, passageNumber) => apiService.get(`/analysis/${documentId}/passage/${passageNumber}`),
+    listPassageSummaries: (documentId) => apiService.get(`/analysis/${documentId}/passage-list`),
     generate: (documentId, passageNumber, count = 1) => apiService.post(`/analysis/${documentId}/analyze-passage`, { passageNumber, count }),
+    generateBatch: (documentId, passageNumbers = []) => apiService.post(`/analysis/${documentId}/analyze-passages`, { passageNumbers }),
     status: (documentId) => apiService.get(`/analysis/status/${documentId}`),
     delete: (documentId) => apiService.delete(`/analysis/${documentId}`),
     feedback: {

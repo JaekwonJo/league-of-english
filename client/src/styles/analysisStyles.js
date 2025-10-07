@@ -374,6 +374,30 @@ export const analysisStyles = {
     fontSize: '0.9rem',
     color: 'var(--color-slate-500)'
   },
+  metaButtonGhost: {
+    background: 'rgba(148, 163, 184, 0.18)',
+    border: 'none',
+    color: 'var(--color-slate-200)',
+    padding: '6px 12px',
+    borderRadius: '8px',
+    fontSize: '12px',
+    cursor: 'pointer'
+  },
+  metaButtonPrimary: {
+    background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%)',
+    border: 'none',
+    color: 'var(--text-on-accent)',
+    padding: '6px 12px',
+    borderRadius: '8px',
+    fontSize: '12px',
+    cursor: 'pointer',
+    boxShadow: '0 10px 20px rgba(79, 70, 229, 0.3)'
+  },
+  metaButtonDisabled: {
+    opacity: 0.5,
+    cursor: 'not-allowed',
+    boxShadow: 'none'
+  },
   reportButton: {
     padding: '10px 18px',
     borderRadius: '12px',

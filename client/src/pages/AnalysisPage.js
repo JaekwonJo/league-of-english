@@ -1,11 +1,15 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { api } from '../services/api.service';
 import { analysisStyles } from '../styles/analysisStyles';
+import PassagePickerGrid from '../components/shared/PassagePickerGrid';
+import PassagePreviewModal from '../components/shared/PassagePreviewModal';
 
 const AnalysisPage = () => {
   const [documents, setDocuments] = useState([]);
   const [selectedDocument, setSelectedDocument] = useState(null);
   const [passageAnalyses, setPassageAnalyses] = useState([]);
+  const [passageList, setPassageList] = useState([]);
+  const [selectedPassages, setSelectedPassages] = useState([]);
   const [selectedPassage, setSelectedPassage] = useState(null);
   const [activeVariantIndex, setActiveVariantIndex] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -18,6 +22,7 @@ const AnalysisPage = () => {
   const [reportModal, setReportModal] = useState({ open: false, variantIndex: null, reason: '' });
   const [reportSubmitting, setReportSubmitting] = useState(false);
   const [step, setStep] = useState(1); // 1: 문서 선택, 2: 지문 선택, 3: 분석 보기
+  const [previewPassage, setPreviewPassage] = useState(null);
 
   useEffect(() => {
     fetchDocumentsList();
@@ -39,7 +44,39 @@ const AnalysisPage = () => {
         originalPassage: originalPassage || item.originalPassage
       };
     }));
+    setPassageList((prev) => prev.map((item) => {
+      if (item.passageNumber !== passageNumber) return item;
+      return {
+        ...item,
+        variantCount: Array.isArray(variants) ? variants.length : 0,
+        hasAnalysis: Array.isArray(variants) && variants.length > 0,
+        originalPassage: originalPassage || item.originalPassage || item.text
+      };
+    }));
   };
+
+  const togglePassageSelection = (passageNumber) => {
+    if (!Number.isInteger(passageNumber)) return;
+    setSelectedPassages((prev) => {
+      if (prev.includes(passageNumber)) {
+        return prev.filter((value) => value !== passageNumber);
+      }
+      if (prev.length >= 3) {
+        return prev;
+      }
+      return [...prev, passageNumber];
+    });
+  };
+
+  const openPreview = (passage) => {
+    if (!passage) return;
+    setPreviewPassage({
+      ...passage,
+      text: passage.text || passage.originalPassage || passage.excerpt || ''
+    });
+  };
+
+  const closePreview = () => setPreviewPassage(null);
 
   const fetchDocumentsList = async () => {
     try {
@@ -67,21 +104,66 @@ const AnalysisPage = () => {
       setAnalysisLimitError(null);
       setSelectedDocument(document);
       setSelectedPassage(null);
+      setSelectedPassages([]);
       setActiveVariantIndex(0);
       setGenerateTarget(null);
       setFeedbackMessage(null);
       setReportModal({ open: false, variantIndex: null, reason: '' });
 
-      const response = await api.analysis.get(document.id);
-      if (response.success) {
-        const normalized = (response.data || []).map(normalizePassage);
-        setPassageAnalyses(normalized);
-        setStep(2);
-      } else {
+      const [analysisResponse, passageResponse] = await Promise.all([
+        api.analysis.get(document.id),
+        api.analysis.listPassageSummaries(document.id)
+      ]);
+
+      if (!analysisResponse.success) {
         setError('지문 분석 결과를 불러오는데 실패했습니다.');
+        setPassageAnalyses([]);
+        setPassageList([]);
+        return;
       }
+
+      const normalizedAnalyses = (analysisResponse.data || []).map(normalizePassage);
+      setPassageAnalyses(normalizedAnalyses);
+
+      const analysisMap = new Map(
+        normalizedAnalyses.map((item) => [item.passageNumber, item])
+      );
+
+      const rawPassages = Array.isArray(passageResponse?.data) ? passageResponse.data : [];
+      const merged = rawPassages.map((entry) => {
+        const analysis = analysisMap.get(entry.passageNumber);
+        const variants = analysis?.variants || [];
+        return {
+          ...entry,
+          hasAnalysis: variants.length > 0,
+          variantCount: variants.length,
+          variants,
+          originalPassage: analysis?.originalPassage || entry.text || entry.excerpt
+        };
+      });
+
+      // Ensure analyses without matching raw passage are still visible
+      analysisMap.forEach((analysis, number) => {
+        if (!merged.find((item) => item.passageNumber === number)) {
+          merged.push({
+            passageNumber: number,
+            excerpt: analysis.originalPassage?.slice(0, 160) || '원문을 찾을 수 없습니다.',
+            text: analysis.originalPassage || '',
+            hasAnalysis: true,
+            variantCount: analysis.variants?.length || 0,
+            variants: analysis.variants || [],
+            originalPassage: analysis.originalPassage || ''
+          });
+        }
+      });
+
+      merged.sort((a, b) => a.passageNumber - b.passageNumber);
+      setPassageList(merged);
+      setStep(2);
     } catch (err) {
-      setError(err?.message || '지문 분석을 불러오는 중 문제가 발생했습니다.');
+      setError(err?.message || '지문 목록을 불러오는 중 문제가 발생했습니다.');
+      setPassageAnalyses([]);
+      setPassageList([]);
     } finally {
       setLoading(false);
     }
@@ -383,78 +465,88 @@ const AnalysisPage = () => {
     </div>
   );
 
-  const renderPassageList = () => (
-    <div style={analysisStyles.container}>
-      <div style={analysisStyles.header}>
-        <button onClick={handleBackToDocuments} style={analysisStyles.backButton}>← 문서 목록으로</button>
-        <h1 style={analysisStyles.title}>📄 {selectedDocument?.title}</h1>
-        <p style={analysisStyles.subtitle}>지문을 골라 분석본을 살펴보거나 새로 만들어 주세요</p>
-      </div>
+  const renderPassageList = () => {
+    const targetPassage = generateTarget
+      ? passageList.find((item) => item.passageNumber === generateTarget) || null
+      : null;
 
-      {analysisLimitError && (
-        <div style={{ ...analysisStyles.errorContainer, background: 'var(--warning-surface)', color: 'var(--warning-strong)' }}>
-          <p>{analysisLimitError}</p>
-        </div>
-      )}
-
-      {loading && (
-        <div style={analysisStyles.loadingContainer}>
-          <div style={analysisStyles.spinner} />
-          <p>지문 목록을 정리하고 있어요...</p>
-        </div>
-      )}
-
-      {!loading && passageAnalyses.length === 0 && (
-        <div style={analysisStyles.emptyState}>
-          <h3>📝 아직 저장된 분석본이 없어요</h3>
-          <p>위 문서에서 분석을 생성하면 여기에서 Variant 1·2를 확인할 수 있어요.</p>
-        </div>
-      )}
-
-      {!loading && passageAnalyses.length > 0 && (
-        <div style={analysisStyles.passageGrid}>
-          {passageAnalyses.map((passage) => (
-            <div
-              key={`passage-${passage.passageNumber}`}
-              style={analysisStyles.passageCard}
-              onClick={() => handlePassageClick(passage)}
+    const renderMeta = (entry) => {
+      const slots = remainingSlots(entry);
+      const disabled = slots <= 0;
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-end' }}>
+          <span style={{ fontSize: '12px', color: 'var(--color-slate-300)' }}>
+            {entry.variantCount || 0}/2 분석본
+          </span>
+          <div style={{ display: 'flex', gap: '6px' }}>
+            <button
+              type="button"
+              style={analysisStyles.metaButtonGhost}
+              onClick={() => handlePassageClick(entry)}
             >
-              <div style={analysisStyles.passageHeader}>
-                <h3>지문 {passage.passageNumber}</h3>
-                <span style={analysisStyles.passageBadge}>
-                  {passage.variants?.length ? `분석본 ${passage.variants.length}/2` : '분석 필요'}
-                </span>
-              </div>
-              <div style={analysisStyles.passagePreview}>
-                <p>{(passage.originalPassage || '').substring(0, 140)}...</p>
-              </div>
-              <div style={analysisStyles.passageFooter}>
-                <span>📊 상세 분석 보기 →</span>
-              </div>
-              {generateTarget === passage.passageNumber ? (
-                <div onClick={(event) => event.stopPropagation()}>
-                  {renderVariantGenerator(passage)}
-                </div>
-              ) : (
-                <div
-                  style={{ padding: '12px 16px', borderTop: '1px solid var(--surface-soft-muted)', background: 'var(--surface-soft-shell)' }}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    setGenerateTarget((prev) => (prev === passage.passageNumber ? null : passage.passageNumber));
-                  }}
-                >
-                  <strong>➕ 분석본 추가하기</strong>
-                  <p style={{ margin: '6px 0 0', color: 'var(--color-slate-500)', fontSize: '0.85rem' }}>
-                    남은 칸: {remainingSlots(passage)} / 2
-                  </p>
-                </div>
-              )}
-            </div>
-          ))}
+              분석 보기
+            </button>
+            <button
+              type="button"
+              style={{
+                ...analysisStyles.metaButtonPrimary,
+                ...(disabled ? analysisStyles.metaButtonDisabled : {})
+              }}
+              onClick={() => setGenerateTarget((prev) => (prev === entry.passageNumber ? null : entry.passageNumber))}
+              disabled={disabled}
+            >
+              {disabled ? '완료' : '분석 생성'}
+            </button>
+          </div>
         </div>
-      )}
-    </div>
-  );
+      );
+    };
+
+    return (
+      <div style={analysisStyles.container}>
+        <div style={analysisStyles.header}>
+          <button onClick={handleBackToDocuments} style={analysisStyles.backButton}>← 문서 목록으로</button>
+          <h1 style={analysisStyles.title}>📄 {selectedDocument?.title}</h1>
+          <p style={analysisStyles.subtitle}>지문을 최대 3개까지 선택해 분석본을 확인하거나 새로 생성해요.</p>
+        </div>
+
+        {analysisLimitError && (
+          <div style={{ ...analysisStyles.errorContainer, background: 'var(--warning-surface)', color: 'var(--warning-strong)' }}>
+            <p>{analysisLimitError}</p>
+          </div>
+        )}
+
+        {loading ? (
+          <div style={analysisStyles.loadingContainer}>
+            <div style={analysisStyles.spinner} />
+            <p>지문 목록을 정리하고 있어요...</p>
+          </div>
+        ) : passageList.length ? (
+          <PassagePickerGrid
+            passages={passageList}
+            selected={selectedPassages}
+            onToggle={togglePassageSelection}
+            onPreview={openPreview}
+            maxSelection={3}
+            selectionLabel="선택 지문"
+            renderMeta={renderMeta}
+            emptyMessage="분석 가능한 지문을 찾지 못했습니다."
+          />
+        ) : (
+          <div style={analysisStyles.emptyState}>
+            <h3>📝 아직 저장된 분석본이 없어요</h3>
+            <p>지문을 선택해 분석을 생성하면 Variant 1·2를 확인할 수 있어요.</p>
+          </div>
+        )}
+
+        {generateTarget && targetPassage && (
+          <div style={{ marginTop: '24px' }}>
+            {renderVariantGenerator(targetPassage)}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const activeVariant = useMemo(() => {
     if (!selectedPassage) return null;
@@ -627,10 +719,25 @@ const AnalysisPage = () => {
     </div>
   );
 
-  if (step === 1) return renderDocumentList();
-  if (step === 2) return renderPassageList();
-  if (step === 3) return renderPassageAnalysis();
-  return null;
+  const currentView = step === 1
+    ? renderDocumentList()
+    : step === 2
+      ? renderPassageList()
+      : step === 3
+        ? renderPassageAnalysis()
+        : renderDocumentList();
+
+  return (
+    <>
+      {currentView}
+      <PassagePreviewModal
+        open={Boolean(previewPassage)}
+        passage={previewPassage}
+        onClose={closePreview}
+        documentTitle={selectedDocument?.title}
+      />
+    </>
+  );
 };
 
 export default AnalysisPage;

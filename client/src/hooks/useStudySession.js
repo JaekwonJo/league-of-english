@@ -220,6 +220,9 @@ const useStudySession = (user, onUserUpdate = () => {}) => {
         counts: studyConfig.types,
         orderDifficulty: "advanced",
         insertionDifficulty: "advanced",
+        passageNumbers: Array.isArray(studyConfig.passageNumbers)
+          ? Array.from(new Set(studyConfig.passageNumbers)).filter((value) => Number.isInteger(value) && value > 0)
+          : [],
         totalCount: Math.min(20, Math.max(1, totalCount || 1)),
       };
 
@@ -234,6 +237,19 @@ const useStudySession = (user, onUserUpdate = () => {}) => {
 
       beginSession(processed);
       logger.info(`Loaded ${processed.length} problems`);
+
+      if (Array.isArray(response.failures) && response.failures.length) {
+        const summary = response.failures
+          .map((failure) => {
+            const type = failure?.type || '문항';
+            const delivered = failure?.delivered ?? 0;
+            const requested = failure?.requested ?? '?';
+            return `${type}: ${delivered}/${requested}`;
+          })
+          .join(', ');
+        setError(`일부 문항은 건너뛰었어요. (생성된 항목: ${summary})`);
+        logger.warn('Partial problem generation failures:', response.failures);
+      }
     } catch (err) {
       logger.error("Failed to start study:", err);
       const msg = err?.message || "";

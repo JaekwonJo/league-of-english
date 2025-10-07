@@ -1,3 +1,10 @@
+## 2025-10-04 (passage picker + study sync)
+- Issue: 관리자 분석 모달, 학생 분석 페이지, 학습 설정이 서로 다른 UI를 사용해 지문 미리보기/선택 흐름이 엇갈렸고, 전체 문서를 다시 훑는 동작 때문에 UX가 일관되지 않았어요.
+- Cause: 본문 원문을 제공하는 공통 API가 없고, 화면마다 카드/목록 레이아웃이 제각각이라 사용자가 같은 정보를 반복 탐색해야 했습니다.
+- Fix: 분석 서비스의 지문 목록 응답에 원문/단어 수를 포함하고, `PassagePickerGrid`·`PassagePreviewModal`을 도입해 관리자·학생·학습 화면을 같은 카드 미리보기 + 최대 3개 선택 UX로 통일했습니다. 앞으로는 선택 지문만 생성하도록 백엔드 필터링을 추가할 예정입니다.
+- Files: server/services/analysisService.js, client/src/components/shared/PassagePickerGrid.js, client/src/components/shared/PassagePreviewModal.js, client/src/components/admin/DocumentAnalysis.js, client/src/components/study/StudyConfig.js, client/src/pages/AnalysisPage.js, client/src/hooks/useStudySession.js, client/src/config/routes.config.json, client/src/styles/analysisStyles.js, client/src/services/api.service.js.
+- Verification: `npm test` (pass, 16 tests) + 로컬에서 관리자/학생 UI 카드 선택·미리보기·문제 생성 흐름 수동 확인.
+
 ## 2025-10-04 (document visibility rules + legacy schema guard)
 - Issue: 관리자만 문서를 볼 수 있어 학생 계정이 빈 화면을 봤고, Render 등 일부 배포 환경에서는 `users.password` 제약 때문에 회원가입이 실패했어요.
 - Cause: 문서에 공개 범위를 저장하는 구조가 없었고, 예전 DB 스키마가 `password` 컬럼을 여전히 NOT NULL로 요구했습니다.

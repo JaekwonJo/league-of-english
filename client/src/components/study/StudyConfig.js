@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../../services/api.service';
 import problemTypes from '../../config/problemTypes.json';
 import logger from '../../utils/logger';
+import PassagePickerGrid from '../shared/PassagePickerGrid';
+import PassagePreviewModal from '../shared/PassagePreviewModal';
 
 const MAX_TOTAL_PROBLEMS = 20;
 const PROBLEM_STEP = 5;
@@ -39,6 +41,11 @@ const sanitizeTypeCounts = (rawTypes = {}) => {
 const StudyConfig = ({ onStart, headerSlot = null, initialFocusType = null }) => {
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [passages, setPassages] = useState([]);
+  const [passageLoading, setPassageLoading] = useState(false);
+  const [selectedPassages, setSelectedPassages] = useState([]);
+  const [previewPassage, setPreviewPassage] = useState(null);
+  const [error, setError] = useState(null);
   const [config, setConfig] = useState({
     documentId: null,
     types: sanitizeTypeCounts({}),
@@ -50,6 +57,56 @@ const StudyConfig = ({ onStart, headerSlot = null, initialFocusType = null }) =>
     loadDocuments();
     loadSavedConfig();
   }, []);
+
+  useEffect(() => {
+    if (!config.documentId) {
+      setPassages([]);
+      setSelectedPassages([]);
+      return;
+    }
+    loadPassageOptions(config.documentId);
+  }, [config.documentId]);
+
+  const loadPassageOptions = async (documentId) => {
+    try {
+      setPassageLoading(true);
+      setError(null);
+      const response = await api.analysis.listPassageSummaries(documentId);
+      const items = response?.data || [];
+      setPassages(items);
+      setSelectedPassages((prev) => {
+        const validNumbers = new Set(items.map((item) => item.passageNumber));
+        return prev.filter((number) => validNumbers.has(number));
+      });
+    } catch (err) {
+      logger.error('Failed to load passages for study:', err);
+      setError(err?.message || '지문 목록을 불러오는 중 문제가 발생했습니다.');
+      setPassages([]);
+      setSelectedPassages([]);
+    } finally {
+      setPassageLoading(false);
+    }
+  };
+
+  const togglePassageSelection = (passageNumber) => {
+    if (!Number.isInteger(passageNumber)) return;
+    setSelectedPassages((prev) => {
+      if (prev.includes(passageNumber)) {
+        return prev.filter((value) => value !== passageNumber);
+      }
+      return [...prev, passageNumber];
+    });
+  };
+
+  const openPreview = (passage) => {
+    if (!passage) return;
+    setPreviewPassage({
+      ...passage,
+      text: passage.text || passage.fullText || passage.excerpt || ''
+    });
+  };
+
+  const closePreview = () => setPreviewPassage(null);
 
   const loadSavedConfig = () => {
     try {
@@ -77,6 +134,7 @@ const StudyConfig = ({ onStart, headerSlot = null, initialFocusType = null }) =>
   const loadDocuments = async () => {
     try {
       setLoading(true);
+      setError(null);
       const list = await api.documents.list();
       setDocuments(list);
       if (list.length > 0) {
@@ -87,6 +145,7 @@ const StudyConfig = ({ onStart, headerSlot = null, initialFocusType = null }) =>
       }
     } catch (error) {
       logger.error('Failed to load documents:', error);
+      setError(error?.message || '문서를 불러오는 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
@@ -118,6 +177,9 @@ const StudyConfig = ({ onStart, headerSlot = null, initialFocusType = null }) =>
 
   const handleDocumentChange = (event) => {
     const value = event.target.value ? Number(event.target.value) : null;
+    setSelectedPassages([]);
+    setPassages([]);
+    setError(null);
     setConfig((prev) => ({ ...prev, documentId: value }));
   };
 
@@ -155,6 +217,10 @@ const StudyConfig = ({ onStart, headerSlot = null, initialFocusType = null }) =>
       alert('학습에 사용할 자료를 먼저 선택해주세요.');
       return;
     }
+    if (!selectedPassages.length) {
+      alert('문제를 만들 지문을 하나 이상 선택해주세요.');
+      return;
+    }
     if (totalProblems === 0) {
       alert('적어도 5문제 이상 선택해주세요 (기본 단위 5문제).');
       return;
@@ -169,10 +235,23 @@ const StudyConfig = ({ onStart, headerSlot = null, initialFocusType = null }) =>
       types: sanitizeTypeCounts(config.types),
       orderDifficulty: 'advanced',
       insertionDifficulty: 'advanced',
+      passageNumbers: Array.from(new Set(selectedPassages))
     };
 
     logger.info('Study config:', payload);
     onStart(payload);
+  };
+
+  const renderPassageMetaForStudy = (passage) => {
+    if (!passage) return null;
+    const { wordCount, charCount } = passage;
+    if (wordCount || charCount) {
+      const parts = [];
+      if (wordCount) parts.push(`${wordCount} words`);
+      if (charCount) parts.push(`${charCount} chars`);
+      return parts.join(' • ');
+    }
+    return null;
   };
 
   return (
@@ -180,6 +259,12 @@ const StudyConfig = ({ onStart, headerSlot = null, initialFocusType = null }) =>
       <h1 style={styles.title}>학습 설정</h1>
 
       {headerSlot && <div style={styles.headerSlot}>{headerSlot}</div>}
+
+      {error && (
+        <div style={styles.errorBox}>
+          ❗️ {error}
+        </div>
+      )}
 
       <div style={styles.section}>
         <h3 style={{ ...styles.sectionTitle, marginBottom: '12px' }}>자료 선택</h3>
@@ -196,6 +281,34 @@ const StudyConfig = ({ onStart, headerSlot = null, initialFocusType = null }) =>
             </option>
           ))}
         </select>
+      </div>
+
+      <div style={styles.section}>
+        <div style={styles.sectionTitleRow}>
+          <h3 style={styles.sectionTitle}>지문 선택</h3>
+          <span style={styles.selectionCount}>{selectedPassages.length}개 선택</span>
+        </div>
+        <p style={styles.sectionHint}>
+          문제에 사용할 지문을 골라주세요. 카드 왼쪽 상단의 체크 박스를 눌러 선택하고, 전체 보기를 누르면 원문을 확인할 수 있어요.
+        </p>
+        {passageLoading ? (
+          <div style={styles.loadingCard}>
+            <div style={styles.spinner} />
+            <p>지문을 불러오는 중이에요...</p>
+          </div>
+        ) : passages.length ? (
+          <PassagePickerGrid
+            passages={passages}
+            selected={selectedPassages}
+            onToggle={togglePassageSelection}
+            onPreview={openPreview}
+            selectionLabel="학습에 포함할 지문을 골라주세요"
+            renderMeta={renderPassageMetaForStudy}
+            emptyMessage="표시할 지문이 아직 없어요."
+          />
+        ) : (
+          <div style={styles.loadingCard}>선택한 자료에서 지문을 찾지 못했어요.</div>
+        )}
       </div>
 
       <div style={styles.section}>
@@ -262,15 +375,23 @@ const StudyConfig = ({ onStart, headerSlot = null, initialFocusType = null }) =>
           style={{
             ...styles.startButton,
             ...(totalProblems === 0 || totalProblems > MAX_TOTAL_PROBLEMS || !config.documentId
+              || !selectedPassages.length
               ? styles.startButtonDisabled
               : {}),
           }}
           onClick={handleStart}
-          disabled={totalProblems === 0 || totalProblems > MAX_TOTAL_PROBLEMS || !config.documentId}
+          disabled={totalProblems === 0 || totalProblems > MAX_TOTAL_PROBLEMS || !config.documentId || !selectedPassages.length}
         >
           학습 시작
         </button>
       </div>
+
+      <PassagePreviewModal
+        open={Boolean(previewPassage)}
+        passage={previewPassage}
+        onClose={closePreview}
+        documentTitle={documents.find((doc) => doc.id === config.documentId)?.title}
+      />
     </div>
   );
 };
@@ -313,6 +434,18 @@ const styles = {
     fontWeight: 700,
     margin: 0,
   },
+  sectionHint: {
+    fontSize: '13px',
+    color: 'var(--color-slate-300)',
+    marginBottom: '18px'
+  },
+  selectionCount: {
+    fontSize: '14px',
+    color: 'var(--color-slate-200)',
+    background: 'rgba(148, 163, 184, 0.18)',
+    padding: '4px 12px',
+    borderRadius: '999px'
+  },
   countBadge: {
     display: 'inline-flex',
     alignItems: 'center',
@@ -348,6 +481,14 @@ const styles = {
     fontSize: '16px',
     fontWeight: 600,
     color: 'var(--border-subtle)',
+  },
+  errorBox: {
+    background: 'rgba(239, 68, 68, 0.12)',
+    border: '1px solid rgba(248, 113, 113, 0.4)',
+    color: '#fecaca',
+    padding: '14px 18px',
+    borderRadius: '14px',
+    marginBottom: '20px'
   },
   select: {
     width: '100%',
@@ -426,6 +567,22 @@ const styles = {
     color: 'var(--surface-soft-solid)',
     fontSize: '18px',
     fontWeight: 'bold',
+  },
+  loadingCard: {
+    background: 'rgba(15, 23, 42, 0.65)',
+    borderRadius: '16px',
+    padding: '28px',
+    textAlign: 'center',
+    color: 'var(--color-slate-200)'
+  },
+  spinner: {
+    width: 36,
+    height: 36,
+    borderRadius: '50%',
+    border: '4px solid rgba(148, 163, 184, 0.25)',
+    borderTopColor: 'rgba(129, 140, 248, 0.9)',
+    margin: '0 auto 12px',
+    animation: 'spin 1s linear infinite'
   },
   actions: {
     display: 'flex',

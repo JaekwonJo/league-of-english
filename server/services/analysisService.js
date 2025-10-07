@@ -84,6 +84,66 @@ class AnalysisService {
     }
   }
 
+  async getPassageList(documentId) {
+    const document = await database.get('SELECT id, content FROM documents WHERE id = ?', [documentId]);
+    if (!document) {
+      throw new Error('문서를 찾을 수 없습니다.');
+    }
+
+    const passages = this.extractPassages(document.content);
+    const existingRows = await database.all(
+      'SELECT passage_number, variants, updated_at FROM passage_analyses WHERE document_id = ?',
+      [documentId]
+    );
+
+    const existingMap = new Map();
+    existingRows.forEach((row) => {
+      try {
+        const formatted = this.analyzer.formatFromDatabase(row);
+        const variants = Array.isArray(formatted?.variants) ? formatted.variants : [];
+        existingMap.set(row.passage_number, {
+          variantCount: variants.length,
+          updatedAt: row.updated_at,
+          variants
+        });
+      } catch (error) {
+        console.warn('[analysis] failed to parse existing variants:', error?.message || error);
+        existingMap.set(row.passage_number, {
+          variantCount: 0,
+          updatedAt: row.updated_at,
+          variants: []
+        });
+      }
+    });
+
+    const list = passages.map((text, index) => {
+      const passageNumber = index + 1;
+      const existing = existingMap.get(passageNumber) || null;
+      const clean = String(text || '');
+      const wordCount = clean.trim().length
+        ? clean.trim().split(/\s+/).filter(Boolean).length
+        : 0;
+      return {
+        passageNumber,
+        excerpt: this._buildExcerpt(text),
+        text: clean,
+        wordCount,
+        charCount: clean.length,
+        analyzed: Boolean(existing),
+        variantCount: existing?.variantCount || 0,
+        variants: existing?.variants || [],
+        updatedAt: existing?.updatedAt || null,
+        remainingSlots: Math.max(0, MAX_VARIANTS_PER_PASSAGE - (existing?.variantCount || 0))
+      };
+    });
+
+    return {
+      success: true,
+      total: list.length,
+      data: list
+    };
+  }
+
   // Analyze a single passage (admin only)
   async analyzePassage(documentId, passageNumber, userRole) {
     try {
@@ -143,6 +203,56 @@ class AnalysisService {
       }
       throw new Error(`지문 분석 실패: ${message}`);
     }
+  }
+
+  async analyzePassages(documentId, passageNumbers = [], userRole, userId) {
+    if (userRole !== 'admin' && userRole !== 'teacher') {
+      throw new Error('분석 생성을 수행하려면 교사 이상 권한이 필요합니다.');
+    }
+
+    if (!Array.isArray(passageNumbers) || passageNumbers.length === 0) {
+      throw new Error('분석할 지문을 선택해 주세요.');
+    }
+
+    const uniqueNumbers = [...new Set(passageNumbers
+      .map((value) => Number(value))
+      .filter((value) => Number.isInteger(value) && value >= 1))];
+
+    if (!uniqueNumbers.length) {
+      throw new Error('유효한 지문 번호가 없습니다.');
+    }
+
+    if (uniqueNumbers.length > 3) {
+      throw new Error('한 번에 최대 3개의 지문만 분석할 수 있어요.');
+    }
+
+    const outcomes = [];
+    const failures = [];
+
+    for (const passageNumber of uniqueNumbers) {
+      try {
+        const result = await this.generateVariants(documentId, passageNumber, 1, userRole, userId);
+        const generatedCount = Array.isArray(result.generated) ? result.generated.length : 0;
+        outcomes.push({
+          passageNumber,
+          generatedCount,
+          message: result.message,
+          data: result.data
+        });
+      } catch (error) {
+        failures.push({
+          passageNumber,
+          message: String(error?.message || error)
+        });
+      }
+    }
+
+    return {
+      success: outcomes.length > 0,
+      requested: uniqueNumbers.length,
+      outcomes,
+      failures
+    };
   }
 
   async generateVariants(documentId, passageNumber, count = 1, userRole, userId) {
@@ -453,6 +563,16 @@ class AnalysisService {
 
     // 문단 단위로 나누지 못하면 전체 텍스트를 단일 지문으로 사용합니다.
     return [text];
+  }
+
+  _buildExcerpt(passage) {
+    const clean = String(passage || '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (clean.length <= 120) {
+      return clean;
+    }
+    return `${clean.slice(0, 120)}…`;
   }
 
   // Persist variants for a passage (up to 2 slots)
