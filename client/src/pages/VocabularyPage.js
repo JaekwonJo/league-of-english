@@ -426,10 +426,10 @@ const VocabularyPage = () => {
     goBackToDays();
   }, [finalizeAndSubmit, goBackToDays, quizState.active, quizState.completed]);
 
-  const goBackToDays = () => {
+  function goBackToDays() {
     resetQuizState();
     setError('');
-  };
+  }
 
   const quizSummary = quizState.result?.summary || null;
 
