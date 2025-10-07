@@ -1,11 +1,743 @@
-import React from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { api } from '../services/api.service';
+import { useAuth } from '../contexts/AuthContext';
+
+const QUIZ_SIZE = 30;
+const tierOrder = ['Iron', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond', 'Master', 'Challenger'];
+
+const formatSeconds = (value = 0) => {
+  const total = Math.max(0, Math.floor(value));
+  const mins = Math.floor(total / 60);
+  const secs = total % 60;
+  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+};
 
 const VocabularyPage = () => {
+  const { user } = useAuth();
+  const [sets, setSets] = useState([]);
+  const [setsLoading, setSetsLoading] = useState(true);
+  const [setsError, setSetsError] = useState('');
+
+  const [selectedSet, setSelectedSet] = useState(null);
+  const [daysLoading, setDaysLoading] = useState(false);
+  const [selectedDayKey, setSelectedDayKey] = useState('');
+
+  const [quizState, setQuizState] = useState({
+    active: false,
+    loading: false,
+    data: null,
+    index: 0,
+    answers: [],
+    completed: false,
+    submitting: false,
+    result: null
+  });
+
+  const [totalTime, setTotalTime] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(0);
+  const timerRef = useRef(null);
+  const questionStartRef = useRef(null);
+
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+
+  const getTierStep = useCallback(() => {
+    const tierName = String(user?.tier?.name || user?.tierInfo?.name || user?.tier || '').toLowerCase();
+    const index = tierOrder.findIndex((label) => label.toLowerCase() === tierName);
+    return index >= 0 ? index : 0;
+  }, [user]);
+
+  const getTimeLimitSeconds = useCallback(() => {
+    const baseSeconds = 180; // Iron tier: 3 minutes
+    const reduction = getTierStep() * 5; // each tier up removes 5 seconds
+    return Math.max(60, baseSeconds - reduction);
+  }, [getTierStep]);
+
+  useEffect(() => {
+    const fetchSets = async () => {
+      setSetsLoading(true);
+      setSetsError('');
+      try {
+        const response = await api.vocabulary.list();
+        setSets(Array.isArray(response?.data) ? response.data : []);
+        if (!response?.data?.length) {
+          setMessage('아직 업로드된 단어장이 없어요. 관리자 페이지에서 PDF 단어장을 업로드하면 여기서 바로 시험을 볼 수 있어요!');
+        }
+      } catch (err) {
+        setSetsError(err?.message || '단어 세트를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
+      } finally {
+        setSetsLoading(false);
+      }
+    };
+
+    fetchSets();
+  }, []);
+
+  useEffect(() => () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
+  const resetQuizState = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    questionStartRef.current = null;
+    setQuizState({
+      active: false,
+      loading: false,
+      data: null,
+      index: 0,
+      answers: [],
+      completed: false,
+      submitting: false,
+      result: null
+    });
+    setTotalTime(0);
+    setTimeLeft(0);
+  };
+
+  const handleSelectSet = async (setInfo) => {
+    if (!setInfo) return;
+    if (selectedSet?.id === setInfo.id) return;
+    setDaysLoading(true);
+    setError('');
+    setMessage('');
+    resetQuizState();
+    setSelectedDayKey('');
+
+    try {
+      const response = await api.vocabulary.detail(setInfo.id);
+      if (!response?.success) {
+        throw new Error(response?.message || '세부 정보를 불러오지 못했습니다.');
+      }
+      setSelectedSet(response.data);
+    } catch (err) {
+      setError(err?.message || '단어장을 불러오지 못했어요.');
+    } finally {
+      setDaysLoading(false);
+    }
+  };
+
+  const handleSelectOption = (choiceIndex) => {
+    if (!quizState.active || quizState.loading) return;
+
+    const problems = quizState.data?.problems || [];
+    const currentProblem = problems[quizState.index];
+    if (!currentProblem) return;
+
+    const selected = choiceIndex + 1;
+    setQuizState((prev) => {
+      const currentProblems = prev.data?.problems || [];
+      const current = currentProblems[prev.index];
+      if (!current) return prev;
+      const answers = [...prev.answers];
+      const existing = answers[prev.index] || {
+        problemId: current.problemId,
+        selected: null,
+        timeSpent: 0
+      };
+      answers[prev.index] = {
+        ...existing,
+        problemId: current.problemId,
+        selected
+      };
+      return { ...prev, answers };
+    });
+  };
+
+  const recordTimeForCurrentQuestion = useCallback(() => {
+    const now = Date.now();
+    let updatedAnswers = null;
+    setQuizState((prev) => {
+      if (!prev.active || !prev.data) return prev;
+      const problems = prev.data.problems || [];
+      const currentProblem = problems[prev.index];
+      if (!currentProblem || !questionStartRef.current) return prev;
+      const elapsedSeconds = Math.max(0, Math.round((now - questionStartRef.current) / 1000));
+      if (elapsedSeconds === 0) return prev;
+      const answers = [...prev.answers];
+      const existing = answers[prev.index] || {
+        problemId: currentProblem.problemId,
+        selected: null,
+        timeSpent: 0
+      };
+      answers[prev.index] = {
+        ...existing,
+        problemId: currentProblem.problemId,
+        timeSpent: (existing.timeSpent || 0) + elapsedSeconds
+      };
+      updatedAnswers = answers;
+      return { ...prev, answers };
+    });
+    questionStartRef.current = now;
+    return updatedAnswers;
+  }, []);
+
+  const goToQuestion = useCallback((targetIndex) => {
+    recordTimeForCurrentQuestion();
+    setQuizState((prev) => {
+      if (!prev.active || !prev.data) return prev;
+      const problems = prev.data.problems || [];
+      if (!problems.length) return prev;
+      const maxIndex = problems.length - 1;
+      const nextIndex = Math.max(0, Math.min(targetIndex, maxIndex));
+      if (nextIndex === prev.index) return prev;
+      return { ...prev, index: nextIndex };
+    });
+    questionStartRef.current = Date.now();
+  }, [recordTimeForCurrentQuestion]);
+
+  const handlePrev = useCallback(() => {
+    goToQuestion(quizState.index - 1);
+  }, [goToQuestion, quizState.index]);
+
+  const handleNext = useCallback(() => {
+    if (!quizState.data) return;
+    if (quizState.index >= quizState.data.problems.length - 1) return;
+    goToQuestion(quizState.index + 1);
+  }, [goToQuestion, quizState.data, quizState.index]);
+
+  const submitQuiz = useCallback(async (finalAnswers, reason = 'manual') => {
+    if (!selectedSet?.id) {
+      setError('단어장을 다시 선택해 주세요.');
+      return;
+    }
+
+    try {
+      const payload = {
+        dayKey: selectedDayKey,
+        answers: finalAnswers.map((entry) => ({
+          problemId: entry.problemId,
+          selected: entry.selected ?? '',
+          timeSpent: entry.timeSpent || 0
+        }))
+      };
+
+      const response = await api.vocabulary.submitQuiz(selectedSet.id, payload);
+
+      if (!response?.success) {
+        throw new Error(response?.message || '결과를 저장하지 못했습니다.');
+      }
+
+      setQuizState((prev) => ({
+        ...prev,
+        submitting: false,
+        result: {
+          summary: response.summary,
+          detail: response.detail,
+          stats: response.stats,
+          rank: response.rank,
+          reason
+        }
+      }));
+      if (reason === 'time') {
+        setMessage('⏰ 제한 시간이 끝났어요! 제출된 결과를 살펴보고 다음에 더 나은 기록에 도전해 볼까요?');
+      } else {
+        setMessage('결과가 저장되었어요! 아래 분석을 참고해 다음 도전을 준비해 볼까요?');
+      }
+    } catch (err) {
+      console.error('submitQuiz error:', err);
+      setQuizState((prev) => ({ ...prev, submitting: false }));
+      setError(err?.message || '결과를 기록하지 못했어요. 네트워크 상태를 확인한 후 다시 시도해 주세요.');
+    }
+  }, [selectedDayKey, selectedSet?.id]);
+
+  const restartQuiz = () => {
+    if (!quizState.data) return;
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    const timeLimit = getTimeLimitSeconds();
+    questionStartRef.current = Date.now();
+    setTotalTime(timeLimit);
+    setTimeLeft(timeLimit);
+
+    timerRef.current = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current);
+          timerRef.current = null;
+          finalizeAndSubmit('time');
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    setQuizState({
+      active: true,
+      loading: false,
+      data: quizState.data,
+      index: 0,
+      answers: quizState.data.problems.map((problem) => ({
+        problemId: problem.problemId,
+        selected: null,
+        timeSpent: 0
+      })),
+      completed: false,
+      submitting: false,
+      result: null
+    });
+    setMessage('다시 한 번 도전해 볼까요? 이번에는 더 많이 맞힐 수 있어요!');
+  };
+
+  const finalizeAndSubmit = useCallback((reason = 'manual') => {
+    let finalAnswers = null;
+    setQuizState((prev) => {
+      if (!prev.active) return prev;
+      if (prev.completed || prev.submitting) return prev;
+      const now = Date.now();
+      const answers = [...prev.answers];
+      const problems = prev.data?.problems || [];
+      const currentProblem = problems[prev.index];
+      if (currentProblem && questionStartRef.current) {
+        const elapsedSeconds = Math.max(0, Math.round((now - questionStartRef.current) / 1000));
+        const existing = answers[prev.index] || {
+          problemId: currentProblem.problemId,
+          selected: null,
+          timeSpent: 0
+        };
+        answers[prev.index] = {
+          ...existing,
+          problemId: currentProblem.problemId,
+          timeSpent: (existing.timeSpent || 0) + elapsedSeconds
+        };
+      }
+      finalAnswers = answers;
+      return {
+        ...prev,
+        answers,
+        completed: true,
+        submitting: true
+      };
+    });
+
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    questionStartRef.current = null;
+    setTimeLeft(0);
+
+    if (finalAnswers) {
+      submitQuiz(finalAnswers, reason);
+    }
+  }, [submitQuiz]);
+
+  const handleStartQuiz = useCallback(async () => {
+    if (!selectedSet || !selectedDayKey) {
+      setError('먼저 단어장을 선택하고 Day를 골라 주세요!');
+      return;
+    }
+
+    setQuizState((prev) => ({ ...prev, loading: true }));
+    setError('');
+    setMessage('');
+
+    try {
+      const response = await api.vocabulary.generateQuiz(selectedSet.id, {
+        dayKey: selectedDayKey,
+        count: QUIZ_SIZE
+      });
+
+      if (!response?.success || !Array.isArray(response?.problems)) {
+        throw new Error(response?.message || '퀴즈를 생성하지 못했습니다.');
+      }
+
+      const timeLimit = getTimeLimitSeconds();
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+
+      const preparedAnswers = response.problems.map((problem) => ({
+        problemId: problem.problemId,
+        selected: null,
+        timeSpent: 0
+      }));
+
+      questionStartRef.current = Date.now();
+      setTotalTime(timeLimit);
+      setTimeLeft(timeLimit);
+
+      timerRef.current = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            clearInterval(timerRef.current);
+            timerRef.current = null;
+            finalizeAndSubmit('time');
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      setQuizState({
+        active: true,
+        loading: false,
+        data: {
+          problems: response.problems,
+          title: response.title,
+          day: response.day,
+          documentId: response.documentId
+        },
+        index: 0,
+        answers: preparedAnswers,
+        completed: false,
+        submitting: false,
+        result: null
+      });
+    } catch (err) {
+      setQuizState((prev) => ({ ...prev, loading: false }));
+      setError(err?.message || '퀴즈를 시작하지 못했어요. 다시 시도해 주세요.');
+    }
+  }, [finalizeAndSubmit, getTimeLimitSeconds, selectedDayKey, selectedSet]);
+
+  const handleSubmit = useCallback(() => {
+    if (!quizState.data) return;
+    const unanswered = quizState.answers.filter((entry) => !entry || !entry.selected).length;
+    if (unanswered > 0) {
+      const confirmSubmit = window.confirm(`아직 ${unanswered}문제가 선택되지 않았어요. 그래도 제출할까요?`);
+      if (!confirmSubmit) {
+        return;
+      }
+    }
+    finalizeAndSubmit('manual');
+  }, [finalizeAndSubmit, quizState.answers, quizState.data]);
+
+  const handleExitQuiz = useCallback(() => {
+    if (!quizState.active) {
+      goBackToDays();
+      return;
+    }
+
+    if (!quizState.completed) {
+      const confirmExit = window.confirm('지금 시험을 종료하면 남은 문제를 채점하지 않고 제출할게요. 계속할까요?');
+      if (!confirmExit) return;
+      finalizeAndSubmit('early-exit');
+      return;
+    }
+
+    goBackToDays();
+  }, [finalizeAndSubmit, goBackToDays, quizState.active, quizState.completed]);
+
+  const goBackToDays = () => {
+    resetQuizState();
+    setError('');
+  };
+
+  const quizSummary = quizState.result?.summary || null;
+
+  const activeDay = useMemo(() => {
+    if (!selectedSet) return null;
+    return selectedSet.days?.find((day) => day.key === selectedDayKey) || null;
+  }, [selectedSet, selectedDayKey]);
+
   return (
     <div style={styles.container}>
-      <h1>📖 단어 시험</h1>
-      <div style={styles.card}>
-        <p>단어 시험 기능 준비 중입니다.</p>
+      <header style={styles.header}>
+        <h1 style={styles.title}>🧠 어휘 훈련</h1>
+        <p style={styles.subtitle}>
+          단어장은 Day별로 정리되어 있어요. 마음에 드는 Day를 골라 30문항 테스트에 도전해 보세요!<br />
+          정답을 고를 때마다 바로 피드백이 나와서, 혼자서도 알차게 복습할 수 있어요. 😊
+        </p>
+      </header>
+
+      {setsLoading ? (
+        <div style={styles.notice}>단어장을 불러오는 중이에요...</div>
+      ) : setsError ? (
+        <div style={{ ...styles.notice, color: 'var(--danger)' }}>{setsError}</div>
+      ) : (
+        <section style={styles.section}>
+          <h2 style={styles.sectionTitle}>1️⃣ 단어장 고르기</h2>
+          <div style={styles.setGrid}>
+            {sets.map((set) => {
+              const isActive = selectedSet?.id === set.id;
+              return (
+                <button
+                  key={set.id}
+                  type="button"
+                  style={{
+                    ...styles.setCard,
+                    borderColor: isActive ? 'var(--color-blue-500)' : 'transparent',
+                    boxShadow: isActive ? '0 12px 32px rgba(52, 118, 246, 0.25)' : styles.setCard.boxShadow
+                  }}
+                  onClick={() => handleSelectSet(set)}
+                >
+                  <span style={styles.setTitle}>{set.title}</span>
+                  <span style={styles.setMeta}>총 {set.totalDays} Day / {set.totalWords} 단어</span>
+                  <span style={styles.setMeta}>최근 업로드: {new Date(set.createdAt).toLocaleDateString()}</span>
+                  <div style={styles.previewWords}>
+                    {set.preview?.map((day) => (
+                      <div key={day.key} style={styles.previewDay}>
+                        <strong>{day.key}</strong>
+                        <span>{day.count} 단어</span>
+                        <span style={{ fontStyle: 'italic', color: 'var(--text-muted)' }}>미리보기는 시험에서 확인해요!</span>
+                      </div>
+                    ))}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {message && <div style={styles.notice}>{message}</div>}
+      {error && <div style={{ ...styles.notice, color: 'var(--danger)' }}>{error}</div>}
+
+      {selectedSet && (
+        <section style={styles.section}>
+          <h2 style={styles.sectionTitle}>2️⃣ Day 선택 & 단어 미리보기</h2>
+          {daysLoading ? (
+            <div style={styles.notice}>Day 정보를 불러오는 중이에요...</div>
+          ) : (
+            <div style={styles.dayGrid}>
+              {selectedSet.days?.map((day) => {
+                const isSelected = day.key === selectedDayKey;
+                return (
+                  <article
+                    key={day.key}
+                    style={{
+                      ...styles.dayCard,
+                      borderColor: isSelected ? 'var(--color-green-500)' : 'transparent',
+                      boxShadow: isSelected ? '0 10px 26px rgba(59, 201, 105, 0.25)' : styles.dayCard.boxShadow
+                    }}
+                    onClick={() => {
+                      setSelectedDayKey(day.key);
+                      resetQuizState();
+                      setMessage('단어장을 훑어본 뒤, 아래에서 바로 테스트를 시작해 보세요!');
+                    }}
+                  >
+                    <div style={styles.dayHeader}>
+                      <strong>{day.label}</strong>
+                      <span>{day.count} 단어</span>
+                    </div>
+                    <div style={styles.daySummary}>
+                      총 {day.count}개의 단어가 숨어 있어요. 시험에서 뜻을 맞혀볼까요?
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+
+          {activeDay && !quizState.active && (
+            <div style={styles.actionBar}>
+              <div>
+                <h3 style={styles.actionTitle}>📝 {activeDay.label} | {activeDay.count}개 단어</h3>
+                <p style={styles.actionHint}>아래 버튼을 누르면 무작위 30문항 시험이 시작돼요!</p>
+              </div>
+              <button
+                type="button"
+                style={styles.primaryButton}
+                onClick={handleStartQuiz}
+                disabled={quizState.loading}
+              >
+                {quizState.loading ? '문제를 준비 중...' : 'Day 시험 시작하기'}
+              </button>
+            </div>
+          )}
+        </section>
+      )}
+
+      {quizState.active && quizState.data && (
+        <section style={styles.quizSection}>
+          {!quizState.completed ? (
+            <QuizBox
+              problem={quizState.data.problems[quizState.index]}
+              index={quizState.index}
+              total={quizState.data.problems.length}
+              selectedOption={quizState.answers?.[quizState.index]?.selected || null}
+              onSelect={handleSelectOption}
+              onPrev={handlePrev}
+              onNext={handleNext}
+              onSubmit={handleSubmit}
+              onExit={handleExitQuiz}
+              timeLeft={timeLeft}
+              totalTime={totalTime}
+            />
+          ) : (
+            <QuizSummary
+              summary={quizSummary}
+              detail={quizState.result?.detail || []}
+              stats={quizState.result?.stats || null}
+              rank={quizState.result?.rank || null}
+              submitting={quizState.submitting}
+              onRetry={restartQuiz}
+              onBack={goBackToDays}
+            />
+          )}
+        </section>
+      )}
+    </div>
+  );
+};
+
+const QuizBox = ({
+  problem,
+  index,
+  total,
+  selectedOption,
+  onSelect,
+  onPrev,
+  onNext,
+  onSubmit,
+  onExit,
+  timeLeft,
+  totalTime
+}) => {
+  if (!problem) return null;
+  const focusLabel = problem.mode === 'meaning_to_term' ? '뜻' : '단어';
+  const focusValue = problem.mode === 'meaning_to_term' ? problem.meaning : problem.term;
+
+  const body = problem.options.map((option, idx) => {
+    const choiceNumber = idx + 1;
+    const isSelected = selectedOption === choiceNumber;
+    return (
+      <button
+        key={`${problem.problemId}-${choiceNumber}`}
+        type="button"
+        style={{
+          ...styles.optionButton,
+          ...(isSelected ? styles.optionButtonSelected : {})
+        }}
+        onClick={() => onSelect(idx)}
+      >
+        <span style={styles.optionNumber}>{choiceNumber}.</span>
+        <span>{option}</span>
+      </button>
+    );
+  });
+
+  return (
+    <div style={styles.quizCard}>
+      <div style={styles.quizHeader}>
+        <span style={styles.quizProgress}>문제 {index + 1} / {total}</span>
+        <div style={styles.timerBox}>
+          <span>⏳ {formatSeconds(timeLeft)} 남음</span>
+          <span style={styles.timerSub}>전체 {formatSeconds(totalTime)}</span>
+        </div>
+      </div>
+      <h3 style={styles.quizPrompt}>{problem.prompt}</h3>
+      <p style={styles.quizTerm}>👉 <strong>{focusLabel}</strong>: {focusValue}</p>
+      <div style={styles.optionList}>{body}</div>
+      <div style={styles.quizNavRow}>
+        <button
+          type="button"
+          style={styles.secondaryButton}
+          onClick={onPrev}
+          disabled={index === 0}
+        >
+          ◀ 이전 문제
+        </button>
+        <button
+          type="button"
+          style={styles.linkButton}
+          onClick={onExit}
+        >
+          시험 종료
+        </button>
+        {index === total - 1 ? (
+          <button type="button" style={styles.primaryButton} onClick={onSubmit}>
+            제출하기
+          </button>
+        ) : (
+          <button type="button" style={styles.primaryButton} onClick={onNext}>
+            다음 문제 ▶
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const QuizSummary = ({ summary, detail, stats, rank, submitting, onRetry, onBack }) => {
+  if (submitting) {
+    return (
+      <div style={styles.quizCard}>
+        <h3 style={styles.quizPrompt}>채점 중입니다... ⏳</h3>
+        <p style={styles.actionHint}>정답과 해설을 정리하고 있어요. 잠시만 기다려 주세요!</p>
+      </div>
+    );
+  }
+
+  return (
+    <div style={styles.quizCard}>
+      <div style={styles.resultBanner}>
+        <h3 style={styles.quizPrompt}>🎉 수고했어요! 결과를 확인해 볼까요?</h3>
+        <p style={styles.resultSubtitle}>이번 시도에서 쌓은 경험이 다음 점수를 올려 줄 거예요!</p>
+      </div>
+      {summary && (
+        <div style={styles.summaryStats}>
+          <span>총 문제: {summary.total}문제</span>
+          <span>정답: {summary.correct}문제</span>
+          <span>틀린 문제: {summary.incorrect}문제</span>
+          <span>정답률: {summary.accuracy}%</span>
+          <span>점수 변화: {summary.pointsDelta >= 0 ? '+' : ''}{summary.pointsDelta}점</span>
+        </div>
+      )}
+
+      {rank && (
+        <div style={styles.rankBanner}>
+          <span>현재 포인트: {rank.points}점</span>
+          {rank.rank && <span>랭킹: {rank.rank}위</span>}
+        </div>
+      )}
+
+      <div style={styles.reviewList}>
+        {detail.map((entry, idx) => {
+          const correctOptionText = (entry.correctOption || '').replace(/^[\u2460-\u2464]\s*/, '');
+          const selectedOptionRaw = entry.options?.[Number(entry.selected) - 1] || '';
+          const selectedOptionText = selectedOptionRaw
+            ? selectedOptionRaw.replace(/^[\u2460-\u2464]\s*/, '')
+            : '—';
+          const isMeaningMode = entry.mode === 'meaning_to_term';
+          const modeLabel = isMeaningMode ? '뜻 → 단어' : '단어 → 뜻';
+          const focusLabel = isMeaningMode ? '뜻' : '단어';
+          const focusValue = isMeaningMode ? (entry.meaning || entry.term || '—') : (entry.term || entry.meaning || '—');
+
+          return (
+            <div
+              key={entry.problemId || idx}
+              style={{
+                ...styles.reviewItem,
+                borderColor: entry.isCorrect ? 'var(--success)' : 'var(--danger)'
+              }}
+            >
+              <div style={styles.reviewHeader}>
+                <strong>{idx + 1}. {modeLabel}</strong>
+                <span>{focusLabel}: {focusValue}</span>
+              </div>
+              <span>정답: {correctOptionText}</span>
+              {entry.selected ? (
+                <span>내 답안: {entry.selected}번 ({selectedOptionText})</span>
+              ) : (
+                <span>내 답안: 미응답</span>
+              )}
+              {typeof entry.timeSpent === 'number' && entry.timeSpent > 0 && (
+                <span>소요 시간: {entry.timeSpent}초</span>
+              )}
+              {!entry.isCorrect && <span style={{ color: 'var(--danger)' }}>{entry.explanation}</span>}
+            </div>
+          );
+        })}
+      </div>
+
+      {stats && (
+        <div style={styles.statsCallout}>
+          <p>지금까지 총 {stats.totalProblems}문제를 풀어 {stats.totalCorrect}문제 맞혔어요. 정답률 {stats.accuracy}%!</p>
+        </div>
+      )}
+
+      <div style={styles.summaryActions}>
+        <button type="button" style={styles.primaryButton} onClick={onRetry}>다시 풀기</button>
+        <button type="button" style={styles.secondaryButton} onClick={onBack}>다른 Day 고르기</button>
       </div>
     </div>
   );
@@ -13,16 +745,277 @@ const VocabularyPage = () => {
 
 const styles = {
   container: {
-    padding: '20px',
+    padding: '24px',
     maxWidth: '1200px',
     margin: '0 auto'
   },
-  card: {
+  header: {
+    marginBottom: '24px'
+  },
+  title: {
+    fontSize: '2.4rem',
+    marginBottom: '8px'
+  },
+  subtitle: {
+    fontSize: '1.05rem',
+    color: 'var(--text-muted)',
+    lineHeight: 1.6
+  },
+  section: {
+    marginBottom: '32px'
+  },
+  sectionTitle: {
+    fontSize: '1.4rem',
+    marginBottom: '16px'
+  },
+  setGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+    gap: '16px'
+  },
+  setCard: {
     background: 'var(--surface-card)',
+    borderRadius: '18px',
+    padding: '20px',
+    textAlign: 'left',
+    position: 'relative',
+    transition: 'all 0.25s ease',
+    border: '2px solid transparent',
+    cursor: 'pointer',
+    boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)'
+  },
+  setTitle: {
+    display: 'block',
+    fontSize: '1.1rem',
+    fontWeight: 600,
+    marginBottom: '8px'
+  },
+  setMeta: {
+    display: 'block',
+    color: 'var(--text-muted)',
+    fontSize: '0.9rem',
+    marginBottom: '4px'
+  },
+  previewWords: {
+    marginTop: '12px',
+    borderTop: '1px dashed var(--border-color)',
+    paddingTop: '12px',
+    fontSize: '0.85rem',
+    color: 'var(--text-muted)',
+    display: 'grid',
+    gap: '8px'
+  },
+  previewDay: {
+    display: 'flex',
+    flexDirection: 'column'
+  },
+  dayGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+    gap: '14px'
+  },
+  dayCard: {
+    background: 'var(--surface-card)',
+    borderRadius: '16px',
+    padding: '18px',
+    cursor: 'pointer',
+    border: '2px solid transparent',
+    transition: 'all 0.2s ease',
+    boxShadow: '0 6px 18px rgba(15, 23, 42, 0.08)'
+  },
+  dayHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '10px'
+  },
+  daySummary: {
+    fontSize: '0.9rem',
+    color: 'var(--text-muted)'
+  },
+  actionBar: {
+    marginTop: '24px',
+    padding: '20px',
+    background: 'var(--surface-muted)',
+    borderRadius: '16px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: '16px'
+  },
+  actionTitle: {
+    fontSize: '1.1rem',
+    marginBottom: '4px'
+  },
+  actionHint: {
+    fontSize: '0.95rem',
+    color: 'var(--text-muted)'
+  },
+  quizSection: {
+    marginBottom: '32px',
+    padding: '32px',
+    borderRadius: '26px',
+    background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.18) 0%, rgba(96, 165, 250, 0.12) 45%, rgba(129, 140, 248, 0.2) 100%)'
+  },
+  quizCard: {
+    background: '#fff',
     borderRadius: '20px',
-    padding: '30px',
-    marginTop: '20px',
-    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)'
+    padding: '28px',
+    boxShadow: '0 16px 32px rgba(15, 23, 42, 0.12)'
+  },
+  quizHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '12px'
+  },
+  quizProgress: {
+    fontWeight: 600,
+    color: 'var(--color-blue-500)'
+  },
+  quizPrompt: {
+    fontSize: '1.25rem',
+    lineHeight: 1.5,
+    marginBottom: '12px'
+  },
+  quizTerm: {
+    fontSize: '1.05rem',
+    marginBottom: '16px'
+  },
+  optionList: {
+    display: 'grid',
+    gap: '12px'
+  },
+  optionButton: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    padding: '14px 18px',
+    borderRadius: '14px',
+    border: '1px solid var(--border-color)',
+    background: '#fff',
+    textAlign: 'left',
+    cursor: 'pointer',
+    fontSize: '1rem',
+    transition: 'all 0.2s ease',
+    boxShadow: '0 6px 16px rgba(15, 23, 42, 0.08)'
+  },
+  optionButtonSelected: {
+    borderColor: 'var(--color-green-500)',
+    background: 'rgba(34, 197, 94, 0.15)',
+    boxShadow: '0 0 0 2px rgba(34, 197, 94, 0.25) inset'
+  },
+  optionNumber: {
+    fontWeight: 700,
+    color: 'var(--color-blue-500)'
+  },
+  summaryStats: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '12px',
+    marginBottom: '16px',
+    fontWeight: 600
+  },
+  resultBanner: {
+    background: 'linear-gradient(135deg, rgba(96, 165, 250, 0.25) 0%, rgba(165, 180, 252, 0.2) 100%)',
+    padding: '20px',
+    borderRadius: '18px',
+    marginBottom: '18px'
+  },
+  resultSubtitle: {
+    marginTop: '8px',
+    fontSize: '0.95rem',
+    color: 'var(--text-muted)'
+  },
+  reviewList: {
+    display: 'grid',
+    gap: '12px',
+    marginBottom: '18px'
+  },
+  reviewItem: {
+    border: '2px solid transparent',
+    borderRadius: '16px',
+    padding: '14px',
+    background: '#fff',
+    display: 'grid',
+    gap: '4px'
+  },
+  reviewHeader: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px'
+  },
+  rankBanner: {
+    display: 'flex',
+    gap: '16px',
+    padding: '12px 16px',
+    borderRadius: '14px',
+    background: 'var(--surface-muted)',
+    marginBottom: '16px',
+    fontWeight: 600
+  },
+  statsCallout: {
+    padding: '12px 16px',
+    borderRadius: '14px',
+    background: 'var(--surface-muted)',
+    marginBottom: '16px',
+    fontSize: '0.95rem'
+  },
+  summaryActions: {
+    display: 'flex',
+    gap: '12px'
+  },
+  notice: {
+    background: 'var(--surface-muted)',
+    padding: '16px',
+    borderRadius: '12px',
+    marginBottom: '20px'
+  },
+  quizNavRow: {
+    marginTop: '24px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: '12px'
+  },
+  primaryButton: {
+    background: 'var(--color-blue-500)',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '12px',
+    padding: '12px 20px',
+    cursor: 'pointer',
+    fontSize: '1rem',
+    fontWeight: 600
+  },
+  secondaryButton: {
+    background: 'var(--surface-muted)',
+    color: 'var(--text-color)',
+    border: '1px solid var(--border-color)',
+    borderRadius: '12px',
+    padding: '12px 20px',
+    cursor: 'pointer',
+    fontSize: '1rem',
+    fontWeight: 600
+  },
+  linkButton: {
+    background: 'transparent',
+    border: 'none',
+    color: 'var(--color-blue-500)',
+    cursor: 'pointer',
+    fontWeight: 600
+  },
+  timerBox: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    gap: '2px',
+    fontWeight: 600,
+    color: 'var(--text-color)'
+  },
+  timerSub: {
+    fontSize: '0.75rem',
+    color: 'var(--text-muted)'
   }
 };
 

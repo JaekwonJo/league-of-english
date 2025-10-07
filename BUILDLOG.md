@@ -1,3 +1,10 @@
+## 2025-10-10 (vocabulary parser & timed quiz)
+- Issue: 단어 시험에서 보기 텍스트가 `12Day 01` 형식으로 붙어 나오고, 선택 즉시 다음 문제로 넘어가 학생이 검토할 시간이 없었습니다.
+- Cause: PDF 파서가 한 줄에 붙은 Day/단어를 분리하지 못해 의미가 다음 항목까지 이어졌고, 프런트는 선택 이벤트와 동시에 인덱스를 증가시키도록 작성돼 있었어요.
+- Fix: WordMaster 파서를 보강해 Day 문자열 속 추가 단어를 모두 분해하고, 퀴즈 생성기에 뜻↔단어 양방향/보기 셔플/정답 검증을 추가했습니다. 프런트는 티어별 3분 타이머, 이전·다음 버튼, 제출 확인, 시간 통계를 지원하도록 전면 개편했어요.
+- Files: server/routes/vocab.routes.js, client/src/pages/VocabularyPage.js, PROJECT_STATE.md, README.md, BUILDLOG.md.
+- Verification: `npm test` (after updates) + 로컬에서 Day 01 30문항을 수동으로 진행하며 타이머·이전/다음·결과 요약·옵션 정제 확인.
+
 ## 2025-10-04 (passage picker + study sync)
 - Issue: 관리자 분석 모달, 학생 분석 페이지, 학습 설정이 서로 다른 UI를 사용해 지문 미리보기/선택 흐름이 엇갈렸고, 전체 문서를 다시 훑는 동작 때문에 UX가 일관되지 않았어요.
 - Cause: 본문 원문을 제공하는 공통 API가 없고, 화면마다 카드/목록 레이아웃이 제각각이라 사용자가 같은 정보를 반복 탐색해야 했습니다.
