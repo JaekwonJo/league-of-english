@@ -3,6 +3,7 @@ import { api } from '../services/api.service';
 import { analysisStyles } from '../styles/analysisStyles';
 import PassagePickerGrid from '../components/shared/PassagePickerGrid';
 import PassagePreviewModal from '../components/shared/PassagePreviewModal';
+import FriendlyError from '../components/common/FriendlyError';
 
 const AnalysisPage = () => {
   const [documents, setDocuments] = useState([]);
@@ -23,6 +24,10 @@ const AnalysisPage = () => {
   const [reportSubmitting, setReportSubmitting] = useState(false);
   const [step, setStep] = useState(1); // 1: 문서 선택, 2: 지문 선택, 3: 분석 보기
   const [previewPassage, setPreviewPassage] = useState(null);
+
+  const raiseError = (summary, detail = '', extra = {}) => {
+    setError({ summary, detail, ...extra });
+  };
 
   useEffect(() => {
     fetchDocumentsList();
@@ -88,10 +93,10 @@ const AnalysisPage = () => {
       if (response.success) {
         setDocuments(response.data || []);
       } else {
-        setError('분석 가능한 문서를 불러오는데 실패했습니다.');
+        raiseError('분석 가능한 문서를 불러오는데 실패했습니다.', response.message || 'success: false');
       }
     } catch (err) {
-      setError(err?.message || '문서 목록을 불러오는 중 문제가 발생했습니다.');
+      raiseError('문서 목록을 불러오는 중 문제가 발생했습니다.', err?.message || '');
     } finally {
       setLoading(false);
     }
@@ -116,7 +121,7 @@ const AnalysisPage = () => {
       ]);
 
       if (!analysisResponse.success) {
-        setError('지문 분석 결과를 불러오는데 실패했습니다.');
+        raiseError('지문 분석 결과를 불러오는데 실패했습니다.', analysisResponse.message || 'success: false');
         setPassageAnalyses([]);
         setPassageList([]);
         return;
@@ -161,7 +166,7 @@ const AnalysisPage = () => {
       setPassageList(merged);
       setStep(2);
     } catch (err) {
-      setError(err?.message || '지문 목록을 불러오는 중 문제가 발생했습니다.');
+      raiseError('지문 목록을 불러오는 중 문제가 발생했습니다.', err?.message || '');
       setPassageAnalyses([]);
       setPassageList([]);
     } finally {
@@ -188,14 +193,14 @@ const AnalysisPage = () => {
         setFeedbackMessage(null);
         setReportModal({ open: false, variantIndex: null, reason: '' });
       } else {
-        setError(response.message || '해당 지문의 분석을 불러오지 못했습니다.');
+        raiseError('해당 지문의 분석을 불러오지 못했습니다.', response.message || 'success: false');
       }
     } catch (err) {
       const message = err?.message || '분석을 불러오는 중 오류가 발생했습니다.';
       if (message.includes('하루 10개의 분석본')) {
         setAnalysisLimitError(message);
       } else {
-        setError(message);
+        raiseError('분석을 불러오는 중 오류가 발생했습니다.', err?.message || '');
       }
     } finally {
       setPassageLoading(false);
@@ -220,10 +225,10 @@ const AnalysisPage = () => {
         setGenerateTarget(null);
         setFeedbackMessage('새 분석본이 준비됐어요! 🤗');
       } else {
-        setError(response.message || '분석본 생성에 실패했습니다.');
+        raiseError('분석본 생성에 실패했습니다.', response.message || 'success: false');
       }
     } catch (err) {
-      setError(err?.message || '분석본 생성 중 문제가 발생했습니다.');
+      raiseError('분석본 생성 중 문제가 발생했습니다.', err?.message || '');
     } finally {
       setGenerating(false);
     }
@@ -261,13 +266,6 @@ const AnalysisPage = () => {
         <div style={analysisStyles.loadingContainer}>
           <div style={analysisStyles.spinner} />
           <p>문서 목록을 불러오는 중이에요...</p>
-        </div>
-      )}
-
-      {error && (
-        <div style={analysisStyles.errorContainer}>
-          <p>❌ {error}</p>
-          <button onClick={fetchDocumentsList} style={analysisStyles.retryButton}>다시 시도</button>
         </div>
       )}
 
@@ -719,6 +717,30 @@ const AnalysisPage = () => {
     </div>
   );
 
+  const handleGlobalRetry = () => {
+    setError(null);
+    if (step === 1) {
+      fetchDocumentsList();
+      return;
+    }
+    if (step === 2 && selectedDocument) {
+      handleDocumentClick(selectedDocument);
+      return;
+    }
+    if (step === 3 && selectedDocument) {
+      const target = passageList.find((item) => item.passageNumber === selectedPassage?.passageNumber)
+        || selectedPassage
+        || null;
+      if (target) {
+        handlePassageClick(target);
+        return;
+      }
+      handleDocumentClick(selectedDocument);
+      return;
+    }
+    fetchDocumentsList();
+  };
+
   const currentView = step === 1
     ? renderDocumentList()
     : step === 2
@@ -726,6 +748,27 @@ const AnalysisPage = () => {
       : step === 3
         ? renderPassageAnalysis()
         : renderDocumentList();
+
+  if (error) {
+    return (
+      <>
+        <FriendlyError
+          error={error}
+          onRetry={handleGlobalRetry}
+          onHome={() => {
+            setError(null);
+            setStep(1);
+          }}
+        />
+        <PassagePreviewModal
+          open={Boolean(previewPassage)}
+          passage={previewPassage}
+          onClose={closePreview}
+          documentTitle={selectedDocument?.title}
+        />
+      </>
+    );
+  }
 
   return (
     <>

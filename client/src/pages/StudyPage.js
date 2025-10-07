@@ -10,6 +10,7 @@ import ScoreHUD from "../components/study/ScoreHUD";
 import StudyResult from "../components/study/StudyResult";
 import useStudySession, { formatSeconds } from "../hooks/useStudySession";
 import { api } from "../services/api.service";
+import FriendlyError from "../components/common/FriendlyError";
 
 const TYPE_LABELS = {
   blank: '빈칸',
@@ -264,16 +265,6 @@ const LoadingState = ({ vocabCards = [], revealStepSeconds = REVEAL_STEP_SECONDS
   );
 };
 
-
-const ErrorState = ({ message, onRetry }) => (
-  <div style={styles.error}>
-    <h2>문제를 만들다가 잠시 멈췄어요 😢</h2>
-    <p>{message}</p>
-    <button onClick={onRetry} style={styles.button}>
-      다시 시도하기
-    </button>
-  </div>
-);
 
 const ReviewCallout = ({ total, problems = [], loading, refreshing, error, onRefresh, onStart }) => (
   <div style={styles.reviewCallout}>
@@ -662,7 +653,19 @@ const StudyPage = () => {
   }
 
   if (error && mode !== "study") {
-    return <ErrorState message={error} onRetry={() => { setError(null); restart(); }} />;
+    const normalizedError = typeof error === 'string' ? { summary: error } : error;
+    return (
+      <FriendlyError
+        error={normalizedError}
+        onRetry={() => {
+          setError(null);
+          restart();
+        }}
+        onHome={() => {
+          window.location.href = '/';
+        }}
+      />
+    );
   }
 
   switch (mode) {
@@ -792,24 +795,25 @@ const styles = {
     boxShadow: "0 12px 24px var(--success-shadow)",
   },
   flashcardItem: {
-    background: "var(--surface-contrast)",
+    background: "var(--surface-card)",
     borderRadius: "12px",
     padding: "14px 16px",
-    color: "var(--text-inverse)",
+    color: "var(--text-primary)",
     boxShadow: "0 10px 20px var(--surface-shadow)",
   },
   flashcardWord: {
     fontSize: "18px",
     fontWeight: 700,
     marginBottom: "4px",
+    color: "var(--text-primary)",
   },
   flashcardMeaning: {
     fontSize: "14px",
-    color: "var(--text-inverse)",
+    color: "var(--text-muted)",
   },
   flashcardCountdown: {
     fontSize: "13px",
-    color: "var(--text-secondary)",
+    color: "var(--text-muted)",
   },
   reviewCallout: {
     marginBottom: "24px",

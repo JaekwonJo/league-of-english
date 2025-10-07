@@ -191,7 +191,13 @@ const useStudySession = (user, onUserUpdate = () => {}) => {
       logger.info("Study completed:", { totalCorrect, accuracy });
     } catch (err) {
       logger.error("Failed to finish study:", err);
-      setError(err.message);
+      setError({
+        title: '채점 결과를 정리하지 못했어요',
+        summary: err?.message || '학습 결과를 저장하는 중 문제가 발생했어요. 잠시 후 다시 시도해 주세요.',
+        hint: '인터넷 연결이나 로그인 상태를 확인한 뒤 다시 제출해 주세요.',
+        detail: err?.response?.data?.message || '',
+        stack: err?.stack || ''
+      });
     } finally {
       setLoading(false);
       setTimeLeft(0);
@@ -239,15 +245,21 @@ const useStudySession = (user, onUserUpdate = () => {}) => {
       logger.info(`Loaded ${processed.length} problems`);
 
       if (Array.isArray(response.failures) && response.failures.length) {
-        const summary = response.failures
+        const detailLines = response.failures
           .map((failure) => {
             const type = failure?.type || '문항';
             const delivered = failure?.delivered ?? 0;
             const requested = failure?.requested ?? '?';
-            return `${type}: ${delivered}/${requested}`;
+            const reason = failure?.reason || failure?.message || '사유가 제공되지 않았어요.';
+            return `• ${type} (${delivered}/${requested}) → ${reason}`;
           })
-          .join(', ');
-        setError(`일부 문항은 건너뛰었어요. (생성된 항목: ${summary})`);
+          .join('\n');
+        setError({
+          title: '⚠️ 일부 문항을 건너뛰었어요',
+          summary: '요청한 문제 중 일부는 아직 준비되지 않았어요. 그래도 가능한 문제부터 바로 풀 수 있도록 준비했어요!',
+          hint: '문제 수를 조금 줄이거나 다른 유형을 추가하면 더 빠르게 생성될 수 있어요.',
+          detail: detailLines
+        });
         logger.warn('Partial problem generation failures:', response.failures);
       }
     } catch (err) {
@@ -258,7 +270,13 @@ const useStudySession = (user, onUserUpdate = () => {}) => {
       else if (/503/.test(msg)) clean = "서버 점검 중일 수 있어요. 잠시 기다렸다가 다시 시도해주세요.";
       else if (/401/.test(msg) || /token|auth/i.test(msg)) clean = "로그인이 만료됐어요. 다시 로그인해주세요.";
       else clean = "문제 생성 중 오류가 발생했어요. 잠시 후 다시 시도해주세요.";
-      setError(clean);
+      setError({
+        title: '😢 문제 세트를 준비하지 못했어요',
+        summary: clean,
+        hint: '계속 같은 오류가 반복되면 관리자에게 지문 번호와 유형을 함께 알려주세요.',
+        detail: err?.response?.data?.message || err?.message || '',
+        stack: err?.stack || ''
+      });
     } finally {
       setLoading(false);
     }

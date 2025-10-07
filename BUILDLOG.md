@@ -1,3 +1,10 @@
+## 2025-10-10 (study order toggle + friendly errors)
+- Issue: 학습/분석 화면에서 오류가 발생해도 로그를 확인하기 어려웠고, 문제 순서가 항상 지문 순서를 따라가 사용자 선택권이 없었습니다.
+- Cause: StudyPage/AnalysisPage가 단순 문자열 에러만 노출했고, `/generate/csat-set`은 문제 순서를 셔플하지 않았어요.
+- Fix: 공통 `FriendlyError` 패널을 도입해 오류 요약·세부 로그·재시도 버튼을 안내하고, 학습 설정에 `랜덤/순서대로` 옵션을 추가해 서버에서 `orderMode`를 받아 문제 배열을 결정하도록 했습니다.
+- Files: client/src/components/common/FriendlyError.js, client/src/components/study/StudyConfig.js, client/src/hooks/useStudySession.js, client/src/pages/StudyPage.js, client/src/pages/AnalysisPage.js, server/routes/problem.routes.js.
+- Verification: `npm test`
+
 ## 2025-10-10 (vocabulary parser & timed quiz)
 - Issue: 단어 시험에서 보기 텍스트가 `12Day 01` 형식으로 붙어 나오고, 선택 즉시 다음 문제로 넘어가 학생이 검토할 시간이 없었습니다.
 - Cause: PDF 파서가 한 줄에 붙은 Day/단어를 분리하지 못해 의미가 다음 항목까지 이어졌고, 프런트는 선택 이벤트와 동시에 인덱스를 증가시키도록 작성돼 있었어요.

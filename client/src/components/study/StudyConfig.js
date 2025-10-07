@@ -51,6 +51,7 @@ const StudyConfig = ({ onStart, headerSlot = null, initialFocusType = null }) =>
     types: sanitizeTypeCounts({}),
     orderDifficulty: 'advanced',
     insertionDifficulty: 'advanced',
+    orderMode: 'random',
   });
 
   useEffect(() => {
@@ -98,6 +99,15 @@ const StudyConfig = ({ onStart, headerSlot = null, initialFocusType = null }) =>
     });
   };
 
+  const handleSelectAllPassages = () => {
+    if (!Array.isArray(passages) || passages.length === 0) return;
+    setSelectedPassages(passages.map((item) => item.passageNumber));
+  };
+
+  const handleClearPassages = () => {
+    setSelectedPassages([]);
+  };
+
   const openPreview = (passage) => {
     if (!passage) return;
     setPreviewPassage({
@@ -114,18 +124,23 @@ const StudyConfig = ({ onStart, headerSlot = null, initialFocusType = null }) =>
       if (!saved) return;
       const parsed = JSON.parse(saved);
       const normalizedTypes = sanitizeTypeCounts(parsed.types || {});
+      const savedOrderMode = parsed.orderMode === 'sequential' ? 'sequential' : 'random';
       setConfig((prev) => ({
         ...prev,
         types: normalizedTypes,
+        orderMode: savedOrderMode,
       }));
     } catch (error) {
       logger.warn('Failed to restore study config from storage:', error);
     }
   };
 
-  const saveConfig = (nextTypes) => {
+  const saveConfig = (nextState) => {
     try {
-      localStorage.setItem('studyConfig', JSON.stringify({ types: nextTypes }));
+      localStorage.setItem('studyConfig', JSON.stringify({
+        types: nextState.types,
+        orderMode: nextState.orderMode,
+      }));
     } catch (error) {
       logger.warn('Failed to persist study config:', error);
     }
@@ -156,7 +171,7 @@ const StudyConfig = ({ onStart, headerSlot = null, initialFocusType = null }) =>
       const updatedTypes = typeof updater === 'function' ? updater(prev.types) : updater;
       const sanitized = sanitizeTypeCounts(updatedTypes);
       const nextState = { ...prev, types: sanitized };
-      saveConfig(sanitized);
+      saveConfig(nextState);
       return nextState;
     });
   };
@@ -189,6 +204,16 @@ const StudyConfig = ({ onStart, headerSlot = null, initialFocusType = null }) =>
       if (!Number.isFinite(numeric)) return current;
       const snapped = Math.min(MAX_TOTAL_PROBLEMS, Math.max(0, Math.floor(numeric / PROBLEM_STEP) * PROBLEM_STEP));
       return { ...current, [type]: snapped };
+    });
+  };
+
+  const handleOrderModeChange = (event) => {
+    const value = event?.target?.value === 'sequential' ? 'sequential' : 'random';
+    setConfig((prev) => {
+      if (prev.orderMode === value) return prev;
+      const nextState = { ...prev, orderMode: value };
+      saveConfig(nextState);
+      return nextState;
     });
   };
 
@@ -235,7 +260,8 @@ const StudyConfig = ({ onStart, headerSlot = null, initialFocusType = null }) =>
       types: sanitizeTypeCounts(config.types),
       orderDifficulty: 'advanced',
       insertionDifficulty: 'advanced',
-      passageNumbers: Array.from(new Set(selectedPassages))
+      passageNumbers: Array.from(new Set(selectedPassages)),
+      orderMode: config.orderMode === 'sequential' ? 'sequential' : 'random',
     };
 
     logger.info('Study config:', payload);
@@ -297,6 +323,23 @@ const StudyConfig = ({ onStart, headerSlot = null, initialFocusType = null }) =>
             <p>지문을 불러오는 중이에요...</p>
           </div>
         ) : passages.length ? (
+          <>
+            <div style={styles.bulkActions}>
+              <button
+                type="button"
+                style={styles.bulkButton}
+                onClick={handleSelectAllPassages}
+              >
+                전체 선택
+              </button>
+              <button
+                type="button"
+                style={{ ...styles.bulkButton, background: 'var(--surface-muted)', color: 'var(--text-color)' }}
+                onClick={handleClearPassages}
+              >
+                선택 해제
+              </button>
+            </div>
           <PassagePickerGrid
             passages={passages}
             selected={selectedPassages}
@@ -306,6 +349,7 @@ const StudyConfig = ({ onStart, headerSlot = null, initialFocusType = null }) =>
             renderMeta={renderPassageMetaForStudy}
             emptyMessage="표시할 지문이 아직 없어요."
           />
+          </>
         ) : (
           <div style={styles.loadingCard}>선택한 자료에서 지문을 찾지 못했어요.</div>
         )}
@@ -363,6 +407,41 @@ const StudyConfig = ({ onStart, headerSlot = null, initialFocusType = null }) =>
               </div>
             );
           })}
+        </div>
+      </div>
+
+      <div style={styles.section}>
+        <h3 style={styles.sectionTitle}>문항 순서</h3>
+        <p style={styles.sectionHint}>랜덤을 선택하면 지문 순서와 상관없이 섞어서 출제돼요. 순서를 고정하면 업로드한 지문 순서대로 차근차근 풀 수 있어요.</p>
+        <div style={styles.orderModeGroup}>
+          <label style={styles.orderModeOption}>
+            <input
+              type="radio"
+              name="orderMode"
+              value="random"
+              checked={config.orderMode !== 'sequential'}
+              onChange={handleOrderModeChange}
+              style={{ marginTop: '4px' }}
+            />
+            <div>
+              <div style={styles.orderModeLabel}>랜덤으로 풀기</div>
+              <div style={styles.orderModeDescription}>선택한 지문과 유형을 한데 섞어서, 매번 색다른 문제 구성을 받아요.</div>
+            </div>
+          </label>
+          <label style={styles.orderModeOption}>
+            <input
+              type="radio"
+              name="orderMode"
+              value="sequential"
+              checked={config.orderMode === 'sequential'}
+              onChange={handleOrderModeChange}
+              style={{ marginTop: '4px' }}
+            />
+            <div>
+              <div style={styles.orderModeLabel}>순서대로 풀기</div>
+              <div style={styles.orderModeDescription}>업로드된 지문 순서대로 문제를 정렬해 안정적으로 학습할 수 있어요.</div>
+            </div>
+          </label>
         </div>
       </div>
 
@@ -438,6 +517,22 @@ const styles = {
     fontSize: '13px',
     color: 'var(--color-slate-300)',
     marginBottom: '18px'
+  },
+  bulkActions: {
+    display: 'flex',
+    gap: '10px',
+    marginBottom: '14px',
+    flexWrap: 'wrap'
+  },
+  bulkButton: {
+    padding: '8px 16px',
+    borderRadius: '10px',
+    border: 'none',
+    background: 'var(--color-blue-500)',
+    color: '#fff',
+    fontWeight: 600,
+    cursor: 'pointer',
+    boxShadow: '0 6px 16px rgba(37, 99, 235, 0.25)'
   },
   selectionCount: {
     fontSize: '14px',
@@ -545,6 +640,32 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     gap: '12px',
+  },
+  orderModeGroup: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+  },
+  orderModeOption: {
+    display: 'flex',
+    gap: '14px',
+    alignItems: 'flex-start',
+    padding: '16px 18px',
+    borderRadius: '14px',
+    border: '1px solid rgba(148, 163, 184, 0.25)',
+    background: 'rgba(15, 23, 42, 0.75)',
+    color: 'var(--surface-soft-solid)',
+    cursor: 'pointer',
+  },
+  orderModeLabel: {
+    fontWeight: 700,
+    fontSize: '15px',
+    marginBottom: '4px'
+  },
+  orderModeDescription: {
+    fontSize: '13px',
+    color: 'var(--color-slate-300)',
+    lineHeight: 1.5
   },
   controlButton: {
     width: '42px',

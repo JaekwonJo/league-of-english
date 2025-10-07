@@ -155,7 +155,8 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
     documentId,
     counts = {},
     orderDifficulty = 'advanced',
-    insertionDifficulty = 'advanced'
+    insertionDifficulty = 'advanced',
+    orderMode = 'random'
   } = req.body || {};
 
   if (!documentId) {
@@ -371,8 +372,19 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
       return res.status(503).json({ message: 'Failed to build a valid problem set.' });
     }
 
+    let finalProblems = normalizedProblems;
+    if (orderMode === 'random') {
+      finalProblems = [...normalizedProblems];
+      for (let i = finalProblems.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [finalProblems[i], finalProblems[j]] = [finalProblems[j], finalProblems[i]];
+      }
+    } else if (orderMode === 'sequential') {
+      finalProblems = normalizedProblems;
+    }
+
     const exposureWhitelist = new Set(['blank', 'grammar', 'vocabulary', 'title', 'theme', 'summary', 'implicit', 'irrelevant']);
-    const exposureIds = [...new Set(normalizedProblems
+    const exposureIds = [...new Set(finalProblems
       .filter((problem) => problem && exposureWhitelist.has(problem.type))
       .map((problem) => Number(problem.id))
       .filter((id) => Number.isInteger(id) && id > 0))];
@@ -381,10 +393,10 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
       await aiService.markExposures(req.user.id, exposureIds);
     }
 
-    await updateUsage(req.user.id, normalizedProblems.length);
+    await updateUsage(req.user.id, finalProblems.length);
     res.json({
-      problems: normalizedProblems,
-      count: normalizedProblems.length,
+      problems: finalProblems,
+      count: finalProblems.length,
       limit: req.dailyLimit
     });
   } catch (error) {
