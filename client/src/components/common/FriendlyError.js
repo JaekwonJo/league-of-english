@@ -7,10 +7,11 @@ const containerStyle = {
   margin: '80px auto',
   padding: '32px',
   borderRadius: '24px',
-  boxShadow: '0 30px 60px rgba(15, 23, 42, 0.35)',
-  background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.92) 0%, rgba(15, 23, 42, 0.96) 100%)',
-  color: '#f8fafc',
+  boxShadow: '0 30px 60px rgba(15, 23, 42, 0.18)',
+  background: 'var(--surface-card)',
+  color: 'var(--text-primary)',
   textAlign: 'center',
+  border: '1px solid var(--surface-border)'
 };
 
 const titleStyle = {
@@ -28,18 +29,18 @@ const summaryStyle = {
 const hintStyle = {
   fontSize: '14px',
   marginBottom: '18px',
-  color: 'rgba(226, 232, 240, 0.85)',
+  color: 'var(--text-secondary)'
 };
 
 const detailBoxStyle = {
   textAlign: 'left',
-  background: 'rgba(15, 23, 42, 0.7)',
+  background: 'var(--surface-soft)',
   borderRadius: '14px',
   padding: '16px',
   margin: '0 auto 20px auto',
   maxWidth: '100%',
   overflowX: 'auto',
-  border: '1px solid rgba(148, 163, 184, 0.25)'
+  border: '1px solid var(--surface-border)'
 };
 
 const buttonRowStyle = {
@@ -62,7 +63,9 @@ const primaryButtonStyle = {
 
 const secondaryButtonStyle = {
   ...primaryButtonStyle,
-  background: 'rgba(148, 163, 184, 0.25)'
+  background: 'var(--surface-soft)',
+  color: 'var(--text-primary)',
+  boxShadow: '0 12px 24px rgba(15, 23, 42, 0.12)'
 };
 
 const FriendlyError = ({
@@ -110,7 +113,7 @@ const FriendlyError = ({
                 marginTop: finalDetail ? '16px' : 0,
                 whiteSpace: 'pre-wrap',
                 wordBreak: 'break-word',
-                color: 'rgba(226, 232, 240, 0.7)',
+                color: 'var(--text-secondary)',
                 fontFamily: 'var(--font-mono, "Fira Code", monospace)'
               }}>
                 {finalStack}

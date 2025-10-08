@@ -46,6 +46,7 @@ const StudyConfig = ({ onStart, headerSlot = null, initialFocusType = null }) =>
   const [selectedPassages, setSelectedPassages] = useState([]);
   const [previewPassage, setPreviewPassage] = useState(null);
   const [error, setError] = useState(null);
+  const [step, setStep] = useState(1);
   const [config, setConfig] = useState({
     documentId: null,
     types: sanitizeTypeCounts({}),
@@ -151,12 +152,22 @@ const StudyConfig = ({ onStart, headerSlot = null, initialFocusType = null }) =>
       setLoading(true);
       setError(null);
       const list = await api.documents.list();
-      setDocuments(list);
-      if (list.length > 0) {
-        setConfig((prev) => ({
-          ...prev,
-          documentId: prev.documentId || list[0].id,
-        }));
+      const worksheetDocs = Array.isArray(list)
+        ? list.filter((doc) => String(doc.type || '').toLowerCase() !== 'vocabulary')
+        : [];
+      setDocuments(worksheetDocs);
+      setConfig((prev) => ({
+        ...prev,
+        documentId:
+          prev.documentId && worksheetDocs.some((doc) => doc.id === prev.documentId)
+            ? prev.documentId
+            : null,
+      }));
+      if (!worksheetDocs.length) {
+        setStep(1);
+      }
+      if (worksheetDocs.length === 0) {
+        setError('문제 학습용 지문이 아직 없어요. 관리자 페이지에서 PDF를 업로드해 주세요.');
       }
     } catch (error) {
       logger.error('Failed to load documents:', error);
@@ -196,6 +207,7 @@ const StudyConfig = ({ onStart, headerSlot = null, initialFocusType = null }) =>
     setPassages([]);
     setError(null);
     setConfig((prev) => ({ ...prev, documentId: value }));
+    setStep(value ? 2 : 1);
   };
 
   const handleTypeChange = (type, value) => {
@@ -280,66 +292,79 @@ const StudyConfig = ({ onStart, headerSlot = null, initialFocusType = null }) =>
     return null;
   };
 
-  return (
-    <div style={styles.container}>
-      <h1 style={styles.title}>학습 설정</h1>
-
-      {headerSlot && <div style={styles.headerSlot}>{headerSlot}</div>}
-
-      {error && (
-        <div style={styles.errorBox}>
-          ❗️ {error}
-        </div>
-      )}
-
-      <div style={styles.section}>
-        <h3 style={{ ...styles.sectionTitle, marginBottom: '12px' }}>자료 선택</h3>
-        <select
-          style={styles.select}
-          value={config.documentId || ''}
-          onChange={handleDocumentChange}
-          disabled={loading || documents.length === 0}
+  const renderStepOne = () => (
+    <div style={styles.section}>
+      <h3 style={{ ...styles.sectionTitle, marginBottom: '12px' }}>1단계 · 자료 선택</h3>
+      <p style={styles.sectionHint}>문제 학습에 사용할 PDF를 고르면 다음 단계에서 지문을 고를 수 있어요.</p>
+      <select
+        style={styles.select}
+        value={config.documentId || ''}
+        onChange={handleDocumentChange}
+        disabled={loading || documents.length === 0}
+      >
+        <option value="" disabled>
+          {documents.length === 0 ? '자료가 없습니다' : '자료를 선택해 주세요'}
+        </option>
+        {documents.map((doc) => (
+          <option key={doc.id} value={doc.id}>
+            {doc.title || `자료 ${doc.id}`}
+          </option>
+        ))}
+      </select>
+      <div style={styles.stepActions}>
+        <button
+          type="button"
+          style={{
+            ...styles.primaryButton,
+            ...(config.documentId ? {} : styles.startButtonDisabled),
+          }}
+          onClick={() => setStep(2)}
+          disabled={!config.documentId}
         >
-          {documents.length === 0 && <option value="">자료가 없습니다</option>}
-          {documents.map((doc) => (
-            <option key={doc.id} value={doc.id}>
-              {doc.title || `자료 ${doc.id}`}
-            </option>
-          ))}
-        </select>
+          다음 단계로 →
+        </button>
       </div>
+    </div>
+  );
 
-      <div style={styles.section}>
-        <div style={styles.sectionTitleRow}>
-          <h3 style={styles.sectionTitle}>지문 선택</h3>
-          <span style={styles.selectionCount}>{selectedPassages.length}개 선택</span>
+  const renderStepTwo = () => (
+    <div style={styles.section}>
+      <div style={styles.sectionTitleRow}>
+        <h3 style={styles.sectionTitle}>2단계 · 지문 선택</h3>
+        <span style={styles.selectionCount}>{selectedPassages.length}개 선택</span>
+      </div>
+      <p style={styles.sectionHint}>
+        문제에 사용할 지문을 골라주세요. 카드 왼쪽 상단의 체크 박스를 눌러 선택하고, 전체 보기를 누르면 원문을 확인할 수 있어요.
+      </p>
+      {passageLoading ? (
+        <div style={styles.loadingCard}>
+          <div style={styles.spinner} />
+          <p>지문을 불러오는 중이에요...</p>
         </div>
-        <p style={styles.sectionHint}>
-          문제에 사용할 지문을 골라주세요. 카드 왼쪽 상단의 체크 박스를 눌러 선택하고, 전체 보기를 누르면 원문을 확인할 수 있어요.
-        </p>
-        {passageLoading ? (
-          <div style={styles.loadingCard}>
-            <div style={styles.spinner} />
-            <p>지문을 불러오는 중이에요...</p>
+      ) : passages.length ? (
+        <>
+          <div style={styles.bulkActions}>
+            <button
+              type="button"
+              style={styles.bulkButton}
+              onClick={handleSelectAllPassages}
+            >
+              전체 선택
+            </button>
+            <button
+              type="button"
+              style={{
+                ...styles.bulkButton,
+                background: 'var(--surface-soft)',
+                color: 'var(--text-primary)',
+                border: '1px solid var(--surface-border)',
+                boxShadow: 'none'
+              }}
+              onClick={handleClearPassages}
+            >
+              선택 해제
+            </button>
           </div>
-        ) : passages.length ? (
-          <>
-            <div style={styles.bulkActions}>
-              <button
-                type="button"
-                style={styles.bulkButton}
-                onClick={handleSelectAllPassages}
-              >
-                전체 선택
-              </button>
-              <button
-                type="button"
-                style={{ ...styles.bulkButton, background: 'var(--surface-muted)', color: 'var(--text-color)' }}
-                onClick={handleClearPassages}
-              >
-                선택 해제
-              </button>
-            </div>
           <PassagePickerGrid
             passages={passages}
             selected={selectedPassages}
@@ -349,15 +374,34 @@ const StudyConfig = ({ onStart, headerSlot = null, initialFocusType = null }) =>
             renderMeta={renderPassageMetaForStudy}
             emptyMessage="표시할 지문이 아직 없어요."
           />
-          </>
-        ) : (
-          <div style={styles.loadingCard}>선택한 자료에서 지문을 찾지 못했어요.</div>
-        )}
+        </>
+      ) : (
+        <div style={styles.loadingCard}>선택한 자료에서 지문을 찾지 못했어요.</div>
+      )}
+      <div style={styles.stepActionsSplit}>
+        <button type="button" style={styles.secondaryButton} onClick={() => setStep(1)}>
+          ← 이전 단계
+        </button>
+        <button
+          type="button"
+          style={{
+            ...styles.primaryButton,
+            ...(selectedPassages.length ? {} : styles.startButtonDisabled),
+          }}
+          onClick={() => setStep(3)}
+          disabled={!selectedPassages.length}
+        >
+          유형 고르러 가기 →
+        </button>
       </div>
+    </div>
+  );
 
+  const renderStepThree = () => (
+    <>
       <div style={styles.section}>
         <div style={styles.sectionTitleRow}>
-          <h3 style={styles.sectionTitle}>문항 종류</h3>
+          <h3 style={styles.sectionTitle}>3단계 · 문항 종류</h3>
           <div style={styles.countBadge}>
             <span style={styles.countLabel}>선택</span>
             <span style={styles.countNumber}>{totalProblems}</span>
@@ -445,25 +489,66 @@ const StudyConfig = ({ onStart, headerSlot = null, initialFocusType = null }) =>
         </div>
       </div>
 
-      <div style={styles.actions}>
-        <button type="button" style={styles.resetButton} onClick={resetTypes}>
-          초기화
+      <div style={styles.stepActionsSplit}>
+        <button type="button" style={styles.secondaryButton} onClick={() => setStep(2)}>
+          ← 지문 다시 고르기
         </button>
-        <button
-          type="button"
-          style={{
-            ...styles.startButton,
-            ...(totalProblems === 0 || totalProblems > MAX_TOTAL_PROBLEMS || !config.documentId
-              || !selectedPassages.length
-              ? styles.startButtonDisabled
-              : {}),
-          }}
-          onClick={handleStart}
-          disabled={totalProblems === 0 || totalProblems > MAX_TOTAL_PROBLEMS || !config.documentId || !selectedPassages.length}
-        >
-          학습 시작
-        </button>
+        <div style={styles.actionsRight}>
+          <button type="button" style={styles.resetButton} onClick={resetTypes}>
+            초기화
+          </button>
+          <button
+            type="button"
+            style={{
+              ...styles.startButton,
+              ...(totalProblems === 0 || totalProblems > MAX_TOTAL_PROBLEMS || !config.documentId
+                || !selectedPassages.length
+                ? styles.startButtonDisabled
+                : {}),
+            }}
+            onClick={handleStart}
+            disabled={totalProblems === 0 || totalProblems > MAX_TOTAL_PROBLEMS || !config.documentId || !selectedPassages.length}
+          >
+            학습 시작
+          </button>
+        </div>
       </div>
+    </>
+  );
+
+  const renderContentByStep = () => {
+    const safeStep = (() => {
+      if (step === 2 && !config.documentId) return 1;
+      if (step === 3 && (!config.documentId || !selectedPassages.length)) {
+        return config.documentId ? 2 : 1;
+      }
+      return step;
+    })();
+    switch (safeStep) {
+      case 1:
+        return renderStepOne();
+      case 2:
+        return renderStepTwo();
+      case 3:
+        return renderStepThree();
+      default:
+        return renderStepOne();
+    }
+  };
+
+  return (
+    <div style={styles.container}>
+      <h1 style={styles.title}>학습 설정</h1>
+
+      {headerSlot && <div style={styles.headerSlot}>{headerSlot}</div>}
+
+      {error && (
+        <div style={styles.errorBox}>
+          ❗️ {error}
+        </div>
+      )}
+
+      {renderContentByStep()}
 
       <PassagePreviewModal
         open={Boolean(previewPassage)}
@@ -481,8 +566,8 @@ const styles = {
     margin: '0 auto',
     padding: '32px',
     minHeight: '100vh',
-    background: 'linear-gradient(135deg, var(--color-slate-900) 0%, var(--color-slate-650) 100%)',
-    color: 'var(--surface-soft-solid)',
+    background: 'var(--app-background)',
+    color: 'var(--text-primary)',
   },
   title: {
     fontSize: '36px',
@@ -494,12 +579,12 @@ const styles = {
     marginBottom: '24px'
   },
   section: {
-    background: 'rgba(30, 41, 59, 0.82)',
+    background: 'var(--surface-card)',
     borderRadius: '18px',
     padding: '28px',
     marginBottom: '28px',
-    boxShadow: '0 20px 40px rgba(15, 23, 42, 0.6)',
-    border: '1px solid rgba(148, 163, 184, 0.15)',
+    boxShadow: '0 20px 40px rgba(15, 23, 42, 0.12)',
+    border: '1px solid var(--surface-border)',
   },
   sectionTitleRow: {
     display: 'flex',
@@ -515,7 +600,7 @@ const styles = {
   },
   sectionHint: {
     fontSize: '13px',
-    color: 'var(--color-slate-300)',
+    color: 'var(--text-secondary)',
     marginBottom: '18px'
   },
   bulkActions: {
@@ -536,8 +621,8 @@ const styles = {
   },
   selectionCount: {
     fontSize: '14px',
-    color: 'var(--color-slate-200)',
-    background: 'rgba(148, 163, 184, 0.18)',
+    color: 'var(--text-secondary)',
+    background: 'var(--surface-soft)',
     padding: '4px 12px',
     borderRadius: '999px'
   },
@@ -578,9 +663,9 @@ const styles = {
     color: 'var(--border-subtle)',
   },
   errorBox: {
-    background: 'rgba(239, 68, 68, 0.12)',
-    border: '1px solid rgba(248, 113, 113, 0.4)',
-    color: '#fecaca',
+    background: 'var(--danger-surface)',
+    border: '1px solid var(--danger-border)',
+    color: 'var(--danger-strong)',
     padding: '14px 18px',
     borderRadius: '14px',
     marginBottom: '20px'
@@ -590,9 +675,9 @@ const styles = {
     padding: '14px',
     fontSize: '16px',
     borderRadius: '10px',
-    border: '2px solid rgba(148, 163, 184, 0.25)',
-    background: 'rgba(15, 23, 42, 0.9)',
-    color: 'var(--surface-soft-solid)',
+    border: '2px solid var(--surface-border)',
+    background: 'var(--surface-soft)',
+    color: 'var(--text-primary)',
   },
   typeHint: {
     fontSize: '13px',
@@ -605,10 +690,10 @@ const styles = {
     gap: '18px',
   },
   typeCard: {
-    background: 'rgba(15, 23, 42, 0.75)',
+    background: 'var(--surface-soft)',
     borderRadius: '16px',
     padding: '18px',
-    border: '1px solid rgba(59, 130, 246, 0.25)',
+    border: '1px solid var(--surface-border)',
     display: 'flex',
     flexDirection: 'column',
     gap: '12px',
@@ -627,12 +712,12 @@ const styles = {
   },
   typeDescription: {
     fontSize: '13px',
-    color: 'var(--color-slate-300)',
+    color: 'var(--text-secondary)',
     marginTop: '2px',
   },
   instruction: {
     fontSize: '12px',
-    color: 'var(--violet-lighter)',
+    color: 'var(--text-secondary)',
     lineHeight: 1.5,
   },
   typeControls: {
@@ -652,9 +737,9 @@ const styles = {
     alignItems: 'flex-start',
     padding: '16px 18px',
     borderRadius: '14px',
-    border: '1px solid rgba(148, 163, 184, 0.25)',
-    background: 'rgba(15, 23, 42, 0.75)',
-    color: 'var(--surface-soft-solid)',
+    border: '1px solid var(--surface-border)',
+    background: 'var(--surface-soft)',
+    color: 'var(--text-primary)',
     cursor: 'pointer',
   },
   orderModeLabel: {
@@ -664,16 +749,16 @@ const styles = {
   },
   orderModeDescription: {
     fontSize: '13px',
-    color: 'var(--color-slate-300)',
+    color: 'var(--text-secondary)',
     lineHeight: 1.5
   },
   controlButton: {
     width: '42px',
     height: '42px',
     borderRadius: '10px',
-    border: '2px solid rgba(148, 163, 184, 0.35)',
-    background: 'rgba(30, 41, 59, 0.8)',
-    color: 'var(--surface-soft-solid)',
+    border: '2px solid var(--surface-border)',
+    background: 'var(--surface-card)',
+    color: 'var(--text-primary)',
     fontSize: '22px',
     fontWeight: 'bold',
     cursor: 'pointer',
@@ -683,18 +768,19 @@ const styles = {
     padding: '10px',
     textAlign: 'center',
     borderRadius: '10px',
-    border: '2px solid rgba(148, 163, 184, 0.35)',
-    background: 'rgba(15, 23, 42, 0.9)',
-    color: 'var(--surface-soft-solid)',
+    border: '2px solid var(--surface-border)',
+    background: 'var(--surface-card)',
+    color: 'var(--text-primary)',
     fontSize: '18px',
     fontWeight: 'bold',
   },
   loadingCard: {
-    background: 'rgba(15, 23, 42, 0.65)',
+    background: 'var(--surface-card)',
     borderRadius: '16px',
     padding: '28px',
     textAlign: 'center',
-    color: 'var(--color-slate-200)'
+    color: 'var(--text-secondary)',
+    border: '1px solid var(--surface-border)'
   },
   spinner: {
     width: 36,
@@ -705,11 +791,50 @@ const styles = {
     margin: '0 auto 12px',
     animation: 'spin 1s linear infinite'
   },
+  stepActions: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    marginTop: '20px'
+  },
+  stepActionsSplit: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: '12px',
+    marginTop: '24px',
+    flexWrap: 'wrap'
+  },
+  actionsRight: {
+    display: 'flex',
+    gap: '12px',
+    flexWrap: 'wrap'
+  },
   actions: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: '18px',
+  },
+  primaryButton: {
+    padding: '12px 28px',
+    borderRadius: '12px',
+    border: 'none',
+    background: 'linear-gradient(135deg, var(--accent-primary) 0%, var(--indigo) 100%)',
+    color: 'var(--text-on-accent)',
+    fontWeight: 700,
+    cursor: 'pointer',
+    boxShadow: '0 14px 28px rgba(59, 130, 246, 0.35)'
+  },
+  secondaryButton: {
+    padding: '12px 24px',
+    borderRadius: '12px',
+    border: 'none',
+    background: 'var(--surface-soft)',
+    color: 'var(--text-primary)',
+    fontWeight: 600,
+    cursor: 'pointer',
+    boxShadow: '0 8px 16px rgba(15, 23, 42, 0.12)',
+    border: '1px solid var(--surface-border)'
   },
   resetButton: {
     padding: '12px 24px',

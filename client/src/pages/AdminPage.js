@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { api } from '../services/api.service';
 import { adminStyles } from '../styles/adminStyles';
 import DocumentList from '../components/admin/DocumentList';
 import UploadModal from '../components/admin/UploadModal';
@@ -8,9 +7,46 @@ import CategoryModal from '../components/admin/CategoryModal';
 import DocumentAnalysis from '../components/admin/DocumentAnalysis';
 import PassageAnalysis from '../components/admin/PassageAnalysisRefactored';
 import ProblemLibrary from '../components/admin/ProblemLibrary';
+import DocumentShareModal from '../components/admin/DocumentShareModal';
+import { useAdminDocuments } from '../hooks/useAdminDocuments';
+import { useDocumentShare } from '../hooks/useDocumentShare';
+import { useFeedbackReports } from '../hooks/useFeedbackReports';
+
+const initialUploadForm = {
+  title: '',
+  category: '수능',
+  school: '',
+  grade: 1,
+  type: 'worksheet',
+  file: null
+};
 
 const AdminPage = () => {
-  const [documents, setDocuments] = useState([]);
+  const {
+    documents,
+    setDocuments,
+    loading: documentsLoading,
+    fetchDocuments,
+    uploadDocument,
+    deleteDocument,
+    fetchShares,
+    updateShares
+  } = useAdminDocuments();
+  const {
+    feedbackReports,
+    feedbackLoading,
+    feedbackError,
+    fetchFeedbackReports,
+    resolveFeedback
+  } = useFeedbackReports();
+  const {
+    shareState,
+    openShareModal,
+    closeShareModal,
+    changeShareForm,
+    saveShare
+  } = useDocumentShare(fetchShares, updateShares);
+
   const [categories, setCategories] = useState(['수능', '내신', '모의고사', '기출문제', '기타']);
   const [loading, setLoading] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -22,40 +58,15 @@ const AdminPage = () => {
   const [analyzingDocument, setAnalyzingDocument] = useState(null);
   const [passageAnalyzingDocument, setPassageAnalyzingDocument] = useState(null);
   const [newCategory, setNewCategory] = useState('');
-  const [uploadForm, setUploadForm] = useState({
-    title: '',
-    category: '수능',
-    school: '',
-    grade: 1,
-    file: null
-  });
-  const [feedbackReports, setFeedbackReports] = useState([]);
-  const [feedbackLoading, setFeedbackLoading] = useState(false);
-  const [feedbackError, setFeedbackError] = useState(null);
+  const [uploadForm, setUploadForm] = useState(initialUploadForm);
+
+  const worksheetDocuments = documents.filter((doc) => String(doc.type || '').toLowerCase() !== 'vocabulary');
+  const vocabularyDocuments = documents.filter((doc) => String(doc.type || '').toLowerCase() === 'vocabulary');
 
   useEffect(() => {
     fetchDocuments();
-    fetchPendingFeedback();
-  }, []);
-
-  const fetchDocuments = async () => {
-    try {
-      setLoading(true);
-      console.log('📋 문서 목록 요청 시작...');
-      console.log('🔐 저장된 토큰:', localStorage.getItem('token') ? 'EXISTS' : 'MISSING');
-      
-      const response = await api.documents.list();
-      console.log('✅ 문서 목록 응답:', response);
-      
-      // API가 배열을 직접 반환함
-      setDocuments(Array.isArray(response) ? response : []);
-    } catch (error) {
-      console.error('❌ 문서 목록 조회 실패:', error);
-      alert('문서 목록을 불러오는데 실패했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchFeedbackReports();
+  }, [fetchDocuments, fetchFeedbackReports]);
 
   const handleUploadFormChange = (field, value) => {
     setUploadForm({ ...uploadForm, [field]: value });
@@ -66,19 +77,24 @@ const AdminPage = () => {
   };
 
   const handleUpload = async () => {
+    if (!uploadForm.file) {
+      alert('업로드할 파일을 선택해 주세요.');
+      return;
+    }
     try {
       setLoading(true);
-      await api.documents.upload(uploadForm.file, {
+      await uploadDocument(uploadForm.file, {
         title: uploadForm.title,
         category: uploadForm.category,
         school: uploadForm.school,
-        grade: uploadForm.grade
+        grade: uploadForm.grade,
+        type: uploadForm.type
       });
-      
+
       alert('문서가 성공적으로 업로드되었습니다.');
       setShowUploadModal(false);
-      setUploadForm({ title: '', category: '수능', school: '', grade: 1, file: null });
-      fetchDocuments();
+      setUploadForm(initialUploadForm);
+      await fetchDocuments();
     } catch (error) {
       console.error('업로드 실패:', error);
       alert('업로드에 실패했습니다: ' + (error.message || '알 수 없는 오류'));
@@ -117,6 +133,39 @@ const AdminPage = () => {
     setShowAnalysisModal(true);
   };
 
+  const handleDocumentShare = async (doc) => {
+    try {
+      await openShareModal(doc);
+    } catch (error) {
+      console.error('문서 공개 범위 조회 실패:', error);
+      alert(error?.message || '문서 공개 범위를 불러오지 못했습니다.');
+    }
+  };
+
+  const handleShareFormChange = (form) => {
+    changeShareForm({
+      public: Boolean(form.public),
+      schools: form.schools || '',
+      grades: form.grades || '',
+      students: form.students || ''
+    });
+  };
+
+  const handleShareSave = async ({ public: isPublic, schools, grades, students }) => {
+    try {
+      await saveShare({
+        public: Boolean(isPublic),
+        schools,
+        grades,
+        students
+      });
+      alert('문서 공개 설정이 저장되었습니다.');
+    } catch (error) {
+      console.error('문서 공개 설정 저장 실패:', error);
+      alert(error?.message || '문서를 공개하는 중 문제가 발생했습니다.');
+    }
+  };
+
   const handleEditingDocumentChange = (field, value) => {
     setEditingDocument({ ...editingDocument, [field]: value });
   };
@@ -128,9 +177,9 @@ const AdminPage = () => {
 
     try {
       setLoading(true);
-      await api.documents.delete(documentId);
+      await deleteDocument(documentId);
       alert('문서가 삭제되었습니다.');
-      fetchDocuments();
+      await fetchDocuments();
     } catch (error) {
       console.error('삭제 실패:', error);
       alert('삭제에 실패했습니다.');
@@ -151,28 +200,13 @@ const AdminPage = () => {
     setShowPassageAnalysisModal(true);
   };
 
-  const fetchPendingFeedback = async () => {
-    try {
-      setFeedbackLoading(true);
-      setFeedbackError(null);
-      const response = await api.analysis.feedback.pending();
-      if (response?.success) {
-        setFeedbackReports(response.data || []);
-      } else {
-        setFeedbackError('신고 목록을 불러오지 못했습니다.');
-      }
-    } catch (error) {
-      console.error('신고 목록 조회 실패:', error);
-      setFeedbackError(error?.message || '신고 목록을 불러오는 중 문제가 발생했습니다.');
-    } finally {
-      setFeedbackLoading(false);
-    }
+  const handleVocabularyPreview = (document) => {
+    window.alert(`🧠 "${document.title}" 단어장은 홈 화면 상단의 "어휘 훈련" 메뉴에서 Day별 시험을 바로 진행할 수 있어요!\n필요한 Day를 골라 30문항 테스트로 연습해 보세요.`);
   };
 
   const handleResolveFeedback = async (feedbackId, status) => {
     try {
-      await api.analysis.feedback.resolve(feedbackId, status);
-      await fetchPendingFeedback();
+      await resolveFeedback(feedbackId, status);
       alert(status === 'resolved' ? '신고가 검수 완료 처리되었습니다.' : '신고가 허위 신고로 처리되었습니다.');
     } catch (error) {
       console.error('신고 상태 변경 실패:', error);
@@ -201,12 +235,26 @@ const AdminPage = () => {
       </div>
 
       <DocumentList
-        documents={documents}
-        loading={loading}
+        title="📘 문제 학습 자료"
+        emptyMessage="아직 문제 학습용 지문이 없어요. PDF를 업로드하고 분석/문제 생성을 시작해볼까요?"
+        documents={worksheetDocuments}
+        loading={documentsLoading || loading}
         onEdit={handleDocumentEdit}
         onDelete={handleDelete}
         onAnalyze={handleDocumentAnalyze}
         onPassageAnalyze={handlePassageAnalyze}
+        onShare={handleDocumentShare}
+      />
+
+      <DocumentList
+        title="🧠 단어장 자료"
+        emptyMessage="업로드된 단어장이 아직 없어요. 단어장을 올리면 어휘 훈련 메뉴에서 바로 시험을 볼 수 있어요."
+        documents={vocabularyDocuments}
+        loading={documentsLoading || loading}
+        onEdit={handleDocumentEdit}
+        onDelete={handleDelete}
+        onShare={handleDocumentShare}
+        onVocabularyPreview={handleVocabularyPreview}
       />
 
       <ProblemLibrary documents={documents} />
@@ -306,6 +354,16 @@ const AdminPage = () => {
           }}
         />
       )}
+
+      <DocumentShareModal
+        show={shareState.visible}
+        loading={shareState.loading}
+        documentTitle={shareState.document?.title || ''}
+        shareForm={shareState.form}
+        onChange={handleShareFormChange}
+        onClose={closeShareModal}
+        onSave={handleShareSave}
+      />
     </div>
   );
 };

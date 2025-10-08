@@ -602,8 +602,8 @@ const styles = {
   reviewQueueItem: {
     padding: '18px',
     borderRadius: '16px',
-    background: 'rgba(255, 255, 255, 0.92)',
-    border: '1px solid rgba(148, 163, 184, 0.25)',
+    background: 'var(--surface-card)',
+    border: '1px solid var(--surface-border)',
     boxShadow: '0 12px 30px rgba(15, 23, 42, 0.1)'
   },
   reviewQueueItemMeta: {
@@ -616,8 +616,8 @@ const styles = {
   reviewQueueType: {
     padding: '4px 10px',
     borderRadius: '999px',
-    background: 'rgba(99, 102, 241, 0.2)',
-    color: 'var(--indigo-deep)',
+    background: 'var(--accent-soft)',
+    color: 'var(--text-secondary)',
     fontSize: '12px',
     fontWeight: 700
   },
@@ -644,27 +644,28 @@ const styles = {
     fontWeight: 600
   },
   profileStatCard: {
-    background: 'rgba(15, 23, 42, 0.72)',
+    background: 'var(--surface-card)',
     borderRadius: '18px',
     padding: '22px',
     textAlign: 'center',
     transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-    color: 'var(--border-subtle)'
+    color: 'var(--text-secondary)',
+    border: '1px solid var(--surface-border)'
   },
   profileStatLabel: {
     fontSize: '14px',
-    color: 'var(--violet-lighter)',
+    color: 'var(--text-secondary)',
     marginBottom: '12px'
   },
   profileStatValue: {
     fontSize: '32px',
     fontWeight: 900,
-    color: 'var(--text-inverse)'
+    color: 'var(--text-primary)'
   },
   profileStatSuffix: {
     fontSize: '16px',
     marginLeft: '4px',
-    color: 'var(--color-slate-350)'
+    color: 'var(--text-secondary)'
   },
   typeSection: {
     marginTop: '40px'
@@ -675,22 +676,22 @@ const styles = {
     gap: '16px'
   },
   typeRow: {
-    background: 'rgba(15, 23, 42, 0.65)',
+    background: 'var(--surface-card)',
     borderRadius: '16px',
     padding: '18px',
-    border: '1px solid rgba(148, 163, 184, 0.25)'
+    border: '1px solid var(--surface-border)'
   },
   typeHeaderRow: {
     display: 'flex',
     justifyContent: 'space-between',
     fontWeight: 700,
-    color: 'var(--border-subtle)',
+    color: 'var(--text-secondary)',
     marginBottom: '10px'
   },
   typeBar: {
     width: '100%',
     height: '12px',
-    background: 'rgba(148, 163, 184, 0.25)',
+    background: 'var(--surface-soft)',
     borderRadius: '999px',
     overflow: 'hidden'
   },
@@ -703,7 +704,7 @@ const styles = {
     gap: '12px',
     marginTop: '10px',
     fontSize: '13px',
-    color: 'var(--color-slate-350)'
+    color: 'var(--text-secondary)'
   },
   infoCard: {
     background: 'rgba(51, 65, 85, 0.8)',

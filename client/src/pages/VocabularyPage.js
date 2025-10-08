@@ -47,11 +47,11 @@ const VocabularyPage = () => {
     return index >= 0 ? index : 0;
   }, [user]);
 
-  const getTimeLimitSeconds = useCallback(() => {
-    const baseSeconds = 180; // Iron tier: 3 minutes
-    const reduction = getTierStep() * 5; // each tier up removes 5 seconds
-    return Math.max(60, baseSeconds - reduction);
-  }, [getTierStep]);
+const getTimeLimitSeconds = useCallback(() => {
+  const baseSeconds = 300; // Iron tier: 5 minutes
+  const reduction = getTierStep() * 5; // each 티어 상승마다 5초 감축
+  return Math.max(120, baseSeconds - reduction);
+}, [getTierStep]);
 
   useEffect(() => {
     const fetchSets = async () => {
@@ -593,8 +593,9 @@ const QuizBox = ({
   totalTime
 }) => {
   if (!problem) return null;
-  const focusLabel = problem.mode === 'meaning_to_term' ? '뜻' : '단어';
-  const focusValue = problem.mode === 'meaning_to_term' ? problem.meaning : problem.term;
+  const isMeaningMode = problem.mode === 'meaning_to_term';
+  const focusLabel = isMeaningMode ? '뜻' : '단어';
+  const focusValue = isMeaningMode ? problem.meaning : problem.term;
 
   const body = problem.options.map((option, idx) => {
     const choiceNumber = idx + 1;
@@ -625,7 +626,9 @@ const QuizBox = ({
         </div>
       </div>
       <h3 style={styles.quizPrompt}>{problem.prompt}</h3>
-      <p style={styles.quizTerm}>👉 <strong>{focusLabel}</strong>: {focusValue}</p>
+      {!isMeaningMode && (
+        <p style={styles.quizTerm}>👉 <strong>{focusLabel}</strong>: {focusValue}</p>
+      )}
       <div style={styles.optionList}>{body}</div>
       <div style={styles.quizNavRow}>
         <button
@@ -855,13 +858,14 @@ const styles = {
     marginBottom: '32px',
     padding: '32px',
     borderRadius: '26px',
-    background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.18) 0%, rgba(96, 165, 250, 0.12) 45%, rgba(129, 140, 248, 0.2) 100%)'
+    background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(96, 165, 250, 0.08) 45%, rgba(129, 140, 248, 0.12) 100%)'
   },
   quizCard: {
-    background: '#fff',
+    background: 'var(--surface-card)',
     borderRadius: '20px',
     padding: '28px',
-    boxShadow: '0 16px 32px rgba(15, 23, 42, 0.12)'
+    boxShadow: '0 16px 32px rgba(15, 23, 42, 0.12)',
+    color: 'var(--text-primary)'
   },
   quizHeader: {
     display: 'flex',
@@ -876,11 +880,13 @@ const styles = {
   quizPrompt: {
     fontSize: '1.25rem',
     lineHeight: 1.5,
-    marginBottom: '12px'
+    marginBottom: '12px',
+    color: 'var(--text-primary)'
   },
   quizTerm: {
     fontSize: '1.05rem',
-    marginBottom: '16px'
+    marginBottom: '16px',
+    color: 'var(--text-secondary)'
   },
   optionList: {
     display: 'grid',
@@ -892,17 +898,18 @@ const styles = {
     gap: '10px',
     padding: '14px 18px',
     borderRadius: '14px',
-    border: '1px solid var(--border-color)',
-    background: '#fff',
+    border: '1px solid var(--surface-border)',
+    background: 'var(--surface-soft)',
     textAlign: 'left',
     cursor: 'pointer',
     fontSize: '1rem',
     transition: 'all 0.2s ease',
-    boxShadow: '0 6px 16px rgba(15, 23, 42, 0.08)'
+    boxShadow: '0 6px 16px rgba(15, 23, 42, 0.08)',
+    color: 'var(--text-primary)'
   },
   optionButtonSelected: {
     borderColor: 'var(--color-green-500)',
-    background: 'rgba(34, 197, 94, 0.15)',
+    background: 'rgba(34, 197, 94, 0.18)',
     boxShadow: '0 0 0 2px rgba(34, 197, 94, 0.25) inset'
   },
   optionNumber: {
@@ -966,10 +973,11 @@ const styles = {
     gap: '12px'
   },
   notice: {
-    background: 'var(--surface-muted)',
+    background: 'var(--surface-soft)',
     padding: '16px',
     borderRadius: '12px',
-    marginBottom: '20px'
+    marginBottom: '20px',
+    color: 'var(--text-secondary)'
   },
   quizNavRow: {
     marginTop: '24px',
@@ -990,8 +998,8 @@ const styles = {
   },
   secondaryButton: {
     background: 'var(--surface-muted)',
-    color: 'var(--text-color)',
-    border: '1px solid var(--border-color)',
+    color: 'var(--text-primary)',
+    border: '1px solid var(--surface-border)',
     borderRadius: '12px',
     padding: '12px 20px',
     cursor: 'pointer',
@@ -1011,7 +1019,7 @@ const styles = {
     alignItems: 'flex-end',
     gap: '2px',
     fontWeight: 600,
-    color: 'var(--text-color)'
+    color: 'var(--text-secondary)'
   },
   timerSub: {
     fontSize: '0.75rem',
