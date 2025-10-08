@@ -4,6 +4,12 @@ import problemRegistry from "../services/problemRegistry";
 import logger from "../utils/logger";
 
 const bracketCleanupPattern = new RegExp(`[{}\\[\\]\\\\]`, "g");
+const GENERATION_STAGES = [
+  '요청 정보를 정리하고 있어요...',
+  '캐시에서 사용할 수 있는 문제를 찾는 중이에요...',
+  'AI가 새 문제를 빚고 있어요...',
+  '문제를 검토하고 정리 중이에요...'
+];
 
 const normalizeAnswerArray = (value) => {
   if (value === null || value === undefined) return [];
@@ -45,6 +51,10 @@ const useStudySession = (user, onUserUpdate = () => {}) => {
   const [currentTime, setCurrentTime] = useState(null);
   const [timeLeft, setTimeLeft] = useState(0);
   const [initialTimeLeft, setInitialTimeLeft] = useState(0);
+  const [loadingContext, setLoadingContext] = useState(null);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [loadingStageIndex, setLoadingStageIndex] = useState(0);
+  const [generationLog, setGenerationLog] = useState([]);
 
   useEffect(() => {
     if (mode !== "study") return undefined;
@@ -53,6 +63,34 @@ const useStudySession = (user, onUserUpdate = () => {}) => {
     const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
   }, [mode]);
+
+  useEffect(() => {
+    if (!loading || !loadingContext) {
+      return undefined;
+    }
+
+    setLoadingProgress((prev) => (prev > 0 ? prev : 5));
+    setLoadingStageIndex(0);
+
+    const progressTimer = setInterval(() => {
+      setLoadingProgress((prev) => {
+        if (prev >= 90) return prev;
+        return Math.min(prev + 3, 90);
+      });
+    }, 600);
+
+    const stageTimer = setInterval(() => {
+      setLoadingStageIndex((prev) => {
+        if (prev >= GENERATION_STAGES.length - 1) return prev;
+        return prev + 1;
+      });
+    }, 4000);
+
+    return () => {
+      clearInterval(progressTimer);
+      clearInterval(stageTimer);
+    };
+  }, [loading, loadingContext]);
 
   const getTierStep = useCallback(() => {
     const tierName = String(user?.tier?.name || user?.tier || "").toLowerCase();
@@ -201,6 +239,9 @@ const useStudySession = (user, onUserUpdate = () => {}) => {
     } finally {
       setLoading(false);
       setTimeLeft(0);
+      setLoadingContext(null);
+      setLoadingProgress(0);
+      setLoadingStageIndex(0);
     }
   }, [answers, problems, startTime, currentTime, mode]);
 
@@ -218,9 +259,22 @@ const useStudySession = (user, onUserUpdate = () => {}) => {
     try {
       setLoading(true);
       setError(null);
+      setGenerationLog([]);
       logger.info("Starting study with config:", studyConfig);
 
       const totalCount = Object.values(studyConfig.types || {}).reduce((sum, count) => sum + count, 0);
+      const activeTypes = Object.entries(studyConfig.types || {})
+        .filter(([, value]) => Number(value || 0) > 0)
+        .map(([key]) => key);
+
+      setLoadingContext({
+        totalRequested: totalCount,
+        requestedTypes: activeTypes,
+        startedAt: Date.now()
+      });
+      setLoadingProgress(totalCount ? 5 : 3);
+      setLoadingStageIndex(0);
+
       const payload = {
         documentId: studyConfig.documentId,
         counts: studyConfig.types,
@@ -230,6 +284,7 @@ const useStudySession = (user, onUserUpdate = () => {}) => {
           ? Array.from(new Set(studyConfig.passageNumbers)).filter((value) => Number.isInteger(value) && value > 0)
           : [],
         totalCount: Math.min(20, Math.max(1, totalCount || 1)),
+        orderMode: studyConfig.orderMode === 'sequential' ? 'sequential' : 'random'
       };
 
       const response = await apiService.post("/generate/csat-set", payload);
@@ -240,6 +295,13 @@ const useStudySession = (user, onUserUpdate = () => {}) => {
       if (!processed.length) {
         throw new Error("문제 세트를 생성하지 못했어요. 잠시 후 다시 시도하거나 관리자에게 문의해주세요.");
       }
+
+      setGenerationLog(Array.isArray(response.progressLog) ? response.progressLog : []);
+      setLoadingProgress(100);
+      setTimeout(() => {
+        setLoadingContext(null);
+        setLoadingStageIndex(0);
+      }, 600);
 
       beginSession(processed);
       logger.info(`Loaded ${processed.length} problems`);
@@ -277,6 +339,9 @@ const useStudySession = (user, onUserUpdate = () => {}) => {
         detail: err?.response?.data?.message || err?.message || '',
         stack: err?.stack || ''
       });
+      setLoadingContext(null);
+      setLoadingProgress(0);
+      setLoadingStageIndex(0);
     } finally {
       setLoading(false);
     }
@@ -286,6 +351,10 @@ const useStudySession = (user, onUserUpdate = () => {}) => {
     const processed = (problemList || [])
       .map((problem) => problemRegistry.executeHandler(problem.type, problem))
       .filter((problem) => problem);
+    setGenerationLog([]);
+    setLoadingContext(null);
+    setLoadingProgress(0);
+    setLoadingStageIndex(0);
     beginSession(processed);
   }, [beginSession]);
 
@@ -303,6 +372,10 @@ const useStudySession = (user, onUserUpdate = () => {}) => {
     setCurrentTime(null);
     setTimeLeft(0);
     setInitialTimeLeft(0);
+    setGenerationLog([]);
+    setLoadingContext(null);
+    setLoadingProgress(0);
+    setLoadingStageIndex(0);
   }, []);
 
   const enterReview = useCallback(() => {
@@ -327,6 +400,12 @@ const useStudySession = (user, onUserUpdate = () => {}) => {
     if (initialTimeLeft <= 0) return 0;
     return Math.min(100, Math.max(0, ((initialTimeLeft - timeLeft) / initialTimeLeft) * 100));
   }, [initialTimeLeft, timeLeft]);
+
+  const loadingStageLabel = useMemo(() => {
+    if (!loading || !loadingContext) return '';
+    const index = Math.min(loadingStageIndex, GENERATION_STAGES.length - 1);
+    return GENERATION_STAGES[index];
+  }, [loading, loadingContext, loadingStageIndex]);
 
   const allAnswered = useMemo(() => {
     if (!problems.length) return false;
@@ -356,6 +435,11 @@ const useStudySession = (user, onUserUpdate = () => {}) => {
     exitReview,
     startManualSession,
     setError,
+    loadingProgress,
+    loadingStageIndex,
+    loadingStageLabel,
+    loadingContext,
+    generationLog,
   };
 };
 

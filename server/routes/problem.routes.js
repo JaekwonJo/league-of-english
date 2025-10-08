@@ -188,6 +188,16 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
     const usedProblemIds = new Set();
     const context = await aiService.getPassages(documentId);
     const docTitle = context?.document?.title || context?.document?.name || null;
+    const progressLog = [];
+
+    const pushProgress = (stage, type, details = {}) => {
+      progressLog.push({
+        stage,
+        type,
+        timestamp: new Date().toISOString(),
+        ...details
+      });
+    };
 
     const appendProblems = (list) => {
       let added = 0;
@@ -210,6 +220,7 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
       const amount = normalizedCounts[type];
       if (!amount) continue;
       let addedForType = 0;
+      pushProgress('type_start', type, { requested: amount });
 
       switch (type) {
         case 'blank': {
@@ -218,6 +229,7 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
             userId: req.user.id
           });
           addedForType += appendProblems(cached);
+          pushProgress('cache_fetch', type, { delivered: cached.length, requested: amount });
           let remaining = amount - addedForType;
 
           if (remaining > 0) {
@@ -225,6 +237,7 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
             const savedBatch = await aiService.saveProblems(documentId, 'blank', generatedBatch, { docTitle });
             const usable = Array.isArray(savedBatch) && savedBatch.length ? savedBatch : generatedBatch;
             addedForType += appendProblems(usable);
+            pushProgress('ai_generated', type, { delivered: usable.length, requested: remaining });
           }
 
           break;
@@ -235,6 +248,7 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
             userId: req.user.id
           });
           addedForType += appendProblems(cached);
+          pushProgress('cache_fetch', type, { delivered: cached.length, requested: amount });
           let remaining = amount - addedForType;
 
           if (remaining > 0) {
@@ -242,6 +256,7 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
             const savedBatch = await aiService.saveProblems(documentId, 'grammar', generatedBatch, { docTitle });
             const usable = Array.isArray(savedBatch) && savedBatch.length ? savedBatch : generatedBatch;
             addedForType += appendProblems(usable);
+            pushProgress('ai_generated', type, { delivered: usable.length, requested: remaining });
           }
 
           break;
@@ -252,6 +267,7 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
             userId: req.user.id
           });
           addedForType += appendProblems(cached);
+          pushProgress('cache_fetch', type, { delivered: cached.length, requested: amount });
           let remaining = amount - addedForType;
 
           if (remaining > 0) {
@@ -259,6 +275,7 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
             const savedBatch = await aiService.saveProblems(documentId, 'vocabulary', generatedBatch, { docTitle });
             const usable = Array.isArray(savedBatch) && savedBatch.length ? savedBatch : generatedBatch;
             addedForType += appendProblems(usable);
+            pushProgress('ai_generated', type, { delivered: usable.length, requested: remaining });
           }
 
           break;
@@ -269,6 +286,7 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
             userId: req.user.id
           });
           addedForType += appendProblems(cached);
+          pushProgress('cache_fetch', type, { delivered: cached.length, requested: amount });
           let remaining = amount - addedForType;
 
           if (remaining > 0) {
@@ -276,6 +294,7 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
             const savedBatch = await aiService.saveProblems(documentId, 'title', generatedBatch, { docTitle });
             const usable = Array.isArray(savedBatch) && savedBatch.length ? savedBatch : generatedBatch;
             addedForType += appendProblems(usable);
+            pushProgress('ai_generated', type, { delivered: usable.length, requested: remaining });
           }
 
           break;
@@ -286,6 +305,7 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
             userId: req.user.id
           });
           addedForType += appendProblems(cached);
+          pushProgress('cache_fetch', type, { delivered: cached.length, requested: amount });
           let remaining = amount - addedForType;
 
           if (remaining > 0) {
@@ -293,6 +313,7 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
             const savedBatch = await aiService.saveProblems(documentId, 'theme', generatedBatch, { docTitle });
             const usable = Array.isArray(savedBatch) && savedBatch.length ? savedBatch : generatedBatch;
             addedForType += appendProblems(usable);
+            pushProgress('ai_generated', type, { delivered: usable.length, requested: remaining });
           }
 
           break;
@@ -303,6 +324,7 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
             userId: req.user.id
           });
           addedForType += appendProblems(cached);
+          pushProgress('cache_fetch', type, { delivered: cached.length, requested: amount });
           let remaining = amount - addedForType;
 
           if (remaining > 0) {
@@ -310,6 +332,7 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
             const savedBatch = await aiService.saveProblems(documentId, 'summary', generatedBatch, { docTitle });
             const usable = Array.isArray(savedBatch) && savedBatch.length ? savedBatch : generatedBatch;
             addedForType += appendProblems(usable);
+            pushProgress('ai_generated', type, { delivered: usable.length, requested: remaining });
           }
 
           break;
@@ -320,6 +343,7 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
             userId: req.user.id
           });
           addedForType += appendProblems(cached);
+          pushProgress('cache_fetch', type, { delivered: cached.length, requested: amount });
           let remaining = amount - addedForType;
 
           if (remaining > 0) {
@@ -327,6 +351,7 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
             const savedBatch = await aiService.saveProblems(documentId, 'implicit', generatedBatch, { docTitle });
             const usable = Array.isArray(savedBatch) && savedBatch.length ? savedBatch : generatedBatch;
             addedForType += appendProblems(usable);
+            pushProgress('ai_generated', type, { delivered: usable.length, requested: remaining });
           }
 
           break;
@@ -334,11 +359,13 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
         case 'order': {
           const generated = buildOrderProblems(context, amount, { orderDifficulty });
           addedForType += appendProblems(generated);
+          pushProgress('static_generated', type, { delivered: generated.length, requested: amount });
           break;
         }
         case 'insertion': {
           const generated = buildInsertionProblems(context, amount, { insertionDifficulty });
           addedForType += appendProblems(generated);
+          pushProgress('static_generated', type, { delivered: generated.length, requested: amount });
           break;
         }
         case 'irrelevant': {
@@ -347,6 +374,7 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
             userId: req.user.id
           });
           addedForType += appendProblems(cached);
+          pushProgress('cache_fetch', type, { delivered: cached.length, requested: amount });
           let remaining = amount - addedForType;
 
           if (remaining > 0) {
@@ -354,6 +382,7 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
             const savedBatch = await aiService.saveProblems(documentId, 'irrelevant', generatedBatch, { docTitle });
             const usable = Array.isArray(savedBatch) && savedBatch.length ? savedBatch : generatedBatch;
             addedForType += appendProblems(usable);
+            pushProgress('ai_generated', type, { delivered: usable.length, requested: remaining });
           }
 
           break;
@@ -365,6 +394,7 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
       if (addedForType < amount) {
         throw new Error(`Failed to prepare enough problems for type: ${type}`);
       }
+      pushProgress('type_complete', type, { delivered: addedForType, requested: amount });
     }
 
     const normalizedProblems = normalizeAll(aggregated);
@@ -382,6 +412,7 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
     } else if (orderMode === 'sequential') {
       finalProblems = normalizedProblems;
     }
+    pushProgress('all_complete', 'all', { delivered: finalProblems.length });
 
     const exposureWhitelist = new Set(['blank', 'grammar', 'vocabulary', 'title', 'theme', 'summary', 'implicit', 'irrelevant']);
     const exposureIds = [...new Set(finalProblems
@@ -397,7 +428,8 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
     res.json({
       problems: finalProblems,
       count: finalProblems.length,
-      limit: req.dailyLimit
+      limit: req.dailyLimit,
+      progressLog
     });
   } catch (error) {
     console.error('[generate/csat-set] error:', error);

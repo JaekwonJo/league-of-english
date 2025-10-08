@@ -185,7 +185,14 @@ const pickFlashcards = (count = 3, excludeWords = []) => {
   return picked.slice(0, count);
 };
 
-const LoadingState = ({ vocabCards = [], revealStepSeconds = REVEAL_STEP_SECONDS, onLoadMore }) => {
+const LoadingState = ({
+  vocabCards = [],
+  revealStepSeconds = REVEAL_STEP_SECONDS,
+  onLoadMore,
+  progressPercent = 0,
+  progressLabel = '',
+  loadingContext = null
+}) => {
   const [countdowns, setCountdowns] = useState([]);
   const [snippetIndex, setSnippetIndex] = useState(() => Math.floor(Math.random() * LOADING_SNIPPETS.length));
 
@@ -223,6 +230,17 @@ const LoadingState = ({ vocabCards = [], revealStepSeconds = REVEAL_STEP_SECONDS
 
   return (
     <div style={styles.loading}>
+      <div style={styles.loadingProgressPanel}>
+        <div style={styles.progressBarOuter}>
+          <div style={{ ...styles.progressBarInner, width: `${Math.min(100, Math.max(0, progressPercent))}%` }} />
+        </div>
+        <div style={styles.progressLabels}>
+          <span>{progressLabel || '문제를 준비하고 있어요...'}</span>
+          {loadingContext?.totalRequested ? (
+            <span>요청한 문항: {loadingContext.totalRequested}문</span>
+          ) : null}
+        </div>
+      </div>
       <div style={styles.spinner}></div>
       <div style={styles.loadingSnippet}>
         {activeSnippet?.type === 'quote' ? (
@@ -261,6 +279,86 @@ const LoadingState = ({ vocabCards = [], revealStepSeconds = REVEAL_STEP_SECONDS
           )}
         </div>
       )}
+    </div>
+  );
+};
+
+
+const GenerationSummary = ({ logs }) => {
+  const summary = useMemo(() => {
+    if (!Array.isArray(logs)) return { items: [], total: null };
+    const map = new Map();
+    let total = null;
+    logs.forEach((entry) => {
+      if (!entry || typeof entry !== 'object') return;
+      const { stage, type } = entry;
+      if (type === 'all') {
+        if (stage === 'all_complete') {
+          total = Number(entry.delivered) || 0;
+        }
+        return;
+      }
+      if (!type) return;
+      const record = map.get(type) || {
+        type,
+        requested: 0,
+        cached: 0,
+        generated: 0,
+        delivered: 0
+      };
+      switch (stage) {
+        case 'type_start':
+          record.requested = Number(entry.requested) || record.requested;
+          break;
+        case 'cache_fetch':
+          record.cached += Number(entry.delivered) || 0;
+          break;
+        case 'ai_generated':
+          record.generated += Number(entry.delivered) || 0;
+          break;
+        case 'static_generated':
+          record.generated += Number(entry.delivered) || 0;
+          break;
+        case 'type_complete':
+          record.delivered = Number(entry.delivered) || record.delivered;
+          if (!record.requested) {
+            record.requested = Number(entry.requested) || record.requested;
+          }
+          break;
+        default:
+          break;
+      }
+      map.set(type, record);
+    });
+    const items = Array.from(map.values()).sort((a, b) => (TYPE_LABELS[a.type] || a.type).localeCompare(TYPE_LABELS[b.type] || b.type, 'ko'));
+    return { items, total };
+  }, [logs]);
+
+  if (!summary.items.length) return null;
+
+  return (
+    <div style={styles.generationSummary} className="no-print">
+      <div style={styles.generationSummaryHeader}>✨ 문제 생성 요약</div>
+      <div style={styles.generationSummaryBody}>
+        {summary.items.map((item) => {
+          const typeLabel = TYPE_LABELS[item.type] || item.type;
+          const delivered = item.delivered || item.cached + item.generated;
+          return (
+            <div key={item.type} style={styles.generationSummaryRow}>
+              <div style={styles.generationSummaryType}>{typeLabel}</div>
+              <div style={styles.generationSummaryStats}>
+                <span>요청 {item.requested}문</span>
+                <span>캐시 {item.cached}문</span>
+                <span>AI {item.generated}문</span>
+                <span>총 {delivered}문</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {typeof summary.total === 'number' ? (
+        <div style={styles.generationSummaryFooter}>이번 세트는 총 {summary.total}문으로 구성됐어요.</div>
+      ) : null}
     </div>
   );
 };
@@ -333,6 +431,7 @@ const StudyModeView = ({
   onAnswer,
   onFinish,
   onRestart,
+  generationLog,
 }) => {
   const [showScrollTop, setShowScrollTop] = useState(false);
 
@@ -352,6 +451,9 @@ const StudyModeView = ({
   return (
     <>
       <div style={styles.studyWrapper}>
+        {Array.isArray(generationLog) && generationLog.length > 0 && (
+          <GenerationSummary logs={generationLog} />
+        )}
         <div style={styles.studyHeader}>
           <button
             className="no-print"
@@ -546,6 +648,10 @@ const StudyPage = () => {
     exitReview,
     startManualSession,
     setError,
+    loadingProgress,
+    loadingStageLabel,
+    loadingContext,
+    generationLog,
   } = useStudySession(user, updateUser);
 
   const clearReviewQuery = useCallback(() => {
@@ -649,7 +755,15 @@ const StudyPage = () => {
   }, []);
 
   if ((loading && mode !== "study") || (reviewLoading && mode === 'config')) {
-    return <LoadingState vocabCards={loadingFlashcards} onLoadMore={handleLoadMoreFlashcards} />;
+    return (
+      <LoadingState
+        vocabCards={loadingFlashcards}
+        onLoadMore={handleLoadMoreFlashcards}
+        progressPercent={loadingProgress}
+        progressLabel={loadingStageLabel}
+        loadingContext={loadingContext}
+      />
+    );
   }
 
   if (error && mode !== "study") {
@@ -701,6 +815,7 @@ const StudyPage = () => {
           onAnswer={handleAnswer}
           onFinish={finishStudy}
           onRestart={restart}
+          generationLog={generationLog}
         />
       );
 
@@ -725,6 +840,14 @@ const styles = {
     padding: "24px",
     minHeight: "400px",
     textAlign: "center",
+  },
+  loadingProgressPanel: {
+    width: '100%',
+    maxWidth: '520px',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    gap: '6px'
   },
   spinner: {
     width: "40px",
@@ -961,6 +1084,46 @@ const styles = {
     maxWidth: "960px",
     margin: "0 auto",
     padding: "24px 16px 48px",
+  },
+  generationSummary: {
+    marginBottom: '20px',
+    padding: '18px',
+    borderRadius: '16px',
+    background: 'var(--surface-soft)',
+    border: '1px solid var(--surface-border)',
+    boxShadow: '0 12px 24px rgba(15, 23, 42, 0.12)'
+  },
+  generationSummaryHeader: {
+    fontWeight: 700,
+    fontSize: '16px',
+    color: 'var(--text-primary)',
+    marginBottom: '12px'
+  },
+  generationSummaryBody: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px'
+  },
+  generationSummaryRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: '8px'
+  },
+  generationSummaryType: {
+    fontWeight: 700,
+    color: 'var(--accent-strong)'
+  },
+  generationSummaryStats: {
+    display: 'flex',
+    gap: '10px',
+    fontSize: '13px',
+    color: 'var(--text-secondary)'
+  },
+  generationSummaryFooter: {
+    marginTop: '10px',
+    fontSize: '13px',
+    color: 'var(--text-secondary)'
   },
   studyHeader: {
     display: "flex",
