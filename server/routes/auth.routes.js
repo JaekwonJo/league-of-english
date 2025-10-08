@@ -34,6 +34,14 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ message: '이름을 입력해 주세요.' });
     }
 
+    const normalizedPassword = String(password || '');
+    if (normalizedPassword.length < 8) {
+      return res.status(400).json({ message: '비밀번호는 8자 이상 입력해 주세요.' });
+    }
+    if (!/[A-Za-z]/.test(normalizedPassword) || !/[0-9]/.test(normalizedPassword)) {
+      return res.status(400).json({ message: '비밀번호는 영문과 숫자를 포함해야 합니다.' });
+    }
+
     const normalizedSchool = String(school || '').trim() || 'League of English';
 
     const parsedGrade = Number(grade);
@@ -57,13 +65,27 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ message: '이미 존재하는 아이디 또는 이메일입니다.' });
     }
 
-    const hashedPassword = await hashPassword(password);
+    const hashedPassword = await hashPassword(normalizedPassword);
 
-    const result = await database.run(
-      `INSERT INTO users (username, password_hash, email, name, school, grade, role, email_verified)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
-      [trimmedUsername, hashedPassword, normalizedEmail, trimmedName, normalizedSchool, parsedGrade, role]
-    );
+    let result;
+    try {
+      result = await database.run(
+        `INSERT INTO users (username, password_hash, email, name, school, grade, role, membership, email_verified)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+        [trimmedUsername, hashedPassword, normalizedEmail, trimmedName, normalizedSchool, parsedGrade, role || 'student', 'free']
+      );
+    } catch (dbError) {
+      const dbMessage = String(dbError?.message || '');
+      if (dbMessage.includes('users.password')) {
+        result = await database.run(
+          `INSERT INTO users (username, password, password_hash, email, name, school, grade, role, membership, email_verified)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+          [trimmedUsername, hashedPassword, hashedPassword, normalizedEmail, trimmedName, normalizedSchool, parsedGrade, role || 'student', 'free']
+        );
+      } else {
+        throw dbError;
+      }
+    }
 
     await logAuthEvent({
       userId: result.id || null,
@@ -131,8 +153,31 @@ router.post('/login', async (req, res) => {
     }
 
     const token = generateToken(user);
-    delete user.password_hash;
-    delete user.password;
+
+    try {
+      await database.run(
+        `UPDATE users
+            SET last_login_at = CURRENT_TIMESTAMP,
+                last_login_ip = ?,
+                login_count = COALESCE(login_count, 0) + 1,
+                updated_at = CURRENT_TIMESTAMP
+          WHERE id = ?`,
+        [req.ip, user.id]
+      );
+    } catch (updateError) {
+      console.warn('[auth] failed to update login metadata:', updateError?.message || updateError);
+    }
+
+    const sanitizedUser = await database.get(
+      `SELECT id, username, email, name, school, grade, role, membership, membership_expires_at,
+              daily_limit, used_today, tier, points, last_login_at, login_count, created_at, updated_at
+         FROM users
+        WHERE id = ?`,
+      [user.id]
+    );
+
+    delete sanitizedUser.password_hash;
+    delete sanitizedUser.password;
 
     await logAuthEvent({
       userId: user.id,
@@ -140,10 +185,10 @@ router.post('/login', async (req, res) => {
       eventType: EVENT_TYPES.LOGIN,
       ipAddress: req.ip,
       userAgent: req.headers['user-agent'] || '',
-      metadata: { role: user.role, membership: user.membership, success: true }
+      metadata: { role: sanitizedUser.role, membership: sanitizedUser.membership, success: true }
     });
 
-    res.json({ message: '로그인 성공', token, user });
+    res.json({ message: '로그인 성공', token, user: sanitizedUser });
   } catch (error) {
     console.error('[auth] login error:', error);
     res.status(500).json({ message: '서버 오류가 발생했습니다.' });

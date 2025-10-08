@@ -101,6 +101,24 @@ async function recordStudySession(userId, rawResults = []) {
   const stats = await getUserStats(numericUserId);
   const rank = await getUserRank(numericUserId);
 
+  try {
+    await database.run(
+      `INSERT INTO study_session_logs (user_id, total_problems, correct, incorrect, accuracy, points_delta, total_points_after)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        numericUserId,
+        results.length,
+        correct,
+        incorrect,
+        results.length ? Math.round((correct / results.length) * 1000) / 10 : 0,
+        delta,
+        totalPoints
+      ]
+    );
+  } catch (logError) {
+    console.warn('[studyService] failed to log study session:', logError?.message || logError);
+  }
+
   return {
     summary: {
       total: results.length,
@@ -141,14 +159,33 @@ async function getUserStats(userId) {
   const accuracy = totalProblems ? Math.round((totalCorrect / totalProblems) * 1000) / 10 : 0;
 
   const sessionsRow = await database.get(
-    "SELECT COUNT(DISTINCT DATE(created_at)) AS sessions FROM study_records WHERE user_id = ?",
+    'SELECT COUNT(*) AS sessions FROM study_session_logs WHERE user_id = ?',
     [numericUserId]
   );
 
   const weeklyRow = await database.get(
-    "SELECT COUNT(DISTINCT DATE(created_at)) AS sessions FROM study_records WHERE user_id = ? AND created_at >= datetime('now', '-7 days')",
+    "SELECT COUNT(*) AS sessions FROM study_session_logs WHERE user_id = ? AND created_at >= datetime('now', '-7 days')",
     [numericUserId]
   );
+
+  let totalSessions = Number(sessionsRow?.sessions) || 0;
+  let weeklySessions = Number(weeklyRow?.sessions) || 0;
+
+  if (totalSessions === 0) {
+    const legacySessions = await database.get(
+      "SELECT COUNT(DISTINCT DATE(created_at)) AS sessions FROM study_records WHERE user_id = ?",
+      [numericUserId]
+    );
+    totalSessions = Number(legacySessions?.sessions) || 0;
+  }
+
+  if (weeklySessions === 0) {
+    const legacyWeekly = await database.get(
+      "SELECT COUNT(DISTINCT DATE(created_at)) AS sessions FROM study_records WHERE user_id = ? AND created_at >= datetime('now', '-7 days')",
+      [numericUserId]
+    );
+    weeklySessions = Number(legacyWeekly?.sessions) || 0;
+  }
 
   const typeRows = await database.all(
     `SELECT p.type AS type,
@@ -179,8 +216,8 @@ async function getUserStats(userId) {
     totalProblems,
     totalCorrect,
     accuracy,
-    totalSessions: Number(sessionsRow?.sessions) || 0,
-    weeklySessions: Number(weeklyRow?.sessions) || 0,
+    totalSessions,
+    weeklySessions,
     perType
   };
 }

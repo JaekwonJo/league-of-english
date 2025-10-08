@@ -1,3 +1,10 @@
+## 2025-10-11 (auth hardening + study session audit)
+- Issue: 회원가입 시 약한 비밀번호도 통과했고, 로그인/학습 기록이 흩어져 있어 접속 이력이나 세션 요약을 추적하기 어려웠어요.
+- Cause: `users` 테이블에 로그인 메타데이터가 없고, 학습 결과는 문제별 레코드만 남겨 세션 단위 통계가 빈약했습니다.
+- Fix: 비밀번호 복잡도 검사를 추가하고, 로그인 성공 시 `last_login_at`·`last_login_ip`·`login_count`를 업데이트하도록 수정했어요. 또한 `study_session_logs` 테이블을 도입해 각 세션의 총 정답 수·점수 변화를 기록하고, 프로필 통계가 이 로그를 활용하도록 바꿨어요.
+- Files: server/routes/auth.routes.js, server/services/studyService.js, server/models/database.js, PROJECT_STATE.md.
+- Verification: `npm test`
+
 ## 2025-10-10 (study order toggle + friendly errors)
 - Issue: 학습/분석 화면에서 오류가 발생해도 로그를 확인하기 어려웠고, 문제 순서가 항상 지문 순서를 따라가 사용자 선택권이 없었습니다.
 - Cause: StudyPage/AnalysisPage가 단순 문자열 에러만 노출했고, `/generate/csat-set`은 문제 순서를 셔플하지 않았어요.

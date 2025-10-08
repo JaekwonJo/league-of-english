@@ -126,6 +126,20 @@ class Database {
           FOREIGN KEY (problem_id) REFERENCES problems(id)
         )`,
 
+        // study_session_logs
+        `CREATE TABLE IF NOT EXISTS study_session_logs (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL,
+          total_problems INTEGER NOT NULL,
+          correct INTEGER NOT NULL,
+          incorrect INTEGER NOT NULL,
+          accuracy REAL NOT NULL,
+          points_delta INTEGER NOT NULL,
+          total_points_after INTEGER NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id)
+        )`,
+
         // problem_generations
         `CREATE TABLE IF NOT EXISTS problem_generations (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -235,6 +249,28 @@ class Database {
           UNIQUE(document_id, passage_number, variant_index, user_id, action)
         )`,
 
+        // document visibility rules
+        `CREATE TABLE IF NOT EXISTS document_visibility (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          document_id INTEGER NOT NULL,
+          visibility_type TEXT NOT NULL CHECK (visibility_type IN ('public','school','grade','student')),
+          value TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (document_id) REFERENCES documents(id)
+        )`,
+
+        `CREATE TABLE IF NOT EXISTS inquiries (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL,
+          subject TEXT NOT NULL,
+          message TEXT NOT NULL,
+          status TEXT DEFAULT 'pending',
+          admin_reply TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id)
+        )`,
+
         // email_verifications
         `CREATE TABLE IF NOT EXISTS email_verifications (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -293,6 +329,9 @@ class Database {
         `ALTER TABLE passage_analyses ADD COLUMN visibility_scope TEXT DEFAULT 'public'`,
         `ALTER TABLE passage_analyses ADD COLUMN variants TEXT`,
         `ALTER TABLE users ADD COLUMN email_verified BOOLEAN DEFAULT 0`,
+        `ALTER TABLE users ADD COLUMN last_login_at DATETIME`,
+        `ALTER TABLE users ADD COLUMN last_login_ip TEXT`,
+        `ALTER TABLE users ADD COLUMN login_count INTEGER DEFAULT 0`,
         `ALTER TABLE analysis_feedback ADD COLUMN status TEXT DEFAULT 'pending'`,
         `ALTER TABLE analysis_feedback ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP`,
         `ALTER TABLE email_verifications ADD COLUMN verified_at DATETIME`,
