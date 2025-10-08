@@ -448,102 +448,106 @@ const getTimeLimitSeconds = useCallback(() => {
         </p>
       </header>
 
-      {setsLoading ? (
-        <div style={styles.notice}>단어장을 불러오는 중이에요...</div>
-      ) : setsError ? (
-        <div style={{ ...styles.notice, color: 'var(--danger)' }}>{setsError}</div>
-      ) : (
-        <section style={styles.section}>
-          <h2 style={styles.sectionTitle}>1️⃣ 단어장 고르기</h2>
-          <div style={styles.setGrid}>
-            {sets.map((set) => {
-              const isActive = selectedSet?.id === set.id;
-              return (
-                <button
-                  key={set.id}
-                  type="button"
-                  style={{
-                    ...styles.setCard,
-                    borderColor: isActive ? 'var(--color-blue-500)' : 'transparent',
-                    boxShadow: isActive ? '0 12px 32px rgba(52, 118, 246, 0.25)' : styles.setCard.boxShadow
-                  }}
-                  onClick={() => handleSelectSet(set)}
-                >
-                  <span style={styles.setTitle}>{set.title}</span>
-                  <span style={styles.setMeta}>총 {set.totalDays} Day / {set.totalWords} 단어</span>
-                  <span style={styles.setMeta}>최근 업로드: {new Date(set.createdAt).toLocaleDateString()}</span>
-                  <div style={styles.previewWords}>
-                    {set.preview?.map((day) => (
-                      <div key={day.key} style={styles.previewDay}>
-                        <strong>{day.key}</strong>
-                        <span>{day.count} 단어</span>
-                        <span style={{ fontStyle: 'italic', color: 'var(--text-muted)' }}>미리보기는 시험에서 확인해요!</span>
-                      </div>
-                    ))}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
-      {message && <div style={styles.notice}>{message}</div>}
-      {error && <div style={{ ...styles.notice, color: 'var(--danger)' }}>{error}</div>}
-
-      {selectedSet && (
-        <section style={styles.section}>
-          <h2 style={styles.sectionTitle}>2️⃣ Day 선택 & 단어 미리보기</h2>
-          {daysLoading ? (
-            <div style={styles.notice}>Day 정보를 불러오는 중이에요...</div>
+      {!quizState.active && (
+        <>
+          {setsLoading ? (
+            <div style={styles.notice}>단어장을 불러오는 중이에요...</div>
+          ) : setsError ? (
+            <div style={{ ...styles.notice, color: 'var(--danger)' }}>{setsError}</div>
           ) : (
-            <div style={styles.dayGrid}>
-              {selectedSet.days?.map((day) => {
-                const isSelected = day.key === selectedDayKey;
-                return (
-                  <article
-                    key={day.key}
-                    style={{
-                      ...styles.dayCard,
-                      borderColor: isSelected ? 'var(--color-green-500)' : 'transparent',
-                      boxShadow: isSelected ? '0 10px 26px rgba(59, 201, 105, 0.25)' : styles.dayCard.boxShadow
-                    }}
-                    onClick={() => {
-                      setSelectedDayKey(day.key);
-                      resetQuizState();
-                      setMessage('단어장을 훑어본 뒤, 아래에서 바로 테스트를 시작해 보세요!');
-                    }}
-                  >
-                    <div style={styles.dayHeader}>
-                      <strong>{day.label}</strong>
-                      <span>{day.count} 단어</span>
-                    </div>
-                    <div style={styles.daySummary}>
-                      총 {day.count}개의 단어가 숨어 있어요. 시험에서 뜻을 맞혀볼까요?
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
+            <section style={styles.section}>
+              <h2 style={styles.sectionTitle}>1️⃣ 단어장 고르기</h2>
+              <div style={styles.setGrid}>
+                {sets.map((set) => {
+                  const isActive = selectedSet?.id === set.id;
+                  return (
+                    <button
+                      key={set.id}
+                      type="button"
+                      style={{
+                        ...styles.setCard,
+                        borderColor: isActive ? 'var(--color-blue-500)' : 'transparent',
+                        boxShadow: isActive ? '0 12px 32px rgba(52, 118, 246, 0.25)' : styles.setCard.boxShadow
+                      }}
+                      onClick={() => handleSelectSet(set)}
+                    >
+                      <span style={styles.setTitle}>{set.title}</span>
+                      <span style={styles.setMeta}>총 {set.totalDays} Day / {set.totalWords} 단어</span>
+                      <span style={styles.setMeta}>최근 업로드: {new Date(set.createdAt).toLocaleDateString()}</span>
+                      <div style={styles.previewWords}>
+                        {set.preview?.map((day) => (
+                          <div key={day.key} style={styles.previewDay}>
+                            <strong>{day.key}</strong>
+                            <span>{day.count} 단어</span>
+                            <span style={{ fontStyle: 'italic', color: 'var(--text-muted)' }}>미리보기는 시험에서 확인해요!</span>
+                          </div>
+                        ))}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
           )}
 
-          {activeDay && !quizState.active && (
-            <div style={styles.actionBar}>
-              <div>
-                <h3 style={styles.actionTitle}>📝 {activeDay.label} | {activeDay.count}개 단어</h3>
-                <p style={styles.actionHint}>아래 버튼을 누르면 무작위 30문항 시험이 시작돼요!</p>
-              </div>
-              <button
-                type="button"
-                style={styles.primaryButton}
-                onClick={handleStartQuiz}
-                disabled={quizState.loading}
-              >
-                {quizState.loading ? '문제를 준비 중...' : 'Day 시험 시작하기'}
-              </button>
-            </div>
+          {message && <div style={styles.notice}>{message}</div>}
+          {error && <div style={{ ...styles.notice, color: 'var(--danger)' }}>{error}</div>}
+
+          {selectedSet && (
+            <section style={styles.section}>
+              <h2 style={styles.sectionTitle}>2️⃣ Day 선택 & 단어 미리보기</h2>
+              {daysLoading ? (
+                <div style={styles.notice}>Day 정보를 불러오는 중이에요...</div>
+              ) : (
+                <div style={styles.dayGrid}>
+                  {selectedSet.days?.map((day) => {
+                    const isSelected = day.key === selectedDayKey;
+                    return (
+                      <article
+                        key={day.key}
+                        style={{
+                          ...styles.dayCard,
+                          borderColor: isSelected ? 'var(--color-green-500)' : 'transparent',
+                          boxShadow: isSelected ? '0 10px 26px rgba(59, 201, 105, 0.25)' : styles.dayCard.boxShadow
+                        }}
+                        onClick={() => {
+                          setSelectedDayKey(day.key);
+                          resetQuizState();
+                          setMessage('단어장을 훑어본 뒤, 아래에서 바로 테스트를 시작해 보세요!');
+                        }}
+                      >
+                        <div style={styles.dayHeader}>
+                          <strong>{day.label}</strong>
+                          <span>{day.count} 단어</span>
+                        </div>
+                        <div style={styles.daySummary}>
+                          총 {day.count}개의 단어가 숨어 있어요. 시험에서 뜻을 맞혀볼까요?
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              )}
+
+              {activeDay && (
+                <div style={styles.actionBar}>
+                  <div>
+                    <h3 style={styles.actionTitle}>📝 {activeDay.label} | {activeDay.count}개 단어</h3>
+                    <p style={styles.actionHint}>아래 버튼을 누르면 무작위 30문항 시험이 시작돼요!</p>
+                  </div>
+                  <button
+                    type="button"
+                    style={styles.primaryButton}
+                    onClick={handleStartQuiz}
+                    disabled={quizState.loading}
+                  >
+                    {quizState.loading ? '문제를 준비 중...' : 'Day 시험 시작하기'}
+                  </button>
+                </div>
+              )}
+            </section>
           )}
-        </section>
+        </>
       )}
 
       {quizState.active && quizState.data && (
