@@ -497,7 +497,7 @@ const styles = {
     alignItems: 'center',
     marginBottom: '15px',
     fontSize: '16px',
-    color: 'var(--color-slate-350)',
+    color: 'var(--text-muted)',
     fontWeight: '600'
   },
   progressBar: {
@@ -538,7 +538,7 @@ const styles = {
     padding: '18px',
     borderRadius: '16px',
     background: 'rgba(15, 23, 42, 0.6)',
-    color: 'var(--color-slate-350)',
+    color: 'var(--text-muted)',
     textAlign: 'center'
   },
   reviewQueueSection: {
@@ -766,7 +766,7 @@ const styles = {
   membershipLabel: {
     display: 'block',
     fontSize: '13px',
-    color: 'var(--color-slate-300)'
+    color: 'var(--text-muted)'
   },
   membershipValue: {
     fontSize: '18px',

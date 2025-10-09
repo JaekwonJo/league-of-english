@@ -332,7 +332,7 @@ const AnalysisPage = () => {
             </button>
           ))}
         </div>
-        {generating && <span style={{ color: 'var(--color-slate-500)' }}>AI가 분석본을 정성껏 만드는 중이에요... ⏳</span>}
+        {generating && <span style={{ color: 'var(--text-secondary)' }}>AI가 분석본을 정성껏 만드는 중이에요... ⏳</span>}
       </div>
     );
   };
@@ -418,7 +418,7 @@ const AnalysisPage = () => {
       <div style={analysisStyles.modalOverlay}>
         <div style={analysisStyles.modalContentSmall}>
           <h3 style={analysisStyles.modalTitle}>🚨 신고하기</h3>
-          <p style={{ color: 'var(--color-slate-500)', marginTop: 0 }}>
+          <p style={{ color: 'var(--text-secondary)', marginTop: 0 }}>
             어떤 부분이 이상했는지 자세히 알려주시면, 관리자 선생님이 빠르게 확인할 수 있어요.
           </p>
           <textarea
@@ -473,7 +473,7 @@ const AnalysisPage = () => {
       const disabled = slots <= 0;
       return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-end' }}>
-          <span style={{ fontSize: '12px', color: 'var(--color-slate-300)' }}>
+          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
             {entry.variantCount || 0}/2 분석본
           </span>
           <div style={{ display: 'flex', gap: '6px' }}>
@@ -693,7 +693,7 @@ const AnalysisPage = () => {
 
           {activeVariant ? (
             <>
-              <p style={{ color: 'var(--color-slate-500)', marginBottom: '12px' }}>
+              <p style={{ color: 'var(--text-secondary)', marginBottom: '12px' }}>
                 생성 시각: {new Date(activeVariant.generatedAt || Date.now()).toLocaleString()} · AI가 사랑을 담아 만든 분석본이에요 💡
               </p>
               {renderFeedbackBar(activeVariant)}

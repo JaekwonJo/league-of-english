@@ -37,7 +37,7 @@ export const headerStyles = {
     borderBottom: '1px solid var(--border-subtle)'
   },
   title: {
-    color: 'var(--color-slate-800)',
+    color: 'var(--text-primary)',
     margin: '0 0 10px 0',
     fontSize: '1.5rem'
   },
@@ -46,19 +46,19 @@ export const headerStyles = {
     border: 'none',
     fontSize: '20px',
     cursor: 'pointer',
-    color: 'var(--color-slate-500)',
+    color: 'var(--text-secondary)',
     padding: '5px'
   },
   documentInfo: {
     marginTop: '10px'
   },
   documentTitle: {
-    color: 'var(--color-slate-800)',
+    color: 'var(--text-primary)',
     margin: '0 0 5px 0',
     fontSize: '1.1rem'
   },
   documentMeta: {
-    color: 'var(--color-slate-500)',
+    color: 'var(--text-secondary)',
     margin: 0,
     fontSize: '14px'
   }
@@ -94,7 +94,7 @@ export const loadingStyles = {
     alignItems: 'center',
     justifyContent: 'center',
     padding: '60px 30px',
-    color: 'var(--color-slate-500)'
+    color: 'var(--text-secondary)'
   },
   spinner: {
     width: '40px',
@@ -116,7 +116,7 @@ export const statusStyles = {
   info: {
     padding: '30px',
     textAlign: 'center',
-    color: 'var(--color-slate-500)'
+    color: 'var(--text-secondary)'
   },
   cachedBadge: {
     background: 'var(--accent-primary-muted)',
@@ -154,7 +154,7 @@ export const navigationStyles = {
     cursor: 'pointer'
   },
   pageInfo: {
-    color: 'var(--color-slate-500)',
+    color: 'var(--text-secondary)',
     fontSize: '14px'
   }
 };

@@ -128,18 +128,18 @@ const styles = {
   },
   sentenceEnglish: {
     fontSize: '16px',
-    color: 'var(--color-slate-800)',
+    color: 'var(--text-primary)',
     marginBottom: '10px',
     fontWeight: '500'
   },
   sentenceTranslation: {
     fontSize: '14px',
-    color: 'var(--color-slate-600)',
+    color: 'var(--text-secondary)',
     marginBottom: '8px'
   },
   sentenceMeaning: {
     fontSize: '14px',
-    color: 'var(--color-slate-500)'
+    color: 'var(--text-secondary)'
   },
   deepAnalysisBox: {
     background: 'var(--surface-soft-strong)',
@@ -163,12 +163,12 @@ const styles = {
   expressionTitle: {
     fontSize: '16px',
     fontWeight: 'bold',
-    color: 'var(--color-slate-800)',
+    color: 'var(--text-primary)',
     marginBottom: '8px'
   },
   expressionMeaning: {
     fontSize: '14px',
-    color: 'var(--color-slate-600)',
+    color: 'var(--text-secondary)',
     marginBottom: '10px'
   },
   backgroundBox: {

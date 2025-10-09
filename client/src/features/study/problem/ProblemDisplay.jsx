@@ -248,7 +248,7 @@ const ProblemDisplay = ({
       lineHeight: 1.7,
     },
     blank: { color: 'var(--accent-primary-strong)', fontWeight: 700 },
-    meta: { color: 'var(--color-slate-400)', fontSize: '14px', marginBottom: '12px' },
+    meta: { color: 'var(--text-muted)', fontSize: '14px', marginBottom: '12px' },
   }), []);
 
   const sentencesBlock = Array.isArray(effectiveProblem.sentences) && effectiveProblem.sentences.length > 0 && (

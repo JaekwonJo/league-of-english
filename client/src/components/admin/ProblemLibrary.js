@@ -551,7 +551,7 @@ const styles = {
   },
   subtitle: {
     margin: 0,
-    color: 'var(--color-slate-400)'
+    color: 'var(--text-muted)'
   },
   documentSelectWrapper: {
     minWidth: '220px',
@@ -604,7 +604,7 @@ const styles = {
     borderRadius: '12px',
     border: '1px solid rgba(148, 163, 184, 0.35)',
     background: 'rgba(15, 23, 42, 0.4)',
-    color: 'var(--color-slate-300)',
+    color: 'var(--text-muted)',
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
@@ -633,7 +633,7 @@ const styles = {
     borderRadius: '10px',
     border: '1px solid rgba(148, 163, 184, 0.35)',
     background: 'rgba(15, 23, 42, 0.4)',
-    color: 'var(--color-slate-300)',
+    color: 'var(--text-muted)',
     cursor: 'pointer',
     fontSize: '13px',
     fontWeight: 600
@@ -683,7 +683,7 @@ const styles = {
   loadingBox: {
     padding: '24px',
     textAlign: 'center',
-    color: 'var(--color-slate-300)'
+    color: 'var(--text-muted)'
   },
   table: {
     width: '100%',
@@ -705,7 +705,7 @@ const styles = {
   },
   tdSource: {
     padding: '12px',
-    color: 'var(--color-slate-350)',
+    color: 'var(--text-muted)',
     width: '220px'
   },
   tdNote: {
@@ -720,7 +720,7 @@ const styles = {
   notePreview: {
     marginBottom: '8px',
     fontSize: '13px',
-    color: 'var(--color-slate-300)',
+    color: 'var(--text-muted)',
     minHeight: '32px'
   },
   noteButton: {
@@ -750,7 +750,7 @@ const styles = {
   },
   exportHint: {
     margin: 0,
-    color: 'var(--color-slate-400)',
+    color: 'var(--text-muted)',
     fontSize: '13px'
   },
   exportCounts: {
@@ -765,7 +765,7 @@ const styles = {
   },
   exportLabel: {
     fontSize: '13px',
-    color: 'var(--color-slate-300)'
+    color: 'var(--text-muted)'
   },
   exportInput: {
     padding: '10px',
@@ -776,7 +776,7 @@ const styles = {
   },
   exportMax: {
     fontSize: '12px',
-    color: 'var(--color-slate-400)'
+    color: 'var(--text-muted)'
   },
   exportFooter: {
     display: 'flex',
@@ -790,7 +790,7 @@ const styles = {
     alignItems: 'center',
     gap: '8px',
     fontSize: '13px',
-    color: 'var(--color-slate-300)'
+    color: 'var(--text-muted)'
   },
   exportSummary: {
     color: 'var(--accent-primary-lighter)',

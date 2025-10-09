@@ -130,13 +130,13 @@ const styles = {
   },
   title: {
     fontSize: '28px',
-    color: 'var(--color-slate-850)',
+    color: 'var(--text-primary)',
     marginBottom: '20px',
     textAlign: 'center'
   },
   message: {
     fontSize: '16px',
-    color: 'var(--color-slate-500)',
+    color: 'var(--text-secondary)',
     textAlign: 'center',
     marginBottom: '30px'
   },
@@ -175,7 +175,7 @@ const styles = {
   buttonSecondary: {
     padding: '12px 24px',
     background: 'var(--surface-soft-muted)',
-    color: 'var(--color-slate-850)',
+    color: 'var(--text-primary)',
     border: 'none',
     borderRadius: '10px',
     fontSize: '16px',

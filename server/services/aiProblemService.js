@@ -97,7 +97,8 @@ const {
   getManualExcerpt: getSummaryManualExcerpt,
   buildPrompt: buildSummaryPrompt,
   coerceSummaryProblem,
-  validateSummaryProblem
+  validateSummaryProblem,
+  deriveSummaryDirectives
 } = require("../utils/summaryTemplate");
 
 const {
@@ -1261,13 +1262,17 @@ class AIProblemService {
       if (!passage) continue;
       let success = false;
       let attempts = 0;
-      while (!success && attempts < 3) {
+      let lastFailure = '';
+      const variantSeed = `doc${documentId}_p${i}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+      while (!success && attempts < 5) {
         attempts += 1;
         try {
           const prompt = buildSummaryPrompt({
             passage,
             docTitle,
-            manualExcerpt
+            manualExcerpt,
+            variantTag: `${variantSeed}_t${attempts}`,
+            extraDirectives: deriveSummaryDirectives(lastFailure)
           });
           const response = await this.callChatCompletion({
             model: "gpt-4o-mini",
@@ -1291,9 +1296,11 @@ class AIProblemService {
           problem.metadata.documentId = documentId;
           results.push(problem);
           success = true;
+          lastFailure = '';
         } catch (error) {
-          console.warn("[ai-summary] generation failed:", error?.message || error);
-          if (attempts >= 3) {
+          lastFailure = error?.message || String(error);
+          console.warn("[ai-summary] generation failed:", lastFailure);
+          if (attempts >= 5) {
             throw error;
           }
         }

@@ -12,7 +12,7 @@ export const adminStyles = {
     marginBottom: '30px'
   },
   title: {
-    color: 'var(--color-slate-800)',
+    color: 'var(--text-primary)',
     margin: 0,
     fontSize: '2rem'
   },
@@ -50,20 +50,20 @@ export const adminStyles = {
     boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)'
   },
   cardTitle: {
-    color: 'var(--color-slate-800)',
+    color: 'var(--text-primary)',
     marginBottom: '25px',
     fontSize: '1.5rem'
   },
   loading: {
     textAlign: 'center',
     padding: '50px',
-    color: 'var(--color-slate-400)',
+    color: 'var(--text-muted)',
     fontSize: '18px'
   },
   emptyState: {
     textAlign: 'center',
     padding: '50px',
-    color: 'var(--color-slate-400)',
+    color: 'var(--text-muted)',
     fontSize: '18px'
   },
   documentsGrid: {
@@ -85,7 +85,7 @@ export const adminStyles = {
     marginBottom: '15px'
   },
   documentTitle: {
-    color: 'var(--color-slate-800)',
+    color: 'var(--text-primary)',
     fontSize: '16px',
     fontWeight: 'bold',
     margin: 0,
@@ -141,7 +141,7 @@ export const adminStyles = {
     fontWeight: 'bold'
   },
   meta: {
-    color: 'var(--color-slate-500)',
+    color: 'var(--text-secondary)',
     fontSize: '14px'
   },
   documentFooter: {
@@ -150,7 +150,7 @@ export const adminStyles = {
     marginTop: '15px'
   },
   date: {
-    color: 'var(--color-slate-400)',
+    color: 'var(--text-muted)',
     fontSize: '12px'
   },
   modal: {
@@ -175,7 +175,7 @@ export const adminStyles = {
     overflow: 'auto'
   },
   modalTitle: {
-    color: 'var(--color-slate-800)',
+    color: 'var(--text-primary)',
     marginBottom: '25px',
     fontSize: '1.4rem'
   },
@@ -195,7 +195,7 @@ export const adminStyles = {
     gap: '15px'
   },
   label: {
-    color: 'var(--color-slate-700)',
+    color: 'var(--text-secondary)',
     fontWeight: 'bold',
     fontSize: '14px'
   },
@@ -214,7 +214,7 @@ export const adminStyles = {
     cursor: 'pointer'
   },
   fileHelp: {
-    color: 'var(--color-slate-500)',
+    color: 'var(--text-secondary)',
     fontSize: '12px'
   },
   modalButtons: {
@@ -225,7 +225,7 @@ export const adminStyles = {
   },
   cancelButton: {
     background: 'var(--surface-soft-muted)',
-    color: 'var(--color-slate-500)',
+    color: 'var(--text-secondary)',
     border: 'none',
     borderRadius: '10px',
     padding: '12px 24px',
@@ -247,7 +247,7 @@ export const adminStyles = {
   categoryTag: {
     display: 'inline-block',
     background: 'var(--border-muted)',
-    color: 'var(--color-slate-700)',
+    color: 'var(--text-secondary)',
     padding: '6px 12px',
     borderRadius: '20px',
     margin: '4px',
@@ -304,13 +304,13 @@ export const adminStyles = {
     flexWrap: 'wrap',
     gap: '12px',
     marginBottom: '12px',
-    color: 'var(--color-slate-500)'
+    color: 'var(--text-secondary)'
   },
   feedbackReason: {
     background: 'var(--surface-soft-strong)',
     borderRadius: '12px',
     padding: '12px',
-    color: 'var(--color-slate-700)',
+    color: 'var(--text-secondary)',
     lineHeight: 1.6,
     marginBottom: '12px'
   },
@@ -329,7 +329,7 @@ export const adminStyles = {
   },
   feedbackActionDismiss: {
     background: 'var(--surface-card)',
-    color: 'var(--color-slate-600)',
+    color: 'var(--text-secondary)',
     border: '1px solid var(--border-muted)',
     borderRadius: '10px',
     padding: '10px 16px',
@@ -339,7 +339,7 @@ export const adminStyles = {
   feedbackEmpty: {
     textAlign: 'center',
     padding: '20px',
-    color: 'var(--color-slate-400)'
+    color: 'var(--text-muted)'
   },
   feedbackError: {
     background: 'var(--danger-surface)',
@@ -382,7 +382,7 @@ export const adminStyles = {
   notificationMeta: {
     display: 'flex',
     justifyContent: 'space-between',
-    color: 'var(--color-slate-500)',
+    color: 'var(--text-secondary)',
     fontSize: '13px'
   },
   notificationType: {
@@ -392,7 +392,7 @@ export const adminStyles = {
     fontStyle: 'italic'
   },
   notificationPayload: {
-    color: 'var(--color-slate-600)',
+    color: 'var(--text-secondary)',
     fontSize: '14px',
     lineHeight: 1.5
   },

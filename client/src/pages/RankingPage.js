@@ -327,7 +327,7 @@ const styles = {
   tab: {
     padding: '12px 24px',
     background: 'rgba(30, 41, 59, 0.8)',
-    color: 'var(--color-slate-400)',
+    color: 'var(--text-muted)',
     border: 'none',
     borderRadius: '12px',
     cursor: 'pointer',
@@ -390,7 +390,7 @@ const styles = {
   rank: {
     fontSize: '18px',
     fontWeight: 'bold',
-    color: 'var(--color-slate-400)',
+    color: 'var(--text-muted)',
     minWidth: '40px'
   },
   userInfo: {
@@ -408,7 +408,7 @@ const styles = {
   },
   userDetails: {
     fontSize: '12px',
-    color: 'var(--color-slate-400)'
+    color: 'var(--text-muted)'
   },
   youBadge: {
     background: 'var(--success)',
@@ -483,7 +483,7 @@ const styles = {
     justifyContent: 'space-between',
     marginBottom: '10px',
     fontSize: '14px',
-    color: 'var(--color-slate-400)'
+    color: 'var(--text-muted)'
   },
   progressBar: {
     height: '10px',
@@ -511,7 +511,7 @@ const styles = {
   },
   noRankDescription: {
     fontSize: '16px',
-    color: 'var(--color-slate-400)',
+    color: 'var(--text-muted)',
     marginBottom: '30px'
   },
   startButton: {
@@ -555,7 +555,7 @@ const styles = {
   },
   tierCardCount: {
     fontSize: '14px',
-    color: 'var(--color-slate-400)'
+    color: 'var(--text-muted)'
   },
   tierProgressBar: {
     height: '6px',

@@ -49,7 +49,7 @@ const styles = {
   },
   savedSessionMetaMuted: {
     fontSize: '12px',
-    color: 'var(--color-slate-400)',
+    color: 'var(--text-muted)',
     marginTop: '4px'
   },
   savedSessionActions: {

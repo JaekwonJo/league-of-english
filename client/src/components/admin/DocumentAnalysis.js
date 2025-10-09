@@ -558,7 +558,7 @@ const DocumentAnalysis = ({ document, onClose }) => {
         <div style={styles.reportOverlay}>
           <div style={styles.reportModal}>
             <h3>🚨 신고하기</h3>
-            <p style={{ color: 'var(--color-slate-500)' }}>
+            <p style={{ color: 'var(--text-secondary)' }}>
               어떤 부분이 이상했는지 자세히 알려주시면, 관리자 선생님이 빠르게 확인할 수 있어요.
             </p>
             <textarea
@@ -618,18 +618,18 @@ const styles = {
   title: {
     margin: 0,
     fontSize: '1.6rem',
-    color: 'var(--color-slate-800)'
+    color: 'var(--text-primary)'
   },
   subtitle: {
     margin: '6px 0 0',
-    color: 'var(--color-slate-500)'
+    color: 'var(--text-secondary)'
   },
   closeButton: {
     border: 'none',
     background: 'none',
     fontSize: '1.1rem',
     cursor: 'pointer',
-    color: 'var(--color-slate-400)'
+    color: 'var(--text-muted)'
   },
   message: {
     background: 'var(--success-surface)',
@@ -680,7 +680,7 @@ const styles = {
     alignItems: 'center',
     gap: 8,
     fontWeight: 600,
-    color: 'var(--color-slate-700)'
+    color: 'var(--text-secondary)'
   },
   badgeGroup: {
     display: 'flex',
@@ -693,7 +693,7 @@ const styles = {
     fontWeight: 600
   },
   passageExcerpt: {
-    color: 'var(--color-slate-500)',
+    color: 'var(--text-secondary)',
     fontSize: 13,
     minHeight: 36
   },
@@ -709,7 +709,7 @@ const styles = {
     borderRadius: 10,
     padding: '10px 12px',
     cursor: 'pointer',
-    color: 'var(--color-slate-600)'
+    color: 'var(--text-secondary)'
   },
   analyzeButton: {
     flex: 1,
@@ -722,7 +722,7 @@ const styles = {
   },
   analyzeButtonDisabled: {
     background: 'var(--surface-soft-strong)',
-    color: 'var(--color-slate-400)',
+    color: 'var(--text-muted)',
     cursor: 'not-allowed'
   },
   batchButton: {
@@ -738,7 +738,7 @@ const styles = {
   },
   batchButtonDisabled: {
     background: 'var(--surface-soft-strong)',
-    color: 'var(--color-slate-400)',
+    color: 'var(--text-muted)',
     cursor: 'not-allowed'
   },
   detailPanel: {
@@ -791,14 +791,14 @@ const styles = {
     background: 'var(--surface-soft)',
     padding: '8px 12px',
     borderRadius: 8,
-    color: 'var(--color-slate-600)'
+    color: 'var(--text-secondary)'
   },
   originalPassage: {
     background: 'var(--surface-soft-strong)',
     padding: '14px',
     borderRadius: 12,
     lineHeight: 1.6,
-    color: 'var(--color-slate-700)'
+    color: 'var(--text-secondary)'
   },
   section: {
     display: 'flex',
@@ -835,10 +835,10 @@ const styles = {
   },
   sentenceEnglish: {
     fontWeight: 600,
-    color: 'var(--color-slate-800)'
+    color: 'var(--text-primary)'
   },
   sentenceBody: {
-    color: 'var(--color-slate-600)',
+    color: 'var(--text-secondary)',
     display: 'flex',
     flexDirection: 'column',
     gap: 6
@@ -853,12 +853,12 @@ const styles = {
   titleList: {
     margin: '6px 0 0 0',
     paddingLeft: 18,
-    color: 'var(--color-slate-600)'
+    color: 'var(--text-secondary)'
   },
   applicationList: {
     margin: 0,
     paddingLeft: 18,
-    color: 'var(--color-slate-600)'
+    color: 'var(--text-secondary)'
   },
   variantTabs: {
     display: 'flex',
@@ -879,7 +879,7 @@ const styles = {
   },
   placeholder: {
     background: 'var(--surface-soft)',
-    color: 'var(--color-slate-500)',
+    color: 'var(--text-secondary)',
     padding: '40px 20px',
     borderRadius: 12,
     textAlign: 'center'
@@ -937,7 +937,7 @@ const styles = {
     borderRadius: 10,
     border: '1px solid var(--border-subtle)',
     background: 'var(--surface-soft)',
-    color: 'var(--color-slate-600)',
+    color: 'var(--text-secondary)',
     cursor: 'pointer'
   },
   metaInfoText: {

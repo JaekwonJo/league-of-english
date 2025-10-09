@@ -41,7 +41,7 @@ const RankPanel = ({ myRank, nearby, rankError }) => (
                   >
                     {entry.isMe ? '나' : entry.name || entry.id}
                   </div>
-                  <div style={{ minWidth: 90, textAlign: 'right', color: 'var(--color-slate-200)' }}>
+                  <div style={{ minWidth: 90, textAlign: 'right', color: 'var(--text-muted)' }}>
                     {(entry.points || 0).toLocaleString()} LP
                   </div>
                 </div>

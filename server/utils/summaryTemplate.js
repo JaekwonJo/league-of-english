@@ -6,6 +6,8 @@ const SUMMARY_QUESTION = "\ub2e4\uc74c \uae00\uc758 \ub0b4\uc6a9\uc744 \ud55c \u
 const CIRCLED_DIGITS = ["\u2460", "\u2461", "\u2462", "\u2463", "\u2464"];
 const EN_DASH = "\u2013";
 
+const { ensureSourceLabel } = require('../services/ai-problem/shared');
+
 let cachedTemplate = null;
 
 function countWords(text = "") {
@@ -40,10 +42,13 @@ function getManualExcerpt(limit = 3600) {
   return cachedTemplate.slice(0, limit);
 }
 
-function buildPrompt({ passage, docTitle, manualExcerpt, variantTag }) {
+function buildPrompt({ passage, docTitle, manualExcerpt, variantTag, extraDirectives = [] }) {
   const clippedPassage = clip(passage, 1800);
   const manualBlock = manualExcerpt ? `Summary template (Korean excerpt):\n${manualExcerpt}\n\n` : "";
   const variantLine = variantTag ? `Variant seed: ${variantTag}` : "";
+  const directives = Array.isArray(extraDirectives)
+    ? extraDirectives.map((item) => String(item || '').trim()).filter(Boolean)
+    : [];
   return [
     "You are an expert CSAT English item writer. Produce exactly ONE summary question with two blanks (A) and (B).",
     manualBlock,
@@ -74,7 +79,10 @@ function buildPrompt({ passage, docTitle, manualExcerpt, variantTag }) {
     "- Exactly one option must satisfy the passage's logic and polarity; the other four must contain distinct defects (narrow, broad, detail, counter-claim, metaphor-literal, role-swap, collocation break, definition).",
     "- Write the explanation in Korean summarising the reason (A)-(B) is correct and naming the main defect of at least one distractor.",
     "- sourceLabel must start with '출처│'.",
-    "- Respond with JSON only (no Markdown fences)."
+    "- Respond with JSON only (no Markdown fences).",
+    directives.length ? "" : null,
+    directives.length ? "Adjustments based on previous validation errors:" : null,
+    ...directives
   ].filter(Boolean).join('\n');
 }
 
@@ -173,11 +181,10 @@ function parseAnswer(value, optionCount) {
 }
 
 function buildSourceLabel(rawSource, context) {
-  const cleaned = String(rawSource || "").trim();
-  if (cleaned.startsWith("\ucd9c\ucc98:")) return cleaned;
-  const docTitle = String(context.docTitle || "").trim();
-  const defaultLabel = docTitle ? `\ucd9c\ucc98: ${docTitle}` : "\ucd9c\ucc98: LoE Source";
-  return cleaned ? `\ucd9c\ucc98: ${cleaned}` : defaultLabel;
+  const docTitle = context && context.docTitle ? String(context.docTitle) : '';
+  const normalized = ensureSourceLabel(rawSource, { docTitle });
+  if (normalized) return normalized;
+  return ensureSourceLabel(null, { docTitle });
 }
 
 function coerceSummaryProblem(raw, context) {
@@ -319,6 +326,69 @@ function validateSummaryProblem(problem) {
   return { valid: issues.length === 0, issues };
 }
 
+function deriveSummaryDirectives(lastFailure = '') {
+  const message = String(lastFailure || '');
+  if (!message) return [];
+
+  const directives = new Set();
+  const lower = message.toLowerCase();
+
+  const add = (line) => {
+    if (line) directives.add(line);
+  };
+
+  if (lower.includes('summary_sentence_blanks')) {
+    add('- SummarySentence must include (A) and (B) exactly once and keep the rest of the sentence grammatical.');
+  }
+  if (lower.includes('summary_sentence_length')) {
+    add('- Rewrite the summary sentence to exactly one sentence of 18-32 words; count the words before returning.');
+  }
+  if (lower.includes('summary_sentence_terminal')) {
+    add('- Finish the summary sentence with a single period and avoid extra sentences.');
+  }
+
+  const leftMatches = [...message.matchAll(/option_(\d+)_left_wordcount/gi)];
+  const rightMatches = [...message.matchAll(/option_(\d+)_right_wordcount/gi)];
+  const leftLabels = leftMatches.map((match) => CIRCLED_DIGITS[Number(match[1]) - 1]).filter(Boolean);
+  const rightLabels = rightMatches.map((match) => CIRCLED_DIGITS[Number(match[1]) - 1]).filter(Boolean);
+  if (leftLabels.length) {
+    add(`- Compress the left phrase in option${leftLabels.length > 1 ? 's' : ''} ${leftLabels.join(', ')} to a natural 1-4 word expression.`);
+  }
+  if (rightLabels.length) {
+    add(`- Keep the right phrase in option${rightLabels.length > 1 ? 's' : ''} ${rightLabels.join(', ')} within 1-4 words while preserving meaning.`);
+  }
+
+  if (lower.includes('option_count')) {
+    add('- Provide exactly five options (①-⑤) in the JSON array.');
+  }
+  const markerMatches = [...message.matchAll(/option_(\d+)_marker/gi)];
+  if (markerMatches.length) {
+    add('- Prefix each option with the matching circled digit (①-⑤).');
+  }
+  if (/option_\d+_dash/i.test(message)) {
+    add('- Use an en dash (–) with spaces: "phrase_A – phrase_B" for every option.');
+  }
+  if (/option_\d+_pair/i.test(message)) {
+    add('- Ensure each option contains both phrases around the en dash (no empty side).');
+  }
+
+  if (lower.includes('explanation_missing') || lower.includes('explanation_language')) {
+    add('- Provide a Korean explanation (at least two sentences) describing why the correct option fits and why distractors fail.');
+  }
+  if (lower.includes('explanation_short')) {
+    add('- Expand the Korean explanation to at least 70 characters with three sentences.');
+  }
+  if (lower.includes('explanation_sentences')) {
+    add('- Make sure the Korean explanation has at least two full sentences.');
+  }
+
+  if (lower.includes('source_missing')) {
+    add("- Set sourceLabel to the format '출처│기관 연도 회차 문항 (pXX)'.");
+  }
+
+  return Array.from(directives);
+}
+
 module.exports = {
   SUMMARY_QUESTION,
   CIRCLED_DIGITS,
@@ -327,5 +397,6 @@ module.exports = {
   getManualExcerpt,
   buildPrompt,
   coerceSummaryProblem,
-  validateSummaryProblem
+  validateSummaryProblem,
+  deriveSummaryDirectives
 };

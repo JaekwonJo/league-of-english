@@ -284,7 +284,7 @@ const styles = {
     fontWeight: 'bold'
   },
   subtitle: {
-    color: 'var(--color-slate-400)',
+    color: 'var(--text-muted)',
     fontSize: '14px',
     margin: 0
   },
@@ -352,7 +352,7 @@ const styles = {
     borderTop: '1px solid rgba(255, 255, 255, 0.1)'
   },
   toggleText: {
-    color: 'var(--color-slate-400)',
+    color: 'var(--text-muted)',
     fontSize: '14px',
     marginRight: '8px'
   },

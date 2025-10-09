@@ -1,3 +1,9 @@
+## 2025-10-17 (summary retry coaching + dark theme contrast)
+- Issue: 요약 문제 생성이 `summary_sentence_length`/`option_*_wordcount` 오류로 반복 실패해 학습 화면이 멈추고, 여러 관리자·분석 화면이 다크 모드에서 거의 검정 텍스트로 표시됐어요.
+- Fix: `summaryTemplate`에 실패 원인을 읽어 맞춤 지시문을 만드는 `deriveSummaryDirectives`를 추가하고, `generateSummary`가 힌트를 적용해 최대 5회 재시도하도록 조정했습니다. 동시에 summary 템플릿용 단위 테스트를 새로 추가했고, 클라이언트 전역 텍스트 색상을 `--text-*` 토큰으로 바꿔 다크 테마 대비를 확보했습니다.
+- Files: server/utils/summaryTemplate.js, server/services/aiProblemService.js, server/tests/summaryTemplate.test.js, client/src/styles/adminStyles.js, client/src/styles/analysis.styles.js, client/src/components/admin/DocumentAnalysis.js, client/src/components/admin/PassageAnalysis*.js, client/src/components/admin/DocumentShareModal.js, client/src/components/study/ScoreHUD.js, client/src/features/study/**/styles.js, README.md, PROJECT_STATE.md.
+- Verification: `npm test`, `CI=true npm --prefix client test -- --watch=false --runInBand`, `npm run lint`.
+
 ## 2025-10-16 (problem feedback ops + cloud session sync)
 - Issue: 학습 화면에서 들어오는 신고는 DB에만 쌓였고, 관리자용 처리판·알림·rate-limit가 없어 품질 대응이 느렸어요. 학습 세션도 로컬 저장만 지원해 브라우저를 바꾸면 이어 풀 수 없었습니다.
 - Fix: `problem_feedback_events`·`admin_notifications`를 추가해 사용자/기기별 피드백 로그와 알림 큐를 만들고, 관리자 페이지에 신고 보드 + 알림 패널을 붙여 바로 완료/보류 처리를 누를 수 있게 했어요. `/api/study/session` 라우트와 `studySessionService`로 학습 스냅샷을 서버에 저장/복구하고 제출 시 자동 정리하도록 만들었습니다. `useStudySession`은 클라우드 동기화와 신고 rate-limit 대응을 함께 처리해요.

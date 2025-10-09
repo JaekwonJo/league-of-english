@@ -81,7 +81,7 @@ export function ProblemFeedbackBoard({
                 {report.reason || '신고 사유가 작성되지 않았습니다.'}
               </div>
               {report.problem?.question && (
-                <div style={{ marginTop: '12px', color: 'var(--color-slate-500)', fontSize: '14px', lineHeight: 1.5 }}>
+                <div style={{ marginTop: '12px', color: 'var(--text-secondary)', fontSize: '14px', lineHeight: 1.5 }}>
                   <strong>문항 미리보기</strong>
                   <div style={{ marginTop: '6px', whiteSpace: 'pre-wrap' }}>
                     {stripHtml(report.problem.question).slice(0, 220)}

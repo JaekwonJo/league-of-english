@@ -1002,35 +1002,35 @@ function StudyPage() {
     const getGradeStyle = (grade) => {
       const styles = {
         'A': { 
-          color: '#10B981', 
+          color: 'var(--success)', 
           gradient: 'from-emerald-500 to-teal-600',
           glow: 'drop-shadow-[0_0_20px_rgba(16,185,129,0.5)]',
           icon: '🏆',
           particles: '✨💎🌟'
         },
         'B': { 
-          color: '#3B82F6', 
+          color: 'var(--accent-primary)', 
           gradient: 'from-blue-500 to-indigo-600',
           glow: 'drop-shadow-[0_0_20px_rgba(59,130,246,0.5)]',
           icon: '🥈',
           particles: '⭐💫🎯'
         },
         'C': { 
-          color: '#F59E0B', 
+          color: 'var(--warning-strong)', 
           gradient: 'from-amber-500 to-orange-600',
           glow: 'drop-shadow-[0_0_20px_rgba(245,158,11,0.5)]',
           icon: '🥉',
           particles: '🔥⚡💪'
         },
         'D': { 
-          color: '#EF4444', 
+          color: 'var(--danger)', 
           gradient: 'from-red-500 to-rose-600',
           glow: 'drop-shadow-[0_0_20px_rgba(239,68,68,0.3)]',
           icon: '📚',
           particles: '🌱💡🚀'
         },
         'F': { 
-          color: '#6B7280', 
+          color: 'var(--text-secondary)', 
           gradient: 'from-gray-500 to-slate-600',
           glow: 'drop-shadow-[0_0_10px_rgba(107,114,128,0.3)]',
           icon: '🎯',

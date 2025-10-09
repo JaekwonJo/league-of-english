@@ -61,6 +61,18 @@ const UploadModal = ({
           </div>
 
           <div style={adminStyles.formGroup}>
+            <label style={adminStyles.label}>문서 유형</label>
+            <select
+              value={uploadForm.type}
+              onChange={(e) => onFormChange('type', e.target.value)}
+              style={adminStyles.input}
+            >
+              <option value="worksheet">읽기 지문 / 문제 생성용</option>
+              <option value="vocabulary">단어장 (Day별 단어 시험)</option>
+            </select>
+          </div>
+
+          <div style={adminStyles.formGroup}>
             <label style={adminStyles.label}>카테고리</label>
             <select
               value={uploadForm.category}
