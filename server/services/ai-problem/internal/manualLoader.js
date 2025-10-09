@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const ROOT_DIR = path.resolve(__dirname, '..', '..', '..');
+const ROOT_DIR = path.resolve(__dirname, '..', '..', '..', '..');
 const PROBLEM_MANUAL_DIR = path.join(ROOT_DIR, 'problem manual');
 const TEMPLATE_DIR = path.join(ROOT_DIR, 'docs', 'problem-templates');
 
