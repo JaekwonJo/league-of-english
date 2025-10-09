@@ -1,3 +1,9 @@
+## 2025-10-13 (status doc sync tidy)
+- Issue: README, PROJECT_STATE, BUILDLOG의 Top 3/Latest update 문구가 제각각이라 어떤 작업이 최우선인지 헷갈렸어요.
+- Fix: PROJECT_STATE의 중복 우선순위 섹션을 `Today’s Top 3 (2025-10-13)` 한 블록으로 정리하고, README "오늘의 Top 3"와 Latest update 문구를 똑같이 맞췄어요. BUILDLOG 맨 윗줄에 이번 정리 내용을 기록했습니다.
+- Files: PROJECT_STATE.md, README.md, BUILDLOG.md.
+- Verification: 문서 검토만 진행했습니다.
+
 ## 2025-10-13 (priority refresh + doc sync)
 - Issue: README, PROJECT_STATE, BUILDLOG에 적힌 우선순위와 Known issues가 제각각이라 팀이 같은 문제를 바라보고 있는지 확신하기 어려웠어요.
 - Fix: PROJECT_STATE에 오늘의 Priorities 섹션을 추가하고, README Top 3와 BUILDLOG 최신 항목을 같은 작업 목록으로 맞췄어요. 손상된 2025-09-19 로그는 복원 필요하다는 메모로 바꿔 다시 확인하도록 안내했습니다.
