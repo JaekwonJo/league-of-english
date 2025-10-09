@@ -1,5 +1,5 @@
 import React from 'react';
-import PassagePickerGrid from '../../../components/shared/PassagePickerGrid';
+import PassagePickerGrid from '../../../../components/shared/PassagePickerGrid';
 import styles from '../configStyles';
 
 const PassageStep = ({

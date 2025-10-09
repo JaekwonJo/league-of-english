@@ -44,16 +44,16 @@ const ProblemDisplay = ({
     setSelectedAnswer(userAnswer ?? '');
   }, [userAnswer, problemIndex]);
 
-  if (!problem) return null;
+  const effectiveProblem = problem || {};
+  const metadata = effectiveProblem.metadata || {};
+  const problemId = Number(effectiveProblem.id);
 
-  const problemId = Number(problem?.id);
-
-  const isOrder = problem.type === 'order';
-  const isInsertion = problem.type === 'insertion';
-  const isGrammar = ['grammar', 'grammar_count', 'grammar_span', 'grammar_multi'].includes(problem.type);
-  const isSummary = problem.type === 'summary';
+  const isOrder = effectiveProblem.type === 'order';
+  const isInsertion = effectiveProblem.type === 'insertion';
+  const isGrammar = ['grammar', 'grammar_count', 'grammar_span', 'grammar_multi'].includes(effectiveProblem.type);
+  const isSummary = effectiveProblem.type === 'summary';
   const isGeneral = !isOrder && !isInsertion && !isGrammar && !isSummary;
-  const isBlank = problem.type === 'blank';
+  const isBlank = effectiveProblem.type === 'blank';
   const isReviewMode = displayMode === 'review';
   const isListMode = displayMode === 'list';
   const shouldShowFeedback = !isReviewMode && Number.isInteger(problemId) && problemId > 0;
@@ -74,7 +74,7 @@ const ProblemDisplay = ({
     ...orderStyles.orderProblemCard
   };
 
-  const rawSourceLabel = problem.sourceLabel || problem.source || problem.metadata?.sourceLabel || problem.metadata?.documentTitle;
+  const rawSourceLabel = effectiveProblem.sourceLabel || effectiveProblem.source || metadata.sourceLabel || metadata.documentTitle;
   const sourceLabel = (() => {
     if (!rawSourceLabel) return '';
     const trimmed = String(rawSourceLabel).trim();
@@ -84,20 +84,20 @@ const ProblemDisplay = ({
     const hasPrefix = /^\s*(출처|Source)\s*[:\u2502|]?/iu.test(trimmed);
     return hasPrefix ? `출처│${cleaned}` : cleaned;
   })();
-  const problemNumber = problem.metadata?.problemNumber;
-  const passageText = problem.mainText || problem.text || '';
-  const generalOptions = Array.isArray(problem.options) ? problem.options : [];
-  const summaryKeywords = Array.isArray(problem.metadata?.keywords)
-    ? problem.metadata.keywords
-    : Array.isArray(problem.keywords)
-    ? problem.keywords
+  const problemNumber = metadata.problemNumber;
+  const passageText = effectiveProblem.mainText || effectiveProblem.text || '';
+  const generalOptions = Array.isArray(effectiveProblem.options) ? effectiveProblem.options : [];
+  const summaryKeywords = Array.isArray(metadata.keywords)
+    ? metadata.keywords
+    : Array.isArray(effectiveProblem.keywords)
+    ? effectiveProblem.keywords
     : [];
-  const summaryPattern = problem.metadata?.summaryPattern || problem.summaryPattern || '';
-  const summarySentence = problem.summarySentence || '';
-  const summarySentenceKor = problem.summarySentenceKor || '';
-  const explanationText = problem.explanation || '';
+  const summaryPattern = metadata.summaryPattern || effectiveProblem.summaryPattern || '';
+  const summarySentence = effectiveProblem.summarySentence || '';
+  const summarySentenceKor = effectiveProblem.summarySentenceKor || '';
+  const explanationText = effectiveProblem.explanation || '';
 
-  const rawCorrectAnswer = reviewMeta?.correctAnswer ?? problem.correctAnswer ?? problem.answer ?? '';
+  const rawCorrectAnswer = reviewMeta?.correctAnswer ?? effectiveProblem.correctAnswer ?? effectiveProblem.answer ?? '';
   const correctIndices = useMemo(() => (
     new Set(
       String(rawCorrectAnswer)
@@ -251,10 +251,10 @@ const ProblemDisplay = ({
     meta: { color: 'var(--color-slate-400)', fontSize: '14px', marginBottom: '12px' },
   }), []);
 
-  const sentencesBlock = Array.isArray(problem.sentences) && problem.sentences.length > 0 && (
+  const sentencesBlock = Array.isArray(effectiveProblem.sentences) && effectiveProblem.sentences.length > 0 && (
     <div style={{ marginBottom: '20px' }}>
       <div style={orderStyles.sentencesLabel}>문장</div>
-      {problem.sentences.map((sent, idx) => (
+      {effectiveProblem.sentences.map((sent, idx) => (
         <div key={idx} style={orderStyles.orderSentence}>
           <strong>{sent.label}.</strong> {sent.text}
         </div>
@@ -283,7 +283,7 @@ const ProblemDisplay = ({
       )}
 
       <div style={orderStyles.orderInstruction}>
-        {renderWithUnderline(problem.question || 'Review the question carefully.')}
+        {renderWithUnderline(effectiveProblem.question || 'Review the question carefully.')}
       </div>
 
       {summarySentence && (
@@ -331,8 +331,8 @@ const ProblemDisplay = ({
       <div style={orderStyles.orderInstruction}>
         Q{totalProblems > 0 ? `.${problemIndex + 1}` : '.'}{' '}
         {isBlank
-          ? renderBlankSegments(problem.question || problem.instruction || '문제를 확인해 주세요.', `question-${problemIndex}`)
-          : renderWithUnderline(problem.question || problem.instruction || '문제를 확인해 주세요.')}
+          ? renderBlankSegments(effectiveProblem.question || effectiveProblem.instruction || '문제를 확인해 주세요.', `question-${problemIndex}`)
+          : renderWithUnderline(effectiveProblem.question || effectiveProblem.instruction || '문제를 확인해 주세요.')}
       </div>
 
       {sentencesBlock}
@@ -443,7 +443,7 @@ const ProblemDisplay = ({
           fontWeight: 700
         }}>
           <span>복습 문항 {problemIndex + 1} / {totalProblems}</span>
-          {problem.type && <span>{problem.type.toUpperCase()}</span>}
+          {effectiveProblem.type && <span>{effectiveProblem.type.toUpperCase()}</span>}
         </div>
         {cardContent}
       </div>
@@ -462,11 +462,15 @@ const ProblemDisplay = ({
           fontWeight: 600
         }}>
           <span>문항 {problemIndex + 1}</span>
-          {problem.type && <span>{problem.type.toUpperCase()}</span>}
+          {effectiveProblem.type && <span>{effectiveProblem.type.toUpperCase()}</span>}
         </div>
         {cardContent}
       </div>
     );
+  }
+
+  if (!problem) {
+    return null;
   }
 
   return (

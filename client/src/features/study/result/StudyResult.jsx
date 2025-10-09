@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useAuth } from '../../../../contexts/AuthContext';
-import { api } from '../../../../services/api.service';
-import tierConfig from '../../../../config/tierConfig.json';
+import { useAuth } from '../../../contexts/AuthContext';
+import { api } from '../../../services/api.service';
+import tierConfig from '../../../config/tierConfig.json';
 import { palette, layoutStyles } from './resultStyles';
 import ResultEffects from './components/ResultEffects';
 import RankPanel from './components/RankPanel';
