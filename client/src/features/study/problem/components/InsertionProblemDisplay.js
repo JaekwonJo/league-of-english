@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { orderStyles } from './problemDisplayStyles';
+import { orderStyles } from '../problemDisplayStyles';
 
 const InsertionProblemDisplay = ({ problem, userAnswer, onAnswer }) => {
   const handleChoiceClick = (choiceNumber) => {
@@ -72,14 +72,13 @@ const InsertionProblemDisplay = ({ problem, userAnswer, onAnswer }) => {
 
 const insertionStyles = {
   container: {
-    background: 'rgba(30, 41, 59, 0.95)',
-    backdropFilter: 'blur(20px)',
-    borderRadius: '25px',
-    padding: '40px',
-    boxShadow: '0 25px 50px rgba(0, 0, 0, 0.3)',
-    border: '1px solid rgba(248, 250, 252, 0.1)',
-    color: 'var(--surface-soft-solid)',
-    lineHeight: '1.8'
+    background: 'var(--surface-card)',
+    borderRadius: '18px',
+    padding: '32px',
+    boxShadow: '0 18px 40px rgba(15, 23, 42, 0.15)',
+    border: '1px solid var(--surface-border)',
+    color: 'var(--text-primary)',
+    lineHeight: 1.7
   },
   questionHeader: {
     marginBottom: '30px',
@@ -88,41 +87,41 @@ const insertionStyles = {
   questionTitle: {
     fontSize: '22px',
     fontWeight: 'bold',
-    color: 'var(--surface-soft-solid)',
+    color: 'var(--text-primary)',
     margin: 0
   },
   givenSentenceSection: {
     marginBottom: '30px',
-    padding: '25px',
-    background: 'rgba(59, 130, 246, 0.1)',
+    padding: '20px',
+    background: 'var(--surface-soft)',
     borderRadius: '15px',
-    border: '2px solid rgba(59, 130, 246, 0.3)'
+    border: '1px solid var(--surface-border)'
   },
   givenSentenceLabel: {
     fontSize: '16px',
     fontWeight: 'bold',
     color: 'var(--accent-primary)',
-    marginBottom: '15px',
+    marginBottom: '12px',
     textAlign: 'center'
   },
   givenSentence: {
     fontSize: '18px',
-    lineHeight: '1.7',
+    lineHeight: 1.7,
     textAlign: 'center',
-    fontWeight: '500',
-    color: 'var(--surface-soft-solid)'
+    fontWeight: 500,
+    color: 'var(--text-primary)'
   },
   mainTextSection: {
     marginBottom: '30px',
-    padding: '30px',
-    background: 'rgba(51, 65, 85, 0.8)',
+    padding: '26px',
+    background: 'var(--surface-soft)',
     borderRadius: '15px',
-    border: '1px solid rgba(248, 250, 252, 0.1)'
+    border: '1px solid var(--surface-border)'
   },
   mainText: {
     fontSize: '17px',
-    lineHeight: '1.8',
-    color: 'var(--surface-soft-solid)',
+    lineHeight: 1.8,
+    color: 'var(--text-primary)',
     whiteSpace: 'pre-wrap'
   },
   choicesSection: {
@@ -138,9 +137,9 @@ const insertionStyles = {
     width: '60px',
     height: '60px',
     borderRadius: '50%',
-    border: '3px solid rgba(248, 250, 252, 0.3)',
-    background: 'rgba(51, 65, 85, 0.8)',
-    color: 'var(--surface-soft-solid)',
+    border: '2px solid var(--surface-border)',
+    background: 'var(--surface-card)',
+    color: 'var(--text-primary)',
     fontSize: '24px',
     fontWeight: 'bold',
     cursor: 'pointer',
@@ -148,12 +147,7 @@ const insertionStyles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    backdropFilter: 'blur(10px)',
-    ':hover': {
-      borderColor: 'var(--accent-primary)',
-      background: 'rgba(59, 130, 246, 0.2)',
-      transform: 'scale(1.1)'
-    }
+    backdropFilter: 'blur(6px)'
   },
   choiceSelected: {
     borderColor: 'var(--success)',
@@ -171,12 +165,11 @@ const insertionStyles = {
   },
   metadataItem: {
     fontSize: '14px',
-    color: 'var(--color-slate-400)',
+    color: 'var(--text-secondary)',
     padding: '8px 16px',
-    background: 'rgba(51, 65, 85, 0.6)',
+    background: 'var(--surface-soft)',
     borderRadius: '20px',
-    border: '1px solid rgba(248, 250, 252, 0.1)',
-    backdropFilter: 'blur(5px)'
+    border: '1px solid var(--surface-border)'
   }
 };
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { orderStyles } from "./problemDisplayStyles";
+import { orderStyles } from "../problemDisplayStyles";
 
 const underlineStyle = {
   textDecoration: "underline",

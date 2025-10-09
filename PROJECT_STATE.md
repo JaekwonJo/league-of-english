@@ -22,7 +22,9 @@
 
 ## Current Stage
 - `aiProblemService`가 메뉴얼 로더·노출 정책·문항 저장소·OpenAI 큐 도우미로 나뉘고, 새 `problemSetService`가 `/generate/csat-set`을 맡아 타입별 진행 로그와 `partial_generation` 정보를 함께 반환합니다.
-- StudyPage가 `LoadingState`·`GenerationSummary`·`ReviewCallout`·`StudyModeView`·`ReviewModeView`로 쪼개져 로딩 UI, 복습 안내, 본문 풀이가 각각 독립된 컴포넌트로 재사용돼요.
+- 학습 프런트가 `features/study` 아래로 재배치돼 설정(`config`), 풀이(`problem`), 결과(`result`)가 각각 전용 훅·스타일·컴포넌트로 나뉘어 재사용성과 경로 구조가 정리됐어요.
+- `StudyConfig`는 API/상태 관리 훅(`useStudyConfig`)과 단계별 뷰(`DocumentStep`·`PassageStep`·`ProblemTypeStep`)로 쪼개져 단계 이동·랜덤 선택·로컬 저장 로직을 한눈에 추적할 수 있습니다.
+- `ProblemDisplay`·`StudyResult`가 옵션/정답/티어 UI를 별도 컴포넌트·스타일로 분리해 리뷰/목록 뷰를 공통으로 쓰고, 복습 카드/랭킹 패널도 재사용 가능한 블록이 됐습니다.
 - Blank 파이프라인이 원문 길이와 문장 수를 검증해 기존의 짧은 캐시 문제를 모두 걸러내고, 새 항목에는 원문 길이/문장 메타를 저장합니다.
 - `problem_exposures`가 정답/오답을 추적하며 틀린 문제는 쿨다운 후 확률적으로 재출제되고, 맞힌 문제는 자동 제외돼요.
 - 홈·프로필·학습 설정 화면에 “복습 대기열” 카드가 추가되어 최근 오답과 바로가기 버튼을 한눈에 볼 수 있습니다.
@@ -46,17 +48,23 @@
 - 학습 설정에서 ‘랜덤/순서대로 풀기’를 고를 수 있고, 서버도 `orderMode` 값에 맞춰 문제 순서를 섞거나 유지합니다.
 - 분석 자료 목록에 단어장도 노출되고 있어요. 어휘 자료는 분석 메뉴에 필요 없으니, 문서 타입을 분리하거나 필터링해야 합니다.
 
-## Today’s Top 3 (2025-10-14)
-1. **빈칸·어휘 검사 완화.** `blank`/`vocabulary` 검증기가 살짝 어긋나도 `partial_generation`만 남도록 재시도·캐시 재활용 정책을 손봐요. (학습 중단 방지)
-2. **학습 화면 피드백 + 대비.** 문제 화면에 👍/🚨 버튼과 라이트·다크 대비 조정을 붙여 품질 신고와 읽기 편함을 같이 챙겨요. (사용성 + 품질 관리)
-3. **Study 리팩토링 마무리.** 새로 쪼갠 StudyMode/ReviewMode 구조에 저장 세션·테스트 커버리지를 연결해 프런트 모듈화를 완성해요. (유지보수성 확보)
+## Today’s Top 3 (2025-10-15)
+1. **학습 세션 저장/복구 붙이기.** 새 `useStudyConfig`·`ResultCard` 구조에 저장된 세션 불러오기/자동 재시작 흐름을 연결하고, 로컬스토리지-API 간 동기화를 검증해요. (세션 손실 방지)
+2. **문제 피드백 UI 연동.** `ProblemDisplay`가 공통 옵션 뷰로 정리됐으니 👍/🚨 버튼, 신고 API, 관리자 알림까지 한 번에 묶어 품질 피드백을 닫아줘요. (콘텐츠 품질 관리)
+3. **프런트 단위 테스트 마련.** `StudyConfig`, `ProblemDisplay`, `ResultCard` 등 새 모듈을 대상으로 렌더/상호작용 테스트를 추가해 리팩토링 안정성을 확보해요. (회귀 방지)
 
 ## Known issues
 - 빈칸 검증기가 여전히 정답 보기를 원문과 완벽히 맞추지 못하면 `partial_generation`만 남기고 중단돼요. 재시도 횟수/허용 오차를 낮춰야 합니다.
 - 어휘 생성기는 본문에 `(A)` 자리 표시자가 없으면 즉시 실패해 "passage missing slot marker (A)" 로그가 쌓이고, 다른 유형까지 함께 빠집니다.
 - 학습 화면에 아직 👍/🚨 문제가 없고, 신고 큐·관리자 알림도 연결되지 않아 품질 피드백 흐름이 막혀 있습니다.
 - 라이트/다크 테마 대비가 부족해 사이드바·카드·분석 섹션이 회색 톤으로 흐릿하게 보입니다.
-- 새 StudyMode/ReviewMode 컴포넌트에 저장 세션/회복 로직과 테스트가 없어 리팩토링 안정성이 보장되지 않습니다.
+- 새 `StudyConfig`·`ProblemDisplay`·`ResultCard` 모듈에 대한 단위 테스트와 스토리 문서가 없어, 후속 변경 시 회귀 여부를 바로 확인하기 어렵습니다.
+
+## Resolved (2025-10-15 - Study 프런트 모듈화 2단계)
+- `client/src/features/study/config`에 `useStudyConfig`와 단계별 뷰(`DocumentStep`·`PassageStep`·`ProblemTypeStep`)를 도입해 문서/지문/유형 선택 로직을 깔끔하게 분리했습니다.
+- `ProblemDisplay`를 `features/study/problem`으로 이사시키고 리뷰/인터랙션 옵션, 텍스트 포매터, 스타일을 별도 모듈로 나눠 모든 유형이 동일한 레이아웃을 공유합니다.
+- `StudyResult`가 카드·랭킹·통계 뷰를 컴포넌트화(`ResultCard`, `RankPanel`, `ResultEffects`)해 티어 UI·문항 요약을 재사용 가능 구조로 재정리했습니다.
+- Verification: `npm run lint`
 
 ## Resolved (2025-10-14 - csat 서비스 모듈화 + study 화면 분리)
 - `aiProblemService`가 manual 로더, 노출 정책, 문제 저장소, OpenAI 큐 도우미로 나뉘고 새 `problemSetService`가 `/generate/csat-set`을 맡아 타입별 진행 로그와 실패 요약을 돌려줍니다.

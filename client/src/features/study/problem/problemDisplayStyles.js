@@ -7,14 +7,14 @@ export const problemDisplayStyles = {
     maxWidth: '860px',
     margin: '0 auto',
     padding: '24px',
-    color: 'var(--border-subtle)'
+    color: 'var(--text-primary)'
   },
   header: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: '20px',
-    color: 'var(--color-slate-400)'
+    color: 'var(--text-secondary)'
   },
   progress: {
     fontSize: '18px',
@@ -25,15 +25,13 @@ export const problemDisplayStyles = {
     fontWeight: 600
   },
   problemCard: {
-    background: 'linear-gradient(135deg, var(--color-slate-850) 0%, var(--color-slate-900) 100%)',
-    color: 'var(--border-muted)',
+    background: 'var(--surface-card)',
+    color: 'var(--text-primary)',
     borderRadius: '20px',
     padding: '32px',
     marginBottom: '20px',
-    borderWidth: '1px',
-    borderStyle: 'solid',
-    borderColor: 'rgba(148, 163, 184, 0.2)',
-    boxShadow: '0 25px 50px rgba(15, 23, 42, 0.4)'
+    border: '1px solid var(--surface-border)',
+    boxShadow: '0 18px 40px rgba(15, 23, 42, 0.12)'
   },
   navigation: {
     display: 'flex',
@@ -42,9 +40,9 @@ export const problemDisplayStyles = {
   },
   navButton: {
     padding: '12px 24px',
-    background: 'var(--color-slate-800)',
-    color: 'var(--color-slate-300)',
-    border: '1px solid var(--color-slate-700)',
+    background: 'var(--surface-soft)',
+    color: 'var(--text-primary)',
+    border: '1px solid var(--surface-border)',
     borderRadius: '10px',
     fontSize: '16px',
     fontWeight: 600,
@@ -75,76 +73,76 @@ export const problemDisplayStyles = {
   },
   missingOptions: {
     padding: '12px 0',
-    color: 'var(--danger-soft)',
+    color: 'var(--danger)',
     fontSize: '14px'
   },
   underlineSpan: {
     textDecoration: 'underline',
-    textDecorationColor: 'var(--warning)',
+    textDecorationColor: 'var(--warning-strong)',
     textDecorationThickness: '3px',
     fontWeight: 'bold',
-    backgroundColor: 'rgba(251, 191, 36, 0.2)',
+    backgroundColor: 'rgba(251, 191, 36, 0.18)',
     padding: '2px 4px',
     borderRadius: '4px',
-    color: 'var(--surface-soft-solid)'
+    color: 'var(--text-primary)'
   }
 };
 
 export const orderStyles = {
   orderProblemCard: {
-    background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(59, 130, 246, 0.08) 100%)',
-    border: '1px solid rgba(99, 102, 241, 0.2)',
-    boxShadow: '0 30px 50px rgba(30, 64, 175, 0.25)'
+    background: 'var(--surface-soft)',
+    border: '1px solid var(--surface-border)',
+    boxShadow: '0 18px 40px rgba(15, 23, 42, 0.15)'
   },
   orderTitleSection: {
-    background: 'linear-gradient(135deg, var(--color-slate-800) 0%, var(--color-slate-850) 100%)',
-    color: 'var(--border-muted)',
+    background: 'var(--surface-card)',
+    color: 'var(--text-primary)',
     padding: '14px 20px',
     borderRadius: '12px',
     marginBottom: '10px',
     fontSize: '15px',
     fontWeight: 600,
-    border: '1px solid var(--color-slate-700)'
+    border: '1px solid var(--surface-border)'
   },
   orderNumberSection: {
-    background: 'linear-gradient(135deg, var(--color-slate-650) 0%, var(--color-slate-900) 100%)',
-    color: 'var(--color-slate-350)',
+    background: 'var(--surface-soft)',
+    color: 'var(--text-secondary)',
     padding: '12px 20px',
     borderRadius: '10px',
     marginBottom: '10px',
     fontSize: '14px',
     fontWeight: 600,
-    border: '1px solid var(--color-slate-600)'
+    border: '1px solid var(--surface-border)'
   },
   orderSourceSection: {
-    background: 'linear-gradient(135deg, var(--color-slate-700) 0%, var(--color-slate-650) 100%)',
-    color: 'var(--color-slate-400)',
+    background: 'var(--surface-soft)',
+    color: 'var(--text-secondary)',
     padding: '12px 20px',
     borderRadius: '10px',
     marginBottom: '16px',
     fontSize: '14px',
     fontWeight: 600,
-    border: '1px solid var(--color-slate-600)'
+    border: '1px solid var(--surface-border)'
   },
   orderInstruction: {
-    background: 'linear-gradient(135deg, var(--color-slate-900) 0%, var(--color-slate-850) 100%)',
-    color: 'var(--surface-soft-solid)',
+    background: 'var(--surface-card)',
+    color: 'var(--text-primary)',
     padding: '20px',
     borderRadius: '16px',
     fontSize: '18px',
     fontWeight: 700,
     textAlign: 'left',
     marginBottom: '24px',
-    border: '1px solid rgba(148, 163, 184, 0.25)'
+    border: '1px solid var(--surface-border)'
   },
   orderGivenContainer: {
     marginBottom: '24px'
   },
   orderGivenText: {
-    background: 'linear-gradient(135deg, var(--color-slate-650) 0%, var(--color-slate-900) 100%)',
-    color: 'var(--border-subtle)',
-    border: '1px solid rgba(71, 85, 105, 0.6)',
-    boxShadow: '0 15px 30px rgba(15, 23, 42, 0.35)',
+    background: 'var(--surface-soft)',
+    color: 'var(--text-primary)',
+    border: '1px solid var(--surface-border)',
+    boxShadow: '0 12px 24px rgba(15, 23, 42, 0.15)',
     padding: '22px',
     borderRadius: '12px',
     fontSize: '15px',
@@ -155,37 +153,35 @@ export const orderStyles = {
     fontSize: '15px',
     fontWeight: 600,
     marginBottom: '12px',
-    color: 'var(--color-slate-400)'
+    color: 'var(--accent-primary)'
   },
   sentencesLabel: {
     fontSize: '16px',
     fontWeight: 600,
     marginBottom: '14px',
-    color: 'var(--color-slate-400)',
+    color: 'var(--accent-primary)',
     textAlign: 'left'
   },
   orderSentence: {
-    background: 'linear-gradient(135deg, var(--color-slate-700) 0%, var(--color-slate-650) 100%)',
-    color: 'var(--border-subtle)',
+    background: 'var(--surface-card)',
+    color: 'var(--text-primary)',
     padding: '16px',
     borderRadius: '10px',
     marginBottom: '12px',
-    border: '1px solid var(--color-slate-600)',
-    boxShadow: '0 12px 24px rgba(15, 23, 42, 0.3)',
+    border: '1px solid var(--surface-border)',
+    boxShadow: '0 8px 18px rgba(15, 23, 42, 0.12)',
     textAlign: 'left',
     whiteSpace: 'pre-line'
   },
   multipleChoiceButton: {
     width: '100%',
-    background: 'linear-gradient(135deg, var(--color-slate-650) 0%, var(--color-slate-900) 100%)',
-    color: 'var(--border-subtle)',
+    background: 'var(--surface-card)',
+    color: 'var(--text-primary)',
     padding: '14px 20px',
     borderRadius: '10px',
     marginBottom: '10px',
-    borderWidth: '1px',
-    borderStyle: 'solid',
-    borderColor: 'rgba(148, 163, 184, 0.2)',
-    boxShadow: '0 10px 20px rgba(15, 23, 42, 0.25)',
+    border: '1px solid var(--surface-border)',
+    boxShadow: '0 10px 20px rgba(15, 23, 42, 0.12)',
     textAlign: 'left',
     fontSize: '16px',
     fontWeight: 600,
@@ -200,4 +196,3 @@ export const orderStyles = {
     boxShadow: '0 16px 30px rgba(99, 102, 241, 0.45)'
   }
 };
-

@@ -4,8 +4,8 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import StudyConfig from "../components/study/StudyConfig";
-import StudyResult from "../components/study/StudyResult";
+import StudyConfig from "../features/study/config/StudyConfig";
+import StudyResult from "../features/study/result/StudyResult";
 import useStudySession from "../hooks/useStudySession";
 import { api } from "../services/api.service";
 import FriendlyError from "../components/common/FriendlyError";

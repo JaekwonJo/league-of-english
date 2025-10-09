@@ -1,3 +1,9 @@
+## 2025-10-15 (study flow modularization stage 2)
+- Issue: 학습 설정/문제/결과 화면이 단일 파일에 로직과 스타일이 얽혀 있어 경로 구조가 엉키고, 저장 세션/복습 UI를 확장하기 어려웠어요.
+- Fix: `StudyConfig`를 전용 훅(`useStudyConfig`)과 단계별 컴포넌트(`DocumentStep`·`PassageStep`·`ProblemTypeStep`)로 쪼개고, `ProblemDisplay`/`StudyResult`를 `features/study` 아래로 옮겨 옵션·통계·랭킹 뷰를 모듈화했습니다. 리뷰 뷰와 인터랙션 옵션도 별도 컴포넌트(`ReviewOptions`, `ChoiceButtons`, `ResultCard`, `RankPanel`)로 분리했어요.
+- Files: client/src/features/study/config/*, client/src/features/study/problem/*, client/src/features/study/result/*, client/src/pages/StudyPage.js, client/src/features/study/components/StudyModeView.jsx, client/src/features/study/components/ReviewModeView.jsx.
+- Verification: `npm run lint`
+
 ## 2025-10-14 (csat service modularization + study flow split)
 - Issue: `/generate/csat-set` 로직이 `aiProblemService` 안에 뒤엉켜 있고 StudyPage도 한 파일에 로딩/복습/풀이 UI가 뒤섞여 유지 보수가 어려웠어요. 부분 실패 로그도 사용자에게 제대로 전달되지 않았습니다.
 - Fix: `aiProblemService`를 manual 로더·노출 정책·문항 저장소·OpenAI 큐 도우미로 쪼개고, 새 `problemSetService`가 진행 로그·실패 요약과 함께 문제를 돌려주도록 리팩토링했어요. StudyPage는 `LoadingState`, `GenerationSummary`, `ReviewCallout`, `StudyModeView`, `ReviewModeView`, `viewStyles`로 분리해 로딩/복습 UI를 재사용 가능하게 만들었습니다.

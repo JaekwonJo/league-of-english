@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { orderStyles } from './problemDisplayStyles';
+import { orderStyles } from '../problemDisplayStyles';
 
 const OrderProblemDisplay = ({ problem, parsedOrderData, onAnswer, userAnswer }) => {
   return (

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import ProblemDisplay from '../../../components/study/ProblemDisplay';
+import ProblemDisplay from '../../problem/ProblemDisplay';
 import ScoreHUD from '../../../components/study/ScoreHUD';
 import { formatSeconds } from '../../../hooks/useStudySession';
 import GenerationSummary from './GenerationSummary';

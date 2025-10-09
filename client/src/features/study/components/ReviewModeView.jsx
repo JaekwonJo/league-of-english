@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import ProblemDisplay from '../../../components/study/ProblemDisplay';
+import ProblemDisplay from '../../problem/ProblemDisplay';
 import { reviewModeStyles as styles } from '../styles/viewStyles';
 
 const buildReviewItems = (results) => {
