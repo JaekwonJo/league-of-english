@@ -1,5 +1,6 @@
 const database = require('../models/database');
 const { getTierInfo, getNextTier, calculateProgress } = require('../utils/tierUtils');
+const { clearSession: clearStudySession } = require('./studySessionService');
 
 const POINTS_CORRECT = 10;
 const POINTS_INCORRECT = -5;
@@ -117,6 +118,12 @@ async function recordStudySession(userId, rawResults = []) {
     );
   } catch (logError) {
     console.warn('[studyService] failed to log study session:', logError?.message || logError);
+  }
+
+  try {
+    await clearStudySession({ userId: numericUserId, reason: 'submitted' });
+  } catch (sessionError) {
+    console.warn('[studyService] failed to clear saved session:', sessionError?.message || sessionError);
   }
 
   return {

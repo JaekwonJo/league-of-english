@@ -215,7 +215,7 @@ const StudyPage = () => {
           initialFocusType={initialFocusType}
           savedSession={savedSession}
           onResumeSavedSession={handleResumeSavedSession}
-          onDiscardSavedSession={clearSavedSession}
+          onDiscardSavedSession={() => clearSavedSession('discarded')}
           headerSlot={(
             <ReviewCallout
               total={reviewPreview.total}

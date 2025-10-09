@@ -37,6 +37,7 @@ const analysisRoutes = require('./routes/analysis');
 const inquiryRoutes = require('./routes/inquiry.routes');
 const adminRoutes = require('./routes/admin.routes');
 const vocabRoutes = require('./routes/vocab.routes');
+const studyRoutes = require('./routes/study.routes');
 
 // App init
 const app = express();
@@ -82,6 +83,7 @@ app.use('/api/analysis', analysisRoutes);
 app.use('/api/inquiries', inquiryRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api', vocabRoutes);
+app.use('/api/study', studyRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

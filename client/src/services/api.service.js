@@ -191,14 +191,33 @@ class ApiService {
     }
   }
 
+  async patch(endpoint, data = {}) {
+    try {
+      const response = await fetch(`${this.baseURL}${endpoint}`, {
+        method: 'PATCH',
+        headers: this.getHeaders(),
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) {
+        throw response;
+      }
+
+      return await response.json();
+    } catch (error) {
+      await this.handleError(error, `PATCH ${endpoint}`);
+    }
+  }
+
   /**
    * DELETE 요청
    */
-  async delete(endpoint) {
+  async delete(endpoint, data) {
     try {
       const response = await fetch(`${this.baseURL}${endpoint}`, {
         method: 'DELETE',
-        headers: this.getHeaders()
+        headers: this.getHeaders(),
+        ...(data !== undefined ? { body: JSON.stringify(data) } : {})
       });
 
       if (!response.ok) {
@@ -266,11 +285,30 @@ export const api = {
     updateShares: (id, payload) => apiService.post(`/documents/${id}/share`, payload)
   },
 
+  admin: {
+    problemFeedback: {
+      list: (params) => apiService.get('/admin/problem-feedback', params),
+      update: (id, payload) => apiService.patch(`/admin/problem-feedback/${id}`, payload)
+    },
+    notifications: {
+      list: (params) => apiService.get('/admin/notifications', params),
+      update: (id, payload) => apiService.patch(`/admin/notifications/${id}`, payload)
+    }
+  },
+
   vocabulary: {
     list: () => apiService.get('/vocabulary/sets'),
     detail: (id) => apiService.get(`/vocabulary/sets/${id}`),
     generateQuiz: (id, payload) => apiService.post(`/vocabulary/sets/${id}/quiz`, payload),
     submitQuiz: (id, payload) => apiService.post(`/vocabulary/sets/${id}/quiz/submit`, payload)
+  },
+
+  study: {
+    session: {
+      get: () => apiService.get('/study/session'),
+      save: (payload) => apiService.post('/study/session', payload),
+      clear: (payload) => apiService.delete('/study/session', payload)
+    }
   },
 
   // 문제
@@ -343,7 +381,7 @@ export const api = {
 };
 
 // Legacy compatibility for older bundles that call api.post(...) directly
-['get', 'post', 'postForBlob', 'put', 'delete', 'uploadFile'].forEach((method) => {
+['get', 'post', 'postForBlob', 'put', 'patch', 'delete', 'uploadFile'].forEach((method) => {
   if (typeof apiService[method] === 'function') {
     api[method] = (...args) => apiService[method](...args);
   }

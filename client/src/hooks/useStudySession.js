@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import apiService from "../services/api.service";
+import apiService, { api } from "../services/api.service";
 import problemRegistry from "../services/problemRegistry";
 import logger from "../utils/logger";
 import { GENERATION_STAGES, TIER_ORDER } from "../features/study/constants";
@@ -71,10 +71,55 @@ const useStudySession = (user, onUserUpdate = () => {}) => {
   const [generationLog, setGenerationLog] = useState([]);
   const [savedSession, setSavedSession] = useState(() => readSavedSession(user?.id));
 
-  const clearSavedSession = useCallback(() => {
+  useEffect(() => {
+    if (!user?.id) {
+      clearSavedSessionStorage();
+      setSavedSession(null);
+      return undefined;
+    }
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await api.study.session.get();
+        const remotePayload = response?.session?.payload;
+        if (!remotePayload || cancelled) {
+          return;
+        }
+
+        const localSnapshot = readSavedSession(user.id);
+        const remoteSavedAt = Number(remotePayload.savedAt || 0);
+        const localSavedAt = Number(localSnapshot?.savedAt || 0);
+        if (!localSnapshot || remoteSavedAt > localSavedAt) {
+          writeSavedSession(remotePayload);
+          if (!cancelled) {
+            setSavedSession(remotePayload);
+          }
+        }
+      } catch (error) {
+        logger.warn('Failed to fetch remote study session:', error);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
+  const clearSavedSession = useCallback((reason = 'manual') => {
     clearSavedSessionStorage();
     setSavedSession(null);
-  }, []);
+    if (!user?.id) {
+      return;
+    }
+    (async () => {
+      try {
+        await api.study.session.clear({ reason });
+      } catch (syncError) {
+        logger.warn('Failed to clear remote study session:', syncError);
+      }
+    })();
+  }, [user?.id]);
   useEffect(() => {
     if (mode !== "study") return undefined;
     const tick = () => setCurrentTime(Date.now());
@@ -150,6 +195,15 @@ const useStudySession = (user, onUserUpdate = () => {}) => {
     };
     writeSavedSession(snapshot);
     setSavedSession(snapshot);
+    if (user?.id) {
+      (async () => {
+        try {
+          await api.study.session.save({ payload: snapshot });
+        } catch (syncError) {
+          logger.warn('Failed to sync study session to cloud:', syncError);
+        }
+      })();
+    }
   }, [getBaseTimePerProblem, user?.id]);
 
   const finishStudy = useCallback(async () => {
@@ -273,7 +327,7 @@ const useStudySession = (user, onUserUpdate = () => {}) => {
       setLoadingContext(null);
       setLoadingProgress(0);
       setLoadingStageIndex(0);
-      clearSavedSession();
+      clearSavedSession('submitted');
     }
   }, [answers, problems, startTime, currentTime, mode, clearSavedSession]);
 
@@ -408,7 +462,7 @@ const useStudySession = (user, onUserUpdate = () => {}) => {
     setLoadingContext(null);
     setLoadingProgress(0);
     setLoadingStageIndex(0);
-    clearSavedSession();
+    clearSavedSession('restart');
   }, [clearSavedSession]);
 
   const enterReview = useCallback(() => {
@@ -449,11 +503,6 @@ const useStudySession = (user, onUserUpdate = () => {}) => {
     setSavedSession(snapshot);
   }, [mode, problems, answers, startTime, initialTimeLeft, timeLeft, user?.id]);
 
-  useEffect(() => {
-    if (!user?.id) return;
-    setSavedSession(readSavedSession(user.id));
-  }, [user?.id]);
-
   const restoreSavedSession = useCallback(() => {
     const snapshot = readSavedSession(user?.id);
     if (!snapshot || !Array.isArray(snapshot.problems) || snapshot.problems.length === 0) {
@@ -463,7 +512,7 @@ const useStudySession = (user, onUserUpdate = () => {}) => {
     const referenceTime = snapshot.savedAt || snapshot.startTime || Date.now();
     const adjustedTimeLeft = snapshot.timeLeft - Math.floor((Date.now() - referenceTime) / 1000);
     if (!Number.isInteger(adjustedTimeLeft) || adjustedTimeLeft <= 0) {
-      clearSavedSession();
+      clearSavedSession('expired');
       return false;
     }
 

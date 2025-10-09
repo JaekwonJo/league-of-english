@@ -348,5 +348,65 @@ export const adminStyles = {
     color: 'var(--danger-strong)',
     padding: '16px',
     marginBottom: '16px'
+  },
+  notificationsSection: {
+    background: 'var(--surface-card)',
+    borderRadius: '20px',
+    padding: '24px',
+    boxShadow: '0 10px 30px rgba(15, 23, 42, 0.08)',
+    marginTop: '40px'
+  },
+  notificationsHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '16px'
+  },
+  notificationList: {
+    listStyle: 'none',
+    margin: 0,
+    padding: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px'
+  },
+  notificationItem: {
+    background: 'var(--surface-soft-solid)',
+    borderRadius: '16px',
+    padding: '16px',
+    border: '1px solid var(--border-subtle)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px'
+  },
+  notificationMeta: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    color: 'var(--color-slate-500)',
+    fontSize: '13px'
+  },
+  notificationType: {
+    fontWeight: 600
+  },
+  notificationTimestamp: {
+    fontStyle: 'italic'
+  },
+  notificationPayload: {
+    color: 'var(--color-slate-600)',
+    fontSize: '14px',
+    lineHeight: 1.5
+  },
+  notificationActions: {
+    display: 'flex',
+    gap: '10px'
+  },
+  notificationButton: {
+    background: 'var(--surface-card)',
+    border: '1px solid var(--border-muted)',
+    borderRadius: '10px',
+    padding: '8px 12px',
+    fontSize: '13px',
+    cursor: 'pointer',
+    transition: 'all 0.2s'
   }
 };

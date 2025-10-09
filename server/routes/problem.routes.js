@@ -1,4 +1,5 @@
 ﻿const express = require('express');
+const crypto = require('crypto');
 const router = express.Router();
 
 const { verifyToken, checkDailyLimit, updateUsage } = require('../middleware/auth');
@@ -245,11 +246,21 @@ router.post('/problems/review-session', verifyToken, async (req, res) => {
 router.post('/problems/:id/feedback', verifyToken, async (req, res) => {
   const problemId = Number(req.params.id);
   try {
+    const fingerprintSource = [
+      req.ip || 'unknown',
+      req.get('user-agent') || 'unknown',
+      req.user?.id || 'anonymous'
+    ].join('|');
+    const clientFingerprint = crypto.createHash('sha256').update(fingerprintSource).digest('hex');
+
     const feedbackResult = await submitProblemFeedback({
       userId: req.user.id,
       problemId,
       action: req.body?.action,
-      reason: req.body?.reason
+      reason: req.body?.reason,
+      clientFingerprint,
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent') || ''
     });
 
     const summary = await getProblemFeedbackSummary(problemId, req.user.id);

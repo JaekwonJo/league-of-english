@@ -1,3 +1,9 @@
+## 2025-10-16 (problem feedback ops + cloud session sync)
+- Issue: 학습 화면에서 들어오는 신고는 DB에만 쌓였고, 관리자용 처리판·알림·rate-limit가 없어 품질 대응이 느렸어요. 학습 세션도 로컬 저장만 지원해 브라우저를 바꾸면 이어 풀 수 없었습니다.
+- Fix: `problem_feedback_events`·`admin_notifications`를 추가해 사용자/기기별 피드백 로그와 알림 큐를 만들고, 관리자 페이지에 신고 보드 + 알림 패널을 붙여 바로 완료/보류 처리를 누를 수 있게 했어요. `/api/study/session` 라우트와 `studySessionService`로 학습 스냅샷을 서버에 저장/복구하고 제출 시 자동 정리하도록 만들었습니다. `useStudySession`은 클라우드 동기화와 신고 rate-limit 대응을 함께 처리해요.
+- Files: server/models/database.js, server/services/problemFeedbackService.js, server/services/notificationService.js, server/services/studySessionService.js, server/routes/admin.routes.js, server/routes/problem.routes.js, server/routes/study.routes.js, server/tests/problemFeedbackService.test.js, server/tests/studySessionService.test.js, client/src/pages/AdminPage.js, client/src/hooks/useStudySession.js, client/src/components/admin/ProblemFeedbackBoard.jsx, client/src/components/admin/AdminNotificationsPanel.jsx, client/src/hooks/useProblemFeedbackReports.js, client/src/hooks/useAdminNotifications.js, client/src/hooks/__tests__/*, client/src/hooks/useStudySession.js, client/src/services/api.service.js, client/src/styles/adminStyles.js.
+- Verification: `npm test`, `CI=true npm --prefix client test -- --watch=false --runInBand`, `npm run lint`
+
 ## 2025-10-15 (study flow modularization stage 2)
 - Issue: 학습 설정/문제/결과 화면이 단일 파일에 로직과 스타일이 얽혀 있어 경로 구조가 엉키고, 저장 세션/복습 UI를 확장하기 어려웠어요.
 - Fix: `StudyConfig`를 전용 훅(`useStudyConfig`)과 단계별 컴포넌트(`DocumentStep`·`PassageStep`·`ProblemTypeStep`)로 쪼개고, `ProblemDisplay`/`StudyResult`를 `features/study` 아래로 옮겨 옵션·통계·랭킹 뷰를 모듈화했습니다. 리뷰 뷰와 인터랙션 옵션도 별도 컴포넌트(`ReviewOptions`, `ChoiceButtons`, `ResultCard`, `RankPanel`)로 분리했어요.

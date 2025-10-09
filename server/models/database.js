@@ -140,6 +140,83 @@ class Database {
           FOREIGN KEY (user_id) REFERENCES users(id)
         )`,
 
+        `CREATE TABLE IF NOT EXISTS study_sessions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL,
+          session_key TEXT DEFAULT 'active',
+          payload TEXT NOT NULL,
+          status TEXT DEFAULT 'active',
+          saved_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          restored_at DATETIME,
+          UNIQUE(user_id, session_key),
+          FOREIGN KEY (user_id) REFERENCES users(id)
+        )`,
+        'CREATE INDEX IF NOT EXISTS idx_study_sessions_status ON study_sessions(status)',
+
+        `CREATE TABLE IF NOT EXISTS study_session_events (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          session_id INTEGER,
+          user_id INTEGER NOT NULL,
+          event TEXT NOT NULL,
+          detail TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (session_id) REFERENCES study_sessions(id),
+          FOREIGN KEY (user_id) REFERENCES users(id)
+        )`,
+        'CREATE INDEX IF NOT EXISTS idx_study_session_events_user ON study_session_events(user_id)',
+
+        `CREATE TABLE IF NOT EXISTS problem_feedback (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL,
+          problem_id INTEGER NOT NULL,
+          action TEXT NOT NULL,
+          reason TEXT,
+          status TEXT DEFAULT 'pending',
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(user_id, problem_id, action),
+          FOREIGN KEY (user_id) REFERENCES users(id),
+          FOREIGN KEY (problem_id) REFERENCES problems(id)
+        )`,
+        'CREATE INDEX IF NOT EXISTS idx_problem_feedback_status ON problem_feedback(status)',
+        'CREATE INDEX IF NOT EXISTS idx_problem_feedback_problem ON problem_feedback(problem_id)',
+        'CREATE INDEX IF NOT EXISTS idx_problem_feedback_user ON problem_feedback(user_id)',
+
+        `CREATE TABLE IF NOT EXISTS problem_feedback_events (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          feedback_id INTEGER,
+          user_id INTEGER NOT NULL,
+          problem_id INTEGER NOT NULL,
+          action TEXT NOT NULL,
+          event TEXT NOT NULL,
+          detail TEXT,
+          fingerprint TEXT,
+          ip_address TEXT,
+          user_agent TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (feedback_id) REFERENCES problem_feedback(id),
+          FOREIGN KEY (user_id) REFERENCES users(id),
+          FOREIGN KEY (problem_id) REFERENCES problems(id)
+        )`,
+        'CREATE INDEX IF NOT EXISTS idx_problem_feedback_events_user ON problem_feedback_events(user_id)',
+        'CREATE INDEX IF NOT EXISTS idx_problem_feedback_events_problem ON problem_feedback_events(problem_id)',
+
+        `CREATE TABLE IF NOT EXISTS admin_notifications (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          type TEXT NOT NULL,
+          reference_id INTEGER,
+          severity TEXT DEFAULT 'normal',
+          payload TEXT,
+          status TEXT DEFAULT 'pending',
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          acknowledged_at DATETIME,
+          resolved_at DATETIME
+        )`,
+        'CREATE INDEX IF NOT EXISTS idx_admin_notifications_status ON admin_notifications(status)',
+        'CREATE INDEX IF NOT EXISTS idx_admin_notifications_type ON admin_notifications(type)',
+
         // problem_generations
         `CREATE TABLE IF NOT EXISTS problem_generations (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -173,22 +250,6 @@ class Database {
           FOREIGN KEY (user_id) REFERENCES users(id),
           FOREIGN KEY (document_id) REFERENCES documents(id)
         )`,
-
-        `CREATE TABLE IF NOT EXISTS problem_feedback (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          user_id INTEGER NOT NULL,
-          problem_id INTEGER NOT NULL,
-          action TEXT NOT NULL,
-          reason TEXT,
-          status TEXT DEFAULT 'pending',
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          UNIQUE(user_id, problem_id, action),
-          FOREIGN KEY (user_id) REFERENCES users(id),
-          FOREIGN KEY (problem_id) REFERENCES problems(id)
-        )`,
-        'CREATE INDEX IF NOT EXISTS idx_problem_feedback_problem ON problem_feedback(problem_id)',
-        'CREATE INDEX IF NOT EXISTS idx_problem_feedback_user ON problem_feedback(user_id)',
 
         // auth_logs
         `CREATE TABLE IF NOT EXISTS auth_logs (
@@ -354,7 +415,12 @@ class Database {
         `ALTER TABLE problem_exposures ADD COLUMN last_result TEXT`,
         `ALTER TABLE problem_exposures ADD COLUMN correct_count INTEGER DEFAULT 0`,
         `ALTER TABLE problem_exposures ADD COLUMN incorrect_count INTEGER DEFAULT 0`,
-        `ALTER TABLE problem_exposures ADD COLUMN last_answered_at DATETIME`
+        `ALTER TABLE problem_exposures ADD COLUMN last_answered_at DATETIME`,
+        `ALTER TABLE problem_feedback ADD COLUMN resolution_note TEXT`,
+        `ALTER TABLE problem_feedback ADD COLUMN resolved_by INTEGER`,
+        `ALTER TABLE problem_feedback ADD COLUMN resolved_at DATETIME`,
+        `ALTER TABLE admin_notifications ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP`,
+        `ALTER TABLE problem_feedback_events ADD COLUMN detail TEXT`
       ];
 
       let errors = 0;
@@ -372,6 +438,11 @@ class Database {
             errors++;
           }
         }
+      }
+      try {
+        this._exec("UPDATE problem_feedback SET status = 'acknowledged' WHERE action = 'like' AND status NOT IN ('acknowledged','resolved')");
+      } catch (err) {
+        console.warn('problem_feedback 상태 정규화 실패:', err?.message || err);
       }
       if (errors === 0) console.log('스키마 업데이트 완료');
       resolve();

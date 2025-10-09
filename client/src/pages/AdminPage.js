@@ -8,9 +8,13 @@ import DocumentAnalysis from '../components/admin/DocumentAnalysis';
 import PassageAnalysis from '../components/admin/PassageAnalysisRefactored';
 import ProblemLibrary from '../components/admin/ProblemLibrary';
 import DocumentShareModal from '../components/admin/DocumentShareModal';
+import ProblemFeedbackBoard from '../components/admin/ProblemFeedbackBoard';
+import AdminNotificationsPanel from '../components/admin/AdminNotificationsPanel';
 import { useAdminDocuments } from '../hooks/useAdminDocuments';
 import { useDocumentShare } from '../hooks/useDocumentShare';
 import { useFeedbackReports } from '../hooks/useFeedbackReports';
+import { useProblemFeedbackReports } from '../hooks/useProblemFeedbackReports';
+import { useAdminNotifications } from '../hooks/useAdminNotifications';
 
 const initialUploadForm = {
   title: '',
@@ -40,6 +44,21 @@ const AdminPage = () => {
     resolveFeedback
   } = useFeedbackReports();
   const {
+    reports: problemReports,
+    summary: problemFeedbackSummary,
+    loading: problemFeedbackLoading,
+    error: problemFeedbackError,
+    fetchReports: fetchProblemReports,
+    updateStatus: updateProblemFeedbackStatus
+  } = useProblemFeedbackReports();
+  const {
+    notifications,
+    loading: notificationsLoading,
+    error: notificationsError,
+    fetchNotifications,
+    updateNotification
+  } = useAdminNotifications();
+  const {
     shareState,
     openShareModal,
     closeShareModal,
@@ -66,7 +85,9 @@ const AdminPage = () => {
   useEffect(() => {
     fetchDocuments();
     fetchFeedbackReports();
-  }, [fetchDocuments, fetchFeedbackReports]);
+    fetchProblemReports();
+    fetchNotifications();
+  }, [fetchDocuments, fetchFeedbackReports, fetchProblemReports, fetchNotifications]);
 
   const handleUploadFormChange = (field, value) => {
     setUploadForm({ ...uploadForm, [field]: value });
@@ -214,6 +235,44 @@ const AdminPage = () => {
     }
   };
 
+  const handleResolveProblemFeedback = async (reportId) => {
+    try {
+      await updateProblemFeedbackStatus(reportId, 'resolved');
+      alert('문항 신고를 검수 완료로 표시했어요. 👍');
+    } catch (error) {
+      console.error('문항 신고 처리 실패:', error);
+      alert(error?.message || '문항 신고를 처리하는 중 문제가 발생했습니다.');
+    }
+  };
+
+  const handleDismissProblemFeedback = async (reportId) => {
+    try {
+      await updateProblemFeedbackStatus(reportId, 'dismissed');
+      alert('문항 신고를 보류 처리했어요.');
+    } catch (error) {
+      console.error('문항 신고 보류 실패:', error);
+      alert(error?.message || '문항 신고를 보류 처리하는 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleNotificationAcknowledge = async (notificationId) => {
+    try {
+      await updateNotification(notificationId, 'acknowledged');
+    } catch (error) {
+      console.error('알림 확인 실패:', error);
+      alert(error?.message || '알림을 확인 상태로 바꾸지 못했어요.');
+    }
+  };
+
+  const handleNotificationResolve = async (notificationId) => {
+    try {
+      await updateNotification(notificationId, 'resolved');
+    } catch (error) {
+      console.error('알림 완료 처리 실패:', error);
+      alert(error?.message || '알림을 완료 상태로 바꾸지 못했어요.');
+    }
+  };
+
   return (
     <div style={adminStyles.container}>
       <div style={adminStyles.header}>
@@ -233,6 +292,25 @@ const AdminPage = () => {
           </button>
         </div>
       </div>
+
+      <AdminNotificationsPanel
+        notifications={notifications}
+        loading={notificationsLoading}
+        error={notificationsError}
+        onRefresh={fetchNotifications}
+        onAcknowledge={handleNotificationAcknowledge}
+        onResolve={handleNotificationResolve}
+      />
+
+      <ProblemFeedbackBoard
+        reports={problemReports}
+        summary={problemFeedbackSummary}
+        loading={problemFeedbackLoading}
+        error={problemFeedbackError}
+        onRefresh={fetchProblemReports}
+        onResolve={handleResolveProblemFeedback}
+        onDismiss={handleDismissProblemFeedback}
+      />
 
       <DocumentList
         title="📘 문제 학습 자료"
