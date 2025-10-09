@@ -1,6 +1,4 @@
-﻿const fs = require("fs");
-const path = require("path");
-const database = require("../models/database");
+﻿const database = require("../models/database");
 const shared = require("./ai-problem/shared");
 const blank = require("./ai-problem/blank");
 const underlined = require("./ai-problem/underlined");
@@ -8,6 +6,17 @@ const vocabulary = require("./ai-problem/vocabulary");
 const title = require("./ai-problem/title");
 const topic = require("./ai-problem/topic");
 const { logImplicitAttempt } = require("../utils/generationLogger");
+const {
+  readGrammarManual,
+  readVocabularyManual,
+  readTitleManual,
+  readBlankManual,
+  readTopicManual,
+  readImplicitManual,
+  readIrrelevantManual
+} = require("./ai-problem/internal/manualLoader");
+const OpenAIQueue = require("./ai-problem/internal/openAiQueue");
+const { createProblemRepository } = require("./ai-problem/internal/problemRepository");
 
 const {
   CIRCLED_DIGITS,
@@ -26,6 +35,7 @@ const {
   isEnglishPhrase,
   labelToIndex,
   ensureSourceLabel,
+  convertStarsToUnderline,
   isPlaceholderSourceLabel
 } = shared;
 
@@ -73,26 +83,6 @@ try {
   console.warn("[aiProblemService] OpenAI SDK unavailable:", error?.message || error);
 }
 
-const GRAMMAR_MANUAL_PATH = path.join(__dirname, "..", "..", "problem manual", "grammar_problem_manual.md");
-const VOCABULARY_MANUAL_PATH = path.join(__dirname, "..", "..", "problem manual", "vocabulary_problem_manual.md");
-const EXTERNAL_GRAMMAR_MANUAL_PATH = '/mnt/c/Users/jaekw/Documents/웹앱문제출제메뉴얼📘 chatgpt5 전용어법문제제작통합메뉴얼.md';
-const EXTERNAL_VOCABULARY_MANUAL_PATH = '/mnt/c/Users/jaekw/Documents/웹앱문제출제메뉴얼📘 chatgpt5 전용어휘문제제작통합메뉴얼.txt';
-const TITLE_MANUAL_PATH = path.join(__dirname, "..", "..", "docs", "problem-templates", "title-master.md");
-const BLANK_MANUAL_PATH = path.join(__dirname, "..", "..", "problem manual", "빈칸_메뉴얼_GPTxClaude.md");
-const TOPIC_MANUAL_PATH = path.join(__dirname, "..", "..", "docs", "problem-templates", "topic-master.md");
-const IMPLICIT_MANUAL_PATH = path.join(__dirname, "..", "..", "docs", "problem-templates", "implicit-master.md");
-const IRRELEVANT_MANUAL_PATH = path.join(__dirname, "..", "..", "docs", "problem-templates", "irrelevant-master.md");
-const manualCache = new Map();
-let cachedTitleManual = null;
-let cachedBlankManual = null;
-let cachedTopicManual = null;
-let cachedImplicitManual = null;
-let cachedIrrelevantManual = null;
-
-const EXPOSURE_MIN_INCORRECT_RETRY_MINUTES = 20;
-const EXPOSURE_BASE_RETRY_PROBABILITY = 0.45;
-const EXPOSURE_RETRY_BONUS_PER_MISS = 0.12;
-const EXPOSURE_FETCH_MULTIPLIER = 4;
 const TOPIC_QUESTION = "\ub2e4\uc74c \uae00\uc758 \uc8fc\uc81c\ub85c \uac00\uc7a5 \uc801\uc808\ud55c \uac83\uc744 \uace0\ub974\uc2dc\uc624.";
 const IMPLICIT_QUESTION = "\ub2e4\uc74c \uae00\uc5d0\uc11c \ubc11\uc904 \uce5c \ubd80\ubd84\uc774 \uc758\ubbf8\ud558\ub294 \ubc14\ub85c \uac00\uc7a5 \uc801\uc808\ud55c \uac83\uc740?";
 const IRRELEVANT_QUESTION = "\ub2e4\uc74c \uae00\uc5d0\uc11c \uc804\uccb4 \ud750\ub984\uacfc \uad00\uacc4 \uc5c6\ub294 \ubb38\uc7a5\uc740?";
@@ -102,111 +92,6 @@ const IRRELEVANT_QUESTION_VARIANTS = [
   "\ub2e4\uc74c \uae00\uc758 \uc804\uccb4\uc801\uc778 \ud750\ub984\uc5d0\uc11c \ubb38\ub9e5\uc0c1 \uc5b4\uc11c\ud55c \ubd80\ubd84\uc774 \uc788\ub294 \ubb38\uc7a5\uc740?",
   "\ub2e4\uc74c \uae00\uc758 \ud750\ub984\uc0c1, \ubc11\uc904 \uce5c (A)\uc640 \uad00\ub828\uc774 \uc5c6\ub294 \uac83\uc740?"
 ];
-
-function loadManualContent(cacheKey, candidates, label) {
-  if (!manualCache.has(cacheKey)) {
-    let content = '';
-    for (const candidate of candidates) {
-      if (!candidate) continue;
-      try {
-        if (fs.existsSync(candidate)) {
-          content = fs.readFileSync(candidate, 'utf8');
-          break;
-        }
-      } catch (error) {
-        console.warn(`[aiProblemService] failed to read ${label} manual candidate`, candidate, ':', error?.message || error);
-      }
-    }
-    if (!content) {
-      console.warn(`[aiProblemService] no ${label} manual found in candidates:`, candidates.filter(Boolean).join(', '));
-    }
-    manualCache.set(cacheKey, content || '');
-  }
-  return manualCache.get(cacheKey) || '';
-}
-
-function readGrammarManual(limit = 2000) {
-  const content = loadManualContent('grammar', [
-    process.env.LOE_GRAMMAR_MANUAL_PATH,
-    EXTERNAL_GRAMMAR_MANUAL_PATH,
-    GRAMMAR_MANUAL_PATH
-  ], 'grammar');
-  return content ? content.slice(0, limit) : '';
-}
-
-function readVocabularyManual(limit = 2000) {
-  const content = loadManualContent('vocabulary', [
-    process.env.LOE_VOCABULARY_MANUAL_PATH,
-    EXTERNAL_VOCABULARY_MANUAL_PATH,
-    VOCABULARY_MANUAL_PATH
-  ], 'vocabulary');
-  return content ? content.slice(0, limit) : '';
-}
-
-function readTitleManual(limit = 1600) {
-  if (cachedTitleManual === null) {
-    try {
-      cachedTitleManual = fs.readFileSync(TITLE_MANUAL_PATH, 'utf8');
-    } catch (error) {
-      console.warn('[aiProblemService] failed to load title manual:', error?.message || error);
-      cachedTitleManual = '';
-    }
-  }
-  if (!cachedTitleManual) return '';
-  return cachedTitleManual.slice(0, limit);
-}
-
-function readBlankManual(limit = 2000) {
-  if (cachedBlankManual === null) {
-    try {
-      cachedBlankManual = fs.readFileSync(BLANK_MANUAL_PATH, 'utf8');
-    } catch (error) {
-      console.warn('[aiProblemService] failed to load blank manual:', error?.message || error);
-      cachedBlankManual = '';
-    }
-  }
-  if (!cachedBlankManual) return '';
-  return cachedBlankManual.slice(0, limit);
-}
-
-function readTopicManual(limit = 1600) {
-  if (cachedTopicManual === null) {
-    try {
-      cachedTopicManual = fs.readFileSync(TOPIC_MANUAL_PATH, 'utf8');
-    } catch (error) {
-      console.warn('[aiProblemService] failed to load topic manual:', error?.message || error);
-      cachedTopicManual = '';
-    }
-  }
-  if (!cachedTopicManual) return '';
-  return cachedTopicManual.slice(0, limit);
-}
-
-function readImplicitManual(limit = 1800) {
-  if (cachedImplicitManual === null) {
-    try {
-      cachedImplicitManual = fs.readFileSync(IMPLICIT_MANUAL_PATH, 'utf8');
-    } catch (error) {
-      console.warn('[aiProblemService] failed to load implicit manual:', error?.message || error);
-      cachedImplicitManual = '';
-    }
-  }
-  if (!cachedImplicitManual) return '';
-  return cachedImplicitManual.slice(0, limit);
-}
-
-function readIrrelevantManual(limit = 2000) {
-  if (cachedIrrelevantManual === null) {
-    try {
-      cachedIrrelevantManual = fs.readFileSync(IRRELEVANT_MANUAL_PATH, 'utf8');
-    } catch (error) {
-      console.warn('[aiProblemService] failed to load irrelevant manual:', error?.message || error);
-      cachedIrrelevantManual = '';
-    }
-  }
-  if (!cachedIrrelevantManual) return '';
-  return cachedIrrelevantManual.slice(0, limit);
-}
 
 const {
   getManualExcerpt: getSummaryManualExcerpt,
@@ -229,87 +114,16 @@ const {
 class AIProblemService {
   constructor() {
     this._openai = null;
-    this._queue = [];
-    this._processing = false;
-  }
-
-  _enqueueOpenAI(task, options = {}) {
-    return new Promise((resolve, reject) => {
-      this._queue.push({ task, options, resolve, reject });
-      if (!this._processing) {
-        this._processQueue();
-      }
-    });
-  }
-
-  async _processQueue() {
-    if (this._processing) return;
-    this._processing = true;
-    while (this._queue.length) {
-      const { task, options, resolve, reject } = this._queue.shift();
-      try {
-        const result = await this._runWithRetry(task, options);
-        resolve(result);
-      } catch (error) {
-        reject(error);
-      }
-    }
-    this._processing = false;
-  }
-
-  async _runWithRetry(task, options = {}) {
-    const retries = Number.isInteger(options.retries) ? options.retries : 3;
-    const baseDelay = Number.isFinite(options.baseDelay) ? options.baseDelay : 500;
-    const maxDelay = Number.isFinite(options.maxDelay) ? options.maxDelay : 4000;
-    let attempt = 0;
-    while (true) {
-      try {
-        return await task();
-      } catch (error) {
-        attempt += 1;
-        if (attempt > retries) {
-          throw error;
-        }
-        const delay = Math.min(baseDelay * (2 ** (attempt - 1)), maxDelay);
-        await this._delay(delay);
-      }
-    }
-  }
-
-  _delay(ms) {
-    return new Promise((resolve) => setTimeout(resolve, Math.max(0, ms)));
+    this.queue = new OpenAIQueue(() => this.getOpenAI());
+    this.repository = createProblemRepository(database);
   }
 
   callChatCompletion(config, options = {}) {
-    const openai = this.getOpenAI();
-    if (!openai) {
-      throw new Error('AI generator unavailable');
-    }
-    return this._enqueueOpenAI(() => openai.chat.completions.create(config), options);
+    return this.queue.callChatCompletion(config, options);
   }
 
   async markExposures(userId, problemIds = []) {
-    const numericUserId = Number(userId);
-    if (!Number.isInteger(numericUserId) || numericUserId <= 0) return 0;
-    const uniqueIds = [...new Set((Array.isArray(problemIds) ? problemIds : [])
-      .map((id) => Number(id))
-      .filter((num) => Number.isInteger(num) && num > 0))];
-    if (!uniqueIds.length) return 0;
-    let updated = 0;
-    for (const problemId of uniqueIds) {
-      try {
-        await database.run(
-          'INSERT INTO problem_exposures (user_id, problem_id, first_seen_at, last_seen_at, exposure_count, last_result) ' +
-            "VALUES (?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 1, 'pending') " +
-            "ON CONFLICT(user_id, problem_id) DO UPDATE SET last_seen_at = CURRENT_TIMESTAMP, exposure_count = problem_exposures.exposure_count + 1, last_result = 'pending'",
-          [numericUserId, problemId]
-        );
-        updated += 1;
-      } catch (error) {
-        console.warn('[aiProblemService] failed to mark exposure:', error?.message || error);
-      }
-    }
-    return updated;
+    return this.repository.markExposures(userId, problemIds);
   }
 
   getOpenAI() {
@@ -453,6 +267,111 @@ class AIProblemService {
     return directives;
   }
 
+  _chooseGrammarTargetIndex(history = []) {
+    const validHistory = Array.isArray(history)
+      ? history
+          .map((value) => parseInt(value, 10))
+          .filter((num) => Number.isInteger(num) && num >= 1 && num <= CIRCLED_DIGITS.length)
+      : [];
+    const usageMap = new Map();
+    validHistory.forEach((idx) => {
+      usageMap.set(idx, (usageMap.get(idx) || 0) + 1);
+    });
+    const recent = validHistory.length ? validHistory[validHistory.length - 1] : null;
+    let pool = [];
+    for (let i = 1; i <= CIRCLED_DIGITS.length; i += 1) {
+      if (recent !== null && i === recent) {
+        continue;
+      }
+      pool.push(i);
+    }
+    if (!pool.length) {
+      pool = Array.from({ length: CIRCLED_DIGITS.length }, (_, index) => index + 1);
+    }
+    let minUsage = Infinity;
+    const balanced = [];
+    pool.forEach((idx) => {
+      const usage = usageMap.get(idx) || 0;
+      if (usage < minUsage) {
+        minUsage = usage;
+        balanced.length = 0;
+        balanced.push(idx);
+      } else if (usage === minUsage) {
+        balanced.push(idx);
+      }
+    });
+    const finalPool = balanced.length ? balanced : pool;
+    const choice = finalPool[Math.floor(Math.random() * finalPool.length)];
+    return Number.isInteger(choice) ? choice : 3;
+  }
+
+  _parsePrimaryAnswerIndex(answerValue) {
+    if (Array.isArray(answerValue)) {
+      for (const entry of answerValue) {
+        const num = parseInt(entry, 10);
+        if (Number.isInteger(num) && num >= 1 && num <= CIRCLED_DIGITS.length) {
+          return num;
+        }
+      }
+    }
+    const tokens = String(answerValue || '')
+      .split(/[\s,]+/)
+      .filter(Boolean);
+    for (const token of tokens) {
+      const num = parseInt(token, 10);
+      if (Number.isInteger(num) && num >= 1 && num <= CIRCLED_DIGITS.length) {
+        return num;
+      }
+    }
+    return null;
+  }
+
+  _shuffleArray(items = []) {
+    const copy = [...items];
+    for (let i = copy.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+  }
+
+  _shuffleVocabularyOptions(problem) {
+    if (!problem || !Array.isArray(problem.options) || problem.options.length !== CIRCLED_DIGITS.length) {
+      return;
+    }
+
+    const combinationIndices = Array.isArray(problem.metadata?.optionCombinationIndices)
+      ? problem.metadata.optionCombinationIndices
+      : null;
+
+    const strippedOptions = problem.options.map((option, idx) => ({
+      body: option.replace(/^[\u2460-\u2464]\s*/, '').trim(),
+      originalIndex: idx,
+      combination: combinationIndices ? combinationIndices[idx] : null
+    }));
+
+    const shuffled = this._shuffleArray(strippedOptions);
+    const originalAnswerIndex = Math.max(0, parseInt(problem.answer, 10) - 1);
+    const newAnswerIndex = shuffled.findIndex((entry) => entry.originalIndex === originalAnswerIndex);
+    if (newAnswerIndex === -1) {
+      return;
+    }
+
+    problem.options = shuffled.map((entry, idx) => {
+      const digit = CIRCLED_DIGITS[idx];
+      const body = entry.body || strippedOptions[entry.originalIndex]?.body || '';
+      return body ? `${digit} ${body}` : `${digit}`;
+    });
+
+    if (combinationIndices) {
+      problem.metadata.optionCombinationIndices = shuffled.map((entry) => entry.combination || []);
+    }
+
+    const answerValue = String(newAnswerIndex + 1);
+    problem.answer = answerValue;
+    problem.correctAnswer = answerValue;
+  }
+
   _normalizeGrammarPayload(payload, context = {}) {
     if (!payload || typeof payload !== 'object') {
       throw new Error('grammar payload missing');
@@ -478,6 +397,7 @@ class AIProblemService {
       ? String(context.passage)
       : String(payload.originalPassage || payload.sourcePassage || '').trim();
     let mainText = String(payload.passage || payload.text || payload.mainText || originalPassageRaw || '').trim();
+    mainText = convertStarsToUnderline(mainText);
     if (!mainText) {
       throw new Error('grammar passage missing');
     }
@@ -549,6 +469,17 @@ class AIProblemService {
       throw new Error('grammar requires exactly one incorrect option');
     }
 
+    const desiredAnswerIndex = Number.isInteger(context.desiredAnswerIndex)
+      ? context.desiredAnswerIndex
+      : null;
+    if (
+      desiredAnswerIndex &&
+      normalizedType === 'grammar' &&
+      (uniqueAnswers.length !== 1 || uniqueAnswers[0] !== desiredAnswerIndex)
+    ) {
+      throw new Error(`grammar answer index mismatch (${desiredAnswerIndex} expected, got ${uniqueAnswers.join(',') || 'none'})`);
+    }
+
     optionsInfo.statuses.forEach((status, index) => {
       if (!status) return;
       const isAnswer = uniqueAnswers.includes(index + 1);
@@ -559,6 +490,12 @@ class AIProblemService {
         throw new Error('grammar answer status must be incorrect');
       }
     });
+
+    for (let i = 0; i < CIRCLED_DIGITS.length; i += 1) {
+      if (!optionsInfo.statuses[i]) {
+        optionsInfo.statuses[i] = uniqueAnswers.includes(i + 1) ? 'incorrect' : 'correct';
+      }
+    }
 
     const explanation = String(payload.explanation || '').trim();
     if (!explanation || !containsHangul(explanation)) {
@@ -604,11 +541,43 @@ class AIProblemService {
       });
     });
 
+    const incorrectIndexSet = new Set(uniqueAnswers);
+    const plainOptionSegments = optionsInfo.rawTexts.map((raw) => {
+      const match = String(raw || '').match(/<u[\s\S]*?>([\s\S]*?)<\/u>/i);
+      return match && match[1] ? match[1] : '';
+    });
+
+    const originalPassagePlain = normalizeWhitespace(stripTags(convertStarsToUnderline(context.passage || '')));
+    const originalPassageLower = originalPassagePlain.toLowerCase();
+    const enforceOriginalComparison = context.enforceOriginalComparison !== false;
+
     for (let i = 0; i < CIRCLED_DIGITS.length; i += 1) {
       const marker = CIRCLED_DIGITS[i];
       const reasonText = reasonMap[marker] ? String(reasonMap[marker]).trim() : '';
       if (!reasonText || !containsHangul(reasonText) || reasonText.length < 6) {
         throw new Error('grammar option reasons incomplete');
+      }
+
+      const normalizedReason = reasonText.replace(/\s+/g, '');
+      if (incorrectIndexSet.has(i + 1)) {
+        if (!/(오류|틀리|잘못|어긋|일치하지|수일치|부적절|정답이아니|비문법)/.test(normalizedReason)) {
+          throw new Error('grammar incorrect reason lacks error keyword');
+        }
+      } else if (!/(맞|옳|적절|정상|문법적|알맞|정답)/.test(normalizedReason)) {
+        throw new Error('grammar correct reason lacks confirmation keyword');
+      }
+
+      if (enforceOriginalComparison && originalPassageLower) {
+        const segmentPlain = normalizeWhitespace(plainOptionSegments[i] || '');
+        const segmentLower = segmentPlain.toLowerCase();
+        const appearsInOriginal = segmentLower && originalPassageLower.includes(segmentLower);
+        if (incorrectIndexSet.has(i + 1)) {
+          if (appearsInOriginal) {
+            throw new Error('grammar incorrect segment unchanged from original');
+          }
+        } else if (!appearsInOriginal) {
+          throw new Error('grammar correct segment diverges from original');
+        }
       }
     }
 
@@ -736,6 +705,7 @@ class AIProblemService {
           });
 
           if (normalized) {
+            this._shuffleVocabularyOptions(normalized);
             normalized.id = normalized.id || `vocab_ai_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
             results.push(normalized);
           }
@@ -775,7 +745,7 @@ class AIProblemService {
       let normalized = null;
       let lastFailure = '';
 
-      while (attempt < 4 && !normalized) {
+      while (attempt < 6 && !normalized) {
         attempt += 1;
         const variantTag = `title_${documentId}_${i}_${Date.now()}_${attempt}`;
         try {
@@ -834,7 +804,7 @@ class AIProblemService {
       let normalized = null;
       let lastFailure = '';
 
-      while (attempt < 4 && !normalized) {
+      while (attempt < 6 && !normalized) {
         attempt += 1;
         const variantTag = `theme_${documentId}_${i}_${Date.now()}_${attempt}`;
         try {
@@ -1019,10 +989,17 @@ class AIProblemService {
           if (!coercedText) {
             throw new Error('implicit text must contain exactly one <u>...</u> span');
           }
-          const text = String(coercedText).trim();
+          let text = String(coercedText).trim();
+          text = text.replace(/\)\s+(?=\([1-5]\))/g, ')\n');
           if (!validateUnderline(text)) {
             throw new Error('implicit text must contain exactly one <u>...</u> span');
           }
+
+          const normalizeForComparison = (input) => String(input || '')
+            .toLowerCase()
+            .replace(/[^a-z\s]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
 
           const options = Array.isArray(payload.options)
             ? payload.options.map((opt) => String(opt || '').trim()).filter(Boolean)
@@ -1030,6 +1007,7 @@ class AIProblemService {
           if (options.length !== CIRCLED_DIGITS.length) {
             throw new Error('implicit options must contain 5 entries');
           }
+          const normalizedTarget = normalizeForComparison(payload.targetSpan || '');
           options.forEach((option, index) => {
             if (!option.startsWith(CIRCLED_DIGITS[index])) {
               throw new Error(`implicit option ${index + 1} missing circled digit`);
@@ -1037,6 +1015,9 @@ class AIProblemService {
             const value = option.slice(CIRCLED_DIGITS[index].length).trim();
             if (!isValidEnglishOption(value)) {
               throw new Error(`implicit option ${index + 1} must be an academic English phrase (6-18 words)`);
+            }
+            if (normalizedTarget && normalizeForComparison(value) === normalizedTarget) {
+              throw new Error(`implicit option ${index + 1} duplicates the underlined expression`);
             }
           });
 
@@ -1340,6 +1321,7 @@ class AIProblemService {
     const manualExcerpt = readGrammarManual(2400);
     const docTitle = document?.title || `Document ${documentId}`;
     const results = [];
+    const answerHistory = [];
 
     for (let i = 0; i < count; i += 1) {
       const passage = passages[i % passages.length];
@@ -1347,19 +1329,32 @@ class AIProblemService {
       let attempt = 0;
       let normalized = null;
       let lastFailure = '';
-      while (attempt < 4 && !normalized) {
+      const targetAnswerIndex = this._chooseGrammarTargetIndex(answerHistory);
+      while (attempt < 6 && !normalized) {
         attempt += 1;
         const failureReasons = [];
         try {
           const variantTag = `doc${documentId}_p${i}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+          const enforceIndex = attempt <= 3 ? targetAnswerIndex : null;
+          const directiveHints = [];
+          if (enforceIndex) {
+            const marker = CIRCLED_DIGITS[enforceIndex - 1];
+            directiveHints.push(
+              `- ${marker} 밑줄만 어법 오류가 되도록 고급 문법 변형(원자 연산 1회)을 적용하세요.`,
+              `- ${marker} 외의 밑줄 네 개는 원문과 철자, 어형, 구두점까지 모두 동일해야 합니다.`
+            );
+          }
           const prompt = buildGrammarPrompt({
             passage,
             docTitle,
             passageIndex: i,
-            difficulty: "advanced",
             manualExcerpt,
             variantTag,
-            extraDirectives: this._deriveEobeopDirectives(lastFailure, 'grammar')
+            desiredAnswerIndex: enforceIndex,
+            extraDirectives: [
+              ...directiveHints,
+              ...this._deriveEobeopDirectives(lastFailure, 'grammar')
+            ]
           });
           const response = await this.callChatCompletion({
             model: "gpt-4o-mini",
@@ -1373,11 +1368,16 @@ class AIProblemService {
             docTitle,
             passage,
             index: results.length,
+            desiredAnswerIndex: enforceIndex,
             failureReasons
           });
           if (normalized) {
             normalized.id = normalized.id || `grammar_ai_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
             results.push(normalized);
+            const primaryAnswer = this._parsePrimaryAnswerIndex(normalized.answer || normalized.correctAnswer);
+            if (primaryAnswer) {
+              answerHistory.push(primaryAnswer);
+            }
           }
         } catch (error) {
           const baseMessage = String(error?.message || '') || 'unknown grammar failure';
@@ -1399,712 +1399,31 @@ class AIProblemService {
   }
 
   _acceptCachedProblem(type, problem) {
-    if (!problem || typeof problem !== 'object') {
-      return false;
-    }
-    if (type === 'summary') {
-      const validation = validateSummaryProblem(problem);
-      if (!validation.valid) {
-        return false;
-      }
-    }
-    if (type === 'title') {
-      const validation = validateTitleProblem(problem);
-      if (!validation.valid) {
-        return false;
-      }
-    }
-    if (type === 'theme' || type === 'topic') {
-      const validation = validateTopicProblem(problem);
-      if (!validation.valid) {
-        return false;
-      }
-    }
-    if (type === 'blank') {
-      const passage = normalizeWhitespace(problem.mainText || problem.text || '');
-      if (!passage || passage.length < MIN_BLANK_TEXT_LENGTH) {
-        return false;
-      }
-      const metadata = problem.metadata && typeof problem.metadata === 'object' ? problem.metadata : {};
-      const originalLength = Number(metadata.originalPassageLength) || 0;
-      if (originalLength && passage.length + 80 < originalLength) {
-        return false;
-      }
-      if (!originalLength && passage.length < MIN_BLANK_TEXT_LENGTH + 80) {
-        return false;
-      }
-      if (countSentences(passage) < MIN_BLANK_SENTENCE_COUNT) {
-        return false;
-      }
-      if (!BLANK_PLACEHOLDER_REGEX.test(passage)) {
-        return false;
-      }
-      const options = Array.isArray(problem.options) ? problem.options : [];
-      if (options.length !== CIRCLED_DIGITS.length) {
-        return false;
-      }
-      for (let i = 0; i < options.length; i += 1) {
-        const marker = CIRCLED_DIGITS[i];
-        const optionText = String(options[i] || '').trim();
-        if (!optionText.startsWith(marker)) {
-          return false;
-        }
-        const value = optionText.slice(marker.length).trim();
-        if (!value) {
-          return false;
-        }
-        if (!isEnglishPhrase(value)) {
-          return false;
-        }
-        if (/\d/.test(value)) {
-          return false;
-        }
-        const wordCount = countWords(value);
-        if (wordCount < BLANK_OPTION_MIN_WORDS || wordCount > BLANK_OPTION_MAX_WORDS) {
-          return false;
-        }
-      }
-    }
-    if (type === 'grammar' || type === 'grammar_multi') {
-      const passage = String(problem.mainText || problem.passage || problem.text || '').trim();
-      if (!passage) return false;
-      if ((passage.match(UNDERLINE_PATTERN) || []).length !== 5) {
-        return false;
-      }
-      const options = Array.isArray(problem.options) ? problem.options : [];
-      if (options.length !== CIRCLED_DIGITS.length) {
-        return false;
-      }
-      for (let i = 0; i < options.length; i += 1) {
-        const expected = CIRCLED_DIGITS[i];
-        const optionText = String(options[i] || '').trim();
-        if (!optionText.startsWith(expected)) {
-          return false;
-        }
-        if (!/<u[\s\S]*?<\/u>/.test(optionText)) {
-          return false;
-        }
-      }
-      const explanation = String(problem.explanation || '').trim();
-      if (!containsHangul(explanation) || explanation.length < GRAMMAR_MIN_EXPLANATION_LENGTH) {
-        return false;
-      }
-      const sourceLabel = String(problem.sourceLabel || '').trim();
-      if (!sourceLabel.startsWith('출처│')) {
-        return false;
-      }
-      const metadata = problem.metadata && typeof problem.metadata === 'object' ? problem.metadata : {};
-      if (!metadata.optionReasons || Object.keys(metadata.optionReasons).length !== CIRCLED_DIGITS.length) {
-        return false;
-      }
-    }
-    if (type === 'vocabulary') {
-      const passage = String(problem.mainText || problem.passage || problem.text || '').trim();
-      if (!passage) return false;
-      if (!/\(A\)/.test(passage)) {
-        return false;
-      }
-
-      const options = Array.isArray(problem.options) ? problem.options : [];
-      if (options.length !== CIRCLED_DIGITS.length) {
-        return false;
-      }
-
-      const metadata = problem.metadata && typeof problem.metadata === 'object' ? problem.metadata : {};
-      const slots = Array.isArray(metadata.vocabSlots) ? metadata.vocabSlots : [];
-      const combinationIndices = Array.isArray(metadata.optionCombinationIndices) ? metadata.optionCombinationIndices : [];
-      if (!slots.length || combinationIndices.length !== options.length) {
-        return false;
-      }
-
-      const slotCount = slots.length;
-      const slotChoiceMaps = slots.map((slot) => {
-        if (!slot || typeof slot !== 'object') {
-          return null;
-        }
-        const label = String(slot.label || '').trim();
-        if (!/^[A-Z]$/.test(label)) {
-          return null;
-        }
-        const choices = Array.isArray(slot.choices) ? slot.choices.map((choice) => String(choice || '').trim()).filter(Boolean) : [];
-        if (choices.length < 2) {
-          return null;
-        }
-        const correctIndex = Number.isInteger(slot.correctIndex) ? slot.correctIndex : -1;
-        if (correctIndex < 0 || correctIndex >= choices.length) {
-          return null;
-        }
-        if (!new RegExp(`\\(${label}\\)`).test(passage)) {
-          return null;
-        }
-        const normalizedChoices = choices.map((choice) => choice.replace(/\s+/g, ' ').trim());
-        const choiceMap = new Map();
-        normalizedChoices.forEach((choice, idx) => {
-          choiceMap.set(choice, idx);
-        });
-        return { label, choices, normalizedChoices, correctIndex, choiceMap };
-      });
-
-      if (slotChoiceMaps.some((entry) => entry === null)) {
-        return false;
-      }
-
-      const optionCombinationIndices = combinationIndices.map((combo) => {
-        if (!Array.isArray(combo) || combo.length !== slotCount) {
-          return null;
-        }
-        return combo.map((value) => {
-          const index = parseInt(value, 10);
-          return Number.isInteger(index) ? index : null;
-        });
-      });
-
-      if (optionCombinationIndices.some((combo) => !combo || combo.some((index, slotIdx) => index === null || index < 0 || index >= slotChoiceMaps[slotIdx].choices.length))) {
-        return false;
-      }
-
-      for (let i = 0; i < options.length; i += 1) {
-        const optionText = String(options[i] || '').trim();
-        if (!optionText.startsWith(CIRCLED_DIGITS[i])) {
-          return false;
-        }
-        const body = optionText.slice(CIRCLED_DIGITS[i].length).trim();
-        if (!body) {
-          return false;
-        }
-        const parts = body.split(/\s*-\s*/).map((part) => part.replace(/\s+/g, ' ').trim()).filter(Boolean);
-        if (parts.length !== slotCount) {
-          return false;
-        }
-        const combination = optionCombinationIndices[i];
-        for (let slotIdx = 0; slotIdx < slotCount; slotIdx += 1) {
-          const slot = slotChoiceMaps[slotIdx];
-          const choiceIndex = combination[slotIdx];
-          const expected = slot.choices[choiceIndex];
-          if (!expected || parts[slotIdx].replace(/\s+/g, ' ').trim() !== expected.replace(/\s+/g, ' ').trim()) {
-            return false;
-          }
-        }
-      }
-
-      const explanation = String(problem.explanation || '').trim();
-      if (!containsHangul(explanation) || explanation.length < VOCAB_MIN_EXPLANATION_LENGTH || countSentences(explanation) < VOCAB_MIN_EXPLANATION_SENTENCES) {
-        return false;
-      }
-
-      const sourceLabel = String(problem.sourceLabel || '').trim();
-      if (!sourceLabel.startsWith('출처│')) {
-        return false;
-      }
-
-      const answerIndex = Number.parseInt(problem.correctAnswer || problem.answer, 10);
-      if (!Number.isInteger(answerIndex) || answerIndex < 1 || answerIndex > options.length) {
-        return false;
-      }
-
-      const correctCombination = optionCombinationIndices[answerIndex - 1];
-      if (!correctCombination) {
-        return false;
-      }
-      for (let slotIdx = 0; slotIdx < slotCount; slotIdx += 1) {
-        const slot = slotChoiceMaps[slotIdx];
-        if (correctCombination[slotIdx] !== slot.correctIndex) {
-          return false;
-        }
-      }
-    }
-    if (type === 'implicit') {
-      const passage = String(problem.text || problem.mainText || '').trim();
-      if (!passage) return false;
-      if ((passage.match(UNDERLINE_PATTERN) || []).length !== 1) {
-        return false;
-      }
-      const options = Array.isArray(problem.options) ? problem.options : [];
-      if (options.length !== CIRCLED_DIGITS.length) {
-        return false;
-      }
-      const isValidEnglishOption = (value) => {
-        if (!value) return false;
-        if (containsHangul(value)) return false;
-        const cleaned = value.replace(/[’]/g, "'").replace(/[“”]/g, '"').trim();
-        if (!cleaned) return false;
-        const wordCount = countWords(cleaned);
-        if (wordCount < 6 || wordCount > 18) {
-          return false;
-        }
-        return /^[A-Za-z][A-Za-z\s.,'"()\-:;!?]*$/.test(cleaned);
-      };
-      for (let i = 0; i < options.length; i += 1) {
-        const expected = CIRCLED_DIGITS[i];
-        const optionText = String(options[i] || '').trim();
-        if (!optionText.startsWith(expected)) {
-          return false;
-        }
-        const value = optionText.slice(expected.length).trim();
-        if (!isValidEnglishOption(value)) {
-          return false;
-        }
-      }
-      const explanation = String(problem.explanation || '').trim();
-      if (!containsHangul(explanation) || explanation.length < 60 || countSentences(explanation) < 2) {
-        return false;
-      }
-      const sourceLabel = String(problem.sourceLabel || '').trim();
-      if (!sourceLabel.startsWith('출처│')) {
-        return false;
-      }
-    }
-    return true;
+    return this.repository.acceptCachedProblem(type, problem);
   }
 
   async listReviewQueueForUser(userId, options = {}) {
-    const numericUserId = Number(userId);
-    if (!Number.isInteger(numericUserId) || numericUserId <= 0) {
-      return { total: 0, problems: [] };
-    }
-
-    const limit = Math.max(parseInt(options.limit, 10) || 0, 0) || 20;
-    const fetchLimit = Math.max(limit * 4, limit);
-
-    const rows = await database.all(
-      'SELECT p.*, pe.last_result AS exposure_last_result, pe.correct_count AS exposure_correct_count, pe.incorrect_count AS exposure_incorrect_count, pe.last_answered_at AS exposure_last_answered_at, pe.last_seen_at AS exposure_last_seen_at ' +
-        'FROM problem_exposures pe ' +
-        'JOIN problems p ON p.id = pe.problem_id ' +
-        "WHERE pe.user_id = ? AND pe.last_result = 'incorrect' " +
-        'ORDER BY datetime(pe.last_answered_at) DESC, pe.id DESC ' +
-        'LIMIT ?'
-      , [numericUserId, fetchLimit]
-    );
-
-    const mapped = rows
-      .map((row) => this._mapDbProblem(row))
-      .filter((problem) => problem && this._acceptCachedProblem(problem.type, problem));
-
-    const totalRow = await database.get(
-      "SELECT COUNT(*) AS total FROM problem_exposures WHERE user_id = ? AND last_result = 'incorrect'",
-      [numericUserId]
-    );
-
-    const total = Number(totalRow?.total) || mapped.length;
-    return {
-      total,
-      problems: mapped.slice(0, limit)
-    };
+    return this.repository.listReviewQueueForUser(userId, options);
   }
 
   async getProblemsByIds(ids = [], options = {}) {
-    const numericIds = [...new Set((Array.isArray(ids) ? ids : [])
-      .map((id) => Number(id))
-      .filter((num) => Number.isInteger(num) && num > 0))];
-    if (!numericIds.length) {
-      return [];
-    }
-
-    const placeholders = numericIds.map(() => '?').join(',');
-    const rows = await database.all(
-      `SELECT p.*, pe.last_result AS exposure_last_result, pe.correct_count AS exposure_correct_count, pe.incorrect_count AS exposure_incorrect_count, pe.last_answered_at AS exposure_last_answered_at, pe.last_seen_at AS exposure_last_seen_at
-         FROM problems p
-         LEFT JOIN problem_exposures pe ON pe.problem_id = p.id AND pe.user_id = ?
-        WHERE p.id IN (${placeholders})`,
-      [Number(options.userId) || 0, ...numericIds]
-    );
-
-    const problems = rows
-      .map((row) => this._mapDbProblem(row))
-      .filter((problem) => problem && this._acceptCachedProblem(problem.type, problem));
-
-    const ordered = numericIds
-      .map((id) => problems.find((problem) => Number(problem.id) === id))
-      .filter((problem) => problem);
-
-    return ordered;
-  }
-
-  _decideExposure(exposure) {
-    if (!exposure || typeof exposure !== 'object') {
-      return 'allow';
-    }
-    const normalizedResult = exposure.lastResult ? String(exposure.lastResult).toLowerCase() : '';
-    if (normalizedResult === 'pending') {
-      return 'skip';
-    }
-    if (normalizedResult === 'correct') {
-      return 'skip';
-    }
-    if (normalizedResult === 'incorrect') {
-      const incorrectCount = Math.max(1, Number(exposure.incorrectCount) || 1);
-      let timestamp = Number.NaN;
-      if (exposure.lastAnsweredAt) {
-        const parsed = Date.parse(String(exposure.lastAnsweredAt).replace(/\s$/, ''));
-        if (Number.isFinite(parsed)) {
-          timestamp = parsed;
-        }
-      }
-      if (Number.isFinite(timestamp)) {
-        const elapsed = Date.now() - timestamp;
-        if (elapsed < EXPOSURE_MIN_INCORRECT_RETRY_MINUTES * 60 * 1000) {
-          return 'skip';
-        }
-      }
-      const probability = Math.min(0.92, EXPOSURE_BASE_RETRY_PROBABILITY + (incorrectCount - 1) * EXPOSURE_RETRY_BONUS_PER_MISS);
-      if (Math.random() <= probability) {
-        return 'allow';
-      }
-      return 'defer';
-    }
-
-    if (!normalizedResult) {
-      return 'allow';
-    }
-
-    return 'skip';
-  }
-
-  _parseJson(value, fallback) {
-    if (!value) return fallback;
-    try {
-      const parsed = JSON.parse(value);
-      return parsed === null ? fallback : parsed;
-    } catch (error) {
-      console.warn('[aiProblemService] JSON parse failed:', error?.message || error);
-      return fallback;
-    }
+    return this.repository.getProblemsByIds(ids, options);
   }
 
   _mapDbProblem(row) {
-    if (!row) return null;
-    const options = this._parseJson(row.options, []);
-    const sentences = this._parseJson(row.sentences, undefined);
-    const metadata = this._parseJson(row.metadata, undefined);
-
-    const generatorTag = metadata && typeof metadata.generator === "string"
-      ? metadata.generator.trim().toLowerCase()
-      : null;
-    if (generatorTag && !['openai', 'openai-preview'].includes(generatorTag)) {
-      return null;
-    }
-
-    const optionArray = Array.isArray(options)
-      ? options
-          .map((opt) => {
-            if (typeof opt === 'string') return opt.trim();
-            if (opt && typeof opt === 'object') {
-              const candidate = opt.text || opt.value || opt.label || opt.symbol;
-              return candidate ? String(candidate).trim() : '';
-            }
-            return opt === null || opt === undefined ? '' : String(opt).trim();
-          })
-          .filter((opt) => opt && opt.length)
-      : [];
-
-    if (!row.question || !optionArray.length || !row.answer) {
-      return null;
-    }
-
-    const noteText = Object.prototype.hasOwnProperty.call(row, 'note_text')
-      ? row.note_text
-      : Object.prototype.hasOwnProperty.call(row, 'note')
-        ? row.note
-        : undefined;
-
-    const problem = {
-      id: row.id ? String(row.id) : undefined,
-      type: row.type || 'generic',
-      question: row.question,
-      options: optionArray,
-      answer: row.answer,
-      explanation: row.explanation || '',
-      difficulty: row.difficulty || 'basic',
-      mainText: row.main_text || undefined,
-      sentences: Array.isArray(sentences) ? sentences : undefined,
-      metadata: metadata && typeof metadata === 'object' ? metadata : undefined
-    };
-
-    if (noteText !== undefined) {
-      problem.note = noteText ? String(noteText).trim() : '';
-    }
-
-    if (metadata && typeof metadata === 'object') {
-      if (metadata.sourceLabel && !problem.sourceLabel) {
-        problem.sourceLabel = metadata.sourceLabel;
-      }
-      if (metadata.documentTitle && !problem.source) {
-        problem.source = metadata.documentTitle;
-      }
-      if (metadata.originalPassage && !problem.originalPassage) {
-        problem.originalPassage = metadata.originalPassage;
-      }
-      if (problem.type === 'summary') {
-        const summarySentence = metadata.summarySentence || metadata.summary_sentence;
-        if (summarySentence && !problem.summarySentence) {
-          problem.summarySentence = String(summarySentence).trim();
-        }
-        const summarySentenceKor = metadata.summarySentenceKor || metadata.summary_sentence_kor;
-        if (summarySentenceKor && !problem.summarySentenceKor) {
-          problem.summarySentenceKor = String(summarySentenceKor).trim();
-        }
-        if (Array.isArray(metadata.keywords) && metadata.keywords.length && !problem.keywords) {
-          problem.keywords = metadata.keywords.map((kw) => String(kw).trim()).filter((kw) => kw.length);
-        }
-        if (metadata.summaryPattern && !problem.summaryPattern) {
-          problem.summaryPattern = String(metadata.summaryPattern).trim();
-        }
-      }
-    }
-
-    if (
-      Object.prototype.hasOwnProperty.call(row, 'exposure_last_result')
-      || Object.prototype.hasOwnProperty.call(row, 'exposure_last_answered_at')
-    ) {
-      const exposure = {
-        lastResult: row.exposure_last_result || null,
-        lastAnsweredAt: row.exposure_last_answered_at || null,
-        lastSeenAt: row.exposure_last_seen_at || null,
-        incorrectCount: Number(row.exposure_incorrect_count) || 0,
-        correctCount: Number(row.exposure_correct_count) || 0
-      };
-      const hasData = exposure.lastResult || exposure.lastAnsweredAt || exposure.lastSeenAt;
-      if (hasData) {
-        problem.exposure = exposure;
-      }
-    }
-
-    return problem;
+    return this.repository.mapDbProblem(row);
   }
 
   async fetchCached(documentId, type, limit, options = {}) {
-    const requested = Math.max(parseInt(limit, 10) || 0, 0);
-    if (!requested) return [];
-
-    const excludeIds = Array.isArray(options.excludeIds)
-      ? options.excludeIds
-          .map((id) => Number(id))
-          .filter((num) => Number.isFinite(num))
-      : [];
-
-    const userId = Number(options.userId);
-    const params = [];
-    let query = 'SELECT p.*, pe.last_result AS exposure_last_result, pe.correct_count AS exposure_correct_count, pe.incorrect_count AS exposure_incorrect_count, pe.last_answered_at AS exposure_last_answered_at, pe.last_seen_at AS exposure_last_seen_at FROM problems p';
-
-    if (Number.isInteger(userId) && userId > 0) {
-      query += ' LEFT JOIN problem_exposures pe ON pe.problem_id = p.id AND pe.user_id = ?';
-      params.push(userId);
-    }
-
-    query += ' WHERE p.document_id = ? AND p.type = ?';
-    params.push(documentId, type);
-
-    if (excludeIds.length) {
-      const placeholders = excludeIds.map(() => '?').join(',');
-      query += ` AND p.id NOT IN (${placeholders})`;
-      params.push(...excludeIds);
-    }
-
-    const fetchCount = Math.max(requested * EXPOSURE_FETCH_MULTIPLIER, requested);
-    query += ' ORDER BY RANDOM() LIMIT ?';
-    params.push(fetchCount);
-
-    const rows = await database.all(query, params);
-    const mapped = rows
-      .map((row) => this._mapDbProblem(row))
-      .filter((problem) => this._acceptCachedProblem(type, problem));
-
-    if (!mapped.length) {
-      return [];
-    }
-
-    const allowList = [];
-    const deferred = [];
-    mapped.forEach((problem) => {
-      const decision = this._decideExposure(problem?.exposure);
-      if (decision === 'allow') {
-        allowList.push(problem);
-      } else if (decision === 'defer') {
-        deferred.push(problem);
-      }
-    });
-
-    let final = allowList.slice(0, requested);
-    if (final.length < requested && deferred.length) {
-      const need = requested - final.length;
-      final = final.concat(deferred.slice(0, need));
-    }
-
-    return final.slice(0, requested);
+    return this.repository.fetchCached(documentId, type, limit, options);
   }
 
   async listProblemsForExport(options = {}) {
-    const documentId = Number(options.documentId) || null;
-    const limit = Math.min(Math.max(parseInt(options.limit, 10) || 40, 1), 200);
-    const types = Array.isArray(options.types)
-      ? options.types.map((type) => String(type || '').trim()).filter((type) => type.length)
-      : [];
-    const difficulties = Array.isArray(options.difficulties)
-      ? options.difficulties.map((level) => String(level || '').trim().toLowerCase()).filter((level) => level.length)
-      : [];
-    const aiOnly = options.includeGeneratedOnly !== false;
-    const randomize = options.randomize !== false;
-
-    const params = [];
-    let query = 'SELECT p.*, pn.note AS note_text FROM problems p LEFT JOIN problem_notes pn ON pn.problem_id = p.id';
-
-    const filters = [];
-    if (documentId) {
-      filters.push('p.document_id = ?');
-      params.push(documentId);
-    }
-    if (types.length) {
-      const placeholders = types.map(() => '?').join(',');
-      filters.push(`p.type IN (${placeholders})`);
-      params.push(...types);
-    }
-    if (difficulties.length) {
-      const placeholders = difficulties.map(() => '?').join(',');
-      filters.push(`LOWER(p.difficulty) IN (${placeholders})`);
-      params.push(...difficulties);
-    }
-    if (aiOnly) {
-      filters.push('p.is_ai_generated = 1');
-    }
-
-    if (filters.length) {
-      query += ` WHERE ${filters.join(' AND ')}`;
-    }
-
-    query += randomize
-      ? ' ORDER BY RANDOM()'
-      : ' ORDER BY datetime(p.created_at) DESC, p.id DESC';
-    query += ' LIMIT ?';
-    params.push(limit);
-
-    const rows = await database.all(query, params);
-    return rows
-      .map((row) => this._mapDbProblem(row))
-      .filter((problem) => problem);
+    return this.repository.listProblemsForExport(options);
   }
 
   async saveProblems(documentId, type, problems = [], context = {}) {
-    const saved = [];
-    const contextTitle = context.docTitle || context.documentTitle || null;
-
-    for (const item of Array.isArray(problems) ? problems : []) {
-      if (!item || typeof item !== 'object') continue;
-
-      const baseMetadata = { ...(item.metadata || {}) };
-      if (contextTitle && !baseMetadata.documentTitle) {
-        baseMetadata.documentTitle = contextTitle;
-      }
-      if (item.sourceLabel && !baseMetadata.sourceLabel) {
-        baseMetadata.sourceLabel = item.sourceLabel;
-      }
-      if (item.originalPassage && !baseMetadata.originalPassage) {
-        baseMetadata.originalPassage = String(item.originalPassage).trim();
-      }
-      if (!baseMetadata.generator) {
-        baseMetadata.generator = 'openai';
-      }
-
-      if (type === 'summary') {
-        if (item.summarySentence && !baseMetadata.summarySentence) {
-          baseMetadata.summarySentence = String(item.summarySentence).trim();
-        }
-        if (item.summarySentenceKor && !baseMetadata.summarySentenceKor) {
-          baseMetadata.summarySentenceKor = String(item.summarySentenceKor).trim();
-        }
-        if (!baseMetadata.summaryPattern && item.summaryPattern) {
-          baseMetadata.summaryPattern = String(item.summaryPattern).trim();
-        }
-        if (!baseMetadata.keywords && Array.isArray(item.keywords)) {
-          const keywords = item.keywords
-            .map((kw) => String(kw).trim())
-            .filter((kw) => kw.length);
-          if (keywords.length) {
-            baseMetadata.keywords = keywords;
-          }
-        }
-      }
-
-      const optionArray = Array.isArray(item.options)
-        ? item.options
-            .map((opt) => {
-              if (typeof opt === 'string') return opt.trim();
-              if (opt && typeof opt === 'object') {
-                const candidate = opt.text || opt.value || opt.label || opt.symbol;
-                return candidate ? String(candidate).trim() : '';
-              }
-              return opt === null || opt === undefined ? '' : String(opt).trim();
-            })
-            .filter((opt) => opt && opt.length)
-        : [];
-      if (!optionArray.length) continue;
-
-      const primaryAnswer = item.correctAnswer ?? item.answer;
-      const rawAnswer = Array.isArray(primaryAnswer) && primaryAnswer.length === 0
-        ? undefined
-        : primaryAnswer;
-      const answerValue = Array.isArray(rawAnswer)
-        ? rawAnswer
-            .filter((val) => val !== null && val !== undefined)
-            .map((val) => String(val).trim())
-            .filter((val) => val.length)
-            .join(',')
-        : rawAnswer === undefined || rawAnswer === null
-          ? ''
-          : String(rawAnswer).trim();
-
-      if (!answerValue) continue;
-
-      const explanation = item.explanation || '';
-      const difficulty = item.difficulty
-        || ((type === 'grammar' || type === 'grammar_multi') ? 'advanced' : 'basic');
-      const mainText = item.mainText || item.text || null;
-      const sentencesJson = item.sentences ? JSON.stringify(item.sentences) : null;
-      const metadataJson = Object.keys(baseMetadata).length ? JSON.stringify(baseMetadata) : null;
-      const optionsJson = JSON.stringify(optionArray);
-
-      const result = await database.run(
-        "INSERT INTO problems (document_id, type, question, options, answer, explanation, difficulty, is_ai_generated, main_text, sentences, metadata) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)",
-        [
-          documentId,
-          type,
-          item.question || item.instruction || '',
-          optionsJson,
-          answerValue,
-          explanation,
-          difficulty,
-          mainText,
-          sentencesJson,
-          metadataJson
-        ]
-      );
-
-      const savedProblem = {
-        ...item,
-        id: result?.id ? String(result.id) : item.id,
-        type,
-        documentId,
-        question: item.question || item.instruction || '',
-        options: [...optionArray],
-        answer: answerValue,
-        explanation,
-        difficulty,
-        mainText,
-        sentences: item.sentences ? [...item.sentences] : undefined,
-        metadata: baseMetadata
-      };
-
-      if (baseMetadata.sourceLabel && !savedProblem.sourceLabel) {
-        savedProblem.sourceLabel = baseMetadata.sourceLabel;
-      }
-
-      saved.push(savedProblem);
-    }
-
-    if (saved.length) {
-      await this._pruneProblemCache(documentId, type, 1000);
-    }
-
-    return saved;
+    return this.repository.saveProblems(documentId, type, problems, context);
   }
 
   async saveProblemNote(problemId, userId, noteText = '') {
@@ -2131,56 +1450,11 @@ class AIProblemService {
   }
 
   async recordExportHistory(payload = {}) {
-    const userId = Number(payload.userId);
-    if (!Number.isInteger(userId) || userId <= 0) {
-      return;
-    }
-
-    const documentId = Number(payload.documentId) || null;
-    const types = Array.isArray(payload.types) ? payload.types : [];
-    const counts = payload.counts && typeof payload.counts === 'object' ? payload.counts : {};
-    const problemIds = Array.isArray(payload.problemIds)
-      ? payload.problemIds.map((id) => Number(id)).filter((id) => Number.isInteger(id) && id > 0)
-      : [];
-    const total = Number(payload.total) || problemIds.length || 0;
-    const includeSolutions = payload.includeSolutions !== false ? 1 : 0;
-
-    try {
-      await database.run(
-        'INSERT INTO problem_export_history (user_id, document_id, types, counts, problem_ids, total, include_solutions, created_at) ' +
-          'VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)',
-        [
-          userId,
-          documentId,
-          JSON.stringify(types),
-          JSON.stringify(counts),
-          JSON.stringify(problemIds),
-          total,
-          includeSolutions
-        ]
-      );
-    } catch (error) {
-      console.warn('[aiProblemService] failed to record export history:', error?.message || error);
-    }
+    return this.repository.recordExportHistory(payload);
   }
 
   async _pruneProblemCache(documentId, type, maxCount = 1000) {
-    if (!Number.isInteger(maxCount) || maxCount <= 0) return;
-    try {
-      const rows = await database.all(
-        'SELECT id FROM problems WHERE document_id = ? AND type = ? ORDER BY datetime(created_at) DESC, id DESC',
-        [documentId, type]
-      );
-      if (!Array.isArray(rows) || rows.length <= maxCount) {
-        return;
-      }
-      const excess = rows.slice(maxCount).map((row) => Number(row.id)).filter((id) => Number.isInteger(id) && id > 0);
-      if (!excess.length) return;
-      const placeholders = excess.map(() => '?').join(',');
-      await database.run(`DELETE FROM problems WHERE id IN (${placeholders})`, excess);
-    } catch (error) {
-      console.warn('[aiProblemService] prune cache failed:', error?.message || error);
-    }
+    return this.repository.pruneProblemCache(documentId, type, maxCount);
   }
 }
 

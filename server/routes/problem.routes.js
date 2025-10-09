@@ -4,103 +4,10 @@ const router = express.Router();
 const { verifyToken, checkDailyLimit, updateUsage } = require('../middleware/auth');
 const aiService = require('../services/aiProblemService');
 const database = require('../models/database');
-const OrderGenerator = require('../utils/orderProblemGenerator');
-const InsertionGenerator = require('../utils/insertionProblemGenerator2');
 const { normalizeAll } = require('../utils/csatProblemNormalizer');
 const studyService = require('../services/studyService');
 const { createProblemsPdf } = require('../utils/pdfExporter');
-
-const STEP_SIZE = 5;
-const MAX_TOTAL = 20;
-const OPENAI_REQUIRED_TYPES = new Set([
-  'blank',
-  'grammar',
-  'vocabulary',
-  'title',
-  'theme',
-  'summary',
-  'implicit',
-  'irrelevant'
-]);
-
-const EXPORT_STEP = 5;
-const EXPORT_MAX_TOTAL = 100;
-
-function snapToStep(value) {
-  const numeric = Number(value);
-  if (!Number.isFinite(numeric) || numeric <= 0) return 0;
-  return Math.max(0, Math.floor(numeric / STEP_SIZE) * STEP_SIZE);
-}
-
-function normalizeTypeCounts(rawCounts = {}) {
-  const counts = {};
-  let total = 0;
-  Object.entries(rawCounts).forEach(([type, value]) => {
-    const snapped = snapToStep(value);
-    if (snapped > 0) {
-      const clamped = Math.min(snapped, MAX_TOTAL);
-      counts[type] = clamped;
-      total += clamped;
-    }
-  });
-
-  if (total > MAX_TOTAL) {
-    const types = Object.keys(counts);
-    let overflow = total - MAX_TOTAL;
-    while (overflow > 0 && types.length) {
-      for (const type of types) {
-        if (overflow <= 0) break;
-        if (counts[type] >= STEP_SIZE) {
-          counts[type] -= STEP_SIZE;
-          overflow -= STEP_SIZE;
-        }
-      }
-      if (types.every((type) => counts[type] === 0)) break;
-    }
-    Object.keys(counts).forEach((type) => {
-      if (counts[type] <= 0) delete counts[type];
-    });
-  }
-
-  return counts;
-}
-
-function normalizeExportCounts(rawCounts = {}) {
-  const counts = {};
-  let total = 0;
-  Object.entries(rawCounts || {}).forEach(([type, value]) => {
-    const numeric = Number(value);
-    if (!Number.isFinite(numeric) || numeric <= 0) return;
-    const snapped = Math.max(0, Math.floor(numeric / EXPORT_STEP) * EXPORT_STEP);
-    if (snapped > 0) {
-      const clamped = Math.min(snapped, EXPORT_MAX_TOTAL);
-      counts[type] = clamped;
-      total += clamped;
-    }
-  });
-
-  if (total > EXPORT_MAX_TOTAL) {
-    const keys = Object.keys(counts);
-    let overflow = total - EXPORT_MAX_TOTAL;
-    while (overflow > 0 && keys.length) {
-      for (const key of keys) {
-        if (overflow <= 0) break;
-        if (counts[key] >= EXPORT_STEP) {
-          counts[key] -= EXPORT_STEP;
-          overflow -= EXPORT_STEP;
-        }
-      }
-      if (keys.every((key) => counts[key] <= 0)) break;
-    }
-    Object.keys(counts).forEach((key) => {
-      if (counts[key] <= 0) {
-        delete counts[key];
-      }
-    });
-  }
-
-  return counts;
-}
+const problemSetService = require('../services/problemSetService');
 
 function safeJsonParse(value, fallback) {
   if (!value) return fallback;
@@ -110,45 +17,6 @@ function safeJsonParse(value, fallback) {
     return fallback;
   }
 }
-
-function buildOrderProblems(context, count, options = {}) {
-  if (count <= 0) return [];
-  return (
-    OrderGenerator.generateOrderProblems(
-      context.passages,
-      count,
-      options,
-      context.document,
-      context.parsedContent
-    ) || []
-  );
-}
-
-function buildInsertionProblems(context, count, options = {}) {
-  if (count <= 0) return [];
-  return (
-    InsertionGenerator.generateInsertionProblems(
-      context.passages,
-      count,
-      options,
-      context.document,
-      context.parsedContent
-    ) || []
-  );
-}
-
-const SUPPORTED_TYPES = new Set([
-  'blank',
-  'order',
-  'insertion',
-  'grammar',
-  'vocabulary',
-  'title',
-  'theme',
-  'summary',
-  'irrelevant',
-  'implicit'
-]);
 
 router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res) => {
   const {
@@ -163,291 +31,21 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
     return res.status(400).json({ message: 'documentId is required.' });
   }
 
-  const normalizedCounts = normalizeTypeCounts(counts);
-  const requestedTypes = Object.keys(normalizedCounts).filter((type) => normalizedCounts[type] > 0);
-
-  if (!requestedTypes.length) {
-    return res.status(400).json({ message: 'No problem counts requested.' });
-  }
-
-  for (const type of requestedTypes) {
-    if (!SUPPORTED_TYPES.has(type)) {
-      return res.status(400).json({ message: `Unsupported problem type: ${type}` });
-    }
-  }
-
-  const needsOpenAI = requestedTypes.some((type) => OPENAI_REQUIRED_TYPES.has(type));
-  if (needsOpenAI && !aiService.getOpenAI()) {
-    return res.status(503).json({
-      message: 'AI 생성기가 준비되지 않았어요. OpenAI API 키를 설정하거나 해당 유형을 제외하고 다시 시도해 주세요.'
-    });
-  }
-
   try {
-    const aggregated = [];
-    const usedProblemIds = new Set();
-    const context = await aiService.getPassages(documentId);
-    const docTitle = context?.document?.title || context?.document?.name || null;
-    const progressLog = [];
+    const result = await problemSetService.generateCsatSet({
+      documentId,
+      counts,
+      orderDifficulty,
+      insertionDifficulty,
+      orderMode,
+      userId: req.user.id
+    });
 
-    const pushProgress = (stage, type, details = {}) => {
-      progressLog.push({
-        stage,
-        type,
-        timestamp: new Date().toISOString(),
-        ...details
-      });
-    };
+    await updateUsage(req.user.id, result.count);
 
-    const appendProblems = (list) => {
-      let added = 0;
-      if (!Array.isArray(list)) return added;
-      for (const problem of list) {
-        if (!problem || typeof problem !== 'object') continue;
-        const identifier = problem.id || problem.originalId || problem.problemId || null;
-        const key = identifier !== null && identifier !== undefined ? String(identifier) : null;
-        if (key) {
-          if (usedProblemIds.has(key)) continue;
-          usedProblemIds.add(key);
-        }
-        aggregated.push(problem);
-        added += 1;
-      }
-      return added;
-    };
-
-    for (const type of requestedTypes) {
-      const amount = normalizedCounts[type];
-      if (!amount) continue;
-      let addedForType = 0;
-      pushProgress('type_start', type, { requested: amount });
-
-      switch (type) {
-        case 'blank': {
-          const cached = await aiService.fetchCached(documentId, 'blank', amount, {
-            excludeIds: Array.from(usedProblemIds),
-            userId: req.user.id
-          });
-          addedForType += appendProblems(cached);
-          const cachedCount = Array.isArray(cached) ? cached.length : 0;
-          pushProgress('cache_fetch', type, { delivered: cachedCount, requested: amount });
-          let remaining = amount - addedForType;
-
-          if (remaining > 0) {
-            const generatedBatch = await aiService.generateBlank(documentId, remaining);
-            const savedBatch = await aiService.saveProblems(documentId, 'blank', generatedBatch, { docTitle });
-            const usable = Array.isArray(savedBatch) && savedBatch.length ? savedBatch : generatedBatch;
-            addedForType += appendProblems(usable);
-            const generatedCount = Array.isArray(usable) ? usable.length : 0;
-            pushProgress('ai_generated', type, { delivered: generatedCount, requested: remaining });
-          }
-
-          break;
-        }
-        case 'grammar': {
-          const cached = await aiService.fetchCached(documentId, 'grammar', amount, {
-            excludeIds: Array.from(usedProblemIds),
-            userId: req.user.id
-          });
-          addedForType += appendProblems(cached);
-          const cachedCount = Array.isArray(cached) ? cached.length : 0;
-          pushProgress('cache_fetch', type, { delivered: cachedCount, requested: amount });
-          let remaining = amount - addedForType;
-
-          if (remaining > 0) {
-            const generatedBatch = await aiService.generateGrammar(documentId, remaining);
-            const savedBatch = await aiService.saveProblems(documentId, 'grammar', generatedBatch, { docTitle });
-            const usable = Array.isArray(savedBatch) && savedBatch.length ? savedBatch : generatedBatch;
-            addedForType += appendProblems(usable);
-            const generatedCount = Array.isArray(usable) ? usable.length : 0;
-            pushProgress('ai_generated', type, { delivered: generatedCount, requested: remaining });
-          }
-
-          break;
-        }
-        case 'vocabulary': {
-          const cached = await aiService.fetchCached(documentId, 'vocabulary', amount, {
-            excludeIds: Array.from(usedProblemIds),
-            userId: req.user.id
-          });
-          addedForType += appendProblems(cached);
-          const cachedCount = Array.isArray(cached) ? cached.length : 0;
-          pushProgress('cache_fetch', type, { delivered: cachedCount, requested: amount });
-          let remaining = amount - addedForType;
-
-          if (remaining > 0) {
-            const generatedBatch = await aiService.generateVocab(documentId, remaining);
-            const savedBatch = await aiService.saveProblems(documentId, 'vocabulary', generatedBatch, { docTitle });
-            const usable = Array.isArray(savedBatch) && savedBatch.length ? savedBatch : generatedBatch;
-            addedForType += appendProblems(usable);
-            const generatedCount = Array.isArray(usable) ? usable.length : 0;
-            pushProgress('ai_generated', type, { delivered: generatedCount, requested: remaining });
-          }
-
-          break;
-        }
-        case 'title': {
-          const cached = await aiService.fetchCached(documentId, 'title', amount, {
-            excludeIds: Array.from(usedProblemIds),
-            userId: req.user.id
-          });
-          addedForType += appendProblems(cached);
-          const cachedCount = Array.isArray(cached) ? cached.length : 0;
-          pushProgress('cache_fetch', type, { delivered: cachedCount, requested: amount });
-          let remaining = amount - addedForType;
-
-          if (remaining > 0) {
-            const generatedBatch = await aiService.generateTitle(documentId, remaining);
-            const savedBatch = await aiService.saveProblems(documentId, 'title', generatedBatch, { docTitle });
-            const usable = Array.isArray(savedBatch) && savedBatch.length ? savedBatch : generatedBatch;
-            addedForType += appendProblems(usable);
-            const generatedCount = Array.isArray(usable) ? usable.length : 0;
-            pushProgress('ai_generated', type, { delivered: generatedCount, requested: remaining });
-          }
-
-          break;
-        }
-        case 'theme': {
-          const cached = await aiService.fetchCached(documentId, 'theme', amount, {
-            excludeIds: Array.from(usedProblemIds),
-            userId: req.user.id
-          });
-          addedForType += appendProblems(cached);
-          const cachedCount = Array.isArray(cached) ? cached.length : 0;
-          pushProgress('cache_fetch', type, { delivered: cachedCount, requested: amount });
-          let remaining = amount - addedForType;
-
-          if (remaining > 0) {
-            const generatedBatch = await aiService.generateTheme(documentId, remaining);
-            const savedBatch = await aiService.saveProblems(documentId, 'theme', generatedBatch, { docTitle });
-            const usable = Array.isArray(savedBatch) && savedBatch.length ? savedBatch : generatedBatch;
-            addedForType += appendProblems(usable);
-            const generatedCount = Array.isArray(usable) ? usable.length : 0;
-            pushProgress('ai_generated', type, { delivered: generatedCount, requested: remaining });
-          }
-
-          break;
-        }
-        case 'summary': {
-          const cached = await aiService.fetchCached(documentId, 'summary', amount, {
-            excludeIds: Array.from(usedProblemIds),
-            userId: req.user.id
-          });
-          addedForType += appendProblems(cached);
-          const cachedCount = Array.isArray(cached) ? cached.length : 0;
-          pushProgress('cache_fetch', type, { delivered: cachedCount, requested: amount });
-          let remaining = amount - addedForType;
-
-          if (remaining > 0) {
-            const generatedBatch = await aiService.generateSummary(documentId, remaining);
-            const savedBatch = await aiService.saveProblems(documentId, 'summary', generatedBatch, { docTitle });
-            const usable = Array.isArray(savedBatch) && savedBatch.length ? savedBatch : generatedBatch;
-            addedForType += appendProblems(usable);
-            const generatedCount = Array.isArray(usable) ? usable.length : 0;
-            pushProgress('ai_generated', type, { delivered: generatedCount, requested: remaining });
-          }
-
-          break;
-        }
-        case 'implicit': {
-          const cached = await aiService.fetchCached(documentId, 'implicit', amount, {
-            excludeIds: Array.from(usedProblemIds),
-            userId: req.user.id
-          });
-          addedForType += appendProblems(cached);
-          const cachedCount = Array.isArray(cached) ? cached.length : 0;
-          pushProgress('cache_fetch', type, { delivered: cachedCount, requested: amount });
-          let remaining = amount - addedForType;
-
-          if (remaining > 0) {
-            const generatedBatch = await aiService.generateImplicit(documentId, remaining);
-            const savedBatch = await aiService.saveProblems(documentId, 'implicit', generatedBatch, { docTitle });
-            const usable = Array.isArray(savedBatch) && savedBatch.length ? savedBatch : generatedBatch;
-            addedForType += appendProblems(usable);
-            const generatedCount = Array.isArray(usable) ? usable.length : 0;
-            pushProgress('ai_generated', type, { delivered: generatedCount, requested: remaining });
-          }
-
-          break;
-        }
-        case 'order': {
-          const generated = buildOrderProblems(context, amount, { orderDifficulty });
-          addedForType += appendProblems(generated);
-          const generatedCount = Array.isArray(generated) ? generated.length : 0;
-          pushProgress('static_generated', type, { delivered: generatedCount, requested: amount });
-          break;
-        }
-        case 'insertion': {
-          const generated = buildInsertionProblems(context, amount, { insertionDifficulty });
-          addedForType += appendProblems(generated);
-          const generatedCount = Array.isArray(generated) ? generated.length : 0;
-          pushProgress('static_generated', type, { delivered: generatedCount, requested: amount });
-          break;
-        }
-        case 'irrelevant': {
-          const cached = await aiService.fetchCached(documentId, 'irrelevant', amount, {
-            excludeIds: Array.from(usedProblemIds),
-            userId: req.user.id
-          });
-          addedForType += appendProblems(cached);
-          const cachedCount = Array.isArray(cached) ? cached.length : 0;
-          pushProgress('cache_fetch', type, { delivered: cachedCount, requested: amount });
-          let remaining = amount - addedForType;
-
-          if (remaining > 0) {
-            const generatedBatch = await aiService.generateIrrelevant(documentId, remaining);
-            const savedBatch = await aiService.saveProblems(documentId, 'irrelevant', generatedBatch, { docTitle });
-            const usable = Array.isArray(savedBatch) && savedBatch.length ? savedBatch : generatedBatch;
-            addedForType += appendProblems(usable);
-            const generatedCount = Array.isArray(usable) ? usable.length : 0;
-            pushProgress('ai_generated', type, { delivered: generatedCount, requested: remaining });
-          }
-
-          break;
-        }
-        default:
-          break;
-      }
-
-      if (addedForType < amount) {
-        throw new Error(`Failed to prepare enough problems for type: ${type}`);
-      }
-      pushProgress('type_complete', type, { delivered: addedForType, requested: amount });
-    }
-
-    const normalizedProblems = normalizeAll(aggregated);
-    if (!normalizedProblems.length) {
-      return res.status(503).json({ message: 'Failed to build a valid problem set.' });
-    }
-
-    let finalProblems = normalizedProblems;
-    if (orderMode === 'random') {
-      finalProblems = [...normalizedProblems];
-      for (let i = finalProblems.length - 1; i > 0; i -= 1) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [finalProblems[i], finalProblems[j]] = [finalProblems[j], finalProblems[i]];
-      }
-    } else if (orderMode === 'sequential') {
-      finalProblems = normalizedProblems;
-    }
-    pushProgress('all_complete', 'all', { delivered: finalProblems.length });
-
-    const exposureWhitelist = new Set(['blank', 'grammar', 'vocabulary', 'title', 'theme', 'summary', 'implicit', 'irrelevant']);
-    const exposureIds = [...new Set(finalProblems
-      .filter((problem) => problem && exposureWhitelist.has(problem.type))
-      .map((problem) => Number(problem.id))
-      .filter((id) => Number.isInteger(id) && id > 0))];
-
-    if (exposureIds.length) {
-      await aiService.markExposures(req.user.id, exposureIds);
-    }
-
-    await updateUsage(req.user.id, finalProblems.length);
     res.json({
-      problems: finalProblems,
-      count: finalProblems.length,
-      limit: req.dailyLimit,
-      progressLog
+      ...result,
+      limit: req.dailyLimit
     });
   } catch (error) {
     console.error('[generate/csat-set] error:', error);
@@ -496,7 +94,7 @@ router.post('/problems/export/pdf', verifyToken, async (req, res) => {
     const normalizedTypes = Array.isArray(types)
       ? types.map((type) => String(type || '').trim()).filter((type) => type.length)
       : [];
-    const normalizedCounts = normalizeExportCounts(counts);
+    const normalizedCounts = problemSetService.normalizeExportCounts(counts);
     const totalFromCounts = Object.values(normalizedCounts).reduce((sum, value) => sum + value, 0);
     const numericLimit = Math.min(Math.max(parseInt(limit, 10) || 0, 0), EXPORT_MAX_TOTAL);
     const finalLimit = totalFromCounts > 0 ? Math.min(totalFromCounts, EXPORT_MAX_TOTAL) : Math.min(Math.max(numericLimit, 0), EXPORT_MAX_TOTAL);

@@ -2,15 +2,9 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import apiService from "../services/api.service";
 import problemRegistry from "../services/problemRegistry";
 import logger from "../utils/logger";
+import { GENERATION_STAGES, TIER_ORDER } from "../features/study/constants";
 
 const bracketCleanupPattern = new RegExp(`[{}\\[\\]\\\\]`, "g");
-const GENERATION_STAGES = [
-  '요청 정보를 정리하고 있어요...',
-  '캐시에서 사용할 수 있는 문제를 찾는 중이에요...',
-  'AI가 새 문제를 빚고 있어요...',
-  '문제를 검토하고 정리 중이에요...'
-];
-
 const normalizeAnswerArray = (value) => {
   if (value === null || value === undefined) return [];
   return String(value)
@@ -28,17 +22,6 @@ export const formatSeconds = (seconds = 0) => {
   const secs = total % 60;
   return `${mins}:${secs.toString().padStart(2, "0")}`;
 };
-
-const tierOrder = [
-  "Iron",
-  "Bronze",
-  "Silver",
-  "Gold",
-  "Platinum",
-  "Diamond",
-  "Master",
-  "Challenger",
-];
 
 const useStudySession = (user, onUserUpdate = () => {}) => {
   const [mode, setMode] = useState("config");
@@ -94,7 +77,7 @@ const useStudySession = (user, onUserUpdate = () => {}) => {
 
   const getTierStep = useCallback(() => {
     const tierName = String(user?.tier?.name || user?.tier || "").toLowerCase();
-    const idx = tierOrder.findIndex((label) => label.toLowerCase() === tierName);
+    const idx = TIER_ORDER.findIndex((label) => label.toLowerCase() === tierName);
     return Math.max(0, idx);
   }, [user]);
 
