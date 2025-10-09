@@ -227,8 +227,8 @@ const styles = {
   message: {
     fontSize: '1.4rem',
     fontWeight: 700,
-    color: palette.textInverse,
-    textShadow: '0 2px 4px rgba(15, 23, 42, 0.35)',
+    color: palette.textPrimary,
+    textShadow: '0 2px 4px rgba(15, 23, 42, 0.2)',
   },
   emoji: {
     fontSize: '1.8rem',
@@ -341,7 +341,7 @@ const styles = {
   },
   typeHeader: {
     fontWeight: 700,
-    background: 'rgba(148, 163, 184, 0.2)',
+    background: 'var(--surface-soft-muted)',
   },
   problemGrid: {
     display: 'grid',

@@ -1,6 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import ProblemDisplay from '../problem/ProblemDisplay';
-import { reviewModeStyles as styles } from '../styles/viewStyles';
+import { reviewModeStyles as styles, studyModeStyles } from '../styles/viewStyles';
 
 const buildReviewItems = (results) => {
   if (!results) return [];
@@ -35,6 +35,22 @@ const buildReviewItems = (results) => {
 
 const ReviewModeView = ({ results, onBack, onRestart }) => {
   const reviewItems = useMemo(() => buildReviewItems(results), [results]);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return () => {};
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 240);
+    };
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const handleScrollTop = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   return (
     <div style={styles.wrapper}>
@@ -97,6 +113,23 @@ const ReviewModeView = ({ results, onBack, onRestart }) => {
           ))}
         </div>
       )}
+
+      {showScrollTop ? (
+        <button
+          type="button"
+          aria-label="맨 위로 이동"
+          style={studyModeStyles.scrollTopButton}
+          onClick={handleScrollTop}
+          onMouseEnter={(event) => {
+            event.currentTarget.style.transform = 'translateY(-4px)';
+          }}
+          onMouseLeave={(event) => {
+            event.currentTarget.style.transform = 'translateY(0)';
+          }}
+        >
+          🔝
+        </button>
+      ) : null}
     </div>
   );
 };

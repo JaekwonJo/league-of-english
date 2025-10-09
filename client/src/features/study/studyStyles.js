@@ -20,13 +20,14 @@ export const studyStyles = {
   progressBarOuter: {
     width: '100%',
     height: '8px',
-    background: 'var(--surface-border-soft)',
+    background: 'var(--surface-soft-muted)',
     borderRadius: '999px',
-    overflow: 'hidden'
+    overflow: 'hidden',
+    boxShadow: 'inset 0 1px 3px var(--surface-shadow)'
   },
   progressBarInner: {
     height: '100%',
-    background: 'var(--accent-gradient)',
+    background: 'var(--progress-gradient)',
     transition: 'width 0.45s ease'
   },
   spinner: {

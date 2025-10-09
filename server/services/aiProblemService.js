@@ -231,6 +231,9 @@ class AIProblemService {
     if (message.includes('underline') || message.includes('밑줄')) {
       directives.push('- Underline exactly five segments with <u>...</u> in both the passage and each option.');
     }
+    if (message.includes('자동으로 추가') || message.includes('missing underline')) {
+      directives.push('- 밑줄은 문제 속 오류 구간만 감싸도록 정확히 표시하고, 각 보기는 최소 한 단어 이상의 밑줄을 포함해야 합니다.');
+    }
     if (message.includes('option') && message.includes('5')) {
       directives.push('- Provide exactly five options labelled with the circled digits ①-⑤.');
     }
@@ -251,6 +254,14 @@ class AIProblemService {
     }
     if (message.includes('찾을 수 없음') || message.includes('segment') || message.includes('위치')) {
       directives.push('- Copy each underlined snippet exactly as it appears in the passage (no paraphrasing or trimming).');
+    }
+    if (
+      message.includes('unchanged from original') ||
+      message.includes('변경되지') ||
+      message.includes('그대로') ||
+      message.includes('일치')
+    ) {
+      directives.push('- 정답이 아닌 밑줄 구간은 원문과 다른 문법 오류가 드러나도록 반드시 하나 이상의 어형/구두점/구문을 바꿔 주세요. 나머지 네 구간은 원문과 철자까지 동일해야 합니다.');
     }
     const missingSnippetRegex = /"([^"]+)"\s*위치를? 찾을 수 없음/gi;
     const snippetDirectives = new Set();

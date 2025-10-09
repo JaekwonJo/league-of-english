@@ -31,17 +31,17 @@ const RankPanel = ({ myRank, nearby, rankError }) => (
             <div style={styles.nearbyList}>
               {nearby.map((entry) => (
                 <div key={entry.id} style={styles.nearbyRow}>
-                  <div style={{ width: 60, color: palette.textSubtle }}>#{entry.rank}</div>
+                  <div style={{ width: 60, color: palette.textSecondary }}>#{entry.rank}</div>
                   <div
                     style={{
                       flex: 1,
-                      color: entry.isMe ? palette.success : 'var(--color-slate-200)',
+                      color: entry.isMe ? palette.success : palette.textSecondary,
                       fontWeight: entry.isMe ? 700 : 500,
                     }}
                   >
                     {entry.isMe ? '나' : entry.name || entry.id}
                   </div>
-                  <div style={{ minWidth: 90, textAlign: 'right', color: 'var(--text-muted)' }}>
+                  <div style={{ minWidth: 90, textAlign: 'right', color: palette.textMuted }}>
                     {(entry.points || 0).toLocaleString()} LP
                   </div>
                 </div>

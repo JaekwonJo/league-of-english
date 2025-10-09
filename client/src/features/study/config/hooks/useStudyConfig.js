@@ -35,6 +35,8 @@ const useStudyConfig = ({ onStart, initialFocusType }) => {
   const [config, setConfig] = useState(defaultConfig);
   const [initialFocusApplied, setInitialFocusApplied] = useState(false);
 
+  const selectedCount = selectedPassages.length;
+
   const totalProblems = useMemo(
     () => calculateTotalProblems(config.types),
     [config.types],
@@ -266,13 +268,15 @@ const useStudyConfig = ({ onStart, initialFocusType }) => {
       return acc;
     }, {});
 
-    const maxSteps = Math.floor(MAX_TOTAL_PROBLEMS / PROBLEM_STEP);
-    const targetSteps = Math.floor(Math.random() * maxSteps) + 1;
-    const targetTotal = targetSteps * PROBLEM_STEP;
+    const baseTarget = totalProblems || selectedCount || 5;
+    const desiredTotal = Math.min(
+      MAX_TOTAL_PROBLEMS,
+      Math.max(PROBLEM_STEP, baseTarget)
+    );
 
     const shuffledTypes = [...TYPE_KEYS].sort(() => Math.random() - 0.5);
     const allocation = { ...zeroed };
-    let remaining = targetTotal;
+    let remaining = desiredTotal;
     let index = 0;
 
     while (remaining > 0) {
@@ -283,7 +287,7 @@ const useStudyConfig = ({ onStart, initialFocusType }) => {
     }
 
     updateTypes(allocation);
-  }, [updateTypes]);
+  }, [selectedCount, totalProblems, updateTypes]);
 
   const changeOrderMode = useCallback((mode) => {
     const normalized = ensureOrderMode(mode);
@@ -310,7 +314,7 @@ const useStudyConfig = ({ onStart, initialFocusType }) => {
       return;
     }
     if (totalProblems === 0) {
-      window.alert('적어도 5문제 이상 선택해주세요 (기본 단위 5문제).');
+      window.alert('적어도 1문제 이상 선택해주세요.');
       return;
     }
     if (totalProblems > MAX_TOTAL_PROBLEMS) {
