@@ -1,3 +1,9 @@
+## 2025-10-13 (priority refresh + doc sync)
+- Issue: README, PROJECT_STATE, BUILDLOG에 적힌 우선순위와 Known issues가 제각각이라 팀이 같은 문제를 바라보고 있는지 확신하기 어려웠어요.
+- Fix: PROJECT_STATE에 오늘의 Priorities 섹션을 추가하고, README Top 3와 BUILDLOG 최신 항목을 같은 작업 목록으로 맞췄어요. 손상된 2025-09-19 로그는 복원 필요하다는 메모로 바꿔 다시 확인하도록 안내했습니다.
+- Files: PROJECT_STATE.md, README.md, BUILDLOG.md.
+- Verification: 문서 검토만 진행했습니다.
+
 ## 2025-10-12 (csat set failure triage + status doc sync)
 - Issue: 학습 세트 생성이 빈칸/어휘 단계에서 멈춰 학생에게 "문제를 준비하지 못했어요"만 보이고, 문제 피드백 UX·테마 대비도 미흡하다는 불만이 이어졌어요.
 - Cause: `blank` 검증기가 정답 보기를 타깃 문장과 동일하게 요구하고, 어휘 프롬프트가 `(A)` 자리 표시자가 없으면 즉시 실패 처리하면서 전체 세트를 중단했습니다. 사이드바/분석 화면은 라이트/다크 테마 색상 토큰이 정리되지 않았고, 문제 화면에는 좋아요/신고 흐름이 없어요.
@@ -352,11 +358,9 @@ NODE` 로 5문항 생성 결과 (가족/전략 태그·한글 해설·단일 빈
 - Verification: `npm run dev:all`, then `curl http://localhost:5000/health`, followed by manual grammar problem checks in the React UI.
 
 ## 2025-09-19
-- Change summary: ??????된 ??롬??트/규칙 기반??로 모든 MCQ ??형????일??JSON ??키마?? 출력??도??개편??고, ??능????크 ??마 카드 UI??문제 ??이??웃????일??다.
-- Cause: 기존 API 출력????형마다 ??락 ??드가 ??르?? UI????배경/???? ??택지 ??으????제 ??험 ??름????랐??
-- Decision: 매뉴??`problem manual/*.md`)????롬??트??주입, ??패 ????백 로직??구축??고 `generateGrammarSpanProblem`??규칙 기반??로 ??작??했??
-- Impact scope: server/services/aiProblemService.js, server/utils/grammarSpanGenerator.js, client/study 문제 카드 ??반.
-- Verification: Node ??위 ??스??로 grammar span 규칙 변??을 ??인??고, 주요 ??형????동 ??행??`source`/`mainText`/`options`가 모두 채워지???? 검증했??
+- Status: 이 항목은 저장 과정에서 인코딩이 손상돼 원문 내용을 확인할 수 없습니다. git 이력(2025-09-19 커밋)을 참고해 MCQ/grammar span 리팩터링 기록을 다시 작성해야 합니다.
+- Cause: 문서 편집기에 인코딩이 깨진 상태로 저장돼 한글이 물음표로 변했습니다.
+- Next step: 해당 날짜 변경 사항을 정리한 뒤 Change summary/Impact/Verification을 복원해 주세요.
 
 ## 2025-09-22
 - Error: insertion problems truncated sentences and revealed ASCII markers instead of exam-style numerals.
