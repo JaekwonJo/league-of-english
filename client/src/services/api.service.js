@@ -266,6 +266,13 @@ export const api = {
     updateShares: (id, payload) => apiService.post(`/documents/${id}/share`, payload)
   },
 
+  vocabulary: {
+    list: () => apiService.get('/vocabulary/sets'),
+    detail: (id) => apiService.get(`/vocabulary/sets/${id}`),
+    generateQuiz: (id, payload) => apiService.post(`/vocabulary/sets/${id}/quiz`, payload),
+    submitQuiz: (id, payload) => apiService.post(`/vocabulary/sets/${id}/quiz/submit`, payload)
+  },
+
   // 문제
   problems: {
     getSmartProblems: (data) => apiService.post('/get-smart-problems', data),
@@ -277,7 +284,11 @@ export const api = {
     reviewQueue: (params) => apiService.get('/problems/review-queue', params),
     startReviewSession: (data) => apiService.post('/problems/review-session', data),
     saveNote: (problemId, data) => apiService.put(`/problems/${problemId}/note`, data),
-    exportHistory: (params) => apiService.get('/problems/export/history', params)
+    exportHistory: (params) => apiService.get('/problems/export/history', params),
+    feedback: {
+      summary: (problemId) => apiService.get(`/problems/${problemId}/feedback/summary`),
+      submit: (problemId, payload) => apiService.post(`/problems/${problemId}/feedback`, payload)
+    }
   },
 
   // 사용자

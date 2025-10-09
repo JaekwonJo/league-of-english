@@ -174,6 +174,22 @@ class Database {
           FOREIGN KEY (document_id) REFERENCES documents(id)
         )`,
 
+        `CREATE TABLE IF NOT EXISTS problem_feedback (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL,
+          problem_id INTEGER NOT NULL,
+          action TEXT NOT NULL,
+          reason TEXT,
+          status TEXT DEFAULT 'pending',
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(user_id, problem_id, action),
+          FOREIGN KEY (user_id) REFERENCES users(id),
+          FOREIGN KEY (problem_id) REFERENCES problems(id)
+        )`,
+        'CREATE INDEX IF NOT EXISTS idx_problem_feedback_problem ON problem_feedback(problem_id)',
+        'CREATE INDEX IF NOT EXISTS idx_problem_feedback_user ON problem_feedback(user_id)',
+
         // auth_logs
         `CREATE TABLE IF NOT EXISTS auth_logs (
           id INTEGER PRIMARY KEY AUTOINCREMENT,

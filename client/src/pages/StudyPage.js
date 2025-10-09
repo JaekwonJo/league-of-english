@@ -66,7 +66,18 @@ const StudyPage = () => {
     loadingStageLabel,
     loadingContext,
     generationLog,
+    savedSession,
+    restoreSavedSession,
+    clearSavedSession,
   } = useStudySession(user, updateUser);
+
+  const handleResumeSavedSession = useCallback(() => {
+    if (typeof restoreSavedSession !== 'function') return;
+    const restored = restoreSavedSession();
+    if (restored === false) {
+      window.alert('저장된 학습 세션을 불러오지 못했어요. 새로 시작해 주세요.');
+    }
+  }, [restoreSavedSession]);
 
   const clearReviewQuery = useCallback(() => {
     try {
@@ -202,6 +213,9 @@ const StudyPage = () => {
         <StudyConfig
           onStart={startStudy}
           initialFocusType={initialFocusType}
+          savedSession={savedSession}
+          onResumeSavedSession={handleResumeSavedSession}
+          onDiscardSavedSession={clearSavedSession}
           headerSlot={(
             <ReviewCallout
               total={reviewPreview.total}

@@ -38,6 +38,58 @@ export const problemDisplayStyles = {
     justifyContent: 'space-between',
     gap: '12px'
   },
+  feedbackBar: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: '16px',
+    padding: '12px 16px',
+    marginBottom: '20px',
+    background: 'var(--surface-soft)',
+    border: '1px solid var(--surface-border)',
+    borderRadius: '14px',
+    flexWrap: 'wrap'
+  },
+  feedbackLabel: {
+    fontSize: '15px',
+    fontWeight: 600,
+    color: 'var(--text-secondary)'
+  },
+  feedbackButtons: {
+    display: 'flex',
+    gap: '12px',
+    flexWrap: 'wrap'
+  },
+  feedbackButton: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '10px 18px',
+    borderRadius: '999px',
+    border: '1px solid var(--surface-border)',
+    background: 'var(--surface-card)',
+    color: 'var(--text-primary)',
+    fontWeight: 600,
+    cursor: 'pointer',
+    transition: 'all 0.2s ease'
+  },
+  feedbackButtonActive: {
+    borderColor: 'var(--accent-primary)',
+    background: 'var(--accent-primary-pale)',
+    color: 'var(--accent-primary-strong)'
+  },
+  feedbackButtonLoading: {
+    opacity: 0.6,
+    cursor: 'wait'
+  },
+  feedbackCount: {
+    fontSize: '13px',
+    color: 'var(--text-secondary)'
+  },
+  feedbackError: {
+    color: 'var(--danger)',
+    fontSize: '13px'
+  },
   navButton: {
     padding: '12px 24px',
     background: 'var(--surface-soft)',

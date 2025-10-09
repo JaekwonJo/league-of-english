@@ -2,21 +2,16 @@
 const router = express.Router();
 
 const { verifyToken, checkDailyLimit, updateUsage } = require('../middleware/auth');
-const aiService = require('../services/aiProblemService');
-const database = require('../models/database');
-const { normalizeAll } = require('../utils/csatProblemNormalizer');
-const studyService = require('../services/studyService');
-const { createProblemsPdf } = require('../utils/pdfExporter');
 const problemSetService = require('../services/problemSetService');
-
-function safeJsonParse(value, fallback) {
-  if (!value) return fallback;
-  try {
-    return JSON.parse(value);
-  } catch (error) {
-    return fallback;
-  }
-}
+const problemExportService = require('../services/problemExportService');
+const problemLibraryService = require('../services/problemLibraryService');
+const problemReviewService = require('../services/problemReviewService');
+const {
+  submitFeedback: submitProblemFeedback,
+  getFeedbackSummary: getProblemFeedbackSummary
+} = require('../services/problemFeedbackService');
+const { getUserStats } = require('../services/problemStatsService');
+const studyService = require('../services/studyService');
 
 router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res) => {
   const {
@@ -91,84 +86,36 @@ router.post('/problems/export/pdf', verifyToken, async (req, res) => {
       subtitle
     } = req.body || {};
 
-    const normalizedTypes = Array.isArray(types)
-      ? types.map((type) => String(type || '').trim()).filter((type) => type.length)
-      : [];
-    const normalizedCounts = problemSetService.normalizeExportCounts(counts);
-    const totalFromCounts = Object.values(normalizedCounts).reduce((sum, value) => sum + value, 0);
-    const numericLimit = Math.min(Math.max(parseInt(limit, 10) || 0, 0), EXPORT_MAX_TOTAL);
-    const finalLimit = totalFromCounts > 0 ? Math.min(totalFromCounts, EXPORT_MAX_TOTAL) : Math.min(Math.max(numericLimit, 0), EXPORT_MAX_TOTAL);
+    const exportBundle = await problemExportService.gatherProblems({
+      documentId,
+      types,
+      counts,
+      limit,
+      includeSolutions,
+      includeGeneratedOnly: false
+    });
 
-    if (!finalLimit || finalLimit < 5) {
-      return res.status(400).json({ message: '내보낼 문제 수를 5문제 이상 선택해 주세요.' });
-    }
-
-    const aggregated = [];
-    const seenIds = new Set();
-
-    if (totalFromCounts > 0) {
-      for (const [type, count] of Object.entries(normalizedCounts)) {
-        if (count <= 0) continue;
-        const fetched = await aiService.listProblemsForExport({
-          documentId,
-          types: [type],
-          limit: count,
-          includeGeneratedOnly: false
-        });
-        fetched.forEach((problem) => {
-          if (problem && problem.id && !seenIds.has(problem.id)) {
-            aggregated.push(problem);
-            seenIds.add(problem.id);
-          }
-        });
-      }
-    } else {
-      const fetched = await aiService.listProblemsForExport({
-        documentId,
-        types: normalizedTypes,
-        limit: finalLimit,
-        includeGeneratedOnly: false
-      });
-      fetched.forEach((problem) => {
-        if (problem && problem.id && !seenIds.has(problem.id)) {
-          aggregated.push(problem);
-          seenIds.add(problem.id);
-        }
-      });
-    }
-
-    if (!aggregated.length) {
-      return res.status(404).json({ message: 'PDF로 내보낼 저장된 문제가 아직 부족해요.' });
-    }
-
-    const problems = aggregated.slice(0, finalLimit);
-
-    const problemIds = problems
-      .map((problem) => Number(problem.id))
-      .filter((id) => Number.isInteger(id) && id > 0);
-
-    try {
-      await aiService.recordExportHistory({
-        userId: req.user.id,
-        documentId,
-        types: normalizedTypes.length ? normalizedTypes : Object.keys(normalizedCounts),
-        counts: normalizedCounts,
-        problemIds,
-        total: problems.length,
-        includeSolutions
-      });
-    } catch (historyError) {
-      console.warn('[problems/export/pdf] history log skipped:', historyError?.message || historyError);
-    }
+    await problemExportService.recordExportHistory({
+      userId: req.user.id,
+      documentId: exportBundle.documentId,
+      types: exportBundle.normalizedTypes.length
+        ? exportBundle.normalizedTypes
+        : Object.keys(exportBundle.normalizedCounts),
+      counts: exportBundle.normalizedCounts,
+      problemIds: exportBundle.problemIds,
+      total: exportBundle.total,
+      includeSolutions
+    });
 
     const filename = `loe-problems-${Date.now()}.pdf`;
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
 
-    const doc = createProblemsPdf(problems, {
-      title: title || 'League of English 문제 세트',
-      subtitle: subtitle || (documentId ? `문서 ID ${documentId}` : null),
-      includeSolutions
+    const doc = problemExportService.buildPdfStream(exportBundle.problems, {
+      title,
+      subtitle,
+      includeSolutions,
+      documentId: exportBundle.documentId
     });
 
     doc.pipe(res);
@@ -183,8 +130,11 @@ router.post('/problems/export/pdf', verifyToken, async (req, res) => {
     doc.end();
   } catch (error) {
     console.error('[problems/export/pdf] error:', error);
+    const statusCode = Number.isInteger(error?.status) ? error.status : 500;
     if (!res.headersSent) {
-      res.status(500).json({ message: '문제 PDF를 생성하지 못했어요. 잠시 후 다시 시도해 주세요.' });
+      res.status(statusCode).json({
+        message: error?.message || '문제 PDF를 생성하지 못했어요. 잠시 후 다시 시도해 주세요.'
+      });
     }
   }
 });
@@ -198,63 +148,29 @@ router.get('/problems/library', verifyToken, async (req, res) => {
     const documentId = req.query.documentId ? Number(req.query.documentId) : null;
     const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 0, 0) || 40, 200);
     const includeGeneratedOnly = req.query.aiOnly === undefined ? true : req.query.aiOnly !== 'false';
-    const rawTypes = req.query.types;
-    let types = [];
-    if (Array.isArray(rawTypes)) {
-      types = rawTypes.map((type) => String(type || '').trim()).filter((type) => type.length);
-    } else if (typeof rawTypes === 'string' && rawTypes.trim()) {
-      types = rawTypes.split(',').map((type) => type.trim()).filter((type) => type.length);
-    }
+    const types = problemLibraryService.normalizeListParam(req.query.types);
+    const difficulties = problemLibraryService
+      .normalizeListParam(req.query.difficulties)
+      .map((item) => item.toLowerCase());
 
-    const rawDifficulties = req.query.difficulties;
-    let difficulties = [];
-    if (Array.isArray(rawDifficulties)) {
-      difficulties = rawDifficulties.map((item) => String(item || '').trim().toLowerCase()).filter((item) => item.length);
-    } else if (typeof rawDifficulties === 'string' && rawDifficulties.trim()) {
-      difficulties = rawDifficulties
-        .split(',')
-        .map((item) => item.trim().toLowerCase())
-        .filter((item) => item.length);
-    }
-
-    const problems = await aiService.listProblemsForExport({
+    const problems = await problemLibraryService.listProblems({
       documentId,
-      types,
-      difficulties,
       limit,
       includeGeneratedOnly,
-      randomize: false
+      types,
+      difficulties
     });
 
-    const normalized = normalizeAll(problems);
-
-    let summaryQuery = 'SELECT type, COUNT(*) AS total FROM problems WHERE 1=1';
-    const summaryParams = [];
-    if (documentId) {
-      summaryQuery += ' AND document_id = ?';
-      summaryParams.push(documentId);
-    }
-    if (includeGeneratedOnly) {
-      summaryQuery += ' AND is_ai_generated = 1';
-    }
-    if (difficulties.length) {
-      const placeholders = difficulties.map(() => '?').join(',');
-      summaryQuery += ` AND LOWER(difficulty) IN (${placeholders})`;
-      summaryParams.push(...difficulties);
-    }
-    summaryQuery += ' GROUP BY type';
-
-    const summaryRows = await database.all(summaryQuery, summaryParams);
-
-    const summary = summaryRows.reduce((acc, row) => {
-      acc[row.type] = Number(row.total) || 0;
-      return acc;
-    }, {});
+    const summary = await problemLibraryService.summarizeProblems({
+      documentId,
+      includeGeneratedOnly,
+      difficulties
+    });
 
     res.json({
-      count: normalized.length,
-      total: normalized.length,
-      problems: normalized,
+      count: problems.length,
+      total: problems.length,
+      problems,
       summary,
       documentId,
       includeGeneratedOnly
@@ -273,9 +189,13 @@ router.put('/problems/:id/note', verifyToken, async (req, res) => {
 
     const problemId = Number(req.params.id);
     const note = typeof req.body?.note === 'string' ? req.body.note : '';
-    const updated = await aiService.saveProblemNote(problemId, req.user.id, note);
-    const normalized = normalizeAll([updated]);
-    res.json({ problem: normalized[0] || null });
+    const problem = await problemLibraryService.saveProblemNote({
+      problemId,
+      userId: req.user.id,
+      note
+    });
+
+    res.json({ problem });
   } catch (error) {
     console.error('[problems/:id/note] error:', error);
     res.status(500).json({ message: '문항 메모를 저장하지 못했어요. 잠시 후 다시 시도해 주세요.' });
@@ -288,32 +208,7 @@ router.get('/problems/export/history', verifyToken, async (req, res) => {
       return res.status(403).json({ message: '관리자 또는 선생님 계정만 내보내기 기록을 볼 수 있어요.' });
     }
 
-    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 50);
-    const rows = await database.all(
-      'SELECT h.*, u.name AS user_name, u.username AS user_username, d.title AS document_title ' +
-        'FROM problem_export_history h ' +
-        'LEFT JOIN users u ON u.id = h.user_id ' +
-        'LEFT JOIN documents d ON d.id = h.document_id ' +
-        'ORDER BY datetime(h.created_at) DESC, h.id DESC LIMIT ?',
-      [limit]
-    );
-
-    const history = rows.map((row) => ({
-      id: row.id,
-      user: {
-        id: row.user_id,
-        name: row.user_name || row.user_username || '관리자'
-      },
-      documentId: row.document_id,
-      documentTitle: row.document_title || null,
-      total: Number(row.total) || 0,
-      includeSolutions: row.include_solutions === 1 || row.include_solutions === '1',
-      problemIds: safeJsonParse(row.problem_ids, []),
-      types: safeJsonParse(row.types, []),
-      counts: safeJsonParse(row.counts, {}),
-      createdAt: row.created_at
-    }));
-
+    const history = await problemExportService.listExportHistory(req.query.limit);
     res.json({ history });
   } catch (error) {
     console.error('[problems/export/history] error:', error);
@@ -324,13 +219,8 @@ router.get('/problems/export/history', verifyToken, async (req, res) => {
 router.get('/problems/review-queue', verifyToken, async (req, res) => {
   try {
     const limit = Math.max(parseInt(req.query.limit, 10) || 0, 0) || 20;
-    const queue = await aiService.listReviewQueueForUser(req.user.id, { limit });
-    const normalized = normalizeAll(queue.problems || []);
-    res.json({
-      total: queue.total,
-      count: normalized.length,
-      problems: normalized
-    });
+    const queue = await problemReviewService.getReviewQueueForUser(req.user.id, { limit });
+    res.json(queue);
   } catch (error) {
     console.error('[problems/review-queue] error:', error);
     res.status(500).json({ message: '복습 대기열을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.' });
@@ -339,40 +229,61 @@ router.get('/problems/review-queue', verifyToken, async (req, res) => {
 
 router.post('/problems/review-session', verifyToken, async (req, res) => {
   try {
-    const limit = Math.min(Math.max(parseInt(req.body?.limit, 10) || 0, 0) || 5, 20);
-    const queue = await aiService.listReviewQueueForUser(req.user.id, { limit: limit * 4 });
-    const selected = (queue.problems || []).slice(0, limit);
-    if (!selected.length) {
-      return res.status(404).json({ message: '복습할 오답 문제가 없어요. 새로운 문제를 풀어볼까요?' });
-    }
-
-    const normalized = normalizeAll(selected);
-    const exposureIds = selected
-      .map((problem) => Number(problem.id))
-      .filter((id) => Number.isInteger(id) && id > 0);
-
-    if (exposureIds.length) {
-      await aiService.markExposures(req.user.id, exposureIds);
-    }
-
-    res.json({
-      total: queue.total,
-      count: normalized.length,
-      problems: normalized
+    const result = await problemReviewService.startReviewSession(req.user.id, {
+      limit: req.body?.limit
     });
+    res.json(result);
   } catch (error) {
     console.error('[problems/review-session] error:', error);
-    res.status(500).json({ message: '복습 세트를 준비하지 못했어요. 잠시 후 다시 시도해 주세요.' });
+    const statusCode = Number.isInteger(error?.status) ? error.status : 500;
+    res.status(statusCode).json({
+      message: error?.message || '복습 세트를 준비하지 못했어요. 잠시 후 다시 시도해 주세요.'
+    });
+  }
+});
+
+router.post('/problems/:id/feedback', verifyToken, async (req, res) => {
+  const problemId = Number(req.params.id);
+  try {
+    const feedbackResult = await submitProblemFeedback({
+      userId: req.user.id,
+      problemId,
+      action: req.body?.action,
+      reason: req.body?.reason
+    });
+
+    const summary = await getProblemFeedbackSummary(problemId, req.user.id);
+
+    res.json({
+      ...feedbackResult,
+      summary
+    });
+  } catch (error) {
+    console.error('[problems/:id/feedback] error:', error);
+    const statusCode = Number.isInteger(error?.status) ? error.status : 500;
+    res.status(statusCode).json({ message: error?.message || '문항 피드백을 저장하지 못했어요.' });
+  }
+});
+
+router.get('/problems/:id/feedback/summary', verifyToken, async (req, res) => {
+  try {
+    const summary = await getProblemFeedbackSummary(Number(req.params.id), req.user.id);
+    res.json(summary);
+  } catch (error) {
+    console.error('[problems/:id/feedback/summary] error:', error);
+    const statusCode = Number.isInteger(error?.status) ? error.status : 500;
+    res.status(statusCode).json({ message: error?.message || '문항 피드백을 불러오지 못했어요.' });
   }
 });
 
 router.get('/problems/stats', verifyToken, async (req, res) => {
   try {
-    const stats = await studyService.getUserStats(req.user.id);
+    const stats = await getUserStats(req.user.id);
     res.json(stats);
   } catch (error) {
     console.error('[problems/stats] error:', error);
-    res.status(500).json({ message: '학습 통계를 불러오지 못했습니다.' });
+    const statusCode = Number.isInteger(error?.status) ? error.status : 500;
+    res.status(statusCode).json({ message: error?.message || '학습 통계를 불러오지 못했습니다.' });
   }
 });
 

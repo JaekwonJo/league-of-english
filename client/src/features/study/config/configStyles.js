@@ -24,6 +24,58 @@ const styles = {
   headerSlot: {
     marginBottom: '24px',
   },
+  savedSessionCard: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: '16px',
+    padding: '18px 20px',
+    marginBottom: '24px',
+    background: 'var(--surface-soft)',
+    border: '1px solid var(--surface-border)',
+    borderRadius: '18px',
+    boxShadow: '0 12px 28px rgba(15, 23, 42, 0.1)',
+    flexWrap: 'wrap'
+  },
+  savedSessionTitle: {
+    fontSize: '16px',
+    fontWeight: 700,
+    color: 'var(--text-primary)'
+  },
+  savedSessionMeta: {
+    fontSize: '14px',
+    color: 'var(--text-secondary)',
+    marginTop: '4px'
+  },
+  savedSessionMetaMuted: {
+    fontSize: '12px',
+    color: 'var(--color-slate-400)',
+    marginTop: '4px'
+  },
+  savedSessionActions: {
+    display: 'flex',
+    gap: '12px',
+    flexWrap: 'wrap'
+  },
+  resumeButton: {
+    padding: '10px 20px',
+    borderRadius: '12px',
+    border: 'none',
+    background: 'linear-gradient(135deg, var(--accent-primary) 0%, var(--indigo) 100%)',
+    color: 'var(--text-on-accent)',
+    fontWeight: 700,
+    cursor: 'pointer',
+    boxShadow: '0 12px 24px rgba(79, 70, 229, 0.25)'
+  },
+  discardButton: {
+    padding: '10px 18px',
+    borderRadius: '12px',
+    border: '1px solid rgba(220, 38, 38, 0.35)',
+    background: 'transparent',
+    color: 'var(--danger-strong)',
+    fontWeight: 600,
+    cursor: 'pointer'
+  },
   section: {
     background: 'var(--surface-card)',
     borderRadius: '18px',

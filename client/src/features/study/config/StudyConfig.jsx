@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import PassagePreviewModal from '../../../components/shared/PassagePreviewModal';
 import styles from './configStyles';
 import useStudyConfig from './hooks/useStudyConfig';
@@ -6,7 +6,14 @@ import DocumentStep from './components/DocumentStep';
 import PassageStep from './components/PassageStep';
 import ProblemTypeStep from './components/ProblemTypeStep';
 
-const StudyConfig = ({ onStart, headerSlot = null, initialFocusType = null }) => {
+const StudyConfig = ({
+  onStart,
+  headerSlot = null,
+  initialFocusType = null,
+  savedSession = null,
+  onResumeSavedSession = null,
+  onDiscardSavedSession = null
+}) => {
   const {
     step,
     safeStep,
@@ -36,6 +43,42 @@ const StudyConfig = ({ onStart, headerSlot = null, initialFocusType = null }) =>
     handleStart,
     renderPassageMeta,
   } = useStudyConfig({ onStart, initialFocusType });
+
+  const resumeAvailable = useMemo(() => (
+    savedSession && Array.isArray(savedSession.problems) && savedSession.problems.length > 0
+  ), [savedSession]);
+
+  const formatDuration = (seconds = 0) => {
+    const total = Math.max(0, Math.floor(Number(seconds) || 0));
+    const mins = Math.floor(total / 60);
+    const secs = total % 60;
+    return `${mins}분 ${secs.toString().padStart(2, '0')}초`;
+  };
+
+  const savedTimeLabel = useMemo(() => (
+    resumeAvailable ? formatDuration(savedSession?.timeLeft) : ''
+  ), [resumeAvailable, savedSession?.timeLeft]);
+
+  const savedUpdatedLabel = useMemo(() => (
+    resumeAvailable && savedSession?.savedAt
+      ? new Date(savedSession.savedAt).toLocaleTimeString()
+      : null
+  ), [resumeAvailable, savedSession?.savedAt]);
+
+  const handleResumeSession = async () => {
+    if (typeof onResumeSavedSession !== 'function') return;
+    const outcome = await onResumeSavedSession();
+    if (outcome === false) {
+      window.alert('저장된 학습 세션을 불러오지 못했어요. 새로 시작해 주세요.');
+    }
+  };
+
+  const handleDiscardSession = () => {
+    if (typeof onDiscardSavedSession !== 'function') return;
+    if (window.confirm('저장된 학습 세션을 삭제할까요?')) {
+      onDiscardSavedSession();
+    }
+  };
 
   const content = (() => {
     switch (safeStep) {
@@ -94,6 +137,29 @@ const StudyConfig = ({ onStart, headerSlot = null, initialFocusType = null }) =>
   return (
     <div style={styles.container}>
       <h1 style={styles.title}>학습 설정</h1>
+
+      {resumeAvailable && (
+        <div style={styles.savedSessionCard}>
+          <div>
+            <div style={styles.savedSessionTitle}>저장된 학습 이어하기</div>
+            <div style={styles.savedSessionMeta}>
+              남은 문제 {savedSession.problems.length}개 · 남은 시간 {savedTimeLabel}
+            </div>
+            {savedUpdatedLabel && (
+              <div style={styles.savedSessionMetaMuted}>마지막 저장 {savedUpdatedLabel}</div>
+            )}
+          </div>
+          <div style={styles.savedSessionActions}>
+            <button type="button" style={styles.resumeButton} onClick={handleResumeSession}>
+              이어서 풀기
+            </button>
+            <button type="button" style={styles.discardButton} onClick={handleDiscardSession}>
+              삭제
+            </button>
+          </div>
+        </div>
+      )}
+
       {headerSlot && <div style={styles.headerSlot}>{headerSlot}</div>}
       {error && <div style={styles.errorBox}>❗️ {error}</div>}
       {content}

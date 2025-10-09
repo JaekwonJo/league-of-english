@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import OrderProblemDisplay from './components/OrderProblemDisplay';
 import InsertionProblemDisplay from './components/InsertionProblemDisplay';
 import GrammarProblemDisplay from './components/GrammarProblemDisplay';
@@ -13,6 +13,12 @@ import {
   circledDigitIndex,
   CIRCLED_DIGITS,
 } from './utils/textFormatters';
+import { api } from '../../../services/api.service';
+
+const FEEDBACK_ACTIONS = {
+  LIKE: 'like',
+  REPORT: 'report'
+};
 
 const ProblemDisplay = ({
   problem,
@@ -29,6 +35,10 @@ const ProblemDisplay = ({
   reviewMeta = {}
 }) => {
   const [selectedAnswer, setSelectedAnswer] = useState(userAnswer ?? '');
+  const [feedbackSummary, setFeedbackSummary] = useState(null);
+  const [feedbackError, setFeedbackError] = useState('');
+  const [feedbackLoading, setFeedbackLoading] = useState(false);
+  const [feedbackSubmitting, setFeedbackSubmitting] = useState('');
 
   useEffect(() => {
     setSelectedAnswer(userAnswer ?? '');
@@ -36,14 +46,17 @@ const ProblemDisplay = ({
 
   if (!problem) return null;
 
+  const problemId = Number(problem?.id);
+
   const isOrder = problem.type === 'order';
   const isInsertion = problem.type === 'insertion';
   const isGrammar = ['grammar', 'grammar_count', 'grammar_span', 'grammar_multi'].includes(problem.type);
   const isSummary = problem.type === 'summary';
   const isGeneral = !isOrder && !isInsertion && !isGrammar && !isSummary;
   const isBlank = problem.type === 'blank';
-  const isListMode = displayMode === 'list';
   const isReviewMode = displayMode === 'review';
+  const isListMode = displayMode === 'list';
+  const shouldShowFeedback = !isReviewMode && Number.isInteger(problemId) && problemId > 0;
 
   const handleSelect = (answer) => {
     setSelectedAnswer(answer);
@@ -128,6 +141,66 @@ const ProblemDisplay = ({
     () => optionRecords.filter((option) => userAnswerIndices.has(option.index)),
     [optionRecords, userAnswerIndices],
   );
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchSummary = async () => {
+      if (!shouldShowFeedback) {
+        setFeedbackSummary(null);
+        setFeedbackError('');
+        return;
+      }
+      setFeedbackLoading(true);
+      try {
+        const summary = await api.problems.feedback.summary(problemId);
+        if (!cancelled) {
+          setFeedbackSummary(summary);
+          setFeedbackError('');
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setFeedbackError(error?.message || '피드백 정보를 불러오지 못했어요.');
+        }
+      } finally {
+        if (!cancelled) {
+          setFeedbackLoading(false);
+        }
+      }
+    };
+
+    fetchSummary();
+    return () => {
+      cancelled = true;
+    };
+  }, [problemId, shouldShowFeedback]);
+
+  const handleFeedback = useCallback(async (action) => {
+    if (!shouldShowFeedback || !problemId) return;
+    let reason;
+    if (action === FEEDBACK_ACTIONS.REPORT) {
+      reason = window.prompt('어떤 문제가 있었나요? (예: 오타, 정답 오류 등)');
+      if (reason === null) return; // user cancelled
+    }
+
+    setFeedbackSubmitting(action);
+    try {
+      const response = await api.problems.feedback.submit(problemId, {
+        action,
+        reason
+      });
+      if (response?.summary) {
+        setFeedbackSummary(response.summary);
+      }
+      setFeedbackError('');
+    } catch (error) {
+      setFeedbackError(error?.message || '피드백을 저장하지 못했어요.');
+    } finally {
+      setFeedbackSubmitting('');
+    }
+  }, [problemId, shouldShowFeedback]);
+
+  const feedbackCounts = feedbackSummary?.counts || { like: 0, report: 0 };
+  const feedbackUserState = feedbackSummary?.user || { like: false, report: false };
 
   const isAnswerCorrect = useMemo(() => (
     typeof reviewMeta?.isCorrect === 'boolean'
@@ -271,6 +344,59 @@ const ProblemDisplay = ({
     </>
   );
 
+  const renderFeedbackBar = () => {
+    if (!shouldShowFeedback) return null;
+    const likeActive = feedbackUserState.like;
+    const reportActive = feedbackUserState.report;
+    const isBusy = feedbackLoading || Boolean(feedbackSubmitting);
+
+    return (
+      <div style={problemDisplayStyles.feedbackBar}>
+        <div style={problemDisplayStyles.feedbackLabel}>이 문제 어땠나요?</div>
+        <div style={problemDisplayStyles.feedbackButtons}>
+          <button
+            type="button"
+            style={{
+              ...problemDisplayStyles.feedbackButton,
+              ...(likeActive ? problemDisplayStyles.feedbackButtonActive : {}),
+              ...(isBusy && feedbackSubmitting === FEEDBACK_ACTIONS.LIKE
+                ? problemDisplayStyles.feedbackButtonLoading
+                : {})
+            }}
+            disabled={isBusy}
+            onClick={() => handleFeedback(FEEDBACK_ACTIONS.LIKE)}
+          >
+            <span role="img" aria-label="좋아요">👍</span>
+            <span>좋아요</span>
+            <span style={problemDisplayStyles.feedbackCount}>({feedbackCounts.like || 0})</span>
+          </button>
+          <button
+            type="button"
+            style={{
+              ...problemDisplayStyles.feedbackButton,
+              ...(reportActive ? problemDisplayStyles.feedbackButtonActive : {}),
+              ...(isBusy && feedbackSubmitting === FEEDBACK_ACTIONS.REPORT
+                ? problemDisplayStyles.feedbackButtonLoading
+                : {})
+            }}
+            disabled={isBusy}
+            onClick={() => handleFeedback(FEEDBACK_ACTIONS.REPORT)}
+          >
+            <span role="img" aria-label="신고">🚨</span>
+            <span>신고</span>
+            <span style={problemDisplayStyles.feedbackCount}>({feedbackCounts.report || 0})</span>
+          </button>
+        </div>
+        <div style={{ flex: '1 1 100%' }}>
+          {feedbackLoading && <span style={problemDisplayStyles.feedbackCount}>피드백 정보를 불러오는 중...</span>}
+          {feedbackError && !feedbackLoading && (
+            <span style={problemDisplayStyles.feedbackError}>{feedbackError}</span>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const cardContent = (
     <div style={cardStyle}>
       {isOrder && (
@@ -354,6 +480,8 @@ const ProblemDisplay = ({
       </div>
 
       {cardContent}
+
+      {renderFeedbackBar()}
 
       <div style={problemDisplayStyles.navigation}>
         <button

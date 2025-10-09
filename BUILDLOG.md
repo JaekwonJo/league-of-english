@@ -1,8 +1,9 @@
 ## 2025-10-15 (study flow modularization stage 2)
 - Issue: 학습 설정/문제/결과 화면이 단일 파일에 로직과 스타일이 얽혀 있어 경로 구조가 엉키고, 저장 세션/복습 UI를 확장하기 어려웠어요.
 - Fix: `StudyConfig`를 전용 훅(`useStudyConfig`)과 단계별 컴포넌트(`DocumentStep`·`PassageStep`·`ProblemTypeStep`)로 쪼개고, `ProblemDisplay`/`StudyResult`를 `features/study` 아래로 옮겨 옵션·통계·랭킹 뷰를 모듈화했습니다. 리뷰 뷰와 인터랙션 옵션도 별도 컴포넌트(`ReviewOptions`, `ChoiceButtons`, `ResultCard`, `RankPanel`)로 분리했어요.
-- Files: client/src/features/study/config/*, client/src/features/study/problem/*, client/src/features/study/result/*, client/src/pages/StudyPage.js, client/src/features/study/components/StudyModeView.jsx, client/src/features/study/components/ReviewModeView.jsx.
-- Verification: `npm run lint`
+- Follow-up: `problem_feedback` 서비스/라우트를 만들어 학습 화면의 👍/🚨 피드백을 저장하고, 저장된 학습 세션을 로컬에 보관해 “이어서 풀기”를 지원했어요. 새 단위 테스트로 StudyConfig/ProblemDisplay/ResultCard의 렌더링과 상호작용을 검증합니다.
+- Files: client/src/features/study/config/*, client/src/features/study/problem/*, client/src/features/study/result/*, client/src/pages/StudyPage.js, client/src/features/study/components/StudyModeView.jsx, client/src/features/study/components/ReviewModeView.jsx, server/services/problemFeedbackService.js, server/routes/problem.routes.js, server/services/problemStatsService.js, server/models/database.js, server/tests/*.test.js.
+- Verification: `npm test`, `CI=true npm --prefix client test -- --watch=false --runInBand`, `npm run lint`
 
 ## 2025-10-14 (csat service modularization + study flow split)
 - Issue: `/generate/csat-set` 로직이 `aiProblemService` 안에 뒤엉켜 있고 StudyPage도 한 파일에 로딩/복습/풀이 UI가 뒤섞여 유지 보수가 어려웠어요. 부분 실패 로그도 사용자에게 제대로 전달되지 않았습니다.

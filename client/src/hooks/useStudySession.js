@@ -23,6 +23,37 @@ export const formatSeconds = (seconds = 0) => {
   return `${mins}:${secs.toString().padStart(2, "0")}`;
 };
 
+const SESSION_STORAGE_KEY = 'loe-study-session';
+
+const readSavedSession = (userId) => {
+  try {
+    const raw = localStorage.getItem(SESSION_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed?.userId && userId && parsed.userId !== userId) return null;
+    return parsed;
+  } catch (error) {
+    logger.warn('Failed to read saved study session:', error);
+    return null;
+  }
+};
+
+const writeSavedSession = (payload) => {
+  try {
+    localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(payload));
+  } catch (error) {
+    logger.warn('Failed to persist study session:', error);
+  }
+};
+
+const clearSavedSessionStorage = () => {
+  try {
+    localStorage.removeItem(SESSION_STORAGE_KEY);
+  } catch (error) {
+    logger.warn('Failed to clear saved study session:', error);
+  }
+};
+
 const useStudySession = (user, onUserUpdate = () => {}) => {
   const [mode, setMode] = useState("config");
   const [problems, setProblems] = useState([]);
@@ -38,7 +69,12 @@ const useStudySession = (user, onUserUpdate = () => {}) => {
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingStageIndex, setLoadingStageIndex] = useState(0);
   const [generationLog, setGenerationLog] = useState([]);
+  const [savedSession, setSavedSession] = useState(() => readSavedSession(user?.id));
 
+  const clearSavedSession = useCallback(() => {
+    clearSavedSessionStorage();
+    setSavedSession(null);
+  }, []);
   useEffect(() => {
     if (mode !== "study") return undefined;
     const tick = () => setCurrentTime(Date.now());
@@ -102,7 +138,19 @@ const useStudySession = (user, onUserUpdate = () => {}) => {
     setInitialTimeLeft(totalSeconds);
     setTimeLeft(totalSeconds);
     setMode("study");
-  }, [getBaseTimePerProblem]);
+
+    const snapshot = {
+      userId: user?.id || null,
+      problems: preparedProblems,
+      answers: {},
+      startTime: now,
+      initialTimeLeft: totalSeconds,
+      timeLeft: totalSeconds,
+      savedAt: Date.now()
+    };
+    writeSavedSession(snapshot);
+    setSavedSession(snapshot);
+  }, [getBaseTimePerProblem, user?.id]);
 
   const finishStudy = useCallback(async () => {
     if (!problems.length || mode !== "study") return;
@@ -225,8 +273,9 @@ const useStudySession = (user, onUserUpdate = () => {}) => {
       setLoadingContext(null);
       setLoadingProgress(0);
       setLoadingStageIndex(0);
+      clearSavedSession();
     }
-  }, [answers, problems, startTime, currentTime, mode]);
+  }, [answers, problems, startTime, currentTime, mode, clearSavedSession]);
 
   useEffect(() => {
     if (mode !== "study") return undefined;
@@ -359,7 +408,8 @@ const useStudySession = (user, onUserUpdate = () => {}) => {
     setLoadingContext(null);
     setLoadingProgress(0);
     setLoadingStageIndex(0);
-  }, []);
+    clearSavedSession();
+  }, [clearSavedSession]);
 
   const enterReview = useCallback(() => {
     setMode((currentMode) => {
@@ -383,6 +433,51 @@ const useStudySession = (user, onUserUpdate = () => {}) => {
     if (initialTimeLeft <= 0) return 0;
     return Math.min(100, Math.max(0, ((initialTimeLeft - timeLeft) / initialTimeLeft) * 100));
   }, [initialTimeLeft, timeLeft]);
+
+  useEffect(() => {
+    if (mode !== 'study') return;
+    const snapshot = {
+      userId: user?.id || null,
+      problems,
+      answers,
+      startTime,
+      initialTimeLeft,
+      timeLeft,
+      savedAt: Date.now()
+    };
+    writeSavedSession(snapshot);
+    setSavedSession(snapshot);
+  }, [mode, problems, answers, startTime, initialTimeLeft, timeLeft, user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    setSavedSession(readSavedSession(user.id));
+  }, [user?.id]);
+
+  const restoreSavedSession = useCallback(() => {
+    const snapshot = readSavedSession(user?.id);
+    if (!snapshot || !Array.isArray(snapshot.problems) || snapshot.problems.length === 0) {
+      return false;
+    }
+
+    const referenceTime = snapshot.savedAt || snapshot.startTime || Date.now();
+    const adjustedTimeLeft = snapshot.timeLeft - Math.floor((Date.now() - referenceTime) / 1000);
+    if (!Number.isInteger(adjustedTimeLeft) || adjustedTimeLeft <= 0) {
+      clearSavedSession();
+      return false;
+    }
+
+    setProblems(snapshot.problems);
+    setAnswers(snapshot.answers || {});
+    setResults(null);
+    setStartTime(snapshot.startTime || Date.now());
+    setCurrentTime(Date.now());
+    setInitialTimeLeft(snapshot.initialTimeLeft || adjustedTimeLeft);
+    setTimeLeft(adjustedTimeLeft);
+    setMode('study');
+    setSavedSession({ ...snapshot, timeLeft: adjustedTimeLeft, savedAt: Date.now() });
+    return true;
+  }, [user?.id, clearSavedSession]);
 
   const loadingStageLabel = useMemo(() => {
     if (!loading || !loadingContext) return '';
@@ -423,6 +518,9 @@ const useStudySession = (user, onUserUpdate = () => {}) => {
     loadingStageLabel,
     loadingContext,
     generationLog,
+    savedSession,
+    restoreSavedSession,
+    clearSavedSession,
   };
 };
 
