@@ -245,63 +245,37 @@ function createProblemRepository(database) {
         if (!optionText.startsWith(expected)) {
           return false;
         }
-        if (!optionText.slice(expected.length).trim()) {
+        const body = optionText.slice(expected.length).trim();
+        if (!body) {
+          return false;
+        }
+        const wordCount = countWords(body);
+        if (wordCount < 2 || wordCount > 14) {
           return false;
         }
       }
 
-      const answerTokens = String(problem.correctAnswer ?? problem.answer ?? '')
-        .split(/[\s,]+/)
-        .map((token) => parseInt(token, 10))
-        .filter((value) => Number.isInteger(value));
-
-      if (new Set(answerTokens).size !== 1) {
-        return false;
-      }
-
-      const answerIndex = answerTokens[0];
+      const answerIndex = parseInt(problem.correctAnswer ?? problem.answer ?? '', 10);
       if (!Number.isInteger(answerIndex) || answerIndex < 1 || answerIndex > options.length) {
         return false;
       }
 
-      const metadata = problem.metadata && typeof problem.metadata === 'object' ? problem.metadata : {};
-      const slots = Array.isArray(metadata.vocabSlots) ? metadata.vocabSlots : [];
-      const combinations = Array.isArray(metadata.optionCombinationIndices) ? metadata.optionCombinationIndices : [];
-
-      if (!slots.length || combinations.length !== options.length) {
-        return false;
-      }
-
-      const targetCombination = combinations[answerIndex - 1];
-      if (!Array.isArray(targetCombination) || targetCombination.length !== slots.length) {
-        return false;
-      }
-
-      const slotCorrect = slots.map((slot) => Number.isInteger(slot?.correctIndex) ? slot.correctIndex : null);
-      if (slotCorrect.some((value) => value === null)) {
-        return false;
-      }
-
-      const matchesTarget = (combo) => Array.isArray(combo)
-        && combo.length === slotCorrect.length
-        && combo.every((value, index) => value === slotCorrect[index]);
-
-      const matchCount = combinations.filter(matchesTarget).length;
-      if (matchCount !== 1) {
-        return false;
-      }
-
-      if (!matchesTarget(targetCombination)) {
-        return false;
-      }
-
       const explanation = String(problem.explanation || '').trim();
-      if (!containsHangul(explanation) || countSentences(explanation) < 2) {
+      if (!containsHangul(explanation) || explanation.length < 100 || countSentences(explanation) < 2) {
         return false;
       }
 
       const sourceLabel = String(problem.sourceLabel || '').trim();
       if (!sourceLabel.startsWith('출처│')) {
+        return false;
+      }
+
+      const distractorReasons = problem.metadata?.distractorReasons;
+      if (!distractorReasons || typeof distractorReasons !== 'object') {
+        return false;
+      }
+      const reasonLabels = Object.keys(distractorReasons).filter((key) => distractorReasons[key]);
+      if (reasonLabels.length < 2) {
         return false;
       }
     }

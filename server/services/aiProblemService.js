@@ -653,7 +653,8 @@ class AIProblemService {
 
   async generateVocab(documentId, count = 5) {
     const { document, passages } = await this.getPassages(documentId);
-    const docTitle = document?.title || `Document ${documentId}`;
+    const documentCode = document?.code || document?.slug || document?.external_id || null;
+    const docTitle = document?.title || documentCode || `Document ${documentId}`;
     const results = [];
 
     if (!this.getOpenAI()) {
@@ -673,25 +674,26 @@ class AIProblemService {
         try {
           const variantTag = `doc${documentId}_v${i}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
           const promptSections = [
-            'You are a deterministic K-CSAT English vocabulary (어휘 적절성) item writer.',
-            'Follow the dedicated vocabulary manual exactly and keep the 한국어 질문 문구 그대로.',
+            'You are a deterministic K-CSAT English vocabulary (어휘) item writer.',
+            'Generate exactly one five-option question that asks for the statement least supported by the passage.',
             '',
             `Passage title: ${docTitle}`,
-            `Passage (retain all sentences verbatim; replace target expressions with (A)/(B)/(C) slots and bracketed choices like "(A) [resolved / raised]"):\n${clipText(passage, 1600)}`,
+            `Passage (preserve every sentence verbatim; do not insert blanks):\n${clipText(passage, 1600)}`,
             '',
             'Manual excerpt (truncated):',
             manualExcerpt,
             '',
             'Return raw JSON only with this structure:',
-            VOCAB_JSON_BLUEPRINT.replace('"variantTag": "V-103"', `"variantTag": "${variantTag}"`),
+            VOCAB_JSON_BLUEPRINT.replace('"variantTag": "V-110"', `"variantTag": "${variantTag}"`),
             '',
             'Generation requirements:',
-            '- Provide a slots array where each entry describes one blank label (예: "A"), exactly two choices, the 0-based correctIndex, and optionally a short Korean explanation.',
-            '- In the passage string, show each blank as "(Label) [choice1 / choice2]" with the correct choice listed first.',
-            '- Provide exactly five options labelled with circled digits (①-⑤); each option must list the selected choices for (A)-(C) joined with " - ".',
-            '- correctAnswer must be the 1-based index of the unique option whose combination matches every slot\'s correct choice.',
-            '- Explanation must be in Korean with 최소 세 문장, 빈칸별 정답 근거와 대표 오답 결함을 모두 언급.',
-            '- Source label must start with "출처│" and avoid placeholder text.',
+            '- Keep the Korean question text exactly "다음 글의 내용과 가장 거리가 먼 것은?".',
+            '- Provide five English options labelled ①-⑤. Each option must be a natural 2-14 word phrase or clause starting with a lowercase letter.',
+            '- Exactly one option must contradict, distort, or over-generalise the passage. 나머지 네 개는 본문에 근거하여 참임을 보여 주세요.',
+            '- correctAnswer는 모순되는 선택지의 번호(1-5)입니다.',
+            '- 설명(explanation)은 한국어로 최소 세 문장 이상 작성하고, 정답이 왜 틀렸는지와 다른 보기들이 왜 맞는지를 모두 다뤄 주세요.',
+            '- distractorReasons 배열에 최소 두 개 이상의 정답이 아닌 보기와 그 이유를 한 문장씩 한국어로 정리하세요.',
+            '- Source label must start with "출처│" and avoid placeholder text (기관 연도 회차 문항 (pXX) 형식).',
             '- Respond with JSON only (no Markdown fences).'
           ];
 
@@ -713,6 +715,7 @@ class AIProblemService {
           const payload = JSON.parse(stripJsonFences(content));
           normalized = this._normalizeVocabularyPayload(payload, {
             docTitle,
+            documentCode,
             passage,
             index: results.length,
             failureReasons

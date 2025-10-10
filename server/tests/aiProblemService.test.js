@@ -103,45 +103,31 @@ const GRAMMAR_CORRECT_REASONS = [
 ];
 
 const VOCAB_PASSAGE = [
-  'Surrounding ourselves with mentors who have already (A) [resolved / raised] similar challenges helps ensure the (B) [presence / absence] of practical optimism.',
-  'Their stories often (C) [transfer / transform] directly into renewed motivation for our own projects.'
+  'A perfectly competitive market motivates participants to reveal what they know through immediate action.',
+  'Whenever preferences or circumstances shift, prices adjust quickly and individuals either stop selling failing products or redirect their effort toward better opportunities.',
+  'Markets can be brutal, but they relentlessly signal when denial is no longer sustainable.'
 ].join(' ');
 
-const VOCAB_SLOTS = [
-  {
-    label: 'A',
-    choices: ['resolved', 'raised'],
-    correctIndex: 0,
-    explanation: '문제를 해결한(resolved) 사람들과 함께해야 도움을 받는다.'
-  },
-  {
-    label: 'B',
-    choices: ['presence', 'absence'],
-    correctIndex: 0,
-    explanation: '긍정 에너지의 존재(presence)가 필요하다.'
-  },
-  {
-    label: 'C',
-    choices: ['transfer', 'transform'],
-    correctIndex: 0,
-    explanation: '긍정 에너지가 우리에게 전달(transfer)된다.'
-  }
-];
-
 const VOCAB_OPTIONS = [
-  '① resolved - presence - transform',
-  '② raised - presence - transfer',
-  '③ resolved - presence - transfer',
-  '④ resolved - absence - transfer',
-  '⑤ raised - absence - transform'
+  '① markets swiftly reveal when a product no longer satisfies demand',
+  '② participants stop selling items that fail to generate optimal gains',
+  '③ competitive prices expose whether individuals must adjust their plans',
+  '④ producers can safely ignore the market verdict and keep their old routines',
+  '⑤ denial about demand vanishing is eventually confronted by the market'
 ];
 
 const VOCAB_EXPLANATION = [
-  '(A) resolved는 이미 비슷한 문제를 해결한 사람들과 함께해야 도움을 받을 수 있다는 흐름과 맞습니다.',
-  'raised는 문제를 제기한 사람을 의미하므로 맥락과 맞지 않습니다.',
-  '(B) presence는 긍정적인 에너지의 존재를 뜻하여 문장의 목적과 일치하며 absence는 반대 의미입니다.',
-  '(C) transfer는 그러한 에너지가 우리에게 전달된다는 의미로, transform은 다른 형태로 변형시킨다는 뜻이라 문맥에 맞지 않습니다.'
+  '본문은 경쟁 시장이 참여자들에게 변화에 맞추어 행동을 조정하도록 신속하게 신호를 보낸다고 설명합니다.',
+  '④번 선택지는 시장 판결을 무시해도 안전하다고 주장해 본문과 정면으로 충돌하므로 가장 거리가 먼 진술입니다.',
+  '다른 보기들은 수요 부재를 인정하고 행동을 고쳐야 한다는 본문의 메시지를 충실히 반영합니다.',
+  '따라서 ④번이 정답이며, 나머지는 본문 내용과 일치합니다.'
 ].join(' ');
+
+const VOCAB_DISTRACTOR_REASONS = [
+  { label: '①', reason: '수요가 사라지면 시장이 즉시 드러낸다는 설명과 연결돼요.' },
+  { label: '②', reason: '최적 이익이 나지 않으면 판매를 멈춘다는 본문 진술과 일치해요.' },
+  { label: '⑤', reason: '현실 부정을 시장이 바로잡는다는 문장과 맞먹습니다.' }
+];
 
 function buildGrammarOption(index, text, status = 'correct', reasonOverride, tagOverride) {
   const marker = CIRCLED_DIGITS[index];
@@ -601,13 +587,13 @@ test('recordStudySession handles negative deltas and duplicate submissions safel
     'vocabulary',
     [
       {
-        question: '(A), (B), (C)의 각 네모 안에서 문맥에 맞는 낱말로 가장 적절한 것은?',
+        question: '다음 글의 내용과 가장 거리가 먼 것은?',
         passage: VOCAB_PASSAGE,
-        slots: VOCAB_SLOTS,
         options: VOCAB_OPTIONS,
-        correctAnswer: 3,
+        correctAnswer: 4,
         explanation: VOCAB_EXPLANATION,
-        sourceLabel: '출처│Mock Vocabulary'
+        sourceLabel: '출처│Mock Vocabulary',
+        distractorReasons: VOCAB_DISTRACTOR_REASONS
       }
     ],
     { docTitle: 'Mock Document' }
@@ -673,25 +659,26 @@ test('normalizeBlankPayload preserves original passage metadata and passes accep
   assert.ok(aiService._acceptCachedProblem('blank', normalized));
 });
 
-test('normalizeVocabularyPayload preserves slot metadata and passes acceptance checks', () => {
+test('normalizeVocabularyPayload validates five-choice vocabulary items', () => {
   const payload = {
-    question: '(A), (B), (C)의 각 네모 안에서 문맥에 맞는 낱말로 가장 적절한 것은?',
+    question: '다음 글의 내용과 가장 거리가 먼 것은?',
     passage: VOCAB_PASSAGE,
-    slots: VOCAB_SLOTS,
     options: VOCAB_OPTIONS,
-    correctAnswer: 3,
+    correctAnswer: 4,
     explanation: VOCAB_EXPLANATION,
-    sourceLabel: '출처│Mock Vocabulary'
+    sourceLabel: '출처│Mock Vocabulary 2025 모의',
+    distractorReasons: VOCAB_DISTRACTOR_REASONS
   };
 
   const normalized = aiService._normalizeVocabularyPayload(payload, {
-    docTitle: 'Mock Document'
+    docTitle: 'Mock Document',
+    documentCode: 'MD-001'
   });
 
   assert.equal(normalized.options.length, 5);
-  assert.equal(normalized.answer, '3');
-  assert.ok(Array.isArray(normalized.metadata?.vocabSlots));
-  assert.ok(Array.isArray(normalized.metadata?.optionCombinationIndices));
+  assert.equal(normalized.answer, '4');
+  assert.equal(normalized.sourceLabel, '출처│Mock Vocabulary 2025 모의');
+  assert.ok(normalized.metadata?.distractorReasons?.['①']);
   assert.ok(aiService._acceptCachedProblem('vocabulary', normalized));
 });
 
