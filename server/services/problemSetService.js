@@ -154,7 +154,8 @@ async function handleAiBackedType({
   userId,
   usedProblemIds,
   pushProgress,
-  appendProblems
+  appendProblems,
+  logFailure
 }) {
   let delivered = 0;
   const cache = await aiService.fetchCached(documentId, type, amount, {
@@ -178,18 +179,34 @@ async function handleAiBackedType({
     return delivered;
   }
 
-  const generatedBatch = await aiService[generatorName](documentId, remaining);
-  const savedBatch = await aiService.saveProblems(documentId, type, generatedBatch, {
-    docTitle,
-    documentCode
-  });
-  const usable = Array.isArray(savedBatch) && savedBatch.length ? savedBatch : generatedBatch;
-  delivered += appendProblems(usable);
-  pushProgress('ai_generated', type, {
-    delivered: Array.isArray(usable) ? usable.length : 0,
-    requested: remaining
-  });
-  return delivered;
+  try {
+    const generatedBatch = await aiService[generatorName](documentId, remaining);
+    const savedBatch = await aiService.saveProblems(documentId, type, generatedBatch, {
+      docTitle,
+      documentCode
+    });
+    const usable = Array.isArray(savedBatch) && savedBatch.length ? savedBatch : generatedBatch;
+    delivered += appendProblems(usable);
+    pushProgress('ai_generated', type, {
+      delivered: Array.isArray(usable) ? usable.length : 0,
+      requested: remaining
+    });
+    return delivered;
+  } catch (error) {
+    const message = String(error?.message || '');
+    if (/missing slot marker/i.test(message)) {
+      pushProgress('ai_failed', type, {
+        delivered: 0,
+        requested: remaining,
+        reason: message
+      });
+      if (typeof logFailure === 'function') {
+        logFailure(type, message);
+      }
+      return delivered;
+    }
+    throw error;
+  }
 }
 
 async function handleOrderType({
@@ -310,6 +327,7 @@ async function generateCsatSet({
   const usedProblemIds = new Set();
   const progressLog = [];
   const failures = [];
+  const failureMessages = new Map();
 
   const pushProgress = (stage, type, details = {}) => {
     progressLog.push({
@@ -318,6 +336,13 @@ async function generateCsatSet({
       timestamp: new Date().toISOString(),
       ...details
     });
+  };
+
+  const registerFailure = (failureType, reason) => {
+    if (!failureType || !reason) return;
+    if (!failureMessages.has(failureType)) {
+      failureMessages.set(failureType, reason);
+    }
   };
 
   const appendProblems = (list) => {
@@ -353,7 +378,8 @@ async function generateCsatSet({
         usedProblemIds,
         pushProgress,
         appendProblems,
-        documentCode
+        documentCode,
+        logFailure: registerFailure
       });
     } else if (type === 'order') {
       delivered = await handleOrderType({
@@ -388,7 +414,7 @@ async function generateCsatSet({
         type,
         delivered,
         requested: amount,
-        reason: 'partial_generation'
+        reason: failureMessages.get(type) || 'partial_generation'
       });
     }
 
