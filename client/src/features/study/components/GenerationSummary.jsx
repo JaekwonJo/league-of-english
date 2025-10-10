@@ -71,7 +71,7 @@ const GenerationSummary = ({ logs }) => {
     <div style={styles.generationSummary} className="no-print">
       <div style={styles.generationSummaryHeader}>✨ 문제 생성 요약</div>
       <div style={styles.generationSummaryBody}>
-        {summary.items.map((item) => {
+        {summary.items.map((item, index) => {
           const typeLabel = TYPE_LABELS[item.type] || item.type;
           const cached = Number(item.cached || 0);
           const generated = Number(item.generated || 0);
@@ -79,14 +79,16 @@ const GenerationSummary = ({ logs }) => {
           const requested = Number(item.requested || 0);
           const isPartial = requested > 0 && delivered < requested;
           const missing = Math.max(0, requested - delivered);
+          const freshLabelPool = ['방금 구운 문제', '따끈따끈 신상 문제'];
+          const freshLabel = freshLabelPool[index % freshLabelPool.length];
 
           return (
             <div key={item.type} style={styles.generationSummaryRow}>
               <div style={styles.generationSummaryType}>{typeLabel}</div>
               <div style={styles.generationSummaryStats}>
                 <span>요청 {requested}문</span>
-                <span>저장된 문제 {cached}문</span>
-                <span>방금 만든 문제 {generated}문</span>
+                <span>미리 담아둔 문제 {cached}문</span>
+                <span>{freshLabel} {generated}문</span>
                 <span>총 {delivered}문</span>
                 {isPartial && (
                   <span style={styles.generationSummaryWarning}>⚠️ {missing}문은 조건 미충족으로 제외</span>
