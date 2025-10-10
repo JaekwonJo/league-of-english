@@ -26,22 +26,22 @@ const RankPanel = ({ myRank, nearby, rankError }) => (
         <div style={styles.nearbyBox}>
           <div style={styles.rankTitle}>주변 랭킹</div>
           {nearby.length === 0 ? (
-            <div style={{ color: palette.textMuted }}>데이터 없음</div>
+            <div style={{ color: palette.textSecondary }}>데이터 없음</div>
           ) : (
             <div style={styles.nearbyList}>
               {nearby.map((entry) => (
                 <div key={entry.id} style={styles.nearbyRow}>
-                  <div style={{ width: 60, color: palette.textSecondary }}>#{entry.rank}</div>
+                  <div style={{ width: 60, color: palette.textPrimary, fontWeight: 600 }}>#{entry.rank}</div>
                   <div
                     style={{
                       flex: 1,
-                      color: entry.isMe ? palette.success : palette.textSecondary,
+                      color: entry.isMe ? palette.success : palette.textPrimary,
                       fontWeight: entry.isMe ? 700 : 500,
                     }}
                   >
                     {entry.isMe ? '나' : entry.name || entry.id}
                   </div>
-                  <div style={{ minWidth: 90, textAlign: 'right', color: palette.textMuted }}>
+                  <div style={{ minWidth: 90, textAlign: 'right', color: palette.textPrimary, fontWeight: 600 }}>
                     {(entry.points || 0).toLocaleString()} LP
                   </div>
                 </div>
@@ -58,7 +58,7 @@ const styles = {
   sectionTitle: {
     fontSize: '1.25rem',
     fontWeight: 700,
-    color: palette.textHighlight,
+    color: palette.textPrimary,
     marginBottom: '18px',
   },
   grid: {
@@ -74,7 +74,7 @@ const styles = {
     backdropFilter: 'blur(10px)',
   },
   rankTitle: {
-    color: palette.textMuted,
+    color: palette.textSecondary,
     fontSize: '0.95rem',
     marginBottom: '12px',
     fontWeight: 600,
@@ -93,12 +93,12 @@ const styles = {
     fontWeight: 700,
   },
   rankPoints: {
-    fontSize: '1.4rem',
-    fontWeight: 700,
-    color: palette.textHighlight,
+    fontSize: '1.45rem',
+    fontWeight: 800,
+    color: palette.textPrimary,
   },
   rankMeta: {
-    color: palette.textMuted,
+    color: palette.textSecondary,
     fontSize: '0.9rem',
   },
   nearbyBox: {

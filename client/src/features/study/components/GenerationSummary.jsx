@@ -63,6 +63,9 @@ const useGenerationSummary = (logs) => useMemo(() => {
   return { items, total };
 }, [logs]);
 
+const STORED_LABELS = ['📦 미리 담아둔 문제', '🧺 살짝 식혀둔 문제', '🗃️ 잘 챙겨 둔 문제'];
+const FRESH_LABELS = ['🍞 방금 구운 문제', '✨ 따끈따끈 신상 문제', '🔥 막 나온 문제'];
+
 const GenerationSummary = ({ logs }) => {
   const summary = useGenerationSummary(logs);
   if (!summary.items.length) return null;
@@ -79,9 +82,8 @@ const GenerationSummary = ({ logs }) => {
           const requested = Number(item.requested || 0);
           const isPartial = requested > 0 && delivered < requested;
           const missing = Math.max(0, requested - delivered);
-          const storedLabel = '📦 미리 담아둔 문제';
-          const freshLabelPool = ['🍞 방금 구운 문제', '✨ 따끈따끈 신상 문제'];
-          const freshLabel = freshLabelPool[index % freshLabelPool.length];
+          const storedLabel = STORED_LABELS[index % STORED_LABELS.length];
+          const freshLabel = FRESH_LABELS[index % FRESH_LABELS.length];
 
           return (
             <div key={item.type} style={styles.generationSummaryRow}>
@@ -100,7 +102,7 @@ const GenerationSummary = ({ logs }) => {
         })}
       </div>
       {typeof summary.total === 'number' ? (
-        <div style={styles.generationSummaryFooter}>🎉 이번 세트는 총 {summary.total}문으로 완성됐어요!</div>
+        <div style={styles.generationSummaryFooter}>🎉 이번 세트는 총 {summary.total}문! 마음껏 모험을 시작해 볼까요? 💪</div>
       ) : null}
     </div>
   );

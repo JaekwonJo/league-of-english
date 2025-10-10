@@ -235,6 +235,14 @@ function createProblemRepository(database) {
       }
     }
     if (type === 'vocabulary') {
+      const passage = String(problem.mainText || problem.passage || problem.text || '').trim();
+      if (!passage) {
+        return false;
+      }
+      const underlineMatches = passage.match(/<u>([^<]+)<\/u>/gi) || [];
+      if (underlineMatches.length !== 1) {
+        return false;
+      }
       const options = Array.isArray(problem.options) ? problem.options : [];
       if (options.length !== CIRCLED_DIGITS.length) {
         return false;
@@ -249,8 +257,11 @@ function createProblemRepository(database) {
         if (!body) {
           return false;
         }
+        if (!/^[A-Za-z]/.test(body)) {
+          return false;
+        }
         const wordCount = countWords(body);
-        if (wordCount < 2 || wordCount > 14) {
+        if (wordCount < 1 || wordCount > 4) {
           return false;
         }
       }
@@ -261,7 +272,7 @@ function createProblemRepository(database) {
       }
 
       const explanation = String(problem.explanation || '').trim();
-      if (!containsHangul(explanation) || explanation.length < 100 || countSentences(explanation) < 2) {
+      if (!containsHangul(explanation) || explanation.length < 140 || countSentences(explanation) < 3) {
         return false;
       }
 
@@ -275,7 +286,15 @@ function createProblemRepository(database) {
         return false;
       }
       const reasonLabels = Object.keys(distractorReasons).filter((key) => distractorReasons[key]);
-      if (reasonLabels.length < 2) {
+      if (reasonLabels.length < 3) {
+        return false;
+      }
+
+      const lexicalNote = problem.metadata?.lexicalNote;
+      if (!lexicalNote || typeof lexicalNote !== 'object') {
+        return false;
+      }
+      if (!lexicalNote.targetWord || !lexicalNote.partOfSpeech) {
         return false;
       }
     }

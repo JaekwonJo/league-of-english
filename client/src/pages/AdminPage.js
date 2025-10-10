@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { adminStyles } from '../styles/adminStyles';
 import DocumentList from '../components/admin/DocumentList';
 import UploadModal from '../components/admin/UploadModal';
@@ -25,6 +25,44 @@ const initialUploadForm = {
   file: null
 };
 
+const toastStyles = {
+  container: {
+    position: 'fixed',
+    top: 16,
+    right: 16,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px',
+    zIndex: 1200
+  },
+  toast: {
+    minWidth: '220px',
+    maxWidth: '320px',
+    padding: '12px 18px',
+    borderRadius: '14px',
+    background: 'var(--surface-card)',
+    color: 'var(--text-primary)',
+    boxShadow: '0 18px 40px rgba(15, 23, 42, 0.22)',
+    borderLeft: '4px solid var(--accent-primary)',
+    fontSize: '0.95rem'
+  },
+  info: {
+    borderLeftColor: 'var(--accent-primary)'
+  },
+  success: {
+    borderLeftColor: 'var(--success)',
+    background: 'var(--success-surface)'
+  },
+  warning: {
+    borderLeftColor: 'var(--warning)',
+    background: 'var(--warning-surface)'
+  },
+  error: {
+    borderLeftColor: 'var(--danger)',
+    background: 'var(--danger-surface)'
+  }
+};
+
 const AdminPage = () => {
   const {
     documents,
@@ -48,6 +86,7 @@ const AdminPage = () => {
     summary: problemFeedbackSummary,
     loading: problemFeedbackLoading,
     error: problemFeedbackError,
+    filters: problemFeedbackFilters,
     fetchReports: fetchProblemReports,
     updateStatus: updateProblemFeedbackStatus
   } = useProblemFeedbackReports();
@@ -78,6 +117,15 @@ const AdminPage = () => {
   const [passageAnalyzingDocument, setPassageAnalyzingDocument] = useState(null);
   const [newCategory, setNewCategory] = useState('');
   const [uploadForm, setUploadForm] = useState(initialUploadForm);
+  const [toasts, setToasts] = useState([]);
+
+  const pushToast = useCallback((message, tone = 'info') => {
+    const id = Date.now() + Math.random();
+    setToasts((prev) => [...prev, { id, message, tone }]);
+    window.setTimeout(() => {
+      setToasts((prev) => prev.filter((toast) => toast.id !== id));
+    }, 3200);
+  }, []);
 
   const worksheetDocuments = documents.filter((doc) => String(doc.type || '').toLowerCase() !== 'vocabulary');
   const vocabularyDocuments = documents.filter((doc) => String(doc.type || '').toLowerCase() === 'vocabulary');
@@ -99,7 +147,7 @@ const AdminPage = () => {
 
   const handleUpload = async () => {
     if (!uploadForm.file) {
-      alert('업로드할 파일을 선택해 주세요.');
+      pushToast('업로드할 파일을 먼저 선택해 주세요.', 'warning');
       return;
     }
     try {
@@ -112,13 +160,13 @@ const AdminPage = () => {
         type: uploadForm.type
       });
 
-      alert('문서가 성공적으로 업로드되었습니다.');
+      pushToast('문서가 성공적으로 업로드되었습니다.', 'success');
       setShowUploadModal(false);
       setUploadForm(initialUploadForm);
       await fetchDocuments();
     } catch (error) {
       console.error('업로드 실패:', error);
-      alert('업로드에 실패했습니다: ' + (error.message || '알 수 없는 오류'));
+      pushToast('업로드에 실패했습니다: ' + (error.message || '알 수 없는 오류'), 'error');
     } finally {
       setLoading(false);
     }
@@ -133,12 +181,12 @@ const AdminPage = () => {
       );
       setDocuments(updatedDocuments);
       
-      alert('문서 정보가 수정되었습니다.');
+      pushToast('문서 정보가 수정되었습니다.', 'success');
       setShowEditModal(false);
       setEditingDocument(null);
     } catch (error) {
       console.error('수정 실패:', error);
-      alert('수정에 실패했습니다.');
+      pushToast('문서 정보를 수정하지 못했습니다.', 'error');
     } finally {
       setLoading(false);
     }
@@ -159,7 +207,7 @@ const AdminPage = () => {
       await openShareModal(doc);
     } catch (error) {
       console.error('문서 공개 범위 조회 실패:', error);
-      alert(error?.message || '문서 공개 범위를 불러오지 못했습니다.');
+      pushToast(error?.message || '문서 공개 범위를 불러오지 못했습니다.', 'error');
     }
   };
 
@@ -180,10 +228,10 @@ const AdminPage = () => {
         grades,
         students
       });
-      alert('문서 공개 설정이 저장되었습니다.');
+      pushToast('문서 공개 설정이 저장되었습니다.', 'success');
     } catch (error) {
       console.error('문서 공개 설정 저장 실패:', error);
-      alert(error?.message || '문서를 공개하는 중 문제가 발생했습니다.');
+      pushToast(error?.message || '문서를 공개하는 중 문제가 발생했습니다.', 'error');
     }
   };
 
@@ -199,11 +247,11 @@ const AdminPage = () => {
     try {
       setLoading(true);
       await deleteDocument(documentId);
-      alert('문서가 삭제되었습니다.');
+      pushToast('문서가 삭제되었습니다.', 'success');
       await fetchDocuments();
     } catch (error) {
       console.error('삭제 실패:', error);
-      alert('삭제에 실패했습니다.');
+      pushToast('문서를 삭제하지 못했습니다.', 'error');
     } finally {
       setLoading(false);
     }
@@ -213,7 +261,7 @@ const AdminPage = () => {
     setCategories([...categories, categoryName]);
     setNewCategory('');
     setShowCategoryModal(false);
-    alert('카테고리가 추가되었습니다.');
+    pushToast('카테고리가 추가되었습니다.', 'success');
   };
 
   const handlePassageAnalyze = (document) => {
@@ -228,30 +276,30 @@ const AdminPage = () => {
   const handleResolveFeedback = async (feedbackId, status) => {
     try {
       await resolveFeedback(feedbackId, status);
-      alert(status === 'resolved' ? '신고가 검수 완료 처리되었습니다.' : '신고가 허위 신고로 처리되었습니다.');
+      pushToast(status === 'resolved' ? '신고를 검수 완료로 표시했어요. ✅' : '신고를 허위 신고로 정리했습니다. 🙅‍♀️', 'success');
     } catch (error) {
       console.error('신고 상태 변경 실패:', error);
-      alert(error?.message || '신고 상태를 변경하는 중 문제가 발생했습니다.');
+      pushToast(error?.message || '신고 상태를 변경하는 중 문제가 발생했습니다.', 'error');
     }
   };
 
   const handleResolveProblemFeedback = async (reportId) => {
     try {
       await updateProblemFeedbackStatus(reportId, 'resolved');
-      alert('문항 신고를 검수 완료로 표시했어요. 👍');
+      pushToast('문항 신고를 검수 완료로 표시했어요. 👍', 'success');
     } catch (error) {
       console.error('문항 신고 처리 실패:', error);
-      alert(error?.message || '문항 신고를 처리하는 중 문제가 발생했습니다.');
+      pushToast(error?.message || '문항 신고를 처리하는 중 문제가 발생했습니다.', 'error');
     }
   };
 
   const handleDismissProblemFeedback = async (reportId) => {
     try {
       await updateProblemFeedbackStatus(reportId, 'dismissed');
-      alert('문항 신고를 보류 처리했어요.');
+      pushToast('문항 신고를 보류 처리했어요.', 'info');
     } catch (error) {
       console.error('문항 신고 보류 실패:', error);
-      alert(error?.message || '문항 신고를 보류 처리하는 중 오류가 발생했습니다.');
+      pushToast(error?.message || '문항 신고를 보류 처리하는 중 오류가 발생했습니다.', 'error');
     }
   };
 
@@ -260,7 +308,7 @@ const AdminPage = () => {
       await updateNotification(notificationId, 'acknowledged');
     } catch (error) {
       console.error('알림 확인 실패:', error);
-      alert(error?.message || '알림을 확인 상태로 바꾸지 못했어요.');
+      pushToast(error?.message || '알림을 확인 상태로 바꾸지 못했어요.', 'error');
     }
   };
 
@@ -269,12 +317,33 @@ const AdminPage = () => {
       await updateNotification(notificationId, 'resolved');
     } catch (error) {
       console.error('알림 완료 처리 실패:', error);
-      alert(error?.message || '알림을 완료 상태로 바꾸지 못했어요.');
+      pushToast(error?.message || '알림을 완료 상태로 바꾸지 못했어요.', 'error');
     }
   };
 
   return (
     <div style={adminStyles.container}>
+      {toasts.length > 0 && (
+        <div style={toastStyles.container}>
+          {toasts.map((toast) => (
+            <div
+              key={toast.id}
+              style={{
+                ...toastStyles.toast,
+                ...(toast.tone === 'error'
+                  ? toastStyles.error
+                  : toast.tone === 'success'
+                    ? toastStyles.success
+                    : toast.tone === 'warning'
+                      ? toastStyles.warning
+                      : toastStyles.info)
+              }}
+            >
+              {toast.message}
+            </div>
+          ))}
+        </div>
+      )}
       <div style={adminStyles.header}>
         <h1 style={adminStyles.title}>⚙️ 관리자 페이지</h1>
         <div style={adminStyles.headerButtons}>
@@ -307,9 +376,13 @@ const AdminPage = () => {
         summary={problemFeedbackSummary}
         loading={problemFeedbackLoading}
         error={problemFeedbackError}
+        filters={problemFeedbackFilters}
+        documents={documents}
         onRefresh={fetchProblemReports}
+        onFilterChange={fetchProblemReports}
         onResolve={handleResolveProblemFeedback}
         onDismiss={handleDismissProblemFeedback}
+        onToast={pushToast}
       />
 
       <DocumentList

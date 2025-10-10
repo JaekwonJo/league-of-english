@@ -363,9 +363,79 @@ class ProblemFeedbackService {
     };
   }
 
-  async listReports({ status = 'pending', limit = 50 } = {}) {
+  async listReports({
+    status = 'pending',
+    type = 'all',
+    documentId = 'all',
+    reporter,
+    search,
+    sort = 'recent',
+    from,
+    to,
+    limit = 50
+  } = {}) {
     const normalizedStatus = typeof status === 'string' ? status.toLowerCase() : 'pending';
+    const normalizedType = typeof type === 'string' ? type.toLowerCase() : 'all';
+    const normalizedSort = sort === 'oldest' ? 'ASC' : 'DESC';
     const normalizedLimit = clampLimit(limit, { min: 1, max: 200, fallback: 50 });
+
+    const conditions = ["pf.action = 'report'"];
+    const params = [];
+
+    if (normalizedStatus !== 'all') {
+      conditions.push('pf.status = ?');
+      params.push(normalizedStatus);
+    }
+
+    if (normalizedType !== 'all') {
+      conditions.push('LOWER(p.type) = ?');
+      params.push(normalizedType);
+    }
+
+    const numericDocumentId = Number(documentId);
+    if (documentId && documentId !== 'all' && Number.isFinite(numericDocumentId)) {
+      conditions.push('p.document_id = ?');
+      params.push(numericDocumentId);
+    }
+
+    const numericReporter = Number(reporter);
+    if (reporter && Number.isFinite(numericReporter)) {
+      conditions.push('pf.user_id = ?');
+      params.push(numericReporter);
+    }
+
+    if (search && typeof search === 'string') {
+      const trimmed = search.trim();
+      if (trimmed.length) {
+        const likeQuery = `%${trimmed}%`;
+        conditions.push('(' +
+          'pf.reason LIKE ? OR ' +
+          'p.question LIKE ? OR ' +
+          'd.title LIKE ? OR ' +
+          'CAST(pf.id AS TEXT) LIKE ? OR ' +
+          'CAST(pf.problem_id AS TEXT) LIKE ?' +
+        ')');
+        params.push(likeQuery, likeQuery, likeQuery, likeQuery, likeQuery);
+      }
+    }
+
+    if (from) {
+      const fromDate = new Date(from);
+      if (!Number.isNaN(fromDate.getTime())) {
+        conditions.push('pf.created_at >= ?');
+        params.push(fromDate.toISOString());
+      }
+    }
+
+    if (to) {
+      const toDate = new Date(to);
+      if (!Number.isNaN(toDate.getTime())) {
+        conditions.push('pf.created_at <= ?');
+        params.push(toDate.toISOString());
+      }
+    }
+
+    const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
 
     const rows = await this.db.all(
       `SELECT pf.id,
@@ -386,11 +456,10 @@ class ProblemFeedbackService {
          FROM problem_feedback pf
    LEFT JOIN problems p ON p.id = pf.problem_id
    LEFT JOIN documents d ON d.id = p.document_id
-        WHERE pf.action = 'report'
-          AND (? = 'all' OR pf.status = ?)
-     ORDER BY pf.created_at ASC
+        ${whereClause}
+     ORDER BY pf.created_at ${normalizedSort}
         LIMIT ?`,
-      [normalizedStatus, normalizedStatus, normalizedLimit]
+      [...params, normalizedLimit]
     );
 
     const totals = await this.db.all(

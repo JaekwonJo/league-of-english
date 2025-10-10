@@ -11,42 +11,76 @@ const {
   ensureSourceLabel
 } = require('./shared');
 
-const VOCAB_BASE_QUESTION = '다음 글의 내용과 가장 거리가 먼 것은?';
+const UNDERLINE_PATTERN = /<u>([^<]+)<\/u>/gi;
+const SENTENCE_SPLIT_REGEX = /(?<=[.!?])\s+/;
+
+const VOCAB_BASE_QUESTION = '밑줄 친 단어와 의미가 가장 가까운 것을 고르시오.';
 const VOCAB_QUESTION_VARIANTS = [
   VOCAB_BASE_QUESTION,
-  '다음 글의 내용과 맞지 않는 것은?',
-  '다음 글의 내용과 일치하지 않는 것은?'
+  '밑줄 친 표현과 의미가 가장 가까운 것은?',
+  '밑줄 단어의 의미로 가장 적절한 것을 고르시오.'
 ];
 
 const VOCAB_JSON_BLUEPRINT = `{
   "type": "vocabulary",
   "question": "${VOCAB_BASE_QUESTION}",
-  "passage": "...본문 전문...",
+  "passage": "...<u>highlight</u>...",
+  "targetWord": "highlight",
+  "targetLemma": "highlight",
+  "targetMeaning": "(명사) 핵심, 강조",
   "options": [
-    "① 진술 1",
-    "② 진술 2",
-    "③ 진술 3",
-    "④ 진술 4",
-    "⑤ 진술 5"
+    "① emphasis",
+    "② climax",
+    "③ summary",
+    "④ digression",
+    "⑤ insight"
   ],
-  "correctAnswer": 4,
+  "correctAnswer": 1,
   "explanation": "한국어로 최소 세 문장 정답 근거와 오답 타당성 설명",
   "sourceLabel": "출처│기관 시험명 연도 회차 문항 (pXX)",
   "distractorReasons": [
-    { "label": "①", "reason": "본문과 일치" },
-    { "label": "②", "reason": "본문과 일치" }
+    { "label": "②", "reason": "climax는 가장 절정의 순간이라 의미가 달라요." },
+    { "label": "④", "reason": "digression은 벗어남이라는 뜻이라 어울리지 않아요." }
   ],
-  "vocabFocus": "usage",
+  "lexicalNote": {
+    "partOfSpeech": "noun",
+    "nuance": "중요한 부분을 강조할 때 쓰는 표현",
+    "example": "This paragraph is the highlight of the report."
+  },
   "difficulty": "중상",
-  "variantTag": "V-110"
+  "variantTag": "V-220"
 }`;
 
 const VOCAB_MIN_EXPLANATION_LENGTH = 140;
 const VOCAB_MIN_EXPLANATION_SENTENCES = 3;
+const VOCAB_MIN_OPTION_WORDS = 1;
+const VOCAB_MAX_OPTION_WORDS = 4;
 
 const questionKeySet = new Set(
   VOCAB_QUESTION_VARIANTS.map((variant) => normalizeQuestionKey(variant))
 );
+
+function extractUnderlinedSegments(text = '') {
+  const matches = [];
+  let match;
+  while ((match = UNDERLINE_PATTERN.exec(text)) !== null) {
+    const segment = String(match[1] || '').trim();
+    if (segment.length) {
+      matches.push(segment);
+    }
+  }
+  return matches;
+}
+
+function findSentenceContaining(rawText = '', keyword = '') {
+  if (!rawText || !keyword) return null;
+  const normalizedKeyword = keyword.trim().toLowerCase();
+  return rawText
+    .split(SENTENCE_SPLIT_REGEX)
+    .map((sentence) => sentence.trim())
+    .find((sentence) => sentence.toLowerCase().includes(normalizedKeyword))
+    || null;
+}
 
 function normalizeVocabularyPayload(payload, context = {}) {
   if (!payload || typeof payload !== 'object') {
@@ -76,10 +110,40 @@ function normalizeVocabularyPayload(payload, context = {}) {
     ? String(context.passage)
     : String(payload.originalPassage || payload.sourcePassage || '').trim();
 
-  const passage = String(payload.passage || payload.text || payload.mainText || originalPassageRaw || '').trim();
+  let passage = String(payload.passage || payload.text || payload.mainText || originalPassageRaw || '').trim();
   if (!passage) {
     raise('vocabulary passage missing');
   }
+
+  const underlinedSegments = extractUnderlinedSegments(passage);
+  if (!underlinedSegments.length) {
+    raise('vocabulary passage must include an underlined target word');
+  }
+
+  const targetWord = String(payload.targetWord || underlinedSegments[0] || '').trim();
+  if (!targetWord) {
+    raise('vocabulary target word missing');
+  }
+
+  const targetLemma = String(payload.targetLemma || payload.baseLemma || '').trim() || null;
+  const targetMeaning = String(payload.targetMeaning || payload.koreanMeaning || '').trim() || null;
+  const targetNuance = String(payload.targetNuance || payload.lexicalNuance || '').trim() || null;
+  const targetPartOfSpeech = String(
+    payload.lexicalNote?.partOfSpeech || payload.partOfSpeech || payload.targetPartOfSpeech || ''
+  ).trim() || null;
+  const targetExample = String(
+    payload.lexicalNote?.example || payload.exampleSentence || payload.targetExample || ''
+  ).trim() || null;
+
+  const normalizedPassage = normalizeWhitespace(stripTags(passage));
+  const normalizedOriginal = originalPassageRaw
+    ? normalizeWhitespace(stripTags(originalPassageRaw))
+    : '';
+  if (normalizedOriginal && normalizedPassage.length + 40 < normalizedOriginal.length) {
+    raise('vocabulary passage truncated');
+  }
+
+  const wordSentence = findSentenceContaining(normalizedPassage, underlinedSegments[0]);
 
   const rawOptions = Array.isArray(payload.options) ? payload.options : [];
   if (rawOptions.length !== CIRCLED_DIGITS.length) {
@@ -113,12 +177,12 @@ function normalizeVocabularyPayload(payload, context = {}) {
     }
 
     const wordCount = countWords(body);
-    if (wordCount < 2 || wordCount > 14) {
-      raise(`vocabulary option ${index + 1} must be 2-14 words`);
+    if (wordCount < VOCAB_MIN_OPTION_WORDS || wordCount > VOCAB_MAX_OPTION_WORDS) {
+      raise(`vocabulary option ${index + 1} must be ${VOCAB_MIN_OPTION_WORDS}-${VOCAB_MAX_OPTION_WORDS} words`);
     }
 
-    if (/^[A-Z]/.test(body) && !/^[A-Z]['a-z]/.test(body)) {
-      body = body.charAt(0).toLowerCase() + body.slice(1);
+    if (!/^[A-Za-z]/.test(body)) {
+      raise(`vocabulary option ${index + 1} must start with an English letter`);
     }
 
     const normalizedKey = body.toLowerCase();
@@ -149,14 +213,6 @@ function normalizeVocabularyPayload(payload, context = {}) {
     documentCode: context.documentCode
   });
 
-  const normalizedOriginal = originalPassageRaw ? normalizeWhitespace(stripTags(originalPassageRaw)) : '';
-  if (normalizedOriginal) {
-    const normalizedCurrent = normalizeWhitespace(stripTags(passage));
-    if (normalizedCurrent.length + 40 < normalizedOriginal.length) {
-      raise('vocabulary passage truncated');
-    }
-  }
-
   const distractorReasonsRaw = Array.isArray(payload.distractorReasons)
     ? payload.distractorReasons
     : Array.isArray(payload.distractors)
@@ -177,10 +233,18 @@ function normalizeVocabularyPayload(payload, context = {}) {
   const metadata = {
     documentTitle: docTitle,
     generator: 'openai',
-    vocabFocus: payload.vocabFocus || payload.focus || undefined,
     difficulty: payload.difficulty || payload.level || 'csat-advanced',
     variantTag: payload.variantTag || payload.variant || undefined,
-    distractorReasons
+    distractorReasons,
+    lexicalNote: {
+      targetWord,
+      lemma: targetLemma || undefined,
+      meaning: targetMeaning || undefined,
+      nuance: targetNuance || undefined,
+      partOfSpeech: targetPartOfSpeech || undefined,
+      example: targetExample || undefined,
+      targetSentence: wordSentence || undefined
+    }
   };
 
   return {
@@ -205,5 +269,7 @@ module.exports = {
   VOCAB_JSON_BLUEPRINT,
   VOCAB_MIN_EXPLANATION_LENGTH,
   VOCAB_MIN_EXPLANATION_SENTENCES,
+  VOCAB_MIN_OPTION_WORDS,
+  VOCAB_MAX_OPTION_WORDS,
   normalizeVocabularyPayload
 };

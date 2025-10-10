@@ -312,18 +312,18 @@ const styles = {
   },
   statLabel: {
     fontSize: '0.9rem',
-    color: palette.textMuted,
+    color: palette.textSecondary,
     marginBottom: '4px',
   },
   statValue: {
     fontSize: '1.4rem',
     fontWeight: 700,
-    color: palette.textHighlight,
+    color: palette.textPrimary,
   },
   sectionTitle: {
     fontSize: '1.3rem',
     fontWeight: 700,
-    color: palette.textHighlight,
+    color: palette.textPrimary,
     textAlign: 'center',
     marginBottom: '18px',
   },
@@ -337,7 +337,7 @@ const styles = {
     gridTemplateColumns: 'repeat(4, 1fr)',
     padding: '12px 16px',
     background: palette.surfaceGlass,
-    color: palette.textHighlight,
+    color: palette.textPrimary,
   },
   typeHeader: {
     fontWeight: 700,
@@ -385,10 +385,10 @@ const styles = {
     fontSize: '0.95rem',
   },
   problemLabel: {
-    color: palette.textMuted,
+    color: palette.textSecondary,
   },
   problemAnswer: {
-    color: palette.textHighlight,
+    color: palette.textPrimary,
     fontWeight: 700,
     padding: '6px 10px',
     background: palette.surfaceGlass,
@@ -403,7 +403,7 @@ const styles = {
   },
   problemTime: {
     fontSize: '0.85rem',
-    color: palette.textMuted,
+    color: palette.textSecondary,
   },
   actions: {
     display: 'flex',

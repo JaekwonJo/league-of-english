@@ -103,30 +103,29 @@ const GRAMMAR_CORRECT_REASONS = [
 ];
 
 const VOCAB_PASSAGE = [
-  'A perfectly competitive market motivates participants to reveal what they know through immediate action.',
-  'Whenever preferences or circumstances shift, prices adjust quickly and individuals either stop selling failing products or redirect their effort toward better opportunities.',
-  'Markets can be brutal, but they relentlessly signal when denial is no longer sustainable.'
+  'Skilled mentors deliberately <u>cultivate</u> curiosity in their classrooms.',
+  'Instead of handing out ready-made answers, they guide learners to gather clues, refine hypotheses, and test explanations for themselves.',
+  'Across repeated cycles of questioning and reflection, students begin to treat confusion as an invitation to explore rather than a reason to give up.'
 ].join(' ');
 
 const VOCAB_OPTIONS = [
-  '① markets swiftly reveal when a product no longer satisfies demand',
-  '② participants stop selling items that fail to generate optimal gains',
-  '③ competitive prices expose whether individuals must adjust their plans',
-  '④ producers can safely ignore the market verdict and keep their old routines',
-  '⑤ denial about demand vanishing is eventually confronted by the market'
+  '① foster',
+  '② neglect',
+  '③ abbreviate',
+  '④ postpone',
+  '⑤ discard'
 ];
 
 const VOCAB_EXPLANATION = [
-  '본문은 경쟁 시장이 참여자들에게 변화에 맞추어 행동을 조정하도록 신속하게 신호를 보낸다고 설명합니다.',
-  '④번 선택지는 시장 판결을 무시해도 안전하다고 주장해 본문과 정면으로 충돌하므로 가장 거리가 먼 진술입니다.',
-  '다른 보기들은 수요 부재를 인정하고 행동을 고쳐야 한다는 본문의 메시지를 충실히 반영합니다.',
-  '따라서 ④번이 정답이며, 나머지는 본문 내용과 일치합니다.'
+  '지문에서는 멘토가 학생들의 호기심을 스스로 탐구하도록 이끌며 “cultivate” 한다고 설명합니다.',
+  '①번 foster는 돌보고 길러 준다는 뜻으로 문맥의 “cultivate curiosity”와 정확히 대응합니다.',
+  '② neglect는 방치하다, ③ abbreviate는 줄이다, ④ postpone은 미루다, ⑤ discard는 버리다라는 의미라서 학생들의 관심을 기르고 유지한다는 문맥과 어긋납니다.'
 ].join(' ');
 
 const VOCAB_DISTRACTOR_REASONS = [
-  { label: '①', reason: '수요가 사라지면 시장이 즉시 드러낸다는 설명과 연결돼요.' },
-  { label: '②', reason: '최적 이익이 나지 않으면 판매를 멈춘다는 본문 진술과 일치해요.' },
-  { label: '⑤', reason: '현실 부정을 시장이 바로잡는다는 문장과 맞먹습니다.' }
+  { label: '②', reason: 'neglect는 관심을 기울이지 않는다는 뜻으로 지문 의도와 반대예요.' },
+  { label: '③', reason: 'abbreviate는 줄이다/축약하다라는 의미라 호기심을 키운다는 맥락과 다릅니다.' },
+  { label: '⑤', reason: 'discard는 버리다는 뜻이라 탐구심을 키운다는 설명과 모순됩니다.' }
 ];
 
 function buildGrammarOption(index, text, status = 'correct', reasonOverride, tagOverride) {
@@ -587,13 +586,21 @@ test('recordStudySession handles negative deltas and duplicate submissions safel
     'vocabulary',
     [
       {
-        question: '다음 글의 내용과 가장 거리가 먼 것은?',
+        question: '밑줄 친 단어와 의미가 가장 가까운 것을 고르시오.',
         passage: VOCAB_PASSAGE,
+        targetWord: 'cultivate',
+        targetLemma: 'cultivate',
+        targetMeaning: '기르다, 배양하다',
         options: VOCAB_OPTIONS,
-        correctAnswer: 4,
+        correctAnswer: 1,
         explanation: VOCAB_EXPLANATION,
         sourceLabel: '출처│Mock Vocabulary',
-        distractorReasons: VOCAB_DISTRACTOR_REASONS
+        distractorReasons: VOCAB_DISTRACTOR_REASONS,
+        lexicalNote: {
+          partOfSpeech: 'verb',
+          nuance: '정성 들여 키워서 자라도록 돕는다는 의미',
+          example: 'Teachers cultivate curiosity by asking genuine questions.'
+        }
       }
     ],
     { docTitle: 'Mock Document' }
@@ -659,15 +666,23 @@ test('normalizeBlankPayload preserves original passage metadata and passes accep
   assert.ok(aiService._acceptCachedProblem('blank', normalized));
 });
 
-test('normalizeVocabularyPayload validates five-choice vocabulary items', () => {
+test('normalizeVocabularyPayload validates synonym-style vocabulary items', () => {
   const payload = {
-    question: '다음 글의 내용과 가장 거리가 먼 것은?',
+    question: '밑줄 친 단어와 의미가 가장 가까운 것을 고르시오.',
     passage: VOCAB_PASSAGE,
+    targetWord: 'cultivate',
+    targetLemma: 'cultivate',
+    targetMeaning: '기르다, 키우다',
     options: VOCAB_OPTIONS,
-    correctAnswer: 4,
+    correctAnswer: 1,
     explanation: VOCAB_EXPLANATION,
     sourceLabel: '출처│Mock Vocabulary 2025 모의',
-    distractorReasons: VOCAB_DISTRACTOR_REASONS
+    distractorReasons: VOCAB_DISTRACTOR_REASONS,
+    lexicalNote: {
+      partOfSpeech: 'verb',
+      nuance: '정성 들여 기르다/배양하다',
+      example: 'She cultivates habits that support creativity.'
+    }
   };
 
   const normalized = aiService._normalizeVocabularyPayload(payload, {
@@ -676,9 +691,10 @@ test('normalizeVocabularyPayload validates five-choice vocabulary items', () => 
   });
 
   assert.equal(normalized.options.length, 5);
-  assert.equal(normalized.answer, '4');
+  assert.equal(normalized.answer, '1');
   assert.equal(normalized.sourceLabel, '출처│Mock Vocabulary 2025 모의');
-  assert.ok(normalized.metadata?.distractorReasons?.['①']);
+  assert.equal(normalized.metadata.lexicalNote.targetWord, 'cultivate');
+  assert.ok(normalized.metadata?.distractorReasons?.['②']);
   assert.ok(aiService._acceptCachedProblem('vocabulary', normalized));
 });
 

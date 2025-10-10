@@ -49,8 +49,28 @@ router.get('/health', verifyToken, requireAdmin, (req, res) => {
 
 router.get('/problem-feedback', verifyToken, requireAdmin, async (req, res) => {
   try {
-    const { status = 'pending', limit = 50 } = req.query || {};
-    const result = await listProblemReports({ status, limit });
+    const {
+      status = 'pending',
+      type = 'all',
+      documentId = 'all',
+      reporter,
+      search,
+      sort = 'recent',
+      from,
+      to,
+      limit = 50
+    } = req.query || {};
+    const result = await listProblemReports({
+      status,
+      type,
+      documentId,
+      reporter,
+      search,
+      sort,
+      from,
+      to,
+      limit
+    });
     res.json(result);
   } catch (error) {
     console.error('[admin] problem-feedback list error:', error);

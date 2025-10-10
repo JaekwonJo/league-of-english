@@ -77,6 +77,9 @@ const LoadingState = ({
     );
   };
 
+  const safePercent = Number.isFinite(progressPercent) ? progressPercent : 0;
+  const displayPercent = safePercent > 0 && safePercent < 8 ? 8 : safePercent;
+
   return (
     <div style={styles.loading}>
       <div style={styles.loadingProgressPanel}>
@@ -84,7 +87,7 @@ const LoadingState = ({
           <div
             style={{
               ...styles.progressBarInner,
-              width: `${Math.min(100, Math.max(0, progressPercent))}%`
+              width: `${Math.min(100, Math.max(0, displayPercent))}%`
             }}
           />
         </div>

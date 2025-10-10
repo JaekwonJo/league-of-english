@@ -239,11 +239,17 @@ class AIProblemService {
     if (message.includes('option') && message.includes('5')) {
       directives.push('- Provide exactly five options labelled with the circled digits ①-⑤.');
     }
+    if (/(1-4|1~4|one to four)/i.test(rawMessage) || message.includes('1-4 word')) {
+      directives.push('- Each option must be a natural 1-4 word English expression that begins with a letter.');
+    }
     if (message.includes('reason')) {
       directives.push('- Fill the "reason" field for every option (정답 포함) with a concise Korean sentence.');
     }
     if (message.includes('korean')) {
       directives.push('- Keep the explanation and option reasons entirely in Korean.');
+    }
+    if (message.includes('lexicalnote') || message.includes('targetlemma') || message.includes('targetmeaning')) {
+      directives.push('- Populate targetWord, targetLemma, targetMeaning, and lexicalNote (partOfSpeech, nuance, example) fields completely.');
     }
     if (message.includes('correct') && message.includes('count')) {
       directives.push('- Ensure the number of incorrect options matches the correctAnswer(s) list.');
@@ -675,25 +681,27 @@ class AIProblemService {
           const variantTag = `doc${documentId}_v${i}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
           const promptSections = [
             'You are a deterministic K-CSAT English vocabulary (어휘) item writer.',
-            'Generate exactly one five-option question that asks for the statement least supported by the passage.',
+            'Generate exactly one five-option question that asks for the English option closest in meaning to the single underlined word in the passage.',
             '',
             `Passage title: ${docTitle}`,
-            `Passage (preserve every sentence verbatim; do not insert blanks):\n${clipText(passage, 1600)}`,
+            `Passage (underline exactly one focus word using <u>...</u>; keep every sentence verbatim):\n${clipText(passage, 1600)}`,
             '',
             'Manual excerpt (truncated):',
             manualExcerpt,
             '',
             'Return raw JSON only with this structure:',
-            VOCAB_JSON_BLUEPRINT.replace('"variantTag": "V-110"', `"variantTag": "${variantTag}"`),
+            VOCAB_JSON_BLUEPRINT.replace('"variantTag": "V-220"', `"variantTag": "${variantTag}"`),
             '',
             'Generation requirements:',
-            '- Keep the Korean question text exactly "다음 글의 내용과 가장 거리가 먼 것은?".',
-            '- Provide five English options labelled ①-⑤. Each option must be a natural 2-14 word phrase or clause starting with a lowercase letter.',
-            '- Exactly one option must contradict, distort, or over-generalise the passage. 나머지 네 개는 본문에 근거하여 참임을 보여 주세요.',
-            '- correctAnswer는 모순되는 선택지의 번호(1-5)입니다.',
-            '- 설명(explanation)은 한국어로 최소 세 문장 이상 작성하고, 정답이 왜 틀렸는지와 다른 보기들이 왜 맞는지를 모두 다뤄 주세요.',
-            '- distractorReasons 배열에 최소 두 개 이상의 정답이 아닌 보기와 그 이유를 한 문장씩 한국어로 정리하세요.',
-            '- Source label must start with "출처│" and avoid placeholder text (기관 연도 회차 문항 (pXX) 형식).',
+            '- Keep the Korean question text exactly "밑줄 친 단어와 의미가 가장 가까운 것을 고르시오."',
+            '- Underline exactly one target word inside the passage with <u>word</u>; do not underline sentences or phrases.',
+            '- Fill `targetWord`, `targetLemma`, `targetMeaning` (concise Korean gloss), and `lexicalNote` fields to explain nuance.',
+            '- Provide five English options labelled ①-⑤. Each option must be a natural 1-4 word expression beginning with an English letter.',
+            '- Exactly one option must match the underlined word meaning in context. The other four should be plausible but incorrect synonyms or confusions.',
+            '- `correctAnswer` is the number (1-5) of the best-matching option.',
+            '- `explanation` must be written in Korean with at least three sentences covering 핵심 의미, 정답 근거, 두 개 이상의 오답이 왜 틀렸는지.',
+            '- `distractorReasons` must include at least three entries for 오답, each in Korean 한 문장.',
+            '- Source label must start with "출처│" and avoid placeholder text.',
             '- Respond with JSON only (no Markdown fences).'
           ];
 
@@ -706,8 +714,8 @@ class AIProblemService {
 
           const response = await this.callChatCompletion({
             model: "gpt-4o-mini",
-            temperature: 0.3,
-            max_tokens: 880,
+            temperature: 0.32,
+            max_tokens: 900,
             messages: [{ role: "user", content: prompt }]
           }, { label: 'vocabulary' });
 

@@ -7,21 +7,35 @@ export function useProblemFeedbackReports(defaultStatus = 'pending') {
   const [status, setStatus] = useState(defaultStatus);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [filters, setFilters] = useState({
+    status: defaultStatus,
+    type: 'all',
+    documentId: 'all',
+    reporter: '',
+    search: '',
+    sort: 'recent',
+    limit: 50
+  });
 
-  const fetchReports = useCallback(async (nextStatus = status) => {
+  const fetchReports = useCallback(async (overrides = {}) => {
     setLoading(true);
     setError(null);
+    const nextFilters = {
+      ...filters,
+      ...overrides
+    };
     try {
-      const response = await api.admin.problemFeedback.list({ status: nextStatus });
+      const response = await api.admin.problemFeedback.list(nextFilters);
       setReports(response?.reports || []);
       setSummary(response?.summary || {});
-      setStatus(nextStatus);
+      setStatus(nextFilters.status || 'pending');
+      setFilters(nextFilters);
     } catch (err) {
       setError(err?.message || '문항 신고 목록을 불러오지 못했어요.');
     } finally {
       setLoading(false);
     }
-  }, [status]);
+  }, [filters]);
 
   const updateStatus = useCallback(async (reportId, nextStatus, resolutionNote) => {
     const target = reports.find((item) => item.id === reportId);
@@ -47,6 +61,7 @@ export function useProblemFeedbackReports(defaultStatus = 'pending') {
     status,
     loading,
     error,
+    filters,
     fetchReports,
     changeStatus: fetchReports,
     updateStatus
