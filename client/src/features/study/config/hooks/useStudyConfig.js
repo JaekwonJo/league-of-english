@@ -317,6 +317,10 @@ const useStudyConfig = ({ onStart, initialFocusType }) => {
       window.alert('적어도 1문제 이상 선택해주세요.');
       return;
     }
+    if (!activeTypes.length) {
+      window.alert('출제할 문제 유형과 개수를 골라주세요.');
+      return;
+    }
     if (totalProblems > MAX_TOTAL_PROBLEMS) {
       window.alert('한 번에 풀 수 있는 최대 문제 수는 20문제입니다.');
       return;

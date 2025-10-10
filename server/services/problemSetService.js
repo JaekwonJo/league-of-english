@@ -268,7 +268,7 @@ async function generateCsatSet({
   const requestedTypes = Object.keys(normalizedCounts).filter((type) => normalizedCounts[type] > 0);
 
   if (!requestedTypes.length) {
-    throw createProblemError('No problem counts requested.', 400);
+    throw createProblemError('문항 유형과 개수를 선택해 주세요.', 400);
   }
 
   for (const type of requestedTypes) {

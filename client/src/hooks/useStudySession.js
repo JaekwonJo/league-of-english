@@ -414,6 +414,14 @@ const useStudySession = (user, onUserUpdate = () => {}) => {
       logger.error("Failed to start study:", err);
       const msg = err?.message || "";
       let clean;
+      if (msg.includes('문항 유형과 개수를 선택해 주세요')) {
+        window.alert('출제할 문제 유형과 개수를 먼저 골라주세요.');
+        setLoading(false);
+        setLoadingContext(null);
+        setLoadingProgress(0);
+        setLoadingStageIndex(0);
+        return;
+      }
       if (/404/.test(msg)) clean = "문서를 찾을 수 없어요. 자료 상태를 확인하고 다시 시도해주세요.";
       else if (/503/.test(msg)) clean = "서버 점검 중일 수 있어요. 잠시 기다렸다가 다시 시도해주세요.";
       else if (/401/.test(msg) || /token|auth/i.test(msg)) clean = "로그인이 만료됐어요. 다시 로그인해주세요.";
