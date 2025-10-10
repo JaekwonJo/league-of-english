@@ -305,6 +305,10 @@ const useStudyConfig = ({ onStart, initialFocusType }) => {
   }, [resetTypes]);
 
   const handleStart = useCallback(() => {
+    const activeTypes = Object.entries(config.types || {})
+      .filter(([, value]) => Number(value || 0) > 0)
+      .map(([key]) => key);
+
     if (!config.documentId) {
       window.alert('학습에 사용할 자료를 먼저 선택해주세요.');
       return;
