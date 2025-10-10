@@ -85,8 +85,8 @@ const GenerationSummary = ({ logs }) => {
               <div style={styles.generationSummaryType}>{typeLabel}</div>
               <div style={styles.generationSummaryStats}>
                 <span>요청 {requested}문</span>
-                <span>캐시 {cached}문</span>
-                <span>AI {generated}문</span>
+                <span>저장된 문제 {cached}문</span>
+                <span>방금 만든 문제 {generated}문</span>
                 <span>총 {delivered}문</span>
                 {isPartial && (
                   <span style={styles.generationSummaryWarning}>⚠️ {missing}문은 조건 미충족으로 제외</span>
