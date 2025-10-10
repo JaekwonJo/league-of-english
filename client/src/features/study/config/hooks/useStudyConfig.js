@@ -215,7 +215,7 @@ const useStudyConfig = ({ onStart, initialFocusType }) => {
       setSelectedPassages([]);
       return;
     }
-    const maxSelectable = passages.length;
+    const maxSelectable = Math.min(passages.length, MAX_TOTAL_PROBLEMS);
     const count = Math.max(1, Math.floor(Math.random() * maxSelectable) + 1);
     const shuffled = [...passages].sort(() => Math.random() - 0.5);
     const randomSubset = shuffled
@@ -322,7 +322,7 @@ const useStudyConfig = ({ onStart, initialFocusType }) => {
       return;
     }
     if (totalProblems > MAX_TOTAL_PROBLEMS) {
-      window.alert('한 번에 풀 수 있는 최대 문제 수는 20문제입니다.');
+      window.alert(`한 번에 풀 수 있는 최대 문제 수는 ${MAX_TOTAL_PROBLEMS}문제입니다.`);
       return;
     }
 

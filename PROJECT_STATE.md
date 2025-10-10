@@ -24,7 +24,7 @@
 - `aiProblemService`가 메뉴얼 로더·노출 정책·문항 저장소·OpenAI 큐 도우미로 나뉘고, 새 `problemSetService`가 `/generate/csat-set`을 맡아 타입별 진행 로그와 `partial_generation` 정보를 함께 반환합니다.
 - 요약 생성기는 실패 로그를 해석해 맞춤 지시문을 붙이고 최대 5회까지 재시도하므로, 길이/단어수 제약에 걸린 경우에도 스스로 교정하도록 진화했습니다.
 - 어법 생성기는 실패 로그에서 "밑줄 그대로"나 오류 키워드 누락을 감지하면 추가 지시문을 붙여 잘못된 밑줄을 반드시 수정하도록 6회까지 재시도하고, 실패 사유에 맞춰 밑줄·이유 필드를 자동 보완해요.
-- 학습 설정의 랜덤 배치는 선택한 지문 수를 그대로 반영하고, 유형 수 조절이 1문제 단위로 가능해 17문처럼 특이한 숫자도 그대로 유지돼요. 문제 유형을 하나도 고르지 않으면 바로 안내창이 떠서 빈 요청이 서버로 가지 않아요.
+- 학습 설정의 랜덤 배치는 선택한 지문 수를 그대로 반영하고, 유형 수 조절이 1문제 단위로 가능해 원하는 숫자를 쉽게 맞출 수 있어요. 문제 유형을 하나도 고르지 않으면 바로 안내창이 떠서 빈 요청이 서버로 가지 않고, 프런트·백엔드가 함께 10문 상한을 지켜 안정적으로 생성합니다.
 - 로딩 화면은 테마 토큰을 사용하는 진행 막대로 시각 피드백을 유지하고, 복습 모드에는 🔝 버튼을 붙여 긴 리스트도 곧바로 맨 위로 돌아갈 수 있어요. 결과 화면 랭킹·격려 문구도 `--text-*` 팔레트를 써서 다크 모드 대비가 살아났습니다.
 - 학습 프런트가 `features/study` 아래로 재배치돼 설정(`config`), 풀이(`problem`), 결과(`result`)가 각각 전용 훅·스타일·컴포넌트로 나뉘어 재사용성과 경로 구조가 정리됐어요.
 - `StudyConfig`는 API/상태 관리 훅(`useStudyConfig`)과 단계별 뷰(`DocumentStep`·`PassageStep`·`ProblemTypeStep`)로 쪼개져 단계 이동·랜덤 선택·로컬 저장 로직을 한눈에 추적할 수 있습니다.
@@ -68,6 +68,12 @@
 - rate-limit이 발동되면 429를 던지긴 하지만, 학습 화면에서 토스트와 가이드 타이머가 없어 사용자가 왜 막혔는지 이해하기 어렵습니다.
 - 클라우드 학습 세션은 시작 시 스냅샷만 저장하고 진행 중 경과/타이머를 동기화하지 않아 장시간 학습 시 정확도가 떨어질 수 있습니다.
 - React 테스트 실행 시 `act(...)` 경고가 계속 출력돼 대기열/렌더 타이밍 버그를 찾기 어렵습니다.
+
+## Resolved (2025-10-19 - 학습 요청 상한 10문 고정)
+- `problemSetService`가 STEP_SIZE를 1로 낮추고 총 요청 수를 10문으로 제한해, 한 번에 너무 많은 AI 호출이 실패로 이어지는 상황을 막아요. 클라이언트도 같은 상한을 공유해 랜덤 배치·저장 세션·직접 입력 모든 경로가 10문 이내로 유지됩니다.
+- `StudyConfig`는 10문 제한 정보를 즉시 보여주고, 랜덤 지문 선택도 최대 10개까지만 골라요. `useStudySession`은 새 한도에 맞춰 totalCount를 보정합니다.
+- Passage 분석 선택 상한을 2개로 줄여 Variant 품질 검토에 집중할 수 있게 했고, 관리자 UI와 학생 분석 페이지 안내 문구도 함께 맞췄어요.
+- Verification: `npm test`, `npm run lint`, `CI=true npm --prefix client test -- --watch=false --runInBand`
 
 ## Resolved (2025-10-18 - 어법 재시도 지시문 + 학습 UX 다듬기)
 - `aiProblemService._deriveEobeopDirectives`가 "segment unchanged"·"오류 키워드 없음" 실패 로그를 감지해 밑줄 수정·한국어 사유 지시문을 추가하고, 어법 생성이 원문과 똑같은 보기로 멈추지 않도록 6회까지 재시도합니다.
@@ -230,7 +236,7 @@
 ## Resolved (2025-09-26)
 - Added `server/utils/summaryTemplate.js` and rewrote `aiProblemService` to build/validate CSAT-style summary problems (A/B blanks, circled options, source labels).
 - Integrated the Wolgo grammar template via `server/utils/eobeopTemplate.js`, removed basic/advanced fallbacks, and returned API-only grammar batches with circled options and underlined passages.
-- Rebuilt `/generate/csat-set` route to enforce 5-question steps (max 20), dispatch batched generators, and normalize responses for the React study screen.
+- Rebuilt `/generate/csat-set` route to enforce 1-question steps (max 10), dispatch batched generators, and normalize responses for the React study screen.
 - Updated the study client (`useStudySession`, `StudyConfig`, `ProblemDisplay`, `GrammarProblemDisplay`) to request 5-at-once, render list mode cleanly, and support the new summary/grammar data shape.
 - Added the K-CSAT Topic Master manual (`docs/problem-templates/topic-master.md`, `theme_problem_manual.md`, `problem manual/theme_problem_manual.md`) so 주제 문제가 논지+범위 기준으로 재현 가능.
 - Hardened `generateTheme` prompt/validation: 5 options(6~14 단어), 한국어 해설, `출처│` 라벨, 오답 결함 메타태그.

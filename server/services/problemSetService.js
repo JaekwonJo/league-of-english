@@ -3,8 +3,8 @@ const OrderGenerator = require('../utils/orderProblemGenerator');
 const InsertionGenerator = require('../utils/insertionProblemGenerator2');
 const { normalizeAll } = require('../utils/csatProblemNormalizer');
 
-const STEP_SIZE = 5;
-const MAX_TOTAL = 20;
+const STEP_SIZE = 1;
+const MAX_TOTAL = 10;
 const OPENAI_REQUIRED_TYPES = new Set([
   'blank',
   'grammar',
@@ -266,9 +266,14 @@ async function generateCsatSet({
 }) {
   const normalizedCounts = normalizeTypeCounts(counts);
   const requestedTypes = Object.keys(normalizedCounts).filter((type) => normalizedCounts[type] > 0);
+  const totalRequested = requestedTypes.reduce((sum, type) => sum + (normalizedCounts[type] || 0), 0);
 
   if (!requestedTypes.length) {
     throw createProblemError('문항 유형과 개수를 선택해 주세요.', 400);
+  }
+
+  if (totalRequested > MAX_TOTAL) {
+    throw createProblemError(`한 번에 최대 ${MAX_TOTAL}문제까지만 요청할 수 있어요.`, 400);
   }
 
   for (const type of requestedTypes) {

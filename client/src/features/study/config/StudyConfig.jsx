@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import PassagePreviewModal from '../../../components/shared/PassagePreviewModal';
 import styles from './configStyles';
 import useStudyConfig from './hooks/useStudyConfig';
+import { MAX_TOTAL_PROBLEMS } from './constants';
 import DocumentStep from './components/DocumentStep';
 import PassageStep from './components/PassageStep';
 import ProblemTypeStep from './components/ProblemTypeStep';
@@ -127,7 +128,7 @@ const StudyConfig = ({
               !!config.documentId &&
               selectedPassages.length > 0 &&
               totalProblems > 0 &&
-              totalProblems <= 20
+              totalProblems <= MAX_TOTAL_PROBLEMS
             }
           />
         );

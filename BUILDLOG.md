@@ -1,3 +1,9 @@
+## 2025-10-19 (study request cap tightened)
+- Issue: 한 번에 20문제를 요청하면 AI 재시도와 검증이 길어져 빈번히 실패했고, 랜덤 배치/저장 세션이 다시 20문을 넘기는 경우도 있었습니다. 분석본 역시 3개의 Variant를 동시에 다루려다 보니 품질 확인이 느려졌어요.
+- Fix: `/generate/csat-set` STEP_SIZE를 1로 낮추고 총 요청 수를 10문으로 제한했습니다. 클라이언트는 `MAX_TOTAL_PROBLEMS=10`으로 맞추고, 랜덤 지문 선택도 10개 이내로 조절해 빈 요청과 초과 요청을 모두 막았어요. 저장 세션 재개 시에도 10문 상한을 적용합니다. 분석본 선택은 2개로 줄여 Variant 검토를 집중시켰어요.
+- Files: server/services/problemSetService.js, client/src/features/study/config/constants.js, client/src/features/study/config/StudyConfig.jsx, client/src/features/study/config/hooks/useStudyConfig.js, client/src/features/study/config/components/ProblemTypeStep.jsx, client/src/hooks/useStudySession.js, client/src/pages/AnalysisPage.js, client/src/components/admin/DocumentAnalysis.js, README.md, PROJECT_STATE.md.
+- Verification: `npm test`, `npm run lint`, `CI=true npm --prefix client test -- --watch=false --runInBand`.
+
 ## 2025-10-18 (grammar directive + study UX polish)
 - Issue: 어법 생성이 원문과 똑같은 밑줄을 반환한 채 멈추고, 학습 설정 랜덤 배치가 5문 단위로 잘려 사용자가 선택한 17문 등이 줄어드는 문제가 있었어요. 복습 화면엔 맨 위로 이동할 조작이 없고, 로딩 막대·결과 랭킹 텍스트가 다크 모드에서 거의 보이지 않았습니다.
 - Fix: 어법 재시도 헬퍼가 실패 로그를 읽고 밑줄 수정·오류 키워드 지시문을 추가하도록 보강하고, 랜덤 배치/유형 증감을 1문 단위와 지문 수 기반으로 재배분했습니다. 유형을 하나도 고르지 않으면 즉시 알림을 띄워 빈 요청이 서버로 가지 않도록 막았고, 로딩 막대에 테마 토큰을 적용하며 복습 모드에 🔝 버튼을 추가했습니다. 결과 랭킹·격려 문구는 `--text-*` 팔레트를 사용해 다크 모드 대비를 확보했습니다.

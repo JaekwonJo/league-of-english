@@ -369,7 +369,7 @@ const useStudySession = (user, onUserUpdate = () => {}) => {
         passageNumbers: Array.isArray(studyConfig.passageNumbers)
           ? Array.from(new Set(studyConfig.passageNumbers)).filter((value) => Number.isInteger(value) && value > 0)
           : [],
-        totalCount: Math.min(20, Math.max(1, totalCount || 1)),
+        totalCount: Math.min(10, Math.max(1, totalCount || 1)),
         orderMode: studyConfig.orderMode === 'sequential' ? 'sequential' : 'random'
       };
 

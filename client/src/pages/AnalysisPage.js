@@ -505,7 +505,7 @@ const AnalysisPage = () => {
         <div style={analysisStyles.header}>
           <button onClick={handleBackToDocuments} style={analysisStyles.backButton}>← 문서 목록으로</button>
           <h1 style={analysisStyles.title}>📄 {selectedDocument?.title}</h1>
-          <p style={analysisStyles.subtitle}>지문을 최대 3개까지 선택해 분석본을 확인하거나 새로 생성해요.</p>
+          <p style={analysisStyles.subtitle}>지문을 최대 2개까지 선택해 분석본을 확인하거나 새로 생성해요.</p>
         </div>
 
         {analysisLimitError && (
@@ -525,7 +525,7 @@ const AnalysisPage = () => {
             selected={selectedPassages}
             onToggle={togglePassageSelection}
             onPreview={openPreview}
-            maxSelection={3}
+            maxSelection={2}
             selectionLabel="선택 지문"
             renderMeta={renderMeta}
             emptyMessage="분석 가능한 지문을 찾지 못했습니다."

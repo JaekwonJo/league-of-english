@@ -4,7 +4,7 @@ import analysisConfig from '../../config/analysis.config.json';
 import PassagePickerGrid from '../shared/PassagePickerGrid';
 import PassagePreviewModal from '../shared/PassagePreviewModal';
 
-const MAX_SELECTION = 3;
+const MAX_SELECTION = 2;
 
 const initialReportModal = {
   open: false,
