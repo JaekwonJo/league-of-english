@@ -164,7 +164,8 @@ class AIProblemService {
 
   async generateBlank(documentId, count = 5) {
     const { document, passages } = await this.getPassages(documentId);
-    const docTitle = document?.title || `Document ${documentId}`;
+    const documentCode = document?.code || document?.slug || document?.external_id || null;
+    const docTitle = document?.title || documentCode || `Document ${documentId}`;
 
     if (!this.getOpenAI()) {
       throw new Error("AI generator unavailable for blank problems");
@@ -200,6 +201,7 @@ class AIProblemService {
           const payload = JSON.parse(stripJsonFences(content));
           normalized = normalizeBlankPayload(payload, {
             docTitle,
+            documentCode,
             passage,
             rawContent: content
           });
@@ -1265,7 +1267,8 @@ class AIProblemService {
     const { document, passages } = await this.getPassages(documentId);
     if (!this.getOpenAI()) throw new Error("AI generator unavailable for summary problems");
     const manualExcerpt = getSummaryManualExcerpt(3200);
-    const docTitle = document?.title || `Document ${documentId}`;
+    const documentCode = document?.code || document?.slug || document?.external_id || null;
+    const docTitle = document?.title || documentCode || `Document ${documentId}`;
     const results = [];
 
     for (let i = 0; i < count; i += 1) {
@@ -1295,14 +1298,15 @@ class AIProblemService {
           const problem = coerceSummaryProblem(payload, {
             index: results.length,
             docTitle,
-            passage
+            passage,
+            documentCode
           });
           if (!problem) throw new Error("summary coercion failed");
           const validation = validateSummaryProblem(problem);
           if (!validation.valid) {
             throw new Error(`summary validation issues: ${validation.issues.join(',')}`);
           }
-          problem.sourceLabel = ensureSourceLabel(problem.sourceLabel, { docTitle });
+          problem.sourceLabel = ensureSourceLabel(problem.sourceLabel, { docTitle, documentCode });
           problem.metadata = problem.metadata || {};
           problem.metadata.documentId = documentId;
           results.push(problem);

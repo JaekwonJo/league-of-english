@@ -114,6 +114,13 @@ function countWords(text = '') {
     .filter(Boolean).length;
 }
 
+function convertStarsToUnderline(text = '') {
+  if (!text) return '';
+  return String(text)
+    // replace Markdown-style italics only when they wrap a single segment
+    .replace(/\*([^*]+)\*/g, (match, inner) => `<u>${inner.trim()}</u>`);
+}
+
 function isEnglishPhrase(text = '') {
   const cleaned = String(text || '')
     .replace(/[’]/g, "'")
@@ -171,6 +178,7 @@ function isPlaceholderSourceLabel(label = '') {
 function ensureSourceLabel(raw, context = {}) {
   const value = String(raw || '').trim();
   const docTitle = String((context && context.docTitle) || '').trim();
+  const docCode = String((context && (context.documentCode || context.docCode)) || '').trim();
   if (value) {
     const normalized = value.replace(SOURCE_PREFIX_REGEX, '출처│').trim();
     const labelBody = normalized.replace(/^출처│/iu, '').trim();
@@ -178,7 +186,13 @@ function ensureSourceLabel(raw, context = {}) {
       return normalized.startsWith('출처│') ? normalized : `출처│${normalized}`;
     }
   }
-  return docTitle ? `출처│${docTitle}` : '출처│LoE Source';
+  if (docTitle) {
+    return docTitle.startsWith('출처│') ? docTitle : `출처│${docTitle}`;
+  }
+  if (docCode) {
+    return `출처│${docCode}`;
+  }
+  return '출처│LoE Source';
 }
 
 module.exports = {
@@ -198,5 +212,6 @@ module.exports = {
   isEnglishPhrase,
   labelToIndex,
   ensureSourceLabel,
+  convertStarsToUnderline,
   isPlaceholderSourceLabel
 };

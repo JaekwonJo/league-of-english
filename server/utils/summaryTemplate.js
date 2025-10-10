@@ -75,7 +75,8 @@ function buildPrompt({ passage, docTitle, manualExcerpt, variantTag, extraDirect
     "Rules:",
     "- SummarySentence must be a single English sentence (18-35 words) ending with a period and containing (A) and (B) exactly once.",
     "- Provide five options labelled with circled digits (\\u2460-\\u2464). Each option is an English pair 'phrase_A \\u2013 phrase_B'.",
-    "- Each phrase must be 1-4 words, grammatically valid, and collocationally natural with its partner.",
+    "- Each phrase must be a lowercase, 1-4 word verb or noun phrase that reads naturally in the sentence (no leading capital letters or full clauses).",
+    "- Avoid reusing the same words that already appear immediately before or after (A) and (B); paraphrase with fresh vocabulary.",
     "- Exactly one option must satisfy the passage's logic and polarity; the other four must contain distinct defects (narrow, broad, detail, counter-claim, metaphor-literal, role-swap, collocation break, definition).",
     "- Write the explanation in Korean summarising the reason (A)-(B) is correct and naming the main defect of at least one distractor.",
     "- sourceLabel must start with '출처│'.",
@@ -138,10 +139,6 @@ function normalizeOptions(options) {
     textValue = textValue.trim();
 
     if (!textValue) return null;
-
-    if (/^[a-z]/.test(textValue)) {
-      textValue = textValue.charAt(0).toUpperCase() + textValue.slice(1);
-    }
 
     textValue = textValue.replace(/\s{2,}/g, ' ');
 
@@ -276,6 +273,36 @@ function validateSummaryProblem(problem) {
   }
 
   const options = Array.isArray(problem.options) ? problem.options : [];
+  const tokenize = (text, minLength = 3) =>
+    String(text || '')
+      .toLowerCase()
+      .replace(/[^a-z\s']/g, ' ')
+      .split(/\s+/)
+      .filter((token) => token.length >= minLength);
+  const simpleStem = (token) => {
+    let stem = token;
+    if (stem.length > 4 && /(?:ing|ed|es)$/i.test(stem)) {
+      stem = stem.replace(/(?:ing|ed|es)$/i, '');
+    } else if (stem.length > 3 && /s$/i.test(stem)) {
+      stem = stem.slice(0, -1);
+    }
+    return stem;
+  };
+  const collectContext = (marker) => {
+    const parts = sentence.split(marker);
+    if (parts.length !== 2) return { before: [], after: [] };
+    const beforeTokens = tokenize(parts[0]).slice(-4);
+    const afterTokens = tokenize(parts[1]).slice(0, 4);
+    return {
+      before: beforeTokens.map(simpleStem),
+      after: afterTokens.map(simpleStem)
+    };
+  };
+  const contextA = collectContext('(A)');
+  const contextB = collectContext('(B)');
+  const contextSetA = new Set([...contextA.before, ...contextA.after]);
+  const contextSetB = new Set([...contextB.before, ...contextB.after]);
+
   if (options.length !== CIRCLED_DIGITS.length) {
     issues.push('option_count');
   } else {
@@ -301,6 +328,16 @@ function validateSummaryProblem(problem) {
         }
         if (rightWords === 0 || rightWords > 4) {
           issues.push(`option_${index + 1}_right_wordcount`);
+        }
+        const leftTokens = tokenize(rawLeft, 4).map(simpleStem);
+        const rightTokens = tokenize(rawRight, 4).map(simpleStem);
+        const leftOverlap = leftTokens.filter((token) => contextSetA.has(token)).length;
+        const rightOverlap = rightTokens.filter((token) => contextSetB.has(token)).length;
+        if (leftOverlap >= 2) {
+          issues.push(`option_${index + 1}_context_overlap_a`);
+        }
+        if (rightOverlap >= 2) {
+          issues.push(`option_${index + 1}_context_overlap_b`);
         }
       }
     });
@@ -370,6 +407,9 @@ function deriveSummaryDirectives(lastFailure = '') {
   }
   if (/option_\d+_pair/i.test(message)) {
     add('- Ensure each option contains both phrases around the en dash (no empty side).');
+  }
+  if (/context_overlap/i.test(message)) {
+    add('- Rephrase the option phrases so they do not recycle the same wording that surrounds (A) or (B); introduce fresh vocabulary.');
   }
 
   if (lower.includes('explanation_missing') || lower.includes('explanation_language')) {

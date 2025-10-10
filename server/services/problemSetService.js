@@ -150,6 +150,7 @@ async function handleAiBackedType({
   amount,
   documentId,
   docTitle,
+  documentCode,
   userId,
   usedProblemIds,
   pushProgress,
@@ -178,7 +179,10 @@ async function handleAiBackedType({
   }
 
   const generatedBatch = await aiService[generatorName](documentId, remaining);
-  const savedBatch = await aiService.saveProblems(documentId, type, generatedBatch, { docTitle });
+  const savedBatch = await aiService.saveProblems(documentId, type, generatedBatch, {
+    docTitle,
+    documentCode
+  });
   const usable = Array.isArray(savedBatch) && savedBatch.length ? savedBatch : generatedBatch;
   delivered += appendProblems(usable);
   pushProgress('ai_generated', type, {
@@ -197,7 +201,8 @@ async function handleOrderType({
   pushProgress,
   appendProblems,
   context,
-  orderDifficulty
+  orderDifficulty,
+  documentCode
 }) {
   let delivered = 0;
   const cache = await aiService.fetchCached(documentId, type, amount, {
@@ -231,7 +236,8 @@ async function handleInsertionType({
   pushProgress,
   appendProblems,
   context,
-  insertionDifficulty
+  insertionDifficulty,
+  documentCode
 }) {
   let delivered = 0;
   const cache = await aiService.fetchCached(documentId, type, amount, {
@@ -288,7 +294,17 @@ async function generateCsatSet({
   }
 
   const context = await aiService.getPassages(documentId);
-  const docTitle = context?.document?.title || context?.document?.name || null;
+  const documentCode =
+    context?.document?.code ||
+    context?.document?.slug ||
+    context?.document?.external_id ||
+    context?.document?.reference ||
+    null;
+  const docTitle =
+    context?.document?.title ||
+    documentCode ||
+    context?.document?.name ||
+    null;
 
   const aggregated = [];
   const usedProblemIds = new Set();
@@ -336,7 +352,8 @@ async function generateCsatSet({
         userId,
         usedProblemIds,
         pushProgress,
-        appendProblems
+        appendProblems,
+        documentCode
       });
     } else if (type === 'order') {
       delivered = await handleOrderType({
@@ -348,7 +365,8 @@ async function generateCsatSet({
         pushProgress,
         appendProblems,
         context,
-        orderDifficulty
+        orderDifficulty,
+        documentCode
       });
     } else if (type === 'insertion') {
       delivered = await handleInsertionType({
@@ -360,7 +378,8 @@ async function generateCsatSet({
         pushProgress,
         appendProblems,
         context,
-        insertionDifficulty
+        insertionDifficulty,
+        documentCode
       });
     }
 

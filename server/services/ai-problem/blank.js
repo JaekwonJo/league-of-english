@@ -47,31 +47,40 @@ const BLANK_PLACEHOLDER_REGEX = /_{2,}|\(\s*\)|\[\s*\]|\bblank\b/i;
 const BLANK_JSON_BLUEPRINT = `{
   "questionFamily": "C-1",
   "question": "다음 빈칸에 들어갈 말로 가장 적절한 것은?",
-  "text": "Sentence with ____ placeholder.",
-  "targetExpression": "original expression removed",
+  "text": "Researchers once expected ____ to offer the quickest relief, yet the data now favours slower but steadier reforms.",
+  "targetExpression": "a swift round of tax cuts",
   "strategy": "paraphrasing",
   "options": [
-    {"label": "①", "text": "offer a partially true summary", "fallacy": "partial-truth"},
-    {"label": "②", "text": "draw an opposite cause-and-effect", "fallacy": "opposite"},
-    {"label": "③", "text": "capture the author's main claim", "fallacy": "correct"},
-    {"label": "④", "text": "extend the idea beyond its scope", "fallacy": "scope-error"},
-    {"label": "⑤", "text": "leap to an unsupported conclusion", "fallacy": "logical-leap"}
+    {"label": "①", "text": "strict civilian oversight committees", "fallacy": "scope-shift"},
+    {"label": "②", "text": "identical spending caps for all regions", "fallacy": "over-generalisation"},
+    {"label": "③", "text": "a swift round of tax cuts", "fallacy": "correct"},
+    {"label": "④", "text": "delayed investment packages", "fallacy": "delay-bias"},
+    {"label": "⑤", "text": "relief funds for unrelated projects", "fallacy": "off-topic"}
   ],
   "correctAnswer": 3,
   "distractorReasons": [
-    {"label": "①", "reason": "부분 정답", "fallacy": "partial-truth"},
-    {"label": "②", "reason": "반대 의미", "fallacy": "opposite"},
-    {"label": "④", "reason": "범위 오류", "fallacy": "scope-error"},
-    {"label": "⑤", "reason": "논리적 비약", "fallacy": "logical-leap"}
+    {"label": "①", "reason": "감독 틀을 바꾸어 핵심 논지에서 벗어남", "fallacy": "scope-shift"},
+    {"label": "②", "reason": "모든 지역을 똑같이 취급해 본문 조건을 무시함", "fallacy": "over-generalisation"},
+    {"label": "④", "reason": "즉각적 개입이 아닌 지연 전략을 제안함", "fallacy": "delay-bias"},
+    {"label": "⑤", "reason": "재원을 엉뚱한 분야로 돌려 본문의 문제를 해결하지 못함", "fallacy": "off-topic"}
   ],
-  "explanation": "한국어로 정답 근거와 오답 결함을 설명",
+  "explanation": "본문은 신속하지만 단기적인 감세보다 데이터를 기반으로 한 점진적 개혁이 더 큰 효과를 낸다고 강조한다. 따라서 (③) 'launching a swift round of tax cuts'가 원문의 핵심 주장과 일치한다. 다른 선택지는 감독 범위를 바꾸거나, 모든 지역에 동일한 상한을 적용하거나, 개입을 미루는 등 본문의 해결책과 어긋난다.",
   "sourceLabel": "출처│기관 연도 회차 문항 (pXX)",
   "notes": {
-    "targetExpression": "original expression removed",
-    "difficulty": "intermediate",
-    "estimatedAccuracy": 50
+    "targetExpression": "a swift round of tax cuts",
+    "difficulty": "advanced",
+    "estimatedAccuracy": 52
   }
 }`;
+
+function shuffleIndices(size) {
+  const indices = Array.from({ length: size }, (_, i) => i);
+  for (let i = size - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [indices[i], indices[j]] = [indices[j], indices[i]];
+  }
+  return indices;
+}
 
 function buildQuestionResolver(canonical, variants = []) {
   const map = new Map();
@@ -168,6 +177,9 @@ function normalizeBlankOptions(rawOptions = []) {
     if (wordCount < BLANK_OPTION_MIN_WORDS || wordCount > BLANK_OPTION_MAX_WORDS) {
       throw new Error(`blank option ${index + 1} must be ${BLANK_OPTION_MIN_WORDS}-${BLANK_OPTION_MAX_WORDS} words`);
     }
+    if (/^(to\s+|[a-z]+ing\b)/i.test(optionValue)) {
+      throw new Error(`blank option ${index + 1} must start with a noun phrase`);
+    }
 
     const circled = CIRCLED_DIGITS[index];
     formatted[index] = `${circled} ${optionValue}`;
@@ -199,7 +211,7 @@ function buildBlankPrompt({ passage, manualExcerpt, extraDirectives = [] }) {
     '- Preserve the original passage sentences and replace exactly one expression with "____".',
     '- Return the full passage verbatim (no sentence deletion or summarising) except for the blanked expression.',
     '- Select a family C-1, C-2, C-3, or C-4. Use the definition-style Korean prompt only for C-2.',
-    '- Provide five English answer choices labelled ①-⑤. Each option must be a natural descriptive phrase of 3-18 words (e.g., "extend the library\'s opening hours"), without numerals or Korean text.',
+    '- Provide five English answer choices labelled ①-⑤. Each option must be a natural noun phrase of 3-18 words (e.g., "a swift round of tax cuts"), without numerals or Korean text. Do not start with gerunds or infinitives.',
     '- Include the original removed wording in "targetExpression" and specify the strategy used (paraphrasing, compression, generalization, minimal-change).',
     '- Explain in Korean with at least three sentences: (1) 핵심 메시지 요약, (2) 정답 근거, (3) 두 개 이상 오답 결함.',
     '- Provide `distractorReasons` covering every incorrect option with one-sentence Korean rationales.'
@@ -244,6 +256,9 @@ function deriveBlankDirectives(lastFailure = '') {
   }
   if (message.includes('option') && (message.includes('words') || message.includes('too short'))) {
     directives.push(`- Expand every answer choice into a ${BLANK_OPTION_MIN_WORDS}-${BLANK_OPTION_MAX_WORDS} word descriptive phrase (예: "extend the library's opening hours" → 6 words).`);
+  }
+  if (message.includes('noun phrase')) {
+    directives.push('- 시작을 명사구로 작성하고, 동사원형(to ...)이나 현재분사(~ing)로 시작하지 마세요.');
   }
   if (message.includes('missing original sentences') || message.includes('missing sentence count')) {
     directives.push('- Output the full original passage and keep every sentence intact, only replacing the target expression with "____".');
@@ -307,12 +322,58 @@ function normalizeBlankPayload(payload, context = {}) {
     throw new Error('blank text missing placeholder');
   }
 
+  const normalizedText = normalizeWhitespace(text);
+
   const optionsInfo = normalizeBlankOptions(payload.options || []);
-  const answerNumber = Number(payload.correctAnswer || payload.answer);
+  let answerNumber = Number(payload.correctAnswer || payload.answer);
   if (!Number.isInteger(answerNumber) || answerNumber < 1 || answerNumber > CIRCLED_DIGITS.length) {
     throw new Error('invalid blank correctAnswer');
   }
-  const answerIndex = answerNumber - 1;
+  let answerIndex = answerNumber - 1;
+
+  const shuffleOrder = shuffleIndices(CIRCLED_DIGITS.length);
+  const needsShuffle = shuffleOrder.some((originalIdx, newIdx) => originalIdx !== newIdx);
+  let originalToNewIndex = Array.from({ length: CIRCLED_DIGITS.length }, (_, idx) => idx);
+  if (needsShuffle) {
+    originalToNewIndex = new Array(CIRCLED_DIGITS.length);
+    shuffleOrder.forEach((fromIdx, newIdx) => {
+      originalToNewIndex[fromIdx] = newIdx;
+    });
+    const reorderedTexts = shuffleOrder.map((fromIdx, newIdx) => {
+      const value = optionsInfo.texts[fromIdx];
+      return `${CIRCLED_DIGITS[newIdx]} ${value}`;
+    });
+    const reorderedPlainTexts = shuffleOrder.map((fromIdx) => optionsInfo.texts[fromIdx]);
+    const reorderedRawTexts = shuffleOrder.map((fromIdx) => optionsInfo.rawTexts[fromIdx]);
+
+    const remapByDigit = (sourceMap) => {
+      const result = {};
+      shuffleOrder.forEach((fromIdx, newIdx) => {
+        const oldDigit = CIRCLED_DIGITS[fromIdx];
+        const newDigit = CIRCLED_DIGITS[newIdx];
+        if (sourceMap && sourceMap[oldDigit]) {
+          result[newDigit] = sourceMap[oldDigit];
+        }
+      });
+      return result;
+    };
+
+    const shuffledFallacies = remapByDigit(optionsInfo.fallacies);
+    const shuffledReasons = remapByDigit(optionsInfo.reasons);
+
+    optionsInfo.formatted = reorderedTexts;
+    optionsInfo.texts = reorderedPlainTexts;
+    optionsInfo.rawTexts = reorderedRawTexts;
+    optionsInfo.fallacies = shuffledFallacies;
+    optionsInfo.reasons = shuffledReasons;
+
+    const newAnswerIdx = shuffleOrder.indexOf(answerIndex);
+    if (newAnswerIdx === -1) {
+      throw new Error('blank answer lost during shuffle');
+    }
+    answerIndex = newAnswerIdx;
+    answerNumber = newAnswerIdx + 1;
+  }
 
   const targetExpressionRaw = payload.targetExpression || payload.target || (payload.notes && payload.notes.targetExpression);
   let targetExpression = targetExpressionRaw ? String(targetExpressionRaw).trim() : '';
@@ -320,6 +381,24 @@ function normalizeBlankPayload(payload, context = {}) {
     targetExpression = optionsInfo.rawTexts[answerIndex]
       ? String(optionsInfo.rawTexts[answerIndex]).trim()
       : optionsInfo.texts[answerIndex] || '';
+  }
+
+  if (targetExpression) {
+    const targetTokens = new Set(
+      String(targetExpression)
+        .toLowerCase()
+        .split(/[^a-z]+/)
+        .filter((token) => token.length >= 4)
+    );
+    if (targetTokens.size) {
+      const correctOptionTokens = String(optionsInfo.texts[answerIndex] || '')
+        .toLowerCase()
+        .split(/[^a-z]+/)
+        .filter((token) => token.length >= 4);
+      if (!correctOptionTokens.some((token) => targetTokens.has(token))) {
+        throw new Error('blank correct option must echo target expression');
+      }
+    }
   }
 
   if (!BLANK_PLACEHOLDER_REGEX.test(text)) {
@@ -368,7 +447,6 @@ function normalizeBlankPayload(payload, context = {}) {
     throw new Error('blank text missing placeholder');
   }
 
-  const normalizedText = normalizeWhitespace(text);
   const originalPassageRaw = context && context.passage ? String(context.passage) : '';
   const normalizedOriginalPassage = originalPassageRaw ? normalizeWhitespace(originalPassageRaw) : '';
   if (normalizedText.length < MIN_BLANK_TEXT_LENGTH) {
@@ -402,7 +480,10 @@ function normalizeBlankPayload(payload, context = {}) {
   }
 
   const rawSource = payload.sourceLabel || payload.source || (payload.notes && payload.notes.sourceLabel);
-  const sourceLabel = ensureSourceLabel(rawSource, { docTitle: context.docTitle });
+  const sourceLabel = ensureSourceLabel(rawSource, {
+    docTitle: context.docTitle,
+    documentCode: context.documentCode
+  });
 
   const distractorReasonsRaw = Array.isArray(payload.distractorReasons)
     ? payload.distractorReasons
@@ -414,7 +495,9 @@ function normalizeBlankPayload(payload, context = {}) {
     if (!entry || typeof entry !== 'object') return;
     const idx = labelToIndex(entry.label, null);
     if (idx === null || idx === answerIndex) return;
-    const circled = CIRCLED_DIGITS[idx];
+    const mappedIndex = originalToNewIndex[idx] ?? idx;
+    if (mappedIndex === answerIndex) return;
+    const circled = CIRCLED_DIGITS[mappedIndex];
     const reason = String(entry.reason || entry.rationale || entry.explanation || '').trim();
     if (reason) {
       distractorReasons[circled] = reason;

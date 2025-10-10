@@ -25,13 +25,23 @@ const SUMMARY_OPTIONS = [
   '\u2464 reduce \u2013 variance'
 ];
 
-const GRAMMAR_PASSAGE = [
-  'Despite the forecast, the event continued with <u>Despite of</u> courage.',
-  'He relaxed only after <u>Having finished</u> the assignment.',
-  'The bell rang just as <u>Scarcely had</u> the class begun.',
-  'The plan proceeds only if <u>Provided that</u> the data remain stable.',
-  'The manager insisted that <u>The manager demanded</u> the report be submitted today.'
+const GRAMMAR_PASSAGE_ORIGINAL = [
+  'Despite the forecast, the event continued with admirable courage.',
+  'He relaxed only after having finished the assignment.',
+  'The bell rang just as scarcely had the class begun.',
+  'The plan proceeds only if provided that the data remain stable.',
+  'The manager insisted that the report be submitted today.'
 ].join(' ');
+
+const GRAMMAR_PASSAGE_WITH_ERROR = [
+  'Despite the forecast, the event continued with <u>Despite of</u> courage.',
+  'He relaxed only after <u>having finished</u> the assignment.',
+  'The bell rang just as <u>scarcely had</u> the class begun.',
+  'The plan proceeds only if <u>provided that</u> the data remain stable.',
+  'The manager insisted that <u>the report be submitted</u> today.'
+].join(' ');
+
+const GRAMMAR_PASSAGE = GRAMMAR_PASSAGE_WITH_ERROR;
 
 const GRAMMAR_PASSAGE_MISSING = [
   'Despite the forecast, the event continued with <u>Despite of</u> courage.',
@@ -41,7 +51,7 @@ const GRAMMAR_PASSAGE_MISSING = [
   'The manager insisted that The manager demanded the report be submitted today.'
 ].join(' ');
 
-const GRAMMAR_PASSAGE_VARIANT = [
+const GRAMMAR_PASSAGE_VARIANT_ORIGINAL = [
   'The mentor advised that the plan should remain flexible.',
   'However, she noted that execution must stay precise.',
   'Finally, the team agreed that documentation would be thorough.',
@@ -49,12 +59,26 @@ const GRAMMAR_PASSAGE_VARIANT = [
   'Consequently, leadership concluded the rollout could proceed.'
 ].join(' ');
 
-const GRAMMAR_PASSAGE_HYPHEN = [
+const GRAMMAR_PASSAGE_VARIANT_WITH_ERROR = [
+  '<u>The mentor advised</u> that the plan should remain flexible.',
+  'However, <u>She Noted</u> that execution must stay precise.',
+  'Finally, the team agreed that <u>documentation would be thorough</u>.',
+  'During reviews, observers confirmed <u>the method was sound</u>.',
+  'Consequently, leadership concluded <u>the rollout could proceed.</u>'
+].join(' ');
+
+const GRAMMAR_PASSAGE_VARIANT = GRAMMAR_PASSAGE_VARIANT_WITH_ERROR;
+
+const GRAMMAR_PASSAGE_HYPHEN_WITH_ERROR = [
   'The institute is committed to pro-\nviding resources that allow schools to focus on equity.',
   'Stakeholders highlight ongoing monitoring across departments.',
   'Teachers remain engaged during feedback cycles and collaboration.',
   'Policies adapt whenever new evaluation data emerges.'
 ].join(' ');
+
+const GRAMMAR_PASSAGE_HYPHEN_ORIGINAL = GRAMMAR_PASSAGE_HYPHEN_WITH_ERROR;
+
+const GRAMMAR_PASSAGE_HYPHEN = GRAMMAR_PASSAGE_HYPHEN_WITH_ERROR;
 
 const LONG_GRAMMAR_EXPLANATION = [
   '이 지문은 상황에 맞는 문법 구조를 검증하도록 설계되었습니다.',
@@ -62,12 +86,20 @@ const LONG_GRAMMAR_EXPLANATION = [
   '나머지 보기는 의미와 문법이 모두 자연스러워 본문의 흐름을 지탱합니다.'
 ].join(' ');
 
-const BASE_GRAMMAR_REASONS = [
-  '①번은 전치사 of가 불필요하여 올바른 표현이 아닙니다.',
-  '②번은 완료분사구가 시간 관계를 정확히 드러냅니다.',
-  '③번은 도치 구문이 잘못되어 의미가 어색합니다.',
-  '④번은 조건절 접속사가 문맥에 적절합니다.',
-  '⑤번은 요구 동사의 목적절 구조가 자연스럽습니다.'
+const GRAMMAR_INCORRECT_REASONS = [
+  '①번은 전치사 of가 중복되어 어법 오류입니다.',
+  '②번은 완료 분사 대신 다른 구조를 써야 해서 어법 오류입니다.',
+  '③번은 도치 구문을 무너뜨려 어법 오류입니다.',
+  '④번은 조건절 접속사가 잘못 사용되어 오류입니다.',
+  '⑤번은 동사 목적절 구조가 깨져서 어법 오류입니다.'
+];
+
+const GRAMMAR_CORRECT_REASONS = [
+  '①번은 문맥과 형태가 모두 자연스러워 문법적으로 옳습니다.',
+  '②번은 완료분사구가 시간 관계를 정확히 드러내서 문법적으로 옳습니다.',
+  '③번은 도치 구문이 자연스러워 문법적으로 옳습니다.',
+  '④번은 조건절 접속사가 문맥에 적절하여 문법적으로 맞습니다.',
+  '⑤번은 요구 동사의 목적절 구조가 정상이라 문법적으로 옳습니다.'
 ];
 
 const VOCAB_PASSAGE = [
@@ -113,7 +145,8 @@ const VOCAB_EXPLANATION = [
 
 function buildGrammarOption(index, text, status = 'correct', reasonOverride, tagOverride) {
   const marker = CIRCLED_DIGITS[index];
-  const reason = reasonOverride || BASE_GRAMMAR_REASONS[index];
+  const reason = reasonOverride
+    || (status === 'incorrect' ? GRAMMAR_INCORRECT_REASONS[index] : GRAMMAR_CORRECT_REASONS[index]);
   const tag = tagOverride || (status === 'incorrect' ? '문법 오류' : '정상 용법');
   return {
     label: marker,
@@ -136,11 +169,11 @@ const BLANK_ORIGINAL_PASSAGE = [
 const BLANK_TARGET = 'market verdict';
 
 const BLANK_OPTIONS = [
-  { label: '①', text: 'cling to their outdated plans' },
-  { label: '②', text: 'expand prices without restraint' },
-  { label: '③', text: 'ignore the signals from buyers' },
-  { label: '④', text: 'downplay the evidence of misfit' },
-  { label: '⑤', text: 'accept the market verdict fully' }
+  { label: '①', text: 'stubborn devotion to outdated plans' },
+  { label: '②', text: 'unrestrained price expansions' },
+  { label: '③', text: 'complete disregard for buyer signals' },
+  { label: '④', text: 'habitual downplaying of misfit evidence' },
+  { label: '⑤', text: 'full acceptance of the market verdict' }
 ];
 
 const BLANK_EXPLANATION = [
@@ -253,7 +286,7 @@ test('formatGrammarProblem preserves circled digits and source label', () => {
         buildGrammarOption(1, '<u>Having finished</u>'),
         buildGrammarOption(2, '<u>Scarcely had</u>'),
         buildGrammarOption(3, '<u>Provided that</u>'),
-        buildGrammarOption(4, '<u>The manager demanded</u>')
+        buildGrammarOption(4, '<u>the report be submitted</u>')
       ],
       correctAnswer: 1,
       explanation: LONG_GRAMMAR_EXPLANATION,
@@ -263,13 +296,72 @@ test('formatGrammarProblem preserves circled digits and source label', () => {
     {
       docTitle: 'Grammar Doc',
       passage: GRAMMAR_PASSAGE,
-      index: 0
+      index: 0,
+      enforceOriginalComparison: false
     }
   );
 
   assert.ok(formatted);
   assert.ok(formatted.options.every((option, index) => option.startsWith(CIRCLED_DIGITS[index])));
   assert.ok(formatted.sourceLabel.startsWith(SOURCE_PREFIX));
+});
+
+test('formatGrammarProblem enforces divergence for incorrect underline when original provided', () => {
+  const formatted = aiService.formatGrammarProblem(
+    {
+      question: BASE_QUESTION,
+      passage: GRAMMAR_PASSAGE_WITH_ERROR,
+      options: [
+        buildGrammarOption(0, '<u>Despite of</u>', 'incorrect', '①번은 전치사 of가 중복되어 어법 오류입니다.', '전치사 중복'),
+        buildGrammarOption(1, '<u>having finished</u>'),
+        buildGrammarOption(2, '<u>scarcely had</u>'),
+        buildGrammarOption(3, '<u>provided that</u>'),
+        buildGrammarOption(4, '<u>the report be submitted</u>')
+      ],
+      correctAnswer: 1,
+      explanation: LONG_GRAMMAR_EXPLANATION,
+      sourceLabel: `${SOURCE_PREFIX}: Divergence`
+    },
+    {
+      docTitle: 'Grammar Doc',
+      passage: GRAMMAR_PASSAGE_ORIGINAL,
+      index: 0,
+      enforceOriginalComparison: true
+    }
+  );
+
+  assert.ok(formatted);
+  assert.equal(formatted.answer, '1');
+});
+
+test('formatGrammarProblem rejects unchanged incorrect segment when comparison enforced', () => {
+  const failureReasons = [];
+  const formatted = aiService.formatGrammarProblem(
+    {
+      question: BASE_QUESTION,
+      passage: GRAMMAR_PASSAGE_ORIGINAL,
+      options: [
+        buildGrammarOption(0, '<u>admirable courage</u>', 'incorrect', '①번은 오류라고 표시했지만 실제로는 원문과 동일합니다.', '검증 실패'),
+        buildGrammarOption(1, '<u>having finished</u>'),
+        buildGrammarOption(2, '<u>scarcely had</u>'),
+        buildGrammarOption(3, '<u>provided that</u>'),
+        buildGrammarOption(4, '<u>the report be submitted</u>')
+      ],
+      correctAnswer: 1,
+      explanation: LONG_GRAMMAR_EXPLANATION,
+      sourceLabel: `${SOURCE_PREFIX}: Invalid`
+    },
+    {
+      docTitle: 'Grammar Doc',
+      passage: GRAMMAR_PASSAGE_ORIGINAL,
+      index: 0,
+      enforceOriginalComparison: true,
+      failureReasons
+    }
+  );
+
+  assert.equal(formatted, null);
+  assert.ok(failureReasons.some((reason) => reason.includes('unchanged from original')));
 });
 test('formatGrammarProblem retains leading letters within underlined choices', () => {
   const formatted = aiService.formatGrammarProblem(
@@ -290,7 +382,8 @@ test('formatGrammarProblem retains leading letters within underlined choices', (
     {
       docTitle: 'Grammar Doc',
       passage: GRAMMAR_PASSAGE,
-      index: 0
+      index: 0,
+      enforceOriginalComparison: false
     }
   );
 
@@ -309,10 +402,10 @@ test('formatGrammarProblem rebuilds missing underlines using options', () => {
       passage: GRAMMAR_PASSAGE_MISSING,
       options: [
         buildGrammarOption(0, '<u>Despite of</u>'),
-        buildGrammarOption(1, '<u>Having finished</u>', 'incorrect', '②번은 완료 분사 대신 다른 구조를 써야 한다는 설정입니다.', '분사 구문 오류'),
+        buildGrammarOption(1, '<u>Having finished</u>', 'incorrect', '②번은 완료 분사 대신 다른 구조를 써야 해서 어법 오류입니다.', '분사 구문 오류'),
         buildGrammarOption(2, '<u>Scarcely had</u>'),
         buildGrammarOption(3, '<u>Provided that</u>'),
-        buildGrammarOption(4, '<u>The manager demanded</u>')
+        buildGrammarOption(4, '<u>the report be submitted</u>')
       ],
       correctAnswer: 2,
       explanation: LONG_GRAMMAR_EXPLANATION,
@@ -321,7 +414,8 @@ test('formatGrammarProblem rebuilds missing underlines using options', () => {
     {
       docTitle: 'Grammar Doc',
       passage: GRAMMAR_PASSAGE_MISSING,
-      index: 0
+      index: 0,
+      enforceOriginalComparison: false
     }
   );
 
@@ -350,7 +444,8 @@ test('formatGrammarProblem rebuild handles case and punctuation differences', ()
     {
       docTitle: 'Grammar Doc',
       passage: GRAMMAR_PASSAGE_VARIANT,
-      index: 0
+      index: 0,
+      enforceOriginalComparison: false
     }
   );
 
@@ -379,7 +474,8 @@ test('formatGrammarProblem rebuilds underlines across hyphenated line breaks', (
     {
       docTitle: 'Grammar Doc',
       passage: GRAMMAR_PASSAGE_HYPHEN,
-      index: 0
+      index: 0,
+      enforceOriginalComparison: false
     }
   );
 
@@ -421,7 +517,7 @@ test('fetchCached skips non-openai grammar problems', async () => {
         buildGrammarOption(1, '<u>Having finished</u>'),
         buildGrammarOption(2, '<u>Scarcely had</u>'),
         buildGrammarOption(3, '<u>Provided that</u>'),
-        buildGrammarOption(4, '<u>The manager demanded</u>')
+        buildGrammarOption(4, '<u>the report be submitted</u>')
       ],
       correctAnswer: 1,
       explanation: LONG_GRAMMAR_EXPLANATION,
@@ -429,10 +525,13 @@ test('fetchCached skips non-openai grammar problems', async () => {
     },
     {
       docTitle: 'Grammar Doc',
-      passage: GRAMMAR_PASSAGE,
-      index: 0
+      passage: GRAMMAR_PASSAGE_ORIGINAL,
+      index: 0,
+      enforceOriginalComparison: true
     }
   );
+
+  assert.ok(generatedProblem);
 
   const saved = await aiService.saveProblems(
     documentId,

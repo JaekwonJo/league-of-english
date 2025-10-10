@@ -79,7 +79,8 @@ const GenerationSummary = ({ logs }) => {
           const requested = Number(item.requested || 0);
           const isPartial = requested > 0 && delivered < requested;
           const missing = Math.max(0, requested - delivered);
-          const freshLabelPool = ['방금 구운 문제', '따끈따끈 신상 문제'];
+          const storedLabel = '📦 미리 담아둔 문제';
+          const freshLabelPool = ['🍞 방금 구운 문제', '✨ 따끈따끈 신상 문제'];
           const freshLabel = freshLabelPool[index % freshLabelPool.length];
 
           return (
@@ -87,7 +88,7 @@ const GenerationSummary = ({ logs }) => {
               <div style={styles.generationSummaryType}>{typeLabel}</div>
               <div style={styles.generationSummaryStats}>
                 <span>요청 {requested}문</span>
-                <span>미리 담아둔 문제 {cached}문</span>
+                <span>{storedLabel} {cached}문</span>
                 <span>{freshLabel} {generated}문</span>
                 <span>총 {delivered}문</span>
                 {isPartial && (
@@ -99,7 +100,7 @@ const GenerationSummary = ({ logs }) => {
         })}
       </div>
       {typeof summary.total === 'number' ? (
-        <div style={styles.generationSummaryFooter}>이번 세트는 총 {summary.total}문으로 구성됐어요.</div>
+        <div style={styles.generationSummaryFooter}>🎉 이번 세트는 총 {summary.total}문으로 완성됐어요!</div>
       ) : null}
     </div>
   );
