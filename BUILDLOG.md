@@ -1,3 +1,10 @@
+## 2025-10-12 (analysis flow fallback hardening)
+- Issue: 관리자/학생 ‘새 분석 생성’ 버튼이 모달 없이 멈추고, OpenAI 오류가 나면 문제·어휘·분석이 비어 버렸어요.
+- Cause: DocumentAnalyzer 프롬프트가 느슨해 JSON 구조가 깨지고, problemSetService·단어 퀴즈는 fallback 템플릿이 없어 빈 배열을 돌려줬습니다.
+- Fix: 분석 화면에 개수 선택 모달/로딩 오버레이를 붙이고, DocumentAnalyzer를 jsonrepair 기반 매뉴얼로 재작성하며 problemSetService·vocab.routes를 `fallbackProblemFactory`와 통합했습니다.
+- Files: client/src/components/admin/DocumentAnalysis.js, client/src/pages/AnalysisPage.js, server/utils/documentAnalyzer.js, server/utils/fallbackProblemFactory.js, server/services/problemSetService.js, server/routes/vocab.routes.js, client/src/features/study/problem/ProblemDisplay.jsx.
+- Verification: 수동 UI 점검 및 로컬 dev 서버에서 문항/분석 생성 흐름 확인.
+
 ## 2025-10-12 (grammar option extraction guard)
 - Issue: 학습 화면 어법 문제가 OpenAI가 비어 있는 options 배열을 돌려주면 보기 영역이 통째로 비거나, 본문 전체가 밑줄로 강조돼 학생이 문제를 풀 수 없었습니다.
 - Fix: `GrammarProblemDisplay`가 본문 `<u>…</u>` 구간을 파싱해 ①~⑤ 보기 문장을 재구성하고, 옵션 배열이 비어 있으면 해당 텍스트로 최소 보기 리스트를 채우도록 보강했습니다.

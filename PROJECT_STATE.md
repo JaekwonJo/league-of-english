@@ -10,17 +10,23 @@
 - SQL.js currently persists documents and generated problems; PostgreSQL migration remains queued after cache + rotation metadata stabilise.
 - Preferred dev command: `npm run dev:all` (API 5000 + client 3000). `npm run dev`/`npm run client` stay available for single-target work.
 - Test with `npm test` (Node test runner over `server/tests`) and lint with `npm run lint` (ESLint via `.eslintrc.cjs`).
+- 새 `jsonrepair` 의존성이 DocumentAnalyzer가 깨진 JSON 응답을 복구할 수 있게 도와주니 `npm install` 후 반드시 동기화해 주세요.
 - Refresh manuals via `node scripts/update-problem-manuals.js` to keep Wolgo-aligned prompts current while expanding API prompts across types.
 
 ## Decisions (key)
-- Rule-based fallbacks are retired for all types except order/insertion; if the API pipeline cannot return a validated item we queue regeneration instead of shipping templated questions.
+- OpenAI가 우선이지만 실패하거나 키가 빠지면 `fallbackProblemFactory`가 검증된 문항을 즉시 공급해 세트가 비지 않도록 하고, order/삽입은 여전히 스크립트 기반으로 유지합니다.
 - Every generated problem is stored in the problem library with source metadata, validation status, and exposure tracking before it reaches students.
+- 'irrelevant' 유형은 생성/학습 파이프라인에서 완전히 제거돼, 어법·어휘 중심 커리큘럼에 집중합니다.
 - Study sessions must draw from cached, unseen problems first; once a student exhausts the cache for a type we invoke the API again just for that learner.
 - Reporting flow lets students flag problematic items; moderators can deactivate them so the cache and rotation immediately exclude the issue.
 - API base URL continues to come from `client/.env` (`REACT_APP_API_URL`); auth tokens stay in `localStorage` until refresh tokens are introduced.
 - Membership tiers: 무료 회원은 생성 즉시 주어지는 미저장(캐시 X) 문제와 느린 응답 속도로 체험하고, 유료(프리미엄 9,900원/프로 19,900원)는 검증된 문제 캐시와 빠른 배포, 프로는 추가 분석 리포트까지 받습니다.
 
 ## Current Stage
+- 관리자·학생 분석 화면이 개수 선택 모달과 전 화면 로딩 오버레이로 새로고침되며, DocumentAnalyzer가 문장별 어휘/이모지/현대 사례를 빠짐없이 채운 Variant를 반환합니다.
+- 문제 세트 생성기는 캐시→OpenAI→fallback 순으로 안전망을 갖추고, fallback 문제도 문서명 기반 sourceLabel과 메타데이터를 일관되게 저장합니다.
+- WordMaster VocabularyParser가 단어장을 Day별 JSON으로 저장해 단어 퀴즈 생성과 fallback이 같은 데이터를 공유할 준비가 됐습니다.
+- 학습 화면 피드백 바에 😕 '별로예요' 버튼이 추가돼 신고 전에도 관리자에게 품질 저하 신호를 보낼 수 있어요.
 - `aiProblemService`가 메뉴얼 로더·노출 정책·문항 저장소·OpenAI 큐 도우미로 나뉘고, 새 `problemSetService`가 `/generate/csat-set`을 맡아 타입별 진행 로그와 `partial_generation` 정보를 함께 반환합니다.
 - 요약 생성기는 실패 로그를 해석해 맞춤 지시문을 붙이고 최대 5회까지 재시도하므로, 길이/단어수 제약에 걸린 경우에도 스스로 교정하도록 진화했습니다.
 - 어법 생성기는 실패 로그에서 "밑줄 그대로"나 오류 키워드 누락을 감지하면 추가 지시문을 붙여 잘못된 밑줄을 반드시 수정하도록 6회까지 재시도하고, 실패 사유에 맞춰 밑줄·이유 필드를 자동 보완해요.
@@ -62,18 +68,18 @@
 - 분석 자료 목록에 단어장도 노출되고 있어요. 어휘 자료는 분석 메뉴에 필요 없으니, 문서 타입을 분리하거나 필터링해야 합니다.
 - 학습 화면 어법 보기 컴포넌트가 `<u>…</u>` 구간을 파싱해 ①~⑤ 보기로 자동 재조립하므로, 본문 전체가 밑줄로 보이거나 옵션이 비어 있는 문제를 막았습니다.
 
-## Today’s Top 3 (2025-10-12)
-1. **어법/어휘 문항 구조화 파서 제작.** Wolgo PDF에서 (A)~(E) 밑줄과 ①~⑤ 보기를 정확히 분리해 JSON으로 만드는 파서를 완성해, 학교 기출을 그대로 fallback/캐시에 넣을 수 있도록 합니다. (콘텐츠 신뢰도)
-2. **구조화 출력과 저장 파이프라인 연동.** 새 파서를 `fallbackProblemFactory`와 `aiProblemService` 검증 단계에 연결해, 수동 템플릿 대신 실제 기출 데이터를 우선 제공하도록 합니다. (생성 안정성)
-3. **어휘 JSON 스키마 재정비.** (A)(B)(C) 슬롯형과 단일 밑줄형을 스키마/검증으로 분리하고, 파서 결과를 각 유형에 맞춰 저장·노출하도록 조정합니다. (유형 일관성)
+## Next 3 (2025-10-12)
+1. **Wolgo 어법 파서 자동화.** `/mnt/c/Users/jaekw/Documents/웹앱문서샘플/2022년월고모의고사어법_30문제.pdf`를 구조화 JSON으로 변환해 기출 그대로 문항은행과 fallback에 넣을 수 있게 해요. (콘텐츠 신뢰도)
+2. **fallbackProblemFactory ↔ 문제 저장 연동.** 새로 파싱한 기출 데이터를 fallback/캐시 파이프라인에 연결해 OpenAI 실패 시에도 동일 품질을 유지하도록 합니다. (생성 안정성)
+3. **안전망 회귀 테스트 추가.** fallback 세트·분석 생성·새 피드백 버튼에 대한 단위/통합 테스트를 마련해 재배포 시 회귀를 막아요. (품질 보증)
 
 ## Known issues
-- 어법/어휘 기출 PDF를 구조화된 JSON으로 변환하는 파서가 없어, fallback 템플릿과 수동 입력에 의존하고 있습니다.
-- 어휘 생성기는 본문에 `(A)` 자리 표시자가 없으면 즉시 실패해 "passage missing slot marker (A)" 로그가 쌓이고, 다른 유형까지 함께 빠집니다.
-- 빈칸 검증기가 여전히 정답 보기를 원문과 완벽히 맞추지 못하면 `partial_generation`만 남기고 중단돼요. 재시도 횟수/허용 오차를 낮춰야 합니다.
-- rate-limit이 발동되면 429를 던지긴 하지만, 학습 화면에서 토스트와 가이드 타이머가 없어 사용자가 왜 막혔는지 이해하기 어렵습니다.
-- 클라우드 학습 세션은 시작 시 스냅샷만 저장하고 진행 중 경과/타이머를 동기화하지 않아 장시간 학습 시 정확도가 떨어질 수 있습니다.
-- React 테스트 실행 시 `act(...)` 경고가 계속 출력돼 대기열/렌더 타이밍 버그를 찾기 어렵습니다.
+- Wolgo 어법 기출 PDF는 아직 파서가 없어 수동 템플릿 fallback에 의존하고 있어요.
+- WordMaster VocabularyParser는 업로드 저장까지만 지원하고, 생성·fallback 파이프라인과는 아직 연결되지 않았어요.
+- fallbackProblemFactory에 담긴 기초 데이터가 2~3세트라 다양성이 부족하니, 기출 파서 출력으로 대체해야 합니다.
+- 문항 세트 fallback·😕 피드백·분석 생성 안전망에 대한 자동 테스트가 없어 수동 QA에 의존 중입니다.
+- OpenAI rate-limit에 걸리면 학습 화면에서 여전히 명확한 안내/대기 시간 표시가 없어 혼란이 남아 있어요.
+- 클라우드 학습 세션은 진행 중 스냅샷을 계속 동기화하지 않아 장시간 학습 시 진척도가 어긋날 수 있습니다.
 
 - `problemSetService`가 STEP_SIZE를 1로 낮추고 총 요청 수를 10문으로 제한해, 한 번에 너무 많은 AI 호출이 실패로 이어지는 상황을 막아요. 클라이언트도 같은 상한을 공유해 랜덤 배치·저장 세션·직접 입력 모든 경로가 10문 이내로 유지됩니다.
 - `StudyConfig`는 10문 제한 정보를 즉시 보여주고, 랜덤 지문 선택도 최대 10개까지만 골라요. `useStudySession`은 새 한도에 맞춰 totalCount를 보정합니다.
@@ -83,6 +89,13 @@
 - 어휘 문제는 5지선다 불일치 탐지 형식으로 전환되어, 본문과 거리가 먼 보기를 하나만 남기고 나머지는 근거를 제시하도록 강제합니다.
 - 생성 요약 패널은 `📦/🍞/✨` 이모지로 용어를 교체해, 미리 준비된 문제와 방금 생성된 문제를 보기 좋게 나눠 보여줍니다.
 - Verification: `npm test`, `npm run lint`, `CI=true npm --prefix client test -- --watch=false --runInBand`
+
+## Resolved (2025-10-12 - 분석 생성 안전망 + fallback 보강)
+- 관리자/학생 분석 화면에 개수 선택 모달과 전 화면 로딩 오버레이를 붙여, 버튼 한 번으로 1·2개 Variant를 안정적으로 만들고 결과를 즉시 갱신합니다.
+- DocumentAnalyzer 프롬프트를 jsonrepair와 강화된 매뉴얼로 재작성해 문장별 해설·동의어/반의어·이모지를 빠짐없이 포함하고 잘못된 JSON도 복구해 저장합니다.
+- problemSetService가 새 `fallbackProblemFactory`와 연결돼 OpenAI가 비어도 최소 1문 이상을 전달하고, 저장 시 문서명 기반 sourceLabel을 일관되게 남깁니다.
+- WordMaster 등 어휘 PDF 업로드 시 VocabularyParser가 Day별 단어를 구조화해 저장하며, 단어 퀴즈 API는 실패 시 fallback 어휘 문제를 즉시 추가합니다.
+- 문제 풀이 화면에 😕 ‘별로예요’ 버튼을 더해 학생이 품질 저하 문항을 관리자에게 빠르게 공유할 수 있도록 했습니다.
 
 ## Resolved (2025-10-12 - 어법 보기 밑줄 추출 보강)
 - 학습 화면 어법 보기가 `<u>…</u>` 구간을 자동 파싱해 ①~⑤ 보기로 재조립하도록 고쳐, 본문 전체가 밑줄로 보이거나 보기 배열이 비는 문제를 막았습니다.
