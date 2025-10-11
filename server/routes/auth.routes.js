@@ -168,13 +168,25 @@ router.post('/login', async (req, res) => {
       console.warn('[auth] failed to update login metadata:', updateError?.message || updateError);
     }
 
-    const sanitizedUser = await database.get(
-      `SELECT id, username, email, name, school, grade, role, membership, membership_expires_at,
-              daily_limit, used_today, tier, points, last_login_at, login_count, created_at, updated_at
-         FROM users
-        WHERE id = ?`,
-      [user.id]
-    );
+    const sanitizedUser = {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      name: user.name,
+      school: user.school,
+      grade: user.grade,
+      role: user.role,
+      membership: user.membership,
+      membership_expires_at: user.membership_expires_at || null,
+      daily_limit: user.daily_limit,
+      used_today: user.used_today,
+      tier: user.tier,
+      points: user.points,
+      last_login_at: user.last_login_at || null,
+      login_count: user.login_count || 0,
+      created_at: user.created_at,
+      updated_at: user.updated_at
+    };
 
     delete sanitizedUser.password_hash;
     delete sanitizedUser.password;
