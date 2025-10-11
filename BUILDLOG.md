@@ -1,3 +1,9 @@
+## 2025-10-12 (grammar option extraction guard)
+- Issue: 학습 화면 어법 문제가 OpenAI가 비어 있는 options 배열을 돌려주면 보기 영역이 통째로 비거나, 본문 전체가 밑줄로 강조돼 학생이 문제를 풀 수 없었습니다.
+- Fix: `GrammarProblemDisplay`가 본문 `<u>…</u>` 구간을 파싱해 ①~⑤ 보기 문장을 재구성하고, 옵션 배열이 비어 있으면 해당 텍스트로 최소 보기 리스트를 채우도록 보강했습니다.
+- Files: client/src/features/study/problem/components/GrammarProblemDisplay.js, PROJECT_STATE.md, README.md.
+- Verification: `npm run lint`.
+
 ## 2025-10-20 (problem deactivate + feedback hint)
 - Issue: 문제 생성 중 이상한 문항이 나오면 학생/선생님이 즉시 제거할 방법이 없어, 신고만 쌓이고 실제 수업에는 계속 노출되는 상황이 반복됐어요. 학습 화면에도 “왜 신고를 눌러야 하는지” 안내가 부족해 학생이 주저하는 문제가 있었습니다.
 - Fix: `problems` 테이블에 `is_active`·`deactivated_at`·`deactivated_by`를 추가하고, 캐시/생성/내보내기 쿼리 모두 숨긴 문항을 제외하도록 수정했습니다. `/admin/problems/:id/deactivate|restore` 라우트를 도입해 신고 보드에서 바로 숨기고, 학습 UI·생성 요약에 "문제가 이상하면 신고" 안내를 추가했습니다.

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import { CIRCLED_DIGITS } from "../utils/textFormatters";
 import { orderStyles } from "../problemDisplayStyles";
 
 const underlineStyle = {
@@ -138,9 +139,34 @@ const GrammarProblemDisplay = ({ problem, onAnswer, userAnswer, showResult }) =>
     return String(choice ?? "");
   };
 
-  const rawChoices = problem.choices || problem.options || problem.multipleChoices || [];
-  const choiceList = Array.isArray(rawChoices) ? rawChoices.map(normalizeChoice).filter(Boolean) : [];
+  const parsedSegments = useMemo(() => {
+    const sourceText = String(problem.text || problem.mainText || '');
+    if (!sourceText) return [];
+    const matches = [];
+    const regex = /<u>(.*?)<\/u>/gis;
+    let match;
+    while ((match = regex.exec(sourceText)) !== null) {
+      const segment = match[1].replace(/<[^>]+>/g, '').trim();
+      if (segment) {
+        matches.push(segment);
+      }
+    }
+    return matches;
+  }, [problem.text, problem.mainText]);
+  const choiceList = useMemo(() => {
+    const baseChoices = problem.choices || problem.options || problem.multipleChoices || [];
+    const normalized = Array.isArray(baseChoices)
+      ? baseChoices.map(normalizeChoice).filter(Boolean)
+      : [];
 
+    if (normalized.length > 0) {
+      return normalized;
+    }
+    if (parsedSegments.length) {
+      return parsedSegments.map((segment, idx) => `${CIRCLED_DIGITS[idx] || idx + 1} ${segment}`);
+    }
+    return [];
+  }, [problem.choices, problem.options, problem.multipleChoices, parsedSegments]);
   const selectionLabel = isMultiSelect
     ? "Select every option that is grammatically correct."
     : "Select the option that is grammatically incorrect.";
