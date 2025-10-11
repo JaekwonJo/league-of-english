@@ -40,6 +40,7 @@ const VocabularyPage = () => {
 
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [setQuery, setSetQuery] = useState('');
 
   const getTierStep = useCallback(() => {
     const tierName = String(user?.tier?.name || user?.tierInfo?.name || user?.tier || '').toLowerCase();
@@ -433,6 +434,12 @@ const getTimeLimitSeconds = useCallback(() => {
 
   const quizSummary = quizState.result?.summary || null;
 
+  const normalizedSetQuery = setQuery.trim().toLowerCase();
+  const filteredSets = useMemo(() => {
+    if (!normalizedSetQuery) return sets;
+    return sets.filter((set) => String(set.title || '').toLowerCase().includes(normalizedSetQuery));
+  }, [sets, normalizedSetQuery]);
+
   const activeDay = useMemo(() => {
     if (!selectedSet) return null;
     return selectedSet.days?.find((day) => day.key === selectedDayKey) || null;
@@ -457,36 +464,63 @@ const getTimeLimitSeconds = useCallback(() => {
           ) : (
             <section style={styles.section}>
               <h2 style={styles.sectionTitle}>1️⃣ 단어장 고르기</h2>
-              <div style={styles.setGrid}>
-                {sets.map((set) => {
-                  const isActive = selectedSet?.id === set.id;
-                  return (
-                    <button
-                      key={set.id}
-                      type="button"
-                      style={{
-                        ...styles.setCard,
-                        borderColor: isActive ? 'var(--color-blue-500)' : 'transparent',
-                        boxShadow: isActive ? '0 12px 32px rgba(52, 118, 246, 0.25)' : styles.setCard.boxShadow
-                      }}
-                      onClick={() => handleSelectSet(set)}
-                    >
-                      <span style={styles.setTitle}>{set.title}</span>
-                      <span style={styles.setMeta}>총 {set.totalDays} Day / {set.totalWords} 단어</span>
-                      <span style={styles.setMeta}>최근 업로드: {new Date(set.createdAt).toLocaleDateString()}</span>
-                      <div style={styles.previewWords}>
-                        {set.preview?.map((day) => (
-                          <div key={day.key} style={styles.previewDay}>
-                            <strong>{day.key}</strong>
-                            <span>{day.count} 단어</span>
-                            <span style={{ fontStyle: 'italic', color: 'var(--text-muted)' }}>미리보기는 시험에서 확인해요!</span>
-                          </div>
-                        ))}
-                      </div>
-                    </button>
-                  );
-                })}
+              <div style={styles.searchRow}>
+                <input
+                  type="search"
+                  style={styles.searchInput}
+                  placeholder="단어장 이름을 검색해 보세요"
+                  value={setQuery}
+                  onChange={(event) => setSetQuery(event.target.value)}
+                  disabled={sets.length === 0}
+                />
+                {setQuery && (
+                  <button
+                    type="button"
+                    style={styles.searchClear}
+                    onClick={() => setSetQuery('')}
+                  >
+                    지우기
+                  </button>
+                )}
               </div>
+              {filteredSets.length === 0 ? (
+                <div style={styles.emptySearch}>
+                  {sets.length === 0
+                    ? '아직 업로드된 단어장이 없어요. 관리자 페이지에서 단어장을 등록하면 바로 여기에서 연습할 수 있어요!'
+                    : '검색 결과가 없어요. 다른 키워드로 다시 검색해 볼까요?'}
+                </div>
+              ) : (
+                <div style={styles.setGrid}>
+                  {filteredSets.map((set) => {
+                    const isActive = selectedSet?.id === set.id;
+                    return (
+                      <button
+                        key={set.id}
+                        type="button"
+                        style={{
+                          ...styles.setCard,
+                          borderColor: isActive ? 'var(--color-blue-500)' : 'transparent',
+                          boxShadow: isActive ? '0 12px 32px rgba(52, 118, 246, 0.25)' : styles.setCard.boxShadow
+                        }}
+                        onClick={() => handleSelectSet(set)}
+                      >
+                        <span style={styles.setTitle}>{set.title}</span>
+                        <span style={styles.setMeta}>총 {set.totalDays} Day / {set.totalWords} 단어</span>
+                        <span style={styles.setMeta}>최근 업로드: {new Date(set.createdAt).toLocaleDateString()}</span>
+                        <div style={styles.previewWords}>
+                          {set.preview?.map((day) => (
+                            <div key={day.key} style={styles.previewDay}>
+                              <strong>{day.key}</strong>
+                              <span>{day.count} 단어</span>
+                              <span style={{ fontStyle: 'italic', color: 'var(--text-muted)' }}>미리보기는 시험에서 확인해요!</span>
+                            </div>
+                          ))}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </section>
           )}
 
@@ -775,6 +809,31 @@ const styles = {
     fontSize: '1.4rem',
     marginBottom: '16px'
   },
+  searchRow: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '12px',
+    marginBottom: '16px'
+  },
+  searchInput: {
+    flex: '1 1 280px',
+    minWidth: '220px',
+    padding: '12px 14px',
+    borderRadius: '12px',
+    border: '1px solid var(--surface-border)',
+    background: 'var(--surface-soft)',
+    fontSize: '0.95rem',
+    color: 'var(--text-primary)'
+  },
+  searchClear: {
+    padding: '10px 18px',
+    borderRadius: '12px',
+    border: '1px solid var(--surface-border)',
+    background: 'var(--surface-soft)',
+    color: 'var(--text-secondary)',
+    fontWeight: 600,
+    cursor: 'pointer'
+  },
   setGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
@@ -982,6 +1041,14 @@ const styles = {
     borderRadius: '12px',
     marginBottom: '20px',
     color: 'var(--text-secondary)'
+  },
+  emptySearch: {
+    background: 'var(--surface-soft)',
+    borderRadius: '16px',
+    padding: '20px',
+    textAlign: 'center',
+    color: 'var(--text-secondary)',
+    border: '1px dashed var(--surface-border)'
   },
   quizNavRow: {
     marginTop: '24px',
