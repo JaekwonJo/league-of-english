@@ -106,7 +106,8 @@ export function ProblemFeedbackBoard({
   onFilterChange,
   onResolve,
   onDismiss,
-  onToast
+  onToast,
+  onDeactivate
 }) {
   const activeFilters = filters || {};
   const [searchValue, setSearchValue] = useState(activeFilters.search || '');
@@ -316,13 +317,20 @@ export function ProblemFeedbackBoard({
         </div>
       ) : (
         <div style={adminStyles.feedbackList}>
-          {reports.map((report) => (
-            <div key={report.id} style={adminStyles.feedbackItem}>
+          {reports.map((report) => {
+            const isInactive = report?.problem?.isActive === false;
+            return (
+              <div key={report.id} style={adminStyles.feedbackItem}>
               <div style={adminStyles.feedbackMeta}>
                 <span>📚 {report.problem?.documentTitle || '문서 정보 없음'}</span>
                 <span>유형 {report.problem?.type || '-'}</span>
                 <span>{STATUS_LABELS[report.status] || report.status}</span>
                 <span>{toLocalString(report.createdAt)} 신고</span>
+                {isInactive && (
+                  <span style={{ color: 'var(--danger-strong)', fontWeight: 600 }}>
+                    🚫 숨긴 문항
+                  </span>
+                )}
               </div>
               <div style={{ ...adminStyles.feedbackReason, fontWeight: 'bold' }}>
                 {report.reason || '신고 사유가 작성되지 않았습니다.'}
@@ -351,9 +359,21 @@ export function ProblemFeedbackBoard({
                 >
                   🙅 보류 처리
                 </button>
+                <button
+                  type="button"
+                  style={{
+                    ...adminStyles.feedbackActionDeactivate,
+                    ...(isInactive ? adminStyles.feedbackActionDisabled : {})
+                  }}
+                  disabled={loading || isInactive}
+                  onClick={() => onDeactivate?.(report)}
+                >
+                  🚨 문항 숨기기
+                </button>
               </div>
-            </div>
-          ))}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

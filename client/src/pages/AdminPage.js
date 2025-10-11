@@ -15,6 +15,7 @@ import { useDocumentShare } from '../hooks/useDocumentShare';
 import { useFeedbackReports } from '../hooks/useFeedbackReports';
 import { useProblemFeedbackReports } from '../hooks/useProblemFeedbackReports';
 import { useAdminNotifications } from '../hooks/useAdminNotifications';
+import { api } from '../services/api.service';
 
 const initialUploadForm = {
   title: '',
@@ -303,6 +304,36 @@ const AdminPage = () => {
     }
   };
 
+  const handleDeactivateProblem = async (report) => {
+    if (!report || !report.problem || !report.problem.id) {
+      pushToast('문항 정보를 찾지 못했어요. 페이지를 새로고침해 주세요.', 'warning');
+      return;
+    }
+    if (report.problem.isActive === false) {
+      pushToast('이미 숨긴 문항이에요. ✅', 'info');
+      return;
+    }
+
+    const confirmHide = window.confirm('이 문항을 학생들에게서 숨길까요? 숨기면 새로운 세트에서도 나오지 않아요.');
+    if (!confirmHide) return;
+
+    const defaultReason = report.reason ? report.reason.slice(0, 80) : '';
+    const reasonInput = window.prompt('숨기는 이유를 간단히 적어주세요. (예: 정답 오류, 지문 불일치)', defaultReason);
+    if (reasonInput === null) return;
+
+    try {
+      await api.admin.problems.deactivate(report.problem.id, {
+        reason: reasonInput?.trim() || undefined,
+        feedbackId: report.id
+      });
+      pushToast('문항을 잠시 쉬게 했어요. 🚫', 'success');
+      fetchProblemReports();
+    } catch (error) {
+      console.error('문항 숨김 처리 실패:', error);
+      pushToast(error?.message || '문항을 숨기지 못했어요. 잠시 후 다시 시도해 주세요.', 'error');
+    }
+  };
+
   const handleNotificationAcknowledge = async (notificationId) => {
     try {
       await updateNotification(notificationId, 'acknowledged');
@@ -383,6 +414,7 @@ const AdminPage = () => {
         onResolve={handleResolveProblemFeedback}
         onDismiss={handleDismissProblemFeedback}
         onToast={pushToast}
+        onDeactivate={handleDeactivateProblem}
       />
 
       <DocumentList

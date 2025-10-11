@@ -336,6 +336,19 @@ export const adminStyles = {
     cursor: 'pointer',
     fontWeight: 600
   },
+  feedbackActionDeactivate: {
+    background: 'var(--danger-surface)',
+    color: 'var(--danger-strong)',
+    border: '1px solid var(--danger-border)',
+    borderRadius: '10px',
+    padding: '10px 16px',
+    cursor: 'pointer',
+    fontWeight: 600
+  },
+  feedbackActionDisabled: {
+    opacity: 0.6,
+    cursor: 'not-allowed'
+  },
   feedbackEmpty: {
     textAlign: 'center',
     padding: '20px',

@@ -73,6 +73,10 @@ function createProblemRepository(database) {
         ? row.note
         : undefined;
 
+    const isActive = Object.prototype.hasOwnProperty.call(row, 'is_active')
+      ? Number(row.is_active) !== 0
+      : true;
+
     const problem = {
       id: row.id ? String(row.id) : undefined,
       type: row.type || 'generic',
@@ -83,8 +87,16 @@ function createProblemRepository(database) {
       difficulty: row.difficulty || 'basic',
       mainText: row.main_text || undefined,
       sentences: Array.isArray(sentences) ? sentences : undefined,
-      metadata: metadata && typeof metadata === 'object' ? metadata : undefined
+      metadata: metadata && typeof metadata === 'object' ? metadata : undefined,
+      isActive
     };
+
+    if (row.deactivated_at) {
+      problem.deactivatedAt = row.deactivated_at;
+    }
+    if (row.deactivated_by) {
+      problem.deactivatedBy = row.deactivated_by;
+    }
 
     if (noteText !== undefined) {
       problem.note = noteText ? String(noteText).trim() : '';
@@ -385,7 +397,7 @@ function createProblemRepository(database) {
       params.push(userId);
     }
 
-    query += ' WHERE p.document_id = ? AND p.type = ?';
+    query += ' WHERE p.document_id = ? AND p.type = ? AND COALESCE(p.is_active, 1) = 1';
     params.push(documentId, type);
 
     if (excludeIds.length) {
@@ -438,6 +450,7 @@ function createProblemRepository(database) {
       : [];
     const aiOnly = options.includeGeneratedOnly !== false;
     const randomize = options.randomize !== false;
+    const includeInactive = options.includeInactive === true;
 
     const params = [];
     let query = 'SELECT p.*, pn.note AS note_text FROM problems p';
@@ -466,6 +479,9 @@ function createProblemRepository(database) {
     }
     if (aiOnly) {
       conditions.push('p.is_ai_generated = 1');
+    }
+    if (!includeInactive) {
+      conditions.push('COALESCE(p.is_active, 1) = 1');
     }
 
     if (conditions.length) {
@@ -563,7 +579,7 @@ function createProblemRepository(database) {
       const optionsJson = JSON.stringify(optionArray);
 
       const result = await database.run(
-        'INSERT INTO problems (document_id, type, question, options, answer, explanation, difficulty, is_ai_generated, main_text, sentences, metadata) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)',
+        'INSERT INTO problems (document_id, type, question, options, answer, explanation, difficulty, is_ai_generated, main_text, sentences, metadata, is_active, deactivated_at, deactivated_by) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, 1, NULL, NULL)',
         [
           documentId,
           type,

@@ -153,19 +153,22 @@ router.get('/problems/library', verifyToken, async (req, res) => {
     const difficulties = problemLibraryService
       .normalizeListParam(req.query.difficulties)
       .map((item) => item.toLowerCase());
+    const includeInactive = req.query.includeInactive === 'true';
 
     const problems = await problemLibraryService.listProblems({
       documentId,
       limit,
       includeGeneratedOnly,
       types,
-      difficulties
+      difficulties,
+      includeInactive
     });
 
     const summary = await problemLibraryService.summarizeProblems({
       documentId,
       includeGeneratedOnly,
-      difficulties
+      difficulties,
+      includeInactive
     });
 
     res.json({
@@ -174,7 +177,8 @@ router.get('/problems/library', verifyToken, async (req, res) => {
       problems,
       summary,
       documentId,
-      includeGeneratedOnly
+      includeGeneratedOnly,
+      includeInactive
     });
   } catch (error) {
     console.error('[problems/library] error:', error);

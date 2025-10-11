@@ -453,7 +453,8 @@ router.post('/vocabulary/sets/:documentId/quiz/submit', verifyToken, async (req,
     const rows = await database.all(
       `SELECT id, document_id, type, answer, options, explanation, metadata
          FROM problems
-        WHERE id IN (${placeholders})`,
+        WHERE id IN (${placeholders})
+          AND COALESCE(is_active, 1) = 1`,
       problemIds
     );
 

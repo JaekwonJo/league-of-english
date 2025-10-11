@@ -392,6 +392,12 @@ const ProblemDisplay = ({
           {feedbackError && !feedbackLoading && (
             <span style={problemDisplayStyles.feedbackError}>{feedbackError}</span>
           )}
+          {!feedbackLoading && !feedbackError && (
+            <span style={problemDisplayStyles.feedbackHint}>
+              <span role="img" aria-label="관리자에게 알려요">🛠️</span>
+              <span>문제가 이상하면 바로 🚨 신고를 눌러주세요. 관리자가 검토 후 숨겨 드려요!</span>
+            </span>
+          )}
         </div>
       </div>
     );

@@ -90,6 +90,13 @@ export const problemDisplayStyles = {
     color: 'var(--danger)',
     fontSize: '13px'
   },
+  feedbackHint: {
+    fontSize: '13px',
+    color: 'var(--text-secondary)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px'
+  },
   navButton: {
     padding: '12px 24px',
     background: 'var(--surface-soft)',

@@ -99,6 +99,7 @@ class ProblemService {
       SELECT * FROM problems 
       WHERE document_id = ? 
         AND type = ? 
+        AND COALESCE(is_active, 1) = 1
         ${excludeClause}
       ORDER BY RANDOM() 
       LIMIT ?
@@ -503,8 +504,8 @@ class ProblemService {
    */
   async saveProblem(problem, documentId) {
     const result = await database.run(
-      `INSERT INTO problems (document_id, type, question, options, answer, explanation, is_ai_generated, main_text, sentences, metadata)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO problems (document_id, type, question, options, answer, explanation, is_ai_generated, main_text, sentences, metadata, is_active, deactivated_at, deactivated_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, NULL, NULL)`,
       [
         documentId,
         problem.type,

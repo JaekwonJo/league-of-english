@@ -293,6 +293,10 @@ export const api = {
     notifications: {
       list: (params) => apiService.get('/admin/notifications', params),
       update: (id, payload) => apiService.patch(`/admin/notifications/${id}`, payload)
+    },
+    problems: {
+      deactivate: (id, payload) => apiService.post(`/admin/problems/${id}/deactivate`, payload),
+      restore: (id, payload) => apiService.post(`/admin/problems/${id}/restore`, payload)
     }
   },
 

@@ -451,6 +451,9 @@ class ProblemFeedbackService {
               p.question,
               p.answer,
               p.explanation,
+              p.is_active AS problem_is_active,
+              p.deactivated_at AS problem_deactivated_at,
+              p.deactivated_by AS problem_deactivated_by,
               d.title AS document_title,
               d.id AS document_id
          FROM problem_feedback pf
@@ -492,7 +495,10 @@ class ProblemFeedbackService {
           answer: row.answer,
           explanation: row.explanation,
           documentId: row.document_id,
-          documentTitle: row.document_title
+          documentTitle: row.document_title,
+          isActive: row.problem_is_active === undefined ? true : Number(row.problem_is_active) !== 0,
+          deactivatedAt: row.problem_deactivated_at,
+          deactivatedBy: row.problem_deactivated_by
         } : null
       })),
       summary

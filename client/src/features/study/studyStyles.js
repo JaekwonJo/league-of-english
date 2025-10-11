@@ -305,5 +305,13 @@ export const studyStyles = {
     borderTop: '1px solid var(--surface-border)',
     fontSize: '14px',
     color: 'var(--text-secondary)'
+  },
+  generationSummaryHint: {
+    padding: '0 24px 20px',
+    fontSize: '13px',
+    color: 'var(--text-secondary)',
+    display: 'flex',
+    gap: '8px',
+    alignItems: 'flex-start'
   }
 };

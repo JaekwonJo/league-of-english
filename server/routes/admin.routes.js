@@ -6,6 +6,7 @@ const {
   listProblemReports,
   updateProblemReportStatus
 } = require('../services/problemFeedbackService');
+const { setProblemActive } = require('../services/problemLibraryService');
 const notifications = require('../services/notificationService');
 
 async function singleValue(query, params = []) {
@@ -18,7 +19,7 @@ router.get('/summary', verifyToken, requireAdmin, async (req, res) => {
     const [userCount, documentCount, problemCount] = await Promise.all([
       singleValue('SELECT COUNT(*) AS value FROM users'),
       singleValue('SELECT COUNT(*) AS value FROM documents'),
-      singleValue('SELECT COUNT(*) AS value FROM problems')
+      singleValue('SELECT COUNT(*) AS value FROM problems WHERE COALESCE(is_active, 1) = 1')
     ]);
 
     res.json({
@@ -93,6 +94,54 @@ router.patch('/problem-feedback/:id', verifyToken, requireAdmin, async (req, res
     console.error('[admin] problem-feedback update error:', error);
     const statusCode = Number.isInteger(error?.status) ? error.status : 500;
     res.status(statusCode).json({ message: error?.message || '신고 상태를 업데이트하지 못했어요.' });
+  }
+});
+
+router.post('/problems/:id/deactivate', verifyToken, requireAdmin, async (req, res) => {
+  try {
+    const { reason, feedbackId } = req.body || {};
+    const problem = await setProblemActive({
+      problemId: req.params.id,
+      isActive: false,
+      userId: req.user.id,
+      reason
+    });
+
+    let report = null;
+    if (feedbackId) {
+      try {
+        report = await updateProblemReportStatus({
+          feedbackId,
+          status: 'resolved',
+          resolutionNote: reason || '문항을 숨김 처리했어요.',
+          resolvedBy: req.user.id
+        });
+      } catch (reportError) {
+        console.warn('[admin] failed to auto-resolve feedback after deactivation:', reportError?.message || reportError);
+      }
+    }
+
+    res.json({ success: true, problem, report });
+  } catch (error) {
+    console.error('[admin] deactivate problem error:', error);
+    const statusCode = Number.isInteger(error?.status) ? error.status : 500;
+    res.status(statusCode).json({ message: error?.message || '문항을 숨기지 못했어요.' });
+  }
+});
+
+router.post('/problems/:id/restore', verifyToken, requireAdmin, async (req, res) => {
+  try {
+    const problem = await setProblemActive({
+      problemId: req.params.id,
+      isActive: true,
+      userId: req.user.id,
+      reason: null
+    });
+    res.json({ success: true, problem });
+  } catch (error) {
+    console.error('[admin] restore problem error:', error);
+    const statusCode = Number.isInteger(error?.status) ? error.status : 500;
+    res.status(statusCode).json({ message: error?.message || '숨긴 문항을 다시 복구하지 못했어요.' });
   }
 });
 

@@ -104,6 +104,10 @@ const GenerationSummary = ({ logs }) => {
       {typeof summary.total === 'number' ? (
         <div style={styles.generationSummaryFooter}>🎉 이번 세트는 총 {summary.total}문! 마음껏 모험을 시작해 볼까요? 💪</div>
       ) : null}
+      <div style={styles.generationSummaryHint}>
+        <span role="img" aria-label="신고 안내">💡</span>
+        <span>엉뚱한 문항이 보이면 문제 화면 아래의 🚨 신고 버튼을 눌러주세요. 관리자가 검토 후 필요하면 바로 숨겨줄게요!</span>
+      </div>
     </div>
   );
 };

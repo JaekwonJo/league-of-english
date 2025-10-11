@@ -201,8 +201,13 @@ function normaliseProblem(problem, index) {
     explanation: toCleanString(problem.explanation || problem.reason || ''),
     difficulty: toCleanString(problem.difficulty || DEFAULT_DIFFICULTY) || DEFAULT_DIFFICULTY,
     mainText: toCleanString(problem.mainText || problem.passage || problem.text || ''),
-    metadata: buildMetadata(problem)
+    metadata: buildMetadata(problem),
+    isActive: problem.isActive === undefined ? true : Boolean(problem.isActive)
   };
+
+  if (problem.deactivatedAt) {
+    normalized.deactivatedAt = toCleanString(problem.deactivatedAt);
+  }
 
   if (Object.prototype.hasOwnProperty.call(problem, 'note')) {
     const rawNote = typeof problem.note === 'string' ? problem.note.trim() : '';
@@ -212,6 +217,22 @@ function normaliseProblem(problem, index) {
 
 const sourceLabel = toCleanString(problem.sourceLabel || problem.source_label || '');
 if (sourceLabel) normalized.sourceLabel = sourceLabel;
+
+const problemNumberLabel = toCleanString(
+  problem.problemNumber ||
+  (problem.metadata && problem.metadata.problemNumber) ||
+  (normalized.metadata && normalized.metadata.problemNumber) ||
+  ''
+);
+if (problemNumberLabel) {
+  normalized.metadata = normalized.metadata || {};
+  if (!normalized.metadata.problemNumber) {
+    normalized.metadata.problemNumber = problemNumberLabel;
+  }
+  if (normalized.sourceLabel && !normalized.sourceLabel.includes(problemNumberLabel)) {
+    normalized.sourceLabel = `${normalized.sourceLabel} · ${problemNumberLabel}`;
+  }
+}
 
 const summarySentence = toCleanString(problem.summarySentence || problem.summary_sentence || problem.summary);
 if (summarySentence) normalized.summarySentence = summarySentence;
