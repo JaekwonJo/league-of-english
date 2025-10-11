@@ -158,10 +158,12 @@ const HomePage = () => {
       <section style={styles.section}>
         <h2 style={styles.sectionTitle}>바로 시작하기</h2>
         <div style={styles.quickGrid}>
-          <QuickButton label="CSAT 세트 생성" description="문제 5세트를 바로 생성" onClick={() => (window.location.href = '/study')} />
-          <QuickButton label="어법 훈련" description="밑줄 어법 문제를 집중 연습" onClick={() => (window.location.href = '/study?focus=grammar')} />
-          <QuickButton label="어휘 훈련" description="본문과 맞지 않는 표현 찾기 5지선다" onClick={() => (window.location.href = '/vocabulary')} />
-          <QuickButton label="문서 업로드" description="새 교재를 등록하고 분석" onClick={() => (window.location.href = '/admin')} />
+          <QuickButton label="학습 세트 생성" description="5문항 세트를 바로 만들기" onClick={() => (window.location.href = '/study')} />
+          <QuickButton label="순서 배열 훈련" description="순서 문제를 집중 연습" onClick={() => (window.location.href = '/study?focus=order')} />
+          <QuickButton label="문장 삽입 훈련" description="문장 삽입 패턴 다지기" onClick={() => (window.location.href = '/study?focus=insertion')} />
+          {user?.role === 'admin' && (
+            <QuickButton label="문서 업로드" description="새 교재를 등록하고 분석" onClick={() => (window.location.href = '/admin')} />
+          )}
         </div>
       </section>
 
@@ -319,26 +321,28 @@ const styles = {
     gap: '16px'
   },
   statCard: {
-    background: 'var(--surface-contrast)',
+    background: 'var(--surface-card)',
     borderRadius: '16px',
     padding: '20px',
     textAlign: 'center',
-    color: 'var(--text-inverse)'
+    color: 'var(--text-primary)',
+    border: '1px solid var(--surface-border)',
+    boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)'
   },
   statLabel: {
     fontSize: '14px',
-    color: 'var(--text-muted)',
-    marginBottom: '12px'
+    color: 'var(--text-secondary)',
+    marginBottom: '10px'
   },
   statValue: {
-    fontSize: '30px',
-    fontWeight: 'bold',
-    color: 'var(--text-inverse)'
+    fontSize: '32px',
+    fontWeight: 800,
+    color: 'var(--accent-primary)'
   },
   statSuffix: {
     fontSize: '16px',
     marginLeft: '4px',
-    color: 'var(--text-muted)'
+    color: 'var(--text-secondary)'
   },
   quickGrid: {
     display: 'grid',
