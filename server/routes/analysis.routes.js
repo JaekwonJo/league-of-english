@@ -28,14 +28,21 @@ router.get('/list', verifyToken, async (req, res) => {
     // 사용자 권한에 따른 문서 조회
     let documents;
     if (userRole === 'admin') {
-      // 관리자는 모든 문서 조회
+      // 관리자는 학습용 문서만 조회 (단어장은 제외)
       documents = await database.all(
-        'SELECT id, title, type, category, school, grade, created_at FROM documents ORDER BY created_at DESC'
+        `SELECT id, title, type, category, school, grade, created_at
+           FROM documents
+          WHERE LOWER(COALESCE(type, '')) <> 'vocabulary'
+          ORDER BY created_at DESC`
       );
     } else {
-      // 일반 사용자는 자신이 업로드한 문서만 조회
+      // 일반 사용자는 자신이 업로드한 학습용 문서만 조회
       documents = await database.all(
-        'SELECT id, title, type, category, school, grade, created_at FROM documents WHERE created_by = ? ORDER BY created_at DESC',
+        `SELECT id, title, type, category, school, grade, created_at
+           FROM documents
+          WHERE created_by = ?
+            AND LOWER(COALESCE(type, '')) <> 'vocabulary'
+          ORDER BY created_at DESC`,
         [userId]
       );
     }

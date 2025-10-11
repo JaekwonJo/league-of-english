@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { api } from '../services/api.service';
 
 export function useProblemFeedbackReports(defaultStatus = 'pending') {
@@ -16,12 +16,13 @@ export function useProblemFeedbackReports(defaultStatus = 'pending') {
     sort: 'recent',
     limit: 50
   });
+  const filtersRef = useRef(filters);
 
   const fetchReports = useCallback(async (overrides = {}) => {
     setLoading(true);
     setError(null);
     const nextFilters = {
-      ...filters,
+      ...filtersRef.current,
       ...overrides
     };
     try {
@@ -30,12 +31,13 @@ export function useProblemFeedbackReports(defaultStatus = 'pending') {
       setSummary(response?.summary || {});
       setStatus(nextFilters.status || 'pending');
       setFilters(nextFilters);
+      filtersRef.current = nextFilters;
     } catch (err) {
       setError(err?.message || '문항 신고 목록을 불러오지 못했어요.');
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, []);
 
   const updateStatus = useCallback(async (reportId, nextStatus, resolutionNote) => {
     const target = reports.find((item) => item.id === reportId);
