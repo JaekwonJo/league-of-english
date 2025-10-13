@@ -12,8 +12,7 @@ const {
   readTitleManual,
   readBlankManual,
   readTopicManual,
-  readImplicitManual,
-  readIrrelevantManual
+  readImplicitManual
 } = require("./ai-problem/internal/manualLoader");
 const OpenAIQueue = require("./ai-problem/internal/openAiQueue");
 const { createProblemRepository } = require("./ai-problem/internal/problemRepository");
@@ -712,12 +711,13 @@ class AIProblemService {
 
           const prompt = promptSections.filter(Boolean).join('\n');
 
+          const useHighTierModel = attempt >= 4;
           const response = await this.callChatCompletion({
-            model: "gpt-4o-mini",
-            temperature: 0.32,
-            max_tokens: 900,
+            model: useHighTierModel ? "gpt-4o" : "gpt-4o-mini",
+            temperature: useHighTierModel ? 0.28 : 0.32,
+            max_tokens: useHighTierModel ? 1000 : 900,
             messages: [{ role: "user", content: prompt }]
-          }, { label: 'vocabulary' });
+          }, { label: 'vocabulary', tier: useHighTierModel ? 'primary' : 'standard' });
 
           const content = response.choices?.[0]?.message?.content || '';
           const payload = JSON.parse(stripJsonFences(content));
@@ -1122,158 +1122,6 @@ class AIProblemService {
     return results;
   }
 
-  async generateIrrelevant(documentId, count = 5) {
-    const { document, passages } = await this.getPassages(documentId);
-    const docTitle = document?.title || `Document ${documentId}`;
-    const results = [];
-    const manualExcerpt = readIrrelevantManual(2000);
-
-    if (!this.getOpenAI()) {
-      throw new Error("AI generator unavailable for irrelevant problems");
-    }
-
-    const hasCircledPrefix = (text, index) =>
-      typeof text === 'string' && text.trim().startsWith(CIRCLED_DIGITS[index]);
-
-    const looksEnglishSentence = (text) => /[A-Za-z]/.test(String(text || ''));
-
-    const validateEnumeratedText = (text) => {
-      if (!text) return false;
-      const matches = String(text)
-        .split(/\((\d)\)/)
-        .filter((chunk) => chunk && chunk.trim().length > 0);
-      return /(\([1-5]\))/.test(text) && matches.length >= 5;
-    };
-
-    for (let i = 0; i < count; i += 1) {
-      const passage = passages[i % passages.length];
-      let success = false;
-      let attempts = 0;
-
-      while (!success && attempts < 3) {
-        attempts += 1;
-        try {
-          const prompt = [
-            "You are a deterministic K-CSAT 'irrelevant sentence' item writer.",
-            "Follow the style contract exactly. Question text must remain Korean.",
-            manualExcerpt,
-            `Passage (preserve sentences; enumerate as (1)~(n)):\n${clipText(passage, 1500)}`,
-            "",
-            "Return raw JSON only with this schema:",
-            "{",
-            "  \"type\": \"irrelevant\",",
-            `  \"question\": \"${IRRELEVANT_QUESTION}\",`,
-            "  \"text\": \"(1) ... (2) ... (3) ... (4) ... (5) ...\",",
-            "  \"options\": [",
-            "    \"\\u2460 English sentence\",",
-            "    \"\\u2461 English sentence\",",
-            "    \"\\u2462 English sentence\",",
-            "    \"\\u2463 English sentence\",",
-            "    \"\\u2464 English sentence\"",
-            "  ],",
-            "  \"correctAnswer\": 3,",
-            "  \"explanation\": \"한국어 해설\",",
-            "  \"sourceLabel\": \"\\ucd9c\\ucc98│기관 연도 회차 문항 (pXX)\",",
-            "  \"irrelevantType\": \"T1|T2|T3|T4|T5|T6|T7|T8|T9|T10\",",
-            "  \"defectAxis\": [\"theme\", \"discourse\", \"cohesion\", \"logic\", \"convention\"]",
-            "}",
-            "Rules:",
-            "- Provide exactly five sentences in options, each prefixed with circled digits (\\u2460-\\u2464).",
-            "- Options must be English declarative sentences that mirror the passage sentences.",
-            "- Exactly one option must break the passage's theme/discourse/cohesion/logic/convention axes decisively.",
-            "- The remaining four options must support the passage's main argument and discourse path.",
-            "- Explanation must be Korean, naming at least one axis where the correct option fails and noting why the others fit.",
-            "- sourceLabel must start with '출처│'.",
-            "- Respond with JSON only (no Markdown fences)."
-          ].filter(Boolean).join("\n");
-
-          const response = await this.callChatCompletion({
-            model: "gpt-4o-mini",
-            temperature: 0.35,
-            max_tokens: 520,
-            messages: [{ role: "user", content: prompt }]
-          }, { label: 'irrelevant' });
-
-          const payload = JSON.parse(stripJsonFences(response.choices?.[0]?.message?.content || ""));
-          const question = String(payload.question || '').trim();
-          if (!IRRELEVANT_QUESTION_VARIANTS.includes(question)) {
-            throw new Error(`unexpected irrelevant question: ${question}`);
-          }
-
-          const text = String(payload.text || '').trim();
-          if (!validateEnumeratedText(text)) {
-            throw new Error('irrelevant text must contain enumerated sentences (1)~(5)');
-          }
-
-          const options = Array.isArray(payload.options)
-            ? payload.options.map((opt) => String(opt || '').trim()).filter(Boolean)
-            : [];
-          if (options.length !== CIRCLED_DIGITS.length) {
-            throw new Error('irrelevant options must contain 5 entries');
-          }
-          options.forEach((option, index) => {
-            if (!hasCircledPrefix(option, index)) {
-              throw new Error(`irrelevant option ${index + 1} missing circled digit`);
-            }
-            const value = option.slice(CIRCLED_DIGITS[index].length).trim();
-            if (!looksEnglishSentence(value)) {
-              throw new Error(`irrelevant option ${index + 1} must contain English text`);
-            }
-          });
-
-          const answer = Number(payload.correctAnswer || payload.answer);
-          if (!Number.isInteger(answer) || answer < 1 || answer > CIRCLED_DIGITS.length) {
-            throw new Error('invalid irrelevant correctAnswer');
-          }
-
-          const explanation = String(payload.explanation || '').trim();
-          if (!explanation || !containsHangul(explanation)) {
-            throw new Error('irrelevant explanation must be Korean');
-          }
-
-          const sourceLabel = ensureSourceLabel(payload.sourceLabel, { docTitle });
-
-          const metadata = {
-            documentTitle: docTitle,
-            generator: 'openai'
-          };
-          if (payload.irrelevantType) {
-            metadata.irrelevantType = String(payload.irrelevantType).trim();
-          }
-          if (Array.isArray(payload.defectAxis)) {
-            const axes = payload.defectAxis
-              .map((axis) => String(axis || '').trim())
-              .filter((axis) => axis.length > 0);
-            if (axes.length) {
-              metadata.defectAxis = axes;
-            }
-          }
-
-          results.push({
-            id: payload.id || `irrelevant_ai_${Date.now()}_${results.length}`,
-            type: 'irrelevant',
-            question,
-            text,
-            options,
-            answer: String(answer),
-            correctAnswer: String(answer),
-            explanation,
-            sourceLabel,
-            metadata
-          });
-          success = true;
-        } catch (error) {
-          console.warn("[ai-irrelevant] generation failed:", error?.message || error);
-          if (attempts >= 3) {
-            throw new Error(`[ai-irrelevant] generation failed after retries: ${error?.message || error}`);
-          }
-        }
-      }
-    }
-
-    return results;
-  }
-
   async generateSummary(documentId, count = 5) {
     const { document, passages } = await this.getPassages(documentId);
     if (!this.getOpenAI()) throw new Error("AI generator unavailable for summary problems");
@@ -1389,12 +1237,13 @@ class AIProblemService {
               ...this._deriveEobeopDirectives(lastFailure, 'grammar')
             ]
           });
+          const useHighTierModel = attempt >= 4;
           const response = await this.callChatCompletion({
-            model: "gpt-4o-mini",
-            temperature: 0.25,
-            max_tokens: 900,
+            model: useHighTierModel ? "gpt-4o" : "gpt-4o-mini",
+            temperature: useHighTierModel ? 0.2 : 0.25,
+            max_tokens: useHighTierModel ? 1100 : 900,
             messages: [{ role: "user", content: prompt }]
-          }, { label: 'grammar' });
+          }, { label: 'grammar', tier: useHighTierModel ? 'primary' : 'standard' });
           const content = response.choices?.[0]?.message?.content || '';
           const payload = JSON.parse(stripJsonFences(content));
           normalized = this._normalizeGrammarPayload(payload, {

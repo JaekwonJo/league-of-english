@@ -6,6 +6,7 @@ const router = express.Router();
 const database = require('../models/database');
 const { verifyToken, checkDailyLimit, updateUsage } = require('../middleware/auth');
 const { CIRCLED_DIGITS } = require('../services/ai-problem/shared');
+const { buildFallbackProblems } = require('../utils/fallbackProblemFactory');
 const studyService = require('../services/studyService');
 
 function cleanupSpacing(text = '') {
@@ -409,6 +410,81 @@ router.post('/vocabulary/sets/:documentId/quiz', verifyToken, checkDailyLimit, a
         });
       } catch (error) {
         console.error('[vocabulary] failed to persist quiz question:', error?.message || error);
+      }
+    }
+
+
+    if (!responseProblems.length) {
+      const fallbackList = await buildFallbackProblems({
+        type: 'vocabulary',
+        count: Math.max(1, Math.min(desiredCount, 3)),
+        docTitle: doc.title,
+        documentCode: String(documentId),
+        reasonTag: 'vocabulary_quiz_fallback'
+      });
+
+      for (const fallback of fallbackList) {
+        const normalizedOptions = (fallback.options || []).map((value) =>
+          String(value || '')
+            .replace(/^(①|②|③|④|⑤)\s*/, '')
+            .trim()
+        );
+        const circledOptions = normalizedOptions.map((option, idx) => `${CIRCLED_DIGITS[idx]} ${option}`.trim());
+        const answerToken = String(fallback.answer || '').trim();
+        const circledIndex = CIRCLED_DIGITS.indexOf(answerToken.charAt(0));
+        const numericMatch = answerToken.match(/\d+/);
+        const answerValue = circledIndex >= 0
+          ? String(circledIndex + 1)
+          : numericMatch
+            ? numericMatch[0]
+            : '1';
+
+        const orderValue = responseProblems.length + 1;
+        const fallbackMetadata = {
+          ...(fallback.metadata || {}),
+          fallback: true,
+          reason: 'vocabulary_quiz_fallback',
+          dayKey: targetDay.key,
+          dayLabel: targetDay.label,
+          order: orderValue,
+          mode: 'term_to_meaning'
+        };
+
+        try {
+          const insertResult = await database.run(
+            `INSERT INTO problems (document_id, type, question, options, answer, explanation, difficulty, main_text, metadata)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              documentId,
+              'vocabulary_quiz',
+              fallback.question || targetDay.label,
+              JSON.stringify(circledOptions),
+              answerValue,
+              fallback.explanation || '',
+              'basic',
+              targetDay.label,
+              JSON.stringify(fallbackMetadata)
+            ]
+          );
+
+          if (insertResult?.id) {
+            const termMatch = /"([^\"]+)"/.exec(fallback.question || '');
+            const term = termMatch ? termMatch[1] : fallbackMetadata.term || 'keyword';
+            const answerIdx = Math.max(0, parseInt(answerValue, 10) - 1);
+            responseProblems.push({
+              problemId: insertResult.id,
+              prompt: fallback.question || targetDay.label,
+              term,
+              meaning: normalizedOptions[answerIdx] || '',
+              options: normalizedOptions,
+              mode: fallbackMetadata.mode,
+              order: orderValue,
+              dayKey: targetDay.key
+            });
+          }
+        } catch (error) {
+          console.error('[vocabulary] failed to insert fallback quiz question:', error?.message || error);
+        }
       }
     }
 

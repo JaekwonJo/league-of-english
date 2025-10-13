@@ -2,20 +2,11 @@ const aiService = require('./aiProblemService');
 const OrderGenerator = require('../utils/orderProblemGenerator');
 const InsertionGenerator = require('../utils/insertionProblemGenerator2');
 const { normalizeAll } = require('../utils/csatProblemNormalizer');
+const { buildFallbackProblems } = require('../utils/fallbackProblemFactory');
+const { ensureSourceLabel } = require('./ai-problem/shared');
 
 const STEP_SIZE = 1;
 const MAX_TOTAL = 10;
-const OPENAI_REQUIRED_TYPES = new Set([
-  'blank',
-  'grammar',
-  'vocabulary',
-  'title',
-  'theme',
-  'summary',
-  'implicit',
-  'irrelevant'
-]);
-
 const SUPPORTED_TYPES = new Set([
   'blank',
   'order',
@@ -25,8 +16,7 @@ const SUPPORTED_TYPES = new Set([
   'title',
   'theme',
   'summary',
-  'implicit',
-  'irrelevant'
+  'implicit'
 ]);
 
 const AI_GENERATOR_MAP = {
@@ -36,8 +26,7 @@ const AI_GENERATOR_MAP = {
   title: 'generateTitle',
   theme: 'generateTheme',
   summary: 'generateSummary',
-  implicit: 'generateImplicit',
-  irrelevant: 'generateIrrelevant'
+  implicit: 'generateImplicit'
 };
 
 function snapToStep(value) {
@@ -139,11 +128,67 @@ function buildInsertionProblems(context, count, options = {}) {
   ) || [];
 }
 
+
 function createProblemError(message, status = 500) {
   const error = new Error(message);
   error.status = status;
   return error;
 }
+
+async function deliverFallbackProblems({
+  type,
+  count,
+  documentId,
+  docTitle,
+  documentCode,
+  reasonTag = 'fallback',
+  appendProblems,
+  pushProgress,
+  registerFailure,
+  context
+}) {
+  const normalizedCount = Math.max(1, Number(count) || 1);
+  const fallbackList = await buildFallbackProblems({
+    type,
+    count: normalizedCount,
+    docTitle,
+    documentCode,
+    reasonTag,
+    passages: context?.passages,
+    context
+  });
+  if (!fallbackList.length) {
+    return 0;
+  }
+
+  let persisted = [];
+  try {
+    persisted = await aiService.saveProblems(documentId, type, fallbackList, {
+      docTitle,
+      documentCode,
+      contextSnapshot: context
+    });
+  } catch (error) {
+    console.warn('[problemSet] failed to persist fallback problems:', error?.message || error);
+  }
+
+  const usable = Array.isArray(persisted) && persisted.length ? persisted : fallbackList;
+  const added = typeof appendProblems === 'function' ? appendProblems(usable) : usable.length;
+
+  if (typeof pushProgress === 'function') {
+    pushProgress('fallback_generated', type, {
+      delivered: added,
+      requested: normalizedCount,
+      reason: reasonTag
+    });
+  }
+  if (typeof registerFailure === 'function' && added) {
+    registerFailure(type, reasonTag);
+  }
+
+  return added;
+}
+
 
 async function handleAiBackedType({
   type,
@@ -155,7 +200,9 @@ async function handleAiBackedType({
   usedProblemIds,
   pushProgress,
   appendProblems,
-  logFailure
+  registerFailure,
+  openaiAvailable,
+  context
 }) {
   let delivered = 0;
   const cache = await aiService.fetchCached(documentId, type, amount, {
@@ -168,15 +215,37 @@ async function handleAiBackedType({
     requested: amount
   });
 
-  const remaining = amount - delivered;
+  let remaining = amount - delivered;
   if (remaining <= 0) {
     return delivered;
   }
 
+  const fallbackArgs = {
+    type,
+    documentId,
+    docTitle,
+    documentCode,
+    appendProblems,
+    pushProgress,
+    registerFailure,
+    context
+  };
+
+  if (!openaiAvailable) {
+    return delivered + await deliverFallbackProblems({
+      ...fallbackArgs,
+      count: remaining,
+      reasonTag: 'openai_unavailable'
+    });
+  }
+
   const generatorName = AI_GENERATOR_MAP[type];
   if (!generatorName || typeof aiService[generatorName] !== 'function') {
-    pushProgress('ai_generated', type, { delivered: 0, requested: remaining, skipped: true });
-    return delivered;
+    return delivered + await deliverFallbackProblems({
+      ...fallbackArgs,
+      count: remaining,
+      reasonTag: 'generator_missing'
+    });
   }
 
   try {
@@ -186,28 +255,40 @@ async function handleAiBackedType({
       documentCode
     });
     const usable = Array.isArray(savedBatch) && savedBatch.length ? savedBatch : generatedBatch;
-    delivered += appendProblems(usable);
+    const added = appendProblems(usable);
+    delivered += added;
     pushProgress('ai_generated', type, {
-      delivered: Array.isArray(usable) ? usable.length : 0,
+      delivered: added,
       requested: remaining
     });
+
+    remaining = amount - delivered;
+    if (remaining > 0) {
+      delivered += await deliverFallbackProblems({
+        ...fallbackArgs,
+        count: remaining,
+        reasonTag: 'partial_generation'
+      });
+    }
     return delivered;
   } catch (error) {
-    const message = String(error?.message || '');
-    if (/missing slot marker/i.test(message)) {
-      pushProgress('ai_failed', type, {
-        delivered: 0,
-        requested: remaining,
-        reason: message
-      });
-      if (typeof logFailure === 'function') {
-        logFailure(type, message);
-      }
-      return delivered;
+    const message = String(error?.message || 'unknown error');
+    pushProgress('ai_failed', type, {
+      delivered: 0,
+      requested: remaining,
+      reason: message
+    });
+    if (typeof registerFailure === 'function') {
+      registerFailure(type, message);
     }
-    throw error;
+    return delivered + await deliverFallbackProblems({
+      ...fallbackArgs,
+      count: remaining,
+      reasonTag: 'ai_generation_error'
+    });
   }
 }
+
 
 async function handleOrderType({
   type,
@@ -219,7 +300,9 @@ async function handleOrderType({
   appendProblems,
   context,
   orderDifficulty,
-  documentCode
+  documentCode,
+  docTitle,
+  registerFailure
 }) {
   let delivered = 0;
   const cache = await aiService.fetchCached(documentId, type, amount, {
@@ -232,17 +315,35 @@ async function handleOrderType({
   }
   delivered += appendProblems(cache);
 
-  const remaining = amount - delivered;
+  let remaining = amount - delivered;
   if (remaining > 0) {
     const generated = buildOrderProblems(context, remaining, { orderDifficulty });
-    delivered += appendProblems(generated);
+    const added = appendProblems(generated);
+    delivered += added;
     pushProgress('static_generated', type, {
-      delivered: Array.isArray(generated) ? generated.length : 0,
+      delivered: Array.isArray(generated) ? generated.length : added,
       requested: remaining
+    });
+  }
+
+  remaining = amount - delivered;
+  if (remaining > 0) {
+    delivered += await deliverFallbackProblems({
+      type,
+      count: remaining,
+      documentId,
+      docTitle: docTitle,
+      documentCode,
+      appendProblems,
+      pushProgress,
+      registerFailure,
+      reasonTag: 'order_fallback',
+      context
     });
   }
   return delivered;
 }
+
 
 async function handleInsertionType({
   type,
@@ -254,7 +355,9 @@ async function handleInsertionType({
   appendProblems,
   context,
   insertionDifficulty,
-  documentCode
+  documentCode,
+  docTitle,
+  registerFailure
 }) {
   let delivered = 0;
   const cache = await aiService.fetchCached(documentId, type, amount, {
@@ -267,13 +370,30 @@ async function handleInsertionType({
   }
   delivered += appendProblems(cache);
 
-  const remaining = amount - delivered;
+  let remaining = amount - delivered;
   if (remaining > 0) {
     const generated = buildInsertionProblems(context, remaining, { insertionDifficulty });
-    delivered += appendProblems(generated);
+    const added = appendProblems(generated);
+    delivered += added;
     pushProgress('static_generated', type, {
-      delivered: Array.isArray(generated) ? generated.length : 0,
+      delivered: Array.isArray(generated) ? generated.length : added,
       requested: remaining
+    });
+  }
+
+  remaining = amount - delivered;
+  if (remaining > 0) {
+    delivered += await deliverFallbackProblems({
+      type,
+      count: remaining,
+      documentId,
+      docTitle,
+      documentCode,
+      appendProblems,
+      pushProgress,
+      registerFailure,
+      reasonTag: 'insertion_fallback',
+      context
     });
   }
   return delivered;
@@ -305,11 +425,6 @@ async function generateCsatSet({
     }
   }
 
-  const needsOpenAI = requestedTypes.some((type) => OPENAI_REQUIRED_TYPES.has(type));
-  if (needsOpenAI && !aiService.getOpenAI()) {
-    throw createProblemError('AI generator unavailable', 503);
-  }
-
   const context = await aiService.getPassages(documentId);
   const documentCode =
     context?.document?.code ||
@@ -322,6 +437,8 @@ async function generateCsatSet({
     documentCode ||
     context?.document?.name ||
     null;
+
+  const openaiAvailable = Boolean(aiService.getOpenAI());
 
   const aggregated = [];
   const usedProblemIds = new Set();
@@ -348,17 +465,41 @@ async function generateCsatSet({
   const appendProblems = (list) => {
     let added = 0;
     if (!Array.isArray(list)) return added;
-    for (const problem of list) {
-      if (!problem || typeof problem !== 'object') continue;
-      const identifier = problem.id || problem.originalId || problem.problemId || null;
+
+    for (const entry of list) {
+      if (!entry || typeof entry !== 'object') continue;
+      const identifier = entry.id || entry.originalId || entry.problemId || null;
       const key = identifier !== null && identifier !== undefined ? String(identifier) : null;
       if (key) {
         if (usedProblemIds.has(key)) continue;
         usedProblemIds.add(key);
       }
-      aggregated.push(problem);
+
+      const sequence = aggregated.length + added + 1;
+      const sourceContextTitle = docTitle || entry.metadata?.documentTitle || entry.sourceLabel || documentCode;
+      const appliedLabel = ensureSourceLabel(entry.sourceLabel, {
+        docTitle: sourceContextTitle,
+        documentCode,
+        sequence
+      });
+
+      const metadata = { ...(entry.metadata || {}), generator: entry.metadata?.generator || 'openai' };
+      metadata.sourceLabel = metadata.sourceLabel || appliedLabel;
+      metadata.sequenceNo = sequence;
+      if (!metadata.documentTitle && sourceContextTitle) {
+        metadata.documentTitle = sourceContextTitle;
+      }
+
+      const normalized = {
+        ...entry,
+        sourceLabel: appliedLabel,
+        metadata
+      };
+
+      aggregated.push(normalized);
       added += 1;
     }
+
     return added;
   };
 
@@ -379,7 +520,9 @@ async function generateCsatSet({
         pushProgress,
         appendProblems,
         documentCode,
-        logFailure: registerFailure
+        registerFailure,
+        openaiAvailable,
+        context
       });
     } else if (type === 'order') {
       delivered = await handleOrderType({
@@ -392,7 +535,9 @@ async function generateCsatSet({
         appendProblems,
         context,
         orderDifficulty,
-        documentCode
+        documentCode,
+        docTitle,
+        registerFailure
       });
     } else if (type === 'insertion') {
       delivered = await handleInsertionType({
@@ -405,7 +550,9 @@ async function generateCsatSet({
         appendProblems,
         context,
         insertionDifficulty,
-        documentCode
+        documentCode,
+        docTitle,
+        registerFailure
       });
     }
 
@@ -426,6 +573,22 @@ async function generateCsatSet({
   }
 
   if (!aggregated.length) {
+    const fallbackType = requestedTypes[0] || 'summary';
+    await deliverFallbackProblems({
+      type: fallbackType,
+      count: 1,
+      documentId,
+      docTitle,
+      documentCode,
+      appendProblems,
+      pushProgress,
+      registerFailure,
+      reasonTag: 'final_rescue',
+      context
+    });
+  }
+
+  if (!aggregated.length) {
     throw createProblemError('Failed to prepare enough problems', 503);
   }
 
@@ -441,7 +604,7 @@ async function generateCsatSet({
 
   pushProgress('all_complete', 'all', { delivered: finalProblems.length });
 
-  const exposureWhitelist = new Set(['blank', 'grammar', 'vocabulary', 'title', 'theme', 'summary', 'implicit', 'irrelevant']);
+  const exposureWhitelist = new Set(['blank', 'grammar', 'vocabulary', 'title', 'theme', 'summary', 'implicit']);
   const exposureIds = [...new Set(finalProblems
     .filter((problem) => problem && exposureWhitelist.has(problem.type))
     .map((problem) => Number(problem.id))

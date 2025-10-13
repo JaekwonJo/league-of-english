@@ -1,3 +1,16 @@
+## 2025-10-13 (doc fallback + AI escalation)
+- Issue: Grammar/vocabulary 생성이 OpenAI 오류에서 멈추면 다른 문서 fallback이 노출되고, 해설은 영어 gloss만 남아 학습 신뢰도가 떨어졌어요.
+- Cause: `fallbackProblemFactory`가 문서 context 없이 정적 bank만 돌렸고, AI 재시도는 동일 모델로 6번 반복했습니다.
+- Fix: `server/utils/documentProblemFallback.js`에서 문서 기반 grammar·vocabulary fallback을 구축하고, problemSetService가 context를 전달해 요청 개수만큼 저장/로그하도록 수정했습니다. `generateGrammar`/`generateVocab`은 4번째부터 gpt-4o로 승격해 성공률을 올리고, WordNet 의존성을 추가해 동의어/오답 사유를 자동 생성합니다.
+- Files: server/utils/documentProblemFallback.js, server/utils/fallbackProblemFactory.js, server/services/problemSetService.js, server/services/aiProblemService.js, server/routes/vocab.routes.js, package.json, package-lock.json.
+- Verification: `npm test`.
+
+## 2025-10-12 (Wolgo parser + fallback vocabulary)
+- Issue: OpenAI 실패 시 grammar/vocabulary fallback이 몇 개 템플릿에만 의존해 다양성과 신뢰도가 떨어졌고, 다크 모드 액션 버튼이 투명 배경 탓에 글씨가 보이지 않았어요.
+- Fix: Wolgo 2022년 9월 어법 PDF를 `grammarPdfParser`+`generate-fallback-grammar.js`로 구조화해 29문항 JSON을 만들고, `fallbackProblemFactory`가 type/answer metadata를 보존하도록 확장했습니다. 동시에 13개의 어휘 fallback 세트를 스크립트로 생성해 동의어/반의어/오답 사유를 메타에 담았고, `--accent-gradient` 변수를 추가해 다크·라이트 모드 버튼 대비를 맞췄습니다.
+- Files: scripts/generate-fallback-grammar.js, scripts/generate-fallback-vocabulary.js, server/utils/grammarPdfParser.js, server/utils/data/wolgo-2022-09-grammar.json, server/utils/data/fallback-vocabulary.json, server/utils/fallbackProblemFactory.js, server/services/ai-problem/shared.js, server/tests/fallbackContent.test.js, client/src/index.css.
+- Verification: `npm test`.
+
 ## 2025-10-12 (analysis flow fallback hardening)
 - Issue: 관리자/학생 ‘새 분석 생성’ 버튼이 모달 없이 멈추고, OpenAI 오류가 나면 문제·어휘·분석이 비어 버렸어요.
 - Cause: DocumentAnalyzer 프롬프트가 느슨해 JSON 구조가 깨지고, problemSetService·단어 퀴즈는 fallback 템플릿이 없어 빈 배열을 돌려줬습니다.

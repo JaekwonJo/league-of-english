@@ -10,12 +10,12 @@
 3. **운영 효율**: 선생님-학부모-관리자가 한 대시보드에서 진행 상황 확인.
 4. **수익 모델**: 학원 내부에서 사용하다가 B2B/B2C SaaS로 확장 가능한 구독 구조.
 
-> Latest update (2025-10-12): 분석 생성 버튼에 개수 선택 모달과 전 화면 로딩 오버레이를 붙이고, DocumentAnalyzer를 jsonrepair 기반 매뉴얼로 강화해 문장별 해설·동의어/반의어·이모지를 빠짐없이 채웁니다. OpenAI가 비어도 `fallbackProblemFactory`가 문항·어휘·빈칸을 즉시 공급해 세트가 멈추지 않아요.
+> Latest update (2025-10-13): 업로드 문서에서 바로 fallback 문항을 생성하는 `documentProblemFallback`을 도입해 OpenAI가 멈춰도 요청한 개수만큼 시험형 grammar·vocabulary 문제를 제공합니다. WordNet으로 동의어/오답 해설을 채우고, problemSetService가 문서 context를 전달해 저장/노출 로그까지 일관되게 남습니다.
 
 ### 오늘의 Top 3
-- `/mnt/c/Users/jaekw/Documents/웹앱문서샘플/2022년월고모의고사어법_30문제.pdf`를 구조화 JSON으로 파싱해 Wolgo 어법 기출을 그대로 fallback/문항은행에 투입합니다. (콘텐츠 신뢰도)
-- 파서가 만든 데이터를 `fallbackProblemFactory`와 문제 저장소에 연결해 OpenAI 실패 시에도 기출 품질을 유지합니다. (생성 안정성)
-- fallback·분석·새 피드백 버튼 안전망에 대한 테스트 세트를 작성해 배포 전 회귀를 잡습니다. (품질 보증)
+- WordNet gloss를 한국어로 옮길 사전을 보강해 fallback 해설이 완전한 한국어로 제공되도록 해요. (학습 신뢰감)
+- `documentProblemFallback`을 problemSetService/프런트 학습 흐름까지 통합 테스트로 검증해 OpenAI 미사용 경로도 안전하게 배포해요. (회귀 방지)
+- 4문 이하 짧은 지문에서도 자연스러운 보기 5개를 만들 수 있도록 세그먼트 분할/이유문 템플릿을 튜닝해요. (콘텐츠 커버리지)
 
 ### 요금제 (초안)
 - **무료**: 생성 즉시 DB에 저장하지 않는 체험용 문제만 제공되고, 응답 속도는 의도적으로 느려요.

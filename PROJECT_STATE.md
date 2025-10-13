@@ -14,7 +14,8 @@
 - Refresh manuals via `node scripts/update-problem-manuals.js` to keep Wolgo-aligned prompts current while expanding API prompts across types.
 
 ## Decisions (key)
-- OpenAI가 우선이지만 실패하거나 키가 빠지면 `fallbackProblemFactory`가 검증된 문항을 즉시 공급해 세트가 비지 않도록 하고, order/삽입은 여전히 스크립트 기반으로 유지합니다.
+- OpenAI가 우선이지만 실패하거나 키가 빠지면 업로드한 문서에서 직접 문항을 재구성하는 `documentProblemFallback`이 즉시 동작하고, WordNet 기반 어휘/문법 템플릿으로 시험급 퀄리티를 유지합니다. order/삽입은 여전히 스크립트 기반으로 유지합니다.
+- Grammar·vocabulary 생성은 실패 로그를 분석하며 4번째 시도부터 gpt-4o로 승격해 더 강력한 모델로 재생성하고, 지시문에 한국어 근거·밑줄 규칙을 자동으로 보강합니다.
 - Every generated problem is stored in the problem library with source metadata, validation status, and exposure tracking before it reaches students.
 - 'irrelevant' 유형은 생성/학습 파이프라인에서 완전히 제거돼, 어법·어휘 중심 커리큘럼에 집중합니다.
 - Study sessions must draw from cached, unseen problems first; once a student exhausts the cache for a type we invoke the API again just for that learner.
@@ -23,7 +24,11 @@
 - Membership tiers: 무료 회원은 생성 즉시 주어지는 미저장(캐시 X) 문제와 느린 응답 속도로 체험하고, 유료(프리미엄 9,900원/프로 19,900원)는 검증된 문제 캐시와 빠른 배포, 프로는 추가 분석 리포트까지 받습니다.
 
 ## Current Stage
+- 업로드 문서에서 직접 밑줄/오류를 추출하는 `documentProblemFallback`이 grammar·vocabulary 문제를 즉시 만들어 OpenAI 비가동 시에도 요청 수만큼 시험형 문항을 보장합니다. WordNet을 통해 동의어·오답 근거·lexicalNote를 채우고, sourceLabel은 원문 문서명을 사용합니다.
+- Grammar·vocabulary 생성 루프가 실패 로그를 분석해 지시문을 보강하고, 4번째 시도부터 gpt-4o로 승격해 긴 문장/어휘 조건에서도 6회 이내 성공률을 끌어올렸습니다.
 - 관리자·학생 분석 화면이 개수 선택 모달과 전 화면 로딩 오버레이로 새로고침되며, DocumentAnalyzer가 문장별 어휘/이모지/현대 사례를 빠짐없이 채운 Variant를 반환합니다.
+- Wolgo 2022년 9월 어법 PDF를 자동 파싱해 29문항 fallback 라이브러리로 변환하고, OpenAI 오류 시에도 문서명 기반 sourceLabel과 메타데이터를 유지합니다.
+- 사전 정의한 어휘 13세트를 `fallbackVocabularyData`로 편성해 `var(--accent-gradient)` 버튼과 함께 다크·라이트 테마에서 동일 대비를 확보했습니다.
 - 문제 세트 생성기는 캐시→OpenAI→fallback 순으로 안전망을 갖추고, fallback 문제도 문서명 기반 sourceLabel과 메타데이터를 일관되게 저장합니다.
 - WordMaster VocabularyParser가 단어장을 Day별 JSON으로 저장해 단어 퀴즈 생성과 fallback이 같은 데이터를 공유할 준비가 됐습니다.
 - 학습 화면 피드백 바에 😕 '별로예요' 버튼이 추가돼 신고 전에도 관리자에게 품질 저하 신호를 보낼 수 있어요.
@@ -68,18 +73,16 @@
 - 분석 자료 목록에 단어장도 노출되고 있어요. 어휘 자료는 분석 메뉴에 필요 없으니, 문서 타입을 분리하거나 필터링해야 합니다.
 - 학습 화면 어법 보기 컴포넌트가 `<u>…</u>` 구간을 파싱해 ①~⑤ 보기로 자동 재조립하므로, 본문 전체가 밑줄로 보이거나 옵션이 비어 있는 문제를 막았습니다.
 
-## Next 3 (2025-10-12)
-1. **Wolgo 어법 파서 자동화.** `/mnt/c/Users/jaekw/Documents/웹앱문서샘플/2022년월고모의고사어법_30문제.pdf`를 구조화 JSON으로 변환해 기출 그대로 문항은행과 fallback에 넣을 수 있게 해요. (콘텐츠 신뢰도)
-2. **fallbackProblemFactory ↔ 문제 저장 연동.** 새로 파싱한 기출 데이터를 fallback/캐시 파이프라인에 연결해 OpenAI 실패 시에도 동일 품질을 유지하도록 합니다. (생성 안정성)
-3. **안전망 회귀 테스트 추가.** fallback 세트·분석 생성·새 피드백 버튼에 대한 단위/통합 테스트를 마련해 재배포 시 회귀를 막아요. (품질 보증)
+## Next 3 (2025-10-13)
+1. **WordNet 한국어 해석 사전 구축.** gloss에서 영어만 남는 경우가 있어, 핵심 단어별 한국어 번역/반의어 표를 만들어 fallback 해설이 완전한 한국어로 제공되도록 합니다. (학습 신뢰감)
+2. **문서 기반 fallback 통합 테스트.** `documentProblemFallback` 결과를 problemSetService/학습 UI까지 시뮬레이션하는 테스트를 추가해, OpenAI 미사용 경로도 회귀 오류 없이 배포합니다. (회귀 방지)
+3. **짧은 지문용 세그먼트 튜닝.** 5문 미만 문장이나 bullet 지문에서도 오류 없는 문항을 만들 수 있도록 분할 규칙과 이유문을 보강합니다. (콘텐츠 커버리지)
 
 ## Known issues
-- Wolgo 어법 기출 PDF는 아직 파서가 없어 수동 템플릿 fallback에 의존하고 있어요.
-- WordMaster VocabularyParser는 업로드 저장까지만 지원하고, 생성·fallback 파이프라인과는 아직 연결되지 않았어요.
-- fallbackProblemFactory에 담긴 기초 데이터가 2~3세트라 다양성이 부족하니, 기출 파서 출력으로 대체해야 합니다.
-- 문항 세트 fallback·😕 피드백·분석 생성 안전망에 대한 자동 테스트가 없어 수동 QA에 의존 중입니다.
-- OpenAI rate-limit에 걸리면 학습 화면에서 여전히 명확한 안내/대기 시간 표시가 없어 혼란이 남아 있어요.
-- 클라우드 학습 세션은 진행 중 스냅샷을 계속 동기화하지 않아 장시간 학습 시 진척도가 어긋날 수 있습니다.
+- WordNet gloss 기반 한국어 표현이 여전히 영어 문장을 포함해 해설이 어색할 수 있습니다. 핵심 단어별 한국어 사전을 정비해야 합니다.
+- 문장이 4개 이하인 짧은 지문에서는 grammar fallback이 동일 문장을 반복해 고르는 경우가 있어 분할 규칙을 더 다듬어야 합니다.
+- WordNet 데이터베이스 초기화가 첫 요청 시 수 초 걸려 콜드 스타트 응답이 길어질 수 있습니다. 서버 부팅 단계에서 미리 warm-up 하는 작업이 필요합니다.
+- 학습 설정 2단계에서 브라우저 뒤로 가기 시 홈으로 이동하는 문제가 여전히 보고돼 히스토리 가드 개선이 남아 있습니다.
 
 - `problemSetService`가 STEP_SIZE를 1로 낮추고 총 요청 수를 10문으로 제한해, 한 번에 너무 많은 AI 호출이 실패로 이어지는 상황을 막아요. 클라이언트도 같은 상한을 공유해 랜덤 배치·저장 세션·직접 입력 모든 경로가 10문 이내로 유지됩니다.
 - `StudyConfig`는 10문 제한 정보를 즉시 보여주고, 랜덤 지문 선택도 최대 10개까지만 골라요. `useStudySession`은 새 한도에 맞춰 totalCount를 보정합니다.
@@ -89,6 +92,18 @@
 - 어휘 문제는 5지선다 불일치 탐지 형식으로 전환되어, 본문과 거리가 먼 보기를 하나만 남기고 나머지는 근거를 제시하도록 강제합니다.
 - 생성 요약 패널은 `📦/🍞/✨` 이모지로 용어를 교체해, 미리 준비된 문제와 방금 생성된 문제를 보기 좋게 나눠 보여줍니다.
 - Verification: `npm test`, `npm run lint`, `CI=true npm --prefix client test -- --watch=false --runInBand`
+
+## Resolved (2025-10-12 - Wolgo 파서 + 어휘 fallback 확장)
+- `scripts/generate-fallback-grammar.js`가 Wolgo 2022년 9월 어법 PDF를 JSON으로 구조화해 29문항 fallback 은행과 `server/utils/grammarPdfParser.js`를 제공합니다.
+- `fallbackProblemFactory`가 새 grammar/vocabulary 데이터를 ID·sourceLabel·answer metadata까지 보존해 저장하며, OpenAI 부재 시에도 `grammar_multi`까지 안정적으로 공급합니다.
+- 신규 어휘 fallback 13문항은 `generate-fallback-vocabulary.js`로 생성돼 동의어/반의어·오답 사유를 함께 메타데이터에 넣고, `npm test`에서 `fallbackContent.test.js`가 어법/어휘 데이터 무결성을 검증합니다.
+- 다크 모드 버튼 대비 문제를 막기 위해 `--accent-gradient` 변수를 추가해 `복습 대기열 시작` 등 액션 버튼이 라이트/다크 모두 동일한 색상 체계를 따릅니다.
+
+## Resolved (2025-10-13 - 문서 기반 fallback + AI 재시도 승격)
+- WordNet 사전과 규칙 기반 세분화로 업로드 문서에서 바로 grammar·vocabulary fallback을 생성하고, explanation/optionReasons/sourceLabel을 문서명으로 통일했습니다.
+- problemSetService/deliverFallbackProblems가 문서 context를 전달해 fallback도 요청 개수만큼 저장·로그되며, 기존 bank 템플릿은 doc fallback 부족 시에만 보완용으로 남겨두었습니다.
+- grammar/vocabulary OpenAI 호출이 네 번째 시도부터 gpt-4o로 승격하고 실패 메시지를 분석해 지시문을 재구성해 성공률을 높였으며, WordNet 초기화를 위해 `wordnet` 의존성을 추가했습니다.
+- Verification: `npm test`.
 
 ## Resolved (2025-10-12 - 분석 생성 안전망 + fallback 보강)
 - 관리자/학생 분석 화면에 개수 선택 모달과 전 화면 로딩 오버레이를 붙여, 버튼 한 번으로 1·2개 Variant를 안정적으로 만들고 결과를 즉시 갱신합니다.
