@@ -4,6 +4,7 @@
 - Plan: ① 최근 50개 업로드 지문에서 오류 문장을 직접 라벨링해 기준 데이터를 만들고, ② 밑줄 후보 생성 → 오류 유형 분류 → 정답/오답 보기 구성 → 해설/오답 사유 작성까지 한 함수로 재설계하며, ③ OpenAI·fallback 경로가 같은 검증기와 회귀 테스트를 공유하도록 통합합니다.
 - Next steps: `docs/grammar-pipeline-spec.md` 초안을 작성하고, `server/tests/grammarGeneration.e2e.test.js`로 업로드→생성→검증 흐름을 자동화할 계획입니다.
 - Verification: 계획 수립 단계 (테스트는 아직 실행 전).
+- Progress: Wolgo 기출 fallback 세트를 분석해 자동으로 61개의 라벨 데이터(`server/utils/data/grammar-labels.jsonl`)를 생성하는 스크립트(`scripts/generate-grammar-labels.js`)를 추가했어요. 첫 QA 후 부족한 오류 유형은 추가 라벨링으로 채울 예정입니다.
 
 ## 2025-10-13 (doc fallback + AI escalation)
 - Issue: Grammar/vocabulary 생성이 OpenAI 오류에서 멈추면 다른 문서 fallback이 노출되고, 해설은 영어 gloss만 남아 학습 신뢰도가 떨어졌어요.

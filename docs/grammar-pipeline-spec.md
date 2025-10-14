@@ -30,6 +30,7 @@ This document lays out how we will rebuild the grammar 문제 생성기 so that 
 3. 오류 유형은 미리 만든 20개 내외의 체계에서 고릅니다.
 4. `targetSpan`은 지문 원문과 글자 단위까지 일치해야 합니다.
 5. 라벨링이 끝나면 JSONL 검증 스크립트(`scripts/validate-grammar-labels.js`)로 형식을 확인합니다. *(스크립트는 이후 구현)*
+6. 초기 시드 데이터는 Wolgo 기출 fallback 세트를 분석해 추출합니다. `scripts/generate-grammar-labels.js`가 자동으로 60+개 기본 샘플을 만들어 주며, 사람이 검수한 뒤 확정본을 유지합니다.
 
 ## 3. 지문 전처리 & 세그먼트 추출
 1. **문장 분리**: `sentence-splitter` 유틸리티(또는 `Intl.Segmenter`)로 분할.
