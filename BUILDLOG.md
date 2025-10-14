@@ -1,3 +1,10 @@
+## 2025-10-21 (grammar generator redesign kickoff)
+- Issue: 어법 문제 생성이 밑줄 5개 추출·오류 유형 태깅·해설 작성 단계마다 흔들려, 같은 문장이 보기로 반복되거나 잘못된 밑줄이 그대로 통과하고 있어요.
+- Cause: 현재 파이프라인이 OpenAI 출력과 fallback 규칙을 섞어 쓰면서 세그먼트 분할·품사 필터·오류 코드가 따로 놀고, 짧은 지문을 위한 전용 규칙이 비어 있습니다.
+- Plan: ① 최근 50개 업로드 지문에서 오류 문장을 직접 라벨링해 기준 데이터를 만들고, ② 밑줄 후보 생성 → 오류 유형 분류 → 정답/오답 보기 구성 → 해설/오답 사유 작성까지 한 함수로 재설계하며, ③ OpenAI·fallback 경로가 같은 검증기와 회귀 테스트를 공유하도록 통합합니다.
+- Next steps: `docs/grammar-pipeline-spec.md` 초안을 작성하고, `server/tests/grammarGeneration.e2e.test.js`로 업로드→생성→검증 흐름을 자동화할 계획입니다.
+- Verification: 계획 수립 단계 (테스트는 아직 실행 전).
+
 ## 2025-10-13 (doc fallback + AI escalation)
 - Issue: Grammar/vocabulary 생성이 OpenAI 오류에서 멈추면 다른 문서 fallback이 노출되고, 해설은 영어 gloss만 남아 학습 신뢰도가 떨어졌어요.
 - Cause: `fallbackProblemFactory`가 문서 context 없이 정적 bank만 돌렸고, AI 재시도는 동일 모델로 6번 반복했습니다.
