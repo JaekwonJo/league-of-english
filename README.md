@@ -10,12 +10,12 @@
 3. **운영 효율**: 선생님-학부모-관리자가 한 대시보드에서 진행 상황 확인.
 4. **수익 모델**: 학원 내부에서 사용하다가 B2B/B2C SaaS로 확장 가능한 구독 구조.
 
-> Latest update (2025-10-22): `scripts/sync-grammar-manual.js`가 Windows 문서함의 어법 메뉴얼을 그대로 복사해 리포지토리 전 경로에 동기화하고, 프롬프트는 메뉴얼 전문을 그대로 포함해요. `scripts/extract-grammar-baseline.js`는 월고 2024 어법 100문제를 JSON으로 추출해 기준 세트를 완성했습니다.
+> Latest update (2025-10-22): 메뉴얼 동기화 검증(`npm run check:grammar-manual`)이 테스트 전에 자동으로 돌고, 월고 2024 기준 세트 회귀 테스트가 추가됐어요. WordNet 워밍업/한글 gloss 변환으로 fallback 해설도 바로 한국어로 나옵니다.
 
 ### 오늘의 Top 3
-- 월고 2024 JSON 기준 세트를 이용해 OpenAI·fallback 생성 결과를 비교하는 회귀 스냅샷 테스트를 세팅해요. (품질 검증)
-- CI에서 `npm run sync:grammar-manual` 결과 해시를 확인해 메뉴얼 누락 배포를 막아요. (운영 안전)
-- WordNet warm-up과 한국어 사전 변환을 작업 큐로 옮겨 첫 호출에서도 fallback 해설이 바로 나오게 손봐요. (콜드 스타트 개선)
+- 월고 기준 세트를 이용해 OpenAI 실시간 생성물과 diff를 비교하는 자동 회귀 스냅샷 파이프라인을 만들어요. (품질 검증)
+- 학생 화면에 “실제 모의고사 미리보기” 모드를 붙여 출제물을 즉시 확인하고 QA 피드백을 모아봐요. (체감 품질)
+- 월고 2023·2022 PDF도 같은 JSON 기준으로 변환해 문제은행 다양성을 늘려요. (데이터 자산)
 
 ### 요금제 (초안)
 - **무료**: 생성 즉시 DB에 저장하지 않는 체험용 문제만 제공되고, 응답 속도는 의도적으로 느려요.
@@ -127,11 +127,14 @@ npm run sync:grammar-manual
 # 4) 월고 2024 어법 100문제 기준 세트 추출
 npm run extract:grammar-baseline
 
-# 5) 품질 체크
+# 5) 메뉴얼 동기화 검증 (테스트 전에 자동 실행)
+npm run check:grammar-manual
+
+# 6) 품질 체크
 npm test        # 서버 테스트 (node --test)
 npm run lint    # ESLint (server/**/*.js)
 
-# 6) 문서/매뉴얼 갱신
+# 7) 문서/매뉴얼 갱신
 docs: node scripts/update-problem-manuals.js
 ```
 - 환경 변수: `OPENAI_API_KEY`, `JWT_SECRET`, `REACT_APP_API_URL` 등 `.env`로 관리.

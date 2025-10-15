@@ -1,8 +1,10 @@
+## 2025-10-22 (manual sync guard + WordNet warm-up)
 - Issue: 어법 메뉴얼 최신본이 프롬프트에 일부만 들어가고 fallback은 예전 지침을 쓰면서 품질 편차가 생겼고, 월고 PDF 기준 데이터가 없어 회귀 테스트를 돌릴 수 없었습니다.
 - Fix: `scripts/sync-grammar-manual.js`가 Windows 문서함 메뉴얼을 루트/`problem manual` 경로에 그대로 복사하도록 만들고, manual loader와 `eobeopTemplate`이 메뉴얼 전문을 그대로 프롬프트에 포함합니다.
 - Fix: `scripts/extract-grammar-baseline.js`가 월고 2024 어법 100문제를 파싱해 `server/utils/data/wolgo-2024-03-grammar-baseline.json`으로 정리하며, 각 ①~⑤ 밑줄은 trimmed segment와 raw 텍스트를 함께 저장합니다.
-- Files: scripts/sync-grammar-manual.js, scripts/extract-grammar-baseline.js, package.json, server/services/ai-problem/internal/manualLoader.js, server/utils/eobeopTemplate.js, server/utils/data/wolgo-2024-03-grammar-baseline.json, README.md, PROJECT_STATE.md, BUILDLOG.md.
-- Verification: 스크립트 수동 실행(메뉴얼 SHA1 5106bc6856e10bde2902818e506564ddefac7fa1), JSON 출력 100문항 확인.
+- Fix: WordNet 워밍업 + gloss 한글 변환으로 fallback 어휘 문제도 첫 호출부터 자연스러운 한국어 뜻을 제공합니다.
+- Files: scripts/sync-grammar-manual.js, scripts/extract-grammar-baseline.js, scripts/check-grammar-manual.js, package.json, server/services/ai-problem/internal/manualLoader.js, server/utils/eobeopTemplate.js, server/utils/documentProblemFallback.js, server/utils/data/wolgo-2024-03-grammar-baseline.json, README.md, PROJECT_STATE.md, BUILDLOG.md, server/tests/grammarManualSync.test.js, server/tests/wolgoBaselineIntegrity.test.js.
+- Verification: `npm run check:grammar-manual`, `npm test` (38 tests pass).
 
 ## 2025-10-21 (grammar generator redesign kickoff)
 - Issue: 어법 문제 생성이 밑줄 5개 추출·오류 유형 태깅·해설 작성 단계마다 흔들려, 같은 문장이 보기로 반복되거나 잘못된 밑줄이 그대로 통과하고 있어요.

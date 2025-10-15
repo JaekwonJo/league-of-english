@@ -2,6 +2,9 @@ const wordnet = require('wordnet');
 const { CIRCLED_DIGITS } = require('../services/ai-problem/shared');
 
 let wordnetReady = null;
+let wordnetWarmupPromise = null;
+
+const WORDNET_WARMUP_SEEDS = ['education', 'develop', 'improve', 'support', 'student', 'community'];
 
 const MAX_GRAMMAR_ATTEMPTS_PER_PASSAGE = 12;
 const MAX_VOCAB_ATTEMPTS_PER_PASSAGE = 18;
@@ -10,6 +13,55 @@ const REQUIRED_SEGMENTS = 5;
 
 const STOP_WORDS = new Set([
   'the','and','that','with','from','this','which','have','will','would','could','should','into','about','over','under','while','because','their','there','they','them','when','what','your','yours','ours','were','been','being','than','then','after','before','such','where','who','whom','whose','each','many','most','some','any','much','very','just','even','also','both','either','neither','ever','never','once','twice','upon','among','toward','against'
+]);
+
+const GLOSS_TRANSLATIONS = [
+  { regex: /(available|optional).*(not required)/i, meaning: '필수는 아니지만 사용할 수 있는' },
+  { regex: /(draw|attract).*(attention)/i, meaning: '관심을 끌다' },
+  { regex: /(state|condition).*(uncertainty)/i, meaning: '불확실한 상태' },
+  { regex: /(cause|make).*(delay)/i, meaning: '지연을 일으키다' },
+  { regex: /(leisurely|unhurried)/i, meaning: '느긋한, 여유 있는' },
+  { regex: /(remarkable|striking).*(coincidence)/i, meaning: '놀라운 우연의 일치' },
+  { regex: /(hindrance|obstacle)/i, meaning: '방해물, 장애물' },
+  { regex: /(hesitate|pause).*(uncertainty)/i, meaning: '주저하다, 망설이다' },
+  { regex: /(eventually|finally)/i, meaning: '결국, 마침내' },
+  { regex: /(barely|scarcely)/i, meaning: '간신히, 겨우' },
+  { regex: /(reluctant|unwilling)/i, meaning: '마음 내키지 않는, 꺼리는' },
+  { regex: /(ancient|very old)/i, meaning: '아주 오래된, 고대의' },
+  { regex: /(support|bolster)/i, meaning: '지지하다, 뒷받침하다' }
+];
+
+const SIMPLE_WORD_TRANSLATIONS = new Map([
+  ['available', '사용 가능한'],
+  ['required', '필수인'],
+  ['delay', '지연'],
+  ['relaxed', '느긋한'],
+  ['random', '무작위의'],
+  ['minor', '사소한'],
+  ['stagnant', '정체된'],
+  ['casual', '가볍고 즉흥적인'],
+  ['luxury', '사치'],
+  ['confusion', '혼란'],
+  ['hindrance', '방해물'],
+  ['ignore', '무시하다'],
+  ['neglect', '소홀히 하다'],
+  ['relax', '긴장을 풀다'],
+  ['hesitate', '주저하다'],
+  ['slowly', '천천히'],
+  ['rarely', '드물게'],
+  ['eventually', '결국'],
+  ['barely', '간신히'],
+  ['swift', '재빠른'],
+  ['prompt', '재빠른'],
+  ['immediate', '즉각적인'],
+  ['borrow', '빌리다'],
+  ['meticulous', '세심한'],
+  ['thorough', '철저한'],
+  ['robust', '튼튼한'],
+  ['resilient', '회복력이 강한'],
+  ['inspect', '면밀히 조사하다'],
+  ['benevolent', '친절한'],
+  ['candid', '솔직한']
 ]);
 
 const GENERIC_DISTRACTORS = {
@@ -300,6 +352,7 @@ function expandSegments(segments, passage) {
   return current;
 }
 
+
 function buildGrammarProblemFromPassage(passage, docTitle, variantIndex = 0, reasonTag = 'doc_fallback') {
   if (!passage) return null;
   let segments = extractSegmentsWithIndices(passage);
@@ -339,51 +392,184 @@ function buildGrammarProblemFromPassage(passage, docTitle, variantIndex = 0, rea
     .map((seg) => (seg.start === mutated.start ? { ...mutated, order: seg.order } : seg))
     .sort((a, b) => a.start - b.start);
 
-  const optionReasons = {};
-  const optionTags = {};
-  const options = [];
-  let answerIndex = 1;
-  let optionCounter = 0;
-
-  const parts = [];
-  let cursor = 0;
   const passageStr = String(passage);
 
-  ordered.forEach((segment) => {
-    const marker = CIRCLED_DIGITS[optionCounter];
-    const segmentText = segment.start === mutated.start ? mutated.incorrectContent : segment.content;
-    const originalSnippet = passageStr.slice(segment.start, segment.end);
-    parts.push(passageStr.slice(cursor, segment.start));
-    parts.push(`<u>${segmentText}</u>`);
-    cursor = segment.end;
+  const highlights = [];
 
-    const optionText = `${marker} <u>${segmentText}</u>`;
-    options.push(optionText);
+  const escapeRegExp = (str) => str.replace(/[.*+?^${}()|[\\]\\]/g, '\$&');
+  const collectWordMatches = (slice) => {
+    const results = [];
+    const regex = /\b[A-Za-z][A-Za-z'\-]*\b/g;
+    let match;
+    while ((match = regex.exec(slice)) !== null) {
+      results.push({ match: match[0], index: match.index });
+    }
+    return results;
+  };
+  const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
-    if (segment.start === mutated.start) {
-      answerIndex = optionCounter + 1;
-      optionReasons[marker] = segment.rule.reason;
-      optionTags[marker] = segment.rule.tag;
-    } else {
-      optionReasons[marker] = '원문의 표현을 그대로 유지해 문법적으로 자연스럽습니다.';
-      optionTags[marker] = '정상 용법';
+  const isWordChar = (ch) => /[A-Za-z']/i.test(ch || '');
+
+  const expandByWords = (start, end, before = 1, after = 1) => {
+    let expandedStart = start;
+    let expandedEnd = end;
+
+    for (let b = 0; b < before; b += 1) {
+      let cursor = expandedStart;
+      while (cursor > 0 && !isWordChar(passageStr[cursor - 1])) {
+        cursor -= 1;
+      }
+      while (cursor > 0 && isWordChar(passageStr[cursor - 1])) {
+        cursor -= 1;
+      }
+      if (cursor === expandedStart) break;
+      expandedStart = cursor;
     }
 
-    optionCounter += 1;
+    for (let a = 0; a < after; a += 1) {
+      let cursor = expandedEnd;
+      while (cursor < passageStr.length && !isWordChar(passageStr[cursor])) {
+        cursor += 1;
+      }
+      while (cursor < passageStr.length && isWordChar(passageStr[cursor])) {
+        cursor += 1;
+      }
+      if (cursor === expandedEnd) break;
+      expandedEnd = cursor;
+    }
+
+    return { start: expandedStart, end: expandedEnd };
+  };
+
+  const buildNeutralHighlight = (segment) => {
+    const slice = String(segment.slice || passageStr.slice(segment.start, segment.end));
+    const words = collectWordMatches(slice);
+    if (!words.length) {
+      return null;
+    }
+    let startWordIndex = 0;
+    for (let idx = 0; idx < words.length; idx += 1) {
+      if (words[idx].match.length > 2) {
+        startWordIndex = idx;
+        break;
+      }
+    }
+    const endWordIndex = clamp(startWordIndex + 2, startWordIndex, words.length - 1);
+    const start = segment.start + words[startWordIndex].index;
+    const end = segment.start + words[endWordIndex].index + words[endWordIndex].match.length;
+    const original = passageStr.slice(start, end);
+    return {
+      start,
+      end,
+      original,
+      display: original
+    };
+  };
+
+  const buildMutatedHighlight = (segment, rule) => {
+    const slice = String(segment.slice || passageStr.slice(segment.start, segment.end));
+    const words = collectWordMatches(slice);
+    const targetLower = rule.original.toLowerCase();
+    let targetWordIndex = words.findIndex((entry) => entry.match.toLowerCase() === targetLower);
+    let start;
+    let end;
+    if (targetWordIndex !== -1) {
+      const startWordIndex = clamp(targetWordIndex - 1, 0, words.length - 1);
+      const endWordIndex = clamp(targetWordIndex + 1, 0, words.length - 1);
+      start = segment.start + words[startWordIndex].index;
+      end = segment.start + words[endWordIndex].index + words[endWordIndex].match.length;
+    } else {
+      const regex = new RegExp(escapeRegExp(rule.original), 'i');
+      const match = regex.exec(slice);
+      if (!match) {
+        return null;
+      }
+      const preliminaryStart = segment.start + match.index;
+      const preliminaryEnd = preliminaryStart + match[0].length;
+      const expanded = expandByWords(preliminaryStart, preliminaryEnd, 1, 1);
+      start = expanded.start;
+      end = expanded.end;
+    }
+    const originalSnippet = passageStr.slice(start, end);
+    const regex = new RegExp(escapeRegExp(rule.original), 'i');
+    const mutatedSnippet = originalSnippet.replace(regex, rule.incorrect);
+    if (originalSnippet === mutatedSnippet) {
+      return null;
+    }
+    return {
+      start,
+      end,
+      original: originalSnippet,
+      display: mutatedSnippet
+    };
+  };
+
+  ordered.forEach((segment, idx) => {
+    const isMutated = segment.start === mutated.start;
+    let highlight = null;
+    if (isMutated) {
+      highlight = buildMutatedHighlight(segment, segment.rule);
+    } else {
+      highlight = buildNeutralHighlight(segment);
+    }
+    if (!highlight) {
+      const fallbackOriginal = passageStr.slice(segment.start, segment.end);
+      highlight = {
+        start: segment.start,
+        end: segment.end,
+        original: fallbackOriginal,
+        display: isMutated ? segment.incorrectContent : fallbackOriginal
+      };
+    }
+    highlights.push({
+      ...highlight,
+      marker: CIRCLED_DIGITS[idx],
+      isMutated,
+      rule: segment.rule
+    });
   });
-  parts.push(passageStr.slice(cursor));
-  const mainText = parts.join('');
+
+  highlights.sort((a, b) => a.start - b.start);
+
+  const optionReasons = {};
+  const optionTags = {};
+  let answerIndex = 1;
+
+  const replacements = highlights.map((item, index) => {
+    if (item.isMutated) {
+      answerIndex = index + 1;
+      optionReasons[item.marker] = item.rule.reason;
+      optionTags[item.marker] = item.rule.tag;
+    } else {
+      optionReasons[item.marker] = '원문의 표현을 그대로 유지해 문법적으로 자연스럽습니다.';
+      optionTags[item.marker] = '정상 용법';
+    }
+    return {
+      start: item.start,
+      end: item.end,
+      marker: item.marker,
+      display: item.display
+    };
+  });
+
+  const options = replacements.map((item) => `${item.marker} <u>${item.display}</u>`);
+
+  const sortedForInsertion = [...replacements].sort((a, b) => b.start - a.start);
+  let mainText = passageStr;
+  sortedForInsertion.forEach((rep) => {
+    mainText = `${mainText.slice(0, rep.start)}<u>${rep.display}</u>${mainText.slice(rep.end)}`;
+  });
   const answerMarker = CIRCLED_DIGITS[answerIndex - 1];
-  const otherMarkers = ordered
-    .map((_, idx) => CIRCLED_DIGITS[idx])
+  const otherMarkers = highlights
+    .map((item) => item.marker)
     .filter((marker) => marker !== answerMarker)
     .join(', ');
 
   const explanationSentences = [
-    `${docTitle || '이 지문'}의 밑줄 문장 가운데 ${answerMarker}번이 문법상 오류를 드러냅니다.`,
+    `${docTitle || '이 지문'}의 밑줄 구간 가운데 ${answerMarker}번이 문법상 오류를 드러냅니다.`,
     `${answerMarker}번은 '${mutated.rule.original}'을 '${mutated.rule.incorrect}'로 바꾸어 ${mutated.rule.tag} 오류가 발생했습니다.`,
-    `${otherMarkers}번은 원문과 동일해 자연스러운 문장 구조를 유지합니다.`,
-    '따라서 오류가 있는 구문을 찾아 교정하면 원문의 논지를 정확히 이해할 수 있습니다.'
+    `${otherMarkers}번은 원문과 동일해 자연스러운 문장 구조를 보존합니다.`,
+    '따라서 오류가 있는 구문을 정확히 찾아 교정하면 시험 수준의 어법 판단이 가능합니다.'
   ];
 
   const explanation = explanationSentences.join(' ');
@@ -419,6 +605,36 @@ async function ensureWordnetReady() {
     wordnetReady = wordnet.init();
   }
   return wordnetReady;
+}
+
+async function warmupWordnet() {
+  if (!wordnetWarmupPromise) {
+    wordnetWarmupPromise = (async () => {
+      try {
+        await ensureWordnetReady();
+        // Warm up sequentially to avoid hammering the disk first time.
+        /* eslint-disable no-await-in-loop */
+        for (const seed of WORDNET_WARMUP_SEEDS) {
+          try {
+            await wordnet.lookup(seed);
+          } catch (lookupError) {
+            // eslint-disable-next-line no-console
+            console.warn('[doc-fallback] warmup lookup failed', seed, lookupError?.message || lookupError);
+          }
+        }
+        /* eslint-enable no-await-in-loop */
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.warn('[doc-fallback] wordnet warmup error', error?.message || error);
+      }
+    })();
+  }
+  return wordnetWarmupPromise;
+}
+
+const NODE_ENV = (process.env.NODE_ENV || '').toLowerCase();
+if (!['test', 'ci'].includes(NODE_ENV)) {
+  warmupWordnet();
 }
 
 async function lookupWordnet(word) {
@@ -464,12 +680,42 @@ function selectDistractors(pos, count, usedWords = new Set()) {
   return chosen;
 }
 
+function translateGlossToKorean(gloss = '') {
+  const trimmed = gloss.trim();
+  if (!trimmed) return '';
+
+  const direct = GLOSS_TRANSLATIONS.find((entry) => entry.regex.test(trimmed));
+  if (direct) {
+    return direct.meaning;
+  }
+
+  const simplified = trimmed
+    .toLowerCase()
+    .replace(/[^a-z\s]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean);
+
+  const translatedWords = simplified
+    .map((word) => SIMPLE_WORD_TRANSLATIONS.get(word))
+    .filter(Boolean);
+
+  if (translatedWords.length >= 2) {
+    return translatedWords.join(' ');
+  }
+  if (translatedWords.length === 1) {
+    return `${translatedWords[0]} 의미`;
+  }
+  return '';
+}
+
 function buildOptionReason(marker, word, gloss, korean, isCorrect, targetWord, targetMeaning) {
+  const glossKorean = korean || translateGlossToKorean(gloss);
+  const glossDisplay = glossKorean || (gloss ? `"${gloss}" 의미` : '문맥에 맞지 않는 의미');
   if (isCorrect) {
     const meaningText = targetMeaning ? `${targetMeaning} 의미` : '같은 의미';
-    return `${marker}번 ${word}은 WordNet 정의가 "${gloss}"로, ${meaningText}를 공유합니다.`;
+    return `${marker}번 ${word}은 ${glossDisplay}라서 ${meaningText}를 공유합니다.`;
   }
-  return `${marker}번 ${word}은 "${gloss}"(=${korean}) 의미라 ${targetWord}의 뜻과 다릅니다.`;
+  return `${marker}번 ${word}은 ${glossDisplay}라 ${targetWord}의 뜻과 다릅니다.`;
 }
 
 const KOREAN_MEANING_PATTERNS = [
@@ -532,110 +778,209 @@ function wrapUnderlinedWord(passage, word) {
   return passage.replace(regex, '<u>$1</u>');
 }
 
+function applyUnderlinesWithReplacement(passage, selections = []) {
+  if (!Array.isArray(selections) || selections.length !== 5) {
+    return null;
+  }
+  const used = new Array(passage.length).fill(false);
+  const segments = [];
+
+  const locate = (word) => {
+    const pattern = new RegExp(`\b${escapeRegex(word)}\b`, 'gi');
+    let match;
+    while ((match = pattern.exec(passage)) !== null) {
+      const start = match.index;
+      const end = start + match[0].length;
+      let overlaps = false;
+      for (let idx = start; idx < end; idx += 1) {
+        if (used[idx]) {
+          overlaps = true;
+          break;
+        }
+      }
+      if (!overlaps) {
+        for (let idx = start; idx < end; idx += 1) {
+          used[idx] = true;
+        }
+        return { start, end, text: match[0] };
+      }
+    }
+    return null;
+  };
+
+  for (const selection of selections) {
+    const match = locate(selection.original);
+    if (!match) {
+      return null;
+    }
+    segments.push({
+      ...match,
+      kind: selection.kind,
+      replacement: selection.kind === 'incorrect' ? selection.replacement : match.text,
+      gloss: selection.gloss || ''
+    });
+  }
+
+  segments.sort((a, b) => a.start - b.start);
+
+  let updatedText = passage;
+  const orderedSegments = [];
+  let incorrectIndex = -1;
+
+  for (let idx = segments.length - 1; idx >= 0; idx -= 1) {
+    const segment = segments[idx];
+    updatedText = `${updatedText.slice(0, segment.start)}<u>${segment.replacement}</u>${updatedText.slice(segment.end)}`;
+  }
+
+  const underlinePattern = /<u[\s\S]*?<\/u>/gi;
+  let match;
+  let cursor = 0;
+  while ((match = underlinePattern.exec(updatedText)) !== null) {
+    const snippet = match[0].replace(/<\/?.*?>/g, '') || '';
+    const segment = segments[cursor];
+    orderedSegments.push({ text: snippet, gloss: segment.gloss, kind: segment.kind });
+    if (segment.kind === 'incorrect') {
+      incorrectIndex = cursor;
+    }
+    cursor += 1;
+  }
+
+  if (orderedSegments.length !== selections.length) {
+    return null;
+  }
+
+  return {
+    updatedText,
+    orderedSegments,
+    incorrectIndex
+  };
+}
+
 async function buildVocabularyProblemFromPassage(passage, docTitle, variantIndex = 0, reasonTag = 'doc_fallback') {
   if (!passage) return null;
-  const candidates = extractCandidateWords(passage);
-  for (let attempt = 0; attempt < Math.min(candidates.length, MAX_VOCAB_ATTEMPTS_PER_PASSAGE); attempt += 1) {
-    const word = candidates[attempt];
+  const candidates = extractCandidateWords(passage).filter((word, idx, arr) => arr.indexOf(word) === idx);
+  if (candidates.length < 5) {
+    return null;
+  }
+
+  for (let attempt = 0; attempt < candidates.length; attempt += 1) {
+    const targetWord = candidates[attempt];
     try {
-      const definitions = await lookupWordnet(word);
+      const definitions = await lookupWordnet(targetWord);
       if (!definitions.length) continue;
       const viable = definitions
         .map((def) => {
-          const rawSynonyms = (def.meta?.words || []).map((entry) => normalizeSynonym(entry.word));
-          const synonyms = rawSynonyms.filter((syn) => syn.toLowerCase() !== word.toLowerCase() && /^[A-Za-z][A-Za-z\s-]{1,20}$/.test(syn));
+          const part = def.meta?.synsetType ? def.meta.synsetType[0] : 'n';
+          const gloss = def.glossary || def.gloss || '';
+          const distractors = selectDistractors(mapPos(part), 3, new Set([targetWord.toLowerCase()]));
           return {
-            pos: def.meta?.synsetType ? def.meta.synsetType[0] : 'n',
-            gloss: def.glossary || def.gloss || '',
-            synonyms
+            part,
+            gloss,
+            distractors
           };
         })
-        .filter((def) => def.synonyms.length > 0);
+        .filter((entry) => entry.distractors.length);
       if (!viable.length) continue;
-      const sense = viable[0];
-      const synonym = sense.synonyms[0];
-      const pos = mapPos(sense.pos);
-      const distractors = selectDistractors(pos, 4, new Set([word.toLowerCase(), synonym.toLowerCase()]));
-      if (distractors.length < 4) continue;
-      const underlinedPassage = wrapUnderlinedWord(passage, word);
-      if (underlinedPassage === passage) {
+
+      const chosen = viable[0];
+      const incorrectEntry = chosen.distractors[0];
+      const incorrectWord = incorrectEntry.word;
+      if (!incorrectWord || incorrectWord.toLowerCase() === targetWord.toLowerCase()) {
         continue;
       }
-      const koreanMeaning = deriveKoreanMeaning(word, sense.gloss);
-      const optionsPool = [
-        {
-          marker: null,
-          word: synonym,
-          gloss: sense.gloss,
-          korean: koreanMeaning,
-          correct: true
-        },
-        ...distractors.map((item) => ({
-          marker: null,
-          word: item.word,
-          gloss: item.gloss,
-          korean: item.korean,
-          correct: false
-        }))
+
+      const fillerWords = candidates.filter((word) => word !== targetWord).slice(0, 4);
+      if (fillerWords.length < 4) {
+        continue;
+      }
+
+      const selections = [
+        { kind: 'incorrect', original: targetWord, replacement: incorrectWord, gloss: incorrectEntry.gloss || chosen.gloss },
+        ...fillerWords.map((word) => ({ kind: 'correct', original: word }))
       ];
-      shuffle(optionsPool, variantIndex + attempt);
-      const options = [];
-      const optionReasons = {};
-      const targetMeaningKo = koreanMeaning || sense.gloss;
-      const usedMarkers = [];
-      let answerIndex = 1;
-      optionsPool.forEach((entry, idx) => {
-        const marker = CIRCLED_DIGITS[idx];
-        entry.marker = marker;
-        options.push(`${marker} ${entry.word}`);
-        optionReasons[marker] = buildOptionReason(marker, entry.word, entry.gloss, entry.korean, entry.correct, word, targetMeaningKo);
-        if (entry.correct) {
-          answerIndex = idx + 1;
-        }
-        usedMarkers.push(marker);
-      });
-      const answerMarker = CIRCLED_DIGITS[answerIndex - 1];
-      const otherMarkers = usedMarkers.filter((mk) => mk !== answerMarker).join(', ');
+
+      const applied = applyUnderlinesWithReplacement(passage, selections);
+      if (!applied) {
+        continue;
+      }
+
+      const { updatedText, orderedSegments, incorrectIndex } = applied;
+      if (orderedSegments.length !== 5 || incorrectIndex === -1) {
+        continue;
+      }
+
+      const options = orderedSegments.map((segment, idx) => `${CIRCLED_DIGITS[idx]} <u>${segment.text}</u>`);
+      const answerValue = String(incorrectIndex + 1);
+      const incorrectMarker = CIRCLED_DIGITS[incorrectIndex];
+      const correctionWord = selections[0].original;
+      const incorrectText = selections[0].replacement;
+      const gloss = selections[0].gloss || '';
+      const glossKorean = translateGlossToKorean(gloss);
+      const glossDisplay = glossKorean || (gloss ? `"${gloss}" 의미` : '문맥에 어울리지 않는 의미');
+      const otherMarkers = orderedSegments
+        .map((segment, idx) => ({ segment, idx }))
+        .filter((entry) => entry.idx !== incorrectIndex)
+        .map((entry) => CIRCLED_DIGITS[entry.idx])
+        .join(', ');
 
       const explanationSentences = [
-        `${docTitle || '이 지문'}에서 밑줄 친 ${word}는 "${sense.gloss}" 의미로 쓰였습니다.`,
-        `${answerMarker}번 ${optionsPool[answerIndex - 1].word}이 ${targetMeaningKo} 의미 영역이라 정답입니다.`,
-        `${otherMarkers}번은 각각 ${optionsPool
-          .filter((entry) => !entry.correct)
-          .map((entry) => `${entry.word}("${entry.gloss}")`)
-          .join(', ')} 뜻이라 문맥과 어긋납니다.`,
-        '밑줄 단어의 의미 차이를 판별하면 지문의 논지를 더욱 정확히 파악할 수 있습니다.'
+        `${docTitle || '이 지문'}은 상황을 설명하며 대부분의 밑줄 표현이 문맥에 맞습니다.`,
+        `${incorrectMarker}번 ${incorrectText}는 ${glossDisplay}라서 ${correctionWord}로 고쳐야 자연스럽습니다.`,
+        `${otherMarkers}번 표현은 원문의 의미와 흐름에 맞는 자연스러운 어휘입니다.`
       ];
 
-      const explanation = explanationSentences.join(' ');
+      const optionReasons = {};
+      optionReasons[incorrectMarker] = `${incorrectText}는 ${glossDisplay}라서 ${correctionWord}로 수정해야 합니다.`;
+      orderedSegments.forEach((segment, idx) => {
+        const marker = CIRCLED_DIGITS[idx];
+        if (marker === incorrectMarker) return;
+        optionReasons[marker] = `${segment.text}는 문맥에 자연스럽게 어울립니다.`;
+      });
+
+      const metadata = {
+        generator: 'doc-fallback',
+        fallbackReason: reasonTag,
+        documentTitle: docTitle,
+        vocabularyUsage: true,
+        incorrectIndex: incorrectIndex + 1,
+        incorrectSnippet: incorrectText,
+        optionReasons,
+        optionStatuses: orderedSegments.map((_, idx) => (idx === incorrectIndex ? 'incorrect' : 'correct')),
+        underlinedSegments: orderedSegments.map((segment) => segment.text),
+        lexicalNote: {
+          targetWord: incorrectText,
+          partOfSpeech: mapPos(chosen.part),
+          correction: correctionWord,
+          meaning: glossKorean || gloss || '문맥과 맞지 않는 어휘입니다.',
+          reason: glossDisplay
+        },
+        correction: {
+          replacement: correctionWord,
+          reason: glossKorean
+            ? `${incorrectText}는 ${glossKorean}라 부적절하므로 ${correctionWord}로 바꿔야 합니다.`
+            : gloss
+            ? `${incorrectText}는 ${gloss} 의미라 부적절하므로 ${correctionWord}로 바꿔야 합니다.`
+            : `${incorrectText} 대신 ${correctionWord}를 사용해야 자연스럽습니다.`
+        }
+      };
 
       return {
         id: `vocab_doc_fallback_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
         type: 'vocabulary',
-        question: '밑줄 친 단어와 의미가 가장 가까운 것을 고르시오.',
-        mainText: underlinedPassage,
-        text: underlinedPassage,
+        question: '다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?',
+        mainText: updatedText,
+        text: updatedText,
         options,
-        answer: String(answerIndex),
-        correctAnswer: String(answerIndex),
-        explanation,
+        answer: answerValue,
+        correctAnswer: answerValue,
+        explanation: explanationSentences.join(' '),
         difficulty: 'csat-advanced',
-        metadata: {
-          generator: 'doc-fallback',
-          fallbackReason: reasonTag,
-          documentTitle: docTitle,
-          targetWord: word,
-          targetLemma: word,
-          targetMeaning: targetMeaningKo,
-          optionReasons,
-          vocabularyFocus: '문맥 어휘',
-          lexicalNote: buildLexicalNote(word, pos, synonym, sense.gloss, targetMeaningKo)
-        },
+        metadata,
         sourceLabel: docTitle ? `출처│${docTitle}` : '출처│업로드 문서'
       };
     } catch (error) {
       // eslint-disable-next-line no-console
-      console.warn('[doc-fallback] wordnet lookup failed for', word, error?.message || error);
+      console.warn('[doc-fallback] vocabulary generation failed for', targetWord, error?.message || error);
     }
   }
   return null;
@@ -707,5 +1052,8 @@ async function buildVocabularyFallbackProblems({ passages = [], count = 1, docTi
 
 module.exports = {
   buildGrammarFallbackProblems,
-  buildVocabularyFallbackProblems
+  buildVocabularyFallbackProblems,
+  // Exposed for tests so we can verify Korean gloss conversion logic.
+  translateGlossToKorean,
+  warmupWordnet
 };

@@ -22,6 +22,7 @@
     "format": "prettier --write .",
     "sync:grammar-manual": "node scripts/sync-grammar-manual.js",
     "extract:grammar-baseline": "node scripts/extract-grammar-baseline.js",
+    "check:grammar-manual": "node scripts/check-grammar-manual.js",
     "prepare": "husky install",
     "session:summary": "node scripts/auto-session-summary.js",
     "session:auto": "node scripts/auto-session-daemon.js",
@@ -29,6 +30,7 @@
     "doctor:client": "node scripts/doctor-client.js",
     "test": "node --test server/tests"
   },
+  "pretest": "npm run check:grammar-manual",
   "engines": {
     "node": ">=18"
   },
