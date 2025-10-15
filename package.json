@@ -20,6 +20,8 @@
     "encoding:check": "node scripts/scan-mojibake.js --fail",
     "lint": "eslint \"server/**/*.js\"",
     "format": "prettier --write .",
+    "sync:grammar-manual": "node scripts/sync-grammar-manual.js",
+    "extract:grammar-baseline": "node scripts/extract-grammar-baseline.js",
     "prepare": "husky install",
     "session:summary": "node scripts/auto-session-summary.js",
     "session:auto": "node scripts/auto-session-daemon.js",

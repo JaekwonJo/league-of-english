@@ -7,10 +7,21 @@ const TEMPLATE_DIR = path.join(ROOT_DIR, 'docs', 'problem-templates');
 
 const manualCache = new Map();
 
+const GRAMMAR_KR_FILENAME = 'chatgpt5 전용 어법 문제 제작 통합 메뉴얼.md';
+
+const DEFAULT_GRAMMAR_PATHS = [
+  '/mnt/c/Users/jaekw/Documents/웹앱문제출제메뉴얼📘 chatgpt5 전용어법문제제작통합메뉴얼.md',
+  '/mnt/c/Users/jaekw/Documents/웹앱/문제출제 메뉴얼/📘 chatgpt5 전용 어법 문제 제작 통합 메뉴얼.md'
+];
+
 const MANUAL_SOURCES = {
   grammar: [
     process.env.LOE_GRAMMAR_MANUAL_PATH,
-    path.join(PROBLEM_MANUAL_DIR, 'grammar_problem_manual.md')
+    ...DEFAULT_GRAMMAR_PATHS,
+    path.join(ROOT_DIR, GRAMMAR_KR_FILENAME),
+    path.join(ROOT_DIR, 'grammar_problem_manual.md'),
+    path.join(PROBLEM_MANUAL_DIR, 'grammar_problem_manual.md'),
+    path.join(TEMPLATE_DIR, 'eobeop-grammar.md')
   ],
   vocabulary: [
     process.env.LOE_VOCABULARY_MANUAL_PATH,
@@ -79,13 +90,14 @@ function loadManualContent(cacheKey, rawCandidates, label) {
 
 function sliceManual(cacheKey, sources, limit, label) {
   const content = loadManualContent(cacheKey, sources, label) || '';
-  if (!limit || content.length <= limit) {
+  const shouldBypassLimit = cacheKey === 'grammar';
+  if (shouldBypassLimit || !Number.isFinite(limit) || content.length <= limit) {
     return content;
   }
   return content.slice(0, Math.max(limit, 0));
 }
 
-function readGrammarManual(limit = 2000) {
+function readGrammarManual(limit) {
   return sliceManual('grammar', MANUAL_SOURCES.grammar, limit, 'grammar');
 }
 

@@ -68,7 +68,7 @@ function buildGrammarPrompt({
   const answerField = difficulty === 'advanced'
     ? '"correctAnswers": [2,4], // 1-based indexes of all correct options'
     : '"correctAnswer": 3 // single 1-based index';
-  const manualSnippet = clip(manualExcerpt, 900);
+  const manualSnippet = manualExcerpt || '';
   const clippedPassage = clip(passage, 1600);
   let blueprint = GRAMMAR_JSON_BLUEPRINT
     .replace('"type": "grammar"', `"type": "${type}"`)
@@ -112,7 +112,7 @@ function buildGrammarPrompt({
     'Template guidance (Korean, authoritative):',
     specSnippet || '(spec unavailable – rely on instructions below)',
     '',
-    manualSnippet ? `Handbook excerpt (truncated):\n${manualSnippet}\n` : '',
+    manualSnippet ? `Handbook (full text):\n${manualSnippet}\n` : '',
     'Return raw JSON only with this structure:',
     blueprint,
     '',

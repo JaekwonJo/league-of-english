@@ -1,9 +1,8 @@
-## 2025-10-22 (grammar manual sync kickoff)
-- Issue: 어법 메뉴얼 최신본이 코드 프롬프트/검증기와 따로 놀아 OpenAI가 안내 문장을 빠뜨리거나 fallback이 이전 지침을 쓰는 사례가 반복되고, 월고 PDF 기준 데이터도 아직 준비되지 않았어요.
-- Cause: 메뉴얼을 복사·붙여넣는 수동 과정이 남아 있고, `2024년월고모의고사어법샘플100문제.pdf`에서 밑줄·번호·정답을 추출하는 도구가 없는 상태입니다.
-- Plan: `scripts/sync-grammar-manual.js`로 메뉴얼 파일을 읽어 프롬프트/검증기/fallback 템플릿에 그대로 반영하고, `scripts/extract-grammar-baseline.js`로 월고 PDF 100문항을 JSON 기준 데이터로 구조화한 뒤 통합 회귀 테스트에 연결합니다.
-- Progress: README·PROJECT_STATE·BUILDLOG를 업데이트해 메뉴얼 싱크/월고 PDF 파이프라인/통합 테스트를 Top 3 우선순위로 맞추고, Known issues에 메뉴얼-코드 불일치 항목을 추가했습니다.
-- Verification: 문서 검토 (코드 실행 전 단계).
+- Issue: 어법 메뉴얼 최신본이 프롬프트에 일부만 들어가고 fallback은 예전 지침을 쓰면서 품질 편차가 생겼고, 월고 PDF 기준 데이터가 없어 회귀 테스트를 돌릴 수 없었습니다.
+- Fix: `scripts/sync-grammar-manual.js`가 Windows 문서함 메뉴얼을 루트/`problem manual` 경로에 그대로 복사하도록 만들고, manual loader와 `eobeopTemplate`이 메뉴얼 전문을 그대로 프롬프트에 포함합니다.
+- Fix: `scripts/extract-grammar-baseline.js`가 월고 2024 어법 100문제를 파싱해 `server/utils/data/wolgo-2024-03-grammar-baseline.json`으로 정리하며, 각 ①~⑤ 밑줄은 trimmed segment와 raw 텍스트를 함께 저장합니다.
+- Files: scripts/sync-grammar-manual.js, scripts/extract-grammar-baseline.js, package.json, server/services/ai-problem/internal/manualLoader.js, server/utils/eobeopTemplate.js, server/utils/data/wolgo-2024-03-grammar-baseline.json, README.md, PROJECT_STATE.md, BUILDLOG.md.
+- Verification: 스크립트 수동 실행(메뉴얼 SHA1 5106bc6856e10bde2902818e506564ddefac7fa1), JSON 출력 100문항 확인.
 
 ## 2025-10-21 (grammar generator redesign kickoff)
 - Issue: 어법 문제 생성이 밑줄 5개 추출·오류 유형 태깅·해설 작성 단계마다 흔들려, 같은 문장이 보기로 반복되거나 잘못된 밑줄이 그대로 통과하고 있어요.

@@ -24,8 +24,8 @@
 - Membership tiers: 무료 회원은 생성 즉시 주어지는 미저장(캐시 X) 문제와 느린 응답 속도로 체험하고, 유료(프리미엄 9,900원/프로 19,900원)는 검증된 문제 캐시와 빠른 배포, 프로는 추가 분석 리포트까지 받습니다.
 
 ## Current Stage
-- `/mnt/c/Users/jaekw/Documents/웹앱문제출제메뉴얼📘 chatgpt5 전용어법문제제작통합메뉴얼.md`를 읽어 OpenAI 프롬프트·검증기·fallback이 같은 지침을 쓰도록 `scripts/sync-grammar-manual.js` 설계를 시작했습니다. 메뉴얼이 바뀌면 diff를 기록하고 배포 전 로그에 경고를 띄울 계획입니다.
-- `scripts/extract-grammar-baseline.js` 초안으로 `웹앱문서샘플/2024년월고모의고사어법샘플100문제.pdf`에서 밑줄 위치·번호·정답·오답 근거를 JSON으로 추출하는 실험을 진행 중입니다. 생성기/검증기가 참고할 기준 데이터셋으로 바로 연결할 예정입니다.
+- `scripts/sync-grammar-manual.js`가 `/mnt/c/Users/jaekw/Documents/웹앱/문제출제 메뉴얼/📘 chatgpt5 전용 어법 문제 제작 통합 메뉴얼.md`를 읽어 루트(`chatgpt5 전용 어법 문제 제작 통합 메뉴얼.md`)와 `problem manual/grammar_problem_manual.md`에 그대로 복사하고, 프롬프트는 메뉴얼 전문을 그대로 포함합니다.
+- `scripts/extract-grammar-baseline.js`가 `/mnt/c/Users/jaekw/Documents/웹앱/문서샘플/2024년3월고2모의고사_어법샘플100문제.pdf`를 파싱해 `server/utils/data/wolgo-2024-03-grammar-baseline.json`을 만들었고, 각 ①~⑤ 구간은 실제 밑줄 길이에 맞게 정규화됐습니다.
 - 업로드 문서에서 직접 밑줄/오류를 추출하는 `documentProblemFallback`이 grammar·vocabulary 문제를 즉시 만들어 OpenAI 비가동 시에도 요청 수만큼 시험형 문항을 보장합니다. WordNet을 통해 동의어·오답 근거·lexicalNote를 채우고, sourceLabel은 원문 문서명을 사용합니다.
 - Grammar·vocabulary 생성 루프가 실패 로그를 분석해 지시문을 보강하고, 4번째 시도부터 gpt-4o로 승격해 긴 문장/어휘 조건에서도 6회 이내 성공률을 끌어올렸습니다.
 - 관리자·학생 분석 화면이 개수 선택 모달과 전 화면 로딩 오버레이로 새로고침되며, DocumentAnalyzer가 문장별 어휘/이모지/현대 사례를 빠짐없이 채운 Variant를 반환합니다.
@@ -76,17 +76,20 @@
 - 학습 화면 어법 보기 컴포넌트가 `<u>…</u>` 구간을 파싱해 ①~⑤ 보기로 자동 재조립하므로, 본문 전체가 밑줄로 보이거나 옵션이 비어 있는 문제를 막았습니다.
 
 ## Next 3 (2025-10-22)
-1. **어법 메뉴얼 싱크 자동화.** 메뉴얼 원문이 OpenAI 프롬프트·검증기·fallback에서 1:1로 쓰이는지 검사하고, 불일치 시 바로 경고하는 스크립트를 완성합니다. (콘텐츠 일관성)
-2. **월고 2024 PDF 기준 세트 구축.** `2024년월고모의고사어법샘플100문제.pdf`에서 밑줄 위치·선지 번호·정답/오답 사유를 추출해 생성기와 비교할 기준 JSON을 만듭니다. (밑줄 정확도)
-3. **통합 회귀 테스트 파이프라인.** 업로드→문항 생성(OpenAI+fallback)→학습 화면 렌더링을 자동으로 돌려 메뉴얼·PDF 기준과 비교하는 테스트를 세팅합니다. (배포 안전성)
-4. **WordNet gloss 한국어 사전 구축.** 영어 gloss를 한국어 뜻·반의어·예문으로 변환해 fallback 해설까지 자연스러운 한국어로 바꿀 데이터셋을 확정합니다. (학생 이해도)
+1. **월고 baseline 회귀 테스트.** `wolgo-2024-03-grammar-baseline.json`을 이용해 OpenAI·fallback 결과를 나란히 비교하는 회귀 스냅샷 테스트를 추가합니다. (품질 검증)
+2. **메뉴얼 해시 가드.** CI에서 `npm run sync:grammar-manual` 실행 결과 해시를 검사해 메뉴얼 누락 배포를 차단합니다. (운영 안정성)
+3. **WordNet warm-up + 한국어 사전 전환.** WordNet 초기화와 gloss 한글화를 작업 큐로 옮겨 첫 호출에서도 fallback 해설이 자연스러운 한국어로 곧바로 나오게 합니다. (콜드 스타트 개선)
 
 ## Known issues
-- 어법 메뉴얼 파일과 코드 프롬프트/검증기가 완전히 동기화되지 않아 최신 지침이 누락될 수 있습니다.
-- 어법 문제 생성 파이프라인이 밑줄 선택·오류 태깅·해설 포맷에서 여전히 일관성이 부족합니다. 특히 문장이 4개 이하인 지문에서는 같은 문장이 보기로 여러 번 등장하고, 밑줄 위치가 실제 오류와 어긋나는 경우가 있습니다.
-- WordNet gloss 기반 한국어 표현이 영어 문장을 포함해 해설이 어색합니다. 핵심 단어별 한국어 사전을 정비해야 합니다.
-- WordNet 데이터베이스 초기화가 첫 요청 시 수 초 걸려 콜드 스타트 응답이 길어질 수 있습니다. 서버 부팅 단계에서 미리 warm-up 하는 작업이 필요합니다.
+- 월고 기준 세트를 이용한 회귀 테스트가 아직 없어서 생성기가 메뉴얼을 어겨도 배포 전에 탐지하지 못합니다.
+- CI/배포 파이프라인이 `sync:grammar-manual` 실행 여부나 해시를 확인하지 않아 메뉴얼 미동기화 위험이 남아 있습니다.
+- WordNet gloss가 영어 표현 위주라 fallback 해설이 여전히 어색하고, 첫 요청은 초기화 지연으로 느립니다.
 - 학습 설정 2단계에서 브라우저 뒤로 가기 시 홈으로 이동하는 문제가 여전히 보고돼 히스토리 가드 개선이 남아 있습니다.
+
+## Resolved (2025-10-22 - grammar manual sync + 월고 baseline)
+- `scripts/sync-grammar-manual.js`가 Windows 문서함의 메뉴얼을 루트/`problem manual/` 경로로 그대로 복사해 프롬프트·검증기·fallback이 같은 지침을 공유합니다.
+- Manual loader와 `eobeopTemplate`이 메뉴얼 전문을 그대로 프롬프트에 포함해 더 이상 잘리지 않습니다.
+- `scripts/extract-grammar-baseline.js`가 월고 2024 어법 100문제를 JSON(`server/utils/data/wolgo-2024-03-grammar-baseline.json`)으로 추출해 각 ①~⑤ 밑줄을 trimmed segment와 raw 텍스트로 저장합니다.
 
 ## Resolved (2025-10-12 - Wolgo 파서 + 어휘 fallback 확장)
 - `scripts/generate-fallback-grammar.js`가 Wolgo 2022년 9월 어법 PDF를 JSON으로 구조화해 29문항 fallback 은행과 `server/utils/grammarPdfParser.js`를 제공합니다.

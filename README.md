@@ -10,12 +10,12 @@
 3. **운영 효율**: 선생님-학부모-관리자가 한 대시보드에서 진행 상황 확인.
 4. **수익 모델**: 학원 내부에서 사용하다가 B2B/B2C SaaS로 확장 가능한 구독 구조.
 
-> Latest update (2025-10-22): `/mnt/c/Users/jaekw/Documents/웹앱문제출제메뉴얼📘 chatgpt5 전용어법문제제작통합메뉴얼.md` 내용을 OpenAI 프롬프트와 fallback 루프에 그대로 넣기 위한 싱크 스크립트를 만들고, `웹앱문서샘플/2024년월고모의고사어법샘플100문제.pdf`에서 밑줄·번호 데이터를 자동 추출해 기준 세트를 만드는 작업을 시작했어요.
+> Latest update (2025-10-22): `scripts/sync-grammar-manual.js`가 Windows 문서함의 어법 메뉴얼을 그대로 복사해 리포지토리 전 경로에 동기화하고, 프롬프트는 메뉴얼 전문을 그대로 포함해요. `scripts/extract-grammar-baseline.js`는 월고 2024 어법 100문제를 JSON으로 추출해 기준 세트를 완성했습니다.
 
 ### 오늘의 Top 3
-- 어법 메뉴얼 싱크 스크립트를 만들어 메뉴얼 원문 전체가 OpenAI 프롬프트/검증기에 그대로 전달되도록 하고, fallback도 같은 지침을 사용하게 맞춰요. (문제 품질 보증)
-- `2024년월고모의고사어법샘플100문제.pdf`를 자동 파싱해 밑줄 위치·번호·정답을 구조화하고, 생성기·검증기가 참고할 기준 데이터를 쌓아요. (밑줄 정확도)
-- 업로드→OpenAI→fallback→학습 화면까지 통합 회귀 테스트를 구성해 메뉴얼·PDF 데이터가 제대로 반영됐는지 매 배포마다 확인해요. (배포 안전성)
+- 월고 2024 JSON 기준 세트를 이용해 OpenAI·fallback 생성 결과를 비교하는 회귀 스냅샷 테스트를 세팅해요. (품질 검증)
+- CI에서 `npm run sync:grammar-manual` 결과 해시를 확인해 메뉴얼 누락 배포를 막아요. (운영 안전)
+- WordNet warm-up과 한국어 사전 변환을 작업 큐로 옮겨 첫 호출에서도 fallback 해설이 바로 나오게 손봐요. (콜드 스타트 개선)
 
 ### 요금제 (초안)
 - **무료**: 생성 즉시 DB에 저장하지 않는 체험용 문제만 제공되고, 응답 속도는 의도적으로 느려요.
@@ -121,11 +121,17 @@ npm run dev:all
 #   - API: http://localhost:5000
 #   - Web: http://localhost:3000
 
-# 3) 품질 체크
+# 3) 어법 메뉴얼 원본을 리포지토리에 동기화
+npm run sync:grammar-manual
+
+# 4) 월고 2024 어법 100문제 기준 세트 추출
+npm run extract:grammar-baseline
+
+# 5) 품질 체크
 npm test        # 서버 테스트 (node --test)
 npm run lint    # ESLint (server/**/*.js)
 
-# 4) 문서/매뉴얼 갱신
+# 6) 문서/매뉴얼 갱신
 docs: node scripts/update-problem-manuals.js
 ```
 - 환경 변수: `OPENAI_API_KEY`, `JWT_SECRET`, `REACT_APP_API_URL` 등 `.env`로 관리.
