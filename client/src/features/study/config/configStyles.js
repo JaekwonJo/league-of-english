@@ -22,6 +22,7 @@ const styles = {
     marginBottom: '36px',
   },
   headerSlot: {
+    marginTop: '32px',
     marginBottom: '24px',
   },
   savedSessionCard: {
@@ -222,6 +223,13 @@ const styles = {
     color: 'var(--text-on-accent)',
     boxShadow: '0 10px 24px rgba(20, 184, 166, 0.28)',
   },
+  previewButton: {
+    ...baseButton,
+    padding: '8px 18px',
+    background: 'linear-gradient(135deg, var(--indigo) 0%, var(--violet) 100%)',
+    color: 'var(--text-on-accent)',
+    boxShadow: '0 12px 28px rgba(99, 102, 241, 0.28)'
+  },
   dangerButton: {
     ...baseButton,
     background: 'linear-gradient(135deg, var(--danger-strong) 0%, var(--danger-stronger) 100%)',
@@ -272,7 +280,7 @@ const styles = {
     borderRadius: '10px',
     border: 'none',
     background: 'var(--color-blue-500)',
-    color: '#fff',
+    color: 'var(--text-on-accent)',
     fontWeight: 600,
     cursor: 'pointer',
     boxShadow: '0 6px 16px rgba(37, 99, 235, 0.25)',

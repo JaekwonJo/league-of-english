@@ -18,6 +18,7 @@ const ProblemTypeStep = ({
   onChangeValue,
   onStart,
   canStart,
+  onPreviewProblem,
 }) => (
   <>
     <div style={styles.section}>
@@ -34,10 +35,15 @@ const ProblemTypeStep = ({
         문항 수는 1문제씩 자유롭게 조절할 수 있고, 한 번에 최대 10문제까지 요청할 수 있어요.
         지문을 랜덤으로 골라도 10문 이하로 맞춰져요.
       </p>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '12px' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '12px', gap: '10px', flexWrap: 'wrap' }}>
         <button type="button" style={styles.randomButton} onClick={onRandomize}>
           랜덤 배치
         </button>
+        {typeof onPreviewProblem === 'function' && (
+          <button type="button" style={styles.previewButton} onClick={onPreviewProblem}>
+            문항 미리보기
+          </button>
+        )}
       </div>
       <div style={styles.typeGrid}>
         {Object.entries(PROBLEM_TYPES).map(([type, info]) => {

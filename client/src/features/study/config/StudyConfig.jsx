@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import PassagePreviewModal from '../../../components/shared/PassagePreviewModal';
 import styles from './configStyles';
 import useStudyConfig from './hooks/useStudyConfig';
@@ -6,6 +6,8 @@ import { MAX_TOTAL_PROBLEMS } from './constants';
 import DocumentStep from './components/DocumentStep';
 import PassageStep from './components/PassageStep';
 import ProblemTypeStep from './components/ProblemTypeStep';
+import ProblemPreviewModal from '../components/ProblemPreviewModal';
+import { sampleProblems } from '../sampleProblems';
 
 const StudyConfig = ({
   onStart,
@@ -45,6 +47,8 @@ const StudyConfig = ({
     renderPassageMeta,
   } = useStudyConfig({ onStart, initialFocusType });
 
+  const [previewProblem, setPreviewProblem] = useState(null);
+
   const resumeAvailable = useMemo(() => (
     savedSession && Array.isArray(savedSession.problems) && savedSession.problems.length > 0
   ), [savedSession]);
@@ -80,6 +84,36 @@ const StudyConfig = ({
       onDiscardSavedSession();
     }
   };
+
+  const handleOpenProblemPreview = () => {
+    const typeEntries = Object.entries(config.types || {}).filter(([, value]) => Number(value) > 0);
+    const primaryType = typeEntries.length ? typeEntries[0][0] : 'grammar';
+    const sample = sampleProblems[primaryType];
+    if (!sample) {
+      setPreviewProblem({ unsupported: true, type: primaryType });
+      return;
+    }
+
+    const sampleClone = JSON.parse(JSON.stringify(sample));
+    const documentTitle = documents.find((doc) => doc.id === config.documentId)?.title?.trim();
+    const previewSourceLabel = documentTitle
+      ? `출처│${documentTitle} - No.미리보기`
+      : sampleClone.sourceLabel || '출처│미리보기';
+
+    sampleClone.sourceLabel = previewSourceLabel;
+    if (Array.isArray(sampleClone.footnotes)) {
+      sampleClone.footnotes = [...sampleClone.footnotes];
+    }
+    sampleClone.metadata = {
+      ...(sampleClone.metadata || {}),
+      footnotes: sampleClone.metadata?.footnotes || sampleClone.footnotes || [],
+      previewLabel: '미리보기'
+    };
+
+    setPreviewProblem(sampleClone);
+  };
+
+  const handleCloseProblemPreview = () => setPreviewProblem(null);
 
   const content = (() => {
     switch (safeStep) {
@@ -130,6 +164,7 @@ const StudyConfig = ({
               totalProblems > 0 &&
               totalProblems <= MAX_TOTAL_PROBLEMS
             }
+            onPreviewProblem={handleOpenProblemPreview}
           />
         );
     }
@@ -161,14 +196,19 @@ const StudyConfig = ({
         </div>
       )}
 
-      {headerSlot && <div style={styles.headerSlot}>{headerSlot}</div>}
       {error && <div style={styles.errorBox}>❗️ {error}</div>}
       {content}
+      {headerSlot && <div style={styles.headerSlot}>{headerSlot}</div>}
       <PassagePreviewModal
         open={Boolean(previewPassage)}
         passage={previewPassage}
         onClose={closePreview}
         documentTitle={documents.find((doc) => doc.id === config.documentId)?.title}
+      />
+      <ProblemPreviewModal
+        open={Boolean(previewProblem)}
+        problem={previewProblem}
+        onClose={handleCloseProblemPreview}
       />
     </div>
   );

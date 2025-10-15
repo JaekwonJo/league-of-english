@@ -2,7 +2,7 @@ import React from 'react';
 import { problemDisplayStyles, orderStyles } from '../problemDisplayStyles';
 import { renderWithUnderline } from '../utils/textFormatters';
 
-const ChoiceButtons = ({ optionRecords, selectedAnswer, onSelect }) => {
+const ChoiceButtons = ({ optionRecords, selectedAnswer, onSelect, showOnlyMarkers = false, disabled = false }) => {
   if (!optionRecords.length) {
     return (
       <div style={problemDisplayStyles.missingOptions}>
@@ -14,6 +14,7 @@ const ChoiceButtons = ({ optionRecords, selectedAnswer, onSelect }) => {
   const buttonStyle = (idx) => ({
     ...orderStyles.multipleChoiceButton,
     ...(selectedAnswer === String(idx + 1) ? orderStyles.multipleChoiceSelected : {}),
+    ...(disabled ? { cursor: 'not-allowed', opacity: 0.7 } : {}),
   });
 
   return (
@@ -23,9 +24,10 @@ const ChoiceButtons = ({ optionRecords, selectedAnswer, onSelect }) => {
           key={`${option.marker}-${idx}`}
           type="button"
           style={buttonStyle(idx)}
-          onClick={() => onSelect(String(idx + 1))}
+          onClick={disabled ? undefined : () => onSelect(String(idx + 1))}
+          disabled={disabled}
         >
-          {renderWithUnderline(option.raw)}
+          {showOnlyMarkers ? option.marker : renderWithUnderline(option.raw)}
         </button>
       ))}
     </div>

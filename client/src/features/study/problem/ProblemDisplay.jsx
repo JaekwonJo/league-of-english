@@ -15,6 +15,8 @@ import {
 } from './utils/textFormatters';
 import { api } from '../../../services/api.service';
 
+const escapeRegExp = (value) => String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 const FEEDBACK_ACTIONS = {
   LIKE: 'like',
   REPORT: 'report'
@@ -56,9 +58,11 @@ const ProblemDisplay = ({
   const isBlank = effectiveProblem.type === 'blank';
   const isReviewMode = displayMode === 'review';
   const isListMode = displayMode === 'list';
-  const shouldShowFeedback = !isReviewMode && Number.isInteger(problemId) && problemId > 0;
+  const isPreviewMode = displayMode === 'preview';
+  const shouldShowFeedback = !isReviewMode && !isPreviewMode && Number.isInteger(problemId) && problemId > 0;
 
   const handleSelect = (answer) => {
+    if (isPreviewMode) return;
     setSelectedAnswer(answer);
     if (typeof onAnswer === 'function') {
       if (onAnswer.length >= 2) {
@@ -142,6 +146,80 @@ const ProblemDisplay = ({
     [optionRecords, userAnswerIndices],
   );
 
+  const blankPassageText = useMemo(() => {
+    if (!isBlank) return passageText;
+    const raw = String(passageText || '');
+    if (/_{2,}/.test(raw)) {
+      return raw;
+    }
+    const blankMeta = metadata?.blank || {};
+    const candidateSources = [
+      metadata?.targetExpression,
+      metadata?.target_expression,
+      metadata?.target,
+      metadata?.originalExpression,
+      metadata?.original_expression,
+      metadata?.targetPhrase,
+      metadata?.target_phrase,
+      metadata?.correctAnswerText,
+      blankMeta?.targetExpression,
+      blankMeta?.target_expression,
+      effectiveProblem?.targetExpression,
+      effectiveProblem?.target_expression
+    ].filter(Boolean);
+
+    const tryReplace = (input, candidate) => {
+      if (!candidate) return input;
+      let updated = input;
+      const base = String(candidate).trim();
+      if (!base) return updated;
+      const variants = new Set([base]);
+      variants.add(base.replace(/[–—]/g, '-'));
+      variants.add(base.replace(/[-–—]/g, ' '));
+      for (const variant of variants) {
+        const cleanVariant = String(variant || '').trim();
+        if (!cleanVariant) continue;
+        const pattern = new RegExp(escapeRegExp(cleanVariant).replace(/\s+/g, '\s+'), 'i');
+        if (pattern.test(updated)) {
+          updated = updated.replace(pattern, '____');
+          return updated;
+        }
+      }
+      return updated;
+    };
+
+    let updatedText = raw;
+    for (const candidate of candidateSources) {
+      const attempted = tryReplace(updatedText, candidate);
+      if (attempted !== updatedText) {
+        updatedText = attempted;
+        break;
+      }
+    }
+
+    if (!/_+/.test(updatedText) && Array.isArray(correctChoices) && correctChoices.length) {
+      const primaryChoice = correctChoices[0]?.value || correctChoices[0]?.raw || '';
+      const attempted = tryReplace(updatedText, primaryChoice);
+      if (attempted !== updatedText) {
+        updatedText = attempted;
+      }
+    }
+
+    if (!/_+/.test(updatedText) && metadata?.targetExpressionOriginal) {
+      const attempted = tryReplace(updatedText, metadata.targetExpressionOriginal);
+      if (attempted !== updatedText) {
+        updatedText = attempted;
+      }
+    }
+
+    if (!/_+/.test(updatedText)) {
+      updatedText = `____ ${updatedText}`.trim();
+    }
+    return updatedText;
+  }, [isBlank, passageText, metadata, correctChoices, effectiveProblem]);
+
+  const displayPassageText = isBlank ? blankPassageText : passageText;
+
   useEffect(() => {
     let cancelled = false;
     const fetchSummary = async () => {
@@ -217,7 +295,22 @@ const ProblemDisplay = ({
   const renderOptionsSection = ({ normalHeading, reviewHeading }) => (
     <div>
       <div style={orderStyles.sentencesLabel}>{isReviewMode ? reviewHeading : normalHeading}</div>
-      {isReviewMode ? (
+      {isPreviewMode ? (
+        <div style={problemDisplayStyles.previewOptions}>
+          {optionRecords.map((option, idx) => (
+            <div key={`${option.marker}-${idx}`} style={problemDisplayStyles.previewOption}>
+              <span style={problemDisplayStyles.previewOptionMarker}>{option.marker}</span>
+              <span>
+                {renderWithUnderline(
+                  option.value && option.value.length
+                    ? option.value
+                    : option.raw.replace(/^(①|②|③|④|⑤)\s*/, '').trim()
+                )}
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : isReviewMode ? (
         <ReviewOptions
           optionRecords={optionRecords}
           correctIndices={correctIndices}
@@ -227,12 +320,15 @@ const ProblemDisplay = ({
           isAnswerCorrect={isAnswerCorrect}
           explanationText={explanationText}
           reviewMeta={reviewMeta}
+          showOnlyMarkers={effectiveProblem.type === "vocabulary"}
         />
       ) : (
         <ChoiceButtons
           optionRecords={optionRecords}
           selectedAnswer={selectedAnswer}
           onSelect={handleSelect}
+          showOnlyMarkers={effectiveProblem.type === "vocabulary"}
+          disabled={isPreviewMode}
         />
       )}
     </div>
@@ -276,9 +372,9 @@ const ProblemDisplay = ({
         </div>
       )}
 
-      {passageText && (
+      {displayPassageText && (
         <div style={{ ...orderStyles.orderGivenText, marginBottom: '20px', whiteSpace: 'pre-wrap' }}>
-          {renderWithUnderline(passageText)}
+          {renderWithUnderline(displayPassageText)}
         </div>
       )}
 
@@ -322,9 +418,9 @@ const ProblemDisplay = ({
         </div>
       )}
 
-      {passageText && (
+      {displayPassageText && (
         <div style={{ ...orderStyles.orderGivenText, marginBottom: '20px', whiteSpace: 'pre-wrap' }}>
-          {isBlank ? renderBlankSegments(passageText, `passage-${problemIndex}`) : renderWithUnderline(passageText)}
+          {isBlank ? renderBlankSegments(displayPassageText, `passage-${problemIndex}`) : renderWithUnderline(displayPassageText)}
         </div>
       )}
 
@@ -338,7 +434,7 @@ const ProblemDisplay = ({
       {sentencesBlock}
 
       {renderOptionsSection({
-        normalHeading: '정답을 선택하세요',
+        normalHeading: isPreviewMode ? '선택지' : '정답을 선택하세요',
         reviewHeading: '선택지와 해설을 확인하세요'
       })}
     </>
@@ -471,6 +567,59 @@ const ProblemDisplay = ({
           {effectiveProblem.type && <span>{effectiveProblem.type.toUpperCase()}</span>}
         </div>
         {cardContent}
+      </div>
+    );
+  }
+
+  if (isPreviewMode) {
+    const previewSource = sourceLabel && sourceLabel.startsWith('출처') ? sourceLabel : `출처│${sourceLabel || '미리보기'}`;
+    const previewFootnotes = Array.isArray(effectiveProblem.footnotes)
+      ? effectiveProblem.footnotes
+      : Array.isArray(metadata.footnotes)
+      ? metadata.footnotes
+      : [];
+
+    return (
+      <div style={problemDisplayStyles.previewWrapper}>
+        <div style={problemDisplayStyles.previewCard}>
+          <div style={problemDisplayStyles.previewHeader}>
+            <div>
+              <div style={problemDisplayStyles.previewHeaderTitle}>수능형 문항 미리보기</div>
+              <div style={problemDisplayStyles.previewSource}>{previewSource}</div>
+            </div>
+          </div>
+          <div style={problemDisplayStyles.previewQuestion}>
+            {renderWithUnderline(effectiveProblem.question || '문제를 확인해 주세요.')}
+          </div>
+          {displayPassageText && (
+            <div style={problemDisplayStyles.previewPassage}>
+              {renderWithUnderline(displayPassageText)}
+            </div>
+          )}
+
+          {renderOptionsSection({
+            normalHeading: '보기',
+            reviewHeading: '보기'
+          })}
+
+          {explanationText && (
+            <div style={problemDisplayStyles.previewExplanation}>
+              ※ 해설: {explanationText}
+            </div>
+          )}
+
+          {previewFootnotes.length > 0 && (
+            <div style={problemDisplayStyles.previewFootnotes}>
+              {previewFootnotes.map((note, idx) => (
+                <div key={`footnote-${idx}`}>{note}</div>
+              ))}
+            </div>
+          )}
+
+          <div style={problemDisplayStyles.previewFooterNote}>
+            ⓘ 실제 생성 문제와 같은 형식을 미리 살펴볼 수 있어요.
+          </div>
+        </div>
       </div>
     );
   }

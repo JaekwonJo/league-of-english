@@ -97,6 +97,89 @@ export const problemDisplayStyles = {
     alignItems: 'center',
     gap: '6px'
   },
+  previewWrapper: {
+    maxWidth: '800px',
+    margin: '0 auto',
+    padding: '24px',
+    fontFamily: '"Noto Sans KR", "Nanum Myeongjo", serif',
+    color: '#111827'
+  },
+  previewCard: {
+    background: '#fff',
+    borderRadius: '18px',
+    border: '1px solid #d1d5db',
+    padding: '32px',
+    boxShadow: '0 24px 60px rgba(15, 23, 42, 0.18)',
+    lineHeight: 1.72
+  },
+  previewHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: '18px',
+    fontSize: '15px',
+    color: '#1f2937'
+  },
+  previewHeaderTitle: {
+    fontWeight: 700,
+    fontSize: '18px'
+  },
+  previewSource: {
+    fontSize: '14px',
+    color: '#4b5563'
+  },
+  previewQuestion: {
+    fontSize: '18px',
+    fontWeight: 700,
+    marginBottom: '18px',
+    color: '#111827'
+  },
+  previewPassage: {
+    whiteSpace: 'pre-wrap',
+    fontSize: '16px',
+    color: '#1f2937',
+    marginBottom: '20px',
+    letterSpacing: '0.01em'
+  },
+  previewOptions: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px',
+    marginBottom: '18px'
+  },
+  previewOption: {
+    display: 'flex',
+    gap: '12px',
+    fontSize: '16px',
+    alignItems: 'baseline'
+  },
+  previewOptionMarker: {
+    fontWeight: 700,
+    color: '#1f2937',
+    minWidth: '20px'
+  },
+  previewExplanation: {
+    background: '#f8fafc',
+    border: '1px solid #e2e8f0',
+    borderRadius: '14px',
+    padding: '16px',
+    fontSize: '14px',
+    color: '#334155',
+    marginBottom: '16px'
+  },
+  previewFootnotes: {
+    marginTop: '12px',
+    paddingTop: '12px',
+    borderTop: '1px dashed #cbd5f5',
+    fontSize: '13px',
+    color: '#55637a'
+  },
+  previewFooterNote: {
+    marginTop: '18px',
+    fontSize: '12px',
+    color: '#6b7280',
+    textAlign: 'right'
+  },
   navButton: {
     padding: '12px 24px',
     background: 'var(--surface-soft)',

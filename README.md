@@ -137,6 +137,7 @@ npm run lint    # ESLint (server/**/*.js)
 # 7) 문서/매뉴얼 갱신
 docs: node scripts/update-problem-manuals.js
 ```
+> Tip: 학습 설정 3단계에서는 `문항 미리보기` 버튼으로 KSAT 스타일 미리보기 모달을 바로 볼 수 있어요.
 - 환경 변수: `OPENAI_API_KEY`, `JWT_SECRET`, `REACT_APP_API_URL` 등 `.env`로 관리.
 - Windows 기본, 필요 시 WSL 사용 가능.
 
