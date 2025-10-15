@@ -1,3 +1,10 @@
+## 2025-10-22 (grammar manual sync kickoff)
+- Issue: 어법 메뉴얼 최신본이 코드 프롬프트/검증기와 따로 놀아 OpenAI가 안내 문장을 빠뜨리거나 fallback이 이전 지침을 쓰는 사례가 반복되고, 월고 PDF 기준 데이터도 아직 준비되지 않았어요.
+- Cause: 메뉴얼을 복사·붙여넣는 수동 과정이 남아 있고, `2024년월고모의고사어법샘플100문제.pdf`에서 밑줄·번호·정답을 추출하는 도구가 없는 상태입니다.
+- Plan: `scripts/sync-grammar-manual.js`로 메뉴얼 파일을 읽어 프롬프트/검증기/fallback 템플릿에 그대로 반영하고, `scripts/extract-grammar-baseline.js`로 월고 PDF 100문항을 JSON 기준 데이터로 구조화한 뒤 통합 회귀 테스트에 연결합니다.
+- Progress: README·PROJECT_STATE·BUILDLOG를 업데이트해 메뉴얼 싱크/월고 PDF 파이프라인/통합 테스트를 Top 3 우선순위로 맞추고, Known issues에 메뉴얼-코드 불일치 항목을 추가했습니다.
+- Verification: 문서 검토 (코드 실행 전 단계).
+
 ## 2025-10-21 (grammar generator redesign kickoff)
 - Issue: 어법 문제 생성이 밑줄 5개 추출·오류 유형 태깅·해설 작성 단계마다 흔들려, 같은 문장이 보기로 반복되거나 잘못된 밑줄이 그대로 통과하고 있어요.
 - Cause: 현재 파이프라인이 OpenAI 출력과 fallback 규칙을 섞어 쓰면서 세그먼트 분할·품사 필터·오류 코드가 따로 놀고, 짧은 지문을 위한 전용 규칙이 비어 있습니다.
