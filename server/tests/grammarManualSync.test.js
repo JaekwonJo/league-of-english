@@ -31,19 +31,25 @@ test('grammar manuals stay in sync and are non-truncated', () => {
 });
 
 test('grammar prompts embed the full manual text', () => {
-    const manual = readGrammarManual();
-    const prompt = buildGrammarPrompt({
-      passage: 'Students *are studying* hard for the exam and it ① keeps them motivated.',
-      docTitle: 'Sample Passage',
-      passageIndex: 0,
-      manualExcerpt: manual,
-      variantTag: 'test-manual-prompt'
-    });
+  const manual = readGrammarManual();
+  const normalizedManual = manual.replace(/\r/g, '');
+  const prompt = buildGrammarPrompt({
+    passage: 'Students *are studying* hard for the exam and it ① keeps them motivated.',
+    docTitle: 'Sample Passage',
+    passageIndex: 0,
+    manualExcerpt: manual,
+    variantTag: 'test-manual-prompt'
+  });
 
-    const firstLine = manual.split(/\r?\n/)[0];
-    const lastLine = manual.trim().split(/\r?\n/).pop();
+  const promptNormalized = prompt.replace(/\r/g, '');
+  const nonEmptyLines = normalizedManual
+    .split(/\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const firstLine = nonEmptyLines[0];
+  const lastLine = nonEmptyLines[nonEmptyLines.length - 1];
 
-    assert.ok(prompt.includes('Handbook (full text):'), 'prompt should label the manual section');
-    assert.ok(prompt.includes(firstLine), 'prompt should include the beginning of the manual');
-    assert.ok(prompt.includes(lastLine), 'prompt should include the end of the manual');
+  assert.ok(promptNormalized.includes('Handbook (full text):'), 'prompt should label the manual section');
+  assert.ok(promptNormalized.includes(firstLine), 'prompt should include the beginning of the manual');
+  assert.ok(promptNormalized.includes(lastLine), 'prompt should include the end of the manual');
 });

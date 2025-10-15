@@ -1,7 +1,8 @@
 const assert = require('assert');
 const test = require('node:test');
 const {
-  translateGlossToKorean
+  translateGlossToKorean,
+  formatSourceLabel
 } = require('../utils/documentProblemFallback');
 
 test('documentProblemFallback translates representative gloss phrases into Korean', () => {
@@ -17,4 +18,10 @@ test('documentProblemFallback translates representative gloss phrases into Korea
     translateGlossToKorean('to delay or defer to a future time').includes('지연'),
     'should map common words when direct pattern missing'
   );
+});
+
+test('documentProblemFallback formats source labels consistently', () => {
+  assert.strictEqual(formatSourceLabel('월고 2024', 0), '출처│월고 2024 - No.1');
+  assert.strictEqual(formatSourceLabel('', 3), '출처│업로드 문서 - No.4');
+  assert.strictEqual(formatSourceLabel('   ', null), '출처│업로드 문서');
 });

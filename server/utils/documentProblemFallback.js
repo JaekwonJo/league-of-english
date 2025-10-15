@@ -64,6 +64,12 @@ const SIMPLE_WORD_TRANSLATIONS = new Map([
   ['candid', '솔직한']
 ]);
 
+function formatSourceLabel(docTitle, variantIndex) {
+  const baseTitle = docTitle && String(docTitle).trim() ? docTitle.trim() : '업로드 문서';
+  const index = Number.isInteger(variantIndex) ? variantIndex + 1 : null;
+  return `출처│${baseTitle}${index ? ` - No.${index}` : ''}`;
+}
+
 const GENERIC_DISTRACTORS = {
   adjective: [
     { word: 'optional', gloss: 'available but not required', korean: '선택적인' },
@@ -596,7 +602,7 @@ function buildGrammarProblemFromPassage(passage, docTitle, variantIndex = 0, rea
       optionTags,
       grammarPoint: mutated.rule.tag
     },
-    sourceLabel: docTitle ? `출처│${docTitle}` : '출처│업로드 문서'
+    sourceLabel: formatSourceLabel(docTitle, variantIndex)
   };
 }
 
@@ -1055,5 +1061,6 @@ module.exports = {
   buildVocabularyFallbackProblems,
   // Exposed for tests so we can verify Korean gloss conversion logic.
   translateGlossToKorean,
-  warmupWordnet
+  warmupWordnet,
+  formatSourceLabel
 };
