@@ -15,6 +15,12 @@
 - Verification: 계획 수립 단계 (테스트는 아직 실행 전).
 - Progress: Wolgo 기출 fallback 세트를 분석해 자동으로 61개의 라벨 데이터(`server/utils/data/grammar-labels.jsonl`)를 생성하는 스크립트(`scripts/generate-grammar-labels.js`)를 추가했어요. 첫 QA 후 부족한 오류 유형은 추가 라벨링으로 채울 예정입니다.
 
+## 2025-10-16 (docs sync + priority refresh)
+- Issue: PROJECT_STATE, README, BUILDLOG가 서로 다른 Top 3/우선순위를 가리켜 QA와 개발이 헷갈렸어요.
+- Fix: 세 문서를 다시 읽고 회귀 diff·모의고사 프리뷰·월고 데이터 확장을 동일한 Top 3로 맞췄으며, Known issues 표현을 초보자도 바로 이해하도록 다듬었습니다.
+- Files: PROJECT_STATE.md, README.md, BUILDLOG.md.
+- Verification: 문서 검토.
+
 ## 2025-10-13 (doc fallback + AI escalation)
 - Issue: Grammar/vocabulary 생성이 OpenAI 오류에서 멈추면 다른 문서 fallback이 노출되고, 해설은 영어 gloss만 남아 학습 신뢰도가 떨어졌어요.
 - Cause: `fallbackProblemFactory`가 문서 context 없이 정적 bank만 돌렸고, AI 재시도는 동일 모델로 6번 반복했습니다.
