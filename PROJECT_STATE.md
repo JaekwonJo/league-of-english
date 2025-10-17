@@ -26,13 +26,13 @@
 ## Current Stage
 - PROJECT_STATE·README·BUILDLOG를 2025-10-16 기준으로 다시 동기화해 문서마다 같은 우선순위와 상태를 보여줍니다.
 - `createGrammarPipeline` 모듈이 어법 문제 생성을 맡아 프롬프트→OpenAI 호출→검증→diff 기록→fallback까지 나눴고, 재시도/모델 정보가 `metadata.pipeline`에 저장됩니다.
-- grammar 파이프라인이 단일 정답뿐 아니라 2개·3개 틀린 문제와 옳은 것 찾기 문제를 각각 25% 확률로 섞어 내도록 가중 무작위 분배를 적용했어요.
+- grammar 파이프라인이 월고 2024 기출 JSON을 기준으로 단일 정답 문항만 생성·검증하고, diff 리포트로 밑줄/문장 오차를 바로 확인합니다.
 - `scripts/sync-grammar-manual.js`가 `/mnt/c/Users/jaekw/Documents/웹앱/문제출제 메뉴얼/📘 chatgpt5 전용 어법 문제 제작 통합 메뉴얼.md`를 읽어 루트(`chatgpt5 전용 어법 문제 제작 통합 메뉴얼.md`)와 `problem manual/grammar_problem_manual.md`에 그대로 복사하고, 프롬프트는 메뉴얼 전문을 그대로 포함합니다.
 - `scripts/extract-grammar-baseline.js`가 `/mnt/c/Users/jaekw/Documents/웹앱/문서샘플/2024년3월고2모의고사_어법샘플100문제.pdf`를 파싱해 `server/utils/data/wolgo-2024-03-grammar-baseline.json`을 만들었고, 각 ①~⑤ 구간은 실제 밑줄 길이에 맞게 정규화됐습니다.
 - `npm run check:grammar-manual`이 `pretest` 단계로 묶여 메뉴얼 복사본의 SHA1을 자동 검사하고, `server/tests/grammarManualSync.test.js`와 `wolgoBaselineIntegrity.test.js`가 기준 세트가 훼손되지 않았는지 회귀 체크를 해요.
 - WordNet 워밍업이 서버 기동 직후 돌아가 첫 호출 지연을 줄였고, gloss 한글 변환으로 fallback 어휘 설명도 즉시 한국어 뜻을 보여줍니다.
 - 학습 설정 3단계에 ‘문항 미리보기’ 버튼이 생겨, 선택한 유형을 KSAT 시험지와 같은 폰트·밑줄·간격으로 즉시 확인할 수 있어요.
-- 업로드 문서에서 직접 밑줄/오류를 추출하는 `documentProblemFallback`이 grammar·vocabulary 문제를 즉시 만들어 OpenAI 비가동 시에도 요청 수만큼 시험형 문항을 보장합니다. WordNet을 통해 동의어·오답 근거·lexicalNote를 채우고, sourceLabel은 원문 문서명을 사용합니다.
+- 업로드 문서에서 직접 밑줄/오류를 추출하는 `documentProblemFallback`이 grammar·vocabulary 문제를 즉시 만들어 OpenAI 비가동 시에도 요청 수만큼 시험형 문항을 보장합니다. WordNet을 통해 어휘 보충 설명을 붙이고, sourceLabel은 원문 문서명을 사용합니다.
 - Grammar·vocabulary 생성 루프가 실패 로그를 분석해 지시문을 보강하고, 4번째 시도부터 gpt-4o로 승격해 긴 문장/어휘 조건에서도 6회 이내 성공률을 끌어올렸습니다.
 - 관리자·학생 분석 화면이 개수 선택 모달과 전 화면 로딩 오버레이로 새로고침되며, DocumentAnalyzer가 문장별 어휘/이모지/현대 사례를 빠짐없이 채운 Variant를 반환합니다.
 - Wolgo 2022년 9월 어법 PDF를 자동 파싱해 29문항 fallback 라이브러리로 변환하고, OpenAI 오류 시에도 문서명 기반 sourceLabel과 메타데이터를 유지합니다.

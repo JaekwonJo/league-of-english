@@ -9,6 +9,10 @@ const {
   isEnglishPhrase
 } = require('../shared');
 const {
+  VOCAB_MIN_EXPLANATION_LENGTH,
+  VOCAB_MIN_EXPLANATION_SENTENCES
+} = require('../vocabulary');
+const {
   BLANK_PLACEHOLDER_REGEX,
   BLANK_OPTION_MIN_WORDS,
   BLANK_OPTION_MAX_WORDS,
@@ -46,7 +50,7 @@ function createProblemRepository(database) {
     const generatorTag = metadata && typeof metadata.generator === 'string'
       ? metadata.generator.trim().toLowerCase()
       : null;
-    if (generatorTag && !['openai', 'openai-preview'].includes(generatorTag)) {
+    if (generatorTag && !['openai', 'openai-preview', 'fallback'].includes(generatorTag)) {
       return null;
     }
 
@@ -246,13 +250,11 @@ function createProblemRepository(database) {
         return false;
       }
     }
+
     if (type === 'vocabulary') {
-      const passage = String(problem.mainText || problem.passage || problem.text || '').trim();
-      if (!passage) {
-        return false;
-      }
-      const underlineMatches = passage.match(/<u>([^<]+)<\/u>/gi) || [];
-      if (underlineMatches.length !== 1) {
+      const passage = String(problem.mainText || problem.text || '').trim();
+      if (!passage) return false;
+      if ((passage.match(UNDERLINE_PATTERN) || []).length !== CIRCLED_DIGITS.length) {
         return false;
       }
       const options = Array.isArray(problem.options) ? problem.options : [];
@@ -265,48 +267,30 @@ function createProblemRepository(database) {
         if (!optionText.startsWith(expected)) {
           return false;
         }
-        const body = optionText.slice(expected.length).trim();
-        if (!body) {
-          return false;
-        }
-        if (!/^[A-Za-z]/.test(body)) {
-          return false;
-        }
-        const wordCount = countWords(body);
-        if (wordCount < 1 || wordCount > 4) {
+        if (!/<u[\s\S]*?<\/u>/.test(optionText)) {
           return false;
         }
       }
-
       const answerIndex = parseInt(problem.correctAnswer ?? problem.answer ?? '', 10);
-      if (!Number.isInteger(answerIndex) || answerIndex < 1 || answerIndex > options.length) {
+      if (!Number.isInteger(answerIndex) || answerIndex < 1 || answerIndex > CIRCLED_DIGITS.length) {
         return false;
       }
-
       const explanation = String(problem.explanation || '').trim();
-      if (!containsHangul(explanation) || explanation.length < 140 || countSentences(explanation) < 3) {
+      if (!containsHangul(explanation) || explanation.length < VOCAB_MIN_EXPLANATION_LENGTH || countSentences(explanation) < VOCAB_MIN_EXPLANATION_SENTENCES) {
         return false;
       }
-
       const sourceLabel = String(problem.sourceLabel || '').trim();
       if (!sourceLabel.startsWith('출처│')) {
         return false;
       }
-
-      const distractorReasons = problem.metadata?.distractorReasons;
-      if (!distractorReasons || typeof distractorReasons !== 'object') {
+      const metadata = problem.metadata && typeof problem.metadata === 'object' ? problem.metadata : {};
+      const optionReasons = metadata.optionReasons && typeof metadata.optionReasons === 'object' ? metadata.optionReasons : null;
+      const incorrectMarker = CIRCLED_DIGITS[answerIndex - 1];
+      if (!optionReasons || !optionReasons[incorrectMarker]) {
         return false;
       }
-      const reasonLabels = Object.keys(distractorReasons).filter((key) => distractorReasons[key]);
-      if (reasonLabels.length < 3) {
-        return false;
-      }
-
-      const lexicalNote = problem.metadata?.lexicalNote;
-      if (!lexicalNote || typeof lexicalNote !== 'object') {
-        return false;
-      }
-      if (!lexicalNote.targetWord || !lexicalNote.partOfSpeech) {
+      const correction = metadata.correction && typeof metadata.correction === 'object' ? metadata.correction : null;
+      if (!correction || !correction.replacement) {
         return false;
       }
     }

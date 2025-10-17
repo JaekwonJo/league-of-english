@@ -596,12 +596,12 @@ class AIProblemService {
 
     const manualNote = manualExcerpt ? clipText(manualExcerpt, 900) : '';
     const requirementList = [
-      '- Keep the original passage verbatim and underline exactly one target word with <u>...</u>.',
-      '- Provide five options labelled ①-⑤, each a natural 1-4 word English expression beginning with a letter.',
-      '- Populate targetWord, targetLemma, targetMeaning, and lexicalNote (partOfSpeech, nuance, example) fields.',
-      '- Set correctAnswer to the 1-based index of the option matching the target word in context.',
-      '- Write a Korean explanation with at least three sentences covering 핵심 의미, 정답 근거, and two incorrect options.',
-      '- Supply distractorReasons entries in Korean for at least three incorrect options.',
+      '- Keep the original passage verbatim and maintain exactly five <u>...</u> expressions in place.',
+      '- Provide five options labelled ①-⑤ that reuse the same underlined snippets in the same order.',
+      '- Set correctAnswer to the single index of the contextually incorrect expression and mark that option as "incorrect".',
+      '- Include correction.replacement + reason for the incorrect expression so the natural phrase is recorded.',
+      '- Provide optionReasons in Korean (정답 포함) explaining 왜 어색하거나 자연스러운지.',
+      '- Keep the explanation concise (1~2 Korean sentences) mirroring the official answer key style.',
       '- Ensure the sourceLabel begins with 출처│ and references the document title or code.'
     ];
 
@@ -1029,7 +1029,7 @@ const normalizedMain = normalizeWhitespace(stripTags(mainText));
           const variantTag = `doc${documentId}_v${i}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
           const promptSections = [
             'You are a deterministic K-CSAT English vocabulary-usage item writer.',
-            'Produce exactly ONE five-option problem where only one underlined expression is lexically inappropriate for the passage.',
+            'Produce exactly ONE five-option problem where only one underlined expression is contextually incorrect for the passage.',
             '',
             `Passage title: ${docTitle}`,
             `Passage (keep every sentence; underline exactly five expressions with <u>...</u>):
@@ -1042,15 +1042,15 @@ ${clipText(passage, 1600)}`,
             VOCAB_USAGE_JSON_BLUEPRINT.replace('"variantTag": "V-001"', `"variantTag": "${variantTag}"`),
             '',
             'Generation requirements:',
-            '- Preserve the original sentences; do not delete or re-order them.',
-            '- Underline exactly five expressions. Replace only one with a contextually incorrect word or phrase.',
-            '- Options must be ①-⑤ with the same underlined expressions that appear in the passage.',
-            '- Set correctAnswer to the index of the inappropriate expression and explain why it is wrong.',
-            '- Fill correction.replacement with the natural word that should replace the incorrect expression and provide a Korean reason.',
-            '- Provide optionReasons for at least three options (정답 포함) in Korean.',
-            '- Explanation must be in Korean and at least three sentences summarising the passage, the error, and why other expressions are appropriate.',
-            '- Mention the incorrect 표현과 정답 표현을 해설에 명확히 적어 주세요.',
-            '- Respond with JSON only (no Markdown fences).'
+            '- Copy the passage verbatim; do not delete or reorder sentences.',
+            '- Underline exactly five expressions with <u>...</u>. Keep four expressions identical to the source and make exactly one expression contextually incorrect.',
+            '- Options must be ①-⑤ and reuse the same <u>...</u> snippets that appear in the passage.',
+            '- Set correctAnswer to the index of the inappropriate expression and explain why it is wrong in Korean.',
+            '- Provide correction.replacement + reason for the incorrect expression, showing the natural phrase that should appear instead.',
+            '- Supply optionReasons in Korean (정답 포함) so the reviewer understands why the expression is wrong/맞다.',
+            '- Keep the explanation concise (1~2 sentences) in Korean, mirroring K-CSAT 정답지 스타일.',
+            '- Preserve any footnotes (lines starting with *).',
+            '- Respond with raw JSON only (no Markdown fences).'
           ];
 
           const additionalDirectives = this._deriveEobeopDirectives(lastFailure, 'vocabulary');

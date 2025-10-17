@@ -102,30 +102,31 @@ const GRAMMAR_CORRECT_REASONS = [
   '⑤번은 요구 동사의 목적절 구조가 정상이라 문법적으로 옳습니다.'
 ];
 
-const VOCAB_PASSAGE = [
-  'Skilled mentors deliberately <u>cultivate</u> curiosity in their classrooms.',
-  'Instead of handing out ready-made answers, they guide learners to gather clues, refine hypotheses, and test explanations for themselves.',
-  'Across repeated cycles of questioning and reflection, students begin to treat confusion as an invitation to explore rather than a reason to give up.'
-].join(' ');
+const VOCAB_USAGE_PASSAGE = [
+  'Too  many  times  people,  especially  in  today’s generation, expect things to just happen <u>overnight.</u>',
+  'When we have these false expectations, it tends to <u>discourage  us  from  continuing  to  move  forward.</u>',
+  'Because this is a high tech society, everything we want has to be within the parameters of our comfort and <u>confident.</u>',
+  'If it doesn’t happen fast enough, we’re <u>tempted to lose interest.</u> So many people don’t want to take the time it requires to be successful.',
+  'Success is not a matter of mere desire; you should develop patience in order to achieve it. Have you <u>fallen prey to impatience?</u> Great things take time to build.',
+  '* parameter: 매개 변수, 제한'
+].join('\n');
 
-const VOCAB_OPTIONS = [
-  '① foster',
-  '② neglect',
-  '③ abbreviate',
-  '④ postpone',
-  '⑤ discard'
+const VOCAB_USAGE_OPTIONS = [
+  '① <u>overnight.</u>',
+  '② <u>discourage  us  from  continuing  to  move  forward.</u>',
+  '③ <u>confident.</u>',
+  '④ <u>tempted to lose interest.</u>',
+  '⑤ <u>fallen prey to impatience?</u>'
 ];
 
-const VOCAB_EXPLANATION = [
-  '지문에서는 멘토가 학생들의 호기심을 스스로 탐구하도록 이끌며 “cultivate” 한다고 설명합니다.',
-  '①번 foster는 돌보고 길러 준다는 뜻으로 문맥의 “cultivate curiosity”와 정확히 대응합니다.',
-  '② neglect는 방치하다, ③ abbreviate는 줄이다, ④ postpone은 미루다, ⑤ discard는 버리다라는 의미라서 학생들의 관심을 기르고 유지한다는 문맥과 어긋납니다.'
+const VOCAB_USAGE_EXPLANATION = [
+  "'편안함과 편리함'이라는 뜻이 문맥에 맞으므로 ③번 confident는 convenience 등으로 고쳐야 합니다.",
+  '다른 표현들은 환영 행사 장면을 자연스럽게 묘사하므로 유지해야 합니다.'
 ].join(' ');
 
-const VOCAB_DISTRACTOR_REASONS = [
-  { label: '②', reason: 'neglect는 관심을 기울이지 않는다는 뜻으로 지문 의도와 반대예요.' },
-  { label: '③', reason: 'abbreviate는 줄이다/축약하다라는 의미라 호기심을 키운다는 맥락과 다릅니다.' },
-  { label: '⑤', reason: 'discard는 버리다는 뜻이라 탐구심을 키운다는 설명과 모순됩니다.' }
+const VOCAB_USAGE_REASONS = [
+  { label: '③', reason: "confident는 '자신감 있는'이라는 뜻이라 '편안함과 편리함'이라는 흐름과 어울리지 않습니다." },
+  { label: '①', reason: 'overnight는 일이 하룻밤 사이에 일어난다는 의미로 문맥상 자연스럽습니다.' }
 ];
 
 function buildGrammarOption(index, text, status = 'correct', reasonOverride, tagOverride) {
@@ -586,21 +587,14 @@ test('recordStudySession handles negative deltas and duplicate submissions safel
     'vocabulary',
     [
       {
-        question: '밑줄 친 단어와 의미가 가장 가까운 것을 고르시오.',
-        passage: VOCAB_PASSAGE,
-        targetWord: 'cultivate',
-        targetLemma: 'cultivate',
-        targetMeaning: '기르다, 배양하다',
-        options: VOCAB_OPTIONS,
-        correctAnswer: 1,
-        explanation: VOCAB_EXPLANATION,
-        sourceLabel: '출처│Mock Vocabulary',
-        distractorReasons: VOCAB_DISTRACTOR_REASONS,
-        lexicalNote: {
-          partOfSpeech: 'verb',
-          nuance: '정성 들여 키워서 자라도록 돕는다는 의미',
-          example: 'Teachers cultivate curiosity by asking genuine questions.'
-        }
+        question: '다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?',
+        passage: VOCAB_USAGE_PASSAGE,
+        options: VOCAB_USAGE_OPTIONS,
+        correctAnswer: 3,
+        explanation: VOCAB_USAGE_EXPLANATION,
+        sourceLabel: '출처│Mock Vocabulary Usage',
+        correction: { replacement: 'flexible', reason: '여유롭게 시간을 조정한다는 의미에는 flexible가 어울립니다.' },
+        optionReasons: VOCAB_USAGE_REASONS
       }
     ],
     { docTitle: 'Mock Document' }
@@ -666,36 +660,29 @@ test('normalizeBlankPayload preserves original passage metadata and passes accep
   assert.ok(aiService._acceptCachedProblem('blank', normalized));
 });
 
-test('normalizeVocabularyPayload validates synonym-style vocabulary items', () => {
+test('normalizeVocabularyPayload validates vocabulary-usage items', () => {
   const payload = {
-    question: '밑줄 친 단어와 의미가 가장 가까운 것을 고르시오.',
-    passage: VOCAB_PASSAGE,
-    targetWord: 'cultivate',
-    targetLemma: 'cultivate',
-    targetMeaning: '기르다, 키우다',
-    options: VOCAB_OPTIONS,
-    correctAnswer: 1,
-    explanation: VOCAB_EXPLANATION,
-    sourceLabel: '출처│Mock Vocabulary 2025 모의',
-    distractorReasons: VOCAB_DISTRACTOR_REASONS,
-    lexicalNote: {
-      partOfSpeech: 'verb',
-      nuance: '정성 들여 기르다/배양하다',
-      example: 'She cultivates habits that support creativity.'
-    }
+    question: '다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?',
+    passage: VOCAB_USAGE_PASSAGE,
+    options: VOCAB_USAGE_OPTIONS,
+    correctAnswer: 3,
+    explanation: VOCAB_USAGE_EXPLANATION,
+    sourceLabel: '출처│2024년 3월 고2 모의고사 어휘 no1',
+    correction: { replacement: 'convenience', reason: "'편안함과 편리함'이라는 뜻이 자연스럽습니다." },
+    optionReasons: VOCAB_USAGE_REASONS
   };
 
-  const normalized = aiService._normalizeVocabularyPayload(payload, {
-    docTitle: 'Mock Document',
-    documentCode: 'MD-001'
-  });
+const normalized = aiService._normalizeVocabularyPayload(payload, {
+  docTitle: 'Mock Document',
+  documentCode: 'MD-001'
+});
 
-  assert.equal(normalized.options.length, 5);
-  assert.equal(normalized.answer, '1');
-  assert.equal(normalized.sourceLabel, '출처│Mock Vocabulary 2025 모의');
-  assert.equal(normalized.metadata.lexicalNote.targetWord, 'cultivate');
-  assert.ok(normalized.metadata?.distractorReasons?.['②']);
-  assert.ok(aiService._acceptCachedProblem('vocabulary', normalized));
+assert.equal(normalized.options.length, 5);
+assert.equal(normalized.answer, '3');
+assert.equal(normalized.sourceLabel, '출처│2024년 3월 고2 모의고사 어휘 no1');
+assert.equal(normalized.metadata.correction.replacement, 'convenience');
+assert.ok(normalized.metadata.optionReasons['③']);
+assert.ok(aiService._acceptCachedProblem('vocabulary', normalized));
 });
 
 test('acceptCachedProblem rejects truncated blank passages', () => {

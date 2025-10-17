@@ -28,6 +28,13 @@
 - Files: server/services/aiProblemService.js, server/services/grammar-generation/*.js, scripts/compare-grammar-datasets.js, docs/grammar-pipeline-refactor.md.
 - Verification: `npm test` (43 tests pass), `node scripts/compare-grammar-datasets.js --baseline server/utils/data/wolgo-2024-03-grammar-baseline.json --candidate server/utils/data/wolgo-2024-grammar-sample.json --output tmp/wolgo-2024-diff.md`.
 
+## 2025-10-16 (vocabulary alignment to Wolgo 2024)
+- Issue: 어휘 생성기가 의미 유사형 템플릿을 유지하면서 실제 월고 2024 어휘 PDF와 형식이 달라 API 출력이 정답지와 맞지 않았어요.
+- Fix: `server/services/ai-problem/vocabulary.js`를 월고 2024 포맷에 맞춰 다시 작성해 밑줄 5개·단일 정답·간결 해설 구조를 강제하고, `generateVocab` 프롬프트/수정 로직을 업데이트했습니다.
+- Fix: 저장소 수용 조건을 갱신해 `correction.replacement`, `optionReasons[정답]`, `출처│` 패턴을 모두 검증합니다.
+- Files: server/services/aiProblemService.js, server/services/ai-problem/vocabulary.js, server/services/ai-problem/internal/problemRepository.js, docs/problem-templates/vocabulary-master.md, problem manual/vocabulary_problem_manual.md, server/tests/aiProblemService.test.js, README.md, PROJECT_STATE.md.
+- Verification: `npm test` (43 tests pass).
+
 ## 2025-10-13 (doc fallback + AI escalation)
 - Issue: Grammar/vocabulary 생성이 OpenAI 오류에서 멈추면 다른 문서 fallback이 노출되고, 해설은 영어 gloss만 남아 학습 신뢰도가 떨어졌어요.
 - Cause: `fallbackProblemFactory`가 문서 context 없이 정적 bank만 돌렸고, AI 재시도는 동일 모델로 6번 반복했습니다.
