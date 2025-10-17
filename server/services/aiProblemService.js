@@ -1608,20 +1608,19 @@ ${clipText(passage, 1600)}`,
     });
 
     const grammarVariants = [
-      { key: 'single_incorrect', question: BASE_QUESTION, answerMode: 'incorrect', targetIncorrectCount: 1, targetCorrectCount: CIRCLED_DIGITS.length - 1 },
-      { key: 'double_incorrect', question: MULTI_INCORRECT_QUESTION, answerMode: 'incorrect', targetIncorrectCount: 2, targetCorrectCount: CIRCLED_DIGITS.length - 2 },
-      { key: 'triple_incorrect', question: MULTI_INCORRECT_QUESTION, answerMode: 'incorrect', targetIncorrectCount: 3, targetCorrectCount: CIRCLED_DIGITS.length - 3 },
-      { key: 'single_correct', question: MULTI_QUESTION, answerMode: 'correct', targetIncorrectCount: CIRCLED_DIGITS.length - 1, targetCorrectCount: 1 }
+      { key: 'single_incorrect', probability: 0.25, question: BASE_QUESTION, answerMode: 'incorrect', targetIncorrectCount: 1, targetCorrectCount: CIRCLED_DIGITS.length - 1 },
+      { key: 'double_incorrect', probability: 0.25, question: MULTI_INCORRECT_QUESTION, answerMode: 'incorrect', targetIncorrectCount: 2, targetCorrectCount: CIRCLED_DIGITS.length - 2 },
+      { key: 'triple_incorrect', probability: 0.25, question: MULTI_INCORRECT_QUESTION, answerMode: 'incorrect', targetIncorrectCount: 3, targetCorrectCount: CIRCLED_DIGITS.length - 3 },
+      { key: 'single_correct', probability: 0.25, question: MULTI_QUESTION, answerMode: 'correct', targetIncorrectCount: CIRCLED_DIGITS.length - 1, targetCorrectCount: 1 }
     ];
 
     const passageQueue = buildPassageQueue(passages, count);
-    const variantSequence = this._shuffleArray(grammarVariants);
     const results = [];
 
     for (let i = 0; i < count; i += 1) {
       const passage = passageQueue[i] || passages[i % (passages.length || 1)] || '';
       if (!passage) continue;
-      const variant = variantSequence[i % variantSequence.length] || grammarVariants[0];
+      const variant = this._pickGrammarVariant(grammarVariants);
 
       const { problem, meta, desiredIndex } = await pipeline.generateProblem({
         passage,
@@ -1651,6 +1650,24 @@ ${clipText(passage, 1600)}`,
     }
 
     return results;
+  }
+
+  _pickGrammarVariant(variants = []) {
+    if (!Array.isArray(variants) || variants.length === 0) {
+      return null;
+    }
+    const totalWeight = variants.reduce((sum, item) => sum + (Number(item.probability) || 0), 0);
+    if (totalWeight > 0) {
+      let threshold = Math.random() * totalWeight;
+      for (const variant of variants) {
+        threshold -= Number(variant.probability) || 0;
+        if (threshold <= 0) {
+          return variant;
+        }
+      }
+    }
+    const index = Math.floor(Math.random() * variants.length);
+    return variants[index] || variants[0];
   }
 
 
