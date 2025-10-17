@@ -154,7 +154,6 @@ server/services/grammar-generation/
 - `server/services/grammar-generation/` 디렉터리와 핵심 모듈(promptBuilder, openAiRunner, directives, history, diffReporter, fallbackFactory, index)을 생성했습니다.
 - `createGrammarPipeline` 이 AI 호출 → JSON 파싱 → 검증 → diff 기록 → fallback 전환까지 단일 진입점으로 통합했고, `aiProblemService.generateGrammar` 가 이 모듈을 호출하도록 리팩터링했습니다.
 - 변형 비율을 가중 무작위(각 25%)로 골라서 ① 한 개 틀린 문제·② 두 개 틀린 문제·③ 세 개 틀린 문제·④ 옳은 것 찾기 문제가 고르게 섞이도록 했습니다.
-- Vocabulary 파이프라인도 동일한 가중 무작위(각 25%)로 1·2·3개 틀린 문제와 옳은 것 찾기 문제를 내고, `correctAnswers`·status·corrections 배열을 새 스키마에 맞춰 검증합니다.
 - 실패 로그에서 자동으로 추출한 지시문을 재시도 프롬프트에 주입해 같은 오류가 반복되지 않도록 했고, 재시도 내역/모델명이 `metadata.pipeline` 에 기록되도록 했습니다.
 - 비교 스크립트(`scripts/compare-grammar-datasets.js`)를 작성해서 Wolgo 기준 JSON과 새 결과 차이를 `tmp/*.md` 리포트로 남길 수 있게 했습니다.
 
