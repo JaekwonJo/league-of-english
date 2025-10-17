@@ -60,6 +60,10 @@ const {
 
 const {
   VOCAB_USAGE_BASE_QUESTION,
+  VOCAB_USAGE_MULTI_INCORRECT_QUESTION,
+  VOCAB_USAGE_DOUBLE_INCORRECT_QUESTION,
+  VOCAB_USAGE_TRIPLE_INCORRECT_QUESTION,
+  VOCAB_USAGE_CORRECT_QUESTION,
   VOCAB_USAGE_JSON_BLUEPRINT,
   VOCAB_MIN_EXPLANATION_LENGTH,
   VOCAB_MIN_EXPLANATION_SENTENCES,
@@ -280,13 +284,13 @@ class AIProblemService {
     if (!rawMessage) return [];
     if (mode === 'vocabulary') {
       return [
-        '- Underline exactly five expressions and keep four of them identical to the original passage.',
-        '- Replace only one expression with a contextually incorrect word and set correctAnswer to its index.',
-        '- Output options as ①-⑤ with the same <u>...</u> snippets that appear in the passage.',
-        '- Fill correction.replacement and correction.reason in Korean, and provide optionReasons for at least three options (정답 포함).',
-        '- Write the explanation in Korean with at least three sentences covering 지문 요약, 정답 오류, 그리고 두 개 이상의 정상 표현이 적절한 이유.',
-        '- Ensure the sourceLabel begins with "출처|" and the question text matches the KSAT vocabulary usage format.',
-        '- 정답 밑줄 하나만 원문과 다르게 바꾸고, 나머지 네 밑줄은 원문과 한 글자도 달라지지 않도록 유지하세요.'
+        '- Underline exactly five expressions in the passage and mirror them in the options (순서와 내용이 완전히 일치해야 합니다).',
+        '- Mark each option status as "correct" 또는 "incorrect" so that 선택해야 하는 보기와 나머지가 확실히 구분됩니다.',
+        '- Provide optionReasons in Korean for 최소 세 개의 보기(정답 포함) explaining 왜 맞거나 틀린지.',
+        '- Fill the corrections list with replacement+reason for every 잘못된 표현 (label은 ①~⑤로 표시).',
+        '- Write the explanation in Korean with at least three sentences: 지문 요약 → 정답 근거 → 다른 보기의 타당성/오류.',
+        '- Ensure the sourceLabel begins with "출처│" and matches the KSAT vocabulary usage format.',
+        '- Respond with raw JSON only and keep the 밑줄 표현이 지문과 한 글자도 달라지지 않도록 관리하세요.'
       ];
     }
     const directives = [];
@@ -584,7 +588,8 @@ class AIProblemService {
     passage,
     docTitle,
     documentCode,
-    manualExcerpt
+    manualExcerpt,
+    questionText
   } = {}) {
     const invalidJson = String(rawContent || '').trim();
     if (!invalidJson) {
@@ -596,12 +601,13 @@ class AIProblemService {
 
     const manualNote = manualExcerpt ? clipText(manualExcerpt, 900) : '';
     const requirementList = [
-      '- Keep the original passage verbatim and underline exactly one target word with <u>...</u>.',
-      '- Provide five options labelled ①-⑤, each a natural 1-4 word English expression beginning with a letter.',
-      '- Populate targetWord, targetLemma, targetMeaning, and lexicalNote (partOfSpeech, nuance, example) fields.',
-      '- Set correctAnswer to the 1-based index of the option matching the target word in context.',
-      '- Write a Korean explanation with at least three sentences covering 핵심 의미, 정답 근거, and two incorrect options.',
-      '- Supply distractorReasons entries in Korean for at least three incorrect options.',
+      '- Preserve the original passage verbatim and keep exactly five underlined expressions with <u>...</u>.',
+      '- Provide five options labelled ①-⑤ that reuse the same underlined snippets in the same order.',
+      '- Populate correctAnswers with the option numbers that satisfy the question and align option status values accordingly.',
+      '- Populate targetWord/lemma/meaning and the lexicalNote (partOfSpeech, nuance, example) fields for every 표현이 어색한 경우.',
+      '- Fill the corrections array with replacement + reason (labelled ①-⑤) for each 잘못된 표현.',
+      '- Write a Korean explanation with at least three sentences covering 지문 요약, 정답 근거, 그리고 다른 보기의 타당성/오류.',
+      '- Provide optionReasons in Korean for 최소 세 개의 보기(정답 포함).',
       '- Ensure the sourceLabel begins with 출처│ and references the document title or code.'
     ];
 
@@ -614,6 +620,7 @@ class AIProblemService {
       failureMessage ? `Failure summary: ${failureMessage}` : '',
       reasonLines.length ? `Validator notes:\n- ${reasonLines.join('\n- ')}` : '',
       manualNote ? `Reference manual excerpt (truncated):\n${manualNote}` : '',
+      questionText ? `Question: ${questionText}` : '',
       docTitle || documentCode ? `Document reference: ${docTitle || documentCode}` : '',
       passage ? `Original passage (keep every character verbatim):\n${clipText(passage, 1800)}` : '',
       'Invalid JSON between <bad_json> and </bad_json>:',
@@ -1013,9 +1020,10 @@ const normalizedMain = normalizeWhitespace(stripTags(mainText));
     const manualExcerpt = readVocabularyManual(2400);
     const passageQueue = buildPassageQueue(passages, count);
 
-    for (let i = 0; i < count; i += 1) {
+        for (let i = 0; i < count; i += 1) {
       const passage = passageQueue[i] || passages[i % (passages.length || 1)] || '';
       if (!passage) continue;
+      const variant = this._pickVocabularyVariant(vocabVariants) || vocabVariants[0];
       let attempt = 0;
       let lastFailure = '';
       let repairBudget = 2;
@@ -1027,9 +1035,36 @@ const normalizedMain = normalizeWhitespace(stripTags(mainText));
         let rawContent = '';
         try {
           const variantTag = `doc${documentId}_v${i}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+          const blueprint = VOCAB_USAGE_JSON_BLUEPRINT
+            .replace(`"question": "${VOCAB_USAGE_BASE_QUESTION}"`, `"question": "${variant.question}"`)
+            .replace('\"variantTag\": \"V-001\"', `\"variantTag\": \"${variantTag}\"`);
+
+          const requirements = [
+            '- Preserve the original sentences; do not delete or re-order them.',
+            '- Underline exactly five expressions and ensure the options reuse the same underlined snippets in the same order.'
+          ];
+
+          if (variant.answerMode === 'incorrect') {
+            requirements.push(`- Replace exactly ${variant.targetIncorrectCount} underlined expression(s) so they become contextually incorrect.`);
+            requirements.push(`- Keep the remaining ${variant.targetCorrectCount} underlined expression(s) identical to the original passage.`);
+            requirements.push('- Set correctAnswers to an array listing the indices of the contextually incorrect expressions in ascending order.');
+            requirements.push('- Mark those expressions with status "incorrect" and the others "correct".');
+          } else {
+            requirements.push(`- Keep exactly ${variant.targetCorrectCount} underlined expression(s) identical to the original passage so they remain contextually correct.`);
+            requirements.push(`- Make the other ${variant.targetIncorrectCount} expression(s) contextually incorrect by changing the word choice.`);
+            requirements.push('- Set correctAnswers to an array listing the indices of the contextually correct expressions in ascending order.');
+            requirements.push('- Mark those expressions with status "correct" and the others "incorrect".');
+          }
+
+          requirements.push('- Provide optionReasons for at least three options (정답 포함) in Korean.');
+          requirements.push('- Fill the corrections array with replacement + reason for every 잘못된 표현 (label은 ①~⑤).');
+          requirements.push('- Explanation must be in Korean with at least three sentences summarising the passage, the answer choice(s), and why the remaining expressions differ.');
+          requirements.push('- Mention the 핵심 표현과 정답 표현을 해설에 명확히 적어 주세요.');
+          requirements.push('- Respond with JSON only (no Markdown fences).');
+
           const promptSections = [
             'You are a deterministic K-CSAT English vocabulary-usage item writer.',
-            'Produce exactly ONE five-option problem where only one underlined expression is lexically inappropriate for the passage.',
+            `Produce exactly ONE five-option problem where ${variant.answerMode === 'incorrect' ? 'the designated expressions are contextually inappropriate' : 'only the designated expression remains contextually appropriate'} for the passage.`,
             '',
             `Passage title: ${docTitle}`,
             `Passage (keep every sentence; underline exactly five expressions with <u>...</u>):
@@ -1039,18 +1074,10 @@ ${clipText(passage, 1600)}`,
             manualExcerpt,
             '',
             'Return raw JSON only with this structure:',
-            VOCAB_USAGE_JSON_BLUEPRINT.replace('"variantTag": "V-001"', `"variantTag": "${variantTag}"`),
+            blueprint,
             '',
             'Generation requirements:',
-            '- Preserve the original sentences; do not delete or re-order them.',
-            '- Underline exactly five expressions. Replace only one with a contextually incorrect word or phrase.',
-            '- Options must be ①-⑤ with the same underlined expressions that appear in the passage.',
-            '- Set correctAnswer to the index of the inappropriate expression and explain why it is wrong.',
-            '- Fill correction.replacement with the natural word that should replace the incorrect expression and provide a Korean reason.',
-            '- Provide optionReasons for at least three options (정답 포함) in Korean.',
-            '- Explanation must be in Korean and at least three sentences summarising the passage, the error, and why other expressions are appropriate.',
-            '- Mention the incorrect 표현과 정답 표현을 해설에 명확히 적어 주세요.',
-            '- Respond with JSON only (no Markdown fences).'
+            ...requirements
           ];
 
           const additionalDirectives = this._deriveEobeopDirectives(lastFailure, 'vocabulary');
@@ -1075,7 +1102,11 @@ ${clipText(passage, 1600)}`,
             documentCode,
             passage,
             index: results.length,
-            failureReasons
+            failureReasons,
+            answerMode: variant.answerMode,
+            targetIncorrectCount: variant.targetIncorrectCount,
+            targetCorrectCount: variant.targetCorrectCount,
+            questionText: variant.question
           });
         } catch (error) {
           const baseMessage = String(error?.message || '') || 'unknown vocabulary failure';
@@ -1098,7 +1129,8 @@ ${clipText(passage, 1600)}`,
                 passage,
                 docTitle,
                 documentCode,
-                manualExcerpt
+                manualExcerpt,
+                questionText: variant.question
               });
               const repairFailureReasons = [];
               normalizedProblem = this._normalizeVocabularyPayload(repairedPayload, {
@@ -1106,7 +1138,11 @@ ${clipText(passage, 1600)}`,
                 documentCode,
                 passage,
                 index: results.length,
-                failureReasons: repairFailureReasons
+                failureReasons: repairFailureReasons,
+                answerMode: variant.answerMode,
+                targetIncorrectCount: variant.targetIncorrectCount,
+                targetCorrectCount: variant.targetCorrectCount,
+                questionText: variant.question
               });
               if (normalizedProblem) {
                 message = '';
@@ -1134,8 +1170,16 @@ ${clipText(passage, 1600)}`,
       }
 
       normalizedProblem.id = normalizedProblem.id || `vocab_ai_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+      normalizedProblem.metadata = {
+        ...(normalizedProblem.metadata || {}),
+        generationVariant: variant.key,
+        answerMode: variant.answerMode,
+        expectedIncorrect: variant.targetIncorrectCount,
+        expectedCorrect: variant.targetCorrectCount
+      };
       results.push(normalizedProblem);
     }
+
 
     return results;
   }
@@ -1650,6 +1694,10 @@ ${clipText(passage, 1600)}`,
     }
 
     return results;
+  }
+
+  _pickVocabularyVariant(variants = []) {
+    return this._pickGrammarVariant(variants);
   }
 
   _pickGrammarVariant(variants = []) {

@@ -25,6 +25,7 @@
 - Issue: `aiProblemService.generateGrammar` 내부에서 프롬프트 생성, OpenAI 호출, 검증, fallback 을 모두 처리해 재사용이 어렵고, 실패 원인과 개선 내역을 추적하기 힘들었습니다.
 - Fix: `server/services/grammar-generation/` 모듈을 신설해 프롬프트 빌더, OpenAI 러너, 지시문 추출, diff 리포터, fallback 공장을 분리했고, `createGrammarPipeline` 으로 재시도/모델 승격/메타데이터 기록을 통합했습니다.
 - Fix: 새 스크립트(`scripts/compare-grammar-datasets.js`)로 월고 기준 JSON과 후보 JSON을 비교하는 리포트를 자동 생성합니다.
+- Fix: Vocabulary 생성기도 1·2·3개 틀린 문제와 옳은 것 찾기 문제가 25%씩 나오도록 프롬프트/검증을 재구성했고, `correctAnswers`·status·corrections 배열을 모두 검증합니다.
 - Files: server/services/aiProblemService.js, server/services/grammar-generation/*.js, scripts/compare-grammar-datasets.js, docs/grammar-pipeline-refactor.md.
 - Verification: `npm test` (43 tests pass), `node scripts/compare-grammar-datasets.js --baseline server/utils/data/wolgo-2024-03-grammar-baseline.json --candidate server/utils/data/wolgo-2024-grammar-sample.json --output tmp/wolgo-2024-diff.md`.
 

@@ -27,6 +27,7 @@
 - PROJECT_STATE·README·BUILDLOG를 2025-10-16 기준으로 다시 동기화해 문서마다 같은 우선순위와 상태를 보여줍니다.
 - `createGrammarPipeline` 모듈이 어법 문제 생성을 맡아 프롬프트→OpenAI 호출→검증→diff 기록→fallback까지 나눴고, 재시도/모델 정보가 `metadata.pipeline`에 저장됩니다.
 - grammar 파이프라인이 단일 정답뿐 아니라 2개·3개 틀린 문제와 옳은 것 찾기 문제를 각각 25% 확률로 섞어 내도록 가중 무작위 분배를 적용했어요.
+- Vocabulary 생성기도 ① 한 개 틀린 것·② 두 개 틀린 것·③ 세 개 틀린 것·④ 옳은 것 찾기 문제를 25%씩 뽑아내고, `correctAnswers`/status/해설이 모두 맞춰지도록 프롬프트·검증·릴레이어를 손봤습니다.
 - `scripts/sync-grammar-manual.js`가 `/mnt/c/Users/jaekw/Documents/웹앱/문제출제 메뉴얼/📘 chatgpt5 전용 어법 문제 제작 통합 메뉴얼.md`를 읽어 루트(`chatgpt5 전용 어법 문제 제작 통합 메뉴얼.md`)와 `problem manual/grammar_problem_manual.md`에 그대로 복사하고, 프롬프트는 메뉴얼 전문을 그대로 포함합니다.
 - `scripts/extract-grammar-baseline.js`가 `/mnt/c/Users/jaekw/Documents/웹앱/문서샘플/2024년3월고2모의고사_어법샘플100문제.pdf`를 파싱해 `server/utils/data/wolgo-2024-03-grammar-baseline.json`을 만들었고, 각 ①~⑤ 구간은 실제 밑줄 길이에 맞게 정규화됐습니다.
 - `npm run check:grammar-manual`이 `pretest` 단계로 묶여 메뉴얼 복사본의 SHA1을 자동 검사하고, `server/tests/grammarManualSync.test.js`와 `wolgoBaselineIntegrity.test.js`가 기준 세트가 훼손되지 않았는지 회귀 체크를 해요.
