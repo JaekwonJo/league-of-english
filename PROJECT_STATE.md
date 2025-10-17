@@ -25,6 +25,7 @@
 
 ## Current Stage
 - PROJECT_STATE·README·BUILDLOG를 2025-10-16 기준으로 다시 동기화해 문서마다 같은 우선순위와 상태를 보여줍니다.
+- `createGrammarPipeline` 모듈이 어법 문제 생성을 맡아 프롬프트→OpenAI 호출→검증→diff 기록→fallback까지 나눴고, 재시도/모델 정보가 `metadata.pipeline`에 저장됩니다.
 - `scripts/sync-grammar-manual.js`가 `/mnt/c/Users/jaekw/Documents/웹앱/문제출제 메뉴얼/📘 chatgpt5 전용 어법 문제 제작 통합 메뉴얼.md`를 읽어 루트(`chatgpt5 전용 어법 문제 제작 통합 메뉴얼.md`)와 `problem manual/grammar_problem_manual.md`에 그대로 복사하고, 프롬프트는 메뉴얼 전문을 그대로 포함합니다.
 - `scripts/extract-grammar-baseline.js`가 `/mnt/c/Users/jaekw/Documents/웹앱/문서샘플/2024년3월고2모의고사_어법샘플100문제.pdf`를 파싱해 `server/utils/data/wolgo-2024-03-grammar-baseline.json`을 만들었고, 각 ①~⑤ 구간은 실제 밑줄 길이에 맞게 정규화됐습니다.
 - `npm run check:grammar-manual`이 `pretest` 단계로 묶여 메뉴얼 복사본의 SHA1을 자동 검사하고, `server/tests/grammarManualSync.test.js`와 `wolgoBaselineIntegrity.test.js`가 기준 세트가 훼손되지 않았는지 회귀 체크를 해요.
@@ -80,12 +81,12 @@
 - 학습 화면 어법 보기 컴포넌트가 `<u>…</u>` 구간을 파싱해 ①~⑤ 보기로 자동 재조립하므로, 본문 전체가 밑줄로 보이거나 옵션이 비어 있는 문제를 막았습니다.
 
 ## Next 3 (2025-10-16)
-1. 월고 기준 세트와 새로 생성한 문제를 자동으로 비교하는 회귀 파이프라인 만들기 → 지금은 QA가 손으로 diff를 확인하느라 시간이 오래 걸려요.
+1. 월고 기준 세트와 새로 생성한 문제를 자동으로 비교하는 회귀 파이프라인 만들기 → 스크립트는 준비됐으니 CI/운영 자동화까지 붙여 QA가 결과만 확인하면 되도록 해요.
 2. 학생 학습 화면에 "실제 모의고사" 프리뷰 붙이기 → QA가 문제를 풀어 보지 않고도 품질을 한눈에 검증할 수 있게 해요.
 3. 월고 2023·2022 PDF를 JSON으로 변환해 문제은행에 추가하기 → 같은 유형만 반복 노출되지 않도록 데이터 폭과 난이도를 넓혀요.
 
 ## Known issues
-- 자동 회귀 diff 파이프라인이 없어 QA가 새 문제를 직접 비교하고 있어요.
+- 자동 회귀 diff 파이프라인이 CI/운영에 붙지 않아 QA가 스크립트를 직접 돌려야 해요.
 - Wolgo 2024 JSON만 있어서 문제 변형 폭이 아직 좁아요.
 - 학생 학습 화면에는 "실제 모의고사" 프리뷰가 없어 QA가 품질을 바로 확인하지 못해요.
 - 학습 설정 2단계에서 브라우저 뒤로 가기를 누르면 홈으로 튕기는 버그가 남아 있어요.

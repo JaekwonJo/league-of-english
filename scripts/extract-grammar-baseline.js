@@ -10,7 +10,7 @@ const pdfParse = require('pdf-parse');
 const ROOT_DIR = path.resolve(__dirname, '..');
 const DATA_DIR = path.join(ROOT_DIR, 'server', 'utils', 'data');
 const DEFAULT_OUTPUT = path.join(DATA_DIR, 'wolgo-2024-03-grammar-baseline.json');
-const SOURCE_LABEL = '2024년 3월 고2 모의고사 어법 100문제 (월고)';
+const DEFAULT_SOURCE_LABEL = '2024년 3월 고2 모의고사 어법 100문제 (월고)';
 
 const CIRCLED_TO_INDEX = {
   '①': 1,
@@ -26,12 +26,15 @@ function parseArgs() {
   const args = process.argv.slice(2);
   let pdfPath = null;
   let outputPath = DEFAULT_OUTPUT;
+  let sourceLabel = DEFAULT_SOURCE_LABEL;
 
   for (const arg of args) {
     if (arg.startsWith('--pdf=')) {
       pdfPath = arg.split('=')[1];
     } else if (arg.startsWith('--output=')) {
       outputPath = arg.split('=')[1];
+    } else if (arg.startsWith('--label=')) {
+      sourceLabel = arg.split('=')[1];
     } else if (!pdfPath) {
       pdfPath = arg;
     }
@@ -60,7 +63,7 @@ function parseArgs() {
     ? outputPath
     : path.resolve(ROOT_DIR, outputPath);
 
-  return { pdfPath: resolvedPdf, outputPath: absoluteOutput };
+  return { pdfPath: resolvedPdf, outputPath: absoluteOutput, sourceLabel };
 }
 
 function normalise(text) {
@@ -93,8 +96,23 @@ function splitPassageAndFootnotes(body) {
   const lines = body.split('\n');
   const footnotes = [];
   const passageLines = [];
+  const conditions = [];
+  let inConditions = false;
   for (const line of lines) {
-    if (line.trim().startsWith('*')) {
+    const trimmed = line.trim();
+    if (!inConditions && trimmed === '[조건]') {
+      inConditions = true;
+      continue;
+    }
+
+    if (inConditions) {
+      if (trimmed) {
+        conditions.push(trimmed);
+      }
+      continue;
+    }
+
+    if (trimmed.startsWith('*')) {
       footnotes.push(line.trim());
     } else {
       passageLines.push(line);
@@ -102,7 +120,8 @@ function splitPassageAndFootnotes(body) {
   }
   return {
     passage: passageLines.join('\n').trim(),
-    footnotes
+    footnotes,
+    conditions
   };
 }
 
@@ -139,7 +158,7 @@ function parseQuestions(blocks) {
     const sourceNumber = sourceNumberMatch ? Number(sourceNumberMatch[1]) : null;
 
     const body = block.slice(block.indexOf(rawHeader) + rawHeader.length).trim();
-    const { passage, footnotes } = splitPassageAndFootnotes(body);
+    const { passage, footnotes, conditions } = splitPassageAndFootnotes(body);
     const segments = parseSegments(passage);
 
     if (segments.length !== 5) {
@@ -152,6 +171,7 @@ function parseQuestions(blocks) {
       sourceNumber,
       passage,
       footnotes,
+      conditions,
       segments
     };
   });
@@ -186,7 +206,7 @@ function parseAnswers(text) {
   return answers;
 }
 
-async function extract(pdfPath) {
+async function extract(pdfPath, sourceLabel = DEFAULT_SOURCE_LABEL) {
   const buffer = fs.readFileSync(pdfPath);
   const parsed = await pdfParse(buffer);
   const text = normalise(parsed.text);
@@ -213,6 +233,7 @@ async function extract(pdfPath) {
       header: question.header,
       passage: question.passage,
       footnotes: question.footnotes,
+      conditions: question.conditions,
       segments: question.segments,
       answer: answerEntry.answerIndex,
       answerMarker: INDEX_TO_CIRCLED[answerEntry.answerIndex] || String(answerEntry.answerIndex),
@@ -222,7 +243,7 @@ async function extract(pdfPath) {
 
   return {
     source: {
-      label: SOURCE_LABEL,
+      label: sourceLabel,
       pdfPath,
       questionCount: items.length,
       extractedAt: new Date().toISOString()
@@ -241,10 +262,10 @@ function writeOutput(outputPath, payload) {
 
 (async () => {
   try {
-    const { pdfPath, outputPath } = parseArgs();
+    const { pdfPath, outputPath, sourceLabel } = parseArgs();
     console.log('[extract-grammar-baseline] 📥 PDF:', pdfPath);
     console.log('[extract-grammar-baseline] 📤 Output:', outputPath);
-    const payload = await extract(pdfPath);
+    const payload = await extract(pdfPath, sourceLabel);
     writeOutput(outputPath, payload);
     console.log(`[extract-grammar-baseline] ✅ Extracted ${payload.items.length} questions.`);
   } catch (error) {

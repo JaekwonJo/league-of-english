@@ -21,6 +21,13 @@
 - Files: PROJECT_STATE.md, README.md, BUILDLOG.md.
 - Verification: 문서 검토.
 
+## 2025-10-16 (grammar pipeline modularisation)
+- Issue: `aiProblemService.generateGrammar` 내부에서 프롬프트 생성, OpenAI 호출, 검증, fallback 을 모두 처리해 재사용이 어렵고, 실패 원인과 개선 내역을 추적하기 힘들었습니다.
+- Fix: `server/services/grammar-generation/` 모듈을 신설해 프롬프트 빌더, OpenAI 러너, 지시문 추출, diff 리포터, fallback 공장을 분리했고, `createGrammarPipeline` 으로 재시도/모델 승격/메타데이터 기록을 통합했습니다.
+- Fix: 새 스크립트(`scripts/compare-grammar-datasets.js`)로 월고 기준 JSON과 후보 JSON을 비교하는 리포트를 자동 생성합니다.
+- Files: server/services/aiProblemService.js, server/services/grammar-generation/*.js, scripts/compare-grammar-datasets.js, docs/grammar-pipeline-refactor.md.
+- Verification: `npm test` (43 tests pass), `node scripts/compare-grammar-datasets.js --baseline server/utils/data/wolgo-2024-03-grammar-baseline.json --candidate server/utils/data/wolgo-2024-grammar-sample.json --output tmp/wolgo-2024-diff.md`.
+
 ## 2025-10-13 (doc fallback + AI escalation)
 - Issue: Grammar/vocabulary 생성이 OpenAI 오류에서 멈추면 다른 문서 fallback이 노출되고, 해설은 영어 gloss만 남아 학습 신뢰도가 떨어졌어요.
 - Cause: `fallbackProblemFactory`가 문서 context 없이 정적 bank만 돌렸고, AI 재시도는 동일 모델로 6번 반복했습니다.
