@@ -643,16 +643,148 @@ if (!['test', 'ci'].includes(NODE_ENV)) {
   warmupWordnet();
 }
 
+const CUSTOM_WORDNET_OVERRIDES = new Map([
+  ['patient', {
+    synsetType: 'n',
+    gloss: 'a person who requires medical care',
+    words: ['patient'],
+    pointers: []
+  }],
+  ['boundary', {
+    synsetType: 'n',
+    gloss: 'a line or limit that marks the edge of an area or concept',
+    words: ['boundary'],
+    pointers: []
+  }],
+  ['mentor', {
+    synsetType: 'n',
+    gloss: 'a trusted guide who gives advice or training',
+    words: ['mentor'],
+    pointers: []
+  }],
+  ['checklist', {
+    synsetType: 'n',
+    gloss: 'a list of tasks to be completed or points to be considered',
+    words: ['checklist'],
+    pointers: []
+  }],
+  ['reminder', {
+    synsetType: 'n',
+    gloss: 'an item or note that prompts the memory of something',
+    words: ['reminder'],
+    pointers: []
+  }],
+  ['expression', {
+    synsetType: 'n',
+    gloss: 'a word or phrase that conveys an idea',
+    words: ['expression'],
+    pointers: []
+  }],
+  ['student', {
+    synsetType: 'n',
+    gloss: 'a learner who attends a school or studies under a teacher',
+    words: ['student'],
+    pointers: []
+  }],
+  ['focus', {
+    synsetType: 'n',
+    gloss: 'the concentration of attention or energy on something',
+    words: ['focus'],
+    pointers: []
+  }]
+]);
+
+const WORDNET_WARNING_CACHE = new Set();
+
+const WORDNET_LEMMA_OVERRIDES = new Map([
+  ['self-boundaries', 'boundary'],
+  ['selfboundaries', 'boundary'],
+  ['health-related', 'health'],
+  ['healthrelated', 'health'],
+  ['cannot', 'can'],
+  ['seen', 'see'],
+  ['makes', 'make'],
+  ['helps', 'help'],
+  ['looks', 'look']
+]);
+
+function buildOverrideDefinition(key) {
+  const override = CUSTOM_WORDNET_OVERRIDES.get(key);
+  if (!override) return [];
+  return [{
+    gloss: override.gloss,
+    glossary: override.gloss,
+    def: override.gloss,
+    meta: {
+      synsetType: [override.synsetType],
+      words: (override.words || []).map((word) => ({ word })),
+      pointers: override.pointers || []
+    }
+  }];
+}
+
+function generateWordnetVariants(raw = '') {
+  const word = String(raw || '').trim();
+  const variants = new Set();
+  if (!word) return [];
+  const lower = word.toLowerCase();
+  variants.add(lower);
+  variants.add(lower.replace(/-/g, ' '));
+  variants.add(lower.replace(/-/g, ''));
+  if (WORDNET_LEMMA_OVERRIDES.has(lower)) {
+    variants.add(WORDNET_LEMMA_OVERRIDES.get(lower));
+  }
+  if (lower.includes('-')) {
+    lower.split('-').forEach((part) => { if (part) variants.add(part); });
+  }
+  if (lower.endsWith('ies')) {
+    variants.add(`${lower.slice(0, -3)}y`);
+  }
+  if (lower.endsWith('ves')) {
+    variants.add(`${lower.slice(0, -3)}f`);
+    variants.add(`${lower.slice(0, -3)}fe`);
+  }
+  if (lower.endsWith('s')) {
+    variants.add(lower.slice(0, -1));
+  }
+  if (lower.endsWith('es')) {
+    variants.add(lower.slice(0, -2));
+  }
+  if (lower.endsWith('ing')) {
+    variants.add(lower.slice(0, -3));
+  }
+  if (lower.endsWith('ed')) {
+    variants.add(lower.slice(0, -2));
+  }
+  return Array.from(variants).filter(Boolean);
+}
+
 async function lookupWordnet(word) {
   await ensureWordnetReady();
-  try {
-    const definitions = await wordnet.lookup(word);
-    return definitions || [];
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.warn('[doc-fallback] wordnet lookup error', word, error?.message || error);
-    return [];
+  const candidates = generateWordnetVariants(word);
+  for (const candidate of candidates) {
+    try {
+      const definitions = await wordnet.lookup(candidate);
+      if (definitions && definitions.length) {
+        return definitions;
+      }
+    } catch (error) {
+      // swallow error; we may succeed with overrides below
+    }
   }
+
+  for (const candidate of candidates) {
+    const override = buildOverrideDefinition(candidate);
+    if (override.length) {
+      return override;
+    }
+  }
+
+  if (!WORDNET_WARNING_CACHE.has(word)) {
+    console.warn('[doc-fallback] wordnet lookup miss', word); // eslint-disable-line no-console
+    WORDNET_WARNING_CACHE.add(word);
+  }
+  return [];
 }
 
 function normalizeSynonym(word) {
@@ -1062,5 +1194,8 @@ module.exports = {
   // Exposed for tests so we can verify Korean gloss conversion logic.
   translateGlossToKorean,
   warmupWordnet,
-  formatSourceLabel
+  formatSourceLabel,
+  __wordnetTest: {
+    lookupWordnet
+  }
 };

@@ -11,6 +11,8 @@ fallbackModule.translateGlossToKorean = (gloss) => (gloss ? `뜻:${gloss}` : '')
 
 delete require.cache[require.resolve('../utils/documentAnalyzer')];
 const DocumentAnalyzer = require('../utils/documentAnalyzer');
+const fallbackDocModule = require('../utils/documentProblemFallback');
+const { buildVocabularyFallbackProblems } = fallbackDocModule;
 
 function hasHangul(text) {
   return /[가-힣]/.test(String(text || ''));
@@ -42,4 +44,12 @@ test('fallback analysis variant fills every field richly', async () => {
   assert.ok(hasHangul(variant.meta?.authorsClaim), 'authorsClaim must be present');
   assert.ok(variant.meta?.englishSummary && variant.meta.englishSummary.length >= 20, 'englishSummary should not be empty');
   assert.ok(hasHangul(variant.meta?.englishSummaryKorean), 'englishSummaryKorean should contain Hangul');
+});
+
+test('WordNet override returns fallback definitions for pluralised words', async () => {
+  const lookup = fallbackDocModule.__wordnetTest.lookupWordnet;
+  const result = await lookup('patients');
+  assert.ok(Array.isArray(result) && result.length > 0, 'patients should resolve via override');
+  const mentorResult = await lookup('mentors');
+  assert.ok(Array.isArray(mentorResult) && mentorResult.length > 0, 'mentors should resolve via override');
 });
