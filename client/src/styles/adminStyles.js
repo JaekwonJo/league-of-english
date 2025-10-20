@@ -159,7 +159,7 @@ export const adminStyles = {
     left: 0,
     right: 0,
     bottom: 0,
-    background: 'rgba(15, 23, 42, 0.55)',
+    background: 'var(--dialog-scrim)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -174,10 +174,45 @@ export const adminStyles = {
     maxHeight: '90vh',
     overflow: 'auto'
   },
+  modalHeader: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px',
+    marginBottom: '20px'
+  },
   modalTitle: {
     color: 'var(--text-primary)',
     marginBottom: '25px',
     fontSize: '1.4rem'
+  },
+  modalSubtitle: {
+    color: 'var(--text-secondary)',
+    fontSize: '0.95rem'
+  },
+  modalActions: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    gap: '12px',
+    marginTop: '10px'
+  },
+  modalSecondaryButton: {
+    background: 'var(--surface-soft)',
+    color: 'var(--text-secondary)',
+    border: '1px solid var(--border-subtle)',
+    borderRadius: '12px',
+    padding: '10px 22px',
+    fontWeight: 600,
+    cursor: 'pointer'
+  },
+  modalPrimaryButton: {
+    background: 'var(--accent-primary)',
+    color: 'var(--text-on-accent)',
+    border: 'none',
+    borderRadius: '12px',
+    padding: '10px 22px',
+    fontWeight: 700,
+    cursor: 'pointer',
+    boxShadow: '0 14px 28px rgba(59, 130, 246, 0.28)'
   },
   form: {
     display: 'flex',

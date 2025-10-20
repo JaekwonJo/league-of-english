@@ -1,3 +1,10 @@
+## 2025-10-20 (share modal token화 + QA 문서 정비)
+- Issue: 문서 공유 모달이 다크 모드에서 대비가 약하고, seed 스크립트 사용법/QA 캡처 절차가 문서마다 흩어져 있었어요.
+- Fix: `DocumentShareModal`이 `adminStyles` 토큰 팔레트를 쓰도록 정리해 라이트/다크 모드 시안이 통일됐어요.
+- Fix: `adminStyles`에 modal header/버튼 토큰을 추가하고 오버레이를 `var(--dialog-scrim)`으로 교체했어요.
+- Docs: README와 `docs/beta-launch-checklist.md`에 `scripts/seed-beta-data.js` 실행 순서를 명시하고, `docs/ui-regression-guide.md`를 새로 작성했어요.
+- Verification: eslint 영향 없음 (스타일 변경), seed 스크립트는 로컬에서 `DB_FILE=server/tmp/beta-seed.db node scripts/seed-beta-data.js`로 스모크 테스트했어요.
+
 ## 2025-10-20 (admin palette + beta seed QA)
 - Issue: 관리자 신고/분석 화면 배지가 다크 모드에서 눈에 잘 띄지 않고, 베타용 데이터 세팅이 매번 수동으로 진행돼 시간과 오류가 생겼어요.
 - Fix: ProblemFeedback 배지 · DocumentAnalysis 보조 버튼에 토큰 색상을 적용해 라이트/다크 모드 대비를 통일했어요.
