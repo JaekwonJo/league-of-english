@@ -1,3 +1,19 @@
+## 2025-10-20 (analysis payload fill + admin UX sync)
+- Error: 분석 보기에서 해석/배경/예시가 비어 있고 안내 문장만 반복돼 실제 학습에 쓸 수 없었어요.
+- Cause: fallback normalizer가 번역 실패 시 템플릿 문구를 그대로 저장했고, UI도 빈 값을 필터링하지 않았어요.
+- Fix: `analysisService`·`documentAnalyzer`가 해석·배경·실생활 예시 필드를 필수로 검증하고, 실패 시 친절한 메시지를 반환해요.
+- Fix: 관리자 분석 모달 라우트를 고쳐 404 대신 안내 문구와 삭제 버튼을 보여 줍니다.
+- Feature: ProblemFeedback/Analysis 팝업에 필터·CSV·토스트를 추가해 신고 대응을 빠르게 했어요.
+- Docs: README, PROJECT_STATE, BUILDLOG를 같은 우선순위·Known Issues로 동기화했어요.
+- Tests: `npm test`, `npm run build` (경고 없음)을 실행해 새 로직이 안전한지 확인했어요.
+
+## 2024-11-XX (beta 준비: fallback 확장 + 배포 문서)
+- Feature: OpenAI 미사용 시에도 해석/배경/예시/문법/어휘를 모두 채우는 fallback 분석 파이프라인을 재작성하고, Google Translate 캐시를 붙여 한국어 설명을 안정적으로 제공합니다.
+- Feature: 관리자 분석 모달에 🗑️ 삭제 버튼을 추가해 신고된 분석본을 즉시 제거하고, 남은 변형 인덱스를 자동 재정렬합니다.
+- Fix: 없는 분석본을 열었을 때 404 대신 안내 메시지를 띄워 "아직 분석이 없습니다"라고 알려 줍니다.
+- Docs: `.env.example`, `client/.env.example`, `DEPLOY_RENDER_VERCEL.md`, `docs/beta-launch-checklist.md`, `README.md`, `PROJECT_STATE.md`를 최신화했습니다.
+- Tests: `npm test` (43개 통과), `npm run build` (경고 존재 – Known Issues에 기록).
+
 ## 2025-10-22 (manual sync guard + WordNet warm-up)
 - Issue: 어법 메뉴얼 최신본이 프롬프트에 일부만 들어가고 fallback은 예전 지침을 쓰면서 품질 편차가 생겼고, 월고 PDF 기준 데이터가 없어 회귀 테스트를 돌릴 수 없었습니다.
 - Fix: `scripts/sync-grammar-manual.js`가 Windows 문서함 메뉴얼을 루트/`problem manual` 경로에 그대로 복사하도록 만들고, manual loader와 `eobeopTemplate`이 메뉴얼 전문을 그대로 프롬프트에 포함합니다.
