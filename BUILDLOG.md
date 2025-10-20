@@ -1,3 +1,11 @@
+## 2025-10-20 (WordNet override + UI 캡처 스크립트)
+- Issue: seed 스크립트를 실행할 때 WordNet에 없는 단어 경고가 반복되고, QA 스크린샷도 손으로만 남겨야 했어요.
+- Fix: `documentProblemFallback`에 복수형/복합어 오버라이드와 래머 변환을 추가해 WordNet 경고 없이 fallback 어휘를 생성합니다.
+- Feature: `scripts/seed-beta-data.js`가 JSON 로그를 남기고, `SEED_WEBHOOK_URL`을 통해 Slack 등으로 완료 알림을 보냅니다.
+- Feature: `scripts/capture-ui-playwright.js`와 `npm run capture:ui`를 추가해 로그인/분석/학습/랭킹 화면을 자동 캡처할 수 있어요.
+- Docs: README, `docs/beta-launch-checklist.md`, `docs/ui-regression-guide.md`에 새 스크립트와 환경 변수를 반영했습니다.
+- Tests: `npm test`, `npm run build`, `DB_FILE=server/tmp/beta-seed.db node scripts/seed-beta-data.js`를 실행해 경고 없이 통과하는지 확인했습니다.
+
 ## 2025-10-20 (share modal token화 + QA 문서 정비)
 - Issue: 문서 공유 모달이 다크 모드에서 대비가 약하고, seed 스크립트 사용법/QA 캡처 절차가 문서마다 흩어져 있었어요.
 - Fix: `DocumentShareModal`이 `adminStyles` 토큰 팔레트를 쓰도록 정리해 라이트/다크 모드 시안이 통일됐어요.

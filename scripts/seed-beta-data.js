@@ -7,6 +7,7 @@
  * - Seeds vocabulary problems tagged with metadata.seedTag
  */
 
+const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 
@@ -307,9 +308,19 @@ async function main() {
     });
   }
 
+  const duration = Date.now() - started;
+  const summary = {
+    startedAt: new Date(started).toISOString(),
+    durationMs: duration,
+    users: userResults,
+    documents: docResults
+  };
+
   await database.close();
 
-  const duration = Date.now() - started;
+  await writeSeedLog(summary);
+  await notifyWebhook(summary);
+
   console.log('✅ Beta seed completed in', `${duration}ms`);
   console.log('👥 Users:');
   userResults.forEach((entry) => {
@@ -330,3 +341,50 @@ main().catch(async (error) => {
   }
   process.exit(1);
 });
+
+function ensureLogsDir() {
+  const override = process.env.SEED_LOG_FILE;
+  if (override) {
+    const dir = path.dirname(override);
+    fs.mkdirSync(dir, { recursive: true });
+    return override;
+  }
+  const logDir = path.join(__dirname, '..', 'logs');
+  fs.mkdirSync(logDir, { recursive: true });
+  return path.join(logDir, 'beta-seed-last.json');
+}
+
+async function writeSeedLog(payload) {
+  try {
+    const target = ensureLogsDir();
+    fs.writeFileSync(target, JSON.stringify(payload, null, 2));
+  } catch (error) {
+    console.warn('[beta-seed] failed to write log file:', error?.message || error);
+  }
+}
+
+async function notifyWebhook(summary) {
+  const url = process.env.SEED_WEBHOOK_URL;
+  if (!url) return;
+  try {
+    const payload = {
+      text: `✅ beta seed finished in ${summary.durationMs}ms\n👥 Users: ${summary.users.length}\n📚 Documents: ${summary.documents.length}`,
+      blocks: [
+        {
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text: `*Beta seed 완료* (${new Date(summary.startedAt).toLocaleString()})\n• 실행 시간: ${summary.durationMs}ms\n• 사용자: ${summary.users.length}\n• 문서: ${summary.documents.length}`
+          }
+        }
+      ]
+    };
+    await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+  } catch (error) {
+    console.warn('[beta-seed] webhook notification failed:', error?.message || error);
+  }
+}

@@ -18,6 +18,7 @@
 - [ ] Render Disk(1GB)가 `/var/data`에 마운트되어 있는지 확인 (SQLite 보존용)
 - [ ] 초기 베타 계정(관리자/교사/학생) 목록을 Notion 등에서 관리
 - [ ] 베타 더미 데이터가 필요하면 `DB_FILE=/var/data/loe.db node scripts/seed-beta-data.js` 실행 (로컬 테스트는 DB_FILE 생략 가능)
+- [ ] 실행 후 `logs/beta-seed-last.json` 확인, 필요 시 `SEED_WEBHOOK_URL`로 Slack 알림 테스트
 - [ ] 스크립트 실행 후 `metadata.seedTag`가 `beta-seed-20251020`인지 확인해 중복 데이터를 방지
 
 ## 4. 기능 점검 (QA 스모크 테스트)
@@ -30,7 +31,7 @@
 | 신고/좋아요 | 문제 화면과 분석 화면에서 👍/🚨 버튼 작동 확인 |
 | 이메일(선택) | 계정 인증 메일 또는 알림 메일이 정상 발송되는지 테스트 |
 | 다크 모드 | 학습/분석/랭킹/어휘 화면을 `ThemeProvider`로 라이트 ↔ 다크 전환하며 텍스트 대비와 버튼 색상을 캡처로 확인 |
-| UI 캡처 | `docs/ui-regression-guide.md`에 있는 순서대로 화면을 캡처해 Notion/Drive에 공유 |
+| UI 캡처 | `docs/ui-regression-guide.md`에 있는 순서대로 화면을 캡처하고 `npm run capture:ui`로 Playwright 결과를 보관 |
 
 ## 5. 모니터링 & 알림
 - [ ] Render Logs 탭을 열고 500 에러가 없는지 확인 (OpenAI 미설정 시 fallback 로그만 나오는지 확인)

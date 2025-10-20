@@ -28,13 +28,15 @@
     "session:auto": "node scripts/auto-session-daemon.js",
     "session:auto:5m": "node scripts/auto-session-daemon.js 300000",
     "doctor:client": "node scripts/doctor-client.js",
-    "test": "node --test server/tests"
+    "test": "node --test server/tests",
+    "capture:ui": "node scripts/capture-ui-playwright.js"
   },
   "pretest": "npm run check:grammar-manual",
   "engines": {
     "node": ">=18"
   },
   "dependencies": {
+    "@vitalets/google-translate-api": "^9.2.1",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
@@ -54,6 +56,7 @@
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "husky": "^9.0.11",
+    "@playwright/test": "^1.48.0",
     "lint-staged": "^15.2.7",
     "nodemon": "^3.0.1",
     "prettier": "^3.3.3"

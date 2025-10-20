@@ -3,12 +3,14 @@
 > 📸 배포 전후에 같은 흐름을 캡처해 두면 버그를 빠르게 찾을 수 있어요. 아래 순서를 토대로 이미지나 짧은 영상을 남겨 주세요.
 
 ## 1. 준비
+- `npm install` 이후 한 번만 `npx playwright install`을 실행해 브라우저 드라이버를 받아요.
 - 크롬 시크릿 창을 열고 `localStorage`를 비워 새 세션으로 시작해요.
 - 라이트 모드 → 다크 모드를 번갈아 캡처해야 하니, `ThemeProvider` 토글 위치를 확인해 두세요.
 - 캡처 파일은 `docs/assets/qa-YYYYMMDD/` 폴더나 Notion/Drive 폴더에 날짜별로 업로드합니다.
+- 자동 캡처는 `npm run capture:ui` (필요 시 `CAPTURE_BASE_URL`, `CAPTURE_ADMIN_USERNAME`, `CAPTURE_ADMIN_PASSWORD`)로 실행하면 `logs/ui-captures/<timestamp>/`에 저장돼요.
 
 ## 2. 관리자 흐름
-1. **로그인** – 관리자 계정으로 로그인 화면 → 대시보드 첫 화면.
+1. **로그인** – 관리자 계정으로 로그인 화면 → 대시보드 첫 화면 (`npm run capture:ui`는 `login-page.png`, `dashboard-after-login.png`를 생성해요).
 2. **문서 업로드** – PDF 업로드 → 분석 생성 → 분석 본문 탭(variant 1)과 삭제 버튼.
 3. **문서 공유 모달** – `📤 공유` 버튼을 눌러 모달을 띄우고, 공개 체크박스/학교 입력 필드 상태를 캡처.
 4. **신고 센터** – ProblemFeedback 보드에서 필터/배지 색상이 라이트·다크 모드 모두 또렷한지 확인.

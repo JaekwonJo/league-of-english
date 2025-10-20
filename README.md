@@ -38,7 +38,8 @@ npm run lint
 1. 로컬 SQLite를 따로 두고 싶다면 `DB_FILE=server/tmp/beta-seed.db node scripts/seed-beta-data.js`
 2. Render 같은 실서버에서는 `DB_FILE=/var/data/loe.db node scripts/seed-beta-data.js`
 3. 스크립트가 관리자/학생 계정과 분석·어휘 샘플을 자동으로 넣고, `metadata.seedTag`로 표시해 줘요.
-4. 실행 중 WordNet 경고가 여러 줄 나오더라도 대부분은 사전에서 찾지 못한 단어 안내라 정상이에요.
+4. 실행 결과는 `logs/beta-seed-last.json`(또는 `SEED_LOG_FILE` 지정 경로)에 저장되고, `SEED_WEBHOOK_URL`을 세팅하면 Slack 등으로 알림을 보낼 수 있어요.
+5. 추가 override 덕분에 WordNet 경고 없이 실행됩니다.
 
 
 ## 3. 배포 가이드 (Render + Vercel)
@@ -57,7 +58,7 @@ npm run lint
 - **테스트**: `npm test` (43개) – fallback 한글 변환, 문제 포맷, 신고 로직 등 검증
 - **빌드**: `npm run build` – CRA 기반 프로덕션 빌드 (경고는 Known Issues 참고)
 - **로그**: Render/Vercel 콘솔에서 실시간 확인, OpenAI 실패 시 fallback 로그 기록
-- **UI 캡처 가이드**: `docs/ui-regression-guide.md`에 분석/학습/랭킹 화면 캡처 순서와 공유 템플릿이 정리돼 있어요.
+- **UI 캡처 가이드**: `docs/ui-regression-guide.md`에 분석/학습/랭킹 화면 캡처 순서와 공유 템플릿이 정리돼 있고, `npm run capture:ui`로 Playwright 캡처 스크립트를 실행할 수 있어요.
 
 ## 6. 최근 업데이트 (2025-10-20)
 - ProblemFeedback 배지·DocumentAnalysis 버튼을 테마 토큰으로 바꿔 다크 모드에서도 선명하게 보이게 했어요.

@@ -27,14 +27,13 @@
 - Vercel(프런트) + Render(백엔드) 배포 가이드를 따라 베타 테스트 준비에 들어갔어요.
 
 ## Next 3 (오늘 우선순위)
-1. **WordNet 경고 줄이기** – seed 스크립트/QA에서 반복되는 lookup 경고를 사용자 사전으로 정리.
-2. **UI 캡처 자동화 PoC** – `docs/ui-regression-guide.md` 흐름을 Playwright나 Percy로 스크립트화.
-3. **Seed 로그 대시보드** – seed 스크립트 실행 결과를 Notion/Slack으로 공유하는 webhook 정리.
+1. **UI 캡처 CI 통합** – `npm run capture:ui` 결과를 CI에서 실행해 스크린샷을 아티팩트로 저장.
+2. **WordNet override 관리 도구** – 코드 대신 JSON/문서 기반으로 단어 오버라이드를 추가할 수 있도록 정리.
+3. **Seed 리포트 자동 공유** – Slack/Notion Webhook 템플릿을 만들어 팀 채널로 결과를 자동 전송.
 
 ## Known Issues
-- `scripts/seed-beta-data.js` 실행 시 WordNet이 인식하지 못한 단어 경고가 다수 출력돼요. (최종 결과는 curated 데이터로 보완됨)
 - UI/API 통합 테스트는 수동 QA로만 점검했습니다. 자동화된 end-to-end 테스트는 아직 준비 중이에요.
-- UI 캡처는 아직 수동 캡처 가이드에 의존합니다. 자동 회귀 도구는 PoC 단계예요.
+- UI 캡처 스크립트는 로컬에서 수동 실행해야 하며 Playwright 설치(`npx playwright install`)가 필요해요.
 - Google Translate 무료 API는 호출 제한이 있으므로 Render 배포 시 캐시 파일 삭제에 주의해야 해요.
 
 ## Resolved – 2025-10-20 (오류 반복 방지)
@@ -42,3 +41,4 @@
 - README · `docs/beta-launch-checklist.md`에 seed 스크립트 실행 절차를 명시해 베타 데이터 세팅이 표준화됐어요.
 - `docs/ui-regression-guide.md`를 작성해 UI 캡처 범위와 공유 규칙을 팀원이 동일하게 따라갈 수 있게 했어요.
 - `analysisFallbackVariant.test.js`, `fallbackContent.test.js`로 fallback 해석·어휘 결과가 텅 비지 않는지 회귀 테스트로 잠궜어요.
+- `scripts/seed-beta-data.js`에 WordNet override/로그/Slack Webhook 옵션을 추가해 경고 없이 seed하고 기록을 남길 수 있어요.
