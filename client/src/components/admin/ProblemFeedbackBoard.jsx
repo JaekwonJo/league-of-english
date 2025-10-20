@@ -203,10 +203,10 @@ export function ProblemFeedbackBoard({
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           <span style={adminStyles.feedbackBadge}>대기 {pendingCount}</span>
-          <span style={{ ...adminStyles.feedbackBadge, background: '#e8f5e9', color: '#2e7d32' }}>
+          <span style={adminStyles.feedbackBadgeSuccess}>
             완료 {resolvedCount}
           </span>
-          <span style={{ ...adminStyles.feedbackBadge, background: '#fff4e5', color: '#e65100' }}>
+          <span style={adminStyles.feedbackBadgeHold}>
             보류 {dismissedCount}
           </span>
         </div>

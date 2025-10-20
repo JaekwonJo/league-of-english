@@ -4,7 +4,7 @@ import analysisConfig from '../../config/analysis.config.json';
 import PassagePickerGrid from '../shared/PassagePickerGrid';
 import PassagePreviewModal from '../shared/PassagePreviewModal';
 
-const MAX_SELECTION = 2;
+const MAX_VARIANTS_PER_PASSAGE = 2;
 
 const initialReportModal = {
   open: false,
@@ -13,9 +13,32 @@ const initialReportModal = {
   reason: ''
 };
 
+
+const GENERATION_WORDS = [
+  { word: 'spark', meaning: '불꽃; 아이디어가 시작되는 불씨' },
+  { word: 'nurture', meaning: '길러 주다; 애정을 쏟아 키우다' },
+  { word: 'momentum', meaning: '관성, 추진력; 계속 나아가게 하는 힘' },
+  { word: 'focus', meaning: '집중; 마음을 한곳에 모으는 상태' }
+];
+
+const GENERATION_QUOTES = [
+  { text: 'Education is the kindling of a flame, not the filling of a vessel.', author: 'William Butler Yeats' },
+  { text: 'The beautiful thing about learning is that nobody can take it away from you.', author: 'B. B. King' },
+  { text: 'Tell me and I forget. Teach me and I remember. Involve me and I learn.', author: 'Benjamin Franklin' },
+  { text: 'Learning never exhausts the mind.', author: 'Leonardo da Vinci' }
+];
+
+const LOADING_MESSAGES = [
+  'AI가 문장을 하나씩 뜯어보는 중이에요... ✨',
+  '교수님 모드로 분석본을 정성껏 기록하는 중입니다... 📝',
+  '학생 눈높이에 맞춰 해석을 다듬는 중이에요... 🌟',
+  '실생활 예시와 어법 포인트를 챙기고 있어요... 📚'
+];
+
+const pickRandom = (items) => items[Math.floor(Math.random() * items.length)];
+
 const DocumentAnalysis = ({ document, onClose }) => {
   const [passages, setPassages] = useState([]);
-  const [selected, setSelected] = useState([]);
   const [analysisMap, setAnalysisMap] = useState({});
   const [activePassageNumber, setActivePassageNumber] = useState(null);
   const [activeVariantIndex, setActiveVariantIndex] = useState(0);
@@ -28,6 +51,19 @@ const DocumentAnalysis = ({ document, onClose }) => {
   const [reportModal, setReportModal] = useState(initialReportModal);
   const [reportSubmitting, setReportSubmitting] = useState(false);
   const [previewPassage, setPreviewPassage] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const [generationPrompt, setGenerationPrompt] = useState({ open: false, passage: null });
+  const [generationLoading, setGenerationLoading] = useState({
+    active: false,
+    passageNumber: null,
+    count: 1,
+    word: null,
+    meaning: null,
+    quote: null,
+    quoteAuthor: null,
+    message: null
+  });
 
   const endpoints = analysisConfig.api.endpoints;
 
@@ -46,7 +82,6 @@ const DocumentAnalysis = ({ document, onClose }) => {
   useEffect(() => {
     if (!document?.id) return;
     setPassages([]);
-    setSelected([]);
     setAnalysisMap({});
     setActivePassageNumber(null);
     setActiveVariantIndex(0);
@@ -80,7 +115,7 @@ const DocumentAnalysis = ({ document, onClose }) => {
         variants: Array.isArray(item.variants) ? item.variants : [],
         remainingSlots: item.remainingSlots !== undefined
           ? item.remainingSlots
-          : Math.max(0, 2 - (item.variantCount || 0)),
+          : Math.max(0, MAX_VARIANTS_PER_PASSAGE - (item.variantCount || 0)),
         updatedAt: item.updatedAt || null
       }));
 
@@ -106,7 +141,7 @@ const DocumentAnalysis = ({ document, onClose }) => {
         ...item,
         analyzed: variantCount > 0,
         variantCount,
-        remainingSlots: Math.max(0, 2 - variantCount)
+        remainingSlots: Math.max(0, MAX_VARIANTS_PER_PASSAGE - variantCount)
       };
     }));
   };
@@ -127,87 +162,118 @@ const DocumentAnalysis = ({ document, onClose }) => {
         setError(response?.message || '분석 결과를 불러오지 못했습니다.');
       }
     } catch (err) {
-      setError(err?.message || '분석 결과를 불러오는 중 문제가 발생했습니다.');
+      const message = String(err?.message || '');
+      if (message.includes('404') || message.includes('찾을 수 없습니다')) {
+        const passage = passages.find((item) => item.passageNumber === passageNumber) || null;
+        const fallback = {
+          passageNumber,
+          originalPassage: passage?.fullText || passage?.text || passage?.excerpt || '',
+          variants: []
+        };
+        syncAnalysisState(fallback);
+        setActivePassageNumber(passageNumber);
+        setActiveVariantIndex(0);
+        setMessage('아직 저장된 분석본이 없어요. 새 분석을 만들어 주세요.');
+        setError(null);
+      } else {
+        setError(message || '분석 결과를 불러오는 중 문제가 발생했습니다.');
+      }
     } finally {
       setDetailLoading(false);
     }
   };
 
-  const toggleSelection = (passageNumber) => {
-    if (!Number.isInteger(passageNumber)) return;
-    if (batchLoading) return;
-    const target = passages.find((item) => item.passageNumber === passageNumber);
-    if (target && target.remainingSlots === 0 && !selected.includes(passageNumber)) {
-      setMessage('이미 두 개의 분석본이 준비된 지문은 추가로 생성할 수 없어요.');
-      return;
-    }
-    setSelected((prev) => {
-      if (prev.includes(passageNumber)) {
-        return prev.filter((num) => num !== passageNumber);
-      }
-      if (prev.length >= MAX_SELECTION) {
-        setMessage(`한 번에 최대 ${MAX_SELECTION}개의 지문만 선택할 수 있어요.`);
-        return prev;
-      }
-      return [...prev, passageNumber];
-    });
-  };
+  const handleAnalyzePassage = async (passageNumber, options = {}) => {
+    const target = Number(passageNumber);
+    if (!Number.isInteger(target) || target < 1) return false;
+    if (batchLoading) return false;
 
-  const handleAnalyzeSelected = async (targetList) => {
-    const targets = Array.isArray(targetList) && targetList.length
-      ? targetList
-      : selected;
-    const normalizedTargets = Array.from(new Set(
-      targets
-        .map((value) => Number(value))
-        .filter((value) => Number.isInteger(value) && value > 0)
-    )).sort((a, b) => a - b);
-
-    if (batchLoading || normalizedTargets.length === 0) return;
+    let success = false;
     try {
       setBatchLoading(true);
       setMessage('');
       setError(null);
-      const endpoint = endpoints.analyzeBatch.replace(':documentId', document.id);
-      const response = await apiService.post(endpoint, { passageNumbers: normalizedTargets });
 
-      if (!response?.success && (!response?.failures || response.failures.length === 0)) {
+      const endpoint = endpoints.analyzePassage.replace(':documentId', document.id);
+      const count = Number(options.count) || 1;
+      const response = await apiService.post(endpoint, { passageNumber: target, count });
+
+      if (!response?.success || !response?.data) {
         setError(response?.message || '분석을 생성하지 못했습니다.');
-        return;
+        return false;
       }
 
-      const outcomes = response?.outcomes || [];
-      if (outcomes.length) {
-        const analyzedNow = [];
-        const latestByPassage = new Map();
-        outcomes.forEach((outcome) => {
-          if (outcome?.data) {
-            syncAnalysisState(outcome.data);
-            analyzedNow.push(outcome.passageNumber);
-            latestByPassage.set(outcome.passageNumber, outcome.data);
-          }
-        });
-        if (analyzedNow.length) {
-          const first = analyzedNow[0];
-          setActivePassageNumber(first);
-          const firstAnalysis = latestByPassage.get(first);
-          if (firstAnalysis?.variants?.length) {
-            setActiveVariantIndex(Math.max(0, firstAnalysis.variants.length - 1));
-          }
-        }
-        setMessage(`${outcomes.length}개의 지문 분석을 완료했어요.`);
+      const payload = response.data;
+      syncAnalysisState(payload);
+      setActivePassageNumber(target);
+      if (payload?.variants?.length) {
+        setActiveVariantIndex(Math.max(0, payload.variants.length - 1));
       }
 
-      const failures = response?.failures || [];
-      if (failures.length) {
-        const texts = failures.map((item) => `지문 ${item.passageNumber}: ${item.message}`).join('\n');
-        setError(`일부 지문은 분석하지 못했어요.\n${texts}`);
-      }
+      setMessage(response?.message || `지문 ${target} 분석이 준비되었어요.`);
+      success = true;
     } catch (err) {
       setError(err?.message || '분석 생성 중 문제가 발생했습니다.');
     } finally {
       setBatchLoading(false);
-      setSelected([]);
+    }
+
+    return success;
+  };
+
+  const buildGenerationFlavor = () => {
+    const word = pickRandom(GENERATION_WORDS);
+    const quote = pickRandom(GENERATION_QUOTES);
+    return {
+      word: word.word,
+      meaning: word.meaning,
+      quote: quote.text,
+      quoteAuthor: quote.author,
+      message: pickRandom(LOADING_MESSAGES)
+    };
+  };
+
+  const openGenerationPrompt = (passage) => {
+    if (!passage || passage.remainingSlots === 0) return;
+    setGenerationPrompt({ open: true, passage });
+    setMessage('');
+    setError(null);
+  };
+
+  const closeGenerationPrompt = () => setGenerationPrompt({ open: false, passage: null });
+
+  const startGeneration = async (count) => {
+    if (!generationPrompt.passage || !Number.isInteger(count)) return;
+    if (batchLoading) return;
+    const { passageNumber } = generationPrompt.passage;
+    const flavor = buildGenerationFlavor();
+    closeGenerationPrompt();
+    setGenerationLoading({
+      active: true,
+      passageNumber,
+      count,
+      word: flavor.word,
+      meaning: flavor.meaning,
+      quote: flavor.quote,
+      quoteAuthor: flavor.quoteAuthor,
+      message: flavor.message
+    });
+
+    const ok = await handleAnalyzePassage(passageNumber, { count });
+
+    setGenerationLoading({
+      active: false,
+      passageNumber: null,
+      count: 1,
+      word: null,
+      meaning: null,
+      quote: null,
+      quoteAuthor: null,
+      message: null
+    });
+
+    if (!ok) {
+      setError((prev) => prev || '분석을 생성하지 못했습니다. 다시 시도해 주세요.');
     }
   };
 
@@ -280,6 +346,41 @@ const DocumentAnalysis = ({ document, onClose }) => {
     }
   };
 
+  const handleDeleteVariant = async (variant) => {
+    if (!activePassageNumber || !variant?.variantIndex) return;
+    if (deleteLoading) return;
+
+    // eslint-disable-next-line no-alert
+    const confirmed = window.confirm('정말로 이 분석본을 삭제할까요? 삭제하면 다시 되돌릴 수 없어요.');
+    if (!confirmed) return;
+
+    try {
+      setDeleteLoading(true);
+      setMessage('');
+      setError(null);
+      setFeedbackMessage('');
+
+      const endpoint = endpoints.deleteVariant
+        .replace(':documentId', document.id)
+        .replace(':passageNumber', activePassageNumber)
+        .replace(':variantIndex', variant.variantIndex);
+
+      const response = await apiService.delete(endpoint);
+      if (response?.success && response?.data) {
+        const payload = response.data;
+        syncAnalysisState(payload);
+        setActiveVariantIndex(Math.max(0, (payload.variants?.length || 1) - 1));
+        setMessage(response?.message || '분석본을 삭제했어요.');
+      } else {
+        setError(response?.message || '분석본을 삭제하지 못했습니다.');
+      }
+    } catch (err) {
+      setError(err?.message || '분석본 삭제 중 문제가 발생했습니다.');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   const openPreview = (passage) => {
     if (!passage) return;
     setPreviewPassage({
@@ -319,7 +420,7 @@ const DocumentAnalysis = ({ document, onClose }) => {
     const disabled = passage.remainingSlots === 0;
     return (
       <>
-        <span style={styles.metaInfoText}>{passage.variantCount}/2 분석본</span>
+        <span style={styles.metaInfoText}>저장된 분석본 {passage.variantCount}/{MAX_VARIANTS_PER_PASSAGE}</span>
         <div style={styles.metaActionRow}>
           <button
             type="button"
@@ -335,10 +436,10 @@ const DocumentAnalysis = ({ document, onClose }) => {
               ...styles.smallPrimaryButton,
               ...(disabled || batchLoading ? styles.smallButtonDisabled : {})
             }}
-            onClick={() => handleAnalyzeSelected([passage.passageNumber])}
+            onClick={() => openGenerationPrompt(passage)}
             disabled={disabled || batchLoading}
           >
-            {disabled ? '완료' : 'AI 분석'}
+            {disabled ? '가득 찼어요' : '새 분석 생성'}
           </button>
         </div>
       </>
@@ -370,8 +471,21 @@ const DocumentAnalysis = ({ document, onClose }) => {
     return (
       <div style={styles.variantContainer}>
         <div style={styles.variantHeader}>
-          <h3>지문 {activePassageNumber}</h3>
-          <small>생성 시각: {new Date(activeVariant.generatedAt || Date.now()).toLocaleString()}</small>
+          <div style={styles.variantTitleBlock}>
+            <h3>지문 {activePassageNumber}</h3>
+            <small>생성 시각: {new Date(activeVariant.generatedAt || Date.now()).toLocaleString()}</small>
+          </div>
+          <button
+            type="button"
+            style={{
+              ...styles.variantDeleteButton,
+              ...(deleteLoading ? styles.variantDeleteButtonDisabled : {})
+            }}
+            onClick={() => handleDeleteVariant(activeVariant)}
+            disabled={deleteLoading}
+          >
+            🗑️ 분석 삭제
+          </button>
         </div>
         <div style={styles.feedbackBar}>
           <button
@@ -511,18 +625,7 @@ const DocumentAnalysis = ({ document, onClose }) => {
           <div style={styles.sidebar}>
             <div style={styles.sidebarHeader}>
               <h3>지문 목록</h3>
-              <p>최대 {MAX_SELECTION}개까지 선택 후 한 번에 분석할 수 있어요.</p>
-              <button
-                type="button"
-                style={{
-                  ...styles.batchButton,
-                  ...(selected.length === 0 || batchLoading ? styles.batchButtonDisabled : {})
-                }}
-                disabled={selected.length === 0 || batchLoading}
-                onClick={handleAnalyzeSelected}
-              >
-                {batchLoading ? '분석 중…' : `선택 지문 분석 (${selected.length})`}
-              </button>
+              <p>지문을 하나씩 선택해 분석을 확인하거나 새로운 분석본을 만들어 주세요. 각 지문은 최대 {MAX_VARIANTS_PER_PASSAGE}개의 분석본을 저장할 수 있어요.</p>
             </div>
             <div style={styles.passageList}>
               {loading ? (
@@ -533,13 +636,9 @@ const DocumentAnalysis = ({ document, onClose }) => {
               ) : passages.length ? (
                 <PassagePickerGrid
                   passages={passages}
-                  selected={selected}
-                  onToggle={toggleSelection}
                   onPreview={openPreview}
-                  maxSelection={MAX_SELECTION}
-                  selectionLabel="분석에 사용할 지문을 골라주세요"
-                  disabledMessage="이미 두 개의 분석본이 있어요!"
                   renderMeta={renderPassageMeta}
+                  selectionEnabled={false}
                 />
               ) : (
                 <div style={styles.placeholder}>분석 가능한 지문을 찾지 못했어요.</div>
@@ -573,6 +672,59 @@ const DocumentAnalysis = ({ document, onClose }) => {
                 {reportSubmitting ? '전송 중…' : '신고 전송'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {generationPrompt.open && (() => {
+        const passage = generationPrompt.passage;
+        const remainingSlots = Math.max(0, MAX_VARIANTS_PER_PASSAGE - (passage?.variantCount || 0));
+        const options = Array.from({ length: remainingSlots }, (_, idx) => idx + 1);
+        return (
+          <div style={styles.generationOverlay}>
+            <div style={styles.generationCard}>
+              <div style={styles.generationBadge}>#{String(passage?.passageNumber || 0).padStart(2, '0')}</div>
+              <h3 style={styles.generationTitle}>몇 개 만들까요?</h3>
+              <p style={styles.generationSubtitle}>남은 칸: {remainingSlots}개 · 만들고 싶은 분석본 수를 골라 주세요.</p>
+              {options.length ? (
+                <div style={styles.generationButtons}>
+                  {options.map((count) => (
+                    <button
+                      key={`gen-count-${count}`}
+                      type="button"
+                      style={styles.generationButton}
+                      onClick={() => startGeneration(count)}
+                    >
+                      {count}개 만들기
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div style={styles.generationEmpty}>이미 두 개의 분석본이 준비되어 있어요.</div>
+              )}
+              <button type="button" style={styles.generationCancel} onClick={closeGenerationPrompt}>닫기</button>
+            </div>
+          </div>
+        );
+      })()}
+
+      {generationLoading.active && (
+        <div style={styles.generationOverlay}>
+          <div style={styles.loadingCard}>
+            <div style={styles.loadingSpinner} />
+            <p style={styles.loadingMessage}>{generationLoading.message || 'AI가 분석본을 정성껏 만드는 중이에요... ⏳'}</p>
+            {generationLoading.word && (
+              <div style={styles.loadingWordBox}>
+                <span style={styles.loadingWord}>{generationLoading.word}</span>
+                <span style={styles.loadingMeaning}>{generationLoading.meaning}</span>
+              </div>
+            )}
+            {generationLoading.quote && (
+              <div style={styles.loadingQuoteBox}>
+                <blockquote style={styles.loadingQuote}>“{generationLoading.quote}”</blockquote>
+                <cite style={styles.loadingQuoteAuthor}>— {generationLoading.quoteAuthor}</cite>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -725,22 +877,6 @@ const styles = {
     color: 'var(--text-muted)',
     cursor: 'not-allowed'
   },
-  batchButton: {
-    width: '100%',
-    marginTop: 12,
-    background: 'var(--indigo)',
-    color: 'var(--text-on-accent)',
-    border: 'none',
-    borderRadius: 10,
-    padding: '10px 14px',
-    cursor: 'pointer',
-    fontWeight: 600
-  },
-  batchButtonDisabled: {
-    background: 'var(--surface-soft-strong)',
-    color: 'var(--text-muted)',
-    cursor: 'not-allowed'
-  },
   detailPanel: {
     flex: 1,
     padding: '24px',
@@ -755,6 +891,24 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'baseline'
+  },
+  variantTitleBlock: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 4
+  },
+  variantDeleteButton: {
+    border: '1px solid var(--danger)',
+    background: 'transparent',
+    color: 'var(--danger)',
+    borderRadius: 8,
+    padding: '6px 12px',
+    cursor: 'pointer',
+    fontSize: 14
+  },
+  variantDeleteButtonDisabled: {
+    opacity: 0.6,
+    cursor: 'not-allowed'
   },
   feedbackBar: {
     display: 'flex',
@@ -942,15 +1096,15 @@ const styles = {
   },
   metaInfoText: {
     fontSize: 12,
-    color: 'var(--text-muted, rgba(255,255,255,0.65))'
+    color: 'var(--text-muted)'
   },
   metaActionRow: {
     display: 'flex',
     gap: 6
   },
   smallGhostButton: {
-    background: 'rgba(255,255,255,0.08)',
-    color: 'var(--text-muted, rgba(255,255,255,0.8))',
+    background: 'var(--surface-overlay)',
+    color: 'var(--text-secondary)',
     border: 'none',
     borderRadius: 6,
     padding: '6px 10px',
@@ -959,18 +1113,151 @@ const styles = {
   },
   smallPrimaryButton: {
     background: 'var(--accent)',
-    color: '#fff',
+    color: 'var(--text-on-accent)',
     border: 'none',
     borderRadius: 6,
     padding: '6px 10px',
     fontSize: 12,
     cursor: 'pointer',
-    boxShadow: '0 8px 14px rgba(108,92,231,0.25)'
+    boxShadow: '0 8px 14px var(--accent-shadow)'
   },
   smallButtonDisabled: {
     opacity: 0.5,
     cursor: 'not-allowed'
-  }
+  },
+  generationOverlay: {
+    position: 'fixed',
+    inset: 0,
+    background: 'rgba(10, 12, 16, 0.65)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1350,
+    padding: '24px'
+  },
+  generationCard: {
+    width: 'min(420px, 92%)',
+    background: 'var(--surface-card)',
+    borderRadius: 22,
+    padding: '32px 36px',
+    boxShadow: '0 32px 60px rgba(15, 23, 42, 0.35)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 18,
+    textAlign: 'center'
+  },
+  generationBadge: {
+    alignSelf: 'center',
+    background: 'rgba(99, 102, 241, 0.15)',
+    color: 'var(--accent-primary)',
+    padding: '4px 12px',
+    borderRadius: 999,
+    fontWeight: 600,
+    letterSpacing: 1
+  },
+  generationTitle: {
+    margin: 0,
+    fontSize: '1.4rem',
+    color: 'var(--text-primary)'
+  },
+  generationSubtitle: {
+    margin: 0,
+    color: 'var(--text-secondary)',
+    lineHeight: 1.5
+  },
+  generationButtons: {
+    display: 'flex',
+    gap: 16,
+    justifyContent: 'center',
+    flexWrap: 'wrap'
+  },
+  generationEmpty: {
+    padding: '16px',
+    borderRadius: 12,
+    background: 'var(--surface-soft)',
+    color: 'var(--text-secondary)'
+  },
+  generationButton: {
+    minWidth: 120,
+    padding: '12px 18px',
+    borderRadius: 12,
+    border: 'none',
+    background: 'var(--accent-primary)',
+    color: 'var(--text-on-accent)',
+    fontWeight: 600,
+    cursor: 'pointer',
+    boxShadow: '0 14px 30px rgba(99, 102, 241, 0.35)'
+  },
+  generationCancel: {
+    alignSelf: 'center',
+    marginTop: 4,
+    background: 'none',
+    border: 'none',
+    color: 'var(--text-muted)',
+    cursor: 'pointer'
+  },
+  loadingCard: {
+    width: 'min(460px, 94%)',
+    padding: '40px 32px',
+    borderRadius: 26,
+    background: 'var(--surface-card)',
+    boxShadow: '0 32px 60px rgba(15, 23, 42, 0.4)',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 20,
+    textAlign: 'center'
+  },
+  loadingSpinner: {
+    width: 64,
+    height: 64,
+    borderRadius: '50%',
+    border: '6px solid rgba(148, 163, 184, 0.25)',
+    borderTopColor: 'var(--accent-primary)',
+    animation: 'spin 1s linear infinite'
+  },
+  loadingMessage: {
+    margin: 0,
+    fontSize: '1.1rem',
+    color: 'var(--text-primary)'
+  },
+  loadingWordBox: {
+    background: 'var(--surface-soft)',
+    borderRadius: 14,
+    padding: '12px 16px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 6,
+    width: '100%'
+  },
+  loadingWord: {
+    fontSize: '1.3rem',
+    fontWeight: 700,
+    color: 'var(--accent-primary)'
+  },
+  loadingMeaning: {
+    color: 'var(--text-secondary)'
+  },
+  loadingQuoteBox: {
+    background: 'rgba(148, 163, 184, 0.12)',
+    borderRadius: 14,
+    padding: '14px 18px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 8,
+    width: '100%'
+  },
+  loadingQuote: {
+    margin: 0,
+    color: 'var(--text-secondary)',
+    fontStyle: 'italic'
+  },
+  loadingQuoteAuthor: {
+    alignSelf: 'flex-end',
+    color: 'var(--text-muted)',
+    fontSize: '0.9rem'
+  },
+
 };
 
 export default DocumentAnalysis;

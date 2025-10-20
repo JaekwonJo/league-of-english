@@ -288,6 +288,22 @@ export const adminStyles = {
     fontWeight: 700,
     fontSize: '0.85rem'
   },
+  feedbackBadgeSuccess: {
+    background: 'var(--success-surface)',
+    color: 'var(--success-strong)',
+    padding: '6px 12px',
+    borderRadius: '999px',
+    fontWeight: 700,
+    fontSize: '0.85rem'
+  },
+  feedbackBadgeHold: {
+    background: 'var(--warning-surface)',
+    color: 'var(--warning-strong)',
+    padding: '6px 12px',
+    borderRadius: '999px',
+    fontWeight: 700,
+    fontSize: '0.85rem'
+  },
   feedbackList: {
     display: 'flex',
     flexDirection: 'column',

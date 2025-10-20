@@ -1,3 +1,11 @@
+## 2025-10-20 (admin palette + beta seed QA)
+- Issue: 관리자 신고/분석 화면 배지가 다크 모드에서 눈에 잘 띄지 않고, 베타용 데이터 세팅이 매번 수동으로 진행돼 시간과 오류가 생겼어요.
+- Fix: ProblemFeedback 배지 · DocumentAnalysis 보조 버튼에 토큰 색상을 적용해 라이트/다크 모드 대비를 통일했어요.
+- Feature: `scripts/seed-beta-data.js`로 베타 교사/학생 계정, 안내문 분석, 어휘 문제를 한번에 주입할 수 있게 했어요.
+- Fix: `documentProblemFallback`에서 빠졌던 `escapeRegex`를 가져와 어휘 fallback에서 밑줄 추출이 멈추지 않게 했어요.
+- Tests: `analysisFallbackVariant.test.js`, `fallbackContent.test.js`를 추가해 fallback 해석/어휘가 빈칸 없이 채워지는지 자동으로 확인했어요.
+- Verification: `DB_FILE=server/tmp/beta-seed.db node scripts/seed-beta-data.js`, `npm test`, `npm run build` 모두 통과했습니다.
+
 ## 2025-10-20 (analysis payload fill + admin UX sync)
 - Error: 분석 보기에서 해석/배경/예시가 비어 있고 안내 문장만 반복돼 실제 학습에 쓸 수 없었어요.
 - Cause: fallback normalizer가 번역 실패 시 템플릿 문구를 그대로 저장했고, UI도 빈 값을 필터링하지 않았어요.

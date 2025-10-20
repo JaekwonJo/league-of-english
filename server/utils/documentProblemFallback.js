@@ -1,5 +1,5 @@
 const wordnet = require('wordnet');
-const { CIRCLED_DIGITS } = require('../services/ai-problem/shared');
+const { CIRCLED_DIGITS, escapeRegex } = require('../services/ai-problem/shared');
 
 let wordnetReady = null;
 let wordnetWarmupPromise = null;

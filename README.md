@@ -8,13 +8,13 @@
 - 관리자(선생님)는 지문 분석본을 검수하고, 마음에 들지 않는 변형을 삭제하거나 신고를 처리할 수 있습니다.
 
 ### 오늘의 Top 3 (베타 직전)
-1. **분석·단어 문제 최종 QA** – UI에서 새 필드(해석, 배경, 보기 해설)가 정상 출력되는지 끝까지 확인하기
-2. **관리자 화면 색상 토큰 마무리** – 남은 하드코딩 배지를 토큰으로 바꿔 다크 모드 대비를 완성하기
-3. **Seed 데이터 자동 주입 스크립트 검증** – 베타 계정·랭크·티어 초기화를 한 번에 실행하도록 리허설하기
+1. **관리자 잔여 화면 토큰화** – DocumentShare, Inquiry 등 남은 하드코딩 색상을 토큰으로 정리하기
+2. **Seed 스크립트 가이드 완성** – `scripts/seed-beta-data.js` 실행 순서를 README/체크리스트에 정리하기
+3. **UI 회귀 캡처 세트 작성** – 분석/어휘/랭킹 화면 흐름을 캡처해 QA 자동화 토대를 만들기
 
 ### Known Issues
-- 관리자 ProblemFeedback / DocumentAnalysis의 일부 배지 색상이 하드코딩이라 다크 모드 대비가 낮아요.
-- fallback vocabulary/grammar JSON을 대량 재생성하면 WordNet 초기화 탓에 첫 실행이 조금 느려요.
+- 관리자 DocumentShare/Inquiry 등 일부 화면은 아직 색상이 직접 지정돼 다크 모드 대비가 낮아요.
+- `scripts/seed-beta-data.js` 실행 시 WordNet 경고가 여러 줄 출력돼요. (결과는 curated 데이터로 보완)
 - UI/API 통합은 수동 QA 위주로 확인했습니다. 자동 end-to-end 테스트는 아직 준비 중이에요.
 - Google Translate 무료 API 호출 제한이 있으니 Render 배포 시 캐시 파일 삭제에 주의해야 해요.
 
@@ -52,9 +52,9 @@ npm run lint
 - **로그**: Render/Vercel 콘솔에서 실시간 확인, OpenAI 실패 시 fallback 로그 기록
 
 ## 6. 최근 업데이트 (2025-10-20)
-- 분석 저장 단계에서 빈 텍스트를 차단하고, 한국어 해석·배경·예시가 모두 채워져야 통과하도록 검증기를 강화했어요.
-- 관리자 분석 보기에서 404가 뜨던 문제를 고치고, 실패 안내/삭제 버튼을 갖춘 새 모달을 배포했어요.
-- React 테마 토큰을 정리해 다크 모드 대비를 안정화했고, 빌드 경고 없이 배포할 준비가 끝났어요.
+- ProblemFeedback 배지·DocumentAnalysis 버튼을 테마 토큰으로 바꿔 다크 모드에서도 선명하게 보이게 했어요.
+- `scripts/seed-beta-data.js`로 베타 교사/학생·분석본·어휘 샘플을 한 번에 넣을 수 있게 했어요.
+- fallback 분석/어휘 결과가 빈칸을 남기지 않는지 Node 테스트(`analysisFallbackVariant.test.js`, `fallbackContent.test.js`)로 잠궜어요.
 - README · PROJECT_STATE · BUILDLOG를 같은 정보로 맞춰 문서가 서로 다른 이야기를 하지 않게 했어요.
 
 궁금한 점이 생기면 “어디에서 막혔어요?”라고 바로 알려 주세요. 함께 해결해 드릴게요! 😊
