@@ -60,6 +60,9 @@ const {
 
 const {
   VOCAB_USAGE_BASE_QUESTION,
+  VOCAB_USAGE_MULTI_INCORRECT_QUESTION,
+  VOCAB_USAGE_SINGLE_CORRECT_QUESTION,
+  VOCAB_USAGE_MULTI_CORRECT_QUESTION,
   VOCAB_USAGE_JSON_BLUEPRINT,
   VOCAB_MIN_EXPLANATION_LENGTH,
   VOCAB_MIN_EXPLANATION_SENTENCES,
@@ -135,11 +138,38 @@ function buildPassageQueue(passages, count) {
   return queue;
 }
 
+function buildVocabularyVariantDirective(variant) {
+  if (variant.answerMode === 'correct') {
+    return 'Produce exactly ONE five-option problem where 네 개 표현은 문맥상 어색하도록 변형하고, 단 하나만 원문과 동일하게 유지하세요.';
+  }
+  if (variant.targetIncorrectCount === 1) {
+    return 'Produce exactly ONE five-option problem where only one underlined expression is contextually incorrect for the passage.';
+  }
+  return `Produce exactly ONE five-option problem where ${variant.targetIncorrectCount} underlined expressions are contextually incorrect and the remaining ${5 - variant.targetIncorrectCount} stay identical to the source.`;
+}
+
+function buildVocabularyAnswerInstruction(variant) {
+  if (variant.answerMode === 'correct') {
+    if (variant.targetCorrectCount === 1) {
+      return '- Set correctAnswers to the index of the sole correct expression and mark that option "correct" while 나머지는 "incorrect"로 표시하세요.';
+    }
+    return `- Mark the ${variant.targetCorrectCount} correct expressions as "correct" and list their indices in correctAnswers; 다른 보기들은 "incorrect"로 표시하세요.`;
+  }
+  if (variant.targetIncorrectCount === 1) {
+    return '- Set correctAnswers (or correctAnswer) to the index of the single incorrect expression and mark that option as "incorrect" while the others remain "correct".';
+  }
+  return `- List all ${variant.targetIncorrectCount} incorrect expression indices in correctAnswers and mark them "incorrect"; 나머지 ${5 - variant.targetIncorrectCount} 보기는 "correct"로 유지하세요.`;
+}
+
 class AIProblemService {
   constructor() {
     this._openai = null;
     this.queue = new OpenAIQueue(() => this.getOpenAI());
     this.repository = createProblemRepository(database);
+    this._grammarVariantQueue = [];
+    this._grammarVariantSignature = '';
+    this._vocabularyVariantQueue = [];
+    this._vocabularyVariantSignature = '';
   }
 
   _safeParseJson(rawContent, { label = 'json' } = {}) {
@@ -543,10 +573,14 @@ class AIProblemService {
       ? failureReasons.map((line) => String(line || '').trim()).filter(Boolean)
       : [];
 
+    const validatorNotes = reasonLines.length
+      ? `Validator notes:\n- ${reasonLines.join('\n- ')}`
+      : '';
+
     const promptParts = [
       'You are a senior KSAT grammar problem editor. Fix the JSON output so it satisfies publication requirements.',
       failureMessage ? `Failure summary: ${failureMessage}` : '',
-      reasonLines.length ? `Validator notes:\n- ${reasonLines.join('\n- ')}` : '',
+      validatorNotes,
       manualNote ? `Reference manual excerpt (truncated):\n${manualNote}` : '',
       docTitle ? `Document title: ${docTitle}` : '',
       passage
@@ -584,7 +618,11 @@ class AIProblemService {
     passage,
     docTitle,
     documentCode,
-    manualExcerpt
+    manualExcerpt,
+    answerMode,
+    targetIncorrectCount,
+    targetCorrectCount,
+    questionText
   } = {}) {
     const invalidJson = String(rawContent || '').trim();
     if (!invalidJson) {
@@ -595,13 +633,24 @@ class AIProblemService {
     }
 
     const manualNote = manualExcerpt ? clipText(manualExcerpt, 900) : '';
+    const mode = answerMode === 'correct' ? 'correct' : 'incorrect';
+    const incorrectCount = Number.isInteger(targetIncorrectCount)
+      ? targetIncorrectCount
+      : (mode === 'incorrect' ? 1 : (CIRCLED_DIGITS.length - (Number.isInteger(targetCorrectCount) ? targetCorrectCount : 1)));
+    const correctCount = mode === 'correct'
+      ? (Number.isInteger(targetCorrectCount) ? targetCorrectCount : 1)
+      : CIRCLED_DIGITS.length - incorrectCount;
+
     const requirementList = [
+      questionText ? `- Use the exact Korean question text: ${questionText}` : `- Use the exact Korean question text: ${mode === 'incorrect' ? VOCAB_USAGE_BASE_QUESTION : VOCAB_USAGE_SINGLE_CORRECT_QUESTION}.`,
       '- Keep the original passage verbatim and maintain exactly five <u>...</u> expressions in place.',
       '- Provide five options labelled ①-⑤ that reuse the same underlined snippets in the same order.',
-      '- Set correctAnswer to the single index of the contextually incorrect expression and mark that option as "incorrect".',
-      '- Include correction.replacement + reason for the incorrect expression so the natural phrase is recorded.',
+      mode === 'correct'
+        ? `- Mark ${correctCount} 밑줄을 "correct"로 유지하고 나머지 ${incorrectCount}개의 표현에는 문맥상 오류를 만들어 주세요.`
+        : `- 변형된 ${incorrectCount}개의 밑줄을 "incorrect"로 표시하고 나머지 ${correctCount}개의 표현은 원문과 동일하게 남겨 주세요.`,
+      '- Include correction.replacement + reason for the 비자연스러운 표현이 무엇인지 명확하게 설명합니다.',
       '- Provide optionReasons in Korean (정답 포함) explaining 왜 어색하거나 자연스러운지.',
-      '- Keep the explanation concise (1~2 Korean sentences) mirroring the official answer key style.',
+      '- Keep the explanation 두 문장 이상 한국어로 작성해 주세요.',
       '- Ensure the sourceLabel begins with 출처│ and references the document title or code.'
     ];
 
@@ -609,13 +658,19 @@ class AIProblemService {
       ? failureReasons.map((line) => String(line || '').trim()).filter(Boolean)
       : [];
 
+    const validatorNotes = reasonLines.length
+      ? `Validator notes:\n- ${reasonLines.join('\n- ')}`
+      : '';
+
     const promptParts = [
       'You are a senior KSAT vocabulary problem editor. Fix the JSON output so it satisfies publication requirements.',
       failureMessage ? `Failure summary: ${failureMessage}` : '',
-      reasonLines.length ? `Validator notes:\n- ${reasonLines.join('\n- ')}` : '',
-      manualNote ? `Reference manual excerpt (truncated):\n${manualNote}` : '',
+      validatorNotes,
+      manualNote ? `Reference manual excerpt (truncated):
+${manualNote}` : '',
       docTitle || documentCode ? `Document reference: ${docTitle || documentCode}` : '',
-      passage ? `Original passage (keep every character verbatim):\n${clipText(passage, 1800)}` : '',
+      passage ? `Original passage (keep every character verbatim):
+${clipText(passage, 1800)}` : '',
       'Invalid JSON between <bad_json> and </bad_json>:',
       '<bad_json>',
       clipText(invalidJson, 3600),
@@ -962,6 +1017,9 @@ const normalizedMain = normalizeWhitespace(stripTags(mainText));
       trapPattern: payload.trapPattern || payload.trap || payload.pattern || undefined,
       difficulty: payload.difficulty || payload.level || 'csat-advanced',
       variantTag: payload.variantTag || payload.variant || undefined,
+      answerMode,
+      targetIncorrectCount: targetIncorrect,
+      targetCorrectCount: targetCorrect,
       optionReasons: reasonMap,
       optionTags: Object.keys(tagMap).length ? tagMap : undefined,
       optionStatuses: statusList.some((item) => item) ? statusList : undefined
@@ -1012,6 +1070,12 @@ const normalizedMain = normalizeWhitespace(stripTags(mainText));
     }
     const manualExcerpt = readVocabularyManual(2400);
     const passageQueue = buildPassageQueue(passages, count);
+    const vocabularyVariants = [
+      { key: 'single_incorrect', probability: 0.25, question: VOCAB_USAGE_BASE_QUESTION, answerMode: 'incorrect', targetIncorrectCount: 1, targetCorrectCount: 4 },
+      { key: 'double_incorrect', probability: 0.25, question: VOCAB_USAGE_MULTI_INCORRECT_QUESTION, answerMode: 'incorrect', targetIncorrectCount: 2, targetCorrectCount: 3 },
+      { key: 'triple_incorrect', probability: 0.25, question: VOCAB_USAGE_MULTI_INCORRECT_QUESTION, answerMode: 'incorrect', targetIncorrectCount: 3, targetCorrectCount: 2 },
+      { key: 'single_correct', probability: 0.25, question: VOCAB_USAGE_SINGLE_CORRECT_QUESTION, answerMode: 'correct', targetIncorrectCount: 4, targetCorrectCount: 1 }
+    ];
 
     for (let i = 0; i < count; i += 1) {
       const passage = passageQueue[i] || passages[i % (passages.length || 1)] || '';
@@ -1020,6 +1084,7 @@ const normalizedMain = normalizeWhitespace(stripTags(mainText));
       let lastFailure = '';
       let repairBudget = 2;
       let normalizedProblem = null;
+      const variant = this._pickVocabularyVariant(vocabularyVariants);
 
       while (attempt < 6 && !normalizedProblem) {
         attempt += 1;
@@ -1029,7 +1094,7 @@ const normalizedMain = normalizeWhitespace(stripTags(mainText));
           const variantTag = `doc${documentId}_v${i}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
           const promptSections = [
             'You are a deterministic K-CSAT English vocabulary-usage item writer.',
-            'Produce exactly ONE five-option problem where only one underlined expression is contextually incorrect for the passage.',
+            buildVocabularyVariantDirective(variant),
             '',
             `Passage title: ${docTitle}`,
             `Passage (keep every sentence; underline exactly five expressions with <u>...</u>):
@@ -1039,16 +1104,17 @@ ${clipText(passage, 1600)}`,
             manualExcerpt,
             '',
             'Return raw JSON only with this structure:',
-            VOCAB_USAGE_JSON_BLUEPRINT.replace('"variantTag": "V-001"', `"variantTag": "${variantTag}"`),
+            VOCAB_USAGE_JSON_BLUEPRINT
+              .replace('"question": "' + VOCAB_USAGE_BASE_QUESTION + '"', `"question": "${variant.question}"`)
+              .replace('"variantTag": "V-001"', `"variantTag": "${variantTag}"`),
             '',
             'Generation requirements:',
             '- Copy the passage verbatim; do not delete or reorder sentences.',
-            '- Underline exactly five expressions with <u>...</u>. Keep four expressions identical to the source and make exactly one expression contextually incorrect.',
-            '- Options must be ①-⑤ and reuse the same <u>...</u> snippets that appear in the passage.',
-            '- Set correctAnswer to the index of the inappropriate expression and explain why it is wrong in Korean.',
-            '- Provide correction.replacement + reason for the incorrect expression, showing the natural phrase that should appear instead.',
-            '- Supply optionReasons in Korean (정답 포함) so the reviewer understands why the expression is wrong/맞다.',
-            '- Keep the explanation concise (1~2 sentences) in Korean, mirroring K-CSAT 정답지 스타일.',
+            '- Underline exactly five expressions with <u>...</u> and reuse the identical snippets inside the options.',
+            buildVocabularyAnswerInstruction(variant),
+            '- Provide correction.replacement + reason for every 오류 표현을 교정할 수 있도록 기록합니다.',
+            '- Supply optionReasons in Korean (정답 포함) explaining 왜 어색하거나 자연스러운지, 반드시 핵심 키워드를 넣어 주세요.',
+            '- Keep the explanation 최소 두 문장 이상 한국어로 작성하고, 수능 정답지 톤을 유지하세요.',
             '- Preserve any footnotes (lines starting with *).',
             '- Respond with raw JSON only (no Markdown fences).'
           ];
@@ -1058,14 +1124,14 @@ ${clipText(passage, 1600)}`,
             promptSections.push('', 'Additional fixes based on the previous attempt:', ...additionalDirectives);
           }
 
-          const prompt = promptSections.filter(Boolean).join('\n');
+          const prompt = promptSections.filter(Boolean).join('\n\n');
 
           const useHighTierModel = attempt >= 3;
           const response = await this.callChatCompletion({
-            model: useHighTierModel ? "gpt-4o" : "gpt-4o-mini",
+            model: useHighTierModel ? 'gpt-4o' : 'gpt-4o-mini',
             temperature: useHighTierModel ? 0.24 : 0.3,
             max_tokens: useHighTierModel ? 1050 : 900,
-            messages: [{ role: "user", content: prompt }]
+            messages: [{ role: 'user', content: prompt }]
           }, { label: 'vocabulary', tier: useHighTierModel ? 'primary' : 'standard' });
 
           rawContent = response.choices?.[0]?.message?.content || '';
@@ -1075,16 +1141,18 @@ ${clipText(passage, 1600)}`,
             documentCode,
             passage,
             index: results.length,
-            failureReasons
+            failureReasons,
+            answerMode: variant.answerMode,
+            targetIncorrectCount: variant.targetIncorrectCount,
+            targetCorrectCount: variant.targetCorrectCount,
+            questionText: variant.question
           });
         } catch (error) {
           const baseMessage = String(error?.message || '') || 'unknown vocabulary failure';
           const detailMessages = [
             ...failureReasons,
             ...(Array.isArray(error?.failureReasons) ? error.failureReasons : [])
-          ]
-            .map((reason) => String(reason || '').trim())
-            .filter((reason) => reason.length > 0);
+          ].map((reason) => String(reason || '').trim()).filter(Boolean);
           let uniqueDetails = [...new Set(detailMessages)];
           let message = uniqueDetails.length ? `${baseMessage} :: ${uniqueDetails.join('; ')}` : baseMessage;
           const rawForRepair = rawContent || error?.rawContent || '';
@@ -1098,7 +1166,11 @@ ${clipText(passage, 1600)}`,
                 passage,
                 docTitle,
                 documentCode,
-                manualExcerpt
+                manualExcerpt,
+                answerMode: variant.answerMode,
+                targetIncorrectCount: variant.targetIncorrectCount,
+                targetCorrectCount: variant.targetCorrectCount,
+                questionText: variant.question
               });
               const repairFailureReasons = [];
               normalizedProblem = this._normalizeVocabularyPayload(repairedPayload, {
@@ -1106,7 +1178,11 @@ ${clipText(passage, 1600)}`,
                 documentCode,
                 passage,
                 index: results.length,
-                failureReasons: repairFailureReasons
+                failureReasons: repairFailureReasons,
+                answerMode: variant.answerMode,
+                targetIncorrectCount: variant.targetIncorrectCount,
+                targetCorrectCount: variant.targetCorrectCount,
+                questionText: variant.question
               });
               if (normalizedProblem) {
                 message = '';
@@ -1134,6 +1210,13 @@ ${clipText(passage, 1600)}`,
       }
 
       normalizedProblem.id = normalizedProblem.id || `vocab_ai_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+      normalizedProblem.metadata = {
+        ...(normalizedProblem.metadata || {}),
+        variantKey: variant.key,
+        answerMode: variant.answerMode,
+        targetIncorrectCount: variant.targetIncorrectCount,
+        targetCorrectCount: variant.targetCorrectCount
+      };
       results.push(normalizedProblem);
     }
 
@@ -1652,22 +1735,47 @@ ${clipText(passage, 1600)}`,
     return results;
   }
 
+  _prepareVariantQueue(type, variants = []) {
+    if (!Array.isArray(variants) || variants.length === 0) {
+      return [];
+    }
+    const queueKey = type === 'grammar' ? '_grammarVariantQueue' : '_vocabularyVariantQueue';
+    const signatureKey = type === 'grammar' ? '_grammarVariantSignature' : '_vocabularyVariantSignature';
+    const signature = variants
+      .map((variant) => `${variant.key || variant.question || ''}:${variant.probability ?? ''}`)
+      .join('|');
+    if (!Array.isArray(this[queueKey]) || this[queueKey].length === 0 || this[signatureKey] !== signature) {
+      this[queueKey] = this._buildVariantRotationQueue(variants);
+      this[signatureKey] = signature;
+    }
+    return this[queueKey];
+  }
+
+  _buildVariantRotationQueue(variants = []) {
+    const clones = variants.map((variant) => ({ ...variant }));
+    for (let i = clones.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [clones[i], clones[j]] = [clones[j], clones[i]];
+    }
+    return clones;
+  }
+
   _pickGrammarVariant(variants = []) {
     if (!Array.isArray(variants) || variants.length === 0) {
       return null;
     }
-    const totalWeight = variants.reduce((sum, item) => sum + (Number(item.probability) || 0), 0);
-    if (totalWeight > 0) {
-      let threshold = Math.random() * totalWeight;
-      for (const variant of variants) {
-        threshold -= Number(variant.probability) || 0;
-        if (threshold <= 0) {
-          return variant;
-        }
-      }
+    const queue = this._prepareVariantQueue('grammar', variants);
+    const next = queue.shift();
+    return next || variants[0];
+  }
+
+  _pickVocabularyVariant(variants = []) {
+    if (!Array.isArray(variants) || variants.length === 0) {
+      return null;
     }
-    const index = Math.floor(Math.random() * variants.length);
-    return variants[index] || variants[0];
+    const queue = this._prepareVariantQueue('vocabulary', variants);
+    const next = queue.shift();
+    return next || variants[0];
   }
 
 

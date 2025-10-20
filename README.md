@@ -8,14 +8,14 @@
 - 관리자(선생님)는 지문 분석본을 검수하고, 마음에 들지 않는 변형을 삭제하거나 신고를 처리할 수 있습니다.
 
 ### 오늘의 Top 3 (베타 직전)
-1. **WordNet 경고 줄이기** – seed/QA에서 반복되는 lookup 경고를 사용자 사전으로 정리하기
-2. **UI 캡처 자동화 PoC** – 새 가이드를 기반으로 Playwright/Percy 스크립트를 마련하기
-3. **Seed 로그 대시보드** – `scripts/seed-beta-data.js` 실행 결과를 Notion/Slack으로 공유하는 webhook 정리하기
+1. **분석 API 404 재현** – 관리자 뷰에서 삭제 후 발생하는 404를 재현하고 통합 테스트를 추가하기
+2. **Vocabulary 결과 QA** – 채점 요약·LP 상승·랭킹 반영이 UI/서버 모두에서 정상 동작하는지 e2e로 확인하기
+3. **Variant 회전 회귀 테스트** – grammar/vocabulary 라운드로빈 큐가 배포 후에도 깨지지 않도록 자동 테스트 보강하기
 
 ### Known Issues
-- `scripts/seed-beta-data.js` 실행 시 WordNet 경고가 여러 줄 출력돼요. (결과는 curated 데이터로 보완)
-- UI/API 통합은 수동 QA 위주로 확인했습니다. 자동 end-to-end 테스트는 아직 준비 중이에요.
-- UI 캡처는 `docs/ui-regression-guide.md`에 따라 수동으로 진행합니다. 자동 회귀는 준비 중이에요.
+- 관리자 분석 뷰에는 삭제/취소 후 404를 막을 통합 테스트가 아직 없어요.
+- Vocabulary 시험 결과 화면이 새 점수 데이터를 표시하지만 LP·랭킹 반영은 추가 QA가 필요합니다.
+- UI 캡처(`npm run capture:ui`)는 여전히 수동 실행이 필요하고 Playwright 설치 안내가 자동화돼 있지 않아요.
 - Google Translate 무료 API 호출 제한이 있으니 Render 배포 시 캐시 파일 삭제에 주의해야 해요.
 
 ## 2. 빠른 시작 (로컬 개발)
@@ -55,15 +55,15 @@ npm run lint
 | 관리자 운영 | 지문 목록, 분석 생성, 분석본 삭제, 신고 처리, 문서 공유(학교/학년/그룹) |
 
 ## 5. 품질 전략
-- **테스트**: `npm test` (43개) – fallback 한글 변환, 문제 포맷, 신고 로직 등 검증
+- **테스트**: `npm test` (49개) – fallback 한글 변환, 문제 포맷, 신고·랭킹·variant 회전 등 검증
 - **빌드**: `npm run build` – CRA 기반 프로덕션 빌드 (경고는 Known Issues 참고)
 - **로그**: Render/Vercel 콘솔에서 실시간 확인, OpenAI 실패 시 fallback 로그 기록
 - **UI 캡처 가이드**: `docs/ui-regression-guide.md`에 분석/학습/랭킹 화면 캡처 순서와 공유 템플릿이 정리돼 있고, `npm run capture:ui`로 Playwright 캡처 스크립트를 실행할 수 있어요.
 
-## 6. 최근 업데이트 (2025-10-20)
-- ProblemFeedback 배지·DocumentAnalysis 버튼을 테마 토큰으로 바꿔 다크 모드에서도 선명하게 보이게 했어요.
-- `scripts/seed-beta-data.js`로 베타 교사/학생·분석본·어휘 샘플을 한 번에 넣을 수 있게 했어요.
-- fallback 분석/어휘 결과가 빈칸을 남기지 않는지 Node 테스트(`analysisFallbackVariant.test.js`, `fallbackContent.test.js`)로 잠궜어요.
-- README · PROJECT_STATE · BUILDLOG를 같은 정보로 맞춰 문서가 서로 다른 이야기를 하지 않게 했어요.
+## 6. 최근 업데이트 (2025-10-21)
+- Grammar/Vocabulary 생성기가 variant 라운드로빈 큐를 사용해 1·2·3개 틀린 문제와 옳은 것 문제가 균등하게 나오고, 메타데이터에 목표 정답 수를 기록합니다.
+- `documentProblemFallback.js` 어법 규칙을 수능형 오류 중심으로 재작성해 "you is" 같은 초급 오류를 제거하고, 학습 화면 밑줄을 토큰 기반 하이라이트로 교체했어요.
+- `DocumentAnalyzer` fallback이 문장별 번역·배경·실생활 예시·어법 설명을 실제 내용으로 채워 템플릿 문구 반복 문제를 해소했습니다.
+- README · PROJECT_STATE · BUILDLOG를 최신 정보로 동기화하고 `npm test`(49개) 회귀가 모두 통과했습니다.
 
 궁금한 점이 생기면 “어디에서 막혔어요?”라고 바로 알려 주세요. 함께 해결해 드릴게요! 😊

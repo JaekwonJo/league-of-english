@@ -1,3 +1,11 @@
+## 2025-10-21 (Grammar/Vocab 분포 + 분석 fallback 정비)
+- Issue: Grammar 생성기가 단일 오류 변형만 자주 뽑고, fallback이 `you is` 같은 초급 오류를 만들었으며 분석 fallback은 템플릿 문구만 반복됐어요.
+- Cause: variant 선택이 Math.random 가중치에만 의존했고, 문법 규칙/배경 작성기가 기초 패턴만 커버했습니다.
+- Fix: `aiProblemService`에 variant 라운드로빈 큐와 목표 정답 수 메타데이터를 추가해 1·2·3개 틀린 문제와 옳은 것 문제가 균등하게 나오도록 했어요.
+- Fix: `documentProblemFallback` 어법 규칙을 수능형 오류(관사, 수동태, 수일치, 비교 구문 등) 중심으로 재작성하고, 학습 화면 밑줄도 토큰 기반 하이라이트로 바꿨어요.
+- Fix: `DocumentAnalyzer` fallback이 문장별 번역·배경·실생활·어법 설명을 실제 내용으로 채우고, 키워드 강조를 `[초점]` 형식으로 정리합니다.
+- Tests: `npm test` (49 suites)로 grammar/vocabulary/analysis 전 구간 회귀를 통과했습니다.
+
 ## 2025-10-20 (WordNet override + UI 캡처 스크립트)
 - Issue: seed 스크립트를 실행할 때 WordNet에 없는 단어 경고가 반복되고, QA 스크린샷도 손으로만 남겨야 했어요.
 - Fix: `documentProblemFallback`에 복수형/복합어 오버라이드와 래머 변환을 추가해 WordNet 경고 없이 fallback 어휘를 생성합니다.

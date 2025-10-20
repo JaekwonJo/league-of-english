@@ -1,26 +1,18 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { CIRCLED_DIGITS } from "../utils/textFormatters";
-import { orderStyles } from "../problemDisplayStyles";
+import { orderStyles, problemDisplayStyles } from "../problemDisplayStyles";
 
-const underlineStyle = {
-  textDecoration: "underline",
-  textDecorationColor: "var(--warning)",
-  textDecorationThickness: "3px",
-  fontWeight: "bold",
-  backgroundColor: "rgba(251, 191, 36, 0.2)",
-  padding: "2px 4px",
-  borderRadius: "4px",
-  color: "inherit"
-};
+const underlineStyle = problemDisplayStyles.underlineSpan;
 
 const parseAnswerValue = (value) => {
   if (value === null || value === undefined) return [];
-  return String(value)
+  const parsed = String(value)
     .replace(/[[\]{}\\]/g, "")
     .split(/[\s,]+/)
     .filter(Boolean)
     .map((token) => parseInt(token, 10))
     .filter((num) => Number.isInteger(num));
+  return Array.from(new Set(parsed)).sort((a, b) => a - b);
 };
 
 const renderTextWithUnderline = (input) => {
@@ -75,6 +67,28 @@ const GrammarProblemDisplay = ({ problem, onAnswer, userAnswer, showResult }) =>
   useEffect(() => {
     setSelected(parseAnswerValue(userAnswer));
   }, [userAnswer]);
+
+  const metadata = useMemo(() => problem?.metadata || {}, [problem]);
+  const answerMode = useMemo(() => {
+    if (metadata?.answerMode) {
+      return String(metadata.answerMode).toLowerCase();
+    }
+    const rawQuestion = String(problem?.question || '').trim().toLowerCase();
+    if (rawQuestion.includes('옳은') || rawQuestion.includes('correct')) {
+      return 'correct';
+    }
+    return 'incorrect';
+  }, [metadata?.answerMode, problem?.question]);
+
+  const targetIncorrect = useMemo(() => {
+    const value = metadata?.targetIncorrectCount;
+    return Number.isFinite(value) ? value : null;
+  }, [metadata?.targetIncorrectCount]);
+
+  const targetCorrect = useMemo(() => {
+    const value = metadata?.targetCorrectCount;
+    return Number.isFinite(value) ? value : null;
+  }, [metadata?.targetCorrectCount]);
 
   const correctAnswers = parseAnswerValue(problem.correctAnswer ?? problem.answer);
   const selectedSet = new Set(selected);
@@ -167,9 +181,19 @@ const GrammarProblemDisplay = ({ problem, onAnswer, userAnswer, showResult }) =>
     }
     return [];
   }, [problem.choices, problem.options, problem.multipleChoices, parsedSegments]);
-  const selectionLabel = isMultiSelect
-    ? "Select every option that is grammatically correct."
-    : "Select the option that is grammatically incorrect.";
+  const selectionLabel = useMemo(() => {
+    const countLabel = (count) => (Number.isFinite(count) && count > 0 ? `${count}개 모두` : '모두');
+    if (answerMode === 'correct') {
+      if (isMultiSelect) {
+        return `밑줄 친 부분 중, 어법상 옳은 것을 ${countLabel(targetCorrect)} 고르세요.`;
+      }
+      return '밑줄 친 부분 중, 어법상 옳은 것을 고르세요.';
+    }
+    if (isMultiSelect) {
+      return `밑줄 친 부분 중, 어법상 틀린 것을 ${countLabel(targetIncorrect)} 고르세요.`;
+    }
+    return '밑줄 친 부분 중, 어법상 틀린 것을 고르세요.';
+  }, [answerMode, isMultiSelect, targetCorrect, targetIncorrect]);
 
   const correctString = correctAnswers.length ? correctAnswers.join(",") : "";
   const isCorrectSelection =
@@ -187,9 +211,15 @@ const GrammarProblemDisplay = ({ problem, onAnswer, userAnswer, showResult }) =>
     const hasPrefix = /^\s*(출처|Source)\s*[:\u2502|]?/iu.test(trimmed);
     return hasPrefix ? `출처│${cleaned}` : cleaned;
   })();
-  const questionText = problem.question || (isMultiSelect
-    ? "Q. Select all of the sentences that are grammatically correct."
-    : "Q. Select the sentence that is grammatically incorrect.");
+  const questionText = problem.question || (
+    answerMode === 'correct'
+      ? (isMultiSelect
+        ? 'Q. 밑줄 친 부분 중, 어법상 옳은 것을 모두 고르시오.'
+        : 'Q. 밑줄 친 부분 중, 어법상 옳은 것을 고르시오.')
+      : (isMultiSelect
+        ? 'Q. 밑줄 친 부분 중, 어법상 틀린 것을 모두 고르시오.'
+        : 'Q. 밑줄 친 부분 중, 어법상 틀린 것은?')
+  );
 
   return (
     <>

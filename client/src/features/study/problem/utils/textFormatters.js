@@ -126,7 +126,7 @@ export const circledDigitIndex = (value) => {
 export const normalizeAnswerArray = (value) => {
   if (value === null || value === undefined) return [];
   return String(value)
-    .replace(/[{}\[\]\\]/g, '')
+    .replace(/[[\]{}\\]/g, '')
     .split(/[\s,]+/)
     .filter(Boolean)
     .map((token) => parseInt(token, 10))

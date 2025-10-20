@@ -105,181 +105,276 @@ const GENERIC_DISTRACTORS = {
   ]
 };
 
+function capitalize(text = '') {
+  if (!text) return '';
+  return text[0].toUpperCase() + text.slice(1);
+}
+
+function matchCasing(template, candidate) {
+  if (!template) return candidate;
+  if (template[0] === template[0].toUpperCase()) {
+    return capitalize(candidate);
+  }
+  return candidate;
+}
+
+const THIRD_PERSON_VERB_MAP = new Map(Object.entries({
+  makes: 'make',
+  takes: 'take',
+  focuses: 'focus',
+  supports: 'support',
+  does: 'do',
+  has: 'have',
+  needs: 'need',
+  wants: 'want',
+  creates: 'create',
+  plans: 'plan',
+  learns: 'learn',
+  leads: 'lead',
+  helps: 'help',
+  improves: 'improve',
+  requires: 'require',
+  uses: 'use',
+  works: 'work',
+  ensures: 'ensure',
+  provides: 'provide'
+}));
+
+const PLURAL_VERB_REPLACEMENTS = new Map(Object.entries({
+  are: 'is',
+  were: 'was',
+  have: 'has'
+}));
+
+const PASSIVE_PARTICIPLE_MAP = new Map(Object.entries({
+  built: 'build',
+  given: 'give',
+  expected: 'expect',
+  required: 'require',
+  recommended: 'recommend',
+  allowed: 'allow',
+  provided: 'provide',
+  completed: 'complete',
+  recognized: 'recognize'
+}));
+
 const GRAMMAR_RULES = [
   {
-    key: 'are_is',
-    description: '주어-동사 수 일치',
+    key: 'third_person_singular',
+    description: '3인칭 단수 현재형',
     apply(sentence) {
-      const regex = /\bare\b/i;
-      const match = regex.exec(sentence);
+      const pattern = /(he|she|it|this|that|each\s+(?:student|member)|the\s+(?:program|team|community|initiative)|[A-Z][a-z]+)([^.!?]{0,60}?)((?:makes|takes|focuses|supports|does|has|needs|wants|creates|plans|learns|leads|helps|improves|requires|uses|works|provides|ensures))/i;
+      const match = pattern.exec(sentence);
       if (!match) return null;
-      const original = match[0];
-      const incorrect = isCapitalized(original) ? 'Is' : 'is';
+      const verb = match[3];
+      const base = THIRD_PERSON_VERB_MAP.get(verb.toLowerCase());
+      if (!base) return null;
+      const incorrect = matchCasing(verb, base);
+      const subject = match[1].trim();
       return {
-        original,
+        original: verb,
         incorrect,
-        reason: `'${original}'는 복수 주어에 맞는 동사인데 '${incorrect}'로 바꾸면 주어-동사 수 일치가 무너집니다.`,
+        reason: `'${subject}'처럼 3인칭 단수 주어 뒤에는 '${verb}'처럼 -s/-es가 붙어야 하는데 '${incorrect}'라고 쓰면 수 일치 오류가 납니다.`,
         tag: '주어-동사 수 일치'
       };
     }
   },
   {
-    key: 'is_are',
-    description: '주어-동사 수 일치',
+    key: 'plural_subject_agreement',
+    description: '복수 주어 수 일치',
     apply(sentence) {
-      const regex = /\bis\b/i;
-      const match = regex.exec(sentence);
+      const pattern = /(students|people|patients|mentors|teams|members|they|we|children|participants|communities)([^.!?]{0,40}?)((?:are|were|have))/i;
+      const match = pattern.exec(sentence);
       if (!match) return null;
-      const original = match[0];
-      const incorrect = isCapitalized(original) ? 'Are' : 'are';
+      const verb = match[3];
+      const replacement = PLURAL_VERB_REPLACEMENTS.get(verb.toLowerCase());
+      if (!replacement) return null;
+      const incorrect = matchCasing(verb, replacement);
+      const subject = match[1].trim();
       return {
-        original,
+        original: verb,
         incorrect,
-        reason: `'${original}'는 단수 주어에 맞는 동사인데 '${incorrect}'로 바꾸면 주어-동사 수 일치가 어긋납니다.`,
+        reason: `'${subject}'처럼 복수 주어에는 '${verb}'가 자연스러운데 '${incorrect}'라고 쓰면 수 일치가 어긋납니다.`,
         tag: '주어-동사 수 일치'
       };
     }
   },
   {
-    key: 'has_have',
-    description: '주어-동사 수 일치',
+    key: 'article_vowel',
+    description: '관사 용법 (모음)',
     apply(sentence) {
-      const regex = /\bhas\b/i;
-      const match = regex.exec(sentence);
+      const pattern = /an\s+([aeiou][a-z]+)/i;
+      const match = pattern.exec(sentence);
       if (!match) return null;
-      const original = match[0];
-      const incorrect = isCapitalized(original) ? 'Have' : 'have';
+      const phrase = match[0];
+      const articleMatch = phrase.match(/an/i);
+      if (!articleMatch) return null;
+      const incorrectArticle = matchCasing(articleMatch[0], 'a');
+      const incorrect = phrase.replace(articleMatch[0], incorrectArticle);
       return {
-        original,
+        original: phrase,
         incorrect,
-        reason: `'${original}'는 단수 주어에 알맞은 형태이므로 '${incorrect}'로 쓰면 수 일치 오류가 발생합니다.`,
-        tag: '주어-동사 수 일치'
+        reason: `'${match[1]}'은 모음 소리로 시작하므로 'an'이 맞는데 '${incorrectArticle}'로 쓰면 관사 오류가 됩니다.`,
+        tag: '관사 용법'
       };
     }
   },
   {
-    key: 'have_has',
-    description: '주어-동사 수 일치',
+    key: 'article_consonant',
+    description: '관사 용법 (자음)',
     apply(sentence) {
-      const regex = /\bhave\b/i;
-      const match = regex.exec(sentence);
+      const pattern = /a\s+([bcdfghjklmnpqrstvwxyz][a-z]+)/i;
+      const match = pattern.exec(sentence);
       if (!match) return null;
-      const original = match[0];
-      const incorrect = isCapitalized(original) ? 'Has' : 'has';
+      const phrase = match[0];
+      const articleMatch = phrase.match(/a/i);
+      if (!articleMatch) return null;
+      const incorrectArticle = matchCasing(articleMatch[0], 'an');
+      const incorrect = phrase.replace(articleMatch[0], incorrectArticle);
       return {
-        original,
+        original: phrase,
         incorrect,
-        reason: `'${original}'는 복수 주어에 맞고, '${incorrect}'로 쓰면 주어-동사 수 일치가 틀립니다.`,
-        tag: '주어-동사 수 일치'
+        reason: `'${match[1]}'처럼 자음으로 시작하는 명사 앞에는 'a'가 자연스러운데 '${incorrectArticle}'라고 쓰면 관사 규칙을 어기게 됩니다.`,
+        tag: '관사 용법'
       };
     }
   },
   {
-    key: 'was_were',
-    description: '시제·수 일치',
+    key: 'preposition_collocation',
+    description: '전치사 어법',
     apply(sentence) {
-      const regex = /\bwas\b/i;
-      const match = regex.exec(sentence);
+      const pattern = /focus\s+on/i;
+      const match = pattern.exec(sentence);
       if (!match) return null;
-      const original = match[0];
-      const incorrect = isCapitalized(original) ? 'Were' : 'were';
+      const incorrect = match[0].replace(/on/i, (token) => matchCasing(token, 'at'));
       return {
-        original,
+        original: match[0],
         incorrect,
-        reason: `'${original}'은 단수 주어에 맞는 형태인데 '${incorrect}'로 바꾸면 시제/수 일치가 맞지 않습니다.`,
-        tag: '시제/수 일치'
+        reason: `'focus' 뒤에는 on을 써야 하는데 '${incorrect.split(' ')[1]}'로 바꾸면 전치사 어법에 맞지 않습니다.`,
+        tag: '전치사 어법'
       };
     }
   },
   {
-    key: 'were_was',
-    description: '시제·수 일치',
+    key: 'parallel_structure',
+    description: '병렬 구조',
     apply(sentence) {
-      const regex = /\bwere\b/i;
-      const match = regex.exec(sentence);
+      const pattern = /((?:to\s+[a-z]+(?:,\s*)?){2})(?:and\s+to\s+[a-z]+)()/i;
+      const match = pattern.exec(sentence);
       if (!match) return null;
-      const original = match[0];
-      const incorrect = isCapitalized(original) ? 'Was' : 'was';
+      const incorrect = match[0].replace(/and\s+to\s+([a-z]+)/i, (full, verb) => `and ${verb}`);
       return {
-        original,
+        original: match[0],
         incorrect,
-        reason: `'${original}'은 복수 주어/가정법에 맞는 형태인데 '${incorrect}'로 쓰면 문법이 틀립니다.`,
-        tag: '시제/수 일치'
+        reason: '병렬 구조에서는 같은 형식을 유지해야 하므로 마지막 to를 생략하면 어법상 오류가 됩니다.',
+        tag: '병렬 구조'
       };
     }
   },
   {
-    key: 'their_there',
-    description: '대명사 사용',
+    key: 'pronoun_case',
+    description: '대명사 격',
     apply(sentence) {
-      const regex = /\btheir\b/i;
-      const match = regex.exec(sentence);
+      const pattern = /between\s+you\s+and\s+me/i;
+      const match = pattern.exec(sentence);
       if (!match) return null;
-      const original = match[0];
-      const incorrect = isCapitalized(original) ? 'There' : 'there';
+      const incorrect = match[0].replace(/me/i, (token) => matchCasing(token, 'I'));
       return {
-        original,
+        original: match[0],
         incorrect,
-        reason: `'${original}'은 소유 대명사인데 '${incorrect}'로 바꾸면 지시 부사로 변해 의미가 틀어집니다.`,
-        tag: '대명사 용법'
+        reason: "전치사 뒤에는 목적격을 써야 하므로 'between you and me'가 맞고 'between you and I'는 잘못입니다.",
+        tag: '대명사 격'
+      };
+    }
+  },
+  {
+    key: 'tense_shift',
+    description: '시제 일치',
+    apply(sentence) {
+      const pattern = /has\s+([a-z]+ed)/i;
+      const match = pattern.exec(sentence);
+      if (!match) return null;
+      const incorrect = match[0].replace(/has/i, (token) => matchCasing(token, 'had'));
+      return {
+        original: match[0],
+        incorrect,
+        reason: `'${match[0]}'처럼 현재완료를 써야 하는 자리에 '${incorrect}'라고 쓰면 시제가 흐트러집니다.`,
+        tag: '시제 일치'
+      };
+    }
+  },
+  {
+    key: 'comparison_than_then',
+    description: '비교 구문',
+    apply(sentence) {
+      const pattern = /(more|less|rather)\s+[a-z-]+\s+than/i;
+      const match = pattern.exec(sentence);
+      if (!match) return null;
+      const incorrect = match[0].replace(/than/i, (token) => matchCasing(token, 'then'));
+      return {
+        original: match[0],
+        incorrect,
+        reason: "비교 구문에서는 'than'을 써야 하는데 'then'으로 바꾸면 의미가 달라집니다.",
+        tag: '비교 구문'
+      };
+    }
+  },
+  {
+    key: 'to_gerund_confusion',
+    description: '부정사 vs 동명사',
+    apply(sentence) {
+      const pattern = /to\s+(?:carefully\s+)?(develop|support|maintain|balance|improve|coordinate|design|deliver|protect|monitor|manage|plan)/i;
+      const match = pattern.exec(sentence);
+      if (!match) return null;
+      const baseVerb = match[1];
+      const incorrectVerb = `${baseVerb}ing`;
+      const incorrect = match[0].replace(new RegExp(`${baseVerb}$`, 'i'), (token) => matchCasing(token, incorrectVerb));
+      return {
+        original: match[0],
+        incorrect,
+        reason: `to 뒤에는 동사원형 '${baseVerb}'가 와야 하는데 '${incorrectVerb}'처럼 동명사를 쓰면 어법에 맞지 않습니다.`,
+        tag: '부정사 용법'
+      };
+    }
+  },
+  {
+    key: 'passive_participle',
+    description: '수동태 형태',
+    apply(sentence) {
+      const pattern = /was\s+(built|given|expected|required|recommended|allowed|provided|completed|recognized)/i;
+      const match = pattern.exec(sentence);
+      if (!match) return null;
+      const participle = match[1].toLowerCase();
+      const base = PASSIVE_PARTICIPLE_MAP.get(participle);
+      if (!base) return null;
+      const incorrectVerb = matchCasing(match[1], base);
+      const incorrect = match[0].replace(match[1], incorrectVerb);
+      return {
+        original: match[0],
+        incorrect,
+        reason: `'was ${match[1]}'처럼 수동태에는 과거분사가 필요한데 '${incorrect}'라고 쓰면 능동 형태가 되어 문장이 어색해집니다.`,
+        tag: '수동태 용법'
       };
     }
   },
   {
     key: 'there_their',
-    description: '대명사 사용',
+    description: '대명사 용법',
     apply(sentence) {
-      const regex = /\bthere\b/i;
-      const match = regex.exec(sentence);
+      const pattern = /their\s+([a-z]+)/i;
+      const match = pattern.exec(sentence);
       if (!match) return null;
-      const original = match[0];
-      const incorrect = isCapitalized(original) ? 'Their' : 'their';
+      const phrase = match[0];
+      const incorrect = phrase.replace(/their/i, (token) => matchCasing(token, 'there'));
       return {
-        original,
+        original: phrase,
         incorrect,
-        reason: `'${original}'은 장소/존재를 나타내는데 '${incorrect}'로 바꿔 소유를 뜻하게 하면 문맥이 어긋납니다.`,
+        reason: `'their'은 소유를 나타내는데 '${incorrect.split(' ')[0]}'로 바꾸면 문맥이 어긋납니다.`,
         tag: '대명사 용법'
-      };
-    }
-  },
-  {
-    key: 'an_a',
-    description: '관사 사용',
-    apply(sentence) {
-      const regex = /\ban\s+([a-z])/i;
-      const match = regex.exec(sentence);
-      if (!match) return null;
-      const original = match[0];
-      const nextChar = match[1];
-      if (!/^[aeiou]/i.test(nextChar)) return null;
-      const incorrect = original.replace(/an/i, isCapitalized(original[0]) ? 'A' : 'a');
-      return {
-        original,
-        incorrect,
-        reason: `'${original}'은 모음 발음 앞에 쓰는 관사인데 '${incorrect}'로 바꾸면 관사 사용이 잘못됩니다.`,
-        tag: '관사 용법'
-      };
-    }
-  },
-  {
-    key: 'a_an',
-    description: '관사 사용',
-    apply(sentence) {
-      const regex = /\ba\s+([aeiou][a-z]*)/i;
-      const match = regex.exec(sentence);
-      if (!match) return null;
-      const original = match[0];
-      const incorrect = original.replace(/a/i, isCapitalized(original[0]) ? 'An' : 'an');
-      return {
-        original,
-        incorrect,
-        reason: `'${original}'은 자음 발음 앞에 쓰는 관사인데 '${incorrect}'로 바꾸면 발음 규칙에 어긋납니다.`,
-        tag: '관사 용법'
       };
     }
   }
 ];
-
 function isCapitalized(token = '') {
   return token && token[0] === token[0].toUpperCase();
 }

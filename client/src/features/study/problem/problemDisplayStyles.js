@@ -102,14 +102,14 @@ export const problemDisplayStyles = {
     margin: '0 auto',
     padding: '24px',
     fontFamily: '"Noto Sans KR", "Nanum Myeongjo", serif',
-    color: '#111827'
+    color: 'var(--text-primary)'
   },
   previewCard: {
-    background: '#fff',
+    background: 'var(--surface-card)',
     borderRadius: '18px',
-    border: '1px solid #d1d5db',
+    border: '1px solid var(--surface-border)',
     padding: '32px',
-    boxShadow: '0 24px 60px rgba(15, 23, 42, 0.18)',
+    boxShadow: '0 24px 60px var(--surface-shadow)',
     lineHeight: 1.72
   },
   previewHeader: {
@@ -118,7 +118,7 @@ export const problemDisplayStyles = {
     alignItems: 'flex-start',
     marginBottom: '18px',
     fontSize: '15px',
-    color: '#1f2937'
+    color: 'var(--text-primary)'
   },
   previewHeaderTitle: {
     fontWeight: 700,
@@ -126,18 +126,18 @@ export const problemDisplayStyles = {
   },
   previewSource: {
     fontSize: '14px',
-    color: '#4b5563'
+    color: 'var(--text-secondary)'
   },
   previewQuestion: {
     fontSize: '18px',
     fontWeight: 700,
     marginBottom: '18px',
-    color: '#111827'
+    color: 'var(--text-primary)'
   },
   previewPassage: {
     whiteSpace: 'pre-wrap',
     fontSize: '16px',
-    color: '#1f2937',
+    color: 'var(--text-secondary)',
     marginBottom: '20px',
     letterSpacing: '0.01em'
   },
@@ -155,29 +155,29 @@ export const problemDisplayStyles = {
   },
   previewOptionMarker: {
     fontWeight: 700,
-    color: '#1f2937',
+    color: 'var(--text-primary)',
     minWidth: '20px'
   },
   previewExplanation: {
-    background: '#f8fafc',
-    border: '1px solid #e2e8f0',
+    background: 'var(--surface-soft)',
+    border: '1px solid var(--surface-border)',
     borderRadius: '14px',
     padding: '16px',
     fontSize: '14px',
-    color: '#334155',
+    color: 'var(--text-secondary)',
     marginBottom: '16px'
   },
   previewFootnotes: {
     marginTop: '12px',
     paddingTop: '12px',
-    borderTop: '1px dashed #cbd5f5',
+    borderTop: '1px dashed var(--border-muted)',
     fontSize: '13px',
-    color: '#55637a'
+    color: 'var(--text-secondary)'
   },
   previewFooterNote: {
     marginTop: '18px',
     fontSize: '12px',
-    color: '#6b7280',
+    color: 'var(--text-muted)',
     textAlign: 'right'
   },
   navButton: {
@@ -211,7 +211,7 @@ export const problemDisplayStyles = {
     fontSize: '17px',
     fontWeight: 700,
     cursor: 'pointer',
-    boxShadow: '0 20px 40px rgba(16, 185, 129, 0.45)'
+    boxShadow: '0 20px 40px var(--success-shadow)'
   },
   missingOptions: {
     padding: '12px 0',
@@ -219,14 +219,19 @@ export const problemDisplayStyles = {
     fontSize: '14px'
   },
   underlineSpan: {
-    textDecoration: 'underline',
-    textDecorationColor: 'var(--warning-strong)',
-    textDecorationThickness: '3px',
-    fontWeight: 'bold',
-    backgroundColor: 'rgba(251, 191, 36, 0.18)',
-    padding: '2px 4px',
-    borderRadius: '4px',
-    color: 'var(--text-primary)'
+    position: 'relative',
+    display: 'inline',
+    padding: '0 0.18em',
+    borderRadius: '6px',
+    color: 'inherit',
+    fontWeight: 700,
+    textDecoration: 'none',
+    textDecorationSkipInk: 'none',
+    boxDecorationBreak: 'clone',
+    WebkitBoxDecorationBreak: 'clone',
+    boxShadow: 'inset 0 -0.45em 0 var(--warning-surface)',
+    borderBottom: '2px solid var(--warning-strong)',
+    transition: 'background 0.2s ease, border-color 0.2s ease'
   }
 };
 
@@ -234,7 +239,7 @@ export const orderStyles = {
   orderProblemCard: {
     background: 'var(--surface-soft)',
     border: '1px solid var(--surface-border)',
-    boxShadow: '0 18px 40px rgba(15, 23, 42, 0.15)'
+    boxShadow: '0 18px 40px var(--surface-shadow)'
   },
   orderTitleSection: {
     background: 'var(--surface-card)',
