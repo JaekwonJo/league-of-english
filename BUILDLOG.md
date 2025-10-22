@@ -1,3 +1,10 @@
+## 2025-10-22 (multi-answer vocab + analysis labels + finish flow)
+- Issue: 어휘 문제에서 단일/복수 정답 변형이 뒤섞일 때 정답 개수·옵션 사유가 불일치했고, 분석(fallback)은 라벨이 없어 빈/짧은 문구가 섞였어요. 학습 마무리 버튼이 미답 항목에서 막히기도 했습니다.
+- Cause: 답안 파싱이 단일값 전제였고, 질문 변형(올바른 것/모두 고르시오) 대응이 부족했습니다. 분석 생성은 필드 길이/라벨 보장이 없고, 밑줄 치환 정규식의 공백 처리도 허술했어요.
+- Fix: `answerMode/answerIndices/optionStatuses` 메타데이터를 추가하고 다중 정답 파싱·검증을 도입. 질문 변형 키를 확장했어요. 분석은 "한글 해석/분석/배경/사례/어법/어휘 포인트" 라벨과 최소 길이를 강제했습니다. Study 마무리 UX 개선, 정규식 공백 처리 보완.
+- Files: server/services/ai-problem/vocabulary.js, server/utils/documentAnalyzer.js, client/src/features/study/*, client/src/pages/*, client/src/styles/*, server/routes/vocab.routes.js (__testables 내보내기), client/src/components/common/ 등.
+- Tests: server/tests/vocabularyParser.test.js 추가, 기존 분석/피드백 테스트 유지. 로컬 `npm test` 통과.
+
 ## 2025-10-21 (Grammar/Vocab 분포 + 분석 fallback 정비)
 - Issue: Grammar 생성기가 단일 오류 변형만 자주 뽑고, fallback이 `you is` 같은 초급 오류를 만들었으며 분석 fallback은 템플릿 문구만 반복됐어요.
 - Cause: variant 선택이 Math.random 가중치에만 의존했고, 문법 규칙/배경 작성기가 기초 패턴만 커버했습니다.
