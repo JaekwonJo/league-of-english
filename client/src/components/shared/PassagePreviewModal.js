@@ -6,7 +6,7 @@ const overlayStyles = {
   left: 0,
   width: '100vw',
   height: '100vh',
-  background: 'rgba(0, 0, 0, 0.6)',
+  background: 'var(--dialog-scrim, rgba(15, 23, 42, 0.65))',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
@@ -15,7 +15,7 @@ const overlayStyles = {
 };
 
 const modalStyles = {
-  background: 'var(--modal-bg, #151923)',
+  background: 'var(--surface-card)',
   borderRadius: '18px',
   maxWidth: '720px',
   width: '90%',
@@ -23,7 +23,7 @@ const modalStyles = {
   padding: '24px',
   display: 'flex',
   flexDirection: 'column',
-  boxShadow: '0 24px 50px rgba(0,0,0,0.28)'
+  boxShadow: '0 24px 50px var(--surface-shadow)'
 };
 
 const titleStyles = {
@@ -31,7 +31,7 @@ const titleStyles = {
   marginBottom: '12px',
   fontSize: '20px',
   fontWeight: 700,
-  color: 'var(--text-primary, #f5f6fa)'
+  color: 'var(--text-primary)'
 };
 
 const scrollAreaStyles = {
@@ -44,7 +44,7 @@ const passageStyles = {
   whiteSpace: 'pre-wrap',
   fontSize: '15px',
   lineHeight: 1.7,
-  color: 'var(--text-muted, rgba(255,255,255,0.82))'
+  color: 'var(--text-secondary)'
 };
 
 const footerStyles = {
@@ -54,15 +54,15 @@ const footerStyles = {
 };
 
 const buttonStyles = {
-  background: 'var(--accent, #6c5ce7)',
-  color: '#fff',
+  background: 'var(--accent-gradient)',
+  color: 'var(--text-on-accent)',
   border: 'none',
   borderRadius: '10px',
   padding: '10px 18px',
   fontSize: '14px',
   cursor: 'pointer',
   fontWeight: 600,
-  boxShadow: '0 12px 20px rgba(108, 92, 231, 0.25)'
+  boxShadow: '0 12px 24px var(--accent-shadow)'
 };
 
 const PassagePreviewModal = ({ open, passage, onClose, documentTitle }) => {

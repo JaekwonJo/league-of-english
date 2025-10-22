@@ -319,8 +319,10 @@ test('ProblemFeedbackService summary excludes dismissed reports', async () => {
   const service = new ProblemFeedbackService({ db, notifications });
 
   const summary = await service.getFeedbackSummary(8, 2);
-  assert.deepEqual(summary.counts, { like: 1, report: 1 });
-  assert.deepEqual(summary.user, { like: false, report: true });
+  assert.equal(summary.counts.like, 1);
+  assert.equal(summary.counts.report, 1);
+  assert.equal(summary.counts.dislike, 0);
+  assert.deepEqual(summary.user, { like: false, dislike: false, report: true });
 });
 
 test('ProblemFeedbackService lists and resolves reports', async () => {

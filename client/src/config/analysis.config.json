@@ -7,7 +7,8 @@
       "passageList": "/analysis/:documentId/passage-list",
       "analyzePassage": "/analysis/:documentId/analyze-passage",
       "analyzeBatch": "/analysis/:documentId/analyze-passages",
-      "getPassage": "/analysis/:documentId/passage/:passageNumber"
+      "getPassage": "/analysis/:documentId/passage/:passageNumber",
+      "deleteVariant": "/analysis/:documentId/passage/:passageNumber/variant/:variantIndex"
     }
   },
   "ui": {

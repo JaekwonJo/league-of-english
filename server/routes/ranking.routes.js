@@ -29,7 +29,8 @@ router.get('/leaderboard', verifyToken, async (req, res) => {
         grade,
         role,
         created_at,
-        ROW_NUMBER() OVER (ORDER BY points DESC) as rank
+        last_login_at,
+        ROW_NUMBER() OVER (ORDER BY points DESC, created_at ASC) as rank
       FROM users 
       WHERE points > 0
       ORDER BY points DESC, created_at ASC
@@ -41,8 +42,8 @@ router.get('/leaderboard', verifyToken, async (req, res) => {
       const tier = getTierInfo(user.points);
       return {
         ...user,
-        tier: tier,
-        isActive: isRecentlyActive(user.last_activity)
+        tier,
+        isActive: isRecentlyActive(user.last_login_at)
       };
     });
 

@@ -75,8 +75,7 @@ export const studyModeStyles = {
     transition: 'opacity 0.2s ease'
   },
   submitButtonDisabled: {
-    opacity: 0.5,
-    cursor: 'not-allowed',
+    opacity: 0.55,
     boxShadow: 'none'
   },
   scrollTopButton: {

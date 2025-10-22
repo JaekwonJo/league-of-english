@@ -13,10 +13,16 @@ const {
 
 const UNDERLINE_PATTERN = /<u>([\s\S]*?)<\/u>/gi;
 const DEFAULT_QUESTION = '다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?';
+const MULTI_INCORRECT_QUESTION = '다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것을 모두 고르시오.';
+const SINGLE_CORRECT_QUESTION = '다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 올바른 것은?';
+const MULTI_CORRECT_QUESTION = '다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 올바른 것을 모두 고르시오.';
 const QUESTION_VARIANTS = [
   DEFAULT_QUESTION,
   '다음 글의 밑줄 친 부분 중 문맥상 낱말의 쓰임이 적절하지 않은 것은?',
-  '다음 글의 밑줄 친 부분 중, 문맥상 어색한 표현은?'
+  '다음 글의 밑줄 친 부분 중, 문맥상 어색한 표현은?',
+  MULTI_INCORRECT_QUESTION,
+  SINGLE_CORRECT_QUESTION,
+  MULTI_CORRECT_QUESTION
 ];
 const QUESTION_KEY_SET = new Set(QUESTION_VARIANTS.map((item) => normalizeQuestionKey(item)));
 
@@ -101,11 +107,27 @@ function normaliseCorrection(payload) {
   return null;
 }
 
-function ensureSingleAnswer(answerValue) {
-  if (Array.isArray(answerValue)) {
-    return Number.parseInt(answerValue[0], 10);
-  }
-  return Number.parseInt(answerValue, 10);
+function parseAnswerIndices(payload) {
+  const answerCandidates = [];
+  ['correctAnswers', 'answers', 'answer', 'correctAnswer', 'answerIndices'].forEach((key) => {
+    const value = payload[key];
+    if (value === undefined || value === null) return;
+    if (Array.isArray(value)) {
+      value.forEach((item) => {
+        const num = Number.parseInt(item, 10);
+        if (Number.isInteger(num)) answerCandidates.push(num);
+      });
+    } else {
+      String(value)
+        .split(/[\s,]+/)
+        .filter(Boolean)
+        .forEach((token) => {
+          const num = Number.parseInt(token, 10);
+          if (Number.isInteger(num)) answerCandidates.push(num);
+        });
+    }
+  });
+  return [...new Set(answerCandidates.filter((num) => Number.isInteger(num) && num >= 1 && num <= CIRCLED_DIGITS.length))].sort((a, b) => a - b);
 }
 
 function normalizeVocabularyPayload(payload, context = {}) {
@@ -125,7 +147,7 @@ function normalizeVocabularyPayload(payload, context = {}) {
     throw new Error(registerFailure(msg));
   };
 
-  const rawQuestion = String(payload.question || '').replace(/\[\d+\]\s*$/, '').trim();
+  const rawQuestion = (context.questionText || String(payload.question || '')).replace(/\[\d+\]\s*$/, '').trim();
   const questionKey = normalizeQuestionKey(rawQuestion || DEFAULT_QUESTION);
   if (!QUESTION_KEY_SET.has(questionKey)) {
     raise('unexpected vocabulary question');
@@ -155,23 +177,27 @@ function normalizeVocabularyPayload(payload, context = {}) {
     if (!text) {
       raise(`vocabulary option ${index + 1} missing text`);
     }
-    const stripped = text
-      .replace(new RegExp(`^[${CIRCLED_DIGITS.join('')}0-9A-Za-z()\.\-\s]*`), '')
-      .trim();
     const snippet = normalizeWhitespace(stripTags(text));
     if (!snippet) {
       raise(`vocabulary option ${index + 1} missing snippet`);
     }
     const expected = segments[index] ? segments[index].text : null;
-    if (expected && normalizeWhitespace(stripTags(text)).replace(/^[①-⑤]\s*/, '').trim().toLowerCase() !== expected.toLowerCase()) {
+    if (expected && snippet.replace(/^[①-⑤]\s*/, '').trim().toLowerCase() !== expected.toLowerCase()) {
       raise(`vocabulary option ${index + 1} does not match passage segment`);
     }
     return `${CIRCLED_DIGITS[index]} <u>${expected}</u>`;
   });
 
-  const answerIndex = ensureSingleAnswer(payload.correctAnswer ?? payload.answer);
-  if (!Number.isInteger(answerIndex) || answerIndex < 1 || answerIndex > CIRCLED_DIGITS.length) {
-    raise('vocabulary correctAnswer out of range');
+  const answerMode = context.answerMode === 'correct' ? 'correct' : 'incorrect';
+  const targetIncorrect = Number.isInteger(context.targetIncorrectCount) ? context.targetIncorrectCount : null;
+  const targetCorrect = Number.isInteger(context.targetCorrectCount) ? context.targetCorrectCount : null;
+
+  const uniqueAnswers = parseAnswerIndices(payload);
+  const expectedCount = answerMode === 'correct'
+    ? (targetCorrect !== null ? targetCorrect : 1)
+    : (targetIncorrect !== null ? targetIncorrect : 1);
+  if (uniqueAnswers.length !== expectedCount) {
+    raise('vocabulary answer count mismatch');
   }
 
   const explanation = String(payload.explanation || '').trim();
@@ -182,9 +208,31 @@ function normalizeVocabularyPayload(payload, context = {}) {
     raise('vocabulary explanation too short');
   }
 
-  const optionReasons = normaliseOptionReasons(payload.optionReasons || payload.distractorReasons || payload.distractors || []);
-  if (Object.keys(optionReasons).length < 1 || !optionReasons[CIRCLED_DIGITS[answerIndex - 1]]) {
-    raise('vocabulary optionReasons must include the incorrect expression');
+  const optionReasonsInput = normaliseOptionReasons(payload.optionReasons || payload.distractorReasons || payload.distractors || []);
+  const answerSet = new Set(uniqueAnswers);
+  const optionStatuses = [];
+  const optionReasons = {};
+
+  normalizedOptions.forEach((optionText, idx) => {
+    const marker = CIRCLED_DIGITS[idx];
+    const isAnswer = answerSet.has(idx + 1);
+    const status = answerMode === 'incorrect'
+      ? (isAnswer ? 'incorrect' : 'correct')
+      : (isAnswer ? 'correct' : 'incorrect');
+    optionStatuses.push(status);
+    const baseReason = optionReasonsInput[marker];
+    if (baseReason) {
+      optionReasons[marker] = baseReason;
+    } else {
+      optionReasons[marker] = status === 'incorrect'
+        ? `${marker}번 표현은 문맥과 맞지 않아 교정이 필요합니다.`
+        : `${marker}번 표현은 문맥에 자연스럽습니다.`;
+    }
+  });
+
+  const firstAnswerMarker = CIRCLED_DIGITS[uniqueAnswers[0] - 1];
+  if (!optionReasons[firstAnswerMarker]) {
+    raise('vocabulary optionReasons must include selected 표현');
   }
 
   const correction = normaliseCorrection(payload.correction || payload.corrections);
@@ -200,7 +248,9 @@ function normalizeVocabularyPayload(payload, context = {}) {
   const metadata = {
     documentTitle: docTitle,
     generator: 'openai',
-    incorrectIndex: answerIndex,
+    answerMode,
+    answerIndices: uniqueAnswers,
+    optionStatuses,
     optionReasons,
     correction,
     difficulty: payload.difficulty || payload.level || 'csat-advanced'
@@ -209,6 +259,8 @@ function normalizeVocabularyPayload(payload, context = {}) {
     metadata.variantTag = payload.variantTag || payload.variant;
   }
 
+  const answerValue = uniqueAnswers.join(',');
+
   return {
     id: payload.id || `vocab_ai_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
     type: 'vocabulary',
@@ -216,8 +268,8 @@ function normalizeVocabularyPayload(payload, context = {}) {
     mainText: passage,
     passage,
     options: normalizedOptions,
-    answer: String(answerIndex),
-    correctAnswer: String(answerIndex),
+    answer: answerValue,
+    correctAnswer: answerValue,
     explanation,
     sourceLabel,
     difficulty: metadata.difficulty,
@@ -227,6 +279,9 @@ function normalizeVocabularyPayload(payload, context = {}) {
 
 module.exports = {
   VOCAB_USAGE_BASE_QUESTION: DEFAULT_QUESTION,
+  VOCAB_USAGE_MULTI_INCORRECT_QUESTION: MULTI_INCORRECT_QUESTION,
+  VOCAB_USAGE_SINGLE_CORRECT_QUESTION: SINGLE_CORRECT_QUESTION,
+  VOCAB_USAGE_MULTI_CORRECT_QUESTION: MULTI_CORRECT_QUESTION,
   VOCAB_USAGE_QUESTION_VARIANTS: QUESTION_VARIANTS,
   VOCAB_USAGE_JSON_BLUEPRINT: VOCAB_JSON_BLUEPRINT,
   VOCAB_MIN_EXPLANATION_LENGTH: MIN_EXPLANATION_LENGTH,

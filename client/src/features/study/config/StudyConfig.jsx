@@ -18,7 +18,6 @@ const StudyConfig = ({
   onDiscardSavedSession = null
 }) => {
   const {
-    step,
     safeStep,
     documents,
     documentsLoading,

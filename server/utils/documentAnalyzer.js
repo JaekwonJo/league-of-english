@@ -119,16 +119,18 @@ const MAX_VARIANTS_PER_PASSAGE = 2;
 const ANALYSIS_MANUAL_SNIPPET = readAnalysisManual(2600);
 
 function buildAnalysisPrompt({ passage, passageNumber, variantIndex, retryNotes }) {
-  const guidance = [
-    '당신은 대한민국 최고의 영어 교수님이자 따뜻한 담임 선생님이에요.',
-    '결과물은 학생에게 전달되는 학습용 artifact입니다. 한 문장씩 차분히 설명하며, 자연스러운 존댓말 대화체로 안내해 주세요.',
-    'sentenceAnalysis의 각 항목은 해설·배경지식·실생활 사례·어법 설명을 최소 두 문장 이상으로 작성하고, 학생을 격려하는 이모지를 한두 개씩 포함해 주세요.',
-    '모든 문장을 빠짐없이 sentenceAnalysis 배열에 넣고, 주제문은 isTopicSentence를 true로 표시하며 english 필드에는 **굵은 글씨**를 적용해 주세요.',
-    '각 문장마다 vocabulary.words에는 최소 두 개 이상의 핵심 어휘를 넣고, 동의어·반의어·사용 팁을 디테일하게 적어 주세요.',
-    '각 vocabulary.words 항목에는 term, meaning, synonyms(최소 두 개), antonyms(최소 한 개), note(사용 팁)를 반드시 채워 주세요.',
-    'modernApplications 배열은 최소 세 가지 현실 사례를 제시하고, 학생이 바로 시도할 수 있는 행동 지침으로 작성해 주세요.',
-    'JSON 외의 설명이나 마크다운은 절대 출력하지 말고, 하나의 JSON 객체만 반환하세요.'
-  ].join('\n');
+const guidance = [
+  '당신은 대한민국 최고의 영어 교수님이자 따뜻한 담임 선생님이에요.',
+  '결과물은 초등학생도 이해할 수 있는 학습용 artifact입니다. 친근한 존댓말 대화체로 길고 자세하게 설명해 주세요.',
+  'sentenceAnalysis 배열의 각 항목에는 english, isTopicSentence, korean, analysis, background, example, grammar, vocabulary.words 필드를 반드시 포함해 주세요.',
+  'english 필드에는 원문 문장을 그대로 적고, 주제문(isTopicSentence=true)은 **굵은 글씨**로 감싸 주세요.',
+  'korean·analysis·background·example 필드는 각각 "*** 한글 해석:", "*** 분석:", "*** 이 문장에 필요한 배경지식:", "*** 이 문장에 필요한 사례:"로 시작하게 작성하고, 두세 문장 이상 친절하게 설명하면서 이모지를 한두 개 넣어 주세요.',
+  'grammar 필드는 "어법 포인트:"로 시작해 복잡한 구문과 시제를 두 문장 이상으로 풀어 설명해 주세요.',
+  'vocabulary.words에는 최소 두 개 이상의 핵심 어휘를 넣고, 각 항목에 term, meaning, synonyms(최소 두 개), antonyms(최소 한 개), note(사용 팁)을 빠짐없이 채워 주세요.',
+  'vocabulary.intro 필드에는 "*** 어휘 포인트:"로 시작하는 문장을 작성해 어떤 단어를 집중해서 공부하면 좋은지 부드럽게 안내해 주세요.',
+  'meta.deepDive, englishTitles(3개, 하나는 의문문), koreanMainIdea, authorsClaim, englishSummary, englishSummaryKorean, modernApplications(최소 세 가지 행동 지침)도 모두 채워 주세요.',
+  'JSON 외의 설명이나 마크다운은 절대 출력하지 말고 하나의 JSON 객체만 반환하세요.'
+].join('\n');
 
   const manualSection = ANALYSIS_MANUAL_SNIPPET
     ? `분석 가이드 전문 (일부 발췌):\n${ANALYSIS_MANUAL_SNIPPET}`
@@ -372,20 +374,20 @@ class DocumentAnalyzer {
         ? `**${englishRaw.replace(/\*\*/g, '').trim()}**`
         : englishRaw;
 
-      const korean = String(entry?.korean || entry?.translation || '').trim();
-      if (!korean) raise(`sentenceAnalysis[${idx + 1}] 한글 해석이 필요합니다.`);
+      const koreanRaw = String(entry?.korean || entry?.translation || '').trim();
+      if (!koreanRaw) raise(`sentenceAnalysis[${idx + 1}] 한글 해석이 필요합니다.`);
 
-      const analysis = String(entry?.analysis || entry?.meaning || '').trim();
-      if (analysis.length < 60) raise(`sentenceAnalysis[${idx + 1}] 해설을 60자 이상으로 따뜻하게 풀어 주세요.`);
+      const analysisRaw = String(entry?.analysis || entry?.meaning || '').trim();
+      if (analysisRaw.length < 60) raise(`sentenceAnalysis[${idx + 1}] 해설을 60자 이상으로 따뜻하게 풀어 주세요.`);
 
-      const background = String(entry?.background || entry?.note || '').trim();
-      if (background.length < 40) raise(`sentenceAnalysis[${idx + 1}] 배경 지식을 40자 이상으로 알려 주세요.`);
+      const backgroundRaw = String(entry?.background || entry?.note || '').trim();
+      if (backgroundRaw.length < 40) raise(`sentenceAnalysis[${idx + 1}] 배경 지식을 40자 이상으로 알려 주세요.`);
 
-      const example = String(entry?.example || '').trim();
-      if (example.length < 40) raise(`sentenceAnalysis[${idx + 1}] 실생활 사례를 40자 이상으로 적어 주세요.`);
+      const exampleRaw = String(entry?.example || '').trim();
+      if (exampleRaw.length < 40) raise(`sentenceAnalysis[${idx + 1}] 실생활 사례를 40자 이상으로 적어 주세요.`);
 
-      const grammar = String(entry?.grammar || '').trim();
-      if (grammar.length < 40) raise(`sentenceAnalysis[${idx + 1}] 어법 설명을 40자 이상으로 작성해 주세요.`);
+      const grammarRaw = String(entry?.grammar || '').trim();
+      if (grammarRaw.length < 40) raise(`sentenceAnalysis[${idx + 1}] 어법 설명을 40자 이상으로 작성해 주세요.`);
 
       const vocabularyEntries = Array.isArray(entry?.vocabulary?.words)
         ? entry.vocabulary.words.map(this._normalizeVocabularyWord)
@@ -413,6 +415,16 @@ class DocumentAnalyzer {
         return word;
       });
 
+      const korean = this._ensurePrefixedLine(koreanRaw, '한글 해석');
+      const analysis = this._ensurePrefixedLine(analysisRaw, '분석');
+      const background = this._ensurePrefixedLine(backgroundRaw, '이 문장에 필요한 배경지식');
+      const example = this._ensurePrefixedLine(exampleRaw, '이 문장에 필요한 사례');
+      const grammar = this._ensureGrammarLine(grammarRaw);
+      const vocabIntroSource = entry?.vocabulary?.intro || entry?.vocabularyIntro || '';
+      const vocabIntro = vocabIntroSource
+        ? this._ensurePrefixedLine(vocabIntroSource, '어휘 포인트')
+        : this._buildVocabularyIntro(vocabWords);
+
       return {
         english,
         isTopicSentence,
@@ -421,7 +433,7 @@ class DocumentAnalyzer {
         background,
         example,
         grammar,
-        vocabulary: { words: vocabWords }
+        vocabulary: { intro: vocabIntro, words: vocabWords }
       };
     });
     
@@ -486,7 +498,7 @@ class DocumentAnalyzer {
         raise(`modernApplications[${idx + 1}]을 40자 이상으로 구체적으로 작성해 주세요.`);
       }
     });
-return {
+    return {
       passageNumber,
       variantIndex,
       generatedAt: new Date().toISOString(),
@@ -502,6 +514,47 @@ return {
         modernApplications
       }
     };
+  }
+
+  _ensurePrefixedLine(value, label, prefix = '***') {
+    const trimmed = String(value || '').trim();
+    if (!trimmed) return '';
+
+    const escape = (text) => String(text || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const prefixPattern = new RegExp(`^${escape(prefix)}\s*${escape(label)}`, 'i');
+    if (prefixPattern.test(trimmed)) {
+      return trimmed;
+    }
+
+    const labelPattern = new RegExp(`^${escape(label)}\s*[:：]\s*`, 'i');
+    const cleaned = trimmed.replace(labelPattern, '').trim();
+    return `${prefix} ${label}: ${cleaned}`;
+  }
+
+  _ensureGrammarLine(value, label = '어법 포인트') {
+    const trimmed = String(value || '').trim();
+    if (!trimmed) return '';
+
+    const escape = (text) => String(text || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const existingPattern = new RegExp(`^(?:✏️\s*)?${escape(label)}`, 'i');
+    if (existingPattern.test(trimmed)) {
+      return trimmed;
+    }
+
+    const labelPattern = new RegExp(`^(?:✏️\s*)?${escape(label)}\s*[:：]\s*`, 'i');
+    const cleaned = trimmed.replace(labelPattern, '').trim();
+    return `✏️ ${label}: ${cleaned}`;
+  }
+
+  _buildVocabularyIntro(words = []) {
+    const terms = (Array.isArray(words) ? words : [])
+      .map((word) => (word?.term ? String(word.term).trim() : ''))
+      .filter(Boolean);
+    const highlighted = terms.slice(0, 3).join(', ');
+    const body = highlighted
+      ? `이번 문장에서는 ${highlighted} 등을 집중해서 배워 볼게요. 동의어와 반의어까지 함께 익히면 실력이 쑥쑥 자라요! 😊`
+      : '이번 문장의 핵심 어휘를 하나씩 정리해 볼게요. 동의어와 반의어까지 챙기면 어휘력이 단단해집니다! 😊';
+    return this._ensurePrefixedLine(body, '어휘 포인트');
   }
 
   _validateVariant(variant, failureReasons = []) {
@@ -607,29 +660,30 @@ return {
       const translation = await this._safeTranslateSentence(englishRaw, keywords);
       const koreanKeywords = await this._translateKeywords(keywords);
       const highlightedKorean = this._highlightKoreanText(translation, koreanKeywords);
-      const koreanLine = `${highlightedKorean || this._buildGenericKoreanGist(englishRaw, keywords, koreanKeywords)} 😊`;
+      const baseKorean = `${highlightedKorean || this._buildGenericKoreanGist(englishRaw, keywords, koreanKeywords)} 😊`;
 
-      const analysis = this._composeSentenceAnalysis({
+      const analysisRaw = this._composeSentenceAnalysis({
         translation,
         koreanKeywords,
         englishSentence: englishRaw,
         idx,
         total: totalSentences
       });
-      const background = this._composeBackground(koreanKeywords, keywords, idx);
-      const example = this._composeExample(koreanKeywords, keywords, idx);
-      const grammar = this._composeGrammarNotes(englishRaw, idx);
+      const backgroundRaw = this._composeBackground(koreanKeywords, keywords, idx);
+      const exampleRaw = this._composeExample(koreanKeywords, keywords, idx);
+      const grammarRaw = this._composeGrammarNotes(englishRaw, idx);
       const vocabularyWords = await this._buildVocabularyEntries(keywords);
+      const vocabularyIntro = this._buildVocabularyIntro(vocabularyWords);
 
       return {
         english: highlightedEnglish,
         isTopicSentence: topicSentence,
-        korean: koreanLine,
-        analysis,
-        background,
-        example,
-        grammar,
-        vocabulary: { words: vocabularyWords }
+        korean: this._ensurePrefixedLine(baseKorean, '한글 해석'),
+        analysis: this._ensurePrefixedLine(analysisRaw, '분석'),
+        background: this._ensurePrefixedLine(backgroundRaw, '이 문장에 필요한 배경지식'),
+        example: this._ensurePrefixedLine(exampleRaw, '이 문장에 필요한 사례'),
+        grammar: this._ensureGrammarLine(grammarRaw),
+        vocabulary: { intro: vocabularyIntro, words: vocabularyWords }
       };
     }));
 
@@ -880,7 +934,17 @@ return {
       });
     }
 
-    return entries;
+    while (entries.length < 2) {
+      entries.push({
+        term: 'Core detail',
+        meaning: '세부 내용을 다시 짚어 주어 문장을 깊이 이해하도록 돕는 표현이에요.',
+        synonyms: ['essential point', 'key detail'],
+        antonyms: ['minor aside'],
+        note: 'Core detail을 표시하며 읽으면 중요한 정보가 눈에 잘 들어와요. 친구와 서로 비교해 보세요! ✨'
+      });
+    }
+
+    return entries.slice(0, 4);
   }
 
   _findVocabularyOverride(term = '') {

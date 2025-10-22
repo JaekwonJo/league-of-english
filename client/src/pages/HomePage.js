@@ -13,7 +13,6 @@ const typeLabelMap = {
   theme: '주제',
   summary: '요약',
   implicit: '함축 의미',
-  irrelevant: '무관 문장'
 };
 
 const HomePage = () => {

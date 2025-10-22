@@ -621,3 +621,11 @@ router.post('/vocabulary/sets/:documentId/quiz/submit', verifyToken, async (req,
 });
 
 module.exports = router;
+module.exports.__testables = {
+  cleanupSpacing,
+  splitTermAndMeaning,
+  expandCombinedEntry,
+  normalizeVocabularyDays,
+  parseVocabularyContent,
+  buildQuizQuestions
+};

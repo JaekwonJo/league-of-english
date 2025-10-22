@@ -27,11 +27,17 @@ test('fallback analysis variant fills every field richly', async () => {
 
   variant.sentenceAnalysis.forEach((entry, idx) => {
     assert.ok(hasHangul(entry.korean), `sentence ${idx + 1} needs Korean translation`);
+    assert.ok(entry.korean.startsWith('*** 한글 해석:'), `sentence ${idx + 1} Korean line should start with required prefix`);
     assert.ok(entry.analysis && entry.analysis.length >= 60, `sentence ${idx + 1} needs long-form analysis`);
+    assert.ok(entry.analysis.startsWith('*** 분석:'), `sentence ${idx + 1} analysis should start with required prefix`);
     assert.ok(entry.background && entry.background.length >= 40, `sentence ${idx + 1} needs background knowledge`);
+    assert.ok(entry.background.startsWith('*** 이 문장에 필요한 배경지식:'), `sentence ${idx + 1} background should start with required prefix`);
     assert.ok(entry.example && entry.example.length >= 40, `sentence ${idx + 1} needs real-life example`);
+    assert.ok(entry.example.startsWith('*** 이 문장에 필요한 사례:'), `sentence ${idx + 1} example should start with required prefix`);
     assert.ok(entry.grammar && entry.grammar.length >= 40, `sentence ${idx + 1} needs grammar explanation`);
-    assert.ok(Array.isArray(entry.vocabulary?.words) && entry.vocabulary.words.length >= 1, `sentence ${idx + 1} needs vocabulary words`);
+    assert.ok(/어법\s*포인트/.test(entry.grammar), `sentence ${idx + 1} grammar should mention 어법 포인트`);
+    assert.ok(entry.vocabulary?.intro && entry.vocabulary.intro.startsWith('*** 어휘 포인트:'), `sentence ${idx + 1} vocabulary intro missing required prefix`);
+    assert.ok(Array.isArray(entry.vocabulary?.words) && entry.vocabulary.words.length >= 2, `sentence ${idx + 1} needs at least two vocabulary words`);
     entry.vocabulary.words.forEach((word, wordIdx) => {
       assert.ok(word.synonyms?.length >= 2, `sentence ${idx + 1} vocab ${wordIdx + 1} requires synonyms`);
       assert.ok(word.antonyms?.length >= 1, `sentence ${idx + 1} vocab ${wordIdx + 1} requires antonyms`);

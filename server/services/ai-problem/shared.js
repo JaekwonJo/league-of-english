@@ -170,29 +170,62 @@ function isPlaceholderSourceLabel(label = '') {
     /sample/iu,
     /예시/iu,
     /기본 값/iu,
-    /default/iu
+    /default/iu,
+    /문서\s*명/iu
   ];
   return placeholders.some((pattern) => pattern.test(normalized));
 }
 
+function sanitizeSourceTitle(value) {
+  const str = String(value || '').trim();
+  if (!str) return '';
+  const withoutPrefix = str.replace(SOURCE_PREFIX_REGEX, '').trim();
+  const withoutNumber = withoutPrefix.replace(/(?:no|#)\s*\d+$/i, '').trim();
+  return withoutNumber.replace(/\s+/g, ' ').trim();
+}
+
+function extractSequence(value) {
+  const match = String(value || '').match(/(?:no|#)\s*(\d+)/i);
+  if (!match) return null;
+  const num = Number(match[1]);
+  return Number.isInteger(num) && num > 0 ? num : null;
+}
+
 function ensureSourceLabel(raw, context = {}) {
-  const value = String(raw || '').trim();
-  const docTitle = String((context && context.docTitle) || '').trim();
-  const docCode = String((context && (context.documentCode || context.docCode)) || '').trim();
-  if (value) {
-    const normalized = value.replace(SOURCE_PREFIX_REGEX, '출처│').trim();
-    const labelBody = normalized.replace(/^출처│/iu, '').trim();
-    if (labelBody && !isPlaceholderSourceLabel(labelBody)) {
-      return normalized.startsWith('출처│') ? normalized : `출처│${normalized}`;
+  const candidates = [
+    raw,
+    context.docTitle,
+    context.documentTitle,
+    context.document_name,
+    context.documentCode,
+    context.docCode
+  ];
+
+  let baseTitle = '';
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+    const rawCandidate = String(candidate).trim();
+    if (!rawCandidate) continue;
+    if (isPlaceholderSourceLabel(rawCandidate)) {
+      continue;
+    }
+    const sanitized = sanitizeSourceTitle(rawCandidate);
+    if (sanitized) {
+      baseTitle = sanitized;
+      break;
     }
   }
-  if (docTitle) {
-    return docTitle.startsWith('출처│') ? docTitle : `출처│${docTitle}`;
+
+  if (!baseTitle) {
+    baseTitle = 'LoE 자료';
   }
-  if (docCode) {
-    return `출처│${docCode}`;
+
+  let sequence = context.sequence ?? context.sequenceNo ?? context.sequenceIndex ?? null;
+  if (!Number.isInteger(sequence) || sequence <= 0) {
+    sequence = extractSequence(raw);
   }
-  return '출처│LoE Source';
+  const suffix = Number.isInteger(sequence) && sequence > 0 ? ` no${sequence}` : '';
+  return `출처│${baseTitle}${suffix}`;
 }
 
 module.exports = {

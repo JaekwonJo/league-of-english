@@ -46,8 +46,8 @@ const ProblemDisplay = ({
     setSelectedAnswer(userAnswer ?? '');
   }, [userAnswer, problemIndex]);
 
-  const effectiveProblem = problem || {};
-  const metadata = effectiveProblem.metadata || {};
+  const effectiveProblem = useMemo(() => problem || {}, [problem]);
+  const metadata = useMemo(() => effectiveProblem.metadata || {}, [effectiveProblem]);
   const problemId = Number(effectiveProblem.id);
 
   const isOrder = effectiveProblem.type === 'order';
@@ -89,8 +89,14 @@ const ProblemDisplay = ({
     return hasPrefix ? `출처│${cleaned}` : cleaned;
   })();
   const problemNumber = metadata.problemNumber;
-  const passageText = effectiveProblem.mainText || effectiveProblem.text || '';
-  const generalOptions = Array.isArray(effectiveProblem.options) ? effectiveProblem.options : [];
+  const passageText = useMemo(
+    () => effectiveProblem.mainText || effectiveProblem.text || '',
+    [effectiveProblem]
+  );
+  const generalOptions = useMemo(
+    () => (Array.isArray(effectiveProblem.options) ? effectiveProblem.options : []),
+    [effectiveProblem]
+  );
   const summaryKeywords = Array.isArray(metadata.keywords)
     ? metadata.keywords
     : Array.isArray(effectiveProblem.keywords)
@@ -179,7 +185,12 @@ const ProblemDisplay = ({
       for (const variant of variants) {
         const cleanVariant = String(variant || '').trim();
         if (!cleanVariant) continue;
-        const pattern = new RegExp(escapeRegExp(cleanVariant).replace(/\s+/g, '\s+'), 'i');
+        const regexSource = escapeRegExp(cleanVariant)
+          .split(/\s+/)
+          .filter(Boolean)
+          .join('\\s+');
+        if (!regexSource) continue;
+        const pattern = new RegExp(regexSource, 'i');
         if (pattern.test(updated)) {
           updated = updated.replace(pattern, '____');
           return updated;

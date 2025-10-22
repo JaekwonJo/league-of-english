@@ -3,37 +3,6 @@ const router = express.Router();
 const database = require('../models/database');
 const { verifyToken, requireAdmin } = require('../middleware/auth');
 
-async function ensureTable(retry = 0) {
-  if (!database.db) {
-    if (retry >= 10) {
-      console.error('[inquiries] database not ready after retries, skipping ensureTable');
-      return;
-    }
-    setTimeout(() => ensureTable(retry + 1), 200);
-    return;
-  }
-
-  try {
-    await database.run(`
-      CREATE TABLE IF NOT EXISTS inquiries (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        subject TEXT NOT NULL,
-        message TEXT NOT NULL,
-        status TEXT DEFAULT 'pending',
-        admin_reply TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users(id)
-      )
-    `);
-  } catch (error) {
-    console.error('[inquiries] ensure table failed:', error);
-  }
-}
-
-ensureTable();
-
 router.post('/', verifyToken, async (req, res) => {
   const { subject, message } = req.body || {};
   if (!subject || !message) return res.status(400).json({ message: 'Subject and message are required.' });

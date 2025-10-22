@@ -17,7 +17,6 @@ const TYPE_LABELS = {
   theme: '주제',
   summary: '요약',
   implicit: '함축 의미',
-  irrelevant: '무관 문장',
 };
 
 const StudyResult = ({ results, onRestart, onReview, onHome }) => {
@@ -60,9 +59,10 @@ const StudyResult = ({ results, onRestart, onReview, onHome }) => {
     timeSpent: item.timeSpent ?? item.elapsed ?? 0,
   }));
 
+  const pointsDelta = summary.pointsDelta;
+
   useEffect(() => {
     setCurrentLpCount(0);
-    const { pointsDelta } = summary;
     if (!pointsDelta) return undefined;
 
     const step = Math.max(1, Math.floor(Math.abs(pointsDelta) / 50));
@@ -79,7 +79,7 @@ const StudyResult = ({ results, onRestart, onReview, onHome }) => {
     }, 30);
 
     return () => clearInterval(interval);
-  }, [summary.pointsDelta]);
+  }, [pointsDelta]);
 
   useEffect(() => {
     if (results?.rank) {
@@ -167,7 +167,14 @@ const StudyResult = ({ results, onRestart, onReview, onHome }) => {
     totalTimeSeconds,
     totalPoints: summary.totalPoints,
     pointsDelta: summary.pointsDelta,
-  }), [summary, totalTimeSeconds]);
+  }), [
+    summary.accuracy,
+    summary.correct,
+    summary.incorrect,
+    summary.totalPoints,
+    summary.pointsDelta,
+    totalTimeSeconds
+  ]);
 
   return (
     <div style={pageStyles.wrapper}>

@@ -22,17 +22,17 @@ const gridStyles = {
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'space-between',
-    background: 'var(--card-bg, #1f2430)',
-    border: '1px solid var(--card-border, rgba(255,255,255,0.08))',
+    background: 'var(--surface-card)',
+    border: '1px solid var(--surface-border)',
     borderRadius: '14px',
     padding: '16px',
     minHeight: '200px',
     transition: 'all 0.2s ease',
-    boxShadow: '0 10px 18px rgba(0,0,0,0.12)'
+    boxShadow: '0 10px 18px var(--surface-shadow)'
   },
   cardSelected: {
-    borderColor: 'var(--accent, #6c5ce7)',
-    boxShadow: '0 12px 24px rgba(108, 92, 231, 0.2)'
+    borderColor: 'var(--accent-primary)',
+    boxShadow: '0 12px 24px var(--accent-shadow)'
   },
   header: {
     display: 'flex',
@@ -44,16 +44,17 @@ const gridStyles = {
   badge: {
     fontSize: '13px',
     fontWeight: '600',
-    background: 'rgba(255,255,255,0.08)',
+    background: 'var(--accent-soft)',
     padding: '6px 10px',
-    borderRadius: '999px'
+    borderRadius: '999px',
+    color: 'var(--accent-strong)'
   },
   checkbox: {
     appearance: 'none',
     width: '20px',
     height: '20px',
     borderRadius: '6px',
-    border: '2px solid var(--accent, #6c5ce7)',
+    border: '2px solid var(--accent-primary)',
     display: 'grid',
     placeItems: 'center',
     cursor: 'pointer',
@@ -61,13 +62,14 @@ const gridStyles = {
     transition: 'all 0.2s ease'
   },
   checkboxChecked: {
-    background: 'var(--accent, #6c5ce7)'
+    background: 'var(--accent-primary)',
+    borderColor: 'var(--accent-primary)'
   },
   excerpt: {
     flex: 1,
     fontSize: '14px',
     lineHeight: 1.6,
-    color: 'var(--text-muted, rgba(255,255,255,0.74))',
+    color: 'var(--text-secondary)',
     margin: 0,
     whiteSpace: 'pre-wrap'
   },
@@ -79,9 +81,9 @@ const gridStyles = {
     gap: '10px'
   },
   previewButton: {
-    background: 'rgba(108, 92, 231, 0.14)',
+    background: 'var(--accent-soft)',
     border: 'none',
-    color: 'var(--accent, #a29bfe)',
+    color: 'var(--accent-primary)',
     borderRadius: '8px',
     padding: '6px 12px',
     cursor: 'pointer',
@@ -94,11 +96,11 @@ const gridStyles = {
     cursor: 'not-allowed'
   },
   empty: {
-    background: 'rgba(255,255,255,0.04)',
+    background: 'var(--surface-soft)',
     borderRadius: '12px',
     padding: '32px',
     textAlign: 'center',
-    color: 'var(--text-muted, rgba(255,255,255,0.7))'
+    color: 'var(--text-secondary)'
   }
 };
 
@@ -111,13 +113,15 @@ const PassagePickerGrid = ({
   renderMeta,
   selectionLabel,
   emptyMessage = '표시할 지문이 아직 없어요.',
-  disabledMessage
+  selectionEnabled = true
 }) => {
-  const isSelected = (number) => selected.includes(number);
+  const selectedList = Array.isArray(selected) ? selected : [];
+  const isSelected = (number) => selectionEnabled && selectedList.includes(number);
   const isSelectionDisabled = (number) => {
+    if (!selectionEnabled) return false;
     if (isSelected(number)) return false;
     if (!maxSelection) return false;
-    return selected.length >= maxSelection;
+    return selectedList.length >= maxSelection;
   };
 
   if (!passages.length) {
@@ -126,12 +130,12 @@ const PassagePickerGrid = ({
 
   return (
     <div style={gridStyles.wrapper}>
-      {selectionLabel && (
+      {selectionEnabled && selectionLabel && (
         <div style={gridStyles.metaRow}>
           <span>{selectionLabel}</span>
-          {maxSelection > 0 && (
-            <span style={{ fontSize: '13px', color: 'var(--text-muted, rgba(255,255,255,0.6))' }}>
-              {selected.length} / {maxSelection}
+          {selectionEnabled && maxSelection > 0 && (
+            <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+              {selectedList.length} / {maxSelection}
             </span>
           )}
         </div>
@@ -153,17 +157,19 @@ const PassagePickerGrid = ({
             >
               <div style={gridStyles.header}>
                 <span style={gridStyles.badge}>#{number.toString().padStart(2, '0')}</span>
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  disabled={disableSelection}
-                  onChange={() => !disableSelection && onToggle && onToggle(number)}
-                  style={{
-                    ...gridStyles.checkbox,
-                    ...(checked ? gridStyles.checkboxChecked : {})
-                  }}
-                  aria-label={`${number}번 지문 선택`}
-                />
+                {selectionEnabled && (
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    disabled={disableSelection}
+                    onChange={() => !disableSelection && onToggle && onToggle(number)}
+                    style={{
+                      ...gridStyles.checkbox,
+                      ...(checked ? gridStyles.checkboxChecked : {})
+                    }}
+                    aria-label={`${number}번 지문 선택`}
+                  />
+                )}
               </div>
 
               <p style={gridStyles.excerpt}>
@@ -200,11 +206,6 @@ const PassagePickerGrid = ({
                 })()}
               </div>
 
-              {disableSelection && !checked && disabledMessage && (
-                <div style={{ fontSize: '12px', color: '#ffb347', marginTop: '10px' }}>
-                  {disabledMessage}
-                </div>
-              )}
             </div>
           );
         })}

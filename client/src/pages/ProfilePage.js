@@ -12,8 +12,7 @@ const typeLabelMap = {
   title: '제목',
   theme: '주제',
   summary: '요약',
-  implicit: '함축 의미',
-  irrelevant: '무관 문장'
+  implicit: '함축 의미'
 };
 
 const ProfilePage = () => {

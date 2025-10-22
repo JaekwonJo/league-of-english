@@ -6,14 +6,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import tierConfig from '../config/tierConfig.json';
+import { api } from '../services/api.service';
 import logger from '../utils/logger';
 
 const RankingPage = () => {
   const { user } = useAuth();
   const [rankings, setRankings] = useState([]);
+  const [leaderboardMeta, setLeaderboardMeta] = useState(null);
   const [myRank, setMyRank] = useState(null);
   const [tierDistribution, setTierDistribution] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [selectedTab, setSelectedTab] = useState('leaderboard');
 
   const getTierInfo = useCallback((points) => {
@@ -27,57 +30,103 @@ const RankingPage = () => {
     return tierConfig.tiers[currentIndex + 1] || null;
   }, []);
 
+  const computeProgressToNext = useCallback((points, tier, nextTier) => {
+    if (!tier) return 0;
+    if (!nextTier) return 100;
+    const range = (nextTier.minLP || 0) - (tier.minLP || 0);
+    if (range <= 0) return 100;
+    const progress = (Number(points) || 0) - (tier.minLP || 0);
+    return Math.min(100, Math.max(0, (progress / range) * 100));
+  }, []);
+
   const loadRankingData = useCallback(async () => {
     try {
       setLoading(true);
-      
-      // API 호출 (임시로 하드코딩된 데이터 사용)
-      const mockRankings = [
-        { id: 1, name: '김철수', username: 'chulsoo', points: 15000, school: '서울고등학교', grade: '3', tier: getTierInfo(15000), rank: 1 },
-        { id: 2, name: '이영희', username: 'younghee', points: 12500, school: '부산고등학교', grade: '2', tier: getTierInfo(12500), rank: 2 },
-        { id: 3, name: '박민수', username: 'minsu', points: 10000, school: '대구고등학교', grade: '3', tier: getTierInfo(10000), rank: 3 },
-        // 더 많은 가상 데이터...
-      ];
-      
-      setRankings(mockRankings);
+      setError('');
+
+      const [leaderboardRes, myRankRes, tierRes] = await Promise.all([
+        api.ranking.leaderboard({ limit: 100 }),
+        api.ranking.myRank(),
+        api.ranking.tierDistribution()
+      ]);
+
+      const leaderboard = Array.isArray(leaderboardRes?.rankings)
+        ? leaderboardRes.rankings.map((entry) => ({
+            ...entry,
+            tier: entry.tier || getTierInfo(entry.points || 0)
+          }))
+        : [];
+
+      setRankings(leaderboard);
+      setLeaderboardMeta(leaderboardRes?.metadata || null);
+
+      const resolvedMyRank = (() => {
+        if (!myRankRes?.myRank) {
+          const fallbackTier = getTierInfo(user?.points || 0);
+          if ((user?.points || 0) <= 0) return null;
+          return {
+            rank: leaderboardRes?.currentUser?.rank || null,
+            points: user?.points || 0,
+            tier: fallbackTier,
+            nextTier: getNextTier(fallbackTier),
+            progressToNext: computeProgressToNext(user?.points || 0, fallbackTier, getNextTier(fallbackTier)),
+            name: user?.name || '나'
+          };
+        }
+
+        const tier = myRankRes.myRank.tier || getTierInfo(myRankRes.myRank.points || 0);
+        const nextTier = myRankRes.myRank.nextTier || getNextTier(tier);
+        return {
+          ...myRankRes.myRank,
+          tier,
+          nextTier,
+          name: myRankRes.myRank.name || user?.name || '나',
+          progressToNext: myRankRes.myRank.progressToNext ?? computeProgressToNext(myRankRes.myRank.points || 0, tier, nextTier)
+        };
+      })();
+
+      const nearbyUsers = Array.isArray(myRankRes?.nearbyUsers)
+        ? myRankRes.nearbyUsers.map((entry) => ({
+            ...entry,
+            tier: entry.tier || getTierInfo(entry.points || 0)
+          }))
+        : [];
+
       setMyRank({
-        rank: user?.points > 0 ? 15 : null,
-        myRank: {
-          rank: 15,
-          name: user?.name || '사용자',
-          points: user?.points || 0,
-          tier: getTierInfo(user?.points || 0),
-          nextTier: getNextTier(getTierInfo(user?.points || 0)),
-          progressToNext: 45
-        },
-        nearbyUsers: mockRankings.slice(12, 18) // 주변 순위
+        rank: resolvedMyRank?.rank || leaderboardRes?.currentUser?.rank || null,
+        myRank: resolvedMyRank,
+        nearbyUsers
       });
-      
-      const mockTierDistribution = tierConfig.tiers.map((tier, index) => ({
-        tier: tier.name,
-        tierKr: tier.nameKr,
-        icon: tier.icon,
-        color: tier.color,
-        count: Math.floor(Math.random() * 100) + 10,
-        percentage: Math.floor(Math.random() * 20) + 5
-      }));
-      
-      setTierDistribution(mockTierDistribution);
-      
-    } catch (error) {
-      logger.error('Failed to load ranking data:', error);
+
+      const distribution = Array.isArray(tierRes?.distribution)
+        ? tierRes.distribution.map((item) => ({
+            ...item,
+            percentage: Number(item.percentage) || 0,
+            count: Number(item.count) || 0
+          }))
+        : [];
+      setTierDistribution(distribution);
+    } catch (fetchError) {
+      logger.error('Failed to load ranking data:', fetchError);
+      setError(fetchError?.message || '랭킹 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
     } finally {
       setLoading(false);
     }
-  }, [getTierInfo, getNextTier, user?.name, user?.points]);
+  }, [computeProgressToNext, getNextTier, getTierInfo, user?.name, user?.points]);
 
   useEffect(() => {
     loadRankingData();
   }, [loadRankingData]);
 
-  const formatPoints = useCallback((points) => points.toLocaleString(), []);
+  const formatPoints = useCallback((points) => {
+    const numeric = Number(points) || 0;
+    return numeric.toLocaleString();
+  }, []);
 
   const getRankDisplay = (rank) => {
+    if (!rank || rank < 1) {
+      return <span style={styles.rank}>—</span>;
+    }
     if (rank <= 3) {
       const medals = ['🥇', '🥈', '🥉'];
       return <span style={styles.medal}>{medals[rank - 1]}</span>;
@@ -97,6 +146,15 @@ const RankingPage = () => {
   return (
     <div style={styles.container}>
       <h1 style={styles.title}>🏆 랭킹</h1>
+
+      {error && (
+        <div style={styles.errorBanner}>
+          <span>⚠️ {error}</span>
+          <button type="button" style={styles.retryButton} onClick={loadRankingData}>
+            다시 시도하기
+          </button>
+        </div>
+      )}
 
       {/* 탭 선택 */}
       <div style={styles.tabs}>
@@ -134,9 +192,17 @@ const RankingPage = () => {
         <div style={styles.content}>
           <div style={styles.leaderboard}>
             <h2 style={styles.sectionTitle}>상위 랭커 TOP 100</h2>
+            {leaderboardMeta?.total && (
+              <p style={styles.leaderboardMeta}>총 {leaderboardMeta.total.toLocaleString()}명의 플레이어가 경쟁 중이에요!</p>
+            )}
             
             <div style={styles.rankingList}>
-              {rankings.map((ranker, index) => (
+              {rankings.length === 0 && (
+                <div style={styles.emptyState}>아직 랭킹에 올라온 플레이어가 없어요. 첫 주인공이 되어 볼까요? ✨</div>
+              )}
+              {rankings.map((ranker, index) => {
+                const lpText = formatPoints(ranker.points);
+                return (
                 <div
                   key={ranker.id}
                   style={{
@@ -155,6 +221,7 @@ const RankingPage = () => {
                       <div style={styles.userDetails}>
                         {ranker.school && `${ranker.school} • `}
                         {ranker.grade}학년
+                        {ranker.isActive && <span style={styles.activeBadge}>활동 중</span>}
                       </div>
                     </div>
                   </div>
@@ -169,11 +236,12 @@ const RankingPage = () => {
                       </span>
                     </div>
                     <div style={styles.points}>
-                      {formatPoints(ranker.points)} LP
+                      {lpText} LP
                     </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
@@ -185,7 +253,7 @@ const RankingPage = () => {
           <div style={styles.myRankSection}>
             <h2 style={styles.sectionTitle}>내 순위 정보</h2>
             
-            {myRank?.rank ? (
+            {myRank?.myRank ? (
               <>
                 <div style={styles.myRankCard}>
                   <div style={styles.myRankHeader}>
@@ -211,14 +279,14 @@ const RankingPage = () => {
                       <div style={styles.progressInfo}>
                         <span>다음 티어: {myRank.myRank.nextTier.nameKr}</span>
                         <span>
-                          {myRank.myRank.nextTier.minLP - myRank.myRank.points} LP 필요
+                          {Math.max(0, (myRank.myRank.nextTier.minLP || 0) - (myRank.myRank.points || 0))} LP 필요
                         </span>
                       </div>
                       <div style={styles.progressBar}>
                         <div 
                           style={{ 
                             ...styles.progressFill, 
-                            width: `${myRank.myRank.progressToNext}%`,
+                            width: `${Math.min(100, Math.max(0, myRank.myRank.progressToNext || 0))}%`,
                             background: myRank.myRank.tier.color 
                           }}
                         />
@@ -226,6 +294,24 @@ const RankingPage = () => {
                     </div>
                   )}
                 </div>
+
+                {myRank.nearbyUsers?.length > 0 && (
+                  <div style={styles.nearbyCard}>
+                    <h3 style={styles.nearbyTitle}>내 주변 순위</h3>
+                    <ul style={styles.nearbyList}>
+                      {myRank.nearbyUsers.map((entry) => (
+                        <li key={`nearby-${entry.rank}`} style={{ ...styles.nearbyItem, ...(entry.isMe ? styles.nearbyMe : {}) }}>
+                          <span>{getRankDisplay(entry.rank)}</span>
+                          <span style={styles.nearbyName}>{entry.isMe ? '나' : entry.name}</span>
+                          <span style={{ ...styles.nearbyTier, color: entry.tier.color }}>
+                            {entry.tier.icon} {entry.tier.nameKr}
+                          </span>
+                          <span style={styles.nearbyPoints}>{formatPoints(entry.points)} LP</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </>
             ) : (
               <div style={styles.noRank}>
@@ -253,6 +339,9 @@ const RankingPage = () => {
             <h2 style={styles.sectionTitle}>티어 분포</h2>
             
             <div style={styles.tierDistribution}>
+              {tierDistribution.length === 0 && (
+                <div style={styles.emptyState}>아직 집계된 티어 정보가 없어요. 계속 학습하면 데이터가 쌓일 거예요! 😊</div>
+              )}
               {tierDistribution.map(tier => (
                 <div key={tier.tier} style={styles.tierCard}>
                   <div style={styles.tierCardHeader}>
@@ -262,7 +351,7 @@ const RankingPage = () => {
                     <div style={styles.tierCardInfo}>
                       <div style={styles.tierCardName}>{tier.tierKr}</div>
                       <div style={styles.tierCardCount}>
-                        {tier.count}명 ({tier.percentage}%)
+                        {tier.count.toLocaleString()}명 ({tier.percentage}%)
                       </div>
                     </div>
                   </div>
@@ -324,10 +413,31 @@ const styles = {
     gap: '10px',
     marginBottom: '30px'
   },
+  errorBanner: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '12px 18px',
+    marginBottom: '20px',
+    borderRadius: '14px',
+    background: 'rgba(248, 113, 113, 0.18)',
+    color: '#FECACA',
+    border: '1px solid rgba(248, 113, 113, 0.45)'
+  },
+  retryButton: {
+    padding: '8px 16px',
+    borderRadius: '999px',
+    border: 'none',
+    background: 'rgba(248, 113, 113, 0.85)',
+    color: '#fff',
+    cursor: 'pointer',
+    fontWeight: 600
+  },
   tab: {
     padding: '12px 24px',
-    background: 'rgba(30, 41, 59, 0.8)',
-    color: 'var(--text-muted)',
+    background: 'var(--surface-soft)',
+    color: 'var(--text-secondary)',
     border: 'none',
     borderRadius: '12px',
     cursor: 'pointer',
@@ -337,46 +447,58 @@ const styles = {
   },
   tabActive: {
     background: 'linear-gradient(135deg, var(--indigo) 0%, var(--indigo-strong) 100%)',
-    color: 'var(--surface-soft-solid)'
+    color: 'var(--text-on-accent)'
   },
   content: {
-    background: 'rgba(30, 41, 59, 0.8)',
+    background: 'var(--surface-card)',
     borderRadius: '20px',
     padding: '30px',
     backdropFilter: 'blur(10px)',
-    border: '1px solid rgba(248, 250, 252, 0.1)'
+    border: '1px solid var(--surface-border)'
   },
   sectionTitle: {
     fontSize: '24px',
     marginBottom: '25px',
     textAlign: 'center',
-    color: 'var(--surface-soft-solid)'
+    color: 'var(--text-primary)'
   },
   leaderboard: {
     width: '100%'
+  },
+  leaderboardMeta: {
+    textAlign: 'center',
+    marginBottom: '16px',
+    color: 'var(--text-secondary)'
   },
   rankingList: {
     display: 'flex',
     flexDirection: 'column',
     gap: '12px'
   },
+  emptyState: {
+    padding: '24px',
+    borderRadius: '16px',
+    background: 'rgba(148, 163, 184, 0.12)',
+    textAlign: 'center',
+    color: 'var(--text-secondary)'
+  },
   rankingItem: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: '16px 20px',
-    background: 'rgba(51, 65, 85, 0.8)',
+    background: 'var(--surface-soft)',
     borderRadius: '12px',
-    border: '1px solid rgba(248, 250, 252, 0.1)',
+    border: '1px solid var(--surface-border)',
     transition: 'all 0.3s ease'
   },
   myRankingItem: {
     border: '2px solid var(--success)',
-    boxShadow: '0 8px 25px rgba(16, 185, 129, 0.3)'
+    boxShadow: '0 8px 25px var(--success-shadow)'
   },
   topRanker: {
-    background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(245, 158, 11, 0.2) 100%)',
-    border: '1px solid rgba(251, 191, 36, 0.3)'
+    background: 'linear-gradient(135deg, rgba(250, 204, 21, 0.2), rgba(245, 158, 11, 0.2))',
+    border: '1px solid rgba(250, 204, 21, 0.35)'
   },
   rankInfo: {
     display: 'flex',
@@ -401,14 +523,25 @@ const styles = {
   userName: {
     fontSize: '16px',
     fontWeight: 'bold',
-    color: 'var(--surface-soft-solid)',
+    color: 'var(--text-primary)',
     display: 'flex',
     alignItems: 'center',
     gap: '8px'
   },
   userDetails: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
     fontSize: '12px',
     color: 'var(--text-muted)'
+  },
+  activeBadge: {
+    padding: '2px 8px',
+    borderRadius: '999px',
+    background: 'rgba(56, 189, 248, 0.2)',
+    color: '#38BDF8',
+    fontWeight: 600,
+    fontSize: '10px'
   },
   youBadge: {
     background: 'var(--success)',
@@ -432,7 +565,7 @@ const styles = {
   tierName: {
     fontSize: '14px',
     fontWeight: 'bold',
-    color: 'var(--surface-soft-solid)'
+    color: 'var(--text-primary)'
   },
   points: {
     fontSize: '14px',
@@ -443,7 +576,7 @@ const styles = {
     width: '100%'
   },
   myRankCard: {
-    background: 'rgba(51, 65, 85, 0.8)',
+    background: 'var(--surface-soft)',
     borderRadius: '16px',
     padding: '25px',
     marginBottom: '25px',
@@ -494,6 +627,51 @@ const styles = {
   progressFill: {
     height: '100%',
     transition: 'width 0.3s ease'
+  },
+  nearbyCard: {
+    marginTop: '24px',
+    padding: '20px',
+    borderRadius: '16px',
+    background: 'var(--surface-soft)',
+    border: '1px solid var(--surface-border)'
+  },
+  nearbyTitle: {
+    marginBottom: '12px',
+    fontSize: '18px',
+    fontWeight: 700,
+    textAlign: 'left',
+    color: 'var(--text-primary)'
+  },
+  nearbyList: {
+    listStyle: 'none',
+    margin: 0,
+    padding: 0,
+    display: 'grid',
+    gap: '10px'
+  },
+  nearbyItem: {
+    display: 'grid',
+    gridTemplateColumns: '60px 1fr 110px 110px',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '10px 14px',
+    borderRadius: '12px',
+    background: 'rgba(148, 163, 184, 0.12)'
+  },
+  nearbyMe: {
+    background: 'rgba(59, 130, 246, 0.18)',
+    border: '1px solid rgba(59, 130, 246, 0.35)'
+  },
+  nearbyName: {
+    fontWeight: 600,
+    color: 'var(--text-primary)'
+  },
+  nearbyTier: {
+    fontWeight: 600
+  },
+  nearbyPoints: {
+    fontWeight: 600,
+    color: 'var(--text-secondary)'
   },
   noRank: {
     textAlign: 'center',

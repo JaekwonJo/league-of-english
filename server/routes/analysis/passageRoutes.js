@@ -31,6 +31,59 @@ router.get('/passages', verifyToken, async (req, res) => {
 });
 
 /**
+ * GET /api/analysis/:documentId/passage-list
+ * Return raw passage list with analysis status
+ */
+router.get('/passage-list', verifyToken, async (req, res) => {
+  try {
+    const { documentId } = req.params;
+    console.log(`[analysis] passage list request - document: ${documentId}`);
+    const result = await analysisService.getPassageList(documentId);
+    res.json(result);
+  } catch (error) {
+    console.error('지문 목록 조회 오류:', error);
+    res.status(500).json({
+      success: false,
+      message: error?.message || '지문 목록을 불러오는 중 오류가 발생했습니다.'
+    });
+  }
+});
+
+/**
+ * GET /api/analysis/:documentId/passage/:passageNumber
+ * Fetch a single passage analysis with view tracking
+ */
+router.get('/passage/:passageNumber', verifyToken, async (req, res) => {
+  const { documentId, passageNumber } = req.params;
+  const numericPassage = Number(passageNumber);
+
+  if (!Number.isInteger(numericPassage) || numericPassage <= 0) {
+    return res.status(400).json({ success: false, message: '올바른 지문 번호가 필요합니다.' });
+  }
+
+  try {
+    if (req.user?.id) {
+      await analysisService.recordAnalysisView(req.user.id, documentId, numericPassage);
+    }
+
+    const analysis = await analysisService.getPassageAnalysis(documentId, numericPassage, req.user?.id || null);
+    if (!analysis) {
+      return res.status(404).json({ success: false, message: '아직 저장된 분석본이 없습니다. 먼저 분석을 생성해 주세요.' });
+    }
+
+    res.json({ success: true, data: analysis });
+  } catch (error) {
+    const message = String(error?.message || '분석을 불러오는 중 오류가 발생했습니다.');
+    const statusCode = message.includes('하루 10개의 분석본') ? 429
+      : message.includes('권한') ? 403
+      : message.includes('찾을 수 없습니다') ? 404
+      : 500;
+
+    res.status(statusCode).json({ success: false, message });
+  }
+});
+
+/**
  * POST /api/analysis/:documentId/analyze-passage
  * Generate up to 2 variants for a passage (teacher/admin)
  */
@@ -58,6 +111,34 @@ router.post('/analyze-passage', verifyToken, async (req, res) => {
       : 500;
 
     res.status(statusCode).json({ success: false, message: msg, error: msg, code });
+  }
+});
+
+/**
+ * POST /api/analysis/:documentId/analyze-passages
+ * Analyze up to three passages at once (admin/teacher)
+ */
+router.post('/analyze-passages', verifyToken, async (req, res) => {
+  try {
+    const { documentId } = req.params;
+    const { passageNumbers } = req.body || {};
+    const userRole = req.user.role;
+
+    const result = await analysisService.analyzePassages(documentId, passageNumbers, userRole, req.user.id);
+    if (!result.success && (!result.failures || result.failures.length === 0)) {
+      return res.status(400).json({ success: false, message: '분석을 생성하지 못했어요. 지문 선택을 확인해 주세요.' });
+    }
+
+    res.json(result);
+  } catch (error) {
+    console.error('다중 지문 분석 오류:', error);
+    const message = String(error?.message || '다중 지문 분석 중 문제가 발생했습니다.');
+    const statusCode = message.includes('권한') ? 403
+      : message.includes('최대') ? 400
+      : message.includes('선택') ? 400
+      : message.includes('문서를 찾을 수') ? 404
+      : 500;
+    res.status(statusCode).json({ success: false, message });
   }
 });
 
@@ -94,6 +175,29 @@ router.post('/publish-passage', verifyToken, requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('지문 공개 오류:', error);
     res.status(500).json({ success: false, message: '지문 공개 중 오류가 발생했습니다.' });
+  }
+});
+
+/**
+ * DELETE /api/analysis/:documentId/passage/:passageNumber/variant/:variantIndex
+ * Remove a single analysis variant (admin)
+ */
+router.delete('/passage/:passageNumber/variant/:variantIndex', verifyToken, requireAdmin, async (req, res) => {
+  try {
+    const { documentId, passageNumber, variantIndex } = req.params;
+    const result = await analysisService.removeVariant(
+      documentId,
+      Number(passageNumber),
+      Number(variantIndex),
+      req.user.role,
+      req.user.id
+    );
+    res.json(result);
+  } catch (error) {
+    console.error('분석 삭제 오류:', error);
+    const message = String(error?.message || '분석본을 삭제하는 중 문제가 발생했습니다.');
+    const status = message.includes('찾을 수') ? 404 : 400;
+    res.status(status).json({ success: false, message });
   }
 });
 

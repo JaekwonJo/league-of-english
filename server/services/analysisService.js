@@ -28,7 +28,12 @@ class AnalysisService {
     try {
       let documents;
       if (userRole === 'admin') {
-        documents = await database.all('SELECT id, title, type, category, school, grade, created_at FROM documents ORDER BY created_at DESC');
+        documents = await database.all(
+          `SELECT id, title, type, category, school, grade, created_at
+           FROM documents
+           WHERE LOWER(COALESCE(type, '')) <> 'vocabulary'
+           ORDER BY created_at DESC`
+        );
       } else {
         const user = await database.get('SELECT school, grade FROM users WHERE id = ?', [userId]);
         const school = user?.school || '';
@@ -36,19 +41,20 @@ class AnalysisService {
         documents = await database.all(
           `SELECT d.id, d.title, d.type, d.category, d.school, d.grade, d.created_at
            FROM documents d
-           WHERE EXISTS (
-             SELECT 1 FROM passage_analyses pa
-             WHERE pa.document_id = d.id AND pa.published = 1 AND (
-               pa.visibility_scope = 'public' OR
-               (pa.visibility_scope = 'school' AND (? <> '' AND (d.school = ? OR d.school IS NULL OR d.school = '' OR d.school IN ('전체','all')))) OR
-               (pa.visibility_scope = 'grade' AND (? IS NOT NULL AND d.grade = ?)) OR
-               (pa.visibility_scope = 'group' AND EXISTS (
-                  SELECT 1 FROM analysis_group_permissions agp
-                  JOIN user_groups ug ON ug.group_name = agp.group_name AND ug.user_id = ?
-                  WHERE agp.analysis_id = pa.id
-               ))
+           WHERE LOWER(COALESCE(d.type, '')) <> 'vocabulary'
+             AND EXISTS (
+               SELECT 1 FROM passage_analyses pa
+               WHERE pa.document_id = d.id AND pa.published = 1 AND (
+                 pa.visibility_scope = 'public' OR
+                 (pa.visibility_scope = 'school' AND (? <> '' AND (d.school = ? OR d.school IS NULL OR d.school = '' OR d.school IN ('전체','all')))) OR
+                 (pa.visibility_scope = 'grade' AND (? IS NOT NULL AND d.grade = ?)) OR
+                 (pa.visibility_scope = 'group' AND EXISTS (
+                    SELECT 1 FROM analysis_group_permissions agp
+                    JOIN user_groups ug ON ug.group_name = agp.group_name AND ug.user_id = ?
+                    WHERE agp.analysis_id = pa.id
+                 ))
+               )
              )
-           )
            ORDER BY d.created_at DESC`,
           [school, school, grade, grade, userId]
         );
@@ -362,6 +368,96 @@ class AnalysisService {
        VALUES (?, 'analysis-view', ?, ?, ?)`,
       [userId, `${documentId}-${passageNumber}`, documentId, passageNumber]
     );
+  }
+
+  async removeVariant(documentId, passageNumber, variantIndex, userRole, userId = null) {
+    if (userRole !== 'admin') {
+      throw new Error('분석본 삭제는 관리자만 할 수 있어요.');
+    }
+
+    const targetIndex = Number(variantIndex);
+    if (!Number.isInteger(targetIndex) || targetIndex < 1) {
+      throw new Error('삭제할 분석본 번호가 올바르지 않습니다.');
+    }
+
+    const row = await database.get(
+      'SELECT * FROM passage_analyses WHERE document_id = ? AND passage_number = ?',
+      [documentId, passageNumber]
+    );
+
+    if (!row) {
+      throw new Error('삭제할 분석본을 찾을 수 없습니다.');
+    }
+
+    const formatted = this.analyzer.formatFromDatabase(row);
+    const variants = Array.isArray(formatted?.variants) ? [...formatted.variants] : [];
+    if (!variants.length) {
+      throw new Error('등록된 분석본이 없습니다.');
+    }
+
+    if (targetIndex > variants.length) {
+      throw new Error(`분석본 ${targetIndex}번을 찾지 못했어요.`);
+    }
+
+    variants.splice(targetIndex - 1, 1);
+    const reindexed = variants.map((variant, idx) => ({
+      ...variant,
+      variantIndex: idx + 1
+    }));
+
+    await database.run(
+      'DELETE FROM analysis_feedback WHERE document_id = ? AND passage_number = ? AND variant_index = ?',
+      [documentId, passageNumber, targetIndex]
+    );
+
+    if (reindexed.length === 0) {
+      await database.run('DELETE FROM analysis_feedback WHERE document_id = ? AND passage_number = ?', [documentId, passageNumber]);
+      await database.run('DELETE FROM analysis_group_permissions WHERE analysis_id = ?', [row.id]);
+      await database.run('DELETE FROM passage_analyses WHERE id = ?', [row.id]);
+      return {
+        success: true,
+        data: {
+          passageNumber,
+          originalPassage: formatted.originalPassage,
+          variants: []
+        },
+        message: '분석본을 삭제했고, 더 남은 분석본이 없어서 기록을 정리했습니다.'
+      };
+    }
+
+    await database.run(
+      'UPDATE analysis_feedback SET variant_index = variant_index - 1 WHERE document_id = ? AND passage_number = ? AND variant_index > ?',
+      [documentId, passageNumber, targetIndex]
+    );
+
+    const dbPayload = this.analyzer.formatForDatabase(reindexed);
+    await database.run(
+      `UPDATE passage_analyses
+         SET original_passage = ?, summary = ?, key_points = ?, vocabulary = ?, grammar_points = ?, study_guide = ?, comprehension_questions = ?, variants = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
+      [
+        formatted.originalPassage,
+        dbPayload.summary,
+        dbPayload.key_points,
+        dbPayload.vocabulary,
+        dbPayload.grammar_points,
+        dbPayload.study_guide,
+        dbPayload.comprehension_questions,
+        dbPayload.variants,
+        row.id
+      ]
+    );
+
+    const enriched = await this._attachFeedbackMetadata(documentId, passageNumber, reindexed, userId);
+    return {
+      success: true,
+      data: {
+        passageNumber,
+        originalPassage: formatted.originalPassage,
+        variants: enriched
+      },
+      message: `분석본 ${targetIndex}번을 삭제했어요.`
+    };
   }
 
   async submitFeedback({ documentId, passageNumber, variantIndex, userId, action, reason }) {

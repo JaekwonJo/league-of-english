@@ -1,0 +1,760 @@
+[
+  {
+    "id": "wolgo-2022-09-grammar-20",
+    "type": "grammar",
+    "question": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?",
+    "questionVariant": "single",
+    "mainText": "We usually take time out only when we really need to\nswitch  off,  and  when  this  happens  we  are  often\novertired, sick, and  <u>in need of recuperation.</u> Me time\nis complicated by negative associations with escapism,\nguilt,  and  regret  as  well  as  overwhelm,  stress,  and\nfatigue. All these negative connotations mean  <u>that\nwe tend to steer clear of it.</u> Well, I am about to \n<u>changing  your  perception  of  the  importance  of  me\ntime, to persuade you that you should view it as vital\nfor your health and wellbeing.</u> Take this as permission\nto set aside some time for  <u>yourself!</u> Our need for\ntime  <u>in which to do what we choose is increasingly\nurgent  in  an  overconnected,  overwhelmed,  and\noverstimulated world.</u>\n*recuperation: 회복",
+    "options": [
+      "① <u>in need of recuperation.</u>",
+      "② <u>that\nwe tend to steer clear of it.</u>",
+      "③ <u>changing  your  perception  of  the  importance  of  me\ntime, to persuade you that you should view it as vital\nfor your health and wellbeing.</u>",
+      "④ <u>yourself!</u>",
+      "⑤ <u>in which to do what we choose is increasingly\nurgent  in  an  overconnected,  overwhelmed,  and\noverstimulated world.</u>"
+    ],
+    "answers": [
+      3
+    ],
+    "answerMarkers": [
+      "③"
+    ],
+    "answer": "3",
+    "correctAnswer": "3",
+    "explanation": "'막 ..하려고 하다'는 의미의 'be about to-v' 구문이 므로, ③ changing을 change로 고쳐야 한다.",
+    "docTitle": "2022년 9월 고2 모의고사",
+    "sourceLabel": "출처│2022년 9월 고2 모의고사 no1",
+    "grammarPoint": "기출 어법"
+  },
+  {
+    "id": "wolgo-2022-09-grammar-21",
+    "type": "grammar_multi",
+    "question": "다음 글의 밑줄 친 부분 중, 어법상 올바른 것을 모두 고르시오.",
+    "questionVariant": "multi",
+    "mainText": "Perhaps worse than attempting to get the bad news\nout of the way  <u>are attempting to soften it or simply\nnot address it at all.</u> This “Mum Effect” — a term \n<u>coining  by  psychologists  Sidney  Rosen  and  Abraham\nTesser in the early 1970s — happens because people\nwant  to  avoid</u> <u>becoming  the  target  of  others’\nnegative emotions.</u> We all have the opportunity to lead\nchange, yet it often requires of us the courage  <u>to\ndeliver bad news to our superiors.</u> We don’t want to be\nthe innocent messenger who falls before a firing line.\nWhen our survival instincts kick in, they can override\nour courage until the truth of a situation gets watered\ndown. “The Mum Effect and the resulting filtering can\nhave devastating effects in a steep hierarchy,” writes\nRobert Sutton, an organizational psychologist. “ <u>That\nstarts out as bad news becomes happier and happier\nas it travels up the ranks ― because after each boss\nhears the news from his or her subordinates, he or she\nmakes it sound a bit less bad before passing it up the\nchain.</u>”",
+    "options": [
+      "① <u>are attempting to soften it or simply\nnot address it at all.</u>",
+      "② <u>coining  by  psychologists  Sidney  Rosen  and  Abraham\nTesser in the early 1970s — happens because people\nwant  to  avoid</u>",
+      "③ <u>becoming  the  target  of  others’\nnegative emotions.</u>",
+      "④ <u>to\ndeliver bad news to our superiors.</u>",
+      "⑤ <u>That\nstarts out as bad news becomes happier and happier\nas it travels up the ranks ― because after each boss\nhears the news from his or her subordinates, he or she\nmakes it sound a bit less bad before passing it up the\nchain.</u>"
+    ],
+    "answers": [
+      3,
+      4
+    ],
+    "answerMarkers": [
+      "③",
+      "④"
+    ],
+    "answer": "3,4",
+    "correctAnswer": "3,4",
+    "explanation": "① 주격보어 worse가 문두에 온 도치구문으로, '보어+동사+주어' 어순에 따라, 주어는 동명사구인 attempting to soften이므로 is가 적절하다. ② 용어가 만들어지는 수동관계 이므로, 과거분사 coined가 적절하다. ⑤ 주어가 없는 불완전한 절이 이어지므로 관계대명사 What으로 고쳐야 한다.",
+    "docTitle": "2022년 9월 고2 모의고사",
+    "sourceLabel": "출처│2022년 9월 고2 모의고사 no2",
+    "grammarPoint": "기출 어법"
+  },
+  {
+    "id": "wolgo-2022-09-grammar-22",
+    "type": "grammar",
+    "question": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?",
+    "questionVariant": "single",
+    "mainText": "Most parents think that if our child would just “behave,”\nwe  could  stay  calm  as  parents.  The  truth  is  that\nmanaging  our  own  emotions  and  actions  <u>is what\nallows us to feel peaceful as parents.</u> Ultimately we can’t\ncontrol our children or the obstacles they will face – but\nwe can always control our own actions. Parenting isn’t\nabout what our child does, but about how we respond. In\nfact, most of what we call parenting  <u>takes place within\nthe  parent,  not  between  a  parent  and  child.</u>  When  a\nstorm brews, a parent’s response will either calm it or\ntrigger a full-scale tsunami.  <u>Staying calm enough to\nrespond constructively to all that childish behavior and\nthe stormy emotions behind it to grow as parent.</u> If we\ncan use those times  <u>when our buttons get pushed to\nreflect,  not  just  react,  we  can  notice  when  we  lose\nequilibrium and steer ourselves back on track.</u> This inner\ngrowth is the hardest work there is, but it’s what is able\nto let you  <u>become a more peaceful parent, one day at\na time.</u>",
+    "options": [
+      "① <u>is what\nallows us to feel peaceful as parents.</u>",
+      "② <u>takes place within\nthe  parent,  not  between  a  parent  and  child.</u>",
+      "③ <u>Staying calm enough to\nrespond constructively to all that childish behavior and\nthe stormy emotions behind it to grow as parent.</u>",
+      "④ <u>when our buttons get pushed to\nreflect,  not  just  react,  we  can  notice  when  we  lose\nequilibrium and steer ourselves back on track.</u>",
+      "⑤ <u>become a more peaceful parent, one day at\na time.</u>"
+    ],
+    "answers": [
+      3
+    ],
+    "answerMarkers": [
+      "③"
+    ],
+    "answer": "3",
+    "correctAnswer": "3",
+    "explanation": "'부모로서 성장하기 위해 그 모든 유치한 행동과 그 뒤에 숨겨진 폭풍 같은 감정에 건설적으로 반응할 수 있을 정도로 충분히 침착하라'라는 의미의 명령문이므로, ③ Staying을 Stay 로 고쳐야 한다.",
+    "docTitle": "2022년 9월 고2 모의고사",
+    "sourceLabel": "출처│2022년 9월 고2 모의고사 no3",
+    "grammarPoint": "기출 어법"
+  },
+  {
+    "id": "wolgo-2022-09-grammar-32",
+    "type": "grammar",
+    "question": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?",
+    "questionVariant": "single",
+    "mainText": "There  <u>are several reasons why support may not be\neffective.</u> One possible reason is that receiving help could\nbe a blow to self-esteem. A recent study by Christopher\nBurke and Jessica Goren at Lehigh University examined\nthis  possibility.  According  to  the  threat  to  self-esteem\nmodel,  help  can  be  <u>perceived as  supportive  and\nloving, or it can be seen as threatening if that help is\ninterpreted  as  implying  incompetence.</u>  According  to\nBurke and Goren, support is especially likely to be seen\nas threatening if it is in an area that is self-relevant or\nself \"defining — that is, in an area  <u>where your own\nsuccess  and  achievement  are  especially  important.</u>\n <u>Receiving help with a self-relevant task can make you\nfeel  bad  about  yourself,  and  this  can  undermine  the\npotential positive effects of the help.</u> For example, if your\nself-concept  <u>rest, in part, on your great cooking ability,\nit may be a blow to your ego when a friend helps you\nprepare a meal for guests because it suggests that you're\nnot the master chef you thought you were.</u>",
+    "options": [
+      "① <u>are several reasons why support may not be\neffective.</u>",
+      "② <u>perceived as  supportive  and\nloving, or it can be seen as threatening if that help is\ninterpreted  as  implying  incompetence.</u>",
+      "③ <u>where your own\nsuccess  and  achievement  are  especially  important.</u>",
+      "④ <u>Receiving help with a self-relevant task can make you\nfeel  bad  about  yourself,  and  this  can  undermine  the\npotential positive effects of the help.</u>",
+      "⑤ <u>rest, in part, on your great cooking ability,\nit may be a blow to your ego when a friend helps you\nprepare a meal for guests because it suggests that you're\nnot the master chef you thought you were.</u>"
+    ],
+    "answers": [
+      5
+    ],
+    "answerMarkers": [
+      "⑤"
+    ],
+    "answer": "5",
+    "correctAnswer": "5",
+    "explanation": "단수 주어인 your self-concept의 동사 자리이고 주 어와 수일치가 이루어져야 하므로 rest를 rests로 고쳐야 한다",
+    "docTitle": "2022년 9월 고2 모의고사",
+    "sourceLabel": "출처│2022년 9월 고2 모의고사 no4",
+    "grammarPoint": "기출 어법"
+  },
+  {
+    "id": "wolgo-2022-09-grammar-35",
+    "type": "grammar",
+    "question": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?",
+    "questionVariant": "single",
+    "mainText": "Taking  a  stand  is  important  because  you  become  a\nbeacon for those individuals  <u>who are your people,\nyour  tribe,  and  your  audience.</u>  When  you  raise  your\nviewpoint  up  like  a  flag,  people  know  where  to  find\nyou;  it  becomes  a  rallying  point.  Displaying  your\nperspective allows prospective (and current) customers\n <u>know  that  you  don’t  just  sell  your  products  or\nservices.</u>  The  best  marketing  is  never  just  about \n<u>selling a product or service, but about taking a stand\n—</u> <u>showing an audience why they should believe in\nwhat you’re marketing enough to want it at any cost,\nsimply  because  they  agree  with  what  you’re  doing.</u> \nProducts  can  be  changed  or  adjusted  if  they  aren’t\nfunctioning, but rallying points  <u>align with the values\nand meaning behind what you do.</u>\n*beacon: 횃불 **rallying point: 집합 지점",
+    "options": [
+      "① <u>who are your people,\nyour  tribe,  and  your  audience.</u>",
+      "② <u>know  that  you  don’t  just  sell  your  products  or\nservices.</u>",
+      "③ <u>selling a product or service, but about taking a stand\n—</u>",
+      "④ <u>showing an audience why they should believe in\nwhat you’re marketing enough to want it at any cost,\nsimply  because  they  agree  with  what  you’re  doing.</u>",
+      "⑤ <u>align with the values\nand meaning behind what you do.</u>"
+    ],
+    "answers": [
+      2
+    ],
+    "answerMarkers": [
+      "②"
+    ],
+    "answer": "2",
+    "correctAnswer": "2",
+    "explanation": "allow동사는 5형식 문장으로 쓰일 때 목적격 보어자 리에 to부정사를 취하므로 ② know를 to know로 고쳐야 한다.",
+    "docTitle": "2022년 9월 고2 모의고사",
+    "sourceLabel": "출처│2022년 9월 고2 모의고사 no5",
+    "grammarPoint": "기출 어법"
+  },
+  {
+    "id": "wolgo-2022-09-grammar-36",
+    "type": "grammar",
+    "question": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?",
+    "questionVariant": "single",
+    "mainText": "If DNA were the only thing that mattered, there would be\nno particular reason to build meaningful social programs\nto  pour  good  experiences  into  children  and  protect\n <u>them from bad experiences.</u> But brains require the\nright  kind  of  environment  if  they  <u>are  to correctly\ndevelop.</u>  When  the  first  draft  of  the  Human  Genome\nProject came to completion at the turn of the millennium,\none of the great surprises  <u>was that humans have only\nabout twenty thousand genes.</u> This number came as a\nsurprise to biologists:  <u>giving the complexity of the\nbrain and the body, it had been assumed that hundreds\nof thousands of genes would be required.</u> So how does\nthe  massively  complicated  brain,  with  its  eighty‐six\nbillion  neurons,  <u>get  built from  such  a  small  recipe\nbook?</u>  The  answer  relies  on  a  clever  strategy\nimplemented by the genome: build incompletely and let\nworld experience refine.\n For  humans  at  birth,  the  brain  is  remarkably    \n(A)   ,  and  interaction  with  the  world  is  necessary\nto     (B)    it.",
+    "options": [
+      "① <u>them from bad experiences.</u>",
+      "② <u>are  to correctly\ndevelop.</u>",
+      "③ <u>was that humans have only\nabout twenty thousand genes.</u>",
+      "④ <u>giving the complexity of the\nbrain and the body, it had been assumed that hundreds\nof thousands of genes would be required.</u>",
+      "⑤ <u>get  built from  such  a  small  recipe\nbook?</u>"
+    ],
+    "answers": [
+      4
+    ],
+    "answerMarkers": [
+      "④"
+    ],
+    "answer": "4",
+    "correctAnswer": "4",
+    "explanation": "④ ‘~을 고려하면, 감안하면’이라는 뜻의 전치사로 쓰 여 부사구로 사용 되고 있으므로, giving을 given으로 고쳐야 한 다.",
+    "docTitle": "2022년 9월 고2 모의고사",
+    "sourceLabel": "출처│2022년 9월 고2 모의고사 no6",
+    "grammarPoint": "기출 어법"
+  },
+  {
+    "id": "wolgo-2022-09-grammar-37",
+    "type": "grammar",
+    "question": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?",
+    "questionVariant": "single",
+    "mainText": "One benefit of reasons and arguments  <u>is that they\ncan  foster  humility.</u>  If  two  people  disagree  without\narguing, all they do is yell at each other. No progress is\nmade. Both still think that they are right. In contrast, if\nboth sides give arguments that  <u>articulate reasons\nfor their positions, then new possibilities open up.</u> One\nof the arguments gets refuted — that is, it is shown to\nfail.  In  that  case,  the  person  who  depended  on  the\nrefuted argument learns that he needs  <u>to change his\nview.</u> That is one way to achieve humility —on one side\nat least. Another possibility is that neither argument is\nrefuted. Both have a degree of reason on their side.\nEven if neither person  <u>involving is convinced by the\nother’s argument, both can still come to appreciate the\nopposing  view.</u>  They  also  realize  that,  even  if  they\nhave some truth, they do not have the whole truth.\nThey  can  gain  humility  when  they  recognize  and\nappreciate the reasons against  <u>their own view.</u>\n*articulate: 분명히 말하다 **humility: 겸손",
+    "options": [
+      "① <u>is that they\ncan  foster  humility.</u>",
+      "② <u>articulate reasons\nfor their positions, then new possibilities open up.</u>",
+      "③ <u>to change his\nview.</u>",
+      "④ <u>involving is convinced by the\nother’s argument, both can still come to appreciate the\nopposing  view.</u>",
+      "⑤ <u>their own view.</u>"
+    ],
+    "answers": [
+      4
+    ],
+    "answerMarkers": [
+      "④"
+    ],
+    "answer": "4",
+    "correctAnswer": "4",
+    "explanation": "주어인 neither person involved와 수동관계이므로 involved로 고쳐야 한다. 즉, 앞의 명사 person을 수식하는 형태 로 '주격 관계대명사 + be동사 (who is)'가 생략된 구조이므로 볼 수 있다. [응용]",
+    "docTitle": "2022년 9월 고2 모의고사",
+    "sourceLabel": "출처│2022년 9월 고2 모의고사 no7",
+    "grammarPoint": "기출 어법"
+  },
+  {
+    "id": "wolgo-2022-09-grammar-39",
+    "type": "grammar",
+    "question": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?",
+    "questionVariant": "single",
+    "mainText": "On any day of the year, the tropics and the hemisphere\nthat is  <u>experiencing its warm season receive much\nmore solar radiation than</u> <u>do the polar regions and\nthe  colder  hemisphere.</u>  Averaged  over  the  course  of\nthe  year,  the  tropics  and  latitudes  up  to  about  40°\nreceive  more  total  heat  than  they  lose  by  radiation.\nLatitudes  above  40°  <u>receive  less  total  heat  than\nthey  lose  by  radiation.</u>  This  inequality  produces  the\nnecessary  conditions  for  the  operation  of  a  huge,\nglobal‐scale engine that takes on heat in the tropics\nand  <u>gives it off in the polar regions.</u> Its working fluid\nis the atmosphere, especially the moisture it contains.\nAir  is  heated  over  the  warm  earth  of  the  tropics,\nexpands,  rises,  and  flows  away  both  northward  and\nsouthward  at  high  altitudes,  <u>cools  as  it  goes.</u>  It\ndescends  and  flows  toward  the  equator  again  from\nmore northerly and southerly latitudes. \n*latitude: 위도",
+    "options": [
+      "① <u>experiencing its warm season receive much\nmore solar radiation than</u>",
+      "② <u>do the polar regions and\nthe  colder  hemisphere.</u>",
+      "③ <u>receive  less  total  heat  than\nthey  lose  by  radiation.</u>",
+      "④ <u>gives it off in the polar regions.</u>",
+      "⑤ <u>cools  as  it  goes.</u>"
+    ],
+    "answers": [
+      5
+    ],
+    "answerMarkers": [
+      "⑤"
+    ],
+    "answer": "5",
+    "correctAnswer": "5",
+    "explanation": "[기출응용] 콤마 뒤의 부분이 분사 구문이어야 하므 로, cools를 cooling으로 고쳐야 한다.",
+    "docTitle": "2022년 9월 고2 모의고사",
+    "sourceLabel": "출처│2022년 9월 고2 모의고사 no8",
+    "grammarPoint": "기출 어법"
+  },
+  {
+    "id": "wolgo-2022-09-grammar-40",
+    "type": "grammar",
+    "question": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?",
+    "questionVariant": "single",
+    "mainText": "Greenwashing  involves  misleading  a  consumer  into\nthinking  a  good  or  service  is  more  environmentally\nfriendly than it really  <u>is.</u> Greenwashing ranges from\nmaking  environmental  claims  required  by  law,  and\ntherefore irrelevant (CFC‐free for example), to puffery\n(exaggerating  environmental  claims)  to  fraud.\nResearchers have shown that claims on products are\noften too vague or misleading. Some products  <u>are\nlabeled “chemical‐free,” when the fact is everything\ncontains  chemicals,  including  plants  and  animals.</u>\nProducts  with  the  highest  number  of  misleading  or\nunverifiable  claims  <u>were  laundry  detergents,\nhousehold  cleaners,  and  paints.</u>  Environmental\nadvocates  agree  there  is  still  a  long  way  to  go  to\nensure  shoppers  are  adequately  informed  about  the\nenvironmental  impact  of  the  products  they  buy.  The\nmost common reason for greenwashing is  <u>to attract\nenvironmentally   conscious   consumers.</u>   Many\nconsumers do not find out about the false claims until\nafter  the  purchase.  Therefore,  greenwashing  may\nincrease sales in the short term. However, this strategy\ncan seriously backfire when consumers find out they\nare being  <u>deceiving.</u>\n*CFC: 염화불화탄소 **fraud: 사기",
+    "options": [
+      "① <u>is.</u>",
+      "② <u>are\nlabeled “chemical‐free,” when the fact is everything\ncontains  chemicals,  including  plants  and  animals.</u>",
+      "③ <u>were  laundry  detergents,\nhousehold  cleaners,  and  paints.</u>",
+      "④ <u>to attract\nenvironmentally   conscious   consumers.</u>",
+      "⑤ <u>deceiving.</u>"
+    ],
+    "answers": [
+      5
+    ],
+    "answerMarkers": [
+      "⑤"
+    ],
+    "answer": "5",
+    "correctAnswer": "5",
+    "explanation": "주어 they는 consumers를 지칭하며 고객들이 기만 되어지는 수동관계를 이루므로 ⑤ deceiving을 deceived로 고쳐 야 한다.",
+    "docTitle": "2022년 9월 고2 모의고사",
+    "sourceLabel": "출처│2022년 9월 고2 모의고사 no9",
+    "grammarPoint": "기출 어법"
+  },
+  {
+    "id": "wolgo-2022-09-grammar-21",
+    "type": "grammar",
+    "question": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?",
+    "questionVariant": "single",
+    "mainText": "Perhaps worse than attempting to get the bad news\nout of the way is attempting to soften it or simply not\n <u>address it at all.</u> This “Mum Effect” — a term coined\nby psychologists Sidney Rosen and Abraham Tesser in\nthe early 1970s — happens because people want to\navoid  <u>becoming  the  target  of  others’  negative\nemotions.</u> We all have the opportunity to lead change,\nyet it often requires of us the courage to deliver bad\nnews  to  our  superiors.  We  don’t  want  to  be  the\ninnocent  messenger  who  falls  before  a  firing  line.\nWhen our survival instincts kick in, they can override\nour  courage  until  the  truth  of  a  situation  gets \n<u>watered  down.</u>  “The  Mum  Effect  and  the  resulting\nfiltering  can  have  devastating  effects  in  a  steep\nhierarchy,”  writes  Robert  Sutton,  an  organizational\npsychologist. “ <u>What starts out as bad news becomes\nhappier  and  happier  as  it  travels  up  the  ranks  ―\nbecause after each boss hears the news from his or\nher subordinates, he or she makes it sound a bit less</u> <u>badly before passing it up the chain.</u>”",
+    "options": [
+      "① <u>address it at all.</u>",
+      "② <u>becoming  the  target  of  others’  negative\nemotions.</u>",
+      "③ <u>watered  down.</u>",
+      "④ <u>What starts out as bad news becomes\nhappier  and  happier  as  it  travels  up  the  ranks  ―\nbecause after each boss hears the news from his or\nher subordinates, he or she makes it sound a bit less</u>",
+      "⑤ <u>badly before passing it up the chain.</u>"
+    ],
+    "answers": [
+      5
+    ],
+    "answerMarkers": [
+      "⑤"
+    ],
+    "answer": "5",
+    "correctAnswer": "5",
+    "explanation": "sound의 보어 자리이므로 ⑤ badly를 bad로 고쳐 야 한다. (less+원급)",
+    "docTitle": "2022년 9월 고2 모의고사",
+    "sourceLabel": "출처│2022년 9월 고2 모의고사 no10",
+    "grammarPoint": "기출 어법"
+  },
+  {
+    "id": "wolgo-2022-09-grammar-22",
+    "type": "grammar",
+    "question": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?",
+    "questionVariant": "single",
+    "mainText": "Most  parents  think  that  if  our  child  would  just\n“behave,” we could stay calm as parents. The truth is\nthat managing our own emotions and actions is what\nallows us to feel  <u>peaceful as parents.</u> Ultimately we\ncan’t control our children or the obstacles  <u>that they\nwill face ―but we can always control our own actions.</u>\nParenting isn’t about what our child does, but about\nhow  we  respond.  In  fact,  most  of  what  we  call\nparenting  <u>doesn’t take place between a parent and\nchild  but  within  the  parent.</u>  When  a  storm  brews,  a\nparent’s response will either calm it or trigger a full‐\nscale  tsunami.  Staying  calm  enough  <u>responding\nconstructively to all that childish behavior ― and the\nstormy  emotions  behind  it  ―requires  that  we  grow,\ntoo.</u> If we can use those times when our buttons get\npushed to reflect, not just react, we can notice when\nwe lose equilibrium and steer ourselves back on track.\nThis inner growth is the hardest work there is, but it’s\nwhat  enables  you  <u>to  become  a  more  peaceful\nparent, one day at a time.</u>",
+    "options": [
+      "① <u>peaceful as parents.</u>",
+      "② <u>that they\nwill face ―but we can always control our own actions.</u>",
+      "③ <u>doesn’t take place between a parent and\nchild  but  within  the  parent.</u>",
+      "④ <u>responding\nconstructively to all that childish behavior ― and the\nstormy  emotions  behind  it  ―requires  that  we  grow,\ntoo.</u>",
+      "⑤ <u>to  become  a  more  peaceful\nparent, one day at a time.</u>"
+    ],
+    "answers": [
+      4
+    ],
+    "answerMarkers": [
+      "④"
+    ],
+    "answer": "4",
+    "correctAnswer": "4",
+    "explanation": "'V할 만큼 충분히 ~한'을 의미하는 enough to-V구 문이므로, ④ responding을 to respond로 고쳐야 한다.",
+    "docTitle": "2022년 9월 고2 모의고사",
+    "sourceLabel": "출처│2022년 9월 고2 모의고사 no11",
+    "grammarPoint": "기출 어법"
+  },
+  {
+    "id": "wolgo-2022-09-grammar-32",
+    "type": "grammar",
+    "question": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?",
+    "questionVariant": "single",
+    "mainText": "There  are  several  reasons  why  support  may  not  be\neffective. One possible reason is that  <u>receives help\ncould  be  a  blow  to  self‐esteem.</u>  A  recent  study  by\nChristopher  Burke  and  Jessica  Goren  at  Lehigh\nUniversity examined this possibility. According to the\nthreat to self‐esteem model, help can be perceived as\nsupportive and loving, or it can be seen as threatening\nif that help is interpreted  <u>as implying incompetence.</u>\nAccording  to  Burke  and  Goren,  support  is  especially\nlikely to be seen as threatening if it is in an area that is\nself‐relevant or self‐defining — that is, in an area \n<u>where  your  own  success  and  achievement  are\nespecially  important.</u>  Receiving  help  with  a  self‐\nrelevant task can make you  <u>feel bad about yourself,\nand this can undermine the potential positive effects of\nthe help.</u> For example, if your self‐concept rests, in\npart, on your great cooking ability, it may be a blow to\nyour ego when a friend helps you prepare a meal for\nguests because it suggests that you’re not the master\nchef you thought  <u>you were.</u>",
+    "options": [
+      "① <u>receives help\ncould  be  a  blow  to  self‐esteem.</u>",
+      "② <u>as implying incompetence.</u>",
+      "③ <u>where  your  own  success  and  achievement  are\nespecially  important.</u>",
+      "④ <u>feel bad about yourself,\nand this can undermine the potential positive effects of\nthe help.</u>",
+      "⑤ <u>you were.</u>"
+    ],
+    "answers": [
+      1
+    ],
+    "answerMarkers": [
+      "①"
+    ],
+    "answer": "1",
+    "correctAnswer": "1",
+    "explanation": "주어진 문장에서 that절 안에서 '도움을 받는 것'을 의미하는 주어 역할을 하는 동명사 자리 이므로, ① receives는 receiving으로 고쳐야 한다.",
+    "docTitle": "2022년 9월 고2 모의고사",
+    "sourceLabel": "출처│2022년 9월 고2 모의고사 no12",
+    "grammarPoint": "기출 어법"
+  },
+  {
+    "id": "wolgo-2022-09-grammar-36",
+    "type": "grammar",
+    "question": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?",
+    "questionVariant": "single",
+    "mainText": "If  DNA  <u>were  the  only  thing  that  mattered,  there\nwould  be  no  particular  reason  to  build  meaningful\nsocial programs to pour good experiences into children\nand  protect  them  from  bad  experiences.</u>  But  brains\nrequire the right kind of environment if they are  <u>to\ncorrectly develop.</u> When the first draft of the Human\nGenome Project came to completion at the turn of the\nmillennium,  one  of  the  great  surprises  was  that\nhumans have only about twenty thousand genes. This\nnumber  came  as  a  surprise  to  biologists:  given  the\ncomplexity  of  the  brain  and  the  body,  it  <u>had\nassumed that hundreds of thousands of genes would</u> <u>be required.</u> So how does the massively complicated\nbrain,  with  its  eighty‐six  billion  neurons,  get  built\nfrom such a small recipe book? The answer relies on a\nclever  strategy  implemented  by  the  genome:  build\nincompletely and let world experience  <u>refine.</u>",
+    "options": [
+      "① <u>were  the  only  thing  that  mattered,  there\nwould  be  no  particular  reason  to  build  meaningful\nsocial programs to pour good experiences into children\nand  protect  them  from  bad  experiences.</u>",
+      "② <u>to\ncorrectly develop.</u>",
+      "③ <u>had\nassumed that hundreds of thousands of genes would</u>",
+      "④ <u>be required.</u>",
+      "⑤ <u>refine.</u>"
+    ],
+    "answers": [
+      3
+    ],
+    "answerMarkers": [
+      "③"
+    ],
+    "answer": "3",
+    "correctAnswer": "3",
+    "explanation": "[응용] 추정되어야 한다의 수동구문이므로 ③ had assumed를 had been assumed로 고쳐야 한다.",
+    "docTitle": "2022년 9월 고2 모의고사",
+    "sourceLabel": "출처│2022년 9월 고2 모의고사 no13",
+    "grammarPoint": "기출 어법"
+  },
+  {
+    "id": "wolgo-2022-09-grammar-37",
+    "type": "grammar",
+    "question": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?",
+    "questionVariant": "single",
+    "mainText": "One benefit of reasons and arguments is  <u>what they\ncan  foster  humility.</u>  If  two  people  disagree  without\narguing, all they do is yell at each other. No progress is\nmade.  Both  still  think   <u>that  they  are  right.</u>  In\ncontrast, if both sides give arguments that articulate\nreasons for their positions, then new possibilities open\nup. One of the arguments gets refuted — that is, it \n<u>is  shown  to  fail.</u>  In  that  case,  the  person  <u>who\ndepended  on  the  refuted  argument  learns  that  he\nneeds to change his view.</u> That is one way to achieve\nhumility —on one side at least. Another possibility is\nthat neither argument is refuted. Both have a degree\nof  reason  on  their  side.  Even  if  neither  person \n<u>involved  is  convinced  by  the  other’s  argument,  both\ncan still come to appreciate the opposing view.</u> They\nalso realize that, even if they have some truth, they do\nnot have the whole truth. They can gain humility when\nthey  recognize  and  appreciate  the  reasons  against\ntheir own view.\n*articulate: 분명히 말하다 **humility: 겸손",
+    "options": [
+      "① <u>what they\ncan  foster  humility.</u>",
+      "② <u>that  they  are  right.</u>",
+      "③ <u>is  shown  to  fail.</u>",
+      "④ <u>who\ndepended  on  the  refuted  argument  learns  that  he\nneeds to change his view.</u>",
+      "⑤ <u>involved  is  convinced  by  the  other’s  argument,  both\ncan still come to appreciate the opposing view.</u>"
+    ],
+    "answers": [
+      1
+    ],
+    "answerMarkers": [
+      "①"
+    ],
+    "answer": "1",
+    "correctAnswer": "1",
+    "explanation": "[기출 응용] ① what 뒤에 나오는 문장이 보어절로 쓰이는 완전한 문장인 명사절이기 때문에 that 으로 고쳐써야 한 다.",
+    "docTitle": "2022년 9월 고2 모의고사",
+    "sourceLabel": "출처│2022년 9월 고2 모의고사 no14",
+    "grammarPoint": "기출 어법"
+  },
+  {
+    "id": "wolgo-2022-09-grammar-40",
+    "type": "grammar",
+    "question": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?",
+    "questionVariant": "single",
+    "mainText": "Greenwashing  involves  misleading  a  consumer  into\nthinking a good or service  <u>does more environmentally\nfriendly  than  it  really  is.</u>  Greenwashing  ranges  from\nmaking environmental claims  <u>required by law, and\ntherefore  irrelevant  (CFC-free  for  example),  to  puffery\n(exaggerating   environmental   claims)   to   fraud.</u>\nResearchers have shown  <u>that claims on products are\noften  too  vague  or  misleading.</u>  Some  products  are\nlabeled  \"chemical-free,\"  when  the  fact  is  everything\n <u>contains chemicals,  including  plants  and  animals.</u>\nProducts  with  the  highest  number  of  misleading  or\nunverifiable claims were laundry detergents, household\ncleaners,  and  paints.  Environmental  advocates  agree\nthere is still a long way to go to ensure shoppers are\nadequately  <u>informed about the environmental impact\nof the products they buy.</u> The most common reason for\ngreenwashing  is  to  attract  environmentally  conscious\nconsumers. Many consumers do not find out about the\nfalse  claims  until  after  the  purchase.  Therefore,\ngreenwashing  may  increase  sales  in  the  short  term.\nHowever,  this  strategy  can  seriously  backfire  when\nconsumers find out they are being deceived.",
+    "options": [
+      "① <u>does more environmentally\nfriendly  than  it  really  is.</u>",
+      "② <u>required by law, and\ntherefore  irrelevant  (CFC-free  for  example),  to  puffery\n(exaggerating   environmental   claims)   to   fraud.</u>",
+      "③ <u>that claims on products are\noften  too  vague  or  misleading.</u>",
+      "④ <u>contains chemicals,  including  plants  and  animals.</u>",
+      "⑤ <u>informed about the environmental impact\nof the products they buy.</u>"
+    ],
+    "answers": [
+      1
+    ],
+    "answerMarkers": [
+      "①"
+    ],
+    "answer": "1",
+    "correctAnswer": "1",
+    "explanation": "주어가 'A or B’일 때 B에 수일치하므로 단수동사여 야 하며, 뒤에 대동사 is가 쓰인 점으로 보아 ① does를 is로 고쳐 야 한다.",
+    "docTitle": "2022년 9월 고2 모의고사",
+    "sourceLabel": "출처│2022년 9월 고2 모의고사 no15",
+    "grammarPoint": "기출 어법"
+  },
+  {
+    "id": "wolgo-2022-09-grammar-21",
+    "type": "grammar",
+    "question": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?",
+    "questionVariant": "single",
+    "mainText": "Perhaps worse than attempting to get the bad news\nout of the way is attempting to soften it or simply not\n <u>addressed  it  at  all.</u>  This  “Mum  Effect”  —  a  term\ncoined  by  psychologists  Sidney  Rosen  and  Abraham\nTesser in the early 1970s — happens because people\nwant  to  avoid  <u>becoming  the  target  of  others’\nnegative emotions.</u> We all have the opportunity to lead\nchange,  yet  it  often  requires  of  us  the  courage  to\ndeliver bad news to our superiors. We don’t want to be\nthe  innocent  messenger  <u>who  falls  before  a  firing\nline.</u>  When  our  survival  instincts  kick  in,  they  can\noverride our courage until the truth of a situation gets\n <u>watered down.</u> “The Mum Effect and the resulting\nfiltering  can  have  devastating  effects  in  a  steep\nhierarchy,”  writes  Robert  Sutton,  an  organizational\npsychologist. “What starts out as bad news becomes\nhappier  and  happier  as  it  travels  up  the  ranks  ―\nbecause after each boss hears the news from his or\nher subordinates, he or she makes it  <u>sound a bit\nless bad before passing it up the chain.</u>”\n(A), (B), (C)의 각 네모 안에서 어법에 맞는 표현으로 가",
+    "options": [
+      "① <u>addressed  it  at  all.</u>",
+      "② <u>becoming  the  target  of  others’\nnegative emotions.</u>",
+      "③ <u>who  falls  before  a  firing\nline.</u>",
+      "④ <u>watered down.</u>",
+      "⑤ <u>sound a bit\nless bad before passing it up the chain.</u>"
+    ],
+    "answers": [
+      1
+    ],
+    "answerMarkers": [
+      "①"
+    ],
+    "answer": "1",
+    "correctAnswer": "1",
+    "explanation": "등위접속사 or로 to soften과 병렬을 이루고 있으므 로, ① addressed를 (to) address로 고쳐야 한다.",
+    "docTitle": "2022년 9월 고2 모의고사",
+    "sourceLabel": "출처│2022년 9월 고2 모의고사 no16",
+    "grammarPoint": "기출 어법"
+  },
+  {
+    "id": "wolgo-2022-09-grammar-22",
+    "type": "grammar",
+    "question": "장 적절한 것은?",
+    "questionVariant": "single",
+    "mainText": "Most  parents  think  that  if  our  child  would  just\n\"behave,” we could stay calm as parents. The truth is\nthat managing our own emotions and actions (A)[is /\nare]  what  allows  us  to  feel  peaceful  as  parents.\nUltimately  we  can't  control  our  children  or  the\nobstacles they will face – but we can always control\nour own actions. Parenting isn't about what our child\ndoes, but about how we respond. In fact, most of what\nwe  call  parenting (B)[doesn't  /  don't]  take  place\nbetween  a  parent  and  child  but  within  the  parent.\nWhen a storm brews, a parent's response will either\ncalm  it  or  trigger  a  full-scale  tsunami.  Staying  calm\nenough  to  respond  constructively  to  all  that  childish\nbehavior – and the stormy emotions behind it – (C)\n[requires / require] that we grow, too. If we can use\nthose times when our buttons get pushed to reflect,\nnot just react, we can notice when we lose equilibrium\nand steer ourselves back on track. This inner growth is\nthe hardest work there is, but it's what enables you to\nbecome a more peaceful parent, one day at a time.\n <u>is - doeesn’t - requires</u> <u>are - don’t - require</u> <u>is - don’t - require</u> <u>are - doeesn’t - requires</u> <u>is - don’t - requires</u>",
+    "options": [
+      "① <u>is - doeesn’t - requires</u>",
+      "② <u>are - don’t - require</u>",
+      "③ <u>is - don’t - require</u>",
+      "④ <u>are - doeesn’t - requires</u>",
+      "⑤ <u>is - don’t - requires</u>"
+    ],
+    "answers": [
+      1
+    ],
+    "answerMarkers": [
+      "①"
+    ],
+    "answer": "1",
+    "correctAnswer": "1",
+    "explanation": "(A)가 포함된 문장에서 주어가 동명사(managing) 이고 단수 취급을 하므로 (A)에는 is가 적절하다. (B)가 포함된 문 장에서 주어가 'most of 명사'이고, 명사의 수로 주어의 단/복수임 을 결정한다. 명사자리는 관계대명사 what절이므로 단수 취급을 하므로 동사자리 (B)에는 doesn't가 가장 적절하다. (C)가 포함 된 문장에서 동명사(Staying calm)가 주어이고 단수 취급을 하므 로 (C)에는 requires가 적절하다. 따라서 어법으로 가장 적절한 것은 ①번이다.",
+    "docTitle": "2022년 9월 고2 모의고사",
+    "sourceLabel": "출처│2022년 9월 고2 모의고사 no17",
+    "grammarPoint": "기출 어법"
+  },
+  {
+    "id": "wolgo-2022-09-grammar-36",
+    "type": "grammar",
+    "question": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?",
+    "questionVariant": "single",
+    "mainText": "If  DNA  were  the  only  thing  that  <u>counted,  there\nwould  be  no  particular  reason  to  build  meaningful\nsocial programs to pour good experiences into children\nand  protect  them  from  bad  experiences.</u>  But  brains\nrequire the right kind of environment if they  <u>are to\ncorrectly develop.</u> When the first draft of the Human\nGenome Project came to completion at the turn of the\nmillennium,  one  of  the  great  surprises  was  that\nhumans have only about twenty thousand genes. This\nnumber came as a surprise to biologists:  <u>giving the\ncomplexity  of  the  brain  and  the  body,  it  had  been\nassumed that hundreds of thousands of genes would\nbe required.</u> So how does the massively complicated\nbrain,  with  its  eighty‐six  billion  neurons,  get \n<u>made  from  such  a  small  recipe  book?</u>  The  answer\nrelies  on  a  clever  strategy  implemented  by  the\ngenome:  build  <u>incompletely  and  let  world\nexperience refine.</u>",
+    "options": [
+      "① <u>counted,  there\nwould  be  no  particular  reason  to  build  meaningful\nsocial programs to pour good experiences into children\nand  protect  them  from  bad  experiences.</u>",
+      "② <u>are to\ncorrectly develop.</u>",
+      "③ <u>giving the\ncomplexity  of  the  brain  and  the  body,  it  had  been\nassumed that hundreds of thousands of genes would\nbe required.</u>",
+      "④ <u>made  from  such  a  small  recipe  book?</u>",
+      "⑤ <u>incompletely  and  let  world\nexperience refine.</u>"
+    ],
+    "answers": [
+      3
+    ],
+    "answerMarkers": [
+      "③"
+    ],
+    "answer": "3",
+    "correctAnswer": "3",
+    "explanation": "[응용] '~이 고려되었을 때'라는 의미를 담고 있으 므로, ③ giving을 given으로 고쳐야 한다.",
+    "docTitle": "2022년 9월 고2 모의고사",
+    "sourceLabel": "출처│2022년 9월 고2 모의고사 no18",
+    "grammarPoint": "기출 어법"
+  },
+  {
+    "id": "wolgo-2022-09-grammar-40",
+    "type": "grammar_multi",
+    "question": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것을 모두 고르시오.",
+    "questionVariant": "multi",
+    "mainText": "Greenwashing  involves  misleading  a  consumer  into\nthinking  a  good  or  service  is  more  environmentally\nfriendly than it really  <u>does.</u> Greenwashing ranges\nfrom making environmental claims  <u>required by law,\nand  therefore  irrelevant  (CFC‐free  for  example),  to\npuffery (exaggerating environmental claims) to fraud.</u>\nResearchers have shown that claims on products are\noften  too  vague  or  misleading.  Some  products  are\nlabeled “chemical‐free,” when the fact is everything\ncontains  chemicals,  including  plants  and  animals.\nProducts  with  the  highest  number  of  misleading  or\nunverifiable  claims  <u>were  laundry  detergents,\nhousehold  cleaners,  and  paints.</u>  Environmental\nadvocates  agree  there  is  still  a  long  way  to  go  to\nensure  shoppers  are  adequately  informed  about  the\nenvironmental  impact  of  the  products  they  buy.  The\nmost common reason for greenwashing is  <u>to attract\nenvironmentally   conscious   consumers.</u>   Many\nconsumers do not find out about the false claims until\nafter  the  purchase.  Therefore,  greenwashing  may\nincrease sales in the short term. However, this strategy\ncan seriously backfire when consumers find out they\nare  <u>deceiving.</u>\n*CFC: 염화불화탄소 **fraud: 사기",
+    "options": [
+      "① <u>does.</u>",
+      "② <u>required by law,\nand  therefore  irrelevant  (CFC‐free  for  example),  to\npuffery (exaggerating environmental claims) to fraud.</u>",
+      "③ <u>were  laundry  detergents,\nhousehold  cleaners,  and  paints.</u>",
+      "④ <u>to attract\nenvironmentally   conscious   consumers.</u>",
+      "⑤ <u>deceiving.</u>"
+    ],
+    "answers": [
+      1,
+      5
+    ],
+    "answerMarkers": [
+      "①",
+      "⑤"
+    ],
+    "answer": "1,5",
+    "correctAnswer": "1,5",
+    "explanation": "① 앞에 쓰인 is more environmentally friendly를 받고 있는 대동사이므로 is로 고쳐야 한다. ⑤ deceive 는 '속이다, 기만하다'를 뜻하는 타동사인데 제시된 목적어가 없 고, 주어인 consumers가 기만되어지는 수동의 의미를 전달하므 로 being deceived로 고쳐야 한다.",
+    "docTitle": "2022년 9월 고2 모의고사",
+    "sourceLabel": "출처│2022년 9월 고2 모의고사 no19",
+    "grammarPoint": "기출 어법"
+  },
+  {
+    "id": "wolgo-2022-09-grammar-21",
+    "type": "grammar",
+    "question": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?",
+    "questionVariant": "single",
+    "mainText": "Perhaps worse than attempting to get the bad news\nout of the way is  <u>attempting to soften it or simply\nnot  address  it  at  all.</u>  This  “Mum  Effect”  —  a  term\ncoined  by  psychologists  Sidney  Rosen  and  Abraham\nTesser in the early 1970s — happens because people\nwant  to  avoid  <u>to  become  the  target  of  others’\nnegative emotions.</u> We all have the opportunity to lead\nchange, yet it often requires of us the courage  <u>to\ndeliver bad news to our superiors.</u> We don’t want to be\nthe innocent messenger who falls before a firing line.\nWhen our survival instincts kick in, they can override\nour  courage  until  the  truth  of  a  situation  gets \n<u>watered  down.</u>  “The  Mum  Effect  and  the  resulting\nfiltering  can  have  devastating  effects  in  a  steep\nhierarchy,”  writes  Robert  Sutton,  an  organizational\npsychologist. “What starts out as bad news becomes\nhappier  and  happier  as  it  travels  up  the  ranks  ―\nbecause after each boss hears the news from his or\nher subordinates, he or she makes it  <u>sound a bit\nless bad before passing it up the chain.</u>”",
+    "options": [
+      "① <u>attempting to soften it or simply\nnot  address  it  at  all.</u>",
+      "② <u>to  become  the  target  of  others’\nnegative emotions.</u>",
+      "③ <u>to\ndeliver bad news to our superiors.</u>",
+      "④ <u>watered  down.</u>",
+      "⑤ <u>sound a bit\nless bad before passing it up the chain.</u>"
+    ],
+    "answers": [
+      2
+    ],
+    "answerMarkers": [
+      "②"
+    ],
+    "answer": "2",
+    "correctAnswer": "2",
+    "explanation": "avoid는 동명사를 목적어로 취하는 동사이므로, ② to become을 becoming으로 고쳐야 한다.",
+    "docTitle": "2022년 9월 고2 모의고사",
+    "sourceLabel": "출처│2022년 9월 고2 모의고사 no20",
+    "grammarPoint": "기출 어법"
+  },
+  {
+    "id": "wolgo-2022-09-grammar-22",
+    "type": "grammar",
+    "question": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?",
+    "questionVariant": "single",
+    "mainText": "Most parents think that if our child would just “behave,”\nwe  could  stay  calm  as  parents.  The  truth  is  that\nmanaging  our  own  emotions  and  actions  <u>is what\nallows us to feel peaceful as parents.</u> Ultimately we can’t\ncontrol our children or the obstacles  <u>they will face –\nbut  we  can  always  control  our  own  actions.</u>  Parenting\nisn’t  about  what  our  child  does,  but  about  how  we\nrespond. In fact, most of what we call parenting doesn’t\ntake  place  between  a  parent  and  child  but  within  the\nparent. When a storm brews, a parent’s response will\neither calm it or trigger a full scale tsunami. Staying calm\nenough to respond  <u>constructive to all that childish\nbehavior – and  the  stormy  emotions  behind  it –</u> <u>requires that we grow, too.</u> If we can use those times\nwhen our buttons get pushed to reflect, not just react,\nwe  can  notice  when  we  lose  equilibrium  and  steer\nourselves back on track. This inner growth is the hardest\nwork there is, but it’s what enables you  <u>to become a\nmore peaceful parent, one day at a time.</u>",
+    "options": [
+      "① <u>is what\nallows us to feel peaceful as parents.</u>",
+      "② <u>they will face –\nbut  we  can  always  control  our  own  actions.</u>",
+      "③ <u>constructive to all that childish\nbehavior – and  the  stormy  emotions  behind  it –</u>",
+      "④ <u>requires that we grow, too.</u>",
+      "⑤ <u>to become a\nmore peaceful parent, one day at a time.</u>"
+    ],
+    "answers": [
+      3
+    ],
+    "answerMarkers": [
+      "③"
+    ],
+    "answer": "3",
+    "correctAnswer": "3",
+    "explanation": "동사인 respond를 수식하는 역할을 하는 부사가 있 어야 할 자리이므로, ③ constructive를 constructively로 고쳐야 한다.",
+    "docTitle": "2022년 9월 고2 모의고사",
+    "sourceLabel": "출처│2022년 9월 고2 모의고사 no21",
+    "grammarPoint": "기출 어법"
+  },
+  {
+    "id": "wolgo-2022-09-grammar-36",
+    "type": "grammar",
+    "question": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?",
+    "questionVariant": "single",
+    "mainText": "If DNA were the only thing that mattered, there would be\nno particular reason to build meaningful social programs\nto pour good experiences into children and protect them\nfrom bad experiences.  <u>But brains require the right\nkind of environment if they are to correctly develop.</u> \n<u>When  the  first  draft  of  the  Human  Genome  Project\ncame to completion at the turn of the millennium, one\nof  the  great  surprises  was  that  humans  have  only\nabout twenty thousand genes.</u>  <u>This number came as\na  surprise  to  biologists:  given  the  complexity  of  the\nbrain  and  the  body,  it  assumed  that  hundreds  of\nthousands of genes would be required.</u>  <u>So how does\nthe  massively  complicated  brain,  with  its  eighty‐six\nbillion  neurons,  get  built  from  such  a  small  recipe\nbook?</u>  <u>The  answer  relies  on  a  clever  strategy\nimplemented by the genome: build incompletely and\nlet world experience refine.</u>",
+    "options": [
+      "① <u>But brains require the right\nkind of environment if they are to correctly develop.</u>",
+      "② <u>When  the  first  draft  of  the  Human  Genome  Project\ncame to completion at the turn of the millennium, one\nof  the  great  surprises  was  that  humans  have  only\nabout twenty thousand genes.</u>",
+      "③ <u>This number came as\na  surprise  to  biologists:  given  the  complexity  of  the\nbrain  and  the  body,  it  assumed  that  hundreds  of\nthousands of genes would be required.</u>",
+      "④ <u>So how does\nthe  massively  complicated  brain,  with  its  eighty‐six\nbillion  neurons,  get  built  from  such  a  small  recipe\nbook?</u>",
+      "⑤ <u>The  answer  relies  on  a  clever  strategy\nimplemented by the genome: build incompletely and\nlet world experience refine.</u>"
+    ],
+    "answers": [
+      3
+    ],
+    "answerMarkers": [
+      "③"
+    ],
+    "answer": "3",
+    "correctAnswer": "3",
+    "explanation": "[기출 응용] ③ 이 숫자는 생물학자들에게 놀라움으 로 다가왔다. 이는 뇌와 신체의 복잡성을 고려했을 때, 수십만 개 의 유전자가 필요할 것이라고 추정되어 왔기 때문이다. 로 해석되 어야 하는 문장으로, 대과거에 있었던 일이 과거까지 영향을 미친 것이기 때문에 had assumed로 바꾸어야 한다.",
+    "docTitle": "2022년 9월 고2 모의고사",
+    "sourceLabel": "출처│2022년 9월 고2 모의고사 no22",
+    "grammarPoint": "기출 어법"
+  },
+  {
+    "id": "wolgo-2022-09-grammar-21",
+    "type": "grammar",
+    "question": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?",
+    "questionVariant": "single",
+    "mainText": "Perhaps worse than attempting to get the bad news\nout of the way is attempting to soften it or simply not\naddress it at all. This “Mum Effect” — a term  <u>coined\nby psychologists Sidney Rosen and Abraham Tesser in\nthe early 1970s — happens because people want to\navoid  becoming  the  target  of  others’  negative\nemotions.</u>  We  all  have  the  opportunity  <u>to  lead\nchange,  yet  it  often  requires  of  us  the  courage  to\ndeliver bad news to our superiors.</u> We don’t want to be\nthe  innocent  messenger  <u>who  falls  before  a  firing\nline.</u>  When  our  survival  instincts  kick  in,  they  can\noverride our courage until the truth of a situation gets\nwatered  down.  “The  Mum  Effect  and  the  resulting\nfiltering  can  have  <u>devastating  effects  in  a  steep\nhierarchy,”  writes  Robert  Sutton,  an  organizational\npsychologist.</u> “ <u>That starts out as bad news becomes\nhappier  and  happier  as  it  travels  up  the  ranks  ―\nbecause after each boss hears the news from his or\nher subordinates, he or she makes it sound a bit less\nbad before passing it up the chain.</u>”",
+    "options": [
+      "① <u>coined\nby psychologists Sidney Rosen and Abraham Tesser in\nthe early 1970s — happens because people want to\navoid  becoming  the  target  of  others’  negative\nemotions.</u>",
+      "② <u>to  lead\nchange,  yet  it  often  requires  of  us  the  courage  to\ndeliver bad news to our superiors.</u>",
+      "③ <u>who  falls  before  a  firing\nline.</u>",
+      "④ <u>devastating  effects  in  a  steep\nhierarchy,”  writes  Robert  Sutton,  an  organizational\npsychologist.</u>",
+      "⑤ <u>That starts out as bad news becomes\nhappier  and  happier  as  it  travels  up  the  ranks  ―\nbecause after each boss hears the news from his or\nher subordinates, he or she makes it sound a bit less\nbad before passing it up the chain.</u>"
+    ],
+    "answers": [
+      5
+    ],
+    "answerMarkers": [
+      "⑤"
+    ],
+    "answer": "5",
+    "correctAnswer": "5",
+    "explanation": "주어가 없는 불완전한 절이 이어지므로, ⑤ That을 관계대명사 What으로 고쳐야 한다.",
+    "docTitle": "2022년 9월 고2 모의고사",
+    "sourceLabel": "출처│2022년 9월 고2 모의고사 no23",
+    "grammarPoint": "기출 어법"
+  },
+  {
+    "id": "wolgo-2022-09-grammar-36",
+    "type": "grammar",
+    "question": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?",
+    "questionVariant": "single",
+    "mainText": "If DNA were the only thing that mattered, there would\nbe  no  particular  reason  to  build  meaningful  social\nprograms to pour good experiences into children and\n <u>protect  them  from  bad  experiences.</u>  But  brains\nrequire the right kind of environment if they are  <u>to\ncorrectly develop.</u> When the first draft of the Human\nGenome Project came to completion at the turn of the\nmillennium,  one  of  the  great  surprises  was  <u>that\nhumans have only about twenty thousand genes.</u> This\nnumber came as a surprise to biologists:  <u>given the\ncomplexity of  the  brain  and  the  body,  it  had  been\nassumed that hundreds of thousands of genes would\nbe required.</u> So how does the massively complicated\nbrain, with its eighty‐six billion neurons,  <u>getting\nbuilt from such a small recipe book?</u> The answer relies\non  a  clever  strategy  implemented  by  the  genome:\nbuild incompletely and let world experience refine.",
+    "options": [
+      "① <u>protect  them  from  bad  experiences.</u>",
+      "② <u>to\ncorrectly develop.</u>",
+      "③ <u>that\nhumans have only about twenty thousand genes.</u>",
+      "④ <u>given the\ncomplexity of  the  brain  and  the  body,  it  had  been\nassumed that hundreds of thousands of genes would\nbe required.</u>",
+      "⑤ <u>getting\nbuilt from such a small recipe book?</u>"
+    ],
+    "answers": [
+      5
+    ],
+    "answerMarkers": [
+      "⑤"
+    ],
+    "answer": "5",
+    "correctAnswer": "5",
+    "explanation": "[응용] 주절의 주어가 없는 명령문이므로, getting 을 get으로 고쳐야 한다.",
+    "docTitle": "2022년 9월 고2 모의고사",
+    "sourceLabel": "출처│2022년 9월 고2 모의고사 no24",
+    "grammarPoint": "기출 어법"
+  },
+  {
+    "id": "wolgo-2022-09-grammar-21",
+    "type": "grammar",
+    "question": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?",
+    "questionVariant": "single",
+    "mainText": "Perhaps worse than attempting to get the bad news\nout of the way is attempting to soften it or simply not\n <u>address it at all.</u> This “Mum Effect” — a term coined\nby psychologists Sidney Rosen and Abraham Tesser in\nthe early 1970s — happens because people want to\navoid  becoming  the  target  of  <u>others’  negative\nemotions.</u> We all have the opportunity to lead change,\nyet it often requires  <u>of us the courage to deliver bad\nnews  to  our  superiors.</u>  We  don’t  want  to  be  the\ninnocent  messenger  who  falls  before  a  firing  line.\nWhen our survival instincts kick in, they can override\nour courage until the truth of a situation gets watered\ndown. “The Mum Effect and the resulting filtering can\nhave  <u>devastated effects in a steep hierarchy,” writes\nRobert  Sutton,  an  organizational  psychologist.</u>  “What\nstarts out as bad news becomes happier and happier\nas it travels up the ranks ― because after each boss\nhears the news from his or her subordinates, he or she\nmakes it sound a bit less  <u>bad before passing it up\nthe chain.</u>”",
+    "options": [
+      "① <u>address it at all.</u>",
+      "② <u>others’  negative\nemotions.</u>",
+      "③ <u>of us the courage to deliver bad\nnews  to  our  superiors.</u>",
+      "④ <u>devastated effects in a steep hierarchy,” writes\nRobert  Sutton,  an  organizational  psychologist.</u>",
+      "⑤ <u>bad before passing it up\nthe chain.</u>"
+    ],
+    "answers": [
+      4
+    ],
+    "answerMarkers": [
+      "④"
+    ],
+    "answer": "4",
+    "correctAnswer": "4",
+    "explanation": "effects를 수식하는 분사로, 파괴적인 결과를 가져 오는 능동관계이므로 현재분사 devastating으로 고쳐야 한다.",
+    "docTitle": "2022년 9월 고2 모의고사",
+    "sourceLabel": "출처│2022년 9월 고2 모의고사 no25",
+    "grammarPoint": "기출 어법"
+  },
+  {
+    "id": "wolgo-2022-09-grammar-22",
+    "type": "grammar",
+    "question": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?",
+    "questionVariant": "single",
+    "mainText": "Most  parents  think  that  if  our  child  would  just\n“behave,” we could stay calm as parents. The truth is\nthat managing our own emotions and actions  <u>to be\nwhat allows us to feel peaceful as parents.</u> Ultimately\nwe can’t control our children or the obstacles they will\nface  ―but  we  can  always  control  our  own  actions.\nParenting isn’t about what our child does, but about \n<u>how  we  respond.</u>  In  fact,  most  of  what  we  call\nparenting  doesn’t  take  place  between  a  parent  and\nchild  but  within  the  parent.  When  a  storm  brews,  a\nparent’s  response  will  either  calm  <u>it  or  trigger  a\nfull‐scale  tsunami.</u>  Staying  calm  enough  to  respond\nconstructively to all that childish behavior ― and the\nstormy emotions behind it ― <u>requires that we grow,\ntoo.</u> If we can use those times when our buttons get\npushed to reflect, not just react, we can notice when\nwe  lose  equilibrium  and  steer  <u>ourselves  back  on\ntrack.</u> This inner growth is the hardest work there is,\nbut it’s what enables you to become a more peaceful\nparent, one day at a time.",
+    "options": [
+      "① <u>to be\nwhat allows us to feel peaceful as parents.</u>",
+      "② <u>how  we  respond.</u>",
+      "③ <u>it  or  trigger  a\nfull‐scale  tsunami.</u>",
+      "④ <u>requires that we grow,\ntoo.</u>",
+      "⑤ <u>ourselves  back  on\ntrack.</u>"
+    ],
+    "answers": [
+      1
+    ],
+    "answerMarkers": [
+      "①"
+    ],
+    "answer": "1",
+    "correctAnswer": "1",
+    "explanation": "'managing~ actions'의 동명사구 주어의 동사자리 이고 주어를 3인칭 단수 취급하므로, ① to be를 is로 고쳐야 한 다.",
+    "docTitle": "2022년 9월 고2 모의고사",
+    "sourceLabel": "출처│2022년 9월 고2 모의고사 no26",
+    "grammarPoint": "기출 어법"
+  },
+  {
+    "id": "wolgo-2022-09-grammar-36",
+    "type": "grammar",
+    "question": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?",
+    "questionVariant": "single",
+    "mainText": "If  DNA  <u>were  the  only  thing  that  mattered,  there\nwould  be  no  particular  reason  to  build  meaningful\nsocial programs to pour good experiences into children\nand protect them from bad</u> <u>experiences.</u> But brains\nrequire the right kind of environment if they are  <u>to\ncorrectly develop.</u> When the first draft of the Human\nGenome Project came to completion at the turn of the\nmillennium,  one  of  the  great  surprises  was  that\nhumans have only about twenty thousand genes. This\nnumber  came  as  a  surprise  to  biologists:  given  the\ncomplexity of the brain and the body,  <u>that had been\nassumed that hundreds of thousands of genes would\nbe required.</u> So how does the massively complicated\nbrain,  with  its  eighty‐six  billion  neurons,  get  built\nfrom such a small recipe book? The answer relies on a\nclever  strategy  implemented  by  the  genome:  build\nincompletely and let world experience  <u>refine.</u>",
+    "options": [
+      "① <u>were  the  only  thing  that  mattered,  there\nwould  be  no  particular  reason  to  build  meaningful\nsocial programs to pour good experiences into children\nand protect them from bad</u>",
+      "② <u>experiences.</u>",
+      "③ <u>to\ncorrectly develop.</u>",
+      "④ <u>that had been\nassumed that hundreds of thousands of genes would\nbe required.</u>",
+      "⑤ <u>refine.</u>"
+    ],
+    "answers": [
+      4
+    ],
+    "answerMarkers": [
+      "④"
+    ],
+    "answer": "4",
+    "correctAnswer": "4",
+    "explanation": "[응용] <it + ~ to 부정사...>의 가주어, 진주어 구 문이므로, ④ that을 가주어인 it으로 고쳐야 한다.",
+    "docTitle": "2022년 9월 고2 모의고사",
+    "sourceLabel": "출처│2022년 9월 고2 모의고사 no27",
+    "grammarPoint": "기출 어법"
+  },
+  {
+    "id": "wolgo-2022-09-grammar-21",
+    "type": "grammar",
+    "question": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?",
+    "questionVariant": "single",
+    "mainText": "Perhaps worse than attempting to get the bad news out\nof  the  way  is  attempting  to  soften  it  or  simply  not\n <u>address it at all.</u> This \"Mum Effect\" ― a term coined by\npsychologists Sidney Rosen and Abraham Tesser in the\nearly 1970s ― happens because people want to avoid\nbecoming the target of others' negative emotions. We all\nhave the opportunity to lead change, yet it often requires\nof us the courage  <u>to deliver bad news to our superiors.</u>\nWe don't want to be the innocent messenger  <u>falling\nbefore a firing line.</u> When our survival instincts kick in,\nthey  can  override  our  courage  until  the  truth  of  a\nsituation gets watered down. \"The Mum Effect and the\nresulting filtering can have devastating effects in a steep\nhierarchy,\"  writes  Robert  Sutton,  an  organizational\npsychologist. \"What starts out as bad news  <u>become\nhappier and happier as it travels up the ranks ― because\nafter  each  boss  hears  the  news  from  his  or  her\nsubordinates, he or she makes it sound a bit less</u> <u>bad\nbefore passing it up the chain.</u>\"",
+    "options": [
+      "① <u>address it at all.</u>",
+      "② <u>to deliver bad news to our superiors.</u>",
+      "③ <u>falling\nbefore a firing line.</u>",
+      "④ <u>become\nhappier and happier as it travels up the ranks ― because\nafter  each  boss  hears  the  news  from  his  or  her\nsubordinates, he or she makes it sound a bit less</u>",
+      "⑤ <u>bad\nbefore passing it up the chain.</u>"
+    ],
+    "answers": [
+      4
+    ],
+    "answerMarkers": [
+      "④"
+    ],
+    "answer": "4",
+    "correctAnswer": "4",
+    "explanation": "선행사를 포함하는 관계대명사절이 주어 역할을 하 고 있고, 주어 what에 대한 동사 starts에 맞춰 본동사도 단수취 급하여 ④ become을 becomes로 고쳐야 한다.",
+    "docTitle": "2022년 9월 고2 모의고사",
+    "sourceLabel": "출처│2022년 9월 고2 모의고사 no28",
+    "grammarPoint": "기출 어법"
+  },
+  {
+    "id": "wolgo-2022-09-grammar-22",
+    "type": "grammar",
+    "question": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?",
+    "questionVariant": "single",
+    "mainText": "Most  parents  think  that  if  our  child  would  just\n“behave,” we could stay calm as parents. The truth is\nthat  managing  our  own  emotions  and  actions  <u>is\nwhat allows us to feel peaceful as parents.</u> Ultimately\nwe can’t control our children or the obstacles  <u>what\nthey  will  face  ―but  we  can  always  control  our  own\nactions.</u> Parenting isn’t about what our child does, but\nabout how we respond. In fact, most of  <u>what we call\nparenting  doesn’t  take  place  between  a  parent  and\nchild  but  within  the  parent.</u>  When  a  storm  brews,  a\nparent’s response will either calm it or trigger a full‐\nscale  tsunami.  Staying  calm  enough  to  respond\nconstructively to all  <u>that childish behavior ― and the\nstormy  emotions  behind  it  ―requires  that  we  grow,\ntoo.</u> If we can use those times when our buttons get\npushed to reflect, not just react, we can notice when\nwe  lose  equilibrium  and  steer  <u>ourselves  back  on\ntrack.</u> This inner growth is the hardest work there is,\nbut it’s what enables you to become a more peaceful\nparent, one day at a time.",
+    "options": [
+      "① <u>is\nwhat allows us to feel peaceful as parents.</u>",
+      "② <u>what\nthey  will  face  ―but  we  can  always  control  our  own\nactions.</u>",
+      "③ <u>what we call\nparenting  doesn’t  take  place  between  a  parent  and\nchild  but  within  the  parent.</u>",
+      "④ <u>that childish behavior ― and the\nstormy  emotions  behind  it  ―requires  that  we  grow,\ntoo.</u>",
+      "⑤ <u>ourselves  back  on\ntrack.</u>"
+    ],
+    "answers": [
+      2
+    ],
+    "answerMarkers": [
+      "②"
+    ],
+    "answer": "2",
+    "correctAnswer": "2",
+    "explanation": "[응용] 선행사를 두고 있는 목적격 관계대명사 자리 로, ② what을 which 또는 that으로 고쳐야 한다.",
+    "docTitle": "2022년 9월 고2 모의고사",
+    "sourceLabel": "출처│2022년 9월 고2 모의고사 no29",
+    "grammarPoint": "기출 어법"
+  }
+]

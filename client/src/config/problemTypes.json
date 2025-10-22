@@ -139,21 +139,6 @@
       "color": "var(--indigo)",
       "instruction": "다음 글의 내용과 가장 유사한 요약을 고르세요."
     },
-    "irrelevant": {
-      "id": "irrelevant",
-      "name": "무관 문장",
-      "description": "본문과 어울리지 않는 문장을 찾는 문제",
-      "points": 2,
-      "difficulty": {
-        "basic": 2,
-        "medium": 2,
-        "advanced": 2
-      },
-      "aiGenerated": true,
-      "icon": "🚫",
-      "color": "var(--violet)",
-      "instruction": "글 전체의 흐름을 살펴보고 주제와 맞지 않는 문장을 고르세요."
-    },
     "implicit": {
       "id": "implicit",
       "name": "함축 추론",
@@ -180,7 +165,6 @@
       "title": 1,
       "theme": 1,
       "summary": 0,
-      "irrelevant": 0,
       "implicit": 0
     },
     "advanced": {
@@ -192,7 +176,6 @@
       "title": 2,
       "theme": 2,
       "summary": 2,
-      "irrelevant": 0,
       "implicit": 0
     }
   },

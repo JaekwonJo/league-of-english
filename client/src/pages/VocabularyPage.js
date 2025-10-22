@@ -81,25 +81,30 @@ const getTimeLimitSeconds = useCallback(() => {
     }
   }, []);
 
-  const resetQuizState = () => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-    questionStartRef.current = null;
-    setQuizState({
-      active: false,
-      loading: false,
-      data: null,
-      index: 0,
-      answers: [],
-      completed: false,
-      submitting: false,
-      result: null
-    });
-    setTotalTime(0);
-    setTimeLeft(0);
-  };
+const resetQuizState = useCallback(() => {
+  if (timerRef.current) {
+    clearInterval(timerRef.current);
+    timerRef.current = null;
+  }
+  questionStartRef.current = null;
+  setQuizState({
+    active: false,
+    loading: false,
+    data: null,
+    index: 0,
+    answers: [],
+    completed: false,
+    submitting: false,
+    result: null
+  });
+  setTotalTime(0);
+  setTimeLeft(0);
+}, []);
+
+  const goBackToDays = useCallback(() => {
+    resetQuizState();
+    setError('');
+  }, [resetQuizState]);
 
   const handleSelectSet = async (setInfo) => {
     if (!setInfo) return;
@@ -204,6 +209,7 @@ const getTimeLimitSeconds = useCallback(() => {
 
   const submitQuiz = useCallback(async (finalAnswers, reason = 'manual') => {
     if (!selectedSet?.id) {
+      setQuizState((prev) => ({ ...prev, submitting: false }));
       setError('단어장을 다시 선택해 주세요.');
       return;
     }
@@ -226,7 +232,6 @@ const getTimeLimitSeconds = useCallback(() => {
 
       setQuizState((prev) => ({
         ...prev,
-        submitting: false,
         result: {
           summary: response.summary,
           detail: response.detail,
@@ -235,6 +240,7 @@ const getTimeLimitSeconds = useCallback(() => {
           reason
         }
       }));
+
       if (reason === 'time') {
         setMessage('⏰ 제한 시간이 끝났어요! 제출된 결과를 살펴보고 다음에 더 나은 기록에 도전해 볼까요?');
       } else {
@@ -242,8 +248,9 @@ const getTimeLimitSeconds = useCallback(() => {
       }
     } catch (err) {
       console.error('submitQuiz error:', err);
-      setQuizState((prev) => ({ ...prev, submitting: false }));
       setError(err?.message || '결과를 기록하지 못했어요. 네트워크 상태를 확인한 후 다시 시도해 주세요.');
+    } finally {
+      setQuizState((prev) => ({ ...prev, submitting: false }));
     }
   }, [selectedDayKey, selectedSet?.id]);
 
@@ -426,11 +433,6 @@ const getTimeLimitSeconds = useCallback(() => {
 
     goBackToDays();
   }, [finalizeAndSubmit, goBackToDays, quizState.active, quizState.completed]);
-
-  function goBackToDays() {
-    resetQuizState();
-    setError('');
-  }
 
   const quizSummary = quizState.result?.summary || null;
 
@@ -725,9 +727,33 @@ const QuizSummary = ({ summary, detail, stats, rank, submitting, onRetry, onBack
       )}
 
       {rank && (
-        <div style={styles.rankBanner}>
-          <span>현재 포인트: {rank.points}점</span>
-          {rank.rank && <span>랭킹: {rank.rank}위</span>}
+        <div style={styles.rankCard}>
+          <div style={styles.rankHeader}>
+            <span style={styles.rankTier}>
+              {rank.tier?.icon || '🌟'} {rank.tier?.nameKr || rank.tier?.name || '티어 미정'}
+            </span>
+            <span style={styles.rankPoints}>{rank.points ?? 0} LP</span>
+            {typeof rank.rank === 'number' && (
+              <span style={styles.rankOrder}>전체 {rank.rank}위</span>
+            )}
+          </div>
+          {rank.nextTier ? (
+            <div style={styles.progressBlock}>
+              <div style={styles.progressLabel}>
+                다음 티어 {rank.nextTier.nameKr || rank.nextTier.name}까지 {Math.max(0, (rank.nextTier.minLP || 0) - (rank.points || 0))}점 남았어요!
+              </div>
+              <div style={styles.progressBar}>
+                <div
+                  style={{
+                    ...styles.progressFill,
+                    width: `${Math.min(100, Math.max(0, rank.progressToNext || 0))}%`
+                  }}
+                />
+              </div>
+            </div>
+          ) : (
+            <div style={styles.progressLabel}>최고 티어에 도달했어요! 멋져요! 🏆</div>
+          )}
         </div>
       )}
 
@@ -1006,7 +1032,7 @@ const styles = {
     border: '2px solid transparent',
     borderRadius: '16px',
     padding: '14px',
-    background: '#fff',
+    background: 'var(--surface-card)',
     display: 'grid',
     gap: '4px'
   },
@@ -1015,19 +1041,62 @@ const styles = {
     flexDirection: 'column',
     gap: '4px'
   },
-  rankBanner: {
+  rankCard: {
+    padding: '18px 20px',
+    borderRadius: '18px',
+    background: 'linear-gradient(135deg, rgba(52, 211, 153, 0.18) 0%, rgba(14, 165, 233, 0.18) 100%)',
+    marginBottom: '18px',
+    display: 'grid',
+    gap: '12px',
+    color: 'var(--text-primary)'
+  },
+  rankHeader: {
     display: 'flex',
-    gap: '16px',
-    padding: '12px 16px',
-    borderRadius: '14px',
-    background: 'var(--surface-muted)',
-    marginBottom: '16px',
-    fontWeight: 600
+    flexWrap: 'wrap',
+    gap: '12px',
+    alignItems: 'center',
+    fontWeight: 700,
+    fontSize: '1.05rem'
+  },
+  rankTier: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '6px 12px',
+    borderRadius: '999px',
+    background: 'var(--surface-card)',
+    boxShadow: '0 6px 16px rgba(14, 165, 233, 0.25)'
+  },
+  rankPoints: {
+    fontWeight: 700,
+    color: 'var(--color-blue-500)'
+  },
+  rankOrder: {
+    fontWeight: 600,
+    color: 'var(--text-secondary)'
+  },
+  progressBlock: {
+    display: 'grid',
+    gap: '8px'
+  },
+  progressLabel: {
+    fontSize: '0.95rem',
+    color: 'var(--text-secondary)'
+  },
+  progressBar: {
+    height: '10px',
+    borderRadius: '999px',
+    background: 'rgba(255, 255, 255, 0.6)',
+    overflow: 'hidden'
+  },
+  progressFill: {
+    height: '100%',
+    background: 'linear-gradient(90deg, var(--color-blue-500) 0%, var(--color-green-500) 100%)'
   },
   statsCallout: {
     padding: '12px 16px',
     borderRadius: '14px',
-    background: 'var(--surface-muted)',
+    background: 'var(--surface-soft)',
     marginBottom: '16px',
     fontSize: '0.95rem'
   },
@@ -1058,8 +1127,8 @@ const styles = {
     gap: '12px'
   },
   primaryButton: {
-    background: 'var(--color-blue-500)',
-    color: '#fff',
+    background: 'var(--accent-gradient)',
+    color: 'var(--text-on-accent)',
     border: 'none',
     borderRadius: '12px',
     padding: '12px 20px',

@@ -6,7 +6,8 @@ const {
   normalizeWhitespace,
   stripTags,
   escapeRegex,
-  labelToIndex
+  labelToIndex,
+  convertStarsToUnderline
 } = require('./shared');
 const { CIRCLED_DIGITS: GRAMMAR_DIGITS } = require('../../utils/eobeopTemplate');
 
@@ -44,7 +45,7 @@ function normalizeUnderlinedOptions(rawOptions = [], failureReasons = null) {
     let status = null;
 
     if (typeof entry === 'string') {
-      rawText = entry.trim();
+      rawText = convertStarsToUnderline(entry.trim());
       const prefix = rawText.slice(0, 1);
       if (CIRCLED_DIGITS.includes(prefix)) {
         label = prefix;
@@ -52,7 +53,7 @@ function normalizeUnderlinedOptions(rawOptions = [], failureReasons = null) {
       }
     } else if (entry && typeof entry === 'object') {
       label = entry.label || entry.symbol || entry.id || entry.choice || entry.option || entry.key;
-      rawText = entry.text || entry.value || entry.segment || entry.snippet || entry.option || '';
+      rawText = convertStarsToUnderline(entry.text || entry.value || entry.segment || entry.snippet || entry.option || '');
       reason = entry.reason || entry.rationale || entry.comment || entry.explanation || entry.note;
       tag = entry.errorType || entry.trapType || entry.tag || entry.defect || entry.category || entry.grammarPoint || entry.vocabPoint;
       status = normalizeOptionStatus(entry.status || entry.role || entry.kind || entry.correctness);
@@ -63,18 +64,18 @@ function normalizeUnderlinedOptions(rawOptions = [], failureReasons = null) {
         status = entry.isWrong ? 'incorrect' : 'correct';
       }
       if (!rawText && entry.underlined) {
-        rawText = `<u>${String(entry.underlined).trim()}</u>`;
+        rawText = convertStarsToUnderline(`<u>${String(entry.underlined).trim()}</u>`);
       }
       if ((!rawText || !/<u[\s\S]*?<\/u>/i.test(String(rawText))) && entry.snippet) {
         const snippet = String(entry.snippet).trim();
         if (snippet) {
-          rawText = `<u>${snippet}</u>`;
+          rawText = convertStarsToUnderline(`<u>${snippet}</u>`);
         }
       }
       if ((!rawText || !/<u[\s\S]*?<\/u>/i.test(String(rawText))) && entry.segment) {
         const segment = String(entry.segment).trim();
         if (segment) {
-          rawText = `<u>${segment}</u>`;
+          rawText = convertStarsToUnderline(`<u>${segment}</u>`);
         }
       }
     } else {
@@ -90,7 +91,7 @@ function normalizeUnderlinedOptions(rawOptions = [], failureReasons = null) {
     }
     available.delete(index);
 
-    let clean = String(rawText || '')
+    let clean = convertStarsToUnderline(String(rawText || ''))
       .replace(/^[\u2460-\u2468]\s*/, '')
       .trim();
 
@@ -117,9 +118,9 @@ function normalizeUnderlinedOptions(rawOptions = [], failureReasons = null) {
 
     if (!/<u[\s\S]*?<\/u>/.test(clean)) {
       if (failureReasons) {
-        failureReasons.push(`옵션 ${index + 1}에 밑줄 구간이 없습니다.`);
+        failureReasons.push(`옵션 ${index + 1}에 밑줄 구간이 없어 자동으로 추가했어요.`);
       }
-      throw new Error(`option ${index + 1} missing underline`);
+      clean = `<u>${clean}</u>`;
     }
 
     const underlineMatches = clean.match(/<u[\s\S]*?<\/u>/gi) || [];

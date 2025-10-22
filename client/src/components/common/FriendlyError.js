@@ -1,5 +1,3 @@
-'use strict';
-
 import React, { useMemo } from 'react';
 
 const containerStyle = {
@@ -7,7 +5,7 @@ const containerStyle = {
   margin: '80px auto',
   padding: '32px',
   borderRadius: '24px',
-  boxShadow: '0 30px 60px rgba(15, 23, 42, 0.18)',
+  boxShadow: '0 30px 60px var(--surface-shadow)',
   background: 'var(--surface-card)',
   color: 'var(--text-primary)',
   textAlign: 'center',
@@ -54,18 +52,19 @@ const primaryButtonStyle = {
   padding: '12px 22px',
   borderRadius: '12px',
   border: 'none',
-  background: 'linear-gradient(135deg, #60a5fa 0%, #2563eb 100%)',
-  color: '#fff',
+  background: 'var(--accent-gradient)',
+  color: 'var(--text-on-accent)',
   fontSize: '15px',
   fontWeight: 700,
-  cursor: 'pointer'
+  cursor: 'pointer',
+  boxShadow: '0 16px 28px var(--accent-shadow)'
 };
 
 const secondaryButtonStyle = {
   ...primaryButtonStyle,
   background: 'var(--surface-soft)',
   color: 'var(--text-primary)',
-  boxShadow: '0 12px 24px rgba(15, 23, 42, 0.12)'
+  boxShadow: '0 12px 24px var(--surface-shadow)'
 };
 
 const FriendlyError = ({

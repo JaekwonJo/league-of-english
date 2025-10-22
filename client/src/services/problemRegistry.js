@@ -199,14 +199,6 @@ const registerDefaultHandlers = () => {
     showBlanks: true
   }));
 
-  // 무관한 문장(문맥상 적절하지 않은 문장)
-  registry.registerHandler('irrelevant', (data) => ({
-    ...data,
-    question: stripLeadingQ(data.question),
-    displayType: 'choice',
-    showSentences: true
-  }));
-
   // 함축 의미(밑줄 의미)
   registry.registerHandler('implicit', (data) => ({
     ...data,
@@ -234,7 +226,7 @@ const registerDefaultValidators = () => {
   });
 
   // 기본 검증 (나머지)
-  ['blank', 'grammar', 'grammar_span', 'vocabulary', 'title', 'theme', 'irrelevant', 'implicit'].forEach(type => {
+  ['blank', 'grammar', 'grammar_span', 'vocabulary', 'title', 'theme', 'implicit'].forEach(type => {
     registry.registerValidator(type, (answer, correct) => {
       return answer?.toString() === correct?.toString();
     });

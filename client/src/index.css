@@ -55,6 +55,7 @@
   --sidebar-button-text: #FFFFFF;
   --scroll-top-bg: rgba(59, 130, 246, 0.85);
   --scroll-top-text: #FFFFFF;
+  --dialog-scrim: rgba(15, 23, 42, 0.55);
   --surface-soft-solid: #F8FAFC;
   --surface-soft-strong: #F1F5F9;
   --surface-soft-muted: #F3F4F6;
@@ -85,6 +86,7 @@
   --accent-primary-soft: #BFDBFE;
   --accent-primary-muted: #E0F2FE;
   --accent-primary-pale: #DBEAFE;
+  --accent-gradient: linear-gradient(135deg, #3B82F6 0%, #6366F1 100%);
   --teal-accent: #14B8A6;
   --pink-accent: #EC4899;
   --info: #0EA5E9;
@@ -188,7 +190,7 @@
   --text-primary: #E2E8F0;
   --text-secondary: #CBD5F5;
   --text-muted: #94A3B8;
-  --text-inverse: #0B1120;
+  --text-inverse: #F8FAFC;
   --accent: #60A5FA;
   --accent-strong: #BFDBFE;
   --accent-soft: rgba(96, 165, 250, 0.3);
@@ -225,6 +227,7 @@
   --sidebar-button-text: #E2E8F0;
   --scroll-top-bg: rgba(59, 130, 246, 0.9);
   --scroll-top-text: #F8FAFC;
+  --dialog-scrim: rgba(2, 6, 23, 0.72);
   --surface-soft-solid: rgba(15, 23, 42, 0.88);
   --surface-soft-strong: rgba(15, 23, 42, 0.95);
   --surface-soft-muted: rgba(30, 41, 59, 0.65);
@@ -255,6 +258,7 @@
   --accent-primary-soft: rgba(59, 130, 246, 0.35);
   --accent-primary-muted: rgba(14, 165, 233, 0.22);
   --accent-primary-pale: rgba(148, 193, 255, 0.22);
+  --accent-gradient: linear-gradient(135deg, #60A5FA 0%, #4F46E5 100%);
   --teal-accent: #2DD4BF;
   --pink-accent: #F472B6;
   --info: #38BDF8;

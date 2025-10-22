@@ -3,11 +3,14 @@ import reviewStyles from '../problemReviewStyles';
 import { problemDisplayStyles } from '../problemDisplayStyles';
 import { renderWithUnderline } from '../utils/textFormatters';
 
-const formatChoiceList = (choices) => {
+const formatChoiceList = (choices, showOnlyMarkers) => {
   if (!choices.length) return '선택 없음';
   return choices
     .map((choice) => {
       const value = choice.value || choice.raw;
+      if (showOnlyMarkers) {
+        return choice.marker;
+      }
       return `${choice.marker} ${value}`.trim();
     })
     .join(', ');
@@ -22,6 +25,7 @@ const ReviewOptions = ({
   isAnswerCorrect,
   explanationText,
   reviewMeta,
+  showOnlyMarkers = false,
 }) => {
   if (!optionRecords.length) {
     return (
@@ -33,8 +37,8 @@ const ReviewOptions = ({
 
   const reviewMetaBox = (
     <div style={reviewStyles.metaBox}>
-      <div><strong>정답</strong>: {formatChoiceList(correctChoices)}</div>
-      <div><strong>내 답</strong>: {formatChoiceList(userChoices)}</div>
+      <div><strong>정답</strong>: {formatChoiceList(correctChoices, showOnlyMarkers)}</div>
+      <div><strong>내 답</strong>: {formatChoiceList(userChoices, showOnlyMarkers)}</div>
       <div><strong>결과</strong>: {isAnswerCorrect ? '정답 ✅' : '오답 ❌'}</div>
       {Number.isFinite(reviewMeta?.timeSpent) && (
         <div><strong>풀이 시간</strong>: {Math.max(0, reviewMeta.timeSpent)}초</div>
@@ -88,9 +92,11 @@ const ReviewOptions = ({
             <div style={reviewStyles.optionHeader}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
                 <span style={reviewStyles.marker}>{option.marker}</span>
-                <span style={reviewStyles.optionText}>
-                  {option.value ? renderWithUnderline(option.value) : renderWithUnderline(option.raw)}
-                </span>
+                {!showOnlyMarkers && (
+                  <span style={reviewStyles.optionText}>
+                    {option.value ? renderWithUnderline(option.value) : renderWithUnderline(option.raw)}
+                  </span>
+                )}
               </div>
               {badges.length > 0 && <div style={reviewStyles.badgeRow}>{badges}</div>}
             </div>

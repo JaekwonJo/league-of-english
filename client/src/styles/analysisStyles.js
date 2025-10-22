@@ -83,7 +83,7 @@ export const analysisStyles = {
     background: 'var(--surface-card)',
     borderRadius: '16px',
     padding: '24px',
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+    boxShadow: '0 4px 12px var(--surface-shadow)',
     cursor: 'pointer',
     transition: 'all 0.3s ease',
     border: '1px solid var(--border-muted)'
@@ -140,7 +140,7 @@ export const analysisStyles = {
   detailContainer: {
     background: 'var(--surface-card)',
     borderRadius: '16px',
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+    boxShadow: '0 4px 12px var(--surface-shadow)',
     overflow: 'hidden'
   },
   documentInfo: {
@@ -254,89 +254,66 @@ export const analysisStyles = {
   sentenceGrid: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '18px'
+    gap: '28px'
   },
   sentenceCard: {
-    background: 'var(--surface-card)',
-    borderRadius: '18px',
-    padding: '20px',
-    boxShadow: '0 12px 32px rgba(15, 23, 42, 0.12)',
-    border: '1px solid var(--border-subtle)'
+    padding: '0 0 28px',
+    borderBottom: '1px solid rgba(148, 163, 184, 0.35)'
+  },
+  sentenceCardLast: {
+    borderBottom: 'none',
+    paddingBottom: 0
   },
   sentenceHeader: {
     display: 'flex',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '12px'
+    alignItems: 'baseline',
+    marginBottom: '10px'
   },
   sentenceEnglish: {
-    fontSize: '1.05rem',
+    fontSize: '1.08rem',
     fontWeight: 600,
-    color: 'var(--text-primary)'
+    color: 'var(--text-primary)',
+    letterSpacing: '0.01em'
   },
   topicBadge: {
-    padding: '4px 10px',
-    borderRadius: '8px',
-    background: 'var(--accent-badge-bg)',
-    color: 'var(--accent-badge-text)',
+    padding: '4px 12px',
+    borderRadius: '999px',
+    background: 'rgba(244, 114, 182, 0.18)',
+    color: '#F472B6',
     fontSize: '0.75rem',
     fontWeight: 700
   },
   sentenceKorean: {
-    background: 'var(--surface-soft-solid)',
-    padding: '12px',
-    borderRadius: '12px',
-    marginBottom: '12px',
-    color: 'var(--text-secondary)'
+    fontSize: '1.02rem',
+    fontWeight: 500,
+    color: 'var(--text-secondary)',
+    marginBottom: '14px',
+    lineHeight: 1.7
   },
   sentenceBody: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-    gap: '14px'
-  },
-  sentenceBlock: {
-    background: 'var(--surface-soft-strong)',
-    borderRadius: '12px',
-    padding: '12px',
-    border: '1px solid var(--border-muted)',
-    fontSize: '0.95rem',
-    lineHeight: 1.7,
-    color: 'var(--text-secondary)'
-  },
-  vocabList: {
-    margin: 0,
-    paddingLeft: '18px'
-  },
-  generatorBar: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '12px',
-    background: 'var(--surface-card)',
-    borderRadius: '16px',
-    padding: '18px',
-    border: '1px dashed var(--border-muted)',
-    marginTop: '18px'
+    gap: '10px'
   },
-  generatorButtons: {
+  sentenceBlock: {
+    fontSize: '0.98rem',
+    lineHeight: 1.75,
+    color: 'var(--text-primary)',
+    whiteSpace: 'pre-wrap'
+  },
+  vocabList: {
+    margin: '6px 0 0',
+    padding: 0,
+    listStyle: 'none',
     display: 'flex',
-    gap: '12px',
-    flexWrap: 'wrap'
+    flexDirection: 'column',
+    gap: '6px'
   },
-  generatorButton: {
-    flex: '0 0 auto',
-    padding: '10px 18px',
-    borderRadius: '999px',
-    border: 'none',
-    background: 'var(--submit-gradient)',
-    color: 'var(--text-on-accent)',
-    fontWeight: 700,
-    cursor: 'pointer',
-    boxShadow: '0 12px 24px var(--submit-shadow)'
-  },
-  generatorButtonDisabled: {
-    opacity: 0.6,
-    cursor: 'not-allowed',
-    boxShadow: 'none'
+  vocabListItem: {
+    lineHeight: 1.7,
+    fontSize: '0.96rem',
+    color: 'var(--text-secondary)'
   },
   emptyVariant: {
     background: 'var(--surface-card)',
@@ -604,6 +581,138 @@ export const analysisStyles = {
     lineHeight: '1.6'
   },
 
+  generationOverlay: {
+    position: 'fixed',
+    inset: 0,
+    background: 'rgba(10, 12, 16, 0.65)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1350,
+    padding: '24px'
+  },
+  generationCard: {
+    width: 'min(420px, 92%)',
+    background: 'var(--surface-card)',
+    borderRadius: 24,
+    padding: '32px 36px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 18,
+    textAlign: 'center',
+    boxShadow: '0 32px 60px rgba(15, 23, 42, 0.35)'
+  },
+  generationBadge: {
+    alignSelf: 'center',
+    background: 'rgba(99, 102, 241, 0.15)',
+    color: 'var(--accent-primary)',
+    padding: '4px 12px',
+    borderRadius: 999,
+    fontWeight: 600,
+    letterSpacing: 1
+  },
+  generationTitle: {
+    margin: 0,
+    fontSize: '1.4rem',
+    color: 'var(--text-primary)'
+  },
+  generationSubtitle: {
+    margin: 0,
+    color: 'var(--text-secondary)',
+    lineHeight: 1.5
+  },
+  generationButtons: {
+    display: 'flex',
+    gap: 16,
+    justifyContent: 'center',
+    flexWrap: 'wrap'
+  },
+  generationButton: {
+    minWidth: 120,
+    padding: '12px 18px',
+    borderRadius: 12,
+    border: 'none',
+    background: 'var(--accent-primary)',
+    color: 'var(--text-on-accent)',
+    fontWeight: 600,
+    cursor: 'pointer',
+    boxShadow: '0 14px 30px rgba(99, 102, 241, 0.35)'
+  },
+  generationCancel: {
+    alignSelf: 'center',
+    marginTop: 4,
+    background: 'none',
+    border: 'none',
+    color: 'var(--text-muted)',
+    cursor: 'pointer'
+  },
+  generationEmpty: {
+    padding: 16,
+    borderRadius: 12,
+    background: 'var(--surface-soft)',
+    color: 'var(--text-secondary)'
+  },
+  loadingCard: {
+    width: 'min(460px, 94%)',
+    padding: '38px 32px',
+    borderRadius: 26,
+    background: 'var(--surface-card)',
+    boxShadow: '0 32px 60px rgba(15, 23, 42, 0.4)',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 20,
+    textAlign: 'center'
+  },
+  loadingSpinner: {
+    width: 64,
+    height: 64,
+    borderRadius: '50%',
+    border: '6px solid rgba(148, 163, 184, 0.25)',
+    borderTopColor: 'var(--accent-primary)',
+    animation: 'spin 1s linear infinite'
+  },
+  loadingMessage: {
+    margin: 0,
+    fontSize: '1.1rem',
+    color: 'var(--text-primary)'
+  },
+  loadingWordBox: {
+    background: 'var(--surface-soft)',
+    borderRadius: 14,
+    padding: '12px 16px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 6,
+    width: '100%'
+  },
+  loadingWord: {
+    fontSize: '1.3rem',
+    fontWeight: 700,
+    color: 'var(--accent-primary)'
+  },
+  loadingMeaning: {
+    color: 'var(--text-secondary)'
+  },
+  loadingQuoteBox: {
+    background: 'rgba(148, 163, 184, 0.12)',
+    borderRadius: 14,
+    padding: '14px 18px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 8,
+    width: '100%'
+  },
+  loadingQuote: {
+    margin: 0,
+    color: 'var(--text-secondary)',
+    fontStyle: 'italic'
+  },
+  loadingQuoteAuthor: {
+    alignSelf: 'flex-end',
+    color: 'var(--text-muted)',
+    fontSize: '0.9rem'
+  },
   word: {
     fontWeight: 'bold',
     color: 'var(--text-primary)',

@@ -48,36 +48,60 @@ router.post(
       let finalContent = '';
       let finalTitle = title || 'Untitled';
       let sources = [];
+      let vocabularyData = null;
 
       if (req.file.mimetype === 'application/pdf') {
         const dataBuffer = fs.readFileSync(req.file.path);
         const pdfData = await pdfParse(dataBuffer);
-        rawText = cleanPDFText(pdfData.text || '');
+        const pdfText = pdfData.text || '';
 
-        // Use NewPDFParser for auto passage extraction
-        try {
-          const parser = new NewPDFParser();
-          parsedData = await parser.parse(rawText);
-          finalContent = parsedData.totalContent || '';
-          finalTitle = title === 'Auto Extract' ? (parsedData.title || title) : (title || parsedData.title || 'Untitled');
-          sources = parsedData.sources || [];
-        } catch (e) {
-          console.warn('[documents] PDF parser failed, falling back:', e.message);
-          finalContent = extractEnglishOnly(rawText);
+        if (type === 'vocabulary') {
+          const VocabularyParser = require('../utils/vocabularyParser');
+          const parser = new VocabularyParser();
+          vocabularyData = parser.parse(pdfText);
+
+          if (!vocabularyData.days || vocabularyData.days.length === 0) {
+            try { fs.unlinkSync(req.file.path); } catch {}
+            return res.status(400).json({ message: 'PDF에서 단어 목록을 찾지 못했습니다. 문서 형식을 확인해 주세요.' });
+          }
+
+          finalContent = JSON.stringify({
+            vocabulary: {
+              ...vocabularyData,
+              sourceFilename: req.file.originalname
+            }
+          });
+          rawText = pdfText;
+        } else {
+          rawText = cleanPDFText(pdfText);
+
+          // Use NewPDFParser for auto passage extraction
+          try {
+            const parser = new NewPDFParser();
+            parsedData = await parser.parse(rawText);
+            finalContent = parsedData.totalContent || '';
+            finalTitle = title === 'Auto Extract' ? (parsedData.title || title) : (title || parsedData.title || 'Untitled');
+            sources = parsedData.sources || [];
+          } catch (e) {
+            console.warn('[documents] PDF parser failed, falling back:', e.message);
+            finalContent = extractEnglishOnly(rawText);
+          }
         }
       } else {
         rawText = fs.readFileSync(req.file.path, 'utf-8');
         finalContent = extractEnglishOnly(rawText);
       }
 
-      if (!finalContent || finalContent.length < 100) {
+      if (type !== 'vocabulary' && (!finalContent || finalContent.length < 100)) {
         try { fs.unlinkSync(req.file.path); } catch {}
         return res.status(400).json({ message: '유효한 영어 본문을 찾지 못했습니다.' });
       }
 
       // Prepare content to store: JSON if parsedData exists
       let contentToStore;
-      if (parsedData && Array.isArray(parsedData.passages) && parsedData.passages.length > 0) {
+      if (type === 'vocabulary' && vocabularyData) {
+        contentToStore = finalContent;
+      } else if (parsedData && Array.isArray(parsedData.passages) && parsedData.passages.length > 0) {
         contentToStore = JSON.stringify({
           content: finalContent,
           passages: parsedData.passages,
@@ -98,7 +122,19 @@ router.post(
         [finalTitle, contentToStore, type, category, user?.school || '전체', grade || null, req.user.id]
       );
 
-      res.status(201).json({ id: result.id, message: '문서가 업로드되었습니다.', parsed: !!parsedData, passages: parsedData?.passages?.length || 0 });
+      const responsePayload = {
+        id: result.id,
+        message: '문서가 업로드되었습니다.',
+        parsed: !!parsedData,
+        passages: parsedData?.passages?.length || 0
+      };
+
+      if (type === 'vocabulary' && vocabularyData) {
+        responsePayload.vocabularyDays = vocabularyData.totalDays;
+        responsePayload.totalWords = vocabularyData.totalWords;
+      }
+
+      res.status(201).json(responsePayload);
     } catch (error) {
       console.error('[documents] upload error:', error);
       res.status(500).json({ message: '문서 업로드 중 오류가 발생했습니다.' });

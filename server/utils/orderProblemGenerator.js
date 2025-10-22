@@ -3,6 +3,9 @@
  */
 
 const ProblemGenerationUtils = require('./problemGenerationUtils');
+const SimpleOrderGenerator = require('./simpleOrderGenerator');
+
+const SYMBOLS = ['①', '②', '③', '④', '⑤'];
 
 class OrderProblemGenerator {
   /**
@@ -52,6 +55,25 @@ class OrderProblemGenerator {
     }
 
     if (problems.length < count) {
+      console.log('🔁 규칙 기반 생성만으로 부족하여 간단 생성기 보충을 시도합니다.');
+      try {
+        const simpleGenerator = new SimpleOrderGenerator();
+        const fallbackNeeded = count - problems.length;
+        const simpleProblems = simpleGenerator.generateOrderProblems(passages, difficulty, fallbackNeeded);
+        for (const simpleProblem of simpleProblems) {
+          if (problems.length >= count) break;
+          const converted = this.transformSimpleProblem(simpleProblem);
+          if (converted) {
+            problems.push(converted);
+            console.log('✅ 간단 생성기 보충 문제 추가 완료');
+          }
+        }
+      } catch (error) {
+        console.log('⚠️ 간단 생성기 보충 중 오류:', error?.message || error);
+      }
+    }
+
+    if (problems.length < count) {
       console.log(`⚠️ 요청한 ${count}개 중 ${problems.length}개만 생성되었습니다.`);
     }
 
@@ -68,11 +90,38 @@ class OrderProblemGenerator {
     console.log(`📝 문장 분리 결과: ${rawSentences.length}개`);
     rawSentences.forEach((sent, idx) => console.log(`  ${idx + 1}. "${sent.substring(0, 60)}..."`));
 
-    const sentences = ProblemGenerationUtils.filterValidSentences(rawSentences, 25);
-    console.log(`✅ 필터링 후 문장: ${sentences.length}개`);
+    let sentences = ProblemGenerationUtils.filterValidSentences(rawSentences, 25);
+    console.log(`✅ 1차 필터링 후 문장: ${sentences.length}개`);
 
     if (sentences.length < targetParts + 1) {
-      console.log(`⚠️ 문장이 부족합니다: ${sentences.length} < ${targetParts + 1}`);
+      console.log('⚠️ 문장이 충분하지 않아 보조 임계값으로 재시도합니다.');
+      const fallbackThresholds = [20, 16, 12, 8];
+      for (const threshold of fallbackThresholds) {
+        const candidate = ProblemGenerationUtils.filterValidSentences(rawSentences, threshold);
+        console.log(`  ↪︎ ${threshold}자 기준 필터링 결과: ${candidate.length}개`);
+        if (candidate.length >= targetParts + 1) {
+          sentences = candidate;
+          break;
+        }
+        if (candidate.length > sentences.length) {
+          sentences = candidate;
+        }
+      }
+    }
+
+    if (sentences.length < targetParts + 1) {
+      console.log('⚠️ 필터링 후에도 문장이 부족하여 원시 문장을 완화된 조건으로 사용합니다.');
+      const relaxed = rawSentences
+        .map((sentence) => (sentence ? sentence.trim() : ''))
+        .filter((sentence) => sentence && /[a-zA-Z]/.test(sentence))
+        .map((sentence) => (/[.!?]$/.test(sentence) ? sentence : `${sentence}.`));
+      if (relaxed.length >= targetParts + 1) {
+        sentences = relaxed;
+      }
+    }
+
+    if (sentences.length < targetParts + 1) {
+      console.log(`⚠️ 문장이 여전히 부족합니다: ${sentences.length} < ${targetParts + 1}`);
       return null;
     }
 
@@ -173,6 +222,90 @@ class OrderProblemGenerator {
     }
 
     return 1;
+  }
+
+  /**
+   * 간단 순서배열 생성기를 통해 반환된 문제를 정규 형식으로 변환
+   */
+  static transformSimpleProblem(simpleProblem) {
+    if (!simpleProblem || !Array.isArray(simpleProblem.sentences) || simpleProblem.sentences.length === 0) {
+      return null;
+    }
+
+    const baseParts = simpleProblem.sentences
+      .map((item) => ({
+        originalLabel: item?.label ? String(item.label).trim().toUpperCase() : '',
+        text: item?.text ? String(item.text).trim() : ''
+      }))
+      .filter((item) => item.text.length > 0);
+
+    const partCount = baseParts.length;
+    if (partCount < 2) return null;
+
+    const canonicalLabels = baseParts.map((part, index) => part.originalLabel || String.fromCharCode(65 + index));
+    const normalizedAnswer = String(simpleProblem.correctAnswer || '')
+      .toUpperCase()
+      .replace(/[^A-Z]/g, '');
+    if (!normalizedAnswer) return null;
+
+    const shuffledParts = ProblemGenerationUtils.shuffleArray(baseParts.map((part) => ({ ...part })));
+    const displayLabels = ['A', 'B', 'C', 'D', 'E'].slice(0, shuffledParts.length);
+    const labelMap = new Map();
+    const sentenceChoices = shuffledParts.map((part, idx) => {
+      const originalLabel = part.originalLabel || canonicalLabels[idx] || displayLabels[idx];
+      const assignedLabel = displayLabels[idx];
+      labelMap.set(originalLabel, assignedLabel);
+      return {
+        label: assignedLabel,
+        text: part.text
+      };
+    });
+
+    const correctSequence = normalizedAnswer
+      .split('')
+      .map((label) => labelMap.get(label) || displayLabels[0])
+      .join('');
+
+    const permutations = ProblemGenerationUtils.generatePermutations(displayLabels);
+    const otherValues = permutations
+      .map((perm) => perm.join(''))
+      .filter((value) => value !== correctSequence);
+    const optionValuesBase = [correctSequence, ...otherValues];
+    const uniqueOptionValues = [...new Set(optionValuesBase)];
+    const trimmedValues = uniqueOptionValues.slice(0, Math.min(5, uniqueOptionValues.length));
+
+    let shuffledValues = ProblemGenerationUtils.shuffleArray(trimmedValues);
+    if (!shuffledValues.includes(correctSequence)) {
+      shuffledValues = ProblemGenerationUtils.shuffleArray([
+        correctSequence,
+        ...shuffledValues.slice(0, Math.max(0, 4))
+      ]);
+    }
+
+    const multipleChoices = shuffledValues.slice(0, 5).map((value, idx) => ({
+      number: idx + 1,
+      symbol: SYMBOLS[idx] || `${idx + 1}.`,
+      value
+    }));
+
+    const answerIndex = multipleChoices.findIndex((choice) => choice.value === correctSequence);
+    const answer = answerIndex === -1 ? '1' : String(multipleChoices[answerIndex].number);
+
+    return {
+      type: 'order',
+      mainText: simpleProblem.mainText || '',
+      sentences: sentenceChoices,
+      multipleChoices,
+      answer,
+      correctOrder: correctSequence,
+      explanation:
+        simpleProblem.explanation || `올바른 순서는 ${correctSequence.split('').join('-')} 입니다.`,
+      is_ai_generated: false,
+      metadata: {
+        ...(simpleProblem.metadata || {}),
+        generator: 'simple-fallback'
+      }
+    };
   }
 }
 

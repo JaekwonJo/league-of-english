@@ -1,37 +1,65 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { api } from '../services/api.service';
 import { analysisStyles } from '../styles/analysisStyles';
 import PassagePickerGrid from '../components/shared/PassagePickerGrid';
 import PassagePreviewModal from '../components/shared/PassagePreviewModal';
 import FriendlyError from '../components/common/FriendlyError';
 
+const MAX_VARIANTS_PER_PASSAGE = 2;
+
+const GENERATION_WORDS = [
+  { word: 'spark', meaning: '불꽃; 아이디어가 시작되는 불씨' },
+  { word: 'nurture', meaning: '길러 주다; 애정을 쏟아 키우다' },
+  { word: 'momentum', meaning: '관성, 추진력; 계속 나아가게 하는 힘' },
+  { word: 'focus', meaning: '집중; 마음을 한곳에 모으는 상태' }
+];
+
+const GENERATION_QUOTES = [
+  { text: 'Education is the kindling of a flame, not the filling of a vessel.', author: 'William Butler Yeats' },
+  { text: 'The beautiful thing about learning is that nobody can take it away from you.', author: 'B. B. King' },
+  { text: 'Tell me and I forget. Teach me and I remember. Involve me and I learn.', author: 'Benjamin Franklin' },
+  { text: 'Learning never exhausts the mind.', author: 'Leonardo da Vinci' }
+];
+
+const LOADING_MESSAGES = [
+  'AI가 문장을 하나씩 뜯어보는 중이에요... ✨',
+  '교수님 모드로 분석본을 정성껏 기록하는 중입니다... 📝',
+  '학생 눈높이에 맞춰 해석을 다듬는 중이에요... 🌟',
+  '실생활 예시와 어법 포인트를 챙기고 있어요... 📚'
+];
+
+const pickRandom = (items) => items[Math.floor(Math.random() * items.length)];
+
 const AnalysisPage = () => {
   const [documents, setDocuments] = useState([]);
   const [selectedDocument, setSelectedDocument] = useState(null);
-  const [passageAnalyses, setPassageAnalyses] = useState([]);
   const [passageList, setPassageList] = useState([]);
-  const [selectedPassages, setSelectedPassages] = useState([]);
   const [selectedPassage, setSelectedPassage] = useState(null);
   const [activeVariantIndex, setActiveVariantIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [passageLoading, setPassageLoading] = useState(false);
-  const [generating, setGenerating] = useState(false);
   const [error, setError] = useState(null);
   const [analysisLimitError, setAnalysisLimitError] = useState(null);
-  const [generateTarget, setGenerateTarget] = useState(null);
   const [feedbackMessage, setFeedbackMessage] = useState(null);
   const [reportModal, setReportModal] = useState({ open: false, variantIndex: null, reason: '' });
   const [reportSubmitting, setReportSubmitting] = useState(false);
   const [step, setStep] = useState(1); // 1: 문서 선택, 2: 지문 선택, 3: 분석 보기
   const [previewPassage, setPreviewPassage] = useState(null);
+  const [generationPrompt, setGenerationPrompt] = useState({ open: false, passage: null });
+  const [generationLoading, setGenerationLoading] = useState({
+    active: false,
+    passageNumber: null,
+    count: 1,
+    word: null,
+    meaning: null,
+    quote: null,
+    quoteAuthor: null,
+    message: null
+  });
 
   const raiseError = (summary, detail = '', extra = {}) => {
     setError({ summary, detail, ...extra });
   };
-
-  useEffect(() => {
-    fetchDocumentsList();
-  }, []);
 
   const normalizePassage = (entry = {}) => ({
     passageNumber: entry.passageNumber,
@@ -40,15 +68,7 @@ const AnalysisPage = () => {
     createdAt: entry.createdAt || null
   });
 
-  const updatePassageVariantsState = (passageNumber, variants, originalPassage) => {
-    setPassageAnalyses((prev) => prev.map((item) => {
-      if (item.passageNumber !== passageNumber) return item;
-      return {
-        ...item,
-        variants: variants || [],
-        originalPassage: originalPassage || item.originalPassage
-      };
-    }));
+const updatePassageVariantsState = (passageNumber, variants, originalPassage) => {
     setPassageList((prev) => prev.map((item) => {
       if (item.passageNumber !== passageNumber) return item;
       return {
@@ -58,19 +78,6 @@ const AnalysisPage = () => {
         originalPassage: originalPassage || item.originalPassage || item.text
       };
     }));
-  };
-
-  const togglePassageSelection = (passageNumber) => {
-    if (!Number.isInteger(passageNumber)) return;
-    setSelectedPassages((prev) => {
-      if (prev.includes(passageNumber)) {
-        return prev.filter((value) => value !== passageNumber);
-      }
-      if (prev.length >= 3) {
-        return prev;
-      }
-      return [...prev, passageNumber];
-    });
   };
 
   const openPreview = (passage) => {
@@ -83,7 +90,7 @@ const AnalysisPage = () => {
 
   const closePreview = () => setPreviewPassage(null);
 
-  const fetchDocumentsList = async () => {
+  const fetchDocumentsList = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -100,7 +107,11 @@ const AnalysisPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchDocumentsList();
+  }, [fetchDocumentsList]);
 
   const handleDocumentClick = async (document) => {
     try {
@@ -109,11 +120,20 @@ const AnalysisPage = () => {
       setAnalysisLimitError(null);
       setSelectedDocument(document);
       setSelectedPassage(null);
-      setSelectedPassages([]);
       setActiveVariantIndex(0);
-      setGenerateTarget(null);
       setFeedbackMessage(null);
       setReportModal({ open: false, variantIndex: null, reason: '' });
+      setGenerationPrompt({ open: false, passage: null });
+      setGenerationLoading({
+        active: false,
+        passageNumber: null,
+        count: 1,
+        word: null,
+        meaning: null,
+        quote: null,
+        quoteAuthor: null,
+        message: null
+      });
 
       const [analysisResponse, passageResponse] = await Promise.all([
         api.analysis.get(document.id),
@@ -122,13 +142,11 @@ const AnalysisPage = () => {
 
       if (!analysisResponse.success) {
         raiseError('지문 분석 결과를 불러오는데 실패했습니다.', analysisResponse.message || 'success: false');
-        setPassageAnalyses([]);
         setPassageList([]);
         return;
       }
 
       const normalizedAnalyses = (analysisResponse.data || []).map(normalizePassage);
-      setPassageAnalyses(normalizedAnalyses);
 
       const analysisMap = new Map(
         normalizedAnalyses.map((item) => [item.passageNumber, item])
@@ -167,7 +185,6 @@ const AnalysisPage = () => {
       setStep(2);
     } catch (err) {
       raiseError('지문 목록을 불러오는 중 문제가 발생했습니다.', err?.message || '');
-      setPassageAnalyses([]);
       setPassageList([]);
     } finally {
       setLoading(false);
@@ -182,6 +199,17 @@ const AnalysisPage = () => {
       setAnalysisLimitError(null);
       setFeedbackMessage(null);
       setReportModal({ open: false, variantIndex: null, reason: '' });
+      setGenerationPrompt({ open: false, passage: null });
+      setGenerationLoading({
+        active: false,
+        passageNumber: null,
+        count: 1,
+        word: null,
+        meaning: null,
+        quote: null,
+        quoteAuthor: null,
+        message: null
+      });
 
       const response = await api.analysis.getPassage(selectedDocument.id, passage.passageNumber);
       if (response.success) {
@@ -208,9 +236,9 @@ const AnalysisPage = () => {
   };
 
   const handleGenerateVariants = async (passageNumber, count) => {
-    if (!selectedDocument) return;
+    if (!selectedDocument) return false;
+    let success = false;
     try {
-      setGenerating(true);
       setError(null);
       setAnalysisLimitError(null);
 
@@ -222,22 +250,79 @@ const AnalysisPage = () => {
           setSelectedPassage(normalized);
           setActiveVariantIndex(Math.max(0, normalized.variants.length - 1));
         }
-        setGenerateTarget(null);
         setFeedbackMessage('새 분석본이 준비됐어요! 🤗');
+        success = true;
       } else {
         raiseError('분석본 생성에 실패했습니다.', response.message || 'success: false');
       }
     } catch (err) {
       raiseError('분석본 생성 중 문제가 발생했습니다.', err?.message || '');
-    } finally {
-      setGenerating(false);
+    }
+
+    return success;
+  };
+
+  const buildGenerationFlavor = () => {
+    const word = pickRandom(GENERATION_WORDS);
+    const quote = pickRandom(GENERATION_QUOTES);
+    return {
+      word: word.word,
+      meaning: word.meaning,
+      quote: quote.text,
+      quoteAuthor: quote.author,
+      message: pickRandom(LOADING_MESSAGES)
+    };
+  };
+
+  const openGenerationPrompt = (passage) => {
+    if (!passage || remainingSlots(passage) === 0) return;
+    setGenerationPrompt({ open: true, passage });
+    setFeedbackMessage(null);
+    setReportModal({ open: false, variantIndex: null, reason: '' });
+  };
+
+  const closeGenerationPrompt = () => setGenerationPrompt({ open: false, passage: null });
+
+  const resetGenerationLoading = () => {
+    setGenerationLoading({
+      active: false,
+      passageNumber: null,
+      count: 1,
+      word: null,
+      meaning: null,
+      quote: null,
+      quoteAuthor: null,
+      message: null
+    });
+  };
+
+  const startGeneration = async (count) => {
+    if (!generationPrompt.passage || !Number.isInteger(count)) return;
+    const flavor = buildGenerationFlavor();
+    const passageNumber = generationPrompt.passage.passageNumber;
+    closeGenerationPrompt();
+    setGenerationLoading({
+      active: true,
+      passageNumber,
+      count,
+      word: flavor.word,
+      meaning: flavor.meaning,
+      quote: flavor.quote,
+      quoteAuthor: flavor.quoteAuthor,
+      message: flavor.message
+    });
+
+    const ok = await handleGenerateVariants(passageNumber, count);
+
+    resetGenerationLoading();
+    if (!ok) {
+      setError((prev) => prev || '분석을 생성하지 못했습니다. 다시 시도해 주세요.');
     }
   };
 
   const handleBackToDocuments = () => {
     setStep(1);
     setSelectedDocument(null);
-    setPassageAnalyses([]);
     setSelectedPassage(null);
     setActiveVariantIndex(0);
     setAnalysisLimitError(null);
@@ -248,12 +333,11 @@ const AnalysisPage = () => {
     setSelectedPassage(null);
     setActiveVariantIndex(0);
     setAnalysisLimitError(null);
-    setGenerateTarget(null);
     setFeedbackMessage(null);
     setReportModal({ open: false, variantIndex: null, reason: '' });
   };
 
-  const remainingSlots = (passage) => Math.max(0, 2 - (passage?.variants?.length || 0));
+  const remainingSlots = (passage) => Math.max(0, MAX_VARIANTS_PER_PASSAGE - (passage?.variants?.length || 0));
 
   const renderDocumentList = () => (
     <div style={analysisStyles.container}>
@@ -295,47 +379,6 @@ const AnalysisPage = () => {
       )}
     </div>
   );
-
-  const renderVariantGenerator = (passage) => {
-    const slots = remainingSlots(passage);
-    if (slots <= 0) {
-      return (
-        <div style={analysisStyles.generatorBar}>
-          <strong>🎉 분석본이 2개 모두 준비되어 있어요.</strong>
-          <span>이 지문은 Variant 1 · Variant 2가 모두 저장되어 있어서 추가 생성을 하지 않아도 됩니다.</span>
-        </div>
-      );
-    }
-
-    const options = Array.from({ length: slots }, (_, idx) => idx + 1);
-
-    return (
-      <div style={analysisStyles.generatorBar}>
-        <strong>✨ 새 분석본 만들기</strong>
-        <span>남은 칸: {slots}개 · 원하는 만큼 버튼을 눌러 주세요.</span>
-        <div style={analysisStyles.generatorButtons}>
-          {options.map((count) => (
-            <button
-              key={count}
-              type="button"
-              style={{
-                ...analysisStyles.generatorButton,
-                ...(generating ? analysisStyles.generatorButtonDisabled : {})
-              }}
-              disabled={generating}
-              onClick={(event) => {
-                event.stopPropagation();
-                handleGenerateVariants(passage.passageNumber, count);
-              }}
-            >
-              {count}개 만들기
-            </button>
-          ))}
-        </div>
-        {generating && <span style={{ color: 'var(--text-secondary)' }}>AI가 분석본을 정성껏 만드는 중이에요... ⏳</span>}
-      </div>
-    );
-  };
 
   const handleHelpfulToggle = async (variant) => {
     if (!selectedDocument || !selectedPassage || !variant?.variantIndex) return;
@@ -464,17 +507,13 @@ const AnalysisPage = () => {
   );
 
   const renderPassageList = () => {
-    const targetPassage = generateTarget
-      ? passageList.find((item) => item.passageNumber === generateTarget) || null
-      : null;
-
     const renderMeta = (entry) => {
       const slots = remainingSlots(entry);
       const disabled = slots <= 0;
       return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-end' }}>
           <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-            {entry.variantCount || 0}/2 분석본
+            {entry.variantCount || 0}/{MAX_VARIANTS_PER_PASSAGE} 분석본
           </span>
           <div style={{ display: 'flex', gap: '6px' }}>
             <button
@@ -490,10 +529,10 @@ const AnalysisPage = () => {
                 ...analysisStyles.metaButtonPrimary,
                 ...(disabled ? analysisStyles.metaButtonDisabled : {})
               }}
-              onClick={() => setGenerateTarget((prev) => (prev === entry.passageNumber ? null : entry.passageNumber))}
+              onClick={() => openGenerationPrompt(entry)}
               disabled={disabled}
             >
-              {disabled ? '완료' : '분석 생성'}
+              {disabled ? '가득 찼어요' : '새 분석 생성'}
             </button>
           </div>
         </div>
@@ -505,7 +544,7 @@ const AnalysisPage = () => {
         <div style={analysisStyles.header}>
           <button onClick={handleBackToDocuments} style={analysisStyles.backButton}>← 문서 목록으로</button>
           <h1 style={analysisStyles.title}>📄 {selectedDocument?.title}</h1>
-          <p style={analysisStyles.subtitle}>지문을 최대 2개까지 선택해 분석본을 확인하거나 새로 생성해요.</p>
+          <p style={analysisStyles.subtitle}>지문을 하나씩 선택해 분석본을 확인하고, 필요하면 AI 분석을 바로 생성해 보세요.</p>
         </div>
 
         {analysisLimitError && (
@@ -522,24 +561,15 @@ const AnalysisPage = () => {
         ) : passageList.length ? (
           <PassagePickerGrid
             passages={passageList}
-            selected={selectedPassages}
-            onToggle={togglePassageSelection}
             onPreview={openPreview}
-            maxSelection={2}
-            selectionLabel="선택 지문"
             renderMeta={renderMeta}
             emptyMessage="분석 가능한 지문을 찾지 못했습니다."
+            selectionEnabled={false}
           />
         ) : (
           <div style={analysisStyles.emptyState}>
             <h3>📝 아직 저장된 분석본이 없어요</h3>
             <p>지문을 선택해 분석을 생성하면 Variant 1·2를 확인할 수 있어요.</p>
-          </div>
-        )}
-
-        {generateTarget && targetPassage && (
-          <div style={{ marginTop: '24px' }}>
-            {renderVariantGenerator(targetPassage)}
           </div>
         )}
       </div>
@@ -597,38 +627,47 @@ const AnalysisPage = () => {
     );
   };
 
-  const renderSentenceCard = (sentence, index) => (
-    <div key={`sentence-${index}`} style={analysisStyles.sentenceCard}>
-      <div style={analysisStyles.sentenceHeader}>
-        <span style={analysisStyles.sentenceEnglish}>
-          {sentence.isTopicSentence ? `⭐ ${sentence.english}` : sentence.english}
-        </span>
-        {sentence.isTopicSentence && <span style={analysisStyles.topicBadge}>주제문</span>}
-      </div>
-      <div style={analysisStyles.sentenceKorean}>{sentence.korean}</div>
-      <div style={analysisStyles.sentenceBody}>
-        <div style={analysisStyles.sentenceBlock}>
-          <strong>의미 분석</strong>
-          <p>{sentence.analysis || '의미를 천천히 정리하고 있어요.'}</p>
+  const renderSentenceCard = (sentence, index, total) => {
+    const englishRaw = String(sentence.english || '');
+    const topicMatch = englishRaw.match(/^\*\*(.*)\*\*$/);
+    const cleanEnglish = topicMatch ? topicMatch[1].trim() : englishRaw;
+
+    const koreanLine = sentence.korean || '*** 한글 해석: 우리말 해석을 준비하는 중이에요. 잠시만 기다려 주세요! 😊';
+    const analysisLine = sentence.analysis || '*** 분석: 의미를 정리하는 중이에요. 조금만 기다리면 완성됩니다! ✨';
+    const backgroundLine = sentence.background || '*** 이 문장에 필요한 배경지식: 관련 배경을 모으는 중이에요. 곧 업데이트됩니다. 📚';
+    const exampleLine = sentence.example || '*** 이 문장에 필요한 사례: 생활 속 예시를 정리하는 중이에요. 잠시 후 확인해 보세요! 🏫';
+    const grammarLine = sentence.grammar || '✏️ 어법 포인트: 중요한 구문을 점검하는 중이에요. 다시 시도해 보세요.';
+    const vocabularyIntro = sentence.vocabulary?.intro || '*** 어휘 포인트: 핵심 어휘를 직접 정리해 보아요. 비슷한 말과 반대말을 찾아보면 더 좋아요! 😊';
+    const vocabWords = Array.isArray(sentence.vocabulary?.words) ? sentence.vocabulary.words : [];
+
+    const cardStyle = {
+      ...analysisStyles.sentenceCard,
+      ...(index === total - 1 ? analysisStyles.sentenceCardLast : {})
+    };
+
+    return (
+      <div key={`sentence-${index}`} style={cardStyle}>
+        <div style={analysisStyles.sentenceHeader}>
+          <span style={analysisStyles.sentenceEnglish}>
+            {sentence.isTopicSentence ? (
+              <strong>⭐ {cleanEnglish}</strong>
+            ) : (
+              cleanEnglish
+            )}
+          </span>
+          {sentence.isTopicSentence && <span style={analysisStyles.topicBadge}>주제문</span>}
         </div>
-        <div style={analysisStyles.sentenceBlock}>
-          <strong>배경 지식</strong>
-          <p>{sentence.background || '추가 배경 지식이 필요하지 않은 문장이에요.'}</p>
-        </div>
-        <div style={analysisStyles.sentenceBlock}>
-          <strong>실생활 사례</strong>
-          <p>{sentence.example || '실생활에서의 사례를 직접 만들어 보세요 😊'}</p>
-        </div>
-        <div style={analysisStyles.sentenceBlock}>
-          <strong>어법 포인트</strong>
-          <p>{sentence.grammar || '복잡한 어법 포인트가 없는 문장이에요.'}</p>
-        </div>
-        <div style={analysisStyles.sentenceBlock}>
-          <strong>어휘 포인트</strong>
-          {sentence.vocabulary?.words?.length ? (
+        <div style={analysisStyles.sentenceKorean}>{koreanLine}</div>
+        <div style={analysisStyles.sentenceBody}>
+          <div style={analysisStyles.sentenceBlock}>{analysisLine}</div>
+          <div style={analysisStyles.sentenceBlock}>{backgroundLine}</div>
+          <div style={analysisStyles.sentenceBlock}>{exampleLine}</div>
+          <div style={analysisStyles.sentenceBlock}>{grammarLine}</div>
+          <div style={analysisStyles.sentenceBlock}>{vocabularyIntro}</div>
+          {vocabWords.length ? (
             <ul style={analysisStyles.vocabList}>
-              {sentence.vocabulary.words.map((word, idx) => (
-                <li key={`word-${index}-${idx}`}>
+              {vocabWords.map((word, idx) => (
+                <li key={`word-${index}-${idx}`} style={analysisStyles.vocabListItem}>
                   <strong>{word.term}</strong>: {word.meaning}
                   {word.synonyms?.length ? ` · 동의어: ${word.synonyms.join(', ')}` : ''}
                   {word.antonyms?.length ? ` · 반의어: ${word.antonyms.join(', ')}` : ''}
@@ -637,12 +676,12 @@ const AnalysisPage = () => {
               ))}
             </ul>
           ) : (
-            <p>중요 어휘는 직접 정리해 보아요.</p>
+            <div style={analysisStyles.sentenceBlock}>*** 어휘 포인트: 핵심 어휘가 아직 준비되지 않았어요. 직접 정리해 보면 어휘력이 쑥 자라요! 💪</div>
           )}
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderPassageAnalysis = () => (
     <div style={analysisStyles.container}>
@@ -702,7 +741,9 @@ const AnalysisPage = () => {
               <div style={analysisStyles.section}>
                 <h2 style={analysisStyles.sectionTitle}>🔍 문장별 깊이 탐구</h2>
                 <div style={analysisStyles.sentenceGrid}>
-                  {(activeVariant.sentenceAnalysis || []).map(renderSentenceCard)}
+                  {(activeVariant.sentenceAnalysis || []).map((sentence, idx, arr) => (
+                    renderSentenceCard(sentence, idx, arr.length)
+                  ))}
                 </div>
               </div>
             </>
@@ -773,6 +814,61 @@ const AnalysisPage = () => {
   return (
     <>
       {currentView}
+
+      {generationPrompt.open && (() => {
+        const passage = generationPrompt.passage;
+        if (!passage) return null;
+        const slots = remainingSlots(passage);
+        const options = Array.from({ length: slots }, (_, idx) => idx + 1);
+        return (
+          <div style={analysisStyles.generationOverlay}>
+            <div style={analysisStyles.generationCard}>
+              <div style={analysisStyles.generationBadge}>#{String(passage.passageNumber || 0).padStart(2, '0')}</div>
+              <h3 style={analysisStyles.generationTitle}>몇 개 만들까요?</h3>
+              <p style={analysisStyles.generationSubtitle}>남은 칸: {slots}개 · 만들고 싶은 분석본 수를 골라 주세요.</p>
+              {options.length ? (
+                <div style={analysisStyles.generationButtons}>
+                  {options.map((count) => (
+                    <button
+                      key={`analysis-generation-count-${count}`}
+                      type="button"
+                      style={analysisStyles.generationButton}
+                      onClick={() => startGeneration(count)}
+                    >
+                      {count}개 만들기
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div style={analysisStyles.generationEmpty}>이미 두 개의 분석본이 준비되어 있어요.</div>
+              )}
+              <button type="button" style={analysisStyles.generationCancel} onClick={closeGenerationPrompt}>닫기</button>
+            </div>
+          </div>
+        );
+      })()}
+
+      {generationLoading.active && (
+        <div style={analysisStyles.generationOverlay}>
+          <div style={analysisStyles.loadingCard}>
+            <div style={analysisStyles.loadingSpinner} />
+            <p style={analysisStyles.loadingMessage}>{generationLoading.message || 'AI가 분석본을 정성껏 만드는 중이에요... ⏳'}</p>
+            {generationLoading.word && (
+              <div style={analysisStyles.loadingWordBox}>
+                <span style={analysisStyles.loadingWord}>{generationLoading.word}</span>
+                <span style={analysisStyles.loadingMeaning}>{generationLoading.meaning}</span>
+              </div>
+            )}
+            {generationLoading.quote && (
+              <div style={analysisStyles.loadingQuoteBox}>
+                <blockquote style={analysisStyles.loadingQuote}>“{generationLoading.quote}”</blockquote>
+                <cite style={analysisStyles.loadingQuoteAuthor}>— {generationLoading.quoteAuthor}</cite>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <PassagePreviewModal
         open={Boolean(previewPassage)}
         passage={previewPassage}

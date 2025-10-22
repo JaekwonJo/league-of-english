@@ -63,11 +63,39 @@ const useGenerationSummary = (logs) => useMemo(() => {
   return { items, total };
 }, [logs]);
 
-const STORED_LABELS = ['📦 미리 담아둔 문제', '🧺 살짝 식혀둔 문제', '🗃️ 잘 챙겨 둔 문제'];
-const FRESH_LABELS = ['🍞 방금 구운 문제', '✨ 따끈따끈 신상 문제', '🔥 막 나온 문제'];
+const SUMMARY_PRESETS = [
+  {
+    stored: '📦 준비해 둔 문제',
+    fresh: '🔥 방금 만든 문제',
+    footer: (total) => `🚀 이번 세트는 총 ${total}문! 집중해서 풀어봐요!`
+  },
+  {
+    stored: '🗂️ 보관 중인 문제',
+    fresh: '✨ 새로 만든 문제',
+    footer: (total) => `🎯 총 ${total}문 확보! 지금 바로 도전해요!`
+  },
+  {
+    stored: '💾 저장된 문제',
+    fresh: '🌟 새로 생성된 문제',
+    footer: (total) => `🌈 준비된 문제는 총 ${total}문! 가볍게 스타트해요!`
+  }
+];
 
 const GenerationSummary = ({ logs }) => {
   const summary = useGenerationSummary(logs);
+  const summaryPreset = useMemo(() => {
+    if (!Array.isArray(logs) || !logs.length) {
+      return SUMMARY_PRESETS[0];
+    }
+    const seedSource = logs[logs.length - 1]?.timestamp
+      || logs[logs.length - 1]?.stage
+      || `${logs.length}_${Date.now()}`;
+    let hash = 0;
+    for (let i = 0; i < seedSource.length; i += 1) {
+      hash = (hash * 31 + seedSource.charCodeAt(i)) % SUMMARY_PRESETS.length;
+    }
+    return SUMMARY_PRESETS[hash] || SUMMARY_PRESETS[0];
+  }, [logs]);
   if (!summary.items.length) return null;
 
   return (
@@ -82,8 +110,8 @@ const GenerationSummary = ({ logs }) => {
           const requested = Number(item.requested || 0);
           const isPartial = requested > 0 && delivered < requested;
           const missing = Math.max(0, requested - delivered);
-          const storedLabel = STORED_LABELS[index % STORED_LABELS.length];
-          const freshLabel = FRESH_LABELS[index % FRESH_LABELS.length];
+          const storedLabel = summaryPreset.stored || '📦 준비해 둔 문제';
+          const freshLabel = summaryPreset.fresh || '🔥 방금 만든 문제';
 
           return (
             <div key={item.type} style={styles.generationSummaryRow}>
@@ -101,9 +129,13 @@ const GenerationSummary = ({ logs }) => {
           );
         })}
       </div>
-      {typeof summary.total === 'number' ? (
-        <div style={styles.generationSummaryFooter}>🎉 이번 세트는 총 {summary.total}문! 마음껏 모험을 시작해 볼까요? 💪</div>
-      ) : null}
+      {(() => {
+        if (typeof summary.total !== 'number') return null;
+        const footerMessage = typeof summaryPreset.footer === 'function'
+          ? summaryPreset.footer(summary.total)
+          : `🎉 이번 세트는 총 ${summary.total}문! 마음껏 모험을 시작해 볼까요? 💪`;
+        return <div style={styles.generationSummaryFooter}>{footerMessage}</div>;
+      })()}
       <div style={styles.generationSummaryHint}>
         <span role="img" aria-label="신고 안내">💡</span>
         <span>엉뚱한 문항이 보이면 문제 화면 아래의 🚨 신고 버튼을 눌러주세요. 관리자가 검토 후 필요하면 바로 숨겨줄게요!</span>

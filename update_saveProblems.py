@@ -1,0 +1,14 @@
+from pathlib import Path
+path = Path('server/services/aiProblemService.js')
+text = path.read_text(encoding='utf-8')
+start = text.find('  async saveProblems(documentId, type, problems) {')
+if start == -1:
+    raise SystemExit('start not found')
+end = text.find('module.exports = new AIProblemService();', start)
+if end == -1:
+    raise SystemExit('end not found')
+end_block = end + len('module.exports = new AIProblemService();')
+old = text[start:end_block]
+new = "  async saveProblems(documentId, type, problems = [], context = {}) {\n    const saved = [];\n    const contextTitle = context.docTitle || context.documentTitle || null;\n\n    for (const item of Array.isArray(problems) ? problems : []) {\n      const baseMetadata = { ...(item.metadata || {}) };\n      if (contextTitle && !baseMetadata.documentTitle) {\n        baseMetadata.documentTitle = contextTitle;\n      }\n      if (item.sourceLabel && !baseMetadata.sourceLabel) {\n        baseMetadata.sourceLabel = item.sourceLabel;\n      }\n      if (!baseMetadata.generator) {\n        baseMetadata.generator = 'openai';\n      }\n\n      const optionsJson = JSON.stringify(item.options || []);\n      const answerValue = Array.isArray(item.answer)\n        ? item.answer.join(',')\n        : String(item.correctAnswer ?? item.answer ?? '');\n      const explanation = item.explanation || '';\n      const difficulty = item.difficulty || 'basic';\n      const mainText = item.mainText || item.text || null;\n      const sentencesJson = item.sentences ? JSON.stringify(item.sentences) : null;\n      const metadataJson = Object.keys(baseMetadata).length ? JSON.stringify(baseMetadata) : null;\n\n      const result = await database.run(\n        \"INSERT INTO problems (document_id, type, question, options, answer, explanation, difficulty, is_ai_generated, main_text, sentences, metadata) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)\",\n        [\n          documentId,\n          type,\n          item.question || item.instruction || '',\n          optionsJson,\n          answerValue,\n          explanation,\n          difficulty,\n          mainText,\n          sentencesJson,\n          metadataJson\n        ]\n      );\n\n      const savedProblem = {\n        ...item,\n        id: result?.id || item.id,\n        type,\n        documentId,\n        question: item.question || item.instruction || '',\n        options: item.options ? [...item.options] : [],\n        answer: answerValue,\n        explanation,\n        difficulty,\n        mainText,\n        sentences: item.sentences ? [...item.sentences] : undefined,\n        metadata: baseMetadata\n      };\n\n      saved.push(savedProblem);\n    }\n\n    return saved;\n  }\n}\n\nmodule.exports = new AIProblemService();"
+text = text[:start] + new + text[end_block:]
+path.write_text(text, encoding='utf-8')

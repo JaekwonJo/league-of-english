@@ -1,10 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../../../../services/api.service';
 import logger from '../../../../utils/logger';
 import {
   MAX_TOTAL_PROBLEMS,
   PROBLEM_STEP,
-  PROBLEM_TYPES,
   TYPE_KEYS,
 } from '../constants';
 import {
@@ -14,6 +13,18 @@ import {
 } from '../utils';
 
 const STORAGE_KEY = 'studyConfig';
+const VALID_STEPS = [1, 2, 3];
+
+const readStepFromLocation = () => {
+  if (typeof window === 'undefined') return 1;
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const raw = Number(params.get('studyStep'));
+    return VALID_STEPS.includes(raw) ? raw : 1;
+  } catch (error) {
+    return 1;
+  }
+};
 
 const defaultConfig = {
   documentId: null,
@@ -24,7 +35,7 @@ const defaultConfig = {
 };
 
 const useStudyConfig = ({ onStart, initialFocusType }) => {
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(() => readStepFromLocation());
   const [documents, setDocuments] = useState([]);
   const [documentsLoading, setDocumentsLoading] = useState(false);
   const [passages, setPassages] = useState([]);
@@ -34,6 +45,9 @@ const useStudyConfig = ({ onStart, initialFocusType }) => {
   const [error, setError] = useState(null);
   const [config, setConfig] = useState(defaultConfig);
   const [initialFocusApplied, setInitialFocusApplied] = useState(false);
+
+  const popHandlingRef = useRef(false);
+  const lastAppliedStepRef = useRef(step);
 
   const selectedCount = selectedPassages.length;
 
@@ -93,6 +107,63 @@ const useStudyConfig = ({ onStart, initialFocusType }) => {
       logger.warn('Failed to restore study config from storage:', storageError);
     }
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+
+    const handlePopState = (event) => {
+      popHandlingRef.current = true;
+      const stateStep = Number(event.state?.studyStep);
+      if (VALID_STEPS.includes(stateStep)) {
+        setStep(stateStep);
+        return;
+      }
+      setStep(readStepFromLocation());
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const activeStep = safeStep;
+    const params = new URLSearchParams(window.location.search);
+
+    if (activeStep <= 1) {
+      params.delete('studyStep');
+    } else {
+      params.set('studyStep', String(activeStep));
+    }
+
+    const nextQuery = params.toString();
+    const nextUrl = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ''}`;
+    const nextState = { ...(window.history.state || {}), studyStep: activeStep };
+    const alignedWithRequest = step === activeStep;
+
+    if (popHandlingRef.current) {
+      window.history.replaceState(nextState, '', nextUrl);
+      popHandlingRef.current = false;
+      lastAppliedStepRef.current = activeStep;
+      return;
+    }
+
+    if (lastAppliedStepRef.current !== activeStep) {
+      if (alignedWithRequest) {
+        window.history.pushState(nextState, '', nextUrl);
+      } else {
+        window.history.replaceState(nextState, '', nextUrl);
+      }
+      lastAppliedStepRef.current = activeStep;
+      return;
+    }
+
+    window.history.replaceState(nextState, '', nextUrl);
+    lastAppliedStepRef.current = activeStep;
+  }, [safeStep, step]);
 
   const loadDocuments = useCallback(async () => {
     try {

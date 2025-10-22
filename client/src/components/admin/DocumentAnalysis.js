@@ -539,30 +539,33 @@ const DocumentAnalysis = ({ document, onClose }) => {
               <div key={`sentence-${index}`} style={styles.sentenceCard}>
                 <div style={styles.sentenceHeader}>
                   <span style={styles.sentenceEnglish}>
-                    {sentence.isTopicSentence ? `⭐ ${sentence.english}` : sentence.english}
+                    {(() => {
+                      const englishRaw = String(sentence.english || '');
+                      const match = englishRaw.match(/^\*\*(.*)\*\*$/);
+                      const clean = (match ? match[1] : englishRaw).trim();
+                      return sentence.isTopicSentence ? <strong>⭐ {clean}</strong> : clean;
+                    })()}
                   </span>
                   {sentence.isTopicSentence && <span style={styles.topicBadge}>주제문</span>}
                 </div>
                 <div style={styles.sentenceBody}>
-                  <p><strong>직역:</strong> {sentence.korean}</p>
-                  <p><strong>해석:</strong> {sentence.analysis || sentence.meaning || '설명이 준비 중이에요.'}</p>
-                  <p><strong>배경 지식:</strong> {sentence.background || '추가 배경 설명이 없습니다.'}</p>
-                  <p><strong>예시:</strong> {sentence.example || '예시가 제공되지 않았어요.'}</p>
-                  <p><strong>문법:</strong> {sentence.grammar || '문법 포인트가 정리되는 중입니다.'}</p>
+                  <p>{sentence.korean || '*** 한글 해석: 우리말 설명을 준비 중이에요.'}</p>
+                  <p>{sentence.analysis || '*** 분석: 의미를 정리하는 중입니다.'}</p>
+                  <p>{sentence.background || '*** 이 문장에 필요한 배경지식: 추가 배경 정보를 수집하는 중입니다.'}</p>
+                  <p>{sentence.example || '*** 이 문장에 필요한 사례: 생활 속 사례를 정리하는 중이에요.'}</p>
+                  <p>{sentence.grammar || '✏️ 어법 포인트: 문법 포인트를 검토하는 중입니다.'}</p>
+                  <p>{sentence.vocabulary?.intro || '*** 어휘 포인트: 핵심 어휘를 직접 정리해 주세요.'}</p>
                   {Array.isArray(sentence.vocabulary?.words) && sentence.vocabulary.words.length > 0 && (
-                    <div>
-                      <strong>어휘:</strong>
-                      <ul>
-                        {sentence.vocabulary.words.map((word, idx) => (
-                          <li key={`word-${index}-${idx}`}>
-                            <strong>{word.term}</strong>: {word.meaning}
-                            {word.synonyms?.length ? ` · 동의어: ${word.synonyms.join(', ')}` : ''}
-                            {word.antonyms?.length ? ` · 반의어: ${word.antonyms.join(', ')}` : ''}
-                            {word.note ? ` · 메모: ${word.note}` : ''}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+                    <ul>
+                      {sentence.vocabulary.words.map((word, idx) => (
+                        <li key={`word-${index}-${idx}`}>
+                          <strong>{word.term}</strong>: {word.meaning}
+                          {word.synonyms?.length ? ` · 동의어: ${word.synonyms.join(', ')}` : ''}
+                          {word.antonyms?.length ? ` · 반의어: ${word.antonyms.join(', ')}` : ''}
+                          {word.note ? ` · 메모: ${word.note}` : ''}
+                        </li>
+                      ))}
+                    </ul>
                   )}
                 </div>
               </div>

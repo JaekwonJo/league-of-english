@@ -13,7 +13,6 @@ const TYPE_LABELS = {
   theme: '주제',
   summary: '요약',
   implicit: '함축 의미',
-  irrelevant: '흐름 무관',
   order: '순서 배열',
   insertion: '문장 삽입'
 };

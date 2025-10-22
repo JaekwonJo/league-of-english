@@ -4,7 +4,7 @@ import problemRegistry from "../services/problemRegistry";
 import logger from "../utils/logger";
 import { GENERATION_STAGES, TIER_ORDER } from "../features/study/constants";
 
-const bracketCleanupPattern = new RegExp(`[{}\\[\\]\\\\]`, "g");
+const bracketCleanupPattern = /[[\]{}\\]/g;
 const normalizeAnswerArray = (value) => {
   if (value === null || value === undefined) return [];
   return String(value)
@@ -206,10 +206,32 @@ const useStudySession = (user, onUserUpdate = () => {}) => {
     }
   }, [getBaseTimePerProblem, user?.id]);
 
-  const finishStudy = useCallback(async () => {
+  const finishStudy = useCallback(async (maybeOptions = {}) => {
+    if (maybeOptions && (typeof maybeOptions.preventDefault === 'function' || typeof maybeOptions.stopPropagation === 'function')) {
+      maybeOptions.preventDefault();
+      maybeOptions = {};
+    }
+    const forceSubmit = Boolean(maybeOptions && typeof maybeOptions === 'object' && maybeOptions.force);
     if (!problems.length || mode !== "study") return;
+    if (!forceSubmit) {
+      const unanswered = [];
+      problems.forEach((_, idx) => {
+        const value = answers[idx];
+        const answered = Array.isArray(value)
+          ? value.filter((entry) => entry !== null && entry !== undefined && String(entry).trim().length > 0).length > 0
+          : value !== undefined && value !== null && String(value).trim().length > 0;
+        if (!answered) {
+          unanswered.push(idx + 1);
+        }
+      });
+      if (unanswered.length) {
+        window.alert(`아직 ${unanswered.length}문제가 풀리지 않았어요: ${unanswered.join(', ')}번 문제를 마저 풀어주세요!`);
+        return;
+      }
+    }
     try {
       setLoading(true);
+      setError(null);
       const studyResults = [];
       const submissionEntries = [];
       let totalCorrect = 0;
@@ -329,12 +351,21 @@ const useStudySession = (user, onUserUpdate = () => {}) => {
       setLoadingStageIndex(0);
       clearSavedSession('submitted');
     }
-  }, [answers, problems, startTime, currentTime, mode, clearSavedSession]);
+  }, [
+    answers,
+    problems,
+    startTime,
+    currentTime,
+    mode,
+    clearSavedSession,
+    onUserUpdate,
+    user
+  ]);
 
   useEffect(() => {
     if (mode !== "study") return undefined;
     if (timeLeft <= 0) {
-      finishStudy();
+      finishStudy({ force: true });
       return undefined;
     }
     const timer = setTimeout(() => setTimeLeft((prev) => Math.max(0, prev - 1)), 1000);

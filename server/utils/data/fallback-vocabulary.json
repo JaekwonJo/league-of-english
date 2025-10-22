@@ -1,0 +1,452 @@
+[
+  {
+    "id": "vocab-fallback-coordination",
+    "type": "vocabulary",
+    "question": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?",
+    "mainText": "During the mentoring hour, Mina gathered the volunteers, reviewed the updated checklist, and confirmed each supply delivery. She reminded the group to <u>submit the safety forms</u>, asked the logistics team to <u>double-check the time slots</u>, and scheduled a final call to <u>collide the bus arrivals</u>. Later that evening, she texted parents to <u>confirm attendance</u> and prepared healthy snacks to <u>energize the helpers</u>.",
+    "text": "During the mentoring hour, Mina gathered the volunteers, reviewed the updated checklist, and confirmed each supply delivery. She reminded the group to <u>submit the safety forms</u>, asked the logistics team to <u>double-check the time slots</u>, and scheduled a final call to <u>collide the bus arrivals</u>. Later that evening, she texted parents to <u>confirm attendance</u> and prepared healthy snacks to <u>energize the helpers</u>.",
+    "options": [
+      "① <u>submit the safety forms</u>",
+      "② <u>double-check the time slots</u>",
+      "③ <u>collide the bus arrivals</u>",
+      "④ <u>confirm attendance</u>",
+      "⑤ <u>energize the helpers</u>"
+    ],
+    "answer": "3",
+    "correctAnswer": "3",
+    "explanation": "이 글은 멘토링 행사 준비 과정을 시간대별로 정리한 안내문이에요. ③번 collide the bus arrivals는 collide는 \"충돌시키다\"라는 뜻이라 버스 도착을 조율한다는 문맥과 어울리지 않아요. 그래서 coordinate the bus arrivals로 고쳐야 자연스럽습니다. ①, ②, ④, ⑤번 표현은 자원봉사자들이 맡은 일을 정리하는 흐름에 꼭 맞는 표현이에요. 전체 단락은 준비, 연락, 격려의 순서로 진행되어 계획적인 분위기를 강조하고 있어요.",
+    "difficulty": "csat-advanced",
+    "vocabularyFocus": "학교 행사 준비",
+    "metadata": {
+      "generator": "fallback",
+      "fallbackReason": "fallback-curated",
+      "vocabularyUsage": true,
+      "incorrectIndex": 3,
+      "incorrectSnippet": "collide the bus arrivals",
+      "optionReasons": {
+        "①": "행사 전에 필요한 안전 서류를 제출하라는 자연스러운 지시입니다.",
+        "②": "행사 시간표를 다시 확인해 달라는 요청이라 상황에 잘 맞아요.",
+        "③": "collide the bus arrivals는 collide는 \"충돌시키다\"라는 뜻이라 버스 도착을 조율한다는 문맥과 어울리지 않아요.",
+        "④": "참석 여부를 확인하는 자연스러운 표현입니다.",
+        "⑤": "도움을 주는 학생들을 격려하려는 자연스러운 표현이에요."
+      },
+      "optionStatuses": [
+        "correct",
+        "correct",
+        "incorrect",
+        "correct",
+        "correct"
+      ],
+      "correction": {
+        "replacement": "coordinate the bus arrivals",
+        "reason": "collide는 \"충돌시키다\"라는 뜻이라 버스 도착을 조율한다는 문맥과 어울리지 않아요."
+      }
+    },
+    "sourceLabel": "출처│LoE 어휘 마스터 no1"
+  },
+  {
+    "id": "vocab-fallback-science-fair",
+    "type": "vocabulary",
+    "question": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?",
+    "mainText": "The science fair committee met after school to finalize the demonstration schedule. The chairperson asked presenters to <u>highlight the safety cautions</u>, reminded the media team to <u>calibrate the microphone levels</u>, and assigned the stage crew to <u>dismantle the visitor guide</u>. In addition, she encouraged newcomers to <u>practice their timing</u> and promised that mentors would <u>assist nervous students</u> throughout the event.",
+    "text": "The science fair committee met after school to finalize the demonstration schedule. The chairperson asked presenters to <u>highlight the safety cautions</u>, reminded the media team to <u>calibrate the microphone levels</u>, and assigned the stage crew to <u>dismantle the visitor guide</u>. In addition, she encouraged newcomers to <u>practice their timing</u> and promised that mentors would <u>assist nervous students</u> throughout the event.",
+    "options": [
+      "① <u>highlight the safety cautions</u>",
+      "② <u>calibrate the microphone levels</u>",
+      "③ <u>dismantle the visitor guide</u>",
+      "④ <u>practice their timing</u>",
+      "⑤ <u>assist nervous students</u>"
+    ],
+    "answer": "3",
+    "correctAnswer": "3",
+    "explanation": "과학 전시회를 준비하는 위원회가 역할을 점검하는 안내문이에요. ③번 dismantle the visitor guide는 dismantle은 \"해체하다\"라는 뜻이라 안내 책자를 배포한다는 문맥에 어울리지 않아요. 그래서 distribute the visitor guide로 고쳐야 자연스럽습니다. ①, ②, ④, ⑤번 표현은 나머지 표현은 발표 준비와 지원 과정에 자연스럽게 사용돼요. 위원회가 세부 역할을 나누며 실전에서 실수하지 않도록 돕는다는 점을 강조합니다.",
+    "difficulty": "csat-advanced",
+    "vocabularyFocus": "과학 전시 준비",
+    "metadata": {
+      "generator": "fallback",
+      "fallbackReason": "fallback-curated",
+      "vocabularyUsage": true,
+      "incorrectIndex": 3,
+      "incorrectSnippet": "dismantle the visitor guide",
+      "optionReasons": {
+        "①": "관람객에게 안전 수칙을 강조하는 표현이라 전시 운영과 잘 맞습니다.",
+        "②": "발표 음향을 맞추는 실제 업무이기 때문에 자연스러운 표현이에요.",
+        "③": "dismantle the visitor guide는 dismantle은 \"해체하다\"라는 뜻이라 안내 책자를 배포한다는 문맥에 어울리지 않아요.",
+        "④": "발표 시간을 연습하라는 요청이므로 전시 준비와 잘 연결돼요.",
+        "⑤": "긴장한 학생을 도와준다는 표현이라 행사 운영 취지에 맞습니다."
+      },
+      "optionStatuses": [
+        "correct",
+        "correct",
+        "incorrect",
+        "correct",
+        "correct"
+      ],
+      "correction": {
+        "replacement": "distribute the visitor guide",
+        "reason": "dismantle은 \"해체하다\"라는 뜻이라 안내 책자를 배포한다는 문맥에 어울리지 않아요."
+      }
+    },
+    "sourceLabel": "출처│LoE 어휘 마스터 no2"
+  },
+  {
+    "id": "vocab-fallback-study-session",
+    "type": "vocabulary",
+    "question": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?",
+    "mainText": "Before the midterm study session, the class leaders summarized the plan on the whiteboard. They agreed to <u>summarize the key formulas</u>, rotated partners to <u>organize the sample problems</u>, and reminded everyone not to <u>ignore the teacher's hints</u>. Afterwards, students volunteered to <u>share helpful mnemonics</u> and set phone alarms to <u>schedule short breaks</u>.",
+    "text": "Before the midterm study session, the class leaders summarized the plan on the whiteboard. They agreed to <u>summarize the key formulas</u>, rotated partners to <u>organize the sample problems</u>, and reminded everyone not to <u>ignore the teacher's hints</u>. Afterwards, students volunteered to <u>share helpful mnemonics</u> and set phone alarms to <u>schedule short breaks</u>.",
+    "options": [
+      "① <u>summarize the key formulas</u>",
+      "② <u>organize the sample problems</u>",
+      "③ <u>ignore the teacher's hints</u>",
+      "④ <u>share helpful mnemonics</u>",
+      "⑤ <u>schedule short breaks</u>"
+    ],
+    "answer": "3",
+    "correctAnswer": "3",
+    "explanation": "중간고사 대비 스터디가 진행되는 모습을 담은 안내 글이에요. ③번 ignore the teacher's hints는 ignore는 \"무시하다\"라서 힌트를 잘 활용하자는 취지와 충돌해요. 그래서 apply the teacher's hints로 고쳐야 자연스럽습니다. ①, ②, ④, ⑤번 표현은 다른 선택지는 학습 계획에 실제로 도움이 되는 자연스러운 조언이에요. 스터디 리더들이 협력과 집중을 동시에 챙기려는 노력을 보여 줍니다.",
+    "difficulty": "csat-advanced",
+    "vocabularyFocus": "학습 전략",
+    "metadata": {
+      "generator": "fallback",
+      "fallbackReason": "fallback-curated",
+      "vocabularyUsage": true,
+      "incorrectIndex": 3,
+      "incorrectSnippet": "ignore the teacher's hints",
+      "optionReasons": {
+        "①": "핵심 공식을 정리하는 표현이라 수학 스터디와 잘 맞습니다.",
+        "②": "예제 문제를 정리하는 행동이라 학습 준비와 어울립니다.",
+        "③": "ignore the teacher's hints는 ignore는 \"무시하다\"라서 힌트를 잘 활용하자는 취지와 충돌해요.",
+        "④": "암기법을 나누자는 제안이라 스터디 분위기에 자연스럽습니다.",
+        "⑤": "짧은 휴식 시간을 잡자는 표현으로 집중을 돕는 자연스러운 문장입니다."
+      },
+      "optionStatuses": [
+        "correct",
+        "correct",
+        "incorrect",
+        "correct",
+        "correct"
+      ],
+      "correction": {
+        "replacement": "apply the teacher's hints",
+        "reason": "ignore는 \"무시하다\"라서 힌트를 잘 활용하자는 취지와 충돌해요."
+      }
+    },
+    "sourceLabel": "출처│LoE 어휘 마스터 no3"
+  },
+  {
+    "id": "vocab-fallback-newspaper",
+    "type": "vocabulary",
+    "question": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?",
+    "mainText": "On deadline night, the school newspaper team surrounded the layout table and checked every page. The editor-in-chief asked reporters to <u>verify the interview quotes</u>, reminded analysts to <u>fact-check the statistics</u>, and warned interns not to <u>fabricate the expert sources</u>. Meanwhile, the design team stayed late to <u>edit the layout draft</u> and the web editor prepared to <u>upload the final issue</u> before sunrise.",
+    "text": "On deadline night, the school newspaper team surrounded the layout table and checked every page. The editor-in-chief asked reporters to <u>verify the interview quotes</u>, reminded analysts to <u>fact-check the statistics</u>, and warned interns not to <u>fabricate the expert sources</u>. Meanwhile, the design team stayed late to <u>edit the layout draft</u> and the web editor prepared to <u>upload the final issue</u> before sunrise.",
+    "options": [
+      "① <u>verify the interview quotes</u>",
+      "② <u>fact-check the statistics</u>",
+      "③ <u>fabricate the expert sources</u>",
+      "④ <u>edit the layout draft</u>",
+      "⑤ <u>upload the final issue</u>"
+    ],
+    "answer": "3",
+    "correctAnswer": "3",
+    "explanation": "학교 신문 동아리가 기사 발간 직전에 확인하는 절차를 보여줘요. ③번 fabricate the expert sources는 fabricate는 \"조작하다\"라는 의미라 신뢰를 강조하는 흐름과 정반대예요. 그래서 clarify the expert sources로 고쳐야 자연스럽습니다. ①, ②, ④, ⑤번 표현은 정확성과 품질을 지키려는 실제 업무 단계라 자연스럽습니다. 동아리는 사실 확인과 윤리성을 강조하며 책임감 있게 기사를 발행하려고 합니다.",
+    "difficulty": "csat-advanced",
+    "vocabularyFocus": "신문 제작",
+    "metadata": {
+      "generator": "fallback",
+      "fallbackReason": "fallback-curated",
+      "vocabularyUsage": true,
+      "incorrectIndex": 3,
+      "incorrectSnippet": "fabricate the expert sources",
+      "optionReasons": {
+        "①": "인터뷰 인용을 확인하는 일은 기사 작성에 꼭 필요한 절차입니다.",
+        "②": "통계를 검증하는 행동이라 언론 제작 문맥과 잘 맞습니다.",
+        "③": "fabricate the expert sources는 fabricate는 \"조작하다\"라는 의미라 신뢰를 강조하는 흐름과 정반대예요.",
+        "④": "지면 레이아웃을 다듬는 표현이라 마감 작업에 자연스럽습니다.",
+        "⑤": "최종 호를 업로드한다는 문장도 업무 순서를 잘 보여 줍니다."
+      },
+      "optionStatuses": [
+        "correct",
+        "correct",
+        "incorrect",
+        "correct",
+        "correct"
+      ],
+      "correction": {
+        "replacement": "clarify the expert sources",
+        "reason": "fabricate는 \"조작하다\"라는 의미라 신뢰를 강조하는 흐름과 정반대예요."
+      }
+    },
+    "sourceLabel": "출처│LoE 어휘 마스터 no4"
+  },
+  {
+    "id": "vocab-fallback-green-campaign",
+    "type": "vocabulary",
+    "question": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?",
+    "mainText": "For the weekend sustainability drive, the eco-club created a shared checklist and message board. The outreach captain volunteered to <u>collect neighborhood surveys</u>, asked the mapping team to <u>map the recycling drop-offs</u>, and reminded everyone not to <u>pollute the riverbank cleanup</u>. Later, student leaders promised to <u>email local supporters</u> and art students stayed late to <u>prepare bilingual posters</u>.",
+    "text": "For the weekend sustainability drive, the eco-club created a shared checklist and message board. The outreach captain volunteered to <u>collect neighborhood surveys</u>, asked the mapping team to <u>map the recycling drop-offs</u>, and reminded everyone not to <u>pollute the riverbank cleanup</u>. Later, student leaders promised to <u>email local supporters</u> and art students stayed late to <u>prepare bilingual posters</u>.",
+    "options": [
+      "① <u>collect neighborhood surveys</u>",
+      "② <u>map the recycling drop-offs</u>",
+      "③ <u>pollute the riverbank cleanup</u>",
+      "④ <u>email local supporters</u>",
+      "⑤ <u>prepare bilingual posters</u>"
+    ],
+    "answer": "3",
+    "correctAnswer": "3",
+    "explanation": "환경 동아리가 지역 캠페인을 준비하며 임무를 나누는 내용이에요. ③번 pollute the riverbank cleanup는 pollute는 \"오염시키다\"라서 환경 보호 취지와 정반대 의미예요. 그래서 promote the riverbank cleanup로 고쳐야 자연스럽습니다. ①, ②, ④, ⑤번 표현은 나머지 표현은 환경 캠페인을 알리고 돕는 실제 활동이에요. 동아리는 여러 언어와 채널을 활용해 주민 참여를 이끌려는 전략을 세우고 있어요.",
+    "difficulty": "csat-advanced",
+    "vocabularyFocus": "환경 캠페인",
+    "metadata": {
+      "generator": "fallback",
+      "fallbackReason": "fallback-curated",
+      "vocabularyUsage": true,
+      "incorrectIndex": 3,
+      "incorrectSnippet": "pollute the riverbank cleanup",
+      "optionReasons": {
+        "①": "주민 설문을 수집한다는 표현이라 캠페인 준비와 딱 맞아요.",
+        "②": "재활용 수거 지점을 지도에 표시한다는 실제 활동을 말합니다.",
+        "③": "pollute the riverbank cleanup는 pollute는 \"오염시키다\"라서 환경 보호 취지와 정반대 의미예요.",
+        "④": "지역 후원자에게 이메일을 보낸다는 자연스러운 표현입니다.",
+        "⑤": "2개 국어 홍보물을 준비한다는 말이라 캠페인 확산과 잘 맞습니다."
+      },
+      "optionStatuses": [
+        "correct",
+        "correct",
+        "incorrect",
+        "correct",
+        "correct"
+      ],
+      "correction": {
+        "replacement": "promote the riverbank cleanup",
+        "reason": "pollute는 \"오염시키다\"라서 환경 보호 취지와 정반대 의미예요."
+      }
+    },
+    "sourceLabel": "출처│LoE 어휘 마스터 no5"
+  },
+  {
+    "id": "vocab-fallback-art-festival",
+    "type": "vocabulary",
+    "question": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?",
+    "mainText": "As the art festival approached, the planning board reviewed each milestone. Coordinators met to <u>coordinate student performers</u>, gallery assistants rushed to <u>label the gallery pieces</u>, and lighting students avoided instructions that told them to <u>disturb the lighting plan</u>. Meanwhile, hospitality volunteers agreed to <u>train the ushers</u> and the accessibility team promised to <u>review the accessibility options</u> before the doors opened.",
+    "text": "As the art festival approached, the planning board reviewed each milestone. Coordinators met to <u>coordinate student performers</u>, gallery assistants rushed to <u>label the gallery pieces</u>, and lighting students avoided instructions that told them to <u>disturb the lighting plan</u>. Meanwhile, hospitality volunteers agreed to <u>train the ushers</u> and the accessibility team promised to <u>review the accessibility options</u> before the doors opened.",
+    "options": [
+      "① <u>coordinate student performers</u>",
+      "② <u>label the gallery pieces</u>",
+      "③ <u>disturb the lighting plan</u>",
+      "④ <u>train the ushers</u>",
+      "⑤ <u>review the accessibility options</u>"
+    ],
+    "answer": "3",
+    "correctAnswer": "3",
+    "explanation": "학교 예술제를 준비하며 분야별로 점검하는 진행표예요. ③번 disturb the lighting plan는 disturb는 \"방해하다\"라서 조명 계획을 세밀하게 조정하자는 맥락과 어긋나요. 그래서 adjust the lighting plan로 고쳐야 자연스럽습니다. ①, ②, ④, ⑤번 표현은 다른 표현은 공연 운영을 원활하게 만들기 위한 실제 준비예요. 각 팀이 역할을 나눠 관객 경험을 세심하게 챙기려는 목표가 드러납니다.",
+    "difficulty": "csat-advanced",
+    "vocabularyFocus": "예술제 준비",
+    "metadata": {
+      "generator": "fallback",
+      "fallbackReason": "fallback-curated",
+      "vocabularyUsage": true,
+      "incorrectIndex": 3,
+      "incorrectSnippet": "disturb the lighting plan",
+      "optionReasons": {
+        "①": "학생 공연자들을 조율한다는 표현이라 행사 진행과 맞아요.",
+        "②": "전시 작품에 라벨을 붙이는 일이라 준비 과정에 어울립니다.",
+        "③": "disturb the lighting plan는 disturb는 \"방해하다\"라서 조명 계획을 세밀하게 조정하자는 맥락과 어긋나요.",
+        "④": "안내 요원을 교육한다는 표현이라 관객 맞이를 준비하는 자연스러운 단계입니다.",
+        "⑤": "접근성 옵션을 점검한다는 문장으로 Inclusivity를 강조하고 있어요."
+      },
+      "optionStatuses": [
+        "correct",
+        "correct",
+        "incorrect",
+        "correct",
+        "correct"
+      ],
+      "correction": {
+        "replacement": "adjust the lighting plan",
+        "reason": "disturb는 \"방해하다\"라서 조명 계획을 세밀하게 조정하자는 맥락과 어긋나요."
+      }
+    },
+    "sourceLabel": "출처│LoE 어휘 마스터 no6"
+  },
+  {
+    "id": "vocab-fallback-career-day",
+    "type": "vocabulary",
+    "question": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?",
+    "mainText": "In the final briefing for career day, coordinators posted a timeline on the projector. The logistics lead moved quickly to <u>confirm the guest speakers</u>, registration aides volunteered to <u>prepare welcome packets</u>, and supervisors cautioned interns not to <u>misplace the schedule boards</u>. Guides practiced how they would <u>guide students between rooms</u> and survey captains planned to <u>collect feedback forms</u> after each session.",
+    "text": "In the final briefing for career day, coordinators posted a timeline on the projector. The logistics lead moved quickly to <u>confirm the guest speakers</u>, registration aides volunteered to <u>prepare welcome packets</u>, and supervisors cautioned interns not to <u>misplace the schedule boards</u>. Guides practiced how they would <u>guide students between rooms</u> and survey captains planned to <u>collect feedback forms</u> after each session.",
+    "options": [
+      "① <u>confirm the guest speakers</u>",
+      "② <u>prepare welcome packets</u>",
+      "③ <u>misplace the schedule boards</u>",
+      "④ <u>guide students between rooms</u>",
+      "⑤ <u>collect feedback forms</u>"
+    ],
+    "answer": "3",
+    "correctAnswer": "3",
+    "explanation": "진로 박람회를 앞두고 운영팀이 체크리스트를 점검하는 장면이에요. ③번 misplace the schedule boards는 misplace는 \"엉뚱한 데 두다\"라서 안내판을 전시한다는 취지와 반대로 쓰였어요. 그래서 display the schedule boards로 고쳐야 자연스럽습니다. ①, ②, ④, ⑤번 표현은 다른 선택지는 박람회 운영 절차를 차근히 설명해 주는 표현이에요. 행사 후 피드백까지 챙기려는 체계적인 계획이 드러나요.",
+    "difficulty": "csat-advanced",
+    "vocabularyFocus": "진로 박람회",
+    "metadata": {
+      "generator": "fallback",
+      "fallbackReason": "fallback-curated",
+      "vocabularyUsage": true,
+      "incorrectIndex": 3,
+      "incorrectSnippet": "misplace the schedule boards",
+      "optionReasons": {
+        "①": "초청 연사를 확정한다는 표현이라 행사 진행에 꼭 필요합니다.",
+        "②": "환영 자료를 준비하는 일도 현장에서 쓰이는 자연스러운 업무예요.",
+        "③": "misplace the schedule boards는 misplace는 \"엉뚱한 데 두다\"라서 안내판을 전시한다는 취지와 반대로 쓰였어요.",
+        "④": "학생들을 이동 안내한다는 표현이라 운영 흐름에 맞습니다.",
+        "⑤": "설문지를 수거해 평가한다는 업무라 사후 관리와 자연스럽게 이어집니다."
+      },
+      "optionStatuses": [
+        "correct",
+        "correct",
+        "incorrect",
+        "correct",
+        "correct"
+      ],
+      "correction": {
+        "replacement": "display the schedule boards",
+        "reason": "misplace는 \"엉뚱한 데 두다\"라서 안내판을 전시한다는 취지와 반대로 쓰였어요."
+      }
+    },
+    "sourceLabel": "출처│LoE 어휘 마스터 no7"
+  },
+  {
+    "id": "vocab-fallback-robotics",
+    "type": "vocabulary",
+    "question": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?",
+    "mainText": "During the final robotics scrimmage, teammates reviewed the diagnostics projected on the lab screen. Mechanics volunteered to <u>test the drive modules</u>, programmers promised to <u>update the firmware logs</u>, and the safety captain warned everyone not to <u>ignore the safety protocol</u>. The documentation crew stayed to <u>document the calibration steps</u> and the power unit rotated students so they could <u>charge the backup batteries</u> before sunrise.",
+    "text": "During the final robotics scrimmage, teammates reviewed the diagnostics projected on the lab screen. Mechanics volunteered to <u>test the drive modules</u>, programmers promised to <u>update the firmware logs</u>, and the safety captain warned everyone not to <u>ignore the safety protocol</u>. The documentation crew stayed to <u>document the calibration steps</u> and the power unit rotated students so they could <u>charge the backup batteries</u> before sunrise.",
+    "options": [
+      "① <u>test the drive modules</u>",
+      "② <u>update the firmware logs</u>",
+      "③ <u>ignore the safety protocol</u>",
+      "④ <u>document the calibration steps</u>",
+      "⑤ <u>charge the backup batteries</u>"
+    ],
+    "answer": "3",
+    "correctAnswer": "3",
+    "explanation": "로봇 동아리가 대회 전 점검표를 확인하는 안내문이에요. ③번 ignore the safety protocol는 safety protocol을 무시하는 것은 모범적인 안내문 취지와 반대 의미예요. 그래서 follow the safety protocol로 고쳐야 자연스럽습니다. ①, ②, ④, ⑤번 표현은 나머지 표현은 로봇 팀이 대회를 준비할 때 실제로 수행하는 점검이에요. 안전 수칙을 강조해 동아리 활동이 책임감 있게 진행되도록 유도합니다.",
+    "difficulty": "csat-advanced",
+    "vocabularyFocus": "로봇 대회",
+    "metadata": {
+      "generator": "fallback",
+      "fallbackReason": "fallback-curated",
+      "vocabularyUsage": true,
+      "incorrectIndex": 3,
+      "incorrectSnippet": "ignore the safety protocol",
+      "optionReasons": {
+        "①": "주행 모듈을 테스트하는 일이라 경기 준비와 딱 맞아요.",
+        "②": "펌웨어 기록을 갱신한다는 표현은 기술팀 업무에 자연스럽습니다.",
+        "③": "ignore the safety protocol는 safety protocol을 무시하는 것은 모범적인 안내문 취지와 반대 의미예요.",
+        "④": "조정 절차를 기록한다는 문장이라 팀 지식 공유에 도움이 됩니다.",
+        "⑤": "예비 배터리를 충전한다는 표현도 경기 준비에 꼭 필요합니다."
+      },
+      "optionStatuses": [
+        "correct",
+        "correct",
+        "incorrect",
+        "correct",
+        "correct"
+      ],
+      "correction": {
+        "replacement": "follow the safety protocol",
+        "reason": "safety protocol을 무시하는 것은 모범적인 안내문 취지와 반대 의미예요."
+      }
+    },
+    "sourceLabel": "출처│LoE 어휘 마스터 no8"
+  },
+  {
+    "id": "vocab-fallback-musical",
+    "type": "vocabulary",
+    "question": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?",
+    "mainText": "On the eve of the dress rehearsal, the musical staff huddled backstage with updated cue sheets. Vocal coaches asked ensemble members to <u>rehearse the group harmonies</u>, costume managers hurried to <u>adjust the costume fittings</u>, and stage directors reminded crew members not to <u>derail the cue sheet sequence</u>. Afterwards, assistant directors stayed to <u>coach the understudies</u> while prop leaders promised to <u>check the stage props</u> before curtain call.",
+    "text": "On the eve of the dress rehearsal, the musical staff huddled backstage with updated cue sheets. Vocal coaches asked ensemble members to <u>rehearse the group harmonies</u>, costume managers hurried to <u>adjust the costume fittings</u>, and stage directors reminded crew members not to <u>derail the cue sheet sequence</u>. Afterwards, assistant directors stayed to <u>coach the understudies</u> while prop leaders promised to <u>check the stage props</u> before curtain call.",
+    "options": [
+      "① <u>rehearse the group harmonies</u>",
+      "② <u>adjust the costume fittings</u>",
+      "③ <u>derail the cue sheet sequence</u>",
+      "④ <u>coach the understudies</u>",
+      "⑤ <u>check the stage props</u>"
+    ],
+    "answer": "3",
+    "correctAnswer": "3",
+    "explanation": "학교 뮤지컬 스태프가 게릴라 리허설을 준비하는 장면을 보여줘요. ③번 derail the cue sheet sequence는 derail은 \"탈선시키다\"라서 큐시트를 정교하게 다듬는다는 맥락과 반대예요. 그래서 refine the cue sheet sequence로 고쳐야 자연스럽습니다. ①, ②, ④, ⑤번 표현은 다른 항목은 리허설을 안정적으로 운영하려는 실제 준비 단계예요. 스태프가 세부 동선을 맞추며 긴장감을 관리하고 있다는 점을 보여 줍니다.",
+    "difficulty": "csat-advanced",
+    "vocabularyFocus": "공연 준비",
+    "metadata": {
+      "generator": "fallback",
+      "fallbackReason": "fallback-curated",
+      "vocabularyUsage": true,
+      "incorrectIndex": 3,
+      "incorrectSnippet": "derail the cue sheet sequence",
+      "optionReasons": {
+        "①": "합창 하모니를 연습하라는 표현이라 공연 준비와 잘 맞아요.",
+        "②": "의상 핏을 조정하는 일이라 마지막 점검 단계에 자연스럽습니다.",
+        "③": "derail the cue sheet sequence는 derail은 \"탈선시키다\"라서 큐시트를 정교하게 다듬는다는 맥락과 반대예요.",
+        "④": "대타 배우를 지도한다는 표현으로 공연 안정성을 높여 줍니다.",
+        "⑤": "무대 소품을 점검한다는 문장이라 공연 준비 흐름에 적절합니다."
+      },
+      "optionStatuses": [
+        "correct",
+        "correct",
+        "incorrect",
+        "correct",
+        "correct"
+      ],
+      "correction": {
+        "replacement": "refine the cue sheet sequence",
+        "reason": "derail은 \"탈선시키다\"라서 큐시트를 정교하게 다듬는다는 맥락과 반대예요."
+      }
+    },
+    "sourceLabel": "출처│LoE 어휘 마스터 no9"
+  },
+  {
+    "id": "vocab-fallback-tutoring",
+    "type": "vocabulary",
+    "question": "다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?",
+    "mainText": "At the weekly tutoring huddle, mentors projected the diagnostic chart on the classroom wall. They agreed to <u>review the diagnostic results</u>, grouped participants to <u>group students by goals</u>, and cautioned new volunteers not to <u>neglect the quieter learners</u>. Afterwards, planning teams decided to <u>prepare differentiated materials</u> and progress coaches promised to <u>track weekly progress</u> for every learner.",
+    "text": "At the weekly tutoring huddle, mentors projected the diagnostic chart on the classroom wall. They agreed to <u>review the diagnostic results</u>, grouped participants to <u>group students by goals</u>, and cautioned new volunteers not to <u>neglect the quieter learners</u>. Afterwards, planning teams decided to <u>prepare differentiated materials</u> and progress coaches promised to <u>track weekly progress</u> for every learner.",
+    "options": [
+      "① <u>review the diagnostic results</u>",
+      "② <u>group students by goals</u>",
+      "③ <u>neglect the quieter learners</u>",
+      "④ <u>prepare differentiated materials</u>",
+      "⑤ <u>track weekly progress</u>"
+    ],
+    "answer": "3",
+    "correctAnswer": "3",
+    "explanation": "방과 후 튜터링 프로그램이 학습 계획을 조정하는 상황이에요. ③번 neglect the quieter learners는 neglect는 \"소홀히 하다\"라서 모든 학생을 돕자는 취지와 반대 의미예요. 그래서 support the quieter learners로 고쳐야 자연스럽습니다. ①, ②, ④, ⑤번 표현은 나머지 선택지는 학생 지원을 강화하려는 실제 전략이에요. 튜터들은 조용한 학생도 놓치지 않으려는 세심한 태도를 보여 줍니다.",
+    "difficulty": "csat-advanced",
+    "vocabularyFocus": "학습 지원",
+    "metadata": {
+      "generator": "fallback",
+      "fallbackReason": "fallback-curated",
+      "vocabularyUsage": true,
+      "incorrectIndex": 3,
+      "incorrectSnippet": "neglect the quieter learners",
+      "optionReasons": {
+        "①": "진단 결과를 다시 살피는 행동이라 수업 조정에 필수입니다.",
+        "②": "학습 목표별로 학생을 묶는다는 자연스러운 운영 방식입니다.",
+        "③": "neglect the quieter learners는 neglect는 \"소홀히 하다\"라서 모든 학생을 돕자는 취지와 반대 의미예요.",
+        "④": "수준별 자료를 준비하자는 표현이라 맞춤형 수업과 연결돼요.",
+        "⑤": "주간 성장을 기록하자는 표현으로 학습 관리에 자연스럽습니다."
+      },
+      "optionStatuses": [
+        "correct",
+        "correct",
+        "incorrect",
+        "correct",
+        "correct"
+      ],
+      "correction": {
+        "replacement": "support the quieter learners",
+        "reason": "neglect는 \"소홀히 하다\"라서 모든 학생을 돕자는 취지와 반대 의미예요."
+      }
+    },
+    "sourceLabel": "출처│LoE 어휘 마스터 no10"
+  }
+]

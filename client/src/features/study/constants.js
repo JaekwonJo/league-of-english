@@ -7,8 +7,7 @@ export const TYPE_LABELS = {
   title: '제목',
   theme: '주제',
   summary: '요약',
-  implicit: '함축 의미',
-  irrelevant: '무관 문장'
+  implicit: '함축 의미'
 };
 
 export const GENERATION_STAGES = [

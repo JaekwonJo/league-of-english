@@ -91,7 +91,7 @@ const StudyModeView = ({
           <div style={styles.submitHint}>
             {allAnswered
               ? '모든 문제를 확인했어요! 마무리 버튼을 눌러 주세요.'
-              : '아직 풀지 않은 문제가 있어요. 모두 풀면 마무리 버튼이 열려요.'}
+              : '아직 풀지 않은 문제가 있어요. 버튼을 누르면 번호를 알려드릴게요.'}
           </div>
           <button
             type="button"
@@ -100,7 +100,6 @@ const StudyModeView = ({
               ...(allAnswered ? {} : styles.submitButtonDisabled),
             }}
             onClick={onFinish}
-            disabled={!allAnswered}
           >
             전체 마무리하기
           </button>

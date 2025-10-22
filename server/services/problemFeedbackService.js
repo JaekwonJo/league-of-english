@@ -3,6 +3,7 @@ const notificationService = require('./notificationService');
 
 const FEEDBACK_ACTIONS = Object.freeze({
   LIKE: 'like',
+  DISLIKE: 'dislike',
   REPORT: 'report'
 });
 
@@ -215,7 +216,7 @@ class ProblemFeedbackService {
       [numericUserId, numericProblemId, normalizedAction]
     );
 
-    if (existing && normalizedAction === FEEDBACK_ACTIONS.LIKE) {
+    if (existing && (normalizedAction === FEEDBACK_ACTIONS.LIKE || normalizedAction === FEEDBACK_ACTIONS.DISLIKE)) {
       await this.db.run('DELETE FROM problem_feedback WHERE id = ?', [existing.id]);
       await this._recordEvent({
         feedbackId: existing.id,
@@ -226,7 +227,7 @@ class ProblemFeedbackService {
         fingerprint: clientFingerprint,
         ipAddress,
         userAgent,
-        detail: 'like_removed'
+        detail: normalizedAction === FEEDBACK_ACTIONS.LIKE ? 'like_removed' : 'dislike_removed'
       });
       return {
         acknowledged: false,
@@ -247,7 +248,7 @@ class ProblemFeedbackService {
           WHERE id = ?`,
         [
           normalizedReason,
-          normalizedAction === FEEDBACK_ACTIONS.LIKE ? FEEDBACK_STATUS.ACKNOWLEDGED : FEEDBACK_STATUS.PENDING,
+          (normalizedAction === FEEDBACK_ACTIONS.LIKE || normalizedAction === FEEDBACK_ACTIONS.DISLIKE) ? FEEDBACK_STATUS.ACKNOWLEDGED : FEEDBACK_STATUS.PENDING,
           existing.id
         ]
       );
@@ -276,7 +277,7 @@ class ProblemFeedbackService {
       };
     }
 
-    const insertStatus = normalizedAction === FEEDBACK_ACTIONS.LIKE
+    const insertStatus = (normalizedAction === FEEDBACK_ACTIONS.LIKE || normalizedAction === FEEDBACK_ACTIONS.DISLIKE)
       ? FEEDBACK_STATUS.ACKNOWLEDGED
       : FEEDBACK_STATUS.PENDING;
 
@@ -338,11 +339,15 @@ class ProblemFeedbackService {
     );
 
     const counts = summaryRows.reduce((acc, row) => {
-      acc[row.action] = Number(row.total) || 0;
+      const key = row.action;
+      const total = Number(row.total) || 0;
+      if (typeof key === 'string') {
+        acc[key] = total;
+      }
       return acc;
-    }, { like: 0, report: 0 });
+    }, { like: 0, dislike: 0, report: 0 });
 
-    const userState = { like: false, report: false };
+    const userState = { like: false, dislike: false, report: false };
     if (Number.isInteger(numericUserId) && numericUserId > 0) {
       const userRows = await this.db.all(
         `SELECT action
@@ -353,6 +358,7 @@ class ProblemFeedbackService {
       );
       userRows.forEach((row) => {
         if (row.action === FEEDBACK_ACTIONS.LIKE) userState.like = true;
+        if (row.action === FEEDBACK_ACTIONS.DISLIKE) userState.dislike = true;
         if (row.action === FEEDBACK_ACTIONS.REPORT) userState.report = true;
       });
     }
