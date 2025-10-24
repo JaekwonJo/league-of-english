@@ -295,36 +295,27 @@ const resetQuizState = useCallback(() => {
   };
 
   const finalizeAndSubmit = useCallback((reason = 'manual') => {
-    let finalAnswers = null;
-    setQuizState((prev) => {
-      if (!prev.active) return prev;
-      if (prev.completed || prev.submitting) return prev;
-      const now = Date.now();
-      const answers = [...prev.answers];
-      const problems = prev.data?.problems || [];
-      const currentProblem = problems[prev.index];
-      if (currentProblem && questionStartRef.current) {
-        const elapsedSeconds = Math.max(0, Math.round((now - questionStartRef.current) / 1000));
-        const existing = answers[prev.index] || {
-          problemId: currentProblem.problemId,
-          selected: null,
-          timeSpent: 0
-        };
-        answers[prev.index] = {
-          ...existing,
-          problemId: currentProblem.problemId,
-          timeSpent: (existing.timeSpent || 0) + elapsedSeconds
-        };
-      }
-      finalAnswers = answers;
-      return {
-        ...prev,
-        answers,
-        completed: true,
-        submitting: true
+    // 1) 현재 상태 스냅샷을 먼저 계산(비동기 setState에 의존하지 않음)
+    const now = Date.now();
+    const current = quizState; // 최신 스냅샷(클로저)
+    const problems = current?.data?.problems || [];
+    const answers = Array.isArray(current?.answers) ? [...current.answers] : [];
+    const currentProblem = problems[current?.index] || null;
+    if (currentProblem && questionStartRef.current) {
+      const elapsedSeconds = Math.max(0, Math.round((now - questionStartRef.current) / 1000));
+      const existing = answers[current.index] || {
+        problemId: currentProblem.problemId,
+        selected: null,
+        timeSpent: 0
       };
-    });
+      answers[current.index] = {
+        ...existing,
+        problemId: currentProblem.problemId,
+        timeSpent: (existing.timeSpent || 0) + elapsedSeconds
+      };
+    }
 
+    // 2) 타이머/상태 즉시 정리
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
@@ -332,10 +323,17 @@ const resetQuizState = useCallback(() => {
     questionStartRef.current = null;
     setTimeLeft(0);
 
-    if (finalAnswers) {
-      submitQuiz(finalAnswers, reason);
-    }
-  }, [submitQuiz]);
+    // 3) 화면 전환(완료/제출중) → 제출 호출
+    setQuizState((prev) => ({
+      ...prev,
+      answers,
+      completed: true,
+      submitting: true
+    }));
+
+    // 4) 서버 제출(에러여도 finally에서 submitting=false로 전환됨)
+    submitQuiz(answers, reason);
+  }, [quizState, submitQuiz]);
 
   const handleStartQuiz = useCallback(async () => {
     if (!selectedSet || !selectedDayKey) {
