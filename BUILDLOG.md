@@ -559,4 +559,12 @@ NODE` 로 5문항 생성 결과 (가족/전략 태그·한글 해설·단일 빈
 - How-to: `git remote set-url origin https://<USER>:<TOKEN>@github.com/JaekwonJo/league-of-english.git` 또는 `gh auth login && git push`를 사용하세요.
 - Files: PROJECT_STATE.md(Resolved/Known), README.md(PAT 푸시 가이드), BUILDLOG.md(본 항목).
 - Verification: 로컬 커밋은 정상. 원격 푸시는 PAT 제공 후 재시도 시 즉시 완료됩니다.
- - Note: 작업 비서 상시 원칙을 `AGENTS.md`로 추가해 이후에도 같은 방식으로 설명/문서화/푸시가 일관되도록 했습니다.
+- Note: 작업 비서 상시 원칙을 `AGENTS.md`로 추가해 이후에도 같은 방식으로 설명/문서화/푸시가 일관되도록 했습니다.
+
+## 2025-10-25 (study submit hang + dev:auto + vocab/grammar polish)
+- Issue: 어휘 퀴즈/학습 제출 시 "채점 중입니다" 화면에서 멈춤. 포트 충돌로 서버 응답이 없을 때 무한 대기.
+- Fix: 프런트 `fetch`에 타임아웃(15–30초) 추가해 무한 대기 차단, 에러 메시지 표준화. 서버 Fallback 영문 문구를 한국어로 교체.
+- Fix: `dev:auto` 스크립트로 빈 포트를 자동 선택(백엔드 5000+, 프런트 3000+). 포트 충돌 제로.
+- Fix: 어휘/어법 본문에 ①~⑤ 번호를 직접 삽입, 밑줄 얇게. 프롬프트에 "핵심 1~3단어만 밑줄" 지시 강화. 출처 코드(2-25-10) 자동 표준화.
+- Files: client/src/services/api.service.js, scripts/dev-auto.js, server/utils/csatProblemNormalizer.js, server/services/ai-problem/*, client/src/features/study/problem/problemDisplayStyles.js.
+- Verification: `npm test` 50개 통과. 로컬에서 dev:auto로 실행 후 어휘/어법 제출 → 결과/랭킹/LP 반영 확인.
