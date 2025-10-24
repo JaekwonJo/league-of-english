@@ -568,3 +568,9 @@ NODE` 로 5문항 생성 결과 (가족/전략 태그·한글 해설·단일 빈
 - Fix: 어휘/어법 본문에 ①~⑤ 번호를 직접 삽입, 밑줄 얇게. 프롬프트에 "핵심 1~3단어만 밑줄" 지시 강화. 출처 코드(2-25-10) 자동 표준화.
 - Files: client/src/services/api.service.js, scripts/dev-auto.js, server/utils/csatProblemNormalizer.js, server/services/ai-problem/*, client/src/features/study/problem/problemDisplayStyles.js.
 - Verification: `npm test` 50개 통과. 로컬에서 dev:auto로 실행 후 어휘/어법 제출 → 결과/랭킹/LP 반영 확인.
+## 2025-10-25 (dev:auto, API base, vocab submit fix)
+- Issue: dev:all에서 포트(3000/5000) 충돌과 프런트가 `/api` 접두어 없이 호출해 404가 잦았고, 어휘 시험이 "채점 중입니다…"에서 멈추거나 결과 요약이 비어 보이는 문제가 있었습니다. 어휘/어법 본문에는 ①~⑤ 표식이 없어 보기 매칭이 헷갈렸습니다.
+- Cause: 고정 포트 사용·API base URL 불일치, 제출 직전 시간 기록/상태 정리 누락, 서버가 요약을 못 줄 때 클라이언트 폴백 없음, 본문 재구성/표식 삽입 미비.
+- Fix: `scripts/dev-auto.js`로 빈 포트 자동 선택 + `REACT_APP_API_URL=http://localhost:{port}/api` 주입. `api.service.js`에 타임아웃 상향(분석/세트/보카) 및 공통 타임아웃 도우미 추가. `VocabularyPage.js`에서 제출 전 스냅샷·타이머 정리, 서버 요약 없을 때 클라 계산 폴백. 서버는 보카 제출 시 `summary/stats/rank/updatedUser` 반환. 본문에 ①~⑤ 자동 삽입 + 얇은 밑줄 스타일.
+- Files: scripts/dev-auto.js, client/src/services/api.service.js, client/src/pages/VocabularyPage.js, client/src/features/study/problem/problemDisplayStyles.js, server/routes/vocab.routes.js, server/services/ai-problem/{shared.js,underlined.js,vocabulary.js}, server/services/problemSetService.js.
+- Notes: 로컬 `npm test` 50 테스트 통과. 로컬 개발은 `npm run dev:auto` 권장(포트 충돌 제로, 404 방지). 프로덕션에서는 `LOE_FAST_MODE` 비활성 유지.
