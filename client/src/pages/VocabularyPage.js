@@ -13,7 +13,7 @@ const formatSeconds = (value = 0) => {
 };
 
 const VocabularyPage = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const [sets, setSets] = useState([]);
   const [setsLoading, setSetsLoading] = useState(true);
   const [setsError, setSetsError] = useState('');
@@ -240,6 +240,15 @@ const resetQuizState = useCallback(() => {
           reason
         }
       }));
+
+      // 업데이트된 유저 정보가 오면 바로 반영(LP/티어 UI 최신화)
+      if (response?.updatedUser && typeof updateUser === 'function') {
+        try {
+          updateUser({ ...(user || {}), ...response.updatedUser });
+        } catch (e) {
+          /* ignore */
+        }
+      }
 
       if (reason === 'time') {
         setMessage('⏰ 제한 시간이 끝났어요! 제출된 결과를 살펴보고 다음에 더 나은 기록에 도전해 볼까요?');
