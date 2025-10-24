@@ -708,19 +708,32 @@ const QuizSummary = ({ summary, detail, stats, rank, submitting, onRetry, onBack
     );
   }
 
+  // Fallback summary 계산(서버 summary 누락 시)
+  const safeDetail = Array.isArray(detail) ? detail : [];
+  const computed = useMemo(() => {
+    if (summary && typeof summary === 'object') return summary;
+    const total = safeDetail.length;
+    const correct = safeDetail.filter((e) => e && e.isCorrect).length;
+    const incorrect = Math.max(0, total - correct);
+    const accuracy = total ? Math.round((correct / total) * 1000) / 10 : 0;
+    return total ? { total, correct, incorrect, accuracy, pointsDelta: 0 } : null;
+  }, [summary, safeDetail]);
+
   return (
     <div style={styles.quizCard}>
       <div style={styles.resultBanner}>
         <h3 style={styles.quizPrompt}>🎉 수고했어요! 결과를 확인해 볼까요?</h3>
         <p style={styles.resultSubtitle}>이번 시도에서 쌓은 경험이 다음 점수를 올려 줄 거예요!</p>
       </div>
-      {summary && (
+      {(computed) && (
         <div style={styles.summaryStats}>
-          <span>총 문제: {summary.total}문제</span>
-          <span>정답: {summary.correct}문제</span>
-          <span>틀린 문제: {summary.incorrect}문제</span>
-          <span>정답률: {summary.accuracy}%</span>
-          <span>점수 변화: {summary.pointsDelta >= 0 ? '+' : ''}{summary.pointsDelta}점</span>
+          <span>총 문제: {computed.total}문제</span>
+          <span>정답: {computed.correct}문제</span>
+          <span>틀린 문제: {computed.incorrect}문제</span>
+          <span>정답률: {computed.accuracy}%</span>
+          {typeof computed.pointsDelta === 'number' && (
+            <span>점수 변화: {computed.pointsDelta >= 0 ? '+' : ''}{computed.pointsDelta}점</span>
+          )}
         </div>
       )}
 
