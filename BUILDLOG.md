@@ -545,3 +545,10 @@ NODE` 로 5문항 생성 결과 (가족/전략 태그·한글 해설·단일 빈
 - Fix: vocabulary 메뉴얼/프로프트/validator를 밑줄 어휘 의미 추론형 5지선다로 재정비하고, 테스트(`aiProblemService.test.js`)와 캐시 수용 기준을 1~4단어·lexicalNote 필수 조건에 맞게 조정했습니다. 관리자 신고 보드에는 상태·유형·문서 필터, 검색, CSV 저장, 토스트 알림을 추가했고, 로딩/결과 UI는 진행 막대 최소 폭·랭킹 텍스트 대비를 높였습니다.
 - Files touched: `server/services/aiProblemService.js`, `server/services/ai-problem/vocabulary.js`, `server/services/ai-problem/internal/problemRepository.js`, `server/tests/aiProblemService.test.js`, `docs/problem-templates/vocabulary-master.md`, `problem manual/vocabulary_problem_manual.md`, `client/src/components/admin/ProblemFeedbackBoard.jsx`, `client/src/hooks/useProblemFeedbackReports.js`, `client/src/pages/AdminPage.js`, `client/src/features/study/components/GenerationSummary.jsx`, `client/src/features/study/components/LoadingState.jsx`, `client/src/features/study/result/components/RankPanel.jsx`, `client/src/features/study/result/components/ResultCard.jsx`, `PROJECT_STATE.md`, `README.md`.
 - Verification: `npm test`, `CI=true npm --prefix client test -- --watch=false --runInBand`, `npm run lint`, 수동으로 신고 보드 필터/CSV/토스트 동작과 다크 모드 결과 화면 대비 체크.
+
+## 2025-10-25 (docs sync + ops guidance)
+- Issue: 문서 간 날짜/용어/Top3가 서로 달라 혼선 발생, 삭제 404 임시 대응이 README에 부재.
+- Cause: 기능 개발 후 문서 동기화 루틴이 없고, 운영 가이드가 분산되어 있었음.
+- Fix: PROJECT_STATE/BUILDLOG/README를 오늘자 기준으로 동기화하고, 관리자 삭제 404 임시 회피(목록 새로고침/재요청)를 명시.
+- Files: PROJECT_STATE.md, BUILDLOG.md, README.md.
+- Notes: 코드 변경 없음(문서/운영 지침 정비). 베타 배포 가이드의 환경 변수 설명을 재점검.
