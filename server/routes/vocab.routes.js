@@ -605,13 +605,14 @@ router.post('/vocabulary/sets/:documentId/quiz/submit', verifyToken, async (req,
       return res.status(400).json({ success: false, message: '채점할 답안이 없습니다.' });
     }
 
-    const summary = await studyService.recordStudySession(req.user.id, resultsPayload);
+    const outcome = await studyService.recordStudySession(req.user.id, resultsPayload);
 
     res.json({
       success: true,
-      summary: summary.summary,
-      stats: summary.stats,
-      rank: summary.rank,
+      summary: outcome.summary,
+      stats: outcome.stats,
+      rank: outcome.rank,
+      updatedUser: outcome.updatedUser,
       detail
     });
   } catch (error) {
