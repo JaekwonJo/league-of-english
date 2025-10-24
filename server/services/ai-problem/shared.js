@@ -201,7 +201,29 @@ function ensureSourceLabel(raw, context = {}) {
     context.docCode
   ];
 
+  // Try to derive a standardized Korean source from codes like "2-25-10" (grade-year-month)
+  function deriveFromCode(text) {
+    const str = String(text || '').trim();
+    if (!str) return null;
+    const m = str.match(/\b(\d)\s*[-_\/.]\s*(\d{2})\s*[-_\/.]\s*(\d{2})\b/);
+    if (!m) return null;
+    const grade = parseInt(m[1], 10);
+    const yy = parseInt(m[2], 10);
+    const mm = parseInt(m[3], 10);
+    if (!(grade >= 1 && grade <= 3) || !(mm >= 1 && mm <= 12)) return null;
+    const yyyy = 2000 + yy;
+    return `고${grade} ${yyyy}년 ${mm}월 모의고사`;
+  }
+
   let baseTitle = '';
+  // Prefer structured code if available
+  for (const candidate of candidates) {
+    const derived = deriveFromCode(candidate);
+    if (derived) {
+      baseTitle = derived;
+      break;
+    }
+  }
   for (const candidate of candidates) {
     if (!candidate) continue;
     const rawCandidate = String(candidate).trim();
@@ -210,7 +232,7 @@ function ensureSourceLabel(raw, context = {}) {
       continue;
     }
     const sanitized = sanitizeSourceTitle(rawCandidate);
-    if (sanitized) {
+    if (!baseTitle && sanitized) {
       baseTitle = sanitized;
       break;
     }

@@ -57,6 +57,7 @@ function createGrammarPipeline({
           selectedModel = modelConfig.name;
           normalized = normalizeGrammarPayload(payload, {
             docTitle,
+            documentCode: extraContext.documentCode,
             passage,
             index: passageIndex,
             desiredAnswerIndex: attempts <= 3 ? desiredIndex : null,
@@ -95,6 +96,7 @@ function createGrammarPipeline({
               });
               normalized = normalizeGrammarPayload(repairedPayload, {
                 docTitle,
+                documentCode: extraContext.documentCode,
                 passage,
                 index: passageIndex,
                 desiredAnswerIndex: attempts <= 3 ? desiredIndex : null,

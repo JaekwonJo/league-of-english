@@ -399,7 +399,9 @@ function rebuildUnderlinesFromOptions(mainText, options = [], failureReasons = n
   let cursor = 0;
   for (const item of sorted) {
     rebuiltParts.push(plain.slice(cursor, item.start));
-    rebuiltParts.push(`<u>${plain.slice(item.start, item.end)}</u>`);
+    const marker = GRAMMAR_DIGITS[item.index] || '';
+    // Insert circled-digit marker immediately before each underlined span in the passage
+    rebuiltParts.push(`${marker}<u>${plain.slice(item.start, item.end)}</u>`);
     cursor = item.end;
   }
   rebuiltParts.push(plain.slice(cursor));

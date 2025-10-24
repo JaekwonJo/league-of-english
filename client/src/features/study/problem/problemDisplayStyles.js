@@ -221,17 +221,18 @@ export const problemDisplayStyles = {
   underlineSpan: {
     position: 'relative',
     display: 'inline',
-    padding: '0 0.18em',
-    borderRadius: '6px',
+    padding: '0 0.08em',
+    borderRadius: '3px',
     color: 'inherit',
     fontWeight: 700,
     textDecoration: 'none',
-    textDecorationSkipInk: 'none',
+    textDecorationSkipInk: 'auto',
     boxDecorationBreak: 'clone',
     WebkitBoxDecorationBreak: 'clone',
-    boxShadow: 'inset 0 -0.45em 0 var(--warning-surface)',
-    borderBottom: '2px solid var(--warning-strong)',
-    transition: 'background 0.2s ease, border-color 0.2s ease'
+    // Cleaner, thinner underline with improved color
+    boxShadow: 'none',
+    borderBottom: '1.5px solid var(--indigo)',
+    transition: 'border-color 0.2s ease'
   }
 };
 

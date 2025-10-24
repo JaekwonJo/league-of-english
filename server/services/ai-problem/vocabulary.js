@@ -10,6 +10,7 @@ const {
   ensureSourceLabel,
   labelToIndex
 } = require('./shared');
+const { rebuildUnderlinesFromOptions } = require('./underlined');
 
 const UNDERLINE_PATTERN = /<u>([\s\S]*?)<\/u>/gi;
 const DEFAULT_QUESTION = '다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 않은 것은?';
@@ -260,6 +261,16 @@ function normalizeVocabularyPayload(payload, context = {}) {
   }
 
   const answerValue = uniqueAnswers.join(',');
+
+  // Ensure circled digits ①-⑤ also appear in the passage next to each underlined expression
+  try {
+    const rebuilt = rebuildUnderlinesFromOptions(passage, normalizedOptions, []);
+    if (rebuilt && rebuilt.mainText) {
+      passage = rebuilt.mainText;
+    }
+  } catch (e) {
+    // best-effort; keep original passage if rebuild fails
+  }
 
   return {
     id: payload.id || `vocab_ai_${Date.now()}_${Math.floor(Math.random() * 1000)}`,

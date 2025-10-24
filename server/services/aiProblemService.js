@@ -915,7 +915,7 @@ const targetCorrect = Number.isInteger(context.targetCorrectCount) ? context.tar
       throw new Error('grammar explanation too short');
     }
 
-    const sourceLabel = ensureSourceLabel(payload.sourceLabel || payload.source, { docTitle });
+    const sourceLabel = ensureSourceLabel(payload.sourceLabel || payload.source, { docTitle, documentCode: context.documentCode });
 
     const reasonMap = { ...optionsInfo.reasons };
     const tagMap = { ...optionsInfo.tags };
@@ -1675,7 +1675,8 @@ ${clipText(passage, 1600)}`,
     if (!this.getOpenAI()) throw new Error("AI generator unavailable for grammar problems");
 
     const manualExcerpt = readGrammarManual(2400);
-    const docTitle = document?.title || `Document ${documentId}`;
+    const documentCode = document?.code || document?.slug || document?.external_id || null;
+    const docTitle = document?.title || documentCode || `Document ${documentId}`;
     const answerHistory = [];
     const baselinePath = path.join(__dirname, '..', 'utils', 'data', 'wolgo-2024-03-grammar-baseline.json');
 
@@ -1710,7 +1711,8 @@ ${clipText(passage, 1600)}`,
         variant,
         passageIndex: i,
         extraContext: {
-          order: results.length + 1
+          order: results.length + 1,
+          documentCode
         }
       });
 
