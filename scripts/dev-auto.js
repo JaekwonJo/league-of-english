@@ -31,7 +31,7 @@ function findFreePort(preferred, maxTries = 5) {
 async function main() {
   const backendPort = await findFreePort(5000, 8) || 5000;
   const frontendPort = await findFreePort(3000, 8) || 3000;
-  const apiUrl = process.env.REACT_APP_API_URL || `http://localhost:${backendPort}`;
+  const apiUrl = process.env.REACT_APP_API_URL || `http://localhost:${backendPort}/api`;
 
   console.log(`\n[dev:auto] backend: ${backendPort}, frontend: ${frontendPort}, REACT_APP_API_URL: ${apiUrl}\n`);
 
@@ -60,4 +60,3 @@ main().catch((err) => {
   console.error('[dev:auto] failed:', err);
   process.exit(1);
 });
-
