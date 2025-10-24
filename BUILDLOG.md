@@ -552,3 +552,10 @@ NODE` 로 5문항 생성 결과 (가족/전략 태그·한글 해설·단일 빈
 - Fix: PROJECT_STATE/BUILDLOG/README를 오늘자 기준으로 동기화하고, 관리자 삭제 404 임시 회피(목록 새로고침/재요청)를 명시.
 - Files: PROJECT_STATE.md, BUILDLOG.md, README.md.
 - Notes: 코드 변경 없음(문서/운영 지침 정비). 베타 배포 가이드의 환경 변수 설명을 재점검.
+## 2025-10-25 (git push auth prompt freeze)
+- Issue: `git push` 중 `Password for 'https://…'` 프롬프트에서 화면이 멈춘 듯 보이고 키보드 입력이 먹지 않았어요.
+- Cause: GitHub는 2021년 이후 비밀번호 푸시를 막았습니다. 터미널이 비밀번호를 기다리지만(대화형 입력) 현재 환경은 상호입력이 차단되어 "멈춘 것처럼" 보입니다.
+- Fix: 비밀번호 대신 GitHub Personal Access Token(PAT, repo 권한)을 사용해 비대화형으로 푸시하도록 문서화하고, `credential.helper` 설정/원격 URL 토큰 사용 절차를 추가했습니다.
+- How-to: `git remote set-url origin https://<USER>:<TOKEN>@github.com/JaekwonJo/league-of-english.git` 또는 `gh auth login && git push`를 사용하세요.
+- Files: PROJECT_STATE.md(Resolved/Known), README.md(PAT 푸시 가이드), BUILDLOG.md(본 항목).
+- Verification: 로컬 커밋은 정상. 원격 푸시는 PAT 제공 후 재시도 시 즉시 완료됩니다.

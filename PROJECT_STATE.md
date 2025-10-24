@@ -36,9 +36,11 @@
 - Vocabulary 다중 정답의 결과 요약/LP/랭킹 반영 e2e 커버리지 보강 필요.
 - UI 캡처(`npm run capture:ui`)는 Playwright 설치 안내를 수동으로 따름.
 - Google Translate 무료 API 호출 제한: 캐시 삭제 시 주의.
+ - GitHub 푸시 시 비밀번호 입력 프롬프트가 뜨면 환경 제약으로 입력이 막혀 "멈춤"처럼 보임 → 비밀번호가 아닌 PAT 필요.
 
 ## Resolved – 2025-10-25 (오류 반복 방지)
 - 문서 날짜·용어·Top3/Known Issues를 통일해 지침 불일치로 인한 시행착오를 줄였습니다.
 - 관리자 삭제 404 관련 재현 케이스와 임시 회피 절차(목록 새로고침/재요청)를 문서화했습니다.
 - 배포 가이드의 환경 변수 설명을 점검해 누락·혼동을 줄였습니다.
 - BUILDLOG/README/PROJECT_STATE 동기화 루틴을 확립해 변경 누락을 방지했습니다.
+ - GitHub 비밀번호 푸시 차단으로 인한 프롬프트 정지 이슈 원인(PAT 필요)을 명확히 하고, 비대화형 푸시 절차(credential.helper/`gh`)를 README에 추가했습니다.

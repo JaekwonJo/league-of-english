@@ -67,3 +67,22 @@ npm run lint
 - 기능 코드는 변동 없음(문서/운영 가이드 정비 중심).
 
 궁금한 점이 생기면 “어디에서 막혔어요?”라고 바로 알려 주세요. 함께 해결해 드릴게요! 😊
+
+## 7. GitHub 푸시가 멈출 때 (PAT 설정)
+GitHub는 비밀번호로 `git push`를 막습니다. 비밀번호를 물어보는 프롬프트에서 입력이 막힌 것처럼 보일 수 있어요. 아래 중 하나로 해결하세요.
+
+1) Personal Access Token(PAT) 사용
+```bash
+# https://github.com/settings/tokens 에서 repo 권한으로 토큰 생성
+git config credential.helper store  # 선택: 로컬에 저장
+git remote set-url origin \
+  https://<YOUR_GH_ID>:<YOUR_PAT>@github.com/JaekwonJo/league-of-english.git
+git push origin main
+```
+
+2) GitHub CLI(gh) 사용
+```bash
+npm i -g gh  # 또는 OS 패키지로 설치
+gh auth login   # 안내에 따라 로그인(HTTPS, GitHub.com, 브라우저/토큰)
+git push origin main
+```
