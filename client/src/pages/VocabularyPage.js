@@ -708,16 +708,7 @@ const QuizBox = ({
 };
 
 const QuizSummary = ({ summary, detail, stats, rank, submitting, onRetry, onBack }) => {
-  if (submitting) {
-    return (
-      <div style={styles.quizCard}>
-        <h3 style={styles.quizPrompt}>채점 중입니다... ⏳</h3>
-        <p style={styles.actionHint}>정답과 해설을 정리하고 있어요. 잠시만 기다려 주세요!</p>
-      </div>
-    );
-  }
-
-  // Fallback summary 계산(서버 summary 누락 시)
+  // Hooks must be called unconditionally
   const safeDetail = Array.isArray(detail) ? detail : [];
   const computed = useMemo(() => {
     if (summary && typeof summary === 'object') return summary;
@@ -727,6 +718,15 @@ const QuizSummary = ({ summary, detail, stats, rank, submitting, onRetry, onBack
     const accuracy = total ? Math.round((correct / total) * 1000) / 10 : 0;
     return total ? { total, correct, incorrect, accuracy, pointsDelta: 0 } : null;
   }, [summary, safeDetail]);
+
+  if (submitting) {
+    return (
+      <div style={styles.quizCard}>
+        <h3 style={styles.quizPrompt}>채점 중입니다... ⏳</h3>
+        <p style={styles.actionHint}>정답과 해설을 정리하고 있어요. 잠시만 기다려 주세요!</p>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.quizCard}>
