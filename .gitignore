@@ -17,6 +17,8 @@ server/uploads/
 *.log
 logs/
 server/tmp/
+.tmp.driveupload/
+.tmp.drivedownload/
 
 # Test databases
 *.sqlite

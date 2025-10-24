@@ -12,6 +12,23 @@ class ApiService {
     console.log('API URL:', this.baseURL); // 디버깅용
   }
 
+  // 내부: fetch 타임아웃 지원 (기본 15초)
+  async _fetchWithTimeout(url, options = {}, timeoutMs = 15000, context = '') {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), Math.max(1000, timeoutMs));
+    try {
+      const response = await fetch(url, { ...options, signal: controller.signal });
+      return response;
+    } catch (error) {
+      if (error?.name === 'AbortError') {
+        throw new Error('요청이 오래 걸려 중단되었어요. 잠시 후 다시 시도해 주세요.');
+      }
+      throw error;
+    } finally {
+      clearTimeout(id);
+    }
+  }
+
   /**
    * 토큰 설정
    */
@@ -84,10 +101,10 @@ class ApiService {
         token: this.getToken() ? 'EXISTS' : 'MISSING'
       });
       
-      const response = await fetch(url, {
+      const response = await this._fetchWithTimeout(url, {
         method: 'GET',
         headers: headers
-      });
+      }, 15000, `GET ${endpoint}`);
 
       if (!response.ok) {
         throw response;
@@ -108,10 +125,10 @@ class ApiService {
       const url = `${this.baseURL}${endpoint}${queryString ? '?' + queryString : ''}`;
       const headers = this.getHeaders();
 
-      const response = await fetch(url, {
+      const response = await this._fetchWithTimeout(url, {
         method: 'GET',
         headers
-      });
+      }, 15000, `GET_TEXT ${endpoint}`);
 
       if (!response.ok) {
         throw response;
@@ -128,11 +145,11 @@ class ApiService {
    */
   async post(endpoint, data = {}) {
     try {
-      const response = await fetch(`${this.baseURL}${endpoint}`, {
+      const response = await this._fetchWithTimeout(`${this.baseURL}${endpoint}`, {
         method: 'POST',
         headers: this.getHeaders(),
         body: JSON.stringify(data)
-      });
+      }, 20000, `POST ${endpoint}`);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -147,11 +164,11 @@ class ApiService {
 
   async postForBlob(endpoint, data = {}) {
     try {
-      const response = await fetch(`${this.baseURL}${endpoint}`, {
+      const response = await this._fetchWithTimeout(`${this.baseURL}${endpoint}`, {
         method: 'POST',
         headers: this.getHeaders(),
         body: JSON.stringify(data)
-      });
+      }, 30000, `POST_BLOB ${endpoint}`);
 
       if (!response.ok) {
         let errorMessage = '요청 처리 실패';
@@ -175,11 +192,11 @@ class ApiService {
    */
   async put(endpoint, data = {}) {
     try {
-      const response = await fetch(`${this.baseURL}${endpoint}`, {
+      const response = await this._fetchWithTimeout(`${this.baseURL}${endpoint}`, {
         method: 'PUT',
         headers: this.getHeaders(),
         body: JSON.stringify(data)
-      });
+      }, 20000, `PUT ${endpoint}`);
 
       if (!response.ok) {
         throw response;
@@ -193,11 +210,11 @@ class ApiService {
 
   async patch(endpoint, data = {}) {
     try {
-      const response = await fetch(`${this.baseURL}${endpoint}`, {
+      const response = await this._fetchWithTimeout(`${this.baseURL}${endpoint}`, {
         method: 'PATCH',
         headers: this.getHeaders(),
         body: JSON.stringify(data)
-      });
+      }, 20000, `PATCH ${endpoint}`);
 
       if (!response.ok) {
         throw response;
@@ -214,11 +231,11 @@ class ApiService {
    */
   async delete(endpoint, data) {
     try {
-      const response = await fetch(`${this.baseURL}${endpoint}`, {
+      const response = await this._fetchWithTimeout(`${this.baseURL}${endpoint}`, {
         method: 'DELETE',
         headers: this.getHeaders(),
         ...(data !== undefined ? { body: JSON.stringify(data) } : {})
-      });
+      }, 15000, `DELETE ${endpoint}`);
 
       if (!response.ok) {
         throw response;
@@ -242,13 +259,13 @@ class ApiService {
         formData.append(key, additionalData[key]);
       });
 
-      const response = await fetch(`${this.baseURL}${endpoint}`, {
+      const response = await this._fetchWithTimeout(`${this.baseURL}${endpoint}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${this.getToken()}`
         },
         body: formData
-      });
+      }, 60000, `UPLOAD ${endpoint}`);
 
       if (!response.ok) {
         throw response;

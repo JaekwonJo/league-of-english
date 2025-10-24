@@ -1,5 +1,5 @@
 ﻿const DEFAULT_DIFFICULTY = 'basic';
-const FALLBACK_QUESTION = 'Preparing question... please wait.';
+const FALLBACK_QUESTION = '문항을 준비하는 중입니다. 잠시만 기다려 주세요.';
 const ZERO_BASED_KEYS = new Set(['correctanswer', 'correct_index', 'correctindex']);
 
 function toCleanString(value) {
