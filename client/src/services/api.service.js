@@ -145,11 +145,18 @@ class ApiService {
    */
   async post(endpoint, data = {}) {
     try {
+      // Long-running endpoints need longer timeouts
+      let timeoutMs = 20000;
+      if (/\/generate\/csat-set$/.test(endpoint)) timeoutMs = 60000;
+      if (/\/analysis\//.test(endpoint)) timeoutMs = Math.max(timeoutMs, 60000);
+      if (/\/vocabulary\/sets\/.+\/quiz$/.test(endpoint)) timeoutMs = Math.max(timeoutMs, 30000);
+      if (/\/problems\/export\/pdf$/.test(endpoint)) timeoutMs = Math.max(timeoutMs, 60000);
+
       const response = await this._fetchWithTimeout(`${this.baseURL}${endpoint}`, {
         method: 'POST',
         headers: this.getHeaders(),
         body: JSON.stringify(data)
-      }, 20000, `POST ${endpoint}`);
+      }, timeoutMs, `POST ${endpoint}`);
 
       if (!response.ok) {
         const errorData = await response.json();
