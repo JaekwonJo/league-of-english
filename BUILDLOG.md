@@ -559,3 +559,4 @@ NODE` 로 5문항 생성 결과 (가족/전략 태그·한글 해설·단일 빈
 - How-to: `git remote set-url origin https://<USER>:<TOKEN>@github.com/JaekwonJo/league-of-english.git` 또는 `gh auth login && git push`를 사용하세요.
 - Files: PROJECT_STATE.md(Resolved/Known), README.md(PAT 푸시 가이드), BUILDLOG.md(본 항목).
 - Verification: 로컬 커밋은 정상. 원격 푸시는 PAT 제공 후 재시도 시 즉시 완료됩니다.
+ - Note: 작업 비서 상시 원칙을 `AGENTS.md`로 추가해 이후에도 같은 방식으로 설명/문서화/푸시가 일관되도록 했습니다.
