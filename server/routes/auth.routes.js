@@ -132,6 +132,50 @@ router.post('/send-code', async (req, res) => {
   }
 });
 
+// 비밀번호 재설정: 코드 발송(등록과 동일 엔진 사용)
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body || {};
+    await emailVerificationService.requestVerificationCode(email);
+    res.json({ success: true, message: '이메일로 재설정 코드를 보냈어요. 10분 안에 입력해 주세요!' });
+  } catch (error) {
+    console.error('[auth] forgot-password error:', error);
+    res.status(400).json({ success: false, message: error?.message || '재설정 코드를 전송하지 못했어요.' });
+  }
+});
+
+// 비밀번호 재설정: 코드 확인 후 새 비밀번호 저장
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { email, code, newPassword } = req.body || {};
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+    const normalizedPassword = String(newPassword || '');
+
+    if (!normalizedEmail) return res.status(400).json({ success: false, message: '이메일을 입력해 주세요.' });
+    if (normalizedPassword.length < 8 || !/[A-Za-z]/.test(normalizedPassword) || !/[0-9]/.test(normalizedPassword)) {
+      return res.status(400).json({ success: false, message: '새 비밀번호는 8자 이상, 영문과 숫자를 포함해야 합니다.' });
+    }
+
+    await emailVerificationService.verifyCode(normalizedEmail, code);
+
+    const user = await database.get('SELECT id FROM users WHERE email = ?', [normalizedEmail]);
+    if (!user) return res.status(404).json({ success: false, message: '사용자를 찾을 수 없습니다.' });
+
+    const hashed = await hashPassword(normalizedPassword);
+    try {
+      await database.run('UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [hashed, user.id]);
+    } catch (e) {
+      // legacy fallback
+      await database.run('UPDATE users SET password = ?, password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [hashed, hashed, user.id]);
+    }
+
+    res.json({ success: true, message: '비밀번호가 재설정되었습니다. 새로운 비밀번호로 로그인해 주세요.' });
+  } catch (error) {
+    console.error('[auth] reset-password error:', error);
+    res.status(400).json({ success: false, message: error?.message || '비밀번호를 재설정하지 못했어요.' });
+  }
+});
+
 // 로그인
 router.post('/login', async (req, res) => {
   const { username, password } = req.body || {};
