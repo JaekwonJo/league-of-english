@@ -321,6 +321,20 @@ export const api = {
     problems: {
       deactivate: (id, payload) => apiService.post(`/admin/problems/${id}/deactivate`, payload),
       restore: (id, payload) => apiService.post(`/admin/problems/${id}/restore`, payload)
+    },
+    users: {
+      list: (params) => apiService.get('/admin/users', params),
+      suspend: (id) => apiService.post(`/admin/users/${id}/suspend`),
+      restore: (id) => apiService.post(`/admin/users/${id}/restore`),
+      remove: (id) => apiService.delete(`/admin/users/${id}`)
+    },
+    membership: {
+      grant: (payload) => apiService.post('/membership/admin/grant', payload),
+      requests: () => apiService.get('/membership/admin/requests'),
+      resolve: (id, payload) => apiService.post(`/membership/admin/requests/${id}/resolve`, payload),
+      coupons: {
+        create: (payload) => apiService.post('/membership/admin/coupons', payload)
+      }
     }
   },
 

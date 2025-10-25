@@ -10,6 +10,8 @@ import ProblemLibrary from '../components/admin/ProblemLibrary';
 import DocumentShareModal from '../components/admin/DocumentShareModal';
 import ProblemFeedbackBoard from '../components/admin/ProblemFeedbackBoard';
 import AdminNotificationsPanel from '../components/admin/AdminNotificationsPanel';
+import AdminUsersPanel from '../components/admin/AdminUsersPanel';
+import MembershipRequestsPanel from '../components/admin/MembershipRequestsPanel';
 import { useAdminDocuments } from '../hooks/useAdminDocuments';
 import { useDocumentShare } from '../hooks/useDocumentShare';
 import { useFeedbackReports } from '../hooks/useFeedbackReports';
@@ -401,6 +403,10 @@ const AdminPage = () => {
         onAcknowledge={handleNotificationAcknowledge}
         onResolve={handleNotificationResolve}
       />
+
+      {/* 멤버십 요청 처리/사용자 관리 */}
+      <MembershipRequestsPanel />
+      <AdminUsersPanel />
 
       <ProblemFeedbackBoard
         reports={problemReports}
