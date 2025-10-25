@@ -175,14 +175,39 @@ router.post('/request', verifyToken, async (req, res) => {
       return res.status(404).json({ success: false, message: '사용자 정보를 찾을 수 없습니다.' });
     }
 
-    await database.run(
+    const { id: requestId } = await database.run(
       `INSERT INTO membership_requests (user_id, plan, message, status)
        VALUES (?, ?, ?, 'pending')`,
       [req.user.id, normalizedPlan, String(message || '').trim()]
     );
 
-    const adminEmail = process.env.ADMIN_ALERT_EMAIL;
-    if (adminEmail) {
+    // 관리자 알림(앱 내 알림 큐)
+    try {
+      const notifications = require('../services/notificationService');
+      await notifications.enqueue({
+        type: 'membership_request',
+        referenceId: requestId,
+        severity: 'normal',
+        payload: {
+          userId: user.id,
+          username: user.username,
+          name: user.name,
+          email: user.email,
+          plan: normalizedPlan,
+          message: String(message || '').trim()
+        }
+      });
+    } catch (notifyError) {
+      console.warn('[membership] 관리자 알림 큐 등록 실패:', notifyError?.message || notifyError);
+    }
+
+    // 이메일 알림(여러 수신자 지원)
+    const adminEmailsRaw = process.env.ADMIN_ALERT_EMAILS || process.env.ADMIN_ALERT_EMAIL || 'jaekwonim@gmail.com, jaekwonim@naver.com';
+    const recipients = String(adminEmailsRaw)
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (recipients.length) {
       const html = `
         <div style="font-family: Pretendard, 'Apple SD Gothic Neo', sans-serif; padding: 24px; line-height: 1.6;">
           <h2 style="margin-bottom: 16px;">새로운 유료 플랜 입금 확인 요청</h2>
@@ -195,7 +220,7 @@ router.post('/request', verifyToken, async (req, res) => {
       `;
       try {
         await sendMail({
-          to: adminEmail,
+          to: recipients.join(', '),
           subject: '[League of English] 유료 플랜 입금 확인 요청',
           html
         });
