@@ -580,3 +580,12 @@ NODE` 로 5문항 생성 결과 (가족/전략 태그·한글 해설·단일 빈
 - Fix: 생성 타임박스(25s)+자동 폴백 도입; 학생 목록에 공개/발행/관리자 문서 노출; 멤버십 상향/요청 승인/쿠폰 API 추가; 욕설 필터+정지/복구/삭제+랭킹 제외; 비번 찾기(코드 발송+재설정) 추가; www→apex 리다이렉트/기본 API/CORS 정리.
 - Files: server/services/problemSetService.js, server/routes/problem.routes.js, server/routes/document.routes.js, server/routes/membership.routes.js, server/routes/admin.routes.js, server/routes/auth.routes.js, server/routes/ranking.routes.js, client/src/pages/VocabularyPage.js, server/routes/vocab.routes.js, vercel.json, client/src/config/appConfig.json.
 - Notes: Vocabulary에 모드 선택(혼합/단어→뜻/뜻→단어) 추가. 프로/프리미엄은 무제한 일일한도로 처리. 학생 학습/랭크/티어 즉시 반영 확인.
+
+## 2025-10-26 (admin UI + per-type limits + ranking effects)
+- Issue: 등급 운영을 수기로 처리해야 했고, 무료 회원 일일 제한을 유형별로 나누어 관리하기 어려웠음. 랭킹에서 유료 회원의 고급 뱃지가 구분되지 않음.
+- Fix: 관리자 화면에 멤버십 요청 패널(승인/반려, 빠른 쿠폰 생성)과 사용자 패널(검색, 정지/복구/삭제, 직접 등급 부여) 추가.
+- Fix: 무료 회원 일일 제한을 유형별로 분리(단어시험 30, 문제풀이 30), 합산 제한 60으로 보강. 프리미엄/프로/관리자 무제한.
+- Fix: 리더보드/내 순위에 프리미엄(은색)·프로(금색) 닉네임 이펙트 적용.
+- Docs: README에 멤버십 플랜/오프라인 결제 흐름/관리자 승인 절차 추가.
+- Files: client/src/pages/AdminPage.js, client/src/components/admin/{MembershipRequestsPanel,AdminUsersPanel}.jsx, client/src/services/api.service.js, server/{routes,services}.*(usage counters), client/src/pages/{ProfilePage,RankingPage}.js.
+- Verify: 관리자 계정으로 요청 승인→등급 반영, 쿠폰 생성→사용자 적용, 무료 계정으로 단어/문제 한도 초과 시 429 메시지 확인.
