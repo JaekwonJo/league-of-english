@@ -574,3 +574,9 @@ NODE` 로 5문항 생성 결과 (가족/전략 태그·한글 해설·단일 빈
 - Fix: `scripts/dev-auto.js`로 빈 포트 자동 선택 + `REACT_APP_API_URL=http://localhost:{port}/api` 주입. `api.service.js`에 타임아웃 상향(분석/세트/보카) 및 공통 타임아웃 도우미 추가. `VocabularyPage.js`에서 제출 전 스냅샷·타이머 정리, 서버 요약 없을 때 클라 계산 폴백. 서버는 보카 제출 시 `summary/stats/rank/updatedUser` 반환. 본문에 ①~⑤ 자동 삽입 + 얇은 밑줄 스타일.
 - Files: scripts/dev-auto.js, client/src/services/api.service.js, client/src/pages/VocabularyPage.js, client/src/features/study/problem/problemDisplayStyles.js, server/routes/vocab.routes.js, server/services/ai-problem/{shared.js,underlined.js,vocabulary.js}, server/services/problemSetService.js.
 - Notes: 로컬 `npm test` 50 테스트 통과. 로컬 개발은 `npm run dev:auto` 권장(포트 충돌 제로, 404 방지). 프로덕션에서는 `LOE_FAST_MODE` 비활성 유지.
+## 2025-10-26 (prod domain, AI timebox, membership/moderation)
+- Issue: 세트 생성이 간헐 타임아웃/알 수 없는 오류, 학생 계정에서 문서가 보이지 않음, 일일한도 제약 운영 불편, 부적절 아이디 노출 위험, 비밀번호 복구 경로 부재.
+- Cause: AI 응답 지연 시 폴백 지연, 문서 목록 정책이 학생에 제한적, 멤버십 관리 UI/엔드포인트 부족, 욕설 아이디 필터/정지 기능 없음, reset 플로우 미구현.
+- Fix: 생성 타임박스(25s)+자동 폴백 도입; 학생 목록에 공개/발행/관리자 문서 노출; 멤버십 상향/요청 승인/쿠폰 API 추가; 욕설 필터+정지/복구/삭제+랭킹 제외; 비번 찾기(코드 발송+재설정) 추가; www→apex 리다이렉트/기본 API/CORS 정리.
+- Files: server/services/problemSetService.js, server/routes/problem.routes.js, server/routes/document.routes.js, server/routes/membership.routes.js, server/routes/admin.routes.js, server/routes/auth.routes.js, server/routes/ranking.routes.js, client/src/pages/VocabularyPage.js, server/routes/vocab.routes.js, vercel.json, client/src/config/appConfig.json.
+- Notes: Vocabulary에 모드 선택(혼합/단어→뜻/뜻→단어) 추가. 프로/프리미엄은 무제한 일일한도로 처리. 학생 학습/랭크/티어 즉시 반영 확인.
