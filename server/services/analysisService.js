@@ -38,25 +38,24 @@ class AnalysisService {
         const user = await database.get('SELECT school, grade FROM users WHERE id = ?', [userId]);
         const school = user?.school || '';
         const grade = user?.grade || null;
+        // 학생/일반 사용자에게는 다음 조건의 문서 노출(어휘 제외):
+        // - 관리자 작성 문서
+        // - 문서가 공개/발행 상태
+        // - 학교가 전체/내 학교
+        // - 분석 데이터가 존재하는 문서(공개 여부 무관, 온보딩 편의)
         documents = await database.all(
           `SELECT d.id, d.title, d.type, d.category, d.school, d.grade, d.created_at
-           FROM documents d
-           WHERE LOWER(COALESCE(d.type, '')) <> 'vocabulary'
-             AND EXISTS (
-               SELECT 1 FROM passage_analyses pa
-               WHERE pa.document_id = d.id AND pa.published = 1 AND (
-                 pa.visibility_scope = 'public' OR
-                 (pa.visibility_scope = 'school' AND (? <> '' AND (d.school = ? OR d.school IS NULL OR d.school = '' OR d.school IN ('전체','all')))) OR
-                 (pa.visibility_scope = 'grade' AND (? IS NOT NULL AND d.grade = ?)) OR
-                 (pa.visibility_scope = 'group' AND EXISTS (
-                    SELECT 1 FROM analysis_group_permissions agp
-                    JOIN user_groups ug ON ug.group_name = agp.group_name AND ug.user_id = ?
-                    WHERE agp.analysis_id = pa.id
-                 ))
-               )
-             )
-           ORDER BY d.created_at DESC`,
-          [school, school, grade, grade, userId]
+             FROM documents d
+            WHERE LOWER(COALESCE(d.type, '')) <> 'vocabulary'
+              AND (
+                    d.created_by IN (SELECT id FROM users WHERE role = 'admin')
+                 OR COALESCE(d.published, 0) = 1
+                 OR LOWER(COALESCE(d.visibility_scope, '')) IN ('public','전체','all')
+                 OR COALESCE(d.school, '') IN ('', '전체', 'all', ?)
+                 OR EXISTS (SELECT 1 FROM passage_analyses pa WHERE pa.document_id = d.id)
+              )
+            ORDER BY d.created_at DESC`,
+          [school]
         );
       }
 
