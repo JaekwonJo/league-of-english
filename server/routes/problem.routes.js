@@ -51,12 +51,25 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
     const statusCode = extractedStatus >= 400 ? extractedStatus : 500;
     const rawMessage = String(error?.message || '').toLowerCase();
     let friendly = '문제를 생성하는 중 알 수 없는 오류가 발생했어요. 잠시 후 다시 시도해 주세요.';
-    if (rawMessage.includes('ai generator unavailable')) {
-      friendly = 'AI 생성기가 준비되지 않았어요. OpenAI API 키를 설정한 뒤 다시 시도해 주세요.';
+    if (statusCode === 401) {
+      friendly = '로그인이 필요합니다. 오른쪽 상단에서 로그인 후 다시 시도해 주세요.';
+    } else if (statusCode === 403) {
+      friendly = '권한이 부족합니다. 관리자/선생님 전용 기능이거나 토큰이 유효하지 않습니다.';
+    } else if (statusCode === 404) {
+      friendly = '요청한 문서 또는 사용자 정보를 찾지 못했습니다. 페이지 새로고침 후 다시 시도해 주세요.';
+    } else if (statusCode === 429) {
+      friendly = '오늘의 문제 생성 한도를 모두 사용했어요. 내일 다시 시도하거나 프리미엄으로 업그레이드해 주세요.';
+    } else if (rawMessage.includes('ai generator unavailable')) {
+      friendly = 'AI 생성기가 준비되지 않았어요. OpenAI API 키 설정 후 다시 시도해 주세요.';
     } else if (rawMessage.includes('failed to prepare enough problems')) {
       friendly = '요청한 유형의 문제를 모두 만들지 못했어요. 문제 수를 줄이거나 다른 유형을 선택해 주세요.';
     }
-    res.status(statusCode).json({ message: friendly });
+
+    const payload = { message: friendly };
+    if (String(process.env.LOE_DEBUG || '').trim() === '1') {
+      payload.debug = { statusCode, error: String(error?.message || error) };
+    }
+    res.status(statusCode).json(payload);
   }
 });
 
