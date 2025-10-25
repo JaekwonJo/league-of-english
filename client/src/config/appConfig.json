@@ -3,7 +3,7 @@
     "name": "League of English",
     "version": "2.0.0",
     "slogan": "영어를 더 쉽고 재밌게!",
-    "apiUrl": "https://loe-server.onrender.com/api"
+    "apiUrl": "https://api.league-of-english.com/api"
   },
   "membership": {
     "free": {
