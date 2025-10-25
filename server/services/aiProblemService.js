@@ -17,6 +17,7 @@ const {
 } = require("./ai-problem/internal/manualLoader");
 const path = require("path");
 const { createGrammarPipeline } = require("./grammar-generation");
+const { createVocabPipeline } = require("./vocab-generation");
 const OpenAIQueue = require("./ai-problem/internal/openAiQueue");
 const { createProblemRepository } = require("./ai-problem/internal/problemRepository");
 
@@ -1076,6 +1077,47 @@ const normalizedMain = normalizeWhitespace(stripTags(mainText));
       { key: 'triple_incorrect', probability: 0.25, question: VOCAB_USAGE_MULTI_INCORRECT_QUESTION, answerMode: 'incorrect', targetIncorrectCount: 3, targetCorrectCount: 2 },
       { key: 'single_correct', probability: 0.25, question: VOCAB_USAGE_SINGLE_CORRECT_QUESTION, answerMode: 'correct', targetIncorrectCount: 4, targetCorrectCount: 1 }
     ];
+
+    // New modular pipeline path (can be toggled off by setting LOE_VOCAB_PIPELINE=0)
+    if (String(process.env.LOE_VOCAB_PIPELINE || '1') === '1') {
+      const pipeline = createVocabPipeline({
+        manualExcerpt,
+        docTitle,
+        callChatCompletion: (config, options) => this.callChatCompletion(config, options),
+        normalizeVocabularyPayload: (payload, context) => this._normalizeVocabularyPayload(payload, context),
+        repairVocabularyOutput: (params) => this._repairVocabularyOutput(params),
+        buildVariantDirective: (v) => buildVocabularyVariantDirective(v),
+        buildAnswerInstruction: (v) => buildVocabularyAnswerInstruction(v),
+        vocabJsonBlueprint: VOCAB_USAGE_JSON_BLUEPRINT,
+        deriveDirectives: (msg) => this._deriveEobeopDirectives(msg, 'vocabulary'),
+        logger: console
+      });
+
+      for (let i = 0; i < count; i += 1) {
+        const passage = passageQueue[i] || passages[i % (passages.length || 1)] || '';
+        if (!passage) continue;
+        const variant = this._pickVocabularyVariant(vocabularyVariants);
+        const { problem } = await pipeline.generateProblem({
+          passage,
+          variant,
+          passageIndex: i,
+          extraContext: { documentCode }
+        });
+        const normalizedProblem = {
+          ...problem,
+          id: problem.id || `vocab_ai_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+          metadata: {
+            ...(problem.metadata || {}),
+            variantKey: variant.key,
+            answerMode: variant.answerMode,
+            targetIncorrectCount: variant.targetIncorrectCount,
+            targetCorrectCount: variant.targetCorrectCount
+          }
+        };
+        results.push(normalizedProblem);
+      }
+      return results;
+    }
 
     for (let i = 0; i < count; i += 1) {
       const passage = passageQueue[i] || passages[i % (passages.length || 1)] || '';
