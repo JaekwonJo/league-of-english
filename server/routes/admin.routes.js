@@ -168,3 +168,65 @@ router.patch('/notifications/:id', verifyToken, requireAdmin, async (req, res) =
 });
 
 module.exports = router;
+
+// --- User moderation ---
+router.get('/users', verifyToken, requireAdmin, async (req, res) => {
+  try {
+    const { q = '', status = 'all', limit = 50 } = req.query || {};
+    const like = `%${String(q).trim()}%`;
+    const where = [];
+    const params = [];
+    if (q) {
+      where.push('(username LIKE ? OR name LIKE ? OR email LIKE ?)');
+      params.push(like, like, like);
+    }
+    if (status === 'active') where.push('COALESCE(is_active,1) = 1');
+    if (status === 'inactive') where.push('COALESCE(is_active,1) = 0');
+    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+    const rows = await database.all(
+      `SELECT id, username, name, email, role, membership, points, tier, is_active, status, created_at, last_login_at
+         FROM users ${whereSql}
+        ORDER BY created_at DESC
+        LIMIT ?`,
+      [...params, Math.min(parseInt(limit, 10) || 50, 200)]
+    );
+    res.json({ users: rows });
+  } catch (error) {
+    console.error('[admin] list users error:', error);
+    res.status(500).json({ message: '사용자 목록을 불러오지 못했습니다.' });
+  }
+});
+
+router.post('/users/:id/suspend', verifyToken, requireAdmin, async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    await database.run('UPDATE users SET is_active = 0, status = ? WHERE id = ?', ['suspended', id]);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('[admin] suspend user error:', error);
+    res.status(500).json({ message: '계정을 정지하지 못했습니다.' });
+  }
+});
+
+router.post('/users/:id/restore', verifyToken, requireAdmin, async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    await database.run('UPDATE users SET is_active = 1, status = ? WHERE id = ?', ['active', id]);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('[admin] restore user error:', error);
+    res.status(500).json({ message: '계정을 복구하지 못했습니다.' });
+  }
+});
+
+router.delete('/users/:id', verifyToken, requireAdmin, async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    // Soft-delete: 비활성 + 상태 표시 (하드 삭제는 데이터 참조 때문에 권장하지 않음)
+    await database.run('UPDATE users SET is_active = 0, status = ? WHERE id = ?', ['deleted', id]);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('[admin] delete user error:', error);
+    res.status(500).json({ message: '계정을 삭제하지 못했습니다.' });
+  }
+});

@@ -32,7 +32,7 @@ router.get('/leaderboard', verifyToken, async (req, res) => {
         last_login_at,
         ROW_NUMBER() OVER (ORDER BY points DESC, created_at ASC) as rank
       FROM users 
-      WHERE points > 0
+      WHERE points > 0 AND COALESCE(is_active, 1) = 1
       ORDER BY points DESC, created_at ASC
       LIMIT ? OFFSET ?
     `, [parseInt(limit), parseInt(offset)]);
@@ -59,7 +59,7 @@ router.get('/leaderboard', verifyToken, async (req, res) => {
           points,
           ROW_NUMBER() OVER (ORDER BY points DESC, created_at ASC) as rank
         FROM users
-        WHERE points > 0
+        WHERE points > 0 AND COALESCE(is_active, 1) = 1
       )
       WHERE id = ?
     `, [currentUser.id]);
@@ -89,7 +89,7 @@ router.get('/leaderboard', verifyToken, async (req, res) => {
  */
 router.get('/tier-distribution', verifyToken, async (req, res) => {
   try {
-    const users = await database.all('SELECT points FROM users WHERE points > 0');
+    const users = await database.all('SELECT points FROM users WHERE points > 0 AND COALESCE(is_active, 1) = 1');
     
     const distribution = tierConfig.tiers.map(tier => {
       const count = users.filter(user => {
@@ -149,7 +149,7 @@ router.get('/my-rank', verifyToken, async (req, res) => {
           points,
           ROW_NUMBER() OVER (ORDER BY points DESC, created_at ASC) as rank
         FROM users
-        WHERE points > 0
+        WHERE points > 0 AND COALESCE(is_active, 1) = 1
       )
       WHERE rank BETWEEN ? AND ?
       ORDER BY rank

@@ -29,6 +29,16 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ message: '아이디를 입력해 주세요.' });
     }
 
+    // 간단한 욕설/부적절 아이디 필터
+    const bannedPatterns = [
+      /sex|porn|fuck|shit|bitch|dick|cunt|slut|rape/iu,
+      /개새|병신|씨발|썅|좆/iu,
+      /nazi|hitler|terror/iu
+    ];
+    if (bannedPatterns.some((re) => re.test(trimmedUsername))) {
+      return res.status(400).json({ message: '부적절한 아이디는 사용할 수 없습니다. 다른 이름을 선택해 주세요.' });
+    }
+
     const trimmedName = String(name || '').trim();
     if (!trimmedName) {
       return res.status(400).json({ message: '이름을 입력해 주세요.' });
@@ -185,6 +195,10 @@ router.post('/login', async (req, res) => {
 
     if (!user) {
       return res.status(401).json({ message: '아이디 또는 비밀번호가 올바르지 않습니다.' });
+    }
+
+    if (Number(user.is_active) === 0 || String(user.status || '').toLowerCase() === 'suspended') {
+      return res.status(403).json({ message: '정지된 계정입니다. 관리자에게 문의해 주세요.' });
     }
 
     let isValid = false;
