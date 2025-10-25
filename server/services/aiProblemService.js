@@ -1153,10 +1153,11 @@ ${clipText(passage, 1600)}`,
             'Generation requirements:',
             '- Copy the passage verbatim; do not delete or reorder sentences.',
             '- Underline exactly five expressions with <u>...</u> and reuse the identical snippets inside the options.',
+            '- Keep each underlined snippet concise (about 1–6 words), never the whole sentence.',
             buildVocabularyAnswerInstruction(variant),
             '- Provide correction.replacement + reason for every 오류 표현을 교정할 수 있도록 기록합니다.',
-            '- Supply optionReasons in Korean (정답 포함) explaining 왜 어색하거나 자연스러운지, 반드시 핵심 키워드를 넣어 주세요.',
-            '- Keep the explanation 최소 두 문장 이상 한국어로 작성하고, 수능 정답지 톤을 유지하세요.',
+            '- Supply optionReasons in Korean for at least three options(정답 포함) with 핵심 근거를 명확히 서술하세요.',
+            '- Keep the explanation 최소 세 문장 이상 한국어로 작성(정답 근거 + 두 개 이상 오답의 결함 포함)하고, 수능 정답지 톤을 유지하세요.',
             '- Preserve any footnotes (lines starting with *).',
             '- Respond with raw JSON only (no Markdown fences).'
           ];

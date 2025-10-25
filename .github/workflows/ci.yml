@@ -52,3 +52,18 @@ jobs:
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           working-directory: ./client
           vercel-args: '--prod'
+      - name: Install Playwright browsers (optional)
+        continue-on-error: true
+        run: npx playwright install --with-deps chromium
+      - name: Capture UI snapshots (optional)
+        continue-on-error: true
+        env:
+          CAPTURE_BASE_URL: https://league-of-english.vercel.app
+        run: |
+          node scripts/capture-ui-playwright.js || true
+      - name: Upload UI snapshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-captures
+          path: logs/ui-captures/**
