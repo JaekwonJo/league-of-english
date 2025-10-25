@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const database = require('../models/database');
-const { verifyToken } = require('../middleware/auth');
+const { verifyToken, requireAdmin } = require('../middleware/auth');
 const { sendMail } = require('../services/emailService');
 
 const FREE_DAILY_LIMIT = parseInt(process.env.LOE_FREE_DAILY_LIMIT || '30', 10);
@@ -215,3 +215,111 @@ router.post('/request', verifyToken, async (req, res) => {
 });
 
 module.exports = router;
+
+// --- Admin endpoints ---
+// Grant membership directly to a user (by id or username)
+router.post('/admin/grant', verifyToken, requireAdmin, async (req, res) => {
+  try {
+    const { userId, username, type = 'premium', durationDays = 30 } = req.body || {};
+    let user = null;
+    if (Number.isInteger(Number(userId))) {
+      user = await database.get('SELECT id, membership, membership_expires_at, daily_limit FROM users WHERE id = ?', [Number(userId)]);
+    } else if (username) {
+      user = await database.get('SELECT id, membership, membership_expires_at, daily_limit FROM users WHERE username = ?', [String(username).trim()]);
+    }
+    if (!user) return res.status(404).json({ success: false, message: '사용자를 찾을 수 없습니다.' });
+
+    let newExpiry = null;
+    const now = new Date();
+    const base = user.membership === type && user.membership_expires_at ? new Date(user.membership_expires_at) : now;
+    if (durationDays && Number(durationDays) > 0) {
+      if (Number.isNaN(base.getTime()) || base.getTime() < now.getTime()) base.setTime(now.getTime());
+      base.setDate(base.getDate() + Number(durationDays));
+      newExpiry = base.toISOString();
+    }
+
+    const nextDailyLimit = (String(type) === 'premium' || String(type) === 'pro') ? -1 : FREE_DAILY_LIMIT;
+    await database.run(
+      'UPDATE users SET membership = ?, membership_expires_at = ?, daily_limit = ? WHERE id = ?',
+      [String(type), newExpiry, nextDailyLimit, user.id]
+    );
+
+    const updated = await getUserById(user.id);
+    return res.json({ success: true, message: '멤버십이 변경되었습니다.', user: updated });
+  } catch (error) {
+    console.error('[membership] admin grant error:', error);
+    res.status(500).json({ success: false, message: '멤버십을 변경하지 못했습니다.' });
+  }
+});
+
+// List pending membership requests
+router.get('/admin/requests', verifyToken, requireAdmin, async (req, res) => {
+  try {
+    const rows = await database.all(
+      `SELECT mr.id, mr.user_id, u.username, u.name, mr.plan, mr.message, mr.status, mr.created_at
+         FROM membership_requests mr
+         JOIN users u ON u.id = mr.user_id
+        WHERE mr.status = 'pending'
+        ORDER BY mr.created_at ASC`
+    );
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    console.error('[membership] list requests error:', error);
+    res.status(500).json({ success: false, message: '요청 목록을 불러오지 못했습니다.' });
+  }
+});
+
+// Resolve a membership request (approve/reject)
+router.post('/admin/requests/:id/resolve', verifyToken, requireAdmin, async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const { action, durationDays = 30, type } = req.body || {};
+    const row = await database.get('SELECT * FROM membership_requests WHERE id = ?', [id]);
+    if (!row) return res.status(404).json({ success: false, message: '요청을 찾을 수 없습니다.' });
+    if (row.status !== 'pending') return res.status(400).json({ success: false, message: '이미 처리된 요청입니다.' });
+
+    if (String(action).toLowerCase() === 'approve') {
+      const grantType = (type || row.plan || 'premium').toLowerCase();
+      const user = await getUserById(row.user_id);
+      if (!user) return res.status(404).json({ success: false, message: '사용자를 찾을 수 없습니다.' });
+      let newExpiry = null;
+      if (durationDays && Number(durationDays) > 0) {
+        const base = user.membership === grantType && user.membershipExpiresAt ? new Date(user.membershipExpiresAt) : new Date();
+        if (Number.isNaN(base.getTime()) || base.getTime() < Date.now()) base.setTime(Date.now());
+        base.setDate(base.getDate() + Number(durationDays));
+        newExpiry = base.toISOString();
+      }
+      const nextDailyLimit = (grantType === 'premium' || grantType === 'pro') ? -1 : user.dailyLimit;
+      await database.run(
+        'UPDATE users SET membership = ?, membership_expires_at = ?, daily_limit = ? WHERE id = ?',
+        [grantType, newExpiry, nextDailyLimit, row.user_id]
+      );
+      await database.run('UPDATE membership_requests SET status = ? WHERE id = ?', ['approved', id]);
+      const updated = await getUserById(row.user_id);
+      return res.json({ success: true, message: '요청을 승인했습니다.', user: updated });
+    }
+
+    await database.run('UPDATE membership_requests SET status = ? WHERE id = ?', ['rejected', id]);
+    res.json({ success: true, message: '요청을 반려했습니다.' });
+  } catch (error) {
+    console.error('[membership] resolve request error:', error);
+    res.status(500).json({ success: false, message: '요청을 처리하지 못했습니다.' });
+  }
+});
+
+// Create a coupon code (optional offline payment flow)
+router.post('/admin/coupons', verifyToken, requireAdmin, async (req, res) => {
+  try {
+    const { code, membership_type = 'premium', duration_days = 30, max_redemptions = 1 } = req.body || {};
+    const finalCode = (code || Math.random().toString(36).slice(2, 8).toUpperCase());
+    await database.run(
+      `INSERT INTO membership_coupons (code, membership_type, duration_days, max_redemptions, redeemed_count, active)
+       VALUES (?, ?, ?, ?, 0, 1)`,
+      [finalCode, membership_type, Number(duration_days) || 30, Number(max_redemptions) || 1]
+    );
+    res.json({ success: true, code: finalCode, membership_type, duration_days });
+  } catch (error) {
+    console.error('[membership] create coupon error:', error);
+    res.status(500).json({ success: false, message: '쿠폰을 생성하지 못했습니다.' });
+  }
+});
