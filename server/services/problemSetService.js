@@ -5,6 +5,28 @@ const { normalizeAll } = require('../utils/csatProblemNormalizer');
 const { buildFallbackProblems } = require('../utils/fallbackProblemFactory');
 const { ensureSourceLabel } = require('./ai-problem/shared');
 
+// Time budget (ms) for AI-backed generation before falling back
+const AI_TIME_BUDGET_MS = Number(process.env.LOE_AIGEN_BUDGET_MS || 25000);
+
+function withTimeout(promise, timeoutMs, onTimeout) {
+  if (!timeoutMs || timeoutMs <= 0) return promise;
+  let timer;
+  const timeoutPromise = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      const err = new Error('ai_generation_time_budget_exceeded');
+      err.code = 'TIME_BUDGET_EXCEEDED';
+      if (typeof onTimeout === 'function') {
+        try { onTimeout(); } catch {}
+      }
+      reject(err);
+    }, timeoutMs);
+  });
+  return Promise.race([
+    promise.finally(() => clearTimeout(timer)),
+    timeoutPromise
+  ]);
+}
+
 const STEP_SIZE = 1;
 const MAX_TOTAL = 10;
 const SUPPORTED_TYPES = new Set([
@@ -249,7 +271,10 @@ async function handleAiBackedType({
   }
 
   try {
-    const generatedBatch = await aiService[generatorName](documentId, remaining);
+    const generatedBatch = await withTimeout(
+      aiService[generatorName](documentId, remaining),
+      AI_TIME_BUDGET_MS
+    );
     const savedBatch = await aiService.saveProblems(documentId, type, generatedBatch, {
       docTitle,
       documentCode
