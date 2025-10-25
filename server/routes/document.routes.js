@@ -152,9 +152,16 @@ router.get('/documents', verifyToken, async (req, res) => {
     } else {
       // for non-admins, show own docs and common ones
       const user = await database.get('SELECT school FROM users WHERE id = ?', [req.user.id]);
-      query = `SELECT id, title, type, category, school, grade, created_at FROM documents
-               WHERE created_by = ? OR school IN ('전체', 'all', '') OR school IS NULL OR school = ?
-               ORDER BY created_at DESC`;
+      query = `SELECT id, title, type, category, school, grade, created_at
+                 FROM documents
+                WHERE (
+                        created_by = ?
+                     OR COALESCE(school, '') IN ('', '전체', 'all')
+                     OR school = ?
+                     OR COALESCE(published, 0) = 1
+                     OR LOWER(COALESCE(visibility_scope, '')) IN ('public', '전체', 'all')
+                      )
+                ORDER BY created_at DESC`;
       params = [req.user.id, user?.school || ''];
     }
 
