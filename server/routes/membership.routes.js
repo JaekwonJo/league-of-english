@@ -321,10 +321,67 @@ router.post('/admin/requests/:id/resolve', verifyToken, requireAdmin, async (req
       );
       await database.run('UPDATE membership_requests SET status = ? WHERE id = ?', ['approved', id]);
       const updated = await getUserById(row.user_id);
+
+      // 알림 큐 상태 갱신(해당 요청 해결)
+      try {
+        const notifications = require('../services/notificationService');
+        await notifications.resolveByReference({ type: 'membership_request', referenceId: id, status: 'resolved' });
+      } catch (notifyErr) {
+        console.warn('[membership] 알림 상태 업데이트 실패:', notifyErr?.message || notifyErr);
+      }
+
+      // 승인 결과 이메일 발송
+      try {
+        const prettyPlan = grantType === 'pro' ? '프로' : '프리미엄';
+        const expiresText = newExpiry ? new Date(newExpiry).toLocaleDateString() : '만료일 미설정';
+        const html = `
+          <div style="font-family: Pretendard, 'Apple SD Gothic Neo', sans-serif; padding: 24px; line-height: 1.6;">
+            <h2 style="margin-bottom: 8px;">멤버십 승인이 완료되었습니다 🎉</h2>
+            <p><strong>${user.name || user.username}</strong> 님의 멤버십이 <strong>${prettyPlan}</strong>으로 변경되었어요.</p>
+            <p>만료 예정일: <strong>${expiresText}</strong></p>
+            <ul>
+              <li>단어시험/문제풀이 무제한</li>
+              ${grantType === 'pro' ? '<li>분석 자료 무제한</li>' : ''}
+              <li>랭킹에서 전용 뱃지/이펙트 적용</li>
+            </ul>
+            <p style="margin-top: 16px;">바로 로그인해서 혜택을 이용해 보세요! 😊</p>
+          </div>
+        `;
+        await sendMail({ to: user.email, subject: '[League of English] 멤버십 승인이 완료되었습니다', html });
+      } catch (mailErr) {
+        console.warn('[membership] 승인 메일 전송 실패:', mailErr?.code || '', mailErr?.message || mailErr);
+      }
       return res.json({ success: true, message: '요청을 승인했습니다.', user: updated });
     }
 
     await database.run('UPDATE membership_requests SET status = ? WHERE id = ?', ['rejected', id]);
+
+    // 알림 큐 상태 갱신(반려)
+    try {
+      const notifications = require('../services/notificationService');
+      await notifications.resolveByReference({ type: 'membership_request', referenceId: id, status: 'dismissed' });
+    } catch (notifyErr) {
+      console.warn('[membership] 알림 상태 업데이트 실패:', notifyErr?.message || notifyErr);
+    }
+
+    // 반려 결과 이메일 발송
+    try {
+      const user = await getUserById(row.user_id);
+      if (user && user.email) {
+        const html = `
+          <div style="font-family: Pretendard, 'Apple SD Gothic Neo', sans-serif; padding: 24px; line-height: 1.6;">
+            <h2 style="margin-bottom: 8px;">멤버십 요청이 반려되었습니다</h2>
+            <p>죄송합니다. 보내주신 멤버십 요청을 이번에는 처리할 수 없었어요.</p>
+            <p>입금 정보/요청 메모를 다시 확인해 주시고, 필요하면 재요청해 주세요.</p>
+            <p style="margin-top: 16px;">도움이 필요하시면 이 메일에 회신해 주세요.</p>
+          </div>
+        `;
+        await sendMail({ to: user.email, subject: '[League of English] 멤버십 요청이 반려되었습니다', html });
+      }
+    } catch (mailErr) {
+      console.warn('[membership] 반려 메일 전송 실패:', mailErr?.code || '', mailErr?.message || mailErr);
+    }
+
     res.json({ success: true, message: '요청을 반려했습니다.' });
   } catch (error) {
     console.error('[membership] resolve request error:', error);

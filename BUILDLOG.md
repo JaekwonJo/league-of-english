@@ -589,3 +589,8 @@ NODE` 로 5문항 생성 결과 (가족/전략 태그·한글 해설·단일 빈
 - Docs: README에 멤버십 플랜/오프라인 결제 흐름/관리자 승인 절차 추가.
 - Files: client/src/pages/AdminPage.js, client/src/components/admin/{MembershipRequestsPanel,AdminUsersPanel}.jsx, client/src/services/api.service.js, server/{routes,services}.*(usage counters), client/src/pages/{ProfilePage,RankingPage}.js.
 - Verify: 관리자 계정으로 요청 승인→등급 반영, 쿠폰 생성→사용자 적용, 무료 계정으로 단어/문제 한도 초과 시 429 메시지 확인.
+
+### 2025-10-26 (membership resolution emails)
+- Issue: 입금 확인 요청을 승인/반려했을 때 학생에게 결과 알림이 가지 않음.
+- Fix: 요청 승인/반려 시 학생 이메일로 결과 통지(승인: 등급/만료일 안내, 반려: 재요청/문의 안내). 알림 큐 항목도 resolved/dismissed로 갱신.
+- Files: server/routes/membership.routes.js
