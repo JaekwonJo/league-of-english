@@ -370,6 +370,7 @@ function rebuildUnderlinesFromOptions(mainText, options = [], failureReasons = n
   const segments = extractOptionUnderlines(options, failureReasons);
   if (segments.length !== 5) return null;
 
+  // Remove only underline tags; keep other characters as-is (including existing circled digits)
   const plain = String(mainText).replace(/<\/?u[^>]*>/gi, '');
   const normalized = buildNormalizedMap(plain);
   const normalizedCursor = { current: 0 };
@@ -398,10 +399,20 @@ function rebuildUnderlinesFromOptions(mainText, options = [], failureReasons = n
   const rebuiltParts = [];
   let cursor = 0;
   for (const item of sorted) {
-    rebuiltParts.push(plain.slice(cursor, item.start));
-    const marker = GRAMMAR_DIGITS[item.index] || '';
-    // Insert circled-digit marker immediately before each underlined span in the passage
-    rebuiltParts.push(`${marker}<u>${plain.slice(item.start, item.end)}</u>`);
+    // Slice prefix up to the underline start
+    let prefix = plain.slice(cursor, item.start);
+    // If prefix already ends with a circled digit (①~⑤), reuse it and avoid duplicating
+    const lastChar = prefix.slice(-1);
+    const hasExistingMarker = GRAMMAR_DIGITS.includes(lastChar);
+    if (hasExistingMarker) {
+      prefix = prefix.slice(0, -1);
+    }
+    rebuiltParts.push(prefix);
+
+    // Choose marker: prefer existing if present, otherwise insert the expected one
+    const markerToUse = hasExistingMarker ? lastChar : (GRAMMAR_DIGITS[item.index] || '');
+    // Insert marker immediately before each underlined span
+    rebuiltParts.push(`${markerToUse}<u>${plain.slice(item.start, item.end)}</u>`);
     cursor = item.end;
   }
   rebuiltParts.push(plain.slice(cursor));

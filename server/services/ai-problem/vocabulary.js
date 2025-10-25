@@ -262,11 +262,30 @@ function normalizeVocabularyPayload(payload, context = {}) {
 
   const answerValue = uniqueAnswers.join(',');
 
-  // Ensure circled digits ①-⑤ also appear in the passage next to each underlined expression
+  // Ensure circled digits ①-⑤ appear exactly once before each underlined expression.
+  // Guard for idempotency: if markers already exist correctly, skip rebuild.
   try {
-    const rebuilt = rebuildUnderlinesFromOptions(passage, normalizedOptions, []);
-    if (rebuilt && rebuilt.mainText) {
-      passage = rebuilt.mainText;
+    const underlineMatches = String(passage).match(/<u[\s\S]*?<\/u>/gi) || [];
+    let markersOk = underlineMatches.length === 5;
+    if (markersOk) {
+      let cursor = 0;
+      const passageStr = String(passage);
+      for (const m of underlineMatches) {
+        const idx = passageStr.indexOf(m, cursor);
+        if (idx === -1) { markersOk = false; break; }
+        const prevChar = idx > 0 ? passageStr.charAt(idx - 1) : '';
+        if (!['\u2460','\u2461','\u2462','\u2463','\u2464'].includes(prevChar)) {
+          markersOk = false;
+          break;
+        }
+        cursor = idx + m.length;
+      }
+    }
+    if (!markersOk) {
+      const rebuilt = rebuildUnderlinesFromOptions(passage, normalizedOptions, []);
+      if (rebuilt && rebuilt.mainText) {
+        passage = rebuilt.mainText;
+      }
     }
   } catch (e) {
     // best-effort; keep original passage if rebuild fails
