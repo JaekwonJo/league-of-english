@@ -30,12 +30,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Render deploy (optional)
-        if: ${{ secrets.RENDER_DEPLOY_HOOK_URL != '' }}
-        run: |
-          curl -f -X POST "$RENDER_DEPLOY_HOOK_URL"
+      - name: Prepare Render deploy hook
+        id: render_prep
         env:
-          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          SECRET_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          VAR_HOOK: ${{ vars.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          HOOK="${SECRET_HOOK}"
+          if [ -z "$HOOK" ]; then HOOK="${VAR_HOOK}"; fi
+          if [ -n "$HOOK" ]; then echo "render_url=$HOOK" >> "$GITHUB_OUTPUT"; fi
+      - name: Render deploy (optional)
+        if: ${{ steps.render_prep.outputs.render_url != '' }}
+        run: |
+          curl -f -X POST "${{ steps.render_prep.outputs.render_url }}"
       - name: Vercel deploy (optional)
         if: ${{ secrets.VERCEL_TOKEN != '' && secrets.VERCEL_ORG_ID != '' && secrets.VERCEL_PROJECT_ID != '' }}
         uses: amondnet/vercel-action@v25
