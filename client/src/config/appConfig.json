@@ -21,7 +21,7 @@
     },
     "premium": {
       "name": "프리미엄",
-      "price": 9900,
+      "price": 12900,
       "dailyLimit": -1,
       "features": {
         "dbProblems": true,
@@ -32,6 +32,21 @@
         "ads": false
       },
       "color": "var(--color-gold-500)"
+    },
+    "pro": {
+      "name": "프로",
+      "price": 19900,
+      "dailyLimit": -1,
+      "features": {
+        "dbProblems": true,
+        "aiProblems": true,
+        "detailedStats": true,
+        "wrongAnswerNote": true,
+        "unlimitedVocabulary": true,
+        "unlimitedAnalysis": true,
+        "ads": false
+      },
+      "color": "var(--warning-strong)"
     }
   },
   "study": {

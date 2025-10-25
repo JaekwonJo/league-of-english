@@ -63,6 +63,8 @@ const verifyPassword = async (password, hash) => {
   return await bcrypt.compare(password, hash);
 };
 
+const FREE_DAILY_LIMIT = parseInt(process.env.LOE_FREE_DAILY_LIMIT || '60', 10);
+
 // 일일 제한 확인 미들웨어
 const checkDailyLimit = async (req, res, next) => {
   const database = require('../models/database');
@@ -103,19 +105,24 @@ const checkDailyLimit = async (req, res, next) => {
       return;
     }
     
+    // 무료 회원은 환경변수 기반의 효과적 일일 합산 제한 적용 (기본 60)
+    const effectiveLimit = (Number(user.daily_limit) > 0)
+      ? Math.max(Number(user.daily_limit), FREE_DAILY_LIMIT)
+      : FREE_DAILY_LIMIT;
+
     // 일일 제한 확인
-    if (user.used_today >= user.daily_limit) {
+    if (user.used_today >= effectiveLimit) {
       return res.status(429).json({ 
         message: '일일 문제 제한에 도달했습니다.',
-        limit: user.daily_limit,
+        limit: effectiveLimit,
         used: user.used_today
       });
     }
     
     req.dailyLimit = {
-      limit: user.daily_limit,
+      limit: effectiveLimit,
       used: user.used_today,
-      remaining: user.daily_limit - user.used_today
+      remaining: effectiveLimit - user.used_today
     };
     
     next();

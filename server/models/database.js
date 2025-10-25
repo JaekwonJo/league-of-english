@@ -143,6 +143,16 @@ class Database {
           FOREIGN KEY (user_id) REFERENCES users(id)
         )`,
 
+        // usage_counters (per-type daily usage for limits)
+        `CREATE TABLE IF NOT EXISTS usage_counters (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL,
+          date DATE NOT NULL,
+          category TEXT NOT NULL,
+          used_count INTEGER DEFAULT 0,
+          UNIQUE(user_id, date, category)
+        )`,
+
         `CREATE TABLE IF NOT EXISTS study_sessions (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           user_id INTEGER NOT NULL,

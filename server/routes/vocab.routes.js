@@ -5,6 +5,7 @@ const router = express.Router();
 
 const database = require('../models/database');
 const { verifyToken, checkDailyLimit, updateUsage } = require('../middleware/auth');
+const { getUsageToday, addUsage } = require('../services/usageService');
 const { CIRCLED_DIGITS } = require('../services/ai-problem/shared');
 const { buildFallbackProblems } = require('../utils/fallbackProblemFactory');
 const studyService = require('../services/studyService');
@@ -370,6 +371,21 @@ router.post('/vocabulary/sets/:documentId/quiz', verifyToken, checkDailyLimit, a
     }
 
     const desiredCount = Math.max(1, Math.min(parseInt(count, 10) || 30, targetDay.entries.length));
+
+    // Per-type(단어) 일일 제한: 무료 회원은 30개/일
+    // 관리자/프리미엄/프로는 무제한
+    const me = await database.get('SELECT membership, role FROM users WHERE id = ?', [req.user.id]);
+    const isUnlimited = me && (me.role === 'admin' || me.membership === 'premium' || me.membership === 'pro');
+    if (!isUnlimited) {
+      const usedVocabToday = await getUsageToday(req.user.id, 'vocab');
+      if ((usedVocabToday + desiredCount) > 30) {
+        const remaining = Math.max(0, 30 - usedVocabToday);
+        return res.status(429).json({
+          success: false,
+          message: `오늘 단어시험 제한(30개)을 초과했어요. 남은 수: ${remaining}개. 내일 다시 시도하거나 업그레이드해 주세요.`
+        });
+      }
+    }
     // Pass mode preference by binding to helper context
     const builder = buildQuizQuestions.bind({ __modePreference: modePreference });
     const problems = builder(targetDay, vocabulary.days, desiredCount);
@@ -499,6 +515,8 @@ router.post('/vocabulary/sets/:documentId/quiz', verifyToken, checkDailyLimit, a
     }
 
     await updateUsage(req.user.id, responseProblems.length);
+    // Per-type 카운터 증가
+    try { await addUsage(req.user.id, 'vocab', responseProblems.length); } catch (e) { /* ignore */ }
 
     res.json({
       success: true,

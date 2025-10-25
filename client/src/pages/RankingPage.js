@@ -214,7 +214,11 @@ const RankingPage = () => {
                   <div style={styles.rankInfo}>
                     {getRankDisplay(ranker.rank)}
                     <div style={styles.userInfo}>
-                      <div style={styles.userName}>
+                      <div style={{
+                        ...styles.userName,
+                        ...(ranker.membership === 'premium' ? styles.userNamePremium : {}),
+                        ...(ranker.membership === 'pro' ? styles.userNamePro : {})
+                      }}>
                         {ranker.name}
                         {ranker.id === user?.id && <span style={styles.youBadge}>YOU</span>}
                       </div>
@@ -259,7 +263,11 @@ const RankingPage = () => {
                   <div style={styles.myRankHeader}>
                     {getRankDisplay(myRank.myRank.rank)}
                     <div>
-                      <div style={styles.myRankName}>{myRank.myRank.name}</div>
+                      <div style={{
+                        ...styles.myRankName,
+                        ...(user?.membership === 'premium' ? styles.userNamePremium : {}),
+                        ...(user?.membership === 'pro' ? styles.userNamePro : {})
+                      }}>{myRank.myRank.name}</div>
                       <div style={styles.myRankPoints}>
                         {formatPoints(myRank.myRank.points)} LP
                       </div>
@@ -592,6 +600,18 @@ const styles = {
     fontSize: '20px',
     fontWeight: 'bold',
     color: 'var(--surface-soft-solid)'
+  },
+  userNamePremium: {
+    padding: '2px 10px',
+    borderRadius: '999px',
+    background: 'linear-gradient(135deg, rgba(203,213,225,0.25), rgba(148,163,184,0.15))',
+    boxShadow: '0 0 0 1px rgba(203,213,225,0.6) inset, 0 8px 18px rgba(203,213,225,0.25)'
+  },
+  userNamePro: {
+    padding: '2px 10px',
+    borderRadius: '999px',
+    background: 'linear-gradient(135deg, rgba(250,204,21,0.25), rgba(245,158,11,0.15))',
+    boxShadow: '0 0 0 1px rgba(250,204,21,0.7) inset, 0 10px 22px rgba(245,158,11,0.35)'
   },
   myRankPoints: {
     fontSize: '16px',

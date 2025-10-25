@@ -752,6 +752,60 @@ const styles = {
     fontWeight: 700,
     color: 'var(--surface-soft-solid)'
   },
+  planGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+    gap: '16px',
+    marginTop: '8px'
+  },
+  planCardBase: {
+    borderRadius: '18px',
+    padding: '18px',
+    border: '1px solid var(--surface-border)',
+    background: 'var(--surface-card)'
+  },
+  planCardFree: {
+    borderRadius: '18px',
+    padding: '18px',
+    border: '1px solid rgba(148,163,184,0.25)',
+    background: 'linear-gradient(135deg, rgba(148,163,184,0.1), rgba(148,163,184,0.05))'
+  },
+  planCardPremium: {
+    borderRadius: '18px',
+    padding: '18px',
+    border: '1px solid rgba(203,213,225,0.5)',
+    background: 'linear-gradient(135deg, rgba(203,213,225,0.18), rgba(148,163,184,0.10))',
+    boxShadow: '0 10px 28px rgba(203,213,225,0.25)'
+  },
+  planCardPro: {
+    borderRadius: '18px',
+    padding: '18px',
+    border: '1px solid rgba(250,204,21,0.5)',
+    background: 'linear-gradient(135deg, rgba(250,204,21,0.18), rgba(245,158,11,0.10))',
+    boxShadow: '0 12px 34px rgba(245,158,11,0.28)'
+  },
+  planHeader: {
+    fontSize: '16px',
+    fontWeight: 800,
+    marginBottom: '10px',
+    color: 'var(--surface-soft-solid)'
+  },
+  planList: {
+    listStyle: 'none',
+    margin: 0,
+    padding: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px',
+    color: 'var(--text-secondary)',
+    fontSize: '14px'
+  },
+  planPrice: {
+    marginTop: '12px',
+    fontWeight: 900,
+    fontSize: '18px',
+    color: 'var(--warning-strong)'
+  },
   membershipText: {
     fontSize: '14px',
     color: 'var(--text-muted)',
@@ -1367,15 +1421,49 @@ const MembershipCard = () => {
         </div>
       )}
 
+      {/* 멤버십 플랜 소개 */}
+      <div style={styles.planGrid}>
+        <div style={styles.planCardFree}>
+          <div style={styles.planHeader}>무료 회원</div>
+          <ul style={styles.planList}>
+            <li>단어시험 하루 30개</li>
+            <li>문제풀이 하루 30개</li>
+            <li>기본 학습 기능</li>
+          </ul>
+          <div style={styles.planPrice}>무료</div>
+        </div>
+        <div style={styles.planCardPremium}>
+          <div style={styles.planHeader}>프리미엄</div>
+          <ul style={styles.planList}>
+            <li>단어시험 무제한</li>
+            <li>문제풀이 무제한</li>
+            <li>학습 통계 제공</li>
+            <li>프리미엄 뱃지 제공</li>
+          </ul>
+          <div style={styles.planPrice}>월 12,900원</div>
+        </div>
+        <div style={styles.planCardPro}>
+          <div style={styles.planHeader}>프로</div>
+          <ul style={styles.planList}>
+            <li>단어시험 무제한</li>
+            <li>문제풀이 무제한</li>
+            <li>학습 통계 제공</li>
+            <li>분석 자료 무제한</li>
+            <li>프로 뱃지 제공</li>
+          </ul>
+          <div style={styles.planPrice}>월 19,900원</div>
+        </div>
+      </div>
+
       <div style={styles.depositBox}>
         <h4 style={styles.membershipTitle}>무통장 입금 안내</h4>
         <p style={styles.membershipText}>
-          프리미엄(월 9,900원) 또는 프로(월 19,900원)로 업그레이드하고 싶다면 아래 계좌로 입금 후 “입금 확인 요청” 버튼을 눌러 주세요.
+          프리미엄(월 12,900원) 또는 프로(월 19,900원)로 업그레이드하고 싶다면 아래 계좌로 입금 후 “입금 확인 요청” 버튼을 눌러 주세요.
           {' '}입금이 확인되는 순간부터 정확히 30일(24시간 × 30)이 지나면 다음 달 결제 안내가 필요해요.
         </p>
         <div style={styles.depositInfo}>
           <span>입금 계좌</span>
-          <strong>국민은행 123456-78-901234 (예금주: 이재권)</strong>
+          <strong>계좌: 1002557648547 (예금주: 조재권)</strong>
         </div>
         <textarea
           style={styles.depositTextarea}

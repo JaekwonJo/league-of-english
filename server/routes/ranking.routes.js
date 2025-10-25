@@ -28,6 +28,7 @@ router.get('/leaderboard', verifyToken, async (req, res) => {
         school,
         grade,
         role,
+        COALESCE(membership, 'free') AS membership,
         created_at,
         last_login_at,
         ROW_NUMBER() OVER (ORDER BY points DESC, created_at ASC) as rank

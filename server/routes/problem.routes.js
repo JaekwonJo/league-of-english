@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const router = express.Router();
 
 const { verifyToken, checkDailyLimit, updateUsage } = require('../middleware/auth');
+const { getUsageToday, addUsage } = require('../services/usageService');
 const problemSetService = require('../services/problemSetService');
 const problemExportService = require('../services/problemExportService');
 const problemLibraryService = require('../services/problemLibraryService');
@@ -28,6 +29,21 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
   }
 
   try {
+    // Per-type(문제풀이) 일일 제한: 무료 회원은 30문항/일
+    // 관리자/프리미엄/프로는 무제한
+    const db = require('../models/database');
+    const me = await db.get('SELECT membership, role FROM users WHERE id = ?', [req.user.id]);
+    const isUnlimited = me && (me.role === 'admin' || me.membership === 'premium' || me.membership === 'pro');
+    if (!isUnlimited) {
+      const requestedTotal = Object.values(counts || {}).reduce((s, v) => s + (parseInt(v, 10) || 0), 0) || 30;
+      const usedProblemsToday = await getUsageToday(req.user.id, 'problems');
+      if ((usedProblemsToday + requestedTotal) > 30) {
+        const remaining = Math.max(0, 30 - usedProblemsToday);
+        return res.status(429).json({
+          message: `오늘 문제풀이 제한(30문항)을 초과했어요. 남은 수: ${remaining}문항. 내일 다시 시도하거나 업그레이드해 주세요.`
+        });
+      }
+    }
     const result = await problemSetService.generateCsatSet({
       documentId,
       counts,
@@ -38,6 +54,7 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
     });
 
     await updateUsage(req.user.id, result.count);
+    try { await addUsage(req.user.id, 'problems', result.count); } catch (e) { /* ignore */ }
 
     res.json({
       ...result,
