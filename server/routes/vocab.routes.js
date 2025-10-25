@@ -177,7 +177,11 @@ function buildQuizQuestions(day, allDays, count) {
   const pool = allDays.flatMap((item) => item.entries);
 
   return targetEntries.map((entry, idx) => {
-    const mode = Math.random() < 0.5 ? 'term_to_meaning' : 'meaning_to_term';
+    // Allow client to prefer a mode via req.body.mode
+    const preferred = (this && this.__modePreference) || null;
+    const mode = (preferred === 'term_to_meaning' || preferred === 'meaning_to_term')
+      ? preferred
+      : (Math.random() < 0.5 ? 'term_to_meaning' : 'meaning_to_term');
     const cleanTerm = cleanupSpacing(entry.term);
     const cleanMeaning = cleanupSpacing(entry.meaning);
 
@@ -337,7 +341,7 @@ router.post('/vocabulary/sets/:documentId/quiz', verifyToken, checkDailyLimit, a
       return res.status(400).json({ success: false, message: '잘못된 문서 ID 입니다.' });
     }
 
-    const { dayKey, count = 30 } = req.body || {};
+    const { dayKey, count = 30, mode: modePreference } = req.body || {};
     if (!dayKey) {
       return res.status(400).json({ success: false, message: 'dayKey 값이 필요합니다.' });
     }
@@ -366,7 +370,9 @@ router.post('/vocabulary/sets/:documentId/quiz', verifyToken, checkDailyLimit, a
     }
 
     const desiredCount = Math.max(1, Math.min(parseInt(count, 10) || 30, targetDay.entries.length));
-    const problems = buildQuizQuestions(targetDay, vocabulary.days, desiredCount);
+    // Pass mode preference by binding to helper context
+    const builder = buildQuizQuestions.bind({ __modePreference: modePreference });
+    const problems = builder(targetDay, vocabulary.days, desiredCount);
 
     const responseProblems = [];
 

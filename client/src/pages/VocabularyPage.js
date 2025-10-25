@@ -21,6 +21,7 @@ const VocabularyPage = () => {
   const [selectedSet, setSelectedSet] = useState(null);
   const [daysLoading, setDaysLoading] = useState(false);
   const [selectedDayKey, setSelectedDayKey] = useState('');
+  const [quizMode, setQuizMode] = useState('mixed'); // 'mixed' | 'term_to_meaning' | 'meaning_to_term'
 
   const [quizState, setQuizState] = useState({
     active: false,
@@ -355,10 +356,9 @@ const resetQuizState = useCallback(() => {
     setMessage('');
 
     try {
-      const response = await api.vocabulary.generateQuiz(selectedSet.id, {
-        dayKey: selectedDayKey,
-        count: QUIZ_SIZE
-      });
+      const payload = { dayKey: selectedDayKey, count: QUIZ_SIZE };
+      if (quizMode === 'term_to_meaning' || quizMode === 'meaning_to_term') payload.mode = quizMode;
+      const response = await api.vocabulary.generateQuiz(selectedSet.id, payload);
 
       if (!response?.success || !Array.isArray(response?.problems)) {
         throw new Error(response?.message || '퀴즈를 생성하지 못했습니다.');
@@ -574,10 +574,15 @@ const resetQuizState = useCallback(() => {
 
               {activeDay && (
                 <div style={styles.actionBar}>
-                  <div>
-                    <h3 style={styles.actionTitle}>📝 {activeDay.label} | {activeDay.count}개 단어</h3>
-                    <p style={styles.actionHint}>아래 버튼을 누르면 무작위 30문항 시험이 시작돼요!</p>
-                  </div>
+              <div>
+                <h3 style={styles.actionTitle}>📝 {activeDay.label} | {activeDay.count}개 단어</h3>
+                <p style={styles.actionHint}>아래에서 유형을 고르고 30문항 시험을 시작해 보세요!</p>
+                <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
+                  <label><input type="radio" name="mode" checked={quizMode==='mixed'} onChange={()=>setQuizMode('mixed')} /> 혼합(뜻→단어/단어→뜻)</label>
+                  <label><input type="radio" name="mode" checked={quizMode==='term_to_meaning'} onChange={()=>setQuizMode('term_to_meaning')} /> 단어→뜻</label>
+                  <label><input type="radio" name="mode" checked={quizMode==='meaning_to_term'} onChange={()=>setQuizMode('meaning_to_term')} /> 뜻→단어</label>
+                </div>
+              </div>
                   <button
                     type="button"
                     style={styles.primaryButton}
