@@ -54,7 +54,7 @@ const VOCAB_JSON_BLUEPRINT = `{
 
 const MIN_EXPLANATION_LENGTH = 64; // encourage richer Korean rationale
 // Dynamic strictness via env flag (production can enable 3-sentence minimum)
-const STRICT_VOCAB = String(process.env.LOE_STRICT_VOCAB || '').trim() === '1';
+const STRICT_VOCAB = String(process.env.LOE_STRICT_VOCAB || (process.env.NODE_ENV === 'production' ? '1' : '')).trim() === '1';
 const MIN_EXPLANATION_SENTENCES = STRICT_VOCAB ? 3 : 1;
 
 function collectUnderlinedSegments(text = '') {
