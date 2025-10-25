@@ -49,10 +49,17 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ message: '학년을 1~3으로 선택해 주세요.' });
     }
 
-    try {
-      await emailVerificationService.verifyCode(normalizedEmail, verificationCode);
-    } catch (verificationError) {
-      return res.status(400).json({ message: verificationError.message || '이메일 인증에 실패했습니다.' });
+    // Allow skipping email verification for beta via env flag
+    const skipEmailVerify = (
+      String(process.env.LOE_SKIP_EMAIL_VERIFICATION || '').trim() === '1' ||
+      !process.env.EMAIL_USER || !process.env.EMAIL_PASS
+    );
+    if (!skipEmailVerify) {
+      try {
+        await emailVerificationService.verifyCode(normalizedEmail, verificationCode);
+      } catch (verificationError) {
+        return res.status(400).json({ message: verificationError.message || '이메일 인증에 실패했습니다.' });
+      }
     }
 
     // 아이디/이메일 중복 확인
@@ -71,16 +78,16 @@ router.post('/register', async (req, res) => {
     try {
       result = await database.run(
         `INSERT INTO users (username, password_hash, email, name, school, grade, role, membership, email_verified)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)`,
-        [trimmedUsername, hashedPassword, normalizedEmail, trimmedName, normalizedSchool, parsedGrade, role || 'student', 'free']
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)` ,
+        [trimmedUsername, hashedPassword, normalizedEmail, trimmedName, normalizedSchool, parsedGrade, role || 'student', 'free', skipEmailVerify ? 1 : 1]
       );
     } catch (dbError) {
       const dbMessage = String(dbError?.message || '');
       if (dbMessage.includes('users.password')) {
         result = await database.run(
           `INSERT INTO users (username, password, password_hash, email, name, school, grade, role, membership, email_verified)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
-          [trimmedUsername, hashedPassword, hashedPassword, normalizedEmail, trimmedName, normalizedSchool, parsedGrade, role || 'student', 'free']
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [trimmedUsername, hashedPassword, hashedPassword, normalizedEmail, trimmedName, normalizedSchool, parsedGrade, role || 'student', 'free', skipEmailVerify ? 1 : 1]
         );
       } else {
         throw dbError;
