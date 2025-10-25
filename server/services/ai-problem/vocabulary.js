@@ -8,7 +8,8 @@ const {
   countSentences,
   containsHangul,
   ensureSourceLabel,
-  labelToIndex
+  labelToIndex,
+  countWords
 } = require('./shared');
 const { rebuildUnderlinesFromOptions } = require('./underlined');
 
@@ -51,8 +52,10 @@ const VOCAB_JSON_BLUEPRINT = `{
   ]
 }`;
 
-const MIN_EXPLANATION_LENGTH = 32;
-const MIN_EXPLANATION_SENTENCES = 1;
+const MIN_EXPLANATION_LENGTH = 64; // encourage richer Korean rationale
+// Dynamic strictness via env flag (production can enable 3-sentence minimum)
+const STRICT_VOCAB = String(process.env.LOE_STRICT_VOCAB || '').trim() === '1';
+const MIN_EXPLANATION_SENTENCES = STRICT_VOCAB ? 3 : 1;
 
 function collectUnderlinedSegments(text = '') {
   const matches = [];
@@ -167,6 +170,15 @@ function normalizeVocabularyPayload(payload, context = {}) {
   if (segments.length !== CIRCLED_DIGITS.length) {
     raise('vocabulary passage must include exactly five underlined expressions');
   }
+  // Enforce concise underlined spans (1–8 words) to avoid full-sentence underlines (strict mode)
+  if (STRICT_VOCAB) {
+    segments.forEach((seg, idx) => {
+      const wc = countWords(seg.text || '');
+      if (wc < 1 || wc > 8) {
+        raise(`vocabulary underlined segment ${idx + 1} has invalid length (${wc} words)`);
+      }
+    });
+  }
 
   const optionsInput = Array.isArray(payload.options) ? payload.options : [];
   if (optionsInput.length !== CIRCLED_DIGITS.length) {
@@ -210,6 +222,12 @@ function normalizeVocabularyPayload(payload, context = {}) {
   }
 
   const optionReasonsInput = normaliseOptionReasons(payload.optionReasons || payload.distractorReasons || payload.distractors || []);
+  if (STRICT_VOCAB) {
+    const providedReasonMarkers = Object.keys(optionReasonsInput || {});
+    if (providedReasonMarkers.length < 3) {
+      raise('vocabulary optionReasons must include at least three entries (정답 포함)');
+    }
+  }
   const answerSet = new Set(uniqueAnswers);
   const optionStatuses = [];
   const optionReasons = {};
