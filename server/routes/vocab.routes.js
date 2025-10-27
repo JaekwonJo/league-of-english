@@ -342,9 +342,19 @@ router.post('/vocabulary/sets/:documentId/quiz', verifyToken, checkDailyLimit, a
       return res.status(400).json({ success: false, message: '잘못된 문서 ID 입니다.' });
     }
 
-    const { dayKey, count = 30, mode: modePreference } = req.body || {};
-    if (!dayKey) {
-      return res.status(400).json({ success: false, message: 'dayKey 값이 필요합니다.' });
+    const { dayKey, dayKeys, count = 30, mode: modePreference } = req.body || {};
+    const normalizedKeys = (() => {
+      if (Array.isArray(dayKeys) && dayKeys.length) {
+        return dayKeys.map((k) => String(k).trim()).filter(Boolean);
+      }
+      if (typeof dayKey === 'string' && dayKey.includes(',')) {
+        return dayKey.split(',').map((k) => k.trim()).filter(Boolean);
+      }
+      if (typeof dayKey === 'string' && dayKey.trim()) return [dayKey.trim()];
+      return [];
+    })();
+    if (!normalizedKeys.length) {
+      return res.status(400).json({ success: false, message: 'dayKey 또는 dayKeys 값이 필요합니다.' });
     }
 
     const doc = await database.get(
@@ -360,17 +370,19 @@ router.post('/vocabulary/sets/:documentId/quiz', verifyToken, checkDailyLimit, a
     if (!vocabulary) {
       return res.status(400).json({ success: false, message: '단어 데이터가 손상되었습니다. 다시 업로드해 주세요.' });
     }
-
-    const targetDay = vocabulary.days.find((day) => day.key === dayKey || day.label === dayKey);
-    if (!targetDay) {
-      return res.status(404).json({ success: false, message: `${dayKey} 정보를 찾을 수 없습니다.` });
+    const selectedDays = normalizedKeys
+      .map((key) => vocabulary.days.find((day) => day.key === key || day.label === key))
+      .filter(Boolean);
+    if (!selectedDays.length) {
+      return res.status(404).json({ success: false, message: `선택한 Day 정보를 찾을 수 없습니다.` });
     }
 
-    if (!Array.isArray(targetDay.entries) || targetDay.entries.length === 0) {
-      return res.status(400).json({ success: false, message: `${dayKey}에 등록된 단어가 없습니다.` });
+    const mergedEntries = selectedDays.flatMap((d) => d.entries || []);
+    if (!mergedEntries.length) {
+      return res.status(400).json({ success: false, message: '선택된 Day에 등록된 단어가 없습니다.' });
     }
 
-    const desiredCount = Math.max(1, Math.min(parseInt(count, 10) || 30, targetDay.entries.length));
+    const desiredCount = Math.max(1, Math.min(parseInt(count, 10) || 30, mergedEntries.length));
 
     // Per-type(단어) 일일 제한: 무료 회원은 30개/일
     // 관리자/프리미엄/프로는 무제한
@@ -388,7 +400,13 @@ router.post('/vocabulary/sets/:documentId/quiz', verifyToken, checkDailyLimit, a
     }
     // Pass mode preference by binding to helper context
     const builder = buildQuizQuestions.bind({ __modePreference: modePreference });
-    const problems = builder(targetDay, vocabulary.days, desiredCount);
+    // 가상의 day 컨테이너(여러 Day 합쳐진 경우)
+    const virtualDay = {
+      key: normalizedKeys.join(','),
+      label: normalizedKeys.join(', '),
+      entries: mergedEntries
+    };
+    const problems = builder(virtualDay, vocabulary.days, desiredCount);
 
     const responseProblems = [];
 
@@ -522,7 +540,7 @@ router.post('/vocabulary/sets/:documentId/quiz', verifyToken, checkDailyLimit, a
       success: true,
       documentId,
       title: doc.title,
-      day: targetDay.key,
+      day: virtualDay.key,
       count: responseProblems.length,
       problems: responseProblems
     });

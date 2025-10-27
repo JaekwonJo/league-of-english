@@ -372,6 +372,30 @@ class Database {
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`,
 
+        // membership_coupons (오프라인 결제용 쿠폰)
+        `CREATE TABLE IF NOT EXISTS membership_coupons (
+          code TEXT PRIMARY KEY,
+          membership_type TEXT NOT NULL,
+          duration_days INTEGER DEFAULT 30,
+          max_redemptions INTEGER DEFAULT 1,
+          redeemed_count INTEGER DEFAULT 0,
+          active INTEGER DEFAULT 1,
+          expires_at DATETIME,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          last_redeemed_at DATETIME
+        )`,
+
+        // membership_coupon_redemptions (쿠폰 사용 기록)
+        `CREATE TABLE IF NOT EXISTS membership_coupon_redemptions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          coupon_code TEXT NOT NULL,
+          user_id INTEGER NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(coupon_code, user_id),
+          FOREIGN KEY (user_id) REFERENCES users(id),
+          FOREIGN KEY (coupon_code) REFERENCES membership_coupons(code)
+        )`,
+
         // membership_requests
         `CREATE TABLE IF NOT EXISTS membership_requests (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -428,6 +452,7 @@ class Database {
         `ALTER TABLE analysis_feedback ADD COLUMN status TEXT DEFAULT 'pending'`,
         `ALTER TABLE analysis_feedback ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP`,
         `ALTER TABLE email_verifications ADD COLUMN verified_at DATETIME`,
+        `ALTER TABLE users ADD COLUMN status TEXT DEFAULT 'active'`,
         `ALTER TABLE problem_exposures ADD COLUMN last_result TEXT`,
         `ALTER TABLE problem_exposures ADD COLUMN correct_count INTEGER DEFAULT 0`,
         `ALTER TABLE problem_exposures ADD COLUMN incorrect_count INTEGER DEFAULT 0`,

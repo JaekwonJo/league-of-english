@@ -1,7 +1,9 @@
 'use strict';
 
 const LINE_SPLIT_REGEX = /\n+/;
-const DAY_MARKER_REGEX = /^(\d+)?\s*Day\s*(\d{2})\s*$/i;
+const DAY_MARKER_REGEX = /^(\d+\s*)?Day\s*(\d{1,2})\s*$/i;
+// Accept lines like "no18", "no.18", "1no.18", "35 no18", "문항 18", "번호18"
+const NO_MARKER_REGEX = /^(?:\d+\s*)?(?:no\.?|문항|번호)\s*(\d{1,3})\s*$/i;
 
 class VocabularyParser {
   parse(rawText = '') {
@@ -31,8 +33,7 @@ class VocabularyParser {
       currentEntry = null;
     };
 
-    const ensureDay = (dayNumber) => {
-      const label = `Day ${dayNumber}`;
+    const ensureDay = (label) => {
       if (!dayMap.has(label)) {
         const dayData = {
           key: label,
@@ -48,12 +49,25 @@ class VocabularyParser {
 
     for (const line of lines) {
       const dayMatch = line.match(DAY_MARKER_REGEX);
-      if (dayMatch) {
+      const noMatch = dayMatch ? null : line.match(NO_MARKER_REGEX);
+      if (dayMatch || noMatch) {
         finalizeEntry();
-        const [, index, dayNumber] = dayMatch;
-        currentDay = ensureDay(dayNumber);
+        if (dayMatch) {
+          const [, index, dayNumber] = dayMatch;
+          currentDay = ensureDay(`Day ${String(dayNumber).padStart(2, '0')}`);
+          currentEntry = {
+            index: index ? parseInt(index, 10) : currentDay.entries.length + 1,
+            term: '',
+            meaningLines: []
+          };
+          continue;
+        }
+        // noXX 스타일을 Day처럼 취급 (label: no18 등)
+        const [, noNumber] = noMatch;
+        const label = `no${parseInt(noNumber, 10)}`;
+        currentDay = ensureDay(label);
         currentEntry = {
-          index: index ? parseInt(index, 10) : currentDay.entries.length + 1,
+          index: currentDay.entries.length + 1,
           term: '',
           meaningLines: []
         };

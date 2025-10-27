@@ -21,6 +21,7 @@ const VocabularyPage = () => {
   const [selectedSet, setSelectedSet] = useState(null);
   const [daysLoading, setDaysLoading] = useState(false);
   const [selectedDayKey, setSelectedDayKey] = useState('');
+  const [selectedDayKeys, setSelectedDayKeys] = useState([]);
   const [quizMode, setQuizMode] = useState('mixed'); // 'mixed' | 'term_to_meaning' | 'meaning_to_term'
 
   const [quizState, setQuizState] = useState({
@@ -115,6 +116,7 @@ const resetQuizState = useCallback(() => {
     setMessage('');
     resetQuizState();
     setSelectedDayKey('');
+    setSelectedDayKeys([]);
 
     try {
       const response = await api.vocabulary.detail(setInfo.id);
@@ -346,7 +348,9 @@ const resetQuizState = useCallback(() => {
   }, [quizState, submitQuiz]);
 
   const handleStartQuiz = useCallback(async () => {
-    if (!selectedSet || !selectedDayKey) {
+    const hasMulti = Array.isArray(selectedDayKeys) && selectedDayKeys.length > 1;
+    const hasSingle = !!selectedDayKey;
+    if (!selectedSet || (!hasSingle && !hasMulti)) {
       setError('먼저 단어장을 선택하고 Day를 골라 주세요!');
       return;
     }
@@ -356,7 +360,9 @@ const resetQuizState = useCallback(() => {
     setMessage('');
 
     try {
-      const payload = { dayKey: selectedDayKey, count: QUIZ_SIZE };
+      const payload = hasMulti
+        ? { dayKeys: selectedDayKeys, count: QUIZ_SIZE }
+        : { dayKey: selectedDayKey, count: QUIZ_SIZE };
       if (quizMode === 'term_to_meaning' || quizMode === 'meaning_to_term') payload.mode = quizMode;
       const response = await api.vocabulary.generateQuiz(selectedSet.id, payload);
 
@@ -411,7 +417,7 @@ const resetQuizState = useCallback(() => {
       setQuizState((prev) => ({ ...prev, loading: false }));
       setError(err?.message || '퀴즈를 시작하지 못했어요. 다시 시도해 주세요.');
     }
-  }, [finalizeAndSubmit, getTimeLimitSeconds, selectedDayKey, selectedSet]);
+  }, [finalizeAndSubmit, getTimeLimitSeconds, selectedDayKey, selectedDayKeys, selectedSet]);
 
   const handleSubmit = useCallback(() => {
     if (!quizState.data) return;
@@ -451,8 +457,9 @@ const resetQuizState = useCallback(() => {
 
   const activeDay = useMemo(() => {
     if (!selectedSet) return null;
+    if (selectedDayKeys.length > 1) return null;
     return selectedSet.days?.find((day) => day.key === selectedDayKey) || null;
-  }, [selectedSet, selectedDayKey]);
+  }, [selectedSet, selectedDayKey, selectedDayKeys.length]);
 
   return (
     <div style={styles.container}>
@@ -544,19 +551,32 @@ const resetQuizState = useCallback(() => {
               ) : (
                 <div style={styles.dayGrid}>
                   {selectedSet.days?.map((day) => {
-                    const isSelected = day.key === selectedDayKey;
+                    const selected = selectedDayKeys.includes(day.key) || day.key === selectedDayKey;
                     return (
                       <article
                         key={day.key}
                         style={{
                           ...styles.dayCard,
-                          borderColor: isSelected ? 'var(--color-green-500)' : 'transparent',
-                          boxShadow: isSelected ? '0 10px 26px rgba(59, 201, 105, 0.25)' : styles.dayCard.boxShadow
+                          borderColor: selected ? 'var(--color-green-500)' : 'transparent',
+                          boxShadow: selected ? '0 10px 26px rgba(59, 201, 105, 0.25)' : styles.dayCard.boxShadow
                         }}
                         onClick={() => {
-                          setSelectedDayKey(day.key);
                           resetQuizState();
                           setMessage('단어장을 훑어본 뒤, 아래에서 바로 테스트를 시작해 보세요!');
+                          setSelectedDayKeys((prev) => {
+                            // toggle behavior; also keep selectedDayKey in sync for single selection
+                            const exists = prev.includes(day.key);
+                            if (exists) {
+                              const next = prev.filter((k) => k !== day.key);
+                              if (next.length <= 1) {
+                                setSelectedDayKey(next[0] || '');
+                              }
+                              return next;
+                            }
+                            const next = [...prev, day.key];
+                            if (next.length === 1) setSelectedDayKey(day.key);
+                            return next;
+                          });
                         }}
                       >
                         <div style={styles.dayHeader}>
@@ -572,24 +592,33 @@ const resetQuizState = useCallback(() => {
                 </div>
               )}
 
-              {activeDay && (
+              {(activeDay || selectedDayKeys.length > 1) && (
                 <div style={styles.actionBar}>
-              <div>
-                <h3 style={styles.actionTitle}>📝 {activeDay.label} | {activeDay.count}개 단어</h3>
-                <p style={styles.actionHint}>아래에서 유형을 고르고 30문항 시험을 시작해 보세요!</p>
-                <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
-                  <label><input type="radio" name="mode" checked={quizMode==='mixed'} onChange={()=>setQuizMode('mixed')} /> 혼합(뜻→단어/단어→뜻)</label>
-                  <label><input type="radio" name="mode" checked={quizMode==='term_to_meaning'} onChange={()=>setQuizMode('term_to_meaning')} /> 단어→뜻</label>
-                  <label><input type="radio" name="mode" checked={quizMode==='meaning_to_term'} onChange={()=>setQuizMode('meaning_to_term')} /> 뜻→단어</label>
-                </div>
-              </div>
+                  <div>
+                    {selectedDayKeys.length > 1 ? (
+                      <>
+                        <h3 style={styles.actionTitle}>📝 선택한 Day {selectedDayKeys.length}개</h3>
+                        <p style={styles.actionHint}>아래에서 유형을 고르고 30문항 시험을 시작해 보세요!</p>
+                      </>
+                    ) : (
+                      <>
+                        <h3 style={styles.actionTitle}>📝 {activeDay?.label} | {activeDay?.count}개 단어</h3>
+                        <p style={styles.actionHint}>아래에서 유형을 고르고 30문항 시험을 시작해 보세요!</p>
+                      </>
+                    )}
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
+                      <label><input type="radio" name="mode" checked={quizMode==='mixed'} onChange={()=>setQuizMode('mixed')} /> 혼합(뜻→단어/단어→뜻)</label>
+                      <label><input type="radio" name="mode" checked={quizMode==='term_to_meaning'} onChange={()=>setQuizMode('term_to_meaning')} /> 단어→뜻</label>
+                      <label><input type="radio" name="mode" checked={quizMode==='meaning_to_term'} onChange={()=>setQuizMode('meaning_to_term')} /> 뜻→단어</label>
+                    </div>
+                  </div>
                   <button
                     type="button"
                     style={styles.primaryButton}
                     onClick={handleStartQuiz}
                     disabled={quizState.loading}
                   >
-                    {quizState.loading ? '문제를 준비 중...' : 'Day 시험 시작하기'}
+                    {quizState.loading ? '문제를 준비 중...' : (selectedDayKeys.length > 1 ? `선택한 ${selectedDayKeys.length}개로 시작` : 'Day 시험 시작하기')}
                   </button>
                 </div>
               )}
