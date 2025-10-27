@@ -88,7 +88,12 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
 
     const payload = { message: friendly };
     if (String(process.env.LOE_DEBUG || '').trim() === '1') {
-      payload.debug = { statusCode, error: String(error?.message || error) };
+      payload.debug = {
+        statusCode,
+        error: String(error?.message || error),
+        stack: process.env.NODE_ENV === 'production' ? undefined : error?.stack,
+        progressLog
+      };
     }
     res.status(statusCode).json(payload);
   }
