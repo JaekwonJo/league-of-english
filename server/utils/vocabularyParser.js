@@ -4,6 +4,8 @@ const LINE_SPLIT_REGEX = /\n+/;
 const DAY_MARKER_REGEX = /^(\d+\s*)?Day\s*(\d{1,2})\s*$/i;
 // Accept lines like "no18", "no.18", "1no.18", "35 no18", "문항 18", "번호18"
 const NO_MARKER_REGEX = /^(?:\d+\s*)?(?:no\.?|문항|번호)\s*(\d{1,3})\s*$/i;
+// Accept textbook style markers like "Lesson 3", "1Lesson 4"
+const LESSON_MARKER_REGEX = /^(?:\d+\s*)?Lesson\s*(\d{1,2})\s*$/i;
 
 class VocabularyParser {
   parse(rawText = '') {
@@ -50,7 +52,8 @@ class VocabularyParser {
     for (const line of lines) {
       const dayMatch = line.match(DAY_MARKER_REGEX);
       const noMatch = dayMatch ? null : line.match(NO_MARKER_REGEX);
-      if (dayMatch || noMatch) {
+      const lessonMatch = (dayMatch || noMatch) ? null : line.match(LESSON_MARKER_REGEX);
+      if (dayMatch || noMatch || lessonMatch) {
         finalizeEntry();
         if (dayMatch) {
           const [, index, dayNumber] = dayMatch;
@@ -62,16 +65,30 @@ class VocabularyParser {
           };
           continue;
         }
-        // noXX 스타일을 Day처럼 취급 (label: no18 등)
-        const [, noNumber] = noMatch;
-        const label = `no${parseInt(noNumber, 10)}`;
-        currentDay = ensureDay(label);
-        currentEntry = {
-          index: currentDay.entries.length + 1,
-          term: '',
-          meaningLines: []
-        };
-        continue;
+        if (noMatch) {
+          // noXX 스타일을 Day처럼 취급 (label: no18 등)
+          const [, noNumber] = noMatch;
+          const label = `no${parseInt(noNumber, 10)}`;
+          currentDay = ensureDay(label);
+          currentEntry = {
+            index: currentDay.entries.length + 1,
+            term: '',
+            meaningLines: []
+          };
+          continue;
+        }
+        if (lessonMatch) {
+          // Lesson N → N과 로 표기
+          const [, lessonNumber] = lessonMatch;
+          const label = `${parseInt(lessonNumber, 10)}과`;
+          currentDay = ensureDay(label);
+          currentEntry = {
+            index: currentDay.entries.length + 1,
+            term: '',
+            meaningLines: []
+          };
+          continue;
+        }
       }
 
       if (!currentDay) {
