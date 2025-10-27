@@ -94,6 +94,11 @@ class ApiService {
       const queryString = new URLSearchParams(params).toString();
       const url = `${this.baseURL}${endpoint}${queryString ? '?' + queryString : ''}`;
       const headers = this.getHeaders();
+      // Allow longer timeouts for analysis endpoints
+      let timeoutMs = 15000;
+      if (/^\/analysis\//.test(endpoint) || endpoint === '/analysis/list' || /^\/analysis\/status\//.test(endpoint)) {
+        timeoutMs = 60000;
+      }
       
       console.log('🔍 API GET Request:', {
         url,
@@ -104,7 +109,7 @@ class ApiService {
       const response = await this._fetchWithTimeout(url, {
         method: 'GET',
         headers: headers
-      }, 15000, `GET ${endpoint}`);
+      }, timeoutMs, `GET ${endpoint}`);
 
       if (!response.ok) {
         throw response;
