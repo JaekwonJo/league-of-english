@@ -609,10 +609,10 @@ async function generateCsatSet({
   }
 
   if (!aggregated.length) {
-    const fallbackType = requestedTypes[0] || 'summary';
+    const fallbackType = requestedTypes[0] || 'order';
     await deliverFallbackProblems({
       type: fallbackType,
-      count: 1,
+      count: Math.max(1, totalRequested || 3),
       documentId,
       docTitle,
       documentCode,
@@ -625,7 +625,17 @@ async function generateCsatSet({
   }
 
   if (!aggregated.length) {
-    throw createProblemError('Failed to prepare enough problems', 503);
+    // As a last resort, return in-memory fallback without touching DB to avoid 500
+    const rescueType = requestedTypes[0] || 'order';
+    const rescueList = await buildFallbackProblems({
+      type: rescueType,
+      count: Math.max(1, totalRequested || 3),
+      docTitle,
+      documentCode,
+      reasonTag: 'in_memory_rescue'
+    });
+    aggregated.push(...rescueList);
+    pushProgress('in_memory_rescue', rescueType, { delivered: rescueList.length, requested: totalRequested || rescueList.length });
   }
 
   const normalizedProblems = normalizeAll(aggregated);

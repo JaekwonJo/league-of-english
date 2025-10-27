@@ -749,8 +749,8 @@ const styles = {
   },
   membershipTitle: {
     fontSize: '20px',
-    fontWeight: 700,
-    color: 'var(--surface-soft-solid)'
+    fontWeight: 800,
+    color: 'var(--text-primary)'
   },
   planGrid: {
     display: 'grid',
