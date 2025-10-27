@@ -35,6 +35,14 @@ const VocabularyPage = () => {
     submitting: false,
     result: null
   });
+  const [practiceState, setPracticeState] = useState({
+    active: false,
+    items: [], // [{term, meaning, dayKey}]
+    index: 0,
+    showBack: false,
+    againQueue: [],
+    front: 'term' // 'term' | 'meaning'
+  });
 
   const [totalTime, setTotalTime] = useState(0);
   const [timeLeft, setTimeLeft] = useState(0);
@@ -107,6 +115,7 @@ const resetQuizState = useCallback(() => {
   const goBackToDays = useCallback(() => {
     resetQuizState();
     setError('');
+    setPracticeState({ active: false, items: [], index: 0, showBack: false, againQueue: [], front: 'term' });
   }, [resetQuizState]);
 
   const handleSelectSet = async (setInfo) => {
@@ -347,6 +356,65 @@ const resetQuizState = useCallback(() => {
     // 4) 서버 제출(에러여도 finally에서 submitting=false로 전환됨)
     submitQuiz(answers, reason);
   }, [quizState, submitQuiz]);
+
+  // Practice (연습하기)
+  const buildPracticeItems = useCallback(() => {
+    if (!selectedSet) return [];
+    const keys = selectedDayKeys.length ? selectedDayKeys : (selectedDayKey ? [selectedDayKey] : []);
+    const selectedDays = (selectedSet.days || []).filter((d) => keys.includes(d.key) || keys.includes(d.label));
+    const entries = selectedDays.flatMap((d) => (d.entries || []).map((e) => ({ term: e.term, meaning: e.meaning, dayKey: d.key })));
+    // Shuffle
+    for (let i = entries.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [entries[i], entries[j]] = [entries[j], entries[i]];
+    }
+    return entries;
+  }, [selectedSet, selectedDayKey, selectedDayKeys]);
+
+  const handleStartPractice = useCallback(() => {
+    const items = buildPracticeItems();
+    if (!items.length) {
+      setError('먼저 단어장을 선택하고 Day/번호/과를 골라 주세요!');
+      return;
+    }
+    setPracticeState({ active: true, items, index: 0, showBack: false, againQueue: [], front: 'term' });
+    setMessage('카드를 뒤집어 뜻을 확인하고, 알겠으면 “알겠어요”, 헷갈리면 “다시 보기”로 표시해요.');
+  }, [buildPracticeItems]);
+
+  const practiceFlip = useCallback(() => {
+    setPracticeState((prev) => ({ ...prev, showBack: !prev.showBack }));
+  }, []);
+
+  const practiceToggleFront = useCallback(() => {
+    setPracticeState((prev) => ({ ...prev, front: prev.front === 'term' ? 'meaning' : 'term', showBack: false }));
+  }, []);
+
+  const movePracticeNext = useCallback((knewIt) => {
+    setPracticeState((prev) => {
+      if (!prev.active || !prev.items.length) return prev;
+      const current = prev.items[prev.index];
+      const againQueue = [...prev.againQueue];
+      // 모름이면 다시 보기 큐에
+      if (!knewIt) againQueue.push(current);
+      const nextIndex = prev.index + 1;
+      if (nextIndex < prev.items.length) {
+        return { ...prev, index: nextIndex, showBack: false, againQueue };
+      }
+      // 끝까지 왔으면 againQueue를 이어 붙여 한 번 더
+      if (againQueue.length) {
+        // 새 덱 구성: 아직 남은 것(없음) + againQueue 셔플
+        const nextDeck = [...againQueue];
+        for (let i = nextDeck.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [nextDeck[i], nextDeck[j]] = [nextDeck[j], nextDeck[i]];
+        }
+        return { active: true, items: nextDeck, index: 0, showBack: false, againQueue: [], front: prev.front };
+      }
+      // 완전히 완료
+      setMessage('연습 완료! 이제 시험에 도전해 볼까요?');
+      return { ...prev, active: false };
+    });
+  }, []);
 
   const handleStartQuiz = useCallback(async () => {
     const hasMulti = Array.isArray(selectedDayKeys) && selectedDayKeys.length > 1;
@@ -627,11 +695,35 @@ const resetQuizState = useCallback(() => {
                   >
                     {quizState.loading ? '문제를 준비 중...' : (selectedDayKeys.length > 1 ? `선택한 ${selectedDayKeys.length}개로 시작` : 'Day 시험 시작하기')}
                   </button>
+                  <button
+                    type="button"
+                    style={{ ...styles.secondaryButton, marginLeft: 8 }}
+                    onClick={handleStartPractice}
+                  >
+                    연습하기
+                  </button>
                 </div>
               )}
             </section>
           )}
         </>
+      )}
+
+      {practiceState.active && (
+        <section style={styles.quizSection}>
+          <PracticeBox
+            item={practiceState.items[practiceState.index]}
+            index={practiceState.index}
+            total={practiceState.items.length}
+            showBack={practiceState.showBack}
+            front={practiceState.front}
+            onFlip={practiceFlip}
+            onKnew={() => movePracticeNext(true)}
+            onUnknown={() => movePracticeNext(false)}
+            onToggleFront={practiceToggleFront}
+            onExit={goBackToDays}
+          />
+        </section>
       )}
 
       {quizState.active && quizState.data && (
@@ -663,6 +755,40 @@ const resetQuizState = useCallback(() => {
           )}
         </section>
       )}
+    </div>
+  );
+};
+
+const PracticeBox = ({ item, index, total, showBack, front, onFlip, onKnew, onUnknown, onToggleFront, onExit }) => {
+  if (!item) return null;
+  const frontLabel = front === 'term' ? '단어' : '뜻';
+  const frontValue = front === 'term' ? item.term : item.meaning;
+  const backLabel = front === 'term' ? '뜻' : '단어';
+  const backValue = front === 'term' ? item.meaning : item.term;
+  return (
+    <div style={styles.quizCard}>
+      <div style={styles.quizHeader}>
+        <span style={styles.quizProgress}>연습 {index + 1} / {total}</span>
+        <div style={styles.timerBox}>
+          <span>📚 연습 모드</span>
+          <button type="button" style={styles.linkButton} onClick={onToggleFront}>표시 전환: {frontLabel} 먼저</button>
+        </div>
+      </div>
+      <h3 style={styles.quizPrompt}>👉 <strong>{frontLabel}</strong>: {frontValue}</h3>
+      {showBack && (
+        <p style={{ ...styles.quizTerm, fontSize: '1.05rem' }}>💡 <strong>{backLabel}</strong>: {backValue}</p>
+      )}
+      {!showBack && (
+        <div style={{ ...styles.notice, marginTop: 8 }}>카드를 뒤집어 정답을 확인해 보세요.</div>
+      )}
+      <div style={styles.quizNavRow}>
+        <button type="button" style={styles.secondaryButton} onClick={onExit}>나가기</button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button type="button" style={styles.linkButton} onClick={onFlip}>뒤집기</button>
+          <button type="button" style={styles.secondaryButton} onClick={onUnknown}>다시 보기</button>
+          <button type="button" style={styles.primaryButton} onClick={onKnew}>알겠어요</button>
+        </div>
+      </div>
     </div>
   );
 };
