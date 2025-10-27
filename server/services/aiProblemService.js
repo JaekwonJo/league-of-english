@@ -229,14 +229,27 @@ class AIProblemService {
     } catch (error) {
       parsedContent = null;
     }
+    // Fallback 1: use passage_analyses if present
     if (!passages.length) {
-      passages = String(doc.content || "")
+      const rows = await database.all(
+        'SELECT passage_number, original_passage FROM passage_analyses WHERE document_id = ? ORDER BY passage_number ASC',
+        [documentId]
+      );
+      if (Array.isArray(rows) && rows.length) {
+        passages = rows
+          .map((r) => String(r.original_passage || '').trim())
+          .filter((t) => t.length > 0);
+      }
+    }
+    // Fallback 2: naive paragraph split from raw content (legacy docs)
+    if (!passages.length) {
+      passages = String(doc.content || '')
         .split(/\n{2,}/)
         .map((chunk) => chunk.trim())
         .filter((chunk) => chunk.length > 40);
-    }
-    if (!passages.length && doc.content) {
-      passages = [String(doc.content)];
+      if (!passages.length && doc.content) {
+        passages = [String(doc.content).trim()].filter(Boolean);
+      }
     }
     // Optional filter: only include selected passage numbers (1-based)
     const selected = Array.isArray(options.passageNumbers)
