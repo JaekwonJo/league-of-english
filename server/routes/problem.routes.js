@@ -324,11 +324,18 @@ router.get('/problems/:id/feedback/summary', verifyToken, async (req, res) => {
 router.get('/problems/stats', verifyToken, async (req, res) => {
   try {
     const stats = await getUserStats(req.user.id);
-    res.json(stats);
+    return res.json(stats);
   } catch (error) {
     console.error('[problems/stats] error:', error);
-    const statusCode = Number.isInteger(error?.status) ? error.status : 500;
-    res.status(statusCode).json({ message: error?.message || '학습 통계를 불러오지 못했습니다.' });
+    // 안전 폴백: UI가 깨지지 않도록 기본 구조 반환
+    return res.json({
+      totalProblems: 0,
+      totalCorrect: 0,
+      accuracy: 0,
+      totalSessions: 0,
+      weeklySessions: 0,
+      perType: []
+    });
   }
 });
 

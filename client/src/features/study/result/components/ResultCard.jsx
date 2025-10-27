@@ -15,15 +15,16 @@ const ResultCard = ({
   onReview,
   onRestart,
   onHome,
+  isMobile = false,
 }) => (
-  <div style={styles.card}>
+  <div style={{ ...styles.card, ...(isMobile ? { padding: '16px' } : {}) }}>
     <div style={styles.heroSection}>
-      <div style={{ ...styles.gradeCircle, background: resultInfo.bgColor }}>
-        <div style={styles.grade}>{resultInfo.grade}</div>
-        <div style={styles.accuracy}>{summary.accuracy}%</div>
+      <div style={{ ...styles.gradeCircle, ...(isMobile ? { width: '140px', height: '140px' } : {}), background: resultInfo.bgColor }}>
+        <div style={{ ...styles.grade, ...(isMobile ? { fontSize: '2.6rem' } : {}) }}>{resultInfo.grade}</div>
+        <div style={{ ...styles.accuracy, ...(isMobile ? { fontSize: '1.1rem' } : {}) }}>{summary.accuracy}%</div>
       </div>
-      <div style={styles.message}>{resultInfo.message}</div>
-      <div style={styles.emoji}>{resultInfo.emoji}</div>
+      <div style={{ ...styles.message, ...(isMobile ? { fontSize: '1.1rem' } : {}) }}>{resultInfo.message}</div>
+      <div style={{ ...styles.emoji, ...(isMobile ? { fontSize: '1.4rem' } : {}) }}>{resultInfo.emoji}</div>
     </div>
 
     <TierSection
@@ -39,13 +40,14 @@ const ResultCard = ({
       totalIncorrect={summary.totalIncorrect}
       totalTimeSeconds={summary.totalTimeSeconds}
       lpDelta={formatLpDelta(currentLpCount)}
+      isMobile={isMobile}
     />
 
     {perTypeStats.length > 0 && (
       <TypeStats perTypeStats={perTypeStats} formatTypeLabel={formatTypeLabel} />
     )}
 
-    <ProblemResults detailResults={detailResults} />
+    <ProblemResults detailResults={detailResults} isMobile={isMobile} />
 
     <ActionButtons onReview={onReview} onRestart={onRestart} onHome={onHome} />
   </div>
@@ -90,8 +92,8 @@ const TierSection = ({ tierInfo, totalPointsAfter, pointsDelta, userPoints, form
   );
 };
 
-const StatGrid = ({ totalCorrect, totalIncorrect, totalTimeSeconds, lpDelta }) => (
-  <div style={styles.statGrid}>
+const StatGrid = ({ totalCorrect, totalIncorrect, totalTimeSeconds, lpDelta, isMobile = false }) => (
+  <div style={{ ...styles.statGrid, ...(isMobile ? { gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))' } : {}) }}>
     <StatBox icon="✅" label="정답" value={`${totalCorrect}개`} />
     <StatBox icon="❌" label="오답" value={`${totalIncorrect}개`} />
     <StatBox
@@ -133,10 +135,10 @@ const TypeStats = ({ perTypeStats, formatTypeLabel }) => (
   </div>
 );
 
-const ProblemResults = ({ detailResults }) => (
+const ProblemResults = ({ detailResults, isMobile = false }) => (
   <div style={{ marginBottom: '32px' }}>
     <h3 style={styles.sectionTitle}>📋 문제별 상세 결과</h3>
-    <div style={styles.problemGrid}>
+    <div style={{ ...styles.problemGrid, ...(isMobile ? { gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' } : {}) }}>
       {detailResults.map((detail, idx) => {
         const isCorrect = Boolean(detail.isCorrect);
         return (

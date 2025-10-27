@@ -318,6 +318,16 @@ const useStudySession = (user, onUserUpdate = () => {}) => {
       const finalCorrect = typeof finalSummary.correct === 'number' ? finalSummary.correct : totalCorrect;
       const finalAccuracy = typeof finalSummary.accuracy === 'number' ? finalSummary.accuracy : accuracy;
 
+      // 통계 폴백: 서버에서 stats가 비었다면 즉시 최신 통계를 한번 더 조회
+      let mergedStats = submissionResponse?.stats || null;
+      if (!mergedStats) {
+        try {
+          mergedStats = await api.problems.stats();
+        } catch (e) {
+          /* ignore */
+        }
+      }
+
       setResults({
         studyResults,
         problems: studyResults,
@@ -327,7 +337,7 @@ const useStudySession = (user, onUserUpdate = () => {}) => {
         totalTime: totalTimeSeconds,
         earnedPoints: finalSummary.pointsDelta,
         summary: finalSummary,
-        stats: submissionResponse?.stats || null,
+        stats: mergedStats,
         rank: submissionResponse?.rank || null,
         submission: submissionResponse || null,
       });

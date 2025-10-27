@@ -37,6 +37,13 @@ const ProblemDisplay = ({
   reviewMeta = {}
 }) => {
   const [selectedAnswer, setSelectedAnswer] = useState(userAnswer ?? '');
+  const [isMobile, setIsMobile] = useState(() => (typeof window !== 'undefined' ? window.innerWidth < 768 : false));
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
   const [feedbackSummary, setFeedbackSummary] = useState(null);
   const [feedbackError, setFeedbackError] = useState('');
   const [feedbackLoading, setFeedbackLoading] = useState(false);
@@ -75,6 +82,7 @@ const ProblemDisplay = ({
 
   const cardStyle = {
     ...problemDisplayStyles.problemCard,
+    ...(isMobile ? { padding: '16px' } : {}),
     ...orderStyles.orderProblemCard
   };
 
@@ -640,8 +648,11 @@ const ProblemDisplay = ({
   }
 
   return (
-    <div style={problemDisplayStyles.container}>
-      <div style={problemDisplayStyles.header}>
+    <div style={{ ...problemDisplayStyles.container, ...(isMobile ? { padding: '12px' } : {}) }}>
+      <div style={{
+        ...problemDisplayStyles.header,
+        ...(isMobile ? { flexDirection: 'column', alignItems: 'flex-start', gap: '6px' } : {})
+      }}>
         <div style={problemDisplayStyles.progress}>문항 {problemIndex + 1} / {totalProblems}</div>
         <div style={problemDisplayStyles.timer}>
           경과 {formatSeconds(timeElapsed)}
@@ -653,9 +664,12 @@ const ProblemDisplay = ({
 
       {renderFeedbackBar()}
 
-      <div style={problemDisplayStyles.navigation}>
+      <div style={{
+        ...problemDisplayStyles.navigation,
+        ...(isMobile ? { flexDirection: 'column' } : {})
+      }}>
         <button
-          style={problemDisplayStyles.navButton}
+          style={{ ...problemDisplayStyles.navButton, ...(isMobile ? { width: '100%' } : {}) }}
           onClick={onPrev}
           disabled={problemIndex === 0}
         >
@@ -664,7 +678,7 @@ const ProblemDisplay = ({
 
         {problemIndex === totalProblems - 1 ? (
           <button
-            style={problemDisplayStyles.finishButton}
+            style={{ ...problemDisplayStyles.finishButton, ...(isMobile ? { width: '100%' } : {}) }}
             onClick={onFinish}
             disabled={!selectedAnswer}
           >
@@ -672,7 +686,7 @@ const ProblemDisplay = ({
           </button>
         ) : (
           <button
-            style={problemDisplayStyles.nextButton}
+            style={{ ...problemDisplayStyles.nextButton, ...(isMobile ? { width: '100%' } : {}) }}
             onClick={onNext}
             disabled={!selectedAnswer}
           >

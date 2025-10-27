@@ -1,5 +1,8 @@
 /* Global responsive tweaks */
 
+html, body { overflow-x: hidden; }
+.main-content { overflow-x: hidden; }
+
 @media (max-width: 768px) {
   .main-content {
     padding: 12px !important;
@@ -14,4 +17,3 @@
 
 /* Dark-only background safety */
 html, body { background-color: #0F172A; }
-

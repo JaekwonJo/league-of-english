@@ -176,11 +176,18 @@ const StudyResult = ({ results, onRestart, onReview, onHome }) => {
     totalTimeSeconds
   ]);
 
+  const [isMobile, setIsMobile] = useState(() => (typeof window !== 'undefined' ? window.innerWidth < 768 : false));
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
   return (
     <div style={pageStyles.wrapper}>
       <ResultEffects effect={resultInfo.effect} emojiSet={resultInfo.emoji} />
       <div style={pageStyles.content}>
-        <div style={layoutStyles.container}>
+        <div style={{ ...layoutStyles.container, ...(isMobile ? { padding: '16px' } : {}) }}>
           <RankPanel myRank={myRank} nearby={nearby} rankError={rankError} />
           <ResultCard
             resultInfo={resultInfo}
@@ -195,6 +202,7 @@ const StudyResult = ({ results, onRestart, onReview, onHome }) => {
             onReview={onReview}
             onRestart={onRestart}
             onHome={onHome}
+            isMobile={isMobile}
           />
         </div>
       </div>

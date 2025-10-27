@@ -75,7 +75,7 @@ export const analysisStyles = {
   },
   grid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
     gap: '20px',
     marginTop: '20px'
   },
@@ -185,7 +185,7 @@ export const analysisStyles = {
   },
   vocabularyGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
     gap: '12px'
   },
   vocabularyCard: {

@@ -53,7 +53,14 @@ const MainLayout = ({ children, currentPath }) => {
       <aside
         style={{
           ...styles.sidebar,
-          width: sidebarOpen ? uiConfig.layout.sidebar.width : uiConfig.layout.sidebar.collapsedWidth,
+          ...(isMobile
+            ? {
+                width: sidebarOpen ? uiConfig.layout.sidebar.width : 0,
+                transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
+                pointerEvents: sidebarOpen ? 'auto' : 'none'
+              }
+            : { width: sidebarOpen ? uiConfig.layout.sidebar.width : uiConfig.layout.sidebar.collapsedWidth }
+          ),
           ...(isMobile && sidebarOpen ? styles.sidebarOverlay : {}),
           ...(isMobile && !sidebarOpen ? styles.sidebarCollapsedMobile : {})
         }}
@@ -149,7 +156,7 @@ const styles = {
     height: '100vh',
     background: 'var(--sidebar-gradient)',
     color: 'var(--sidebar-text-primary)',
-    transition: 'width 0.3s ease',
+    transition: 'width 0.3s ease, transform 0.3s ease',
     display: 'flex',
     flexDirection: 'column',
     zIndex: 1000
