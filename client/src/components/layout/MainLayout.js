@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import * as LucideIcons from 'lucide-react';
@@ -8,7 +8,21 @@ import uiConfig from '../../config/ui.config.json';
 const MainLayout = ({ children, currentPath }) => {
   const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
+  const breakpoint = uiConfig.layout.sidebar.breakpoint || 768;
+  const [isMobile, setIsMobile] = useState(() => (typeof window !== 'undefined' ? window.innerWidth < breakpoint : false));
+
+  useEffect(() => {
+    const onResize = () => {
+      const mobile = window.innerWidth < breakpoint;
+      setIsMobile(mobile);
+      if (mobile) setSidebarOpen(false);
+    };
+    window.addEventListener('resize', onResize);
+    // initialize
+    onResize();
+    return () => window.removeEventListener('resize', onResize);
+  }, [breakpoint]);
 
   const getRoleLabel = (role) => {
     const roleMap = {
@@ -39,7 +53,9 @@ const MainLayout = ({ children, currentPath }) => {
       <aside
         style={{
           ...styles.sidebar,
-          width: sidebarOpen ? uiConfig.layout.sidebar.width : uiConfig.layout.sidebar.collapsedWidth
+          width: sidebarOpen ? uiConfig.layout.sidebar.width : uiConfig.layout.sidebar.collapsedWidth,
+          ...(isMobile && sidebarOpen ? styles.sidebarOverlay : {}),
+          ...(isMobile && !sidebarOpen ? styles.sidebarCollapsedMobile : {})
         }}
       >
         <div style={styles.logo}>
@@ -79,10 +95,7 @@ const MainLayout = ({ children, currentPath }) => {
             )}
           </div>
 
-          <button type="button" style={styles.themeToggle} onClick={toggleTheme}>
-            {theme === 'dark' ? <LucideIcons.Sun size={18} /> : <LucideIcons.Moon size={18} />}
-            {sidebarOpen && <span>{theme === 'dark' ? '라이트 모드' : '다크 모드'}</span>}
-          </button>
+          {/* Theme toggle removed: dark-only */}
 
           <button style={styles.logoutButton} onClick={handleLogout}>
             <LucideIcons.LogOut size={20} />
@@ -90,21 +103,33 @@ const MainLayout = ({ children, currentPath }) => {
           </button>
         </div>
 
-        <button
-          style={styles.toggleButton}
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          aria-label="사이드바 접기/펼치기"
-        >
-          {sidebarOpen ? <LucideIcons.ChevronLeft /> : <LucideIcons.ChevronRight />}
-        </button>
+        {!isMobile && (
+          <button
+            style={styles.toggleButton}
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            aria-label="사이드바 접기/펼치기"
+          >
+            {sidebarOpen ? <LucideIcons.ChevronLeft /> : <LucideIcons.ChevronRight />}
+          </button>
+        )}
       </aside>
 
       <main
         style={{
           ...styles.main,
-          marginLeft: sidebarOpen ? uiConfig.layout.sidebar.width : uiConfig.layout.sidebar.collapsedWidth
+          marginLeft: isMobile ? 0 : (sidebarOpen ? uiConfig.layout.sidebar.width : uiConfig.layout.sidebar.collapsedWidth)
         }}
+        className="main-content"
       >
+        {isMobile && (
+          <div style={styles.mobileTopBar}>
+            <button style={styles.mobileMenuBtn} onClick={() => setSidebarOpen(!sidebarOpen)} aria-label="메뉴 열기">
+              <LucideIcons.Menu />
+            </button>
+            <div style={styles.mobileTitle}>League of English</div>
+            <div style={{ width: 40 }}></div>
+          </div>
+        )}
         {children}
       </main>
     </div>
@@ -128,6 +153,12 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     zIndex: 1000
+  },
+  sidebarOverlay: {
+    boxShadow: '0 0 0 9999px rgba(2,6,23,0.6)'
+  },
+  sidebarCollapsedMobile: {
+    boxShadow: 'none'
   },
   logo: {
     padding: '20px',
@@ -249,6 +280,33 @@ const styles = {
     padding: '20px',
     minHeight: '100vh',
     background: 'var(--main-background)',
+    color: 'var(--text-primary)'
+  },
+  mobileTopBar: {
+    position: 'sticky',
+    top: 0,
+    zIndex: 5,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '10px 8px',
+    marginBottom: '10px',
+    background: 'var(--surface-card)',
+    border: '1px solid var(--surface-border)',
+    borderRadius: '12px'
+  },
+  mobileMenuBtn: {
+    width: 40,
+    height: 36,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
+    border: '1px solid var(--border-subtle)',
+    background: 'var(--surface-soft)'
+  },
+  mobileTitle: {
+    fontWeight: 800,
     color: 'var(--text-primary)'
   }
 };

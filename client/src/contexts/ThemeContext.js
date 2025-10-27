@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 const ThemeContext = createContext({
-  theme: 'light',
+  theme: 'dark',
   toggleTheme: () => {},
   setTheme: () => {}
 });
@@ -9,22 +9,24 @@ const ThemeContext = createContext({
 const STORAGE_KEY = 'loe-theme-preference';
 
 export const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState(() => {
-    const stored = typeof window !== 'undefined' ? window.localStorage.getItem(STORAGE_KEY) : null;
-    return stored === 'dark' || stored === 'light' ? stored : 'light';
-  });
+  // Force dark mode only
+  const [theme, setTheme] = useState('dark');
 
   useEffect(() => {
     if (typeof document !== 'undefined') {
-      document.documentElement.dataset.theme = theme;
+      document.documentElement.dataset.theme = 'dark';
     }
     if (typeof window !== 'undefined') {
-      window.localStorage.setItem(STORAGE_KEY, theme);
+      try { window.localStorage.setItem(STORAGE_KEY, 'dark'); } catch {}
     }
-  }, [theme]);
+  }, []);
 
   const toggleTheme = () => {
-    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
+    // No-op: dark mode only
+    setTheme('dark');
+    if (typeof document !== 'undefined') {
+      document.documentElement.dataset.theme = 'dark';
+    }
   };
 
   const value = useMemo(() => ({ theme, setTheme, toggleTheme }), [theme]);

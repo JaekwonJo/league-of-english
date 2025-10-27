@@ -10,6 +10,7 @@ import ErrorBoundary from './middleware/errorBoundary';
 import AppRouter from './routes/AppRouter';
 import logger from './utils/logger';
 import './App.css';
+import './styles/responsive.css';
 
 // 환경 설정 확인
 const checkEnvironment = () => {

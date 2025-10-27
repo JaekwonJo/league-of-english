@@ -49,8 +49,6 @@ class AnalysisService {
             WHERE LOWER(COALESCE(d.type, '')) <> 'vocabulary'
               AND (
                     d.created_by IN (SELECT id FROM users WHERE role = 'admin')
-                 OR COALESCE(d.published, 0) = 1
-                 OR LOWER(COALESCE(d.visibility_scope, '')) IN ('public','전체','all')
                  OR COALESCE(d.school, '') IN ('', '전체', 'all', ?)
                  OR EXISTS (SELECT 1 FROM passage_analyses pa WHERE pa.document_id = d.id)
               )

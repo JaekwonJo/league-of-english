@@ -158,8 +158,6 @@ router.get('/documents', verifyToken, async (req, res) => {
                         created_by = ?
                      OR COALESCE(school, '') IN ('', '전체', 'all')
                      OR school = ?
-                     OR COALESCE(published, 0) = 1
-                     OR LOWER(COALESCE(visibility_scope, '')) IN ('public', '전체', 'all')
                      OR created_by IN (SELECT id FROM users WHERE role = 'admin')
                       )
                 ORDER BY created_at DESC`;

@@ -1,0 +1,17 @@
+/* Global responsive tweaks */
+
+@media (max-width: 768px) {
+  .main-content {
+    padding: 12px !important;
+  }
+
+  /* Make buttons more tappable on mobile */
+  button { min-height: 40px; }
+
+  /* Prevent long words from overflowing */
+  body, .main-content { word-break: break-word; overflow-wrap: anywhere; }
+}
+
+/* Dark-only background safety */
+html, body { background-color: #0F172A; }
+
