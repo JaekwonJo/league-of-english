@@ -638,7 +638,29 @@ async function generateCsatSet({
     pushProgress('in_memory_rescue', rescueType, { delivered: rescueList.length, requested: totalRequested || rescueList.length });
   }
 
-  const normalizedProblems = normalizeAll(aggregated);
+  let normalizedProblems = normalizeAll(aggregated);
+  if (!Array.isArray(normalizedProblems) || normalizedProblems.length === 0) {
+    const rescueType = requestedTypes[0] || 'order';
+    const rescueList = await buildFallbackProblems({
+      type: rescueType,
+      count: Math.max(1, totalRequested || 3),
+      docTitle,
+      documentCode,
+      reasonTag: 'normalize_rescue'
+    });
+    normalizedProblems = normalizeAll(rescueList);
+    pushProgress('normalize_rescue', rescueType, { delivered: normalizedProblems.length, requested: totalRequested || rescueList.length });
+  }
+
+  if (!Array.isArray(normalizedProblems) || normalizedProblems.length === 0) {
+    return {
+      problems: [],
+      count: 0,
+      progressLog,
+      failures: [{ type: 'all', delivered: 0, requested: totalRequested, reason: 'normalize_failed' }]
+    };
+  }
+
   // Always randomize final sequence to avoid memorization patterns
   let finalProblems = [...normalizedProblems];
   for (let i = finalProblems.length - 1; i > 0; i -= 1) {
