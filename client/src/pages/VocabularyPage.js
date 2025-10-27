@@ -23,6 +23,7 @@ const VocabularyPage = () => {
   const [selectedDayKey, setSelectedDayKey] = useState('');
   const [selectedDayKeys, setSelectedDayKeys] = useState([]);
   const [quizMode, setQuizMode] = useState('mixed'); // 'mixed' | 'term_to_meaning' | 'meaning_to_term'
+  const [orderPolicy, setOrderPolicy] = useState('random'); // 'random' | 'sequential'
 
   const [quizState, setQuizState] = useState({
     active: false,
@@ -363,7 +364,10 @@ const resetQuizState = useCallback(() => {
       const payload = hasMulti
         ? { dayKeys: selectedDayKeys, count: QUIZ_SIZE }
         : { dayKey: selectedDayKey, count: QUIZ_SIZE };
-      if (quizMode === 'term_to_meaning' || quizMode === 'meaning_to_term') payload.mode = quizMode;
+      // Always send mode (including 'mixed') for clarity
+      payload.mode = quizMode;
+      // Order policy: random (default) or sequential
+      payload.order = (orderPolicy === 'sequential') ? 'sequential' : 'random';
       const response = await api.vocabulary.generateQuiz(selectedSet.id, payload);
 
       if (!response?.success || !Array.isArray(response?.problems)) {
@@ -606,10 +610,13 @@ const resetQuizState = useCallback(() => {
                         <p style={styles.actionHint}>아래에서 유형을 고르고 30문항 시험을 시작해 보세요!</p>
                       </>
                     )}
-                    <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', gap: '12px', marginTop: '8px', flexWrap: 'wrap' }}>
                       <label><input type="radio" name="mode" checked={quizMode==='mixed'} onChange={()=>setQuizMode('mixed')} /> 혼합(뜻→단어/단어→뜻)</label>
                       <label><input type="radio" name="mode" checked={quizMode==='term_to_meaning'} onChange={()=>setQuizMode('term_to_meaning')} /> 단어→뜻</label>
                       <label><input type="radio" name="mode" checked={quizMode==='meaning_to_term'} onChange={()=>setQuizMode('meaning_to_term')} /> 뜻→단어</label>
+                      <span style={{ marginLeft: 16, color: 'var(--text-secondary)' }}>|</span>
+                      <label><input type="radio" name="orderPolicy" checked={orderPolicy==='random'} onChange={()=>setOrderPolicy('random')} /> 출제 순서: 랜덤</label>
+                      <label><input type="radio" name="orderPolicy" checked={orderPolicy==='sequential'} onChange={()=>setOrderPolicy('sequential')} /> 출제 순서: 순차</label>
                     </div>
                   </div>
                   <button
@@ -707,9 +714,7 @@ const QuizBox = ({
         </div>
       </div>
       <h3 style={styles.quizPrompt}>{problem.prompt}</h3>
-      {!isMeaningMode && (
-        <p style={styles.quizTerm}>👉 <strong>{focusLabel}</strong>: {focusValue}</p>
-      )}
+      <p style={styles.quizTerm}>👉 <strong>{focusLabel}</strong>: {focusValue}</p>
       <div style={styles.optionList}>{body}</div>
       <div style={styles.quizNavRow}>
         <button

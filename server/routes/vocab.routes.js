@@ -174,15 +174,25 @@ function selectDistractors(pool, target, count, selector) {
 }
 
 function buildQuizQuestions(day, allDays, count) {
-  const targetEntries = shuffle(day.entries).slice(0, Math.min(count, day.entries.length));
+  // ordering: random(default) or sequential
+  const orderPolicy = (this && this.__orderPolicy) || 'random';
+  const poolEntries = Array.isArray(day.entries) ? [...day.entries] : [];
+  if (orderPolicy !== 'sequential') {
+    shuffle(poolEntries);
+  }
+  const targetEntries = poolEntries.slice(0, Math.min(count, poolEntries.length));
   const pool = allDays.flatMap((item) => item.entries);
 
   return targetEntries.map((entry, idx) => {
     // Allow client to prefer a mode via req.body.mode
     const preferred = (this && this.__modePreference) || null;
-    const mode = (preferred === 'term_to_meaning' || preferred === 'meaning_to_term')
-      ? preferred
-      : (Math.random() < 0.5 ? 'term_to_meaning' : 'meaning_to_term');
+    let mode = 'term_to_meaning';
+    if (preferred === 'term_to_meaning' || preferred === 'meaning_to_term') {
+      mode = preferred;
+    } else {
+      // balanced mixed: alternate by index
+      mode = (idx % 2 === 0) ? 'term_to_meaning' : 'meaning_to_term';
+    }
     const cleanTerm = cleanupSpacing(entry.term);
     const cleanMeaning = cleanupSpacing(entry.meaning);
 
@@ -342,7 +352,7 @@ router.post('/vocabulary/sets/:documentId/quiz', verifyToken, checkDailyLimit, a
       return res.status(400).json({ success: false, message: '잘못된 문서 ID 입니다.' });
     }
 
-    const { dayKey, dayKeys, count = 30, mode: modePreference } = req.body || {};
+    const { dayKey, dayKeys, count = 30, mode: modePreference, order = 'random' } = req.body || {};
     const normalizedKeys = (() => {
       if (Array.isArray(dayKeys) && dayKeys.length) {
         return dayKeys.map((k) => String(k).trim()).filter(Boolean);
@@ -398,8 +408,9 @@ router.post('/vocabulary/sets/:documentId/quiz', verifyToken, checkDailyLimit, a
         });
       }
     }
-    // Pass mode preference by binding to helper context
-    const builder = buildQuizQuestions.bind({ __modePreference: modePreference });
+    // Pass preferences by binding to helper context
+    const normalizedOrder = (order === 'sequential') ? 'sequential' : 'random';
+    const builder = buildQuizQuestions.bind({ __modePreference: modePreference, __orderPolicy: normalizedOrder });
     // 가상의 day 컨테이너(여러 Day 합쳐진 경우)
     const virtualDay = {
       key: normalizedKeys.join(','),
