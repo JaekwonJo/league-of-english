@@ -6,6 +6,8 @@ const DAY_MARKER_REGEX = /^(\d+\s*)?Day\s*(\d{1,2})\s*$/i;
 const NO_MARKER_REGEX = /^(?:\d+\s*)?(?:no\.?|문항|번호)\s*(\d{1,3})\s*$/i;
 // Accept textbook style markers like "Lesson 3", "1Lesson 4"
 const LESSON_MARKER_REGEX = /^(?:\d+\s*)?Lesson\s*(\d{1,2})\s*$/i;
+// Inline entries like: "367no.41~42 generate 뜻..." or "no.18 express 뜻..."
+const INLINE_NO_ENTRY_REGEX = /^(?:\d+\s*)?no\.?\s*(\d{1,3})(?:~\d+)?\s+([A-Za-z][A-Za-z\s'\-]*)\s+(.+)$/i;
 
 class VocabularyParser {
   parse(rawText = '') {
@@ -50,6 +52,20 @@ class VocabularyParser {
     };
 
     for (const line of lines) {
+      // 0) Inline entry handling: noXX + term + meaning on one line
+      const inlineNo = line.match(INLINE_NO_ENTRY_REGEX);
+      if (inlineNo) {
+        finalizeEntry();
+        const [, noNumber, term, rest] = inlineNo;
+        const label = `no${parseInt(noNumber, 10)}`;
+        currentDay = ensureDay(label);
+        currentEntry = {
+          index: currentDay.entries.length + 1,
+          term: String(term || '').trim(),
+          meaningLines: [String(rest || '').trim()]
+        };
+        continue;
+      }
       const dayMatch = line.match(DAY_MARKER_REGEX);
       const noMatch = dayMatch ? null : line.match(NO_MARKER_REGEX);
       const lessonMatch = (dayMatch || noMatch) ? null : line.match(LESSON_MARKER_REGEX);

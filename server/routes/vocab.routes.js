@@ -183,7 +183,7 @@ function buildQuizQuestions(day, allDays, count) {
   const targetEntries = poolEntries.slice(0, Math.min(count, poolEntries.length));
   const pool = allDays.flatMap((item) => item.entries);
 
-  return targetEntries.map((entry, idx) => {
+  const questions = targetEntries.map((entry, idx) => {
     // Allow client to prefer a mode via req.body.mode
     const preferred = (this && this.__modePreference) || null;
     let mode = 'term_to_meaning';
@@ -260,6 +260,7 @@ function buildQuizQuestions(day, allDays, count) {
       }
     };
   });
+  return orderPolicy !== 'sequential' ? shuffle(questions) : questions;
 }
 
 router.get('/vocabulary/sets', verifyToken, async (req, res) => {

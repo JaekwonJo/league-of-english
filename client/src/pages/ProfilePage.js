@@ -768,27 +768,27 @@ const styles = {
     borderRadius: '18px',
     padding: '18px',
     border: '1px solid rgba(148,163,184,0.25)',
-    background: 'linear-gradient(135deg, rgba(148,163,184,0.1), rgba(148,163,184,0.05))'
+    background: 'linear-gradient(135deg, rgba(148,163,184,0.10), rgba(148,163,184,0.06))'
   },
   planCardPremium: {
     borderRadius: '18px',
     padding: '18px',
     border: '1px solid rgba(203,213,225,0.5)',
-    background: 'linear-gradient(135deg, rgba(203,213,225,0.18), rgba(148,163,184,0.10))',
-    boxShadow: '0 10px 28px rgba(203,213,225,0.25)'
+    background: 'linear-gradient(135deg, rgba(59,130,246,0.15), rgba(96,165,250,0.10))',
+    boxShadow: '0 0 24px rgba(59,130,246,0.35), 0 0 48px rgba(59,130,246,0.25)'
   },
   planCardPro: {
     borderRadius: '18px',
     padding: '18px',
-    border: '1px solid rgba(250,204,21,0.5)',
-    background: 'linear-gradient(135deg, rgba(250,204,21,0.18), rgba(245,158,11,0.10))',
-    boxShadow: '0 12px 34px rgba(245,158,11,0.28)'
+    border: '1px solid rgba(245,158,11,0.65)',
+    background: 'linear-gradient(135deg, rgba(245,158,11,0.20), rgba(250,204,21,0.12))',
+    boxShadow: '0 0 30px rgba(245,158,11,0.45), 0 0 60px rgba(250,204,21,0.30)'
   },
   planHeader: {
     fontSize: '16px',
     fontWeight: 800,
     marginBottom: '10px',
-    color: 'var(--surface-soft-solid)'
+    color: 'var(--text-primary)'
   },
   planList: {
     listStyle: 'none',

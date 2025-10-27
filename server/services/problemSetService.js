@@ -1,6 +1,8 @@
 const aiService = require('./aiProblemService');
 const OrderGenerator = require('../utils/orderProblemGenerator');
-const InsertionGenerator = require('../utils/insertionProblemGenerator2');
+let InsertionGenerator;
+try { InsertionGenerator = require('../utils/insertionProblemGenerator2'); }
+catch { InsertionGenerator = require('../utils/insertionProblemGenerator3'); }
 const { normalizeAll } = require('../utils/csatProblemNormalizer');
 const { buildFallbackProblems } = require('../utils/fallbackProblemFactory');
 const { ensureSourceLabel } = require('./ai-problem/shared');
