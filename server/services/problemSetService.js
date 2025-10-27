@@ -627,13 +627,11 @@ async function generateCsatSet({
   }
 
   const normalizedProblems = normalizeAll(aggregated);
-  let finalProblems = normalizedProblems;
-  if (orderMode === 'random') {
-    finalProblems = [...normalizedProblems];
-    for (let i = finalProblems.length - 1; i > 0; i -= 1) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [finalProblems[i], finalProblems[j]] = [finalProblems[j], finalProblems[i]];
-    }
+  // Always randomize final sequence to avoid memorization patterns
+  let finalProblems = [...normalizedProblems];
+  for (let i = finalProblems.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [finalProblems[i], finalProblems[j]] = [finalProblems[j], finalProblems[i]];
   }
 
   pushProgress('all_complete', 'all', { delivered: finalProblems.length });

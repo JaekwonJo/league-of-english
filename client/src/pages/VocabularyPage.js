@@ -468,11 +468,11 @@ const resetQuizState = useCallback(() => {
   return (
     <div style={styles.container}>
       <header style={styles.header}>
-        <h1 style={styles.title}>🧠 어휘 훈련</h1>
-        <p style={styles.subtitle}>
-          단어장은 Day별로 정리되어 있어요. 마음에 드는 Day를 골라 30문항 테스트에 도전해 보세요!<br />
-          정답을 고를 때마다 바로 피드백이 나와서, 혼자서도 알차게 복습할 수 있어요. 😊
-        </p>
+      <h1 style={styles.title}>🧠 어휘 훈련</h1>
+      <p style={styles.subtitle}>
+        세트 유형에 따라 단위가 달라요: 워드마스터는 <strong>Day</strong>, 모의고사는 <strong>번호(noXX)</strong>, 교과서는 <strong>과(예: 3과)</strong> 기준으로 정리되어 있어요.<br />
+        원하는 단위를 골라 시험을 시작해 보세요. 정답을 고를 때마다 바로 피드백이 제공되어 혼자서도 알차게 복습할 수 있어요. 😊
+      </p>
       </header>
 
       {!quizState.active && (
@@ -602,12 +602,12 @@ const resetQuizState = useCallback(() => {
                     {selectedDayKeys.length > 1 ? (
                       <>
                         <h3 style={styles.actionTitle}>📝 선택한 Day {selectedDayKeys.length}개</h3>
-                        <p style={styles.actionHint}>아래에서 유형을 고르고 30문항 시험을 시작해 보세요!</p>
+                        <p style={styles.actionHint}>아래에서 유형을 고르고 시험을 시작해 보세요!</p>
                       </>
                     ) : (
                       <>
                         <h3 style={styles.actionTitle}>📝 {activeDay?.label} | {activeDay?.count}개 단어</h3>
-                        <p style={styles.actionHint}>아래에서 유형을 고르고 30문항 시험을 시작해 보세요!</p>
+                        <p style={styles.actionHint}>아래에서 유형을 고르고 시험을 시작해 보세요!</p>
                       </>
                     )}
                     <div style={{ display: 'flex', gap: '12px', marginTop: '8px', flexWrap: 'wrap' }}>
