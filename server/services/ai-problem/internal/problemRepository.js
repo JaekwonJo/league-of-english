@@ -154,6 +154,44 @@ function createProblemRepository(database) {
     return problem;
   }
 
+  let exposureColumnsEnsured = false;
+
+  async function ensureProblemExposureColumns() {
+    if (exposureColumnsEnsured) return;
+    try {
+      const columns = await database.all('PRAGMA table_info(problem_exposures)');
+      const names = Array.isArray(columns) ? columns.map((row) => row.name) : [];
+      const statements = [];
+      if (!names.includes('first_seen_at')) {
+        statements.push('ALTER TABLE problem_exposures ADD COLUMN first_seen_at DATETIME DEFAULT CURRENT_TIMESTAMP');
+      }
+      if (!names.includes('last_seen_at')) {
+        statements.push('ALTER TABLE problem_exposures ADD COLUMN last_seen_at DATETIME DEFAULT CURRENT_TIMESTAMP');
+      }
+      if (!names.includes('last_answered_at')) {
+        statements.push('ALTER TABLE problem_exposures ADD COLUMN last_answered_at DATETIME');
+      }
+      if (!names.includes('correct_count')) {
+        statements.push('ALTER TABLE problem_exposures ADD COLUMN correct_count INTEGER DEFAULT 0');
+      }
+      if (!names.includes('incorrect_count')) {
+        statements.push('ALTER TABLE problem_exposures ADD COLUMN incorrect_count INTEGER DEFAULT 0');
+      }
+      for (const sql of statements) {
+        try {
+          await database.run(sql);
+        } catch (error) {
+          if (!String(error?.message || '').includes('duplicate column name')) {
+            console.warn('[problemRepository] exposure column ensure failed:', error?.message || error);
+          }
+        }
+      }
+      exposureColumnsEnsured = true;
+    } catch (error) {
+      console.warn('[problemRepository] exposure ensure error:', error?.message || error);
+    }
+  }
+
   function acceptCachedProblem(type, problem) {
     if (!problem || typeof problem !== 'object') {
       return false;
@@ -345,6 +383,7 @@ function createProblemRepository(database) {
       .map((id) => Number(id))
       .filter((num) => Number.isInteger(num) && num > 0))];
     if (!uniqueIds.length) return 0;
+    await ensureProblemExposureColumns();
     let updated = 0;
     for (const problemId of uniqueIds) {
       try {
@@ -394,6 +433,7 @@ function createProblemRepository(database) {
     query += ' ORDER BY RANDOM() LIMIT ?';
     params.push(fetchCount);
 
+    await ensureProblemExposureColumns();
     const rows = await database.all(query, params);
     const mapped = rows
       .map((row) => mapDbProblem(row))
@@ -635,6 +675,7 @@ function createProblemRepository(database) {
     const limit = Math.max(parseInt(options.limit, 10) || 0, 0) || 20;
     const fetchLimit = Math.max(limit * 4, limit);
 
+    await ensureProblemExposureColumns();
     const rows = await database.all(
       'SELECT p.*, pe.last_result AS exposure_last_result, pe.correct_count AS exposure_correct_count, pe.incorrect_count AS exposure_incorrect_count, pe.last_answered_at AS exposure_last_answered_at, pe.last_seen_at AS exposure_last_seen_at '
         + 'FROM problem_exposures pe '
@@ -670,6 +711,7 @@ function createProblemRepository(database) {
     }
 
     const placeholders = numericIds.map(() => '?').join(',');
+    await ensureProblemExposureColumns();
     const rows = await database.all(
       `SELECT p.*, pe.last_result AS exposure_last_result, pe.correct_count AS exposure_correct_count, pe.incorrect_count AS exposure_incorrect_count, pe.last_answered_at AS exposure_last_answered_at, pe.last_seen_at AS exposure_last_seen_at
          FROM problems p
