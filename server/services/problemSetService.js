@@ -342,13 +342,17 @@ async function handleOrderType({
 
   let remaining = amount - delivered;
   if (remaining > 0) {
-    const generated = buildOrderProblems(context, remaining, { orderDifficulty });
-    const added = appendProblems(generated);
-    delivered += added;
-    pushProgress('static_generated', type, {
-      delivered: Array.isArray(generated) ? generated.length : added,
-      requested: remaining
-    });
+    try {
+      const generated = buildOrderProblems(context, remaining, { orderDifficulty });
+      const added = appendProblems(generated);
+      delivered += added;
+      pushProgress('static_generated', type, {
+        delivered: Array.isArray(generated) ? generated.length : added,
+        requested: remaining
+      });
+    } catch (genError) {
+      pushProgress('static_failed', type, { delivered: 0, requested: remaining, reason: String(genError?.message || genError) });
+    }
   }
 
   remaining = amount - delivered;
@@ -397,13 +401,17 @@ async function handleInsertionType({
 
   let remaining = amount - delivered;
   if (remaining > 0) {
-    const generated = buildInsertionProblems(context, remaining, { insertionDifficulty });
-    const added = appendProblems(generated);
-    delivered += added;
-    pushProgress('static_generated', type, {
-      delivered: Array.isArray(generated) ? generated.length : added,
-      requested: remaining
-    });
+    try {
+      const generated = buildInsertionProblems(context, remaining, { insertionDifficulty });
+      const added = appendProblems(generated);
+      delivered += added;
+      pushProgress('static_generated', type, {
+        delivered: Array.isArray(generated) ? generated.length : added,
+        requested: remaining
+      });
+    } catch (genError) {
+      pushProgress('static_failed', type, { delivered: 0, requested: remaining, reason: String(genError?.message || genError) });
+    }
   }
 
   remaining = amount - delivered;

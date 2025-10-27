@@ -134,7 +134,14 @@ const MainLayout = ({ children, currentPath }) => {
               <LucideIcons.Menu />
             </button>
             <div style={styles.mobileTitle}>League of English</div>
-            <div style={{ width: 40 }}></div>
+            <button
+              style={styles.mobileActionBtn}
+              onClick={handleLogout}
+              aria-label="로그아웃"
+              title="로그아웃"
+            >
+              <LucideIcons.LogOut size={18} />
+            </button>
           </div>
         )}
         {children}
@@ -315,6 +322,18 @@ const styles = {
   mobileTitle: {
     fontWeight: 800,
     color: 'var(--text-primary)'
+  },
+  mobileActionBtn: {
+    width: 40,
+    height: 36,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
+    border: '1px solid var(--border-subtle)',
+    background: 'var(--surface-soft)',
+    color: 'var(--text-primary)',
+    cursor: 'pointer'
   }
 };
 
