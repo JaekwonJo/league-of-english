@@ -1178,10 +1178,18 @@ class DocumentAnalyzer {
   }
 
   _buildGenericKoreanGist(sentence, keywords = [], koreanKeywords = []) {
-    const mainKeyword = (koreanKeywords.find((value) => value) || keywords[0] || '핵심 아이디어');
-    const secondKeyword = (koreanKeywords.slice(1).find((value) => value) || keywords[1] || '관련 개념');
+    const cleaned = String(sentence || '').trim();
+    // 키워드가 없으면 중립 설명으로 처리
+    if (!Array.isArray(keywords) || keywords.length === 0) {
+      // 문장 위치에 따른 기본 설명(주제문/설명/마무리)
+      if (/^[A-Z]/.test(cleaned)) return '주제를 제시하며 글의 방향을 잡아 주는 문장입니다.';
+      if (/for example|for instance|e\.g\./i.test(cleaned)) return '앞선 내용을 뒷받침하는 구체적 예시를 제시하는 문장입니다.';
+      return '앞 문장을 이어 받아 내용을 구체화하고 흐름을 자연스럽게 연결하는 문장입니다.';
+    }
+    const mainKeyword = (koreanKeywords.find((v) => v) || keywords[0]).toString();
+    const secondKeyword = (koreanKeywords.slice(1).find((v) => v) || keywords[1] || '').toString();
     if (secondKeyword && secondKeyword !== mainKeyword) {
-      return `${mainKeyword}과(와) ${secondKeyword}의 연결을 보여 주며 생각의 폭을 넓혀 주는 문장입니다.`;
+      return `${mainKeyword}와 ${secondKeyword}의 관계를 보여 주며 내용을 확장하는 문장입니다.`;
     }
     return `${mainKeyword}의 의미를 또렷하게 잡아 주는 핵심 문장입니다.`;
   }
@@ -1208,7 +1216,7 @@ class DocumentAnalyzer {
       }
     });
     if (!unique.length) {
-      return ['Focus'];
+      return [];
     }
     return unique
       .slice(0, Math.max(1, limit))
