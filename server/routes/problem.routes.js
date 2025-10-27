@@ -21,7 +21,8 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
     counts = {},
     orderDifficulty = 'advanced',
     insertionDifficulty = 'advanced',
-    orderMode = 'random'
+    orderMode = 'random',
+    passageNumbers = []
   } = req.body || {};
 
   if (!documentId) {
@@ -50,7 +51,8 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
       orderDifficulty,
       insertionDifficulty,
       orderMode,
-      userId: req.user.id
+      userId: req.user.id,
+      passageNumbers: Array.isArray(passageNumbers) ? passageNumbers : []
     });
 
     await updateUsage(req.user.id, result.count);
@@ -78,6 +80,8 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
       friendly = '오늘의 문제 생성 한도를 모두 사용했어요. 내일 다시 시도하거나 프리미엄으로 업그레이드해 주세요.';
     } else if (rawMessage.includes('ai generator unavailable')) {
       friendly = 'AI 생성기가 준비되지 않았어요. OpenAI API 키 설정 후 다시 시도해 주세요.';
+    } else if (rawMessage.includes('document not found')) {
+      friendly = '요청한 자료를 찾지 못했어요. 문서 목록을 새로고침하고 다시 선택해 주세요.';
     } else if (rawMessage.includes('failed to prepare enough problems')) {
       friendly = '요청한 유형의 문제를 모두 만들지 못했어요. 문제 수를 줄이거나 다른 유형을 선택해 주세요.';
     }

@@ -430,7 +430,8 @@ async function generateCsatSet({
   orderDifficulty = 'advanced',
   insertionDifficulty = 'advanced',
   orderMode = 'random',
-  userId
+  userId,
+  passageNumbers = []
 }) {
   const normalizedCounts = normalizeTypeCounts(counts);
   const requestedTypes = Object.keys(normalizedCounts).filter((type) => normalizedCounts[type] > 0);
@@ -450,7 +451,7 @@ async function generateCsatSet({
     }
   }
 
-  const context = await aiService.getPassages(documentId);
+  const context = await aiService.getPassages(documentId, { passageNumbers });
   const documentCode =
     context?.document?.code ||
     context?.document?.slug ||

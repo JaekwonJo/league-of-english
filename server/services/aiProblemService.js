@@ -214,7 +214,7 @@ class AIProblemService {
     return this._openai;
   }
 
-  async getPassages(documentId) {
+  async getPassages(documentId, options = {}) {
     const doc = await database.get("SELECT * FROM documents WHERE id = ?", [documentId]);
     if (!doc) throw new Error("Document not found");
     let passages = [];
@@ -238,6 +238,24 @@ class AIProblemService {
     if (!passages.length && doc.content) {
       passages = [String(doc.content)];
     }
+    // Optional filter: only include selected passage numbers (1-based)
+    const selected = Array.isArray(options.passageNumbers)
+      ? options.passageNumbers
+          .map((n) => Number(n))
+          .filter((n) => Number.isInteger(n) && n >= 1)
+      : null;
+    if (selected && selected.length) {
+      const filtered = [];
+      const indices = new Set(selected.map((n) => n - 1));
+      passages.forEach((text, idx) => { if (indices.has(idx)) filtered.push(text); });
+      if (filtered.length) passages = filtered;
+      // Also narrow parsedContent sentence map if present
+      if (parsedContent && parsedContent.metadata && Array.isArray(parsedContent.metadata.sentenceMap)) {
+        parsedContent = { ...parsedContent, metadata: { ...parsedContent.metadata } };
+        parsedContent.metadata.sentenceMap = parsedContent.metadata.sentenceMap.filter((_, idx) => indices.has(idx));
+      }
+    }
+
     return { document: doc, passages, parsedContent };
   }
 
