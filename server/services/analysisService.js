@@ -773,12 +773,26 @@ class AnalysisService {
       );
       if (!document) throw new Error('문서를 찾을 수 없습니다.');
 
-      console.log('[analysis] running analysis for all passages...');
       const passages = this.extractPassages(document.content);
+      const maxPerCall = Math.max(1, parseInt(process.env.LOE_ANALYSIS_MAX_PASSAGES_PER_CALL || '2', 10));
+      const budgetMs = Math.max(5000, parseInt(process.env.LOE_ANALYSIS_TIME_BUDGET_MS || '25000', 10));
+      const start = Date.now();
       const saved = [];
 
+      console.log(`[analysis] starting auto-analysis: total=${passages.length}, maxPerCall=${maxPerCall}, budgetMs=${budgetMs}`);
+
       for (let index = 0; index < passages.length; index += 1) {
+        if (saved.length >= maxPerCall) break;
+        if ((Date.now() - start) > (budgetMs - 1000)) {
+          console.log('[analysis] time budget reached, returning partial results');
+          break;
+        }
         const passage = passages[index];
+        const already = await this.getPassageAnalysis(documentId, index + 1, userId);
+        if (already && Array.isArray(already.variants) && already.variants.length) {
+          saved.push(already);
+          continue;
+        }
         const analysis = await this.analyzer.analyzeIndividualPassage(passage, index + 1);
         const { allVariants } = await this.appendVariants(documentId, index + 1, passage, [analysis]);
         const enriched = await this._attachFeedbackMetadata(documentId, index + 1, allVariants, userId);
@@ -789,11 +803,18 @@ class AnalysisService {
         });
       }
 
+      const partial = saved.length < passages.length;
+      const remaining = Math.max(0, passages.length - saved.length);
       return {
         success: true,
         data: saved,
-        message: `총 ${saved.length}개 지문을 분석했습니다.`,
-        cached: false
+        message: partial
+          ? `일부 지문(${saved.length}/${passages.length}) 분석을 완료했어요. 나머지는 개별 지문 분석으로 이어가세요.`
+          : `총 ${saved.length}개 지문을 분석했습니다.`,
+        cached: false,
+        partial,
+        totalPassages: passages.length,
+        remaining
       };
     } catch (error) {
       const message = String(error?.message || '');

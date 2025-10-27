@@ -209,7 +209,8 @@ const guidance = [
 
 class DocumentAnalyzer {
   constructor() {
-    this.openai = OpenAI && process.env.OPENAI_API_KEY
+    const fastMode = String(process.env.LOE_FAST_MODE || '').trim() === '1';
+    this.openai = (!fastMode) && OpenAI && process.env.OPENAI_API_KEY
       ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
       : null;
   }

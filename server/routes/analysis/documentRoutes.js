@@ -87,4 +87,22 @@ router.get('/:documentId', verifyToken, async (req, res) => {
   }
 });
 
+/**
+ * GET /api/analysis/status/:documentId
+ * 문서 분석 진행상황(분석된 지문 수/전체 지문 수) 조회
+ */
+router.get('/status/:documentId', verifyToken, async (req, res) => {
+  try {
+    const { documentId } = req.params;
+    const list = await analysisService.getPassageList(documentId);
+    const total = Number(list?.total || 0);
+    const analyzedCount = Array.isArray(list?.data)
+      ? list.data.filter((p) => Number(p.variantCount || 0) > 0).length
+      : 0;
+    res.json({ success: true, data: { total, analyzed: analyzedCount } });
+  } catch (error) {
+    res.status(500).json({ success: false, message: '분석 상태를 확인하지 못했습니다.' });
+  }
+});
+
 module.exports = router;
