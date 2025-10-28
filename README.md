@@ -9,8 +9,8 @@
 
 ### 오늘의 Top 3 (베타 직전)
 1. **Fallback 분석 prefix 보정** – `analysisFallbackVariant.test.js`가 요구하는 형식으로 프롬프트/후처리를 정리
-2. **어휘 3단계·분석 삭제 E2E 스냅샷** – 신규 플로우를 Playwright로 캡처해 회귀를 막기
-3. **Render/Vercel 배포 스모크 재정비** – 새 플로우가 실서버에서도 정상 동작하는지 체크리스트 갱신
+2. **단계별 URL E2E 스냅샷 추가** – 어휘/학습/분석 새 경로를 Playwright로 캡처해 회귀 방지
+3. **Render/Vercel 재배포 + 스모크 점검** – 새 플로우가 실서버에 반영됐는지 확인
 
 ### Known Issues
 - `analysisFallbackVariant.test.js`가 fallback 해석 prefix 누락으로 실패 중 – 프롬프트/포맷 교정 예정.
@@ -71,12 +71,12 @@ npm run lint
 - **로그**: Render/Vercel 콘솔에서 실시간 확인, OpenAI 실패 시 fallback 로그 기록
 - **UI 캡처 가이드**: `docs/ui-regression-guide.md`에 분석/학습/랭킹 화면 캡처 순서와 공유 템플릿이 정리돼 있고, `npm run capture:ui`로 Playwright 캡처 스크립트를 실행할 수 있어요.
 
-## 6. 최근 업데이트 (2025-10-27)
-- Vocabulary 시험을 세트 → Day → 시험 준비 3단계로 나눠 안내하고, 모바일 헤더를 🦉 아이콘 + 테마 토글로 정돈했습니다.
-- 분석 홈은 검색/목록만 담당하고, 지문 상세에서만 분석을 불러오도록 분리했습니다. 체크박스로 분석본을 여러 개 선택해 일괄 삭제할 수 있어요.
-- 사이드바/모바일 상단에 라이트↔다크 토글을 복구하고, 분석·어휘 UI 토큰을 정리해 색상 대비를 향상했습니다.
-- `deleteVariants` API와 서버 `removeVariants` 로직을 추가해 관리자 반복 삭제 404를 줄였습니다.
-- `npm test`는 fallback 해석 prefix 보정 작업이 남아 있어 `analysisFallbackVariant.test.js` 한 건이 실패 중입니다 (후속 작업 예정).
+## 6. 최근 업데이트 (2025-10-29)
+- Vocabulary/Study/Analysis를 단계별 경로(`/vocabulary/days`, `/study/solve`, `/analysis/detail`)로 분리해 뒤로가기·딥링크가 자연스럽게 동작합니다.
+- 모바일 헤더를 단일 토글(☰/✕)과 중앙 🦉 제목으로 정리해 메뉴/로고 겹침을 없앴습니다.
+- `/documents/:id` PUT API로 관리자 문서 제목·학년을 수정하면 학습/어휘 목록에 즉시 반영됩니다.
+- 문제 생성 한도를 유형별로 재조정(AI 합산 5문, 비AI 유형 10문)해 긴 요청에서 타임아웃이 크게 줄었습니다.
+- 빈칸 fallback 문제의 질문·해설을 KSAT 스타일로 강화했으며, `analysisFallbackVariant.test.js` 보정 작업은 진행 중입니다.
 
 궁금한 점이 생기면 “어디에서 막혔어요?”라고 바로 알려 주세요. 함께 해결해 드릴게요! 😊
 

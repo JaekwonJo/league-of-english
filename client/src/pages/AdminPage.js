@@ -18,6 +18,7 @@ import { useFeedbackReports } from '../hooks/useFeedbackReports';
 import { useProblemFeedbackReports } from '../hooks/useProblemFeedbackReports';
 import { useAdminNotifications } from '../hooks/useAdminNotifications';
 import { api } from '../services/api.service';
+import { useAuth } from '../contexts/AuthContext';
 
 const initialUploadForm = {
   title: '',
@@ -69,10 +70,10 @@ const toastStyles = {
 const AdminPage = () => {
   const {
     documents,
-    setDocuments,
     loading: documentsLoading,
     fetchDocuments,
     uploadDocument,
+    updateDocument,
     deleteDocument,
     fetchShares,
     updateShares
@@ -107,6 +108,9 @@ const AdminPage = () => {
     changeShareForm,
     saveShare
   } = useDocumentShare(fetchShares, updateShares);
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
+  const isTeacherOnly = user?.role === 'teacher';
 
   const [categories, setCategories] = useState(['수능', '내신', '모의고사', '기출문제', '기타']);
   const [loading, setLoading] = useState(false);
@@ -178,18 +182,22 @@ const AdminPage = () => {
   const handleEdit = async () => {
     try {
       setLoading(true);
-      // 문서 수정 API가 없으므로 임시로 삭제 후 재생성하지 않고 클라이언트에서만 업데이트
-      const updatedDocuments = documents.map(doc => 
-        doc.id === editingDocument.id ? editingDocument : doc
-      );
-      setDocuments(updatedDocuments);
-      
+      const payload = {
+        title: (editingDocument.title || '').trim(),
+        category: editingDocument.category || null,
+        school: (editingDocument.school || '').trim() || null,
+        grade: Number.isInteger(editingDocument.grade) ? editingDocument.grade : null
+      };
+
+      await updateDocument(editingDocument.id, payload);
+
       pushToast('문서 정보가 수정되었습니다.', 'success');
       setShowEditModal(false);
       setEditingDocument(null);
+      await fetchDocuments();
     } catch (error) {
       console.error('수정 실패:', error);
-      pushToast('문서 정보를 수정하지 못했습니다.', 'error');
+      pushToast(error?.message || '문서 정보를 수정하지 못했습니다.', 'error');
     } finally {
       setLoading(false);
     }
@@ -380,9 +388,22 @@ const AdminPage = () => {
           ))}
         </div>
       )}
-      <div style={adminStyles.header}>
-        <h1 style={adminStyles.title}>⚙️ 관리자 페이지</h1>
-        <div style={adminStyles.headerButtons}>
+      <div style={{
+        ...adminStyles.header,
+        ...(isTeacherOnly ? { alignItems: 'flex-start', flexDirection: 'column', gap: '12px' } : {})
+      }}>
+        <div>
+          <h1 style={adminStyles.title}>{isAdmin ? '⚙️ 관리자 페이지' : '🍎 선생님 모드'}</h1>
+          {isTeacherOnly && (
+            <p style={{ margin: '6px 0 0', color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+              자기 반 학생들의 학습 기록을 편하게 확인할 수 있도록 통계 보드도 준비 중이에요. 😊
+            </p>
+          )}
+        </div>
+        <div style={{
+          ...adminStyles.headerButtons,
+          ...(isTeacherOnly ? { marginTop: '8px' } : {})
+        }}>
           <button 
             style={adminStyles.primaryButton}
             onClick={() => setShowUploadModal(true)}
@@ -407,9 +428,13 @@ const AdminPage = () => {
         onResolve={handleNotificationResolve}
       />
 
-      {/* 멤버십 요청 처리/사용자 관리 */}
-      <MembershipRequestsPanel />
-      <AdminUsersPanel />
+      {/* 멤버십 요청 처리/사용자 관리는 관리자만 접근 */}
+      {isAdmin && (
+        <>
+          <MembershipRequestsPanel />
+          <AdminUsersPanel />
+        </>
+      )}
 
       <ProblemFeedbackBoard
         reports={problemReports}

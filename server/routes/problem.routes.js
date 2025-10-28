@@ -29,6 +29,7 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
     return res.status(400).json({ message: 'documentId is required.' });
   }
 
+  let lastProgressLog = null;
   try {
     // Per-type(문제풀이) 일일 제한: 무료 회원은 30문항/일
     // 관리자/프리미엄/프로는 무제한
@@ -55,6 +56,8 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
       passageNumbers: Array.isArray(passageNumbers) ? passageNumbers : []
     });
 
+    lastProgressLog = Array.isArray(result?.progressLog) ? result.progressLog : null;
+
     await updateUsage(req.user.id, result.count);
     try { await addUsage(req.user.id, 'problems', result.count); } catch (e) { /* ignore */ }
 
@@ -64,6 +67,9 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
     });
   } catch (error) {
     console.error('[generate/csat-set] error:', error);
+    if (!lastProgressLog && Array.isArray(error?.progressLog)) {
+      lastProgressLog = error.progressLog;
+    }
     const extractedStatus = Number.isInteger(error?.statusCode)
       ? error.statusCode
       : Number.isInteger(error?.status) ? error.status : 500;
@@ -92,7 +98,7 @@ router.post('/generate/csat-set', verifyToken, checkDailyLimit, async (req, res)
         statusCode,
         error: String(error?.message || error),
         stack: process.env.NODE_ENV === 'production' ? undefined : error?.stack,
-        progressLog
+        progressLog: lastProgressLog
       };
     }
     res.status(statusCode).json(payload);

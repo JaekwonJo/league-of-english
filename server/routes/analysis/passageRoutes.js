@@ -202,6 +202,40 @@ router.delete('/passage/:passageNumber/variant/:variantIndex', verifyToken, requ
 });
 
 /**
+ * POST /api/analysis/:documentId/passage/:passageNumber/delete-variants
+ * Remove multiple analysis variants at once (admin)
+ */
+router.post('/passage/:passageNumber/delete-variants', verifyToken, requireAdmin, async (req, res) => {
+  try {
+    const { documentId, passageNumber } = req.params;
+    const { variantIndexes } = req.body || {};
+    const numericPassage = Number(passageNumber);
+
+    if (!Number.isInteger(numericPassage) || numericPassage <= 0) {
+      return res.status(400).json({ success: false, message: '올바른 지문 번호가 필요합니다.' });
+    }
+
+    const indexes = Array.isArray(variantIndexes) ? variantIndexes : [];
+    const result = await analysisService.removeVariants(
+      documentId,
+      numericPassage,
+      indexes,
+      req.user.role,
+      req.user.id
+    );
+    res.json(result);
+  } catch (error) {
+    console.error('분석 일괄 삭제 오류:', error);
+    const message = String(error?.message || '분석본을 삭제하는 중 문제가 발생했습니다.');
+    const status = message.includes('권한') ? 403
+      : message.includes('찾을 수') ? 404
+      : message.includes('선택') ? 400
+      : 400;
+    res.status(status).json({ success: false, message });
+  }
+});
+
+/**
  * POST /api/analysis/:documentId/quiz-from-analysis
  * Generate learning quiz from published analysis
  */

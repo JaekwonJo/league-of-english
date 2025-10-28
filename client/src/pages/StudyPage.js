@@ -71,6 +71,91 @@ const StudyPage = () => {
     clearSavedSession,
   } = useStudySession(user, updateUser);
 
+  const studyPathMap = useMemo(() => ({
+    config: '/study',
+    study: '/study/solve',
+    result: '/study/result',
+    review: '/study/review'
+  }), []);
+
+  const getModeFromPath = useCallback((pathname) => {
+    if (pathname.startsWith('/study/review')) return 'review';
+    if (pathname.startsWith('/study/solve')) return 'study';
+    if (pathname.startsWith('/study/result')) return 'result';
+    return 'config';
+  }, []);
+
+  const syncPathToMode = useCallback((modeValue) => {
+    const target = studyPathMap[modeValue] || '/study';
+    if (window.location.pathname !== target) {
+      window.history.pushState({}, '', target);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    }
+  }, [studyPathMap]);
+
+  useEffect(() => {
+    syncPathToMode(mode);
+  }, [mode, syncPathToMode]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const desiredMode = getModeFromPath(window.location.pathname);
+      if (desiredMode === mode) return;
+
+      if (desiredMode === 'config') {
+        if (mode !== 'config') {
+          restart();
+        }
+        return;
+      }
+
+      if (desiredMode === 'study') {
+        if (mode === 'study') return;
+        if (savedSession) {
+          const resumed = handleResumeSavedSession();
+          if (!resumed) {
+            syncPathToMode('config');
+          }
+        } else {
+          syncPathToMode(mode);
+        }
+        return;
+      }
+
+      if (desiredMode === 'result') {
+        if (mode === 'result') return;
+        if (mode === 'review') {
+          exitReview();
+          return;
+        }
+        if (results) {
+          exitReview();
+        } else {
+          syncPathToMode(mode);
+        }
+        return;
+      }
+
+      if (desiredMode === 'review') {
+        if (mode === 'review') return;
+        if (results) {
+          enterReview();
+        } else {
+          syncPathToMode(mode);
+        }
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    handlePopState();
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [mode, getModeFromPath, savedSession, handleResumeSavedSession, syncPathToMode, restart, exitReview, enterReview, results]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [mode]);
+
   const handleResumeSavedSession = useCallback(() => {
     if (typeof restoreSavedSession !== 'function') return;
     const restored = restoreSavedSession();

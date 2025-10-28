@@ -179,7 +179,7 @@ const ActionButtons = ({ onReview, onRestart, onHome }) => (
   <div style={styles.actions}>
     {typeof onReview === 'function' && (
       <button type="button" style={styles.reviewButton} onClick={onReview}>
-        🔁 복습하기
+        📘 해설보기
       </button>
     )}
     <button type="button" style={styles.restartButton} onClick={() => onRestart(true)}>

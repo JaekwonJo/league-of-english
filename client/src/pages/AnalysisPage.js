@@ -30,8 +30,15 @@ const LOADING_MESSAGES = [
 
 const pickRandom = (items) => items[Math.floor(Math.random() * items.length)];
 
+const STEPS = {
+  DOCUMENT: 1,
+  PASSAGE: 2,
+  ANALYSIS: 3
+};
+
 const AnalysisPage = () => {
   const [documents, setDocuments] = useState([]);
+  const [documentSearch, setDocumentSearch] = useState('');
   const [selectedDocument, setSelectedDocument] = useState(null);
   const [passageList, setPassageList] = useState([]);
   const [selectedPassage, setSelectedPassage] = useState(null);
@@ -43,7 +50,31 @@ const AnalysisPage = () => {
   const [feedbackMessage, setFeedbackMessage] = useState(null);
   const [reportModal, setReportModal] = useState({ open: false, variantIndex: null, reason: '' });
   const [reportSubmitting, setReportSubmitting] = useState(false);
-  const [step, setStep] = useState(1); // 1: 문서 선택, 2: 지문 선택, 3: 분석 보기
+  const stepPathMap = useMemo(() => ({
+    [STEPS.DOCUMENT]: '/analysis',
+    [STEPS.PASSAGE]: '/analysis/passages',
+    [STEPS.ANALYSIS]: '/analysis/detail'
+  }), []);
+  const getStepFromPath = useCallback((pathname) => {
+    if (pathname.startsWith('/analysis/detail')) return STEPS.ANALYSIS;
+    if (pathname.startsWith('/analysis/passages')) return STEPS.PASSAGE;
+    return STEPS.DOCUMENT;
+  }, []);
+  const [step, setStep] = useState(() => getStepFromPath(window.location.pathname));
+  const navigateToStep = useCallback((nextStep) => {
+    const target = stepPathMap[nextStep] || '/analysis';
+    if (window.location.pathname !== target) {
+      window.history.pushState({}, '', target);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    } else {
+      setStep(nextStep);
+    }
+  }, [stepPathMap]);
+  useEffect(() => {
+    const handler = () => setStep(getStepFromPath(window.location.pathname));
+    window.addEventListener('popstate', handler);
+    return () => window.removeEventListener('popstate', handler);
+  }, [getStepFromPath]);
   const [previewPassage, setPreviewPassage] = useState(null);
   const [generationPrompt, setGenerationPrompt] = useState({ open: false, passage: null });
   const [generationLoading, setGenerationLoading] = useState({
@@ -56,6 +87,8 @@ const AnalysisPage = () => {
     quoteAuthor: null,
     message: null
   });
+  const [selectedVariantIndexes, setSelectedVariantIndexes] = useState([]);
+  const [variantDeleteLoading, setVariantDeleteLoading] = useState(false);
 
   const raiseError = (summary, detail = '', extra = {}) => {
     setError({ summary, detail, ...extra });
@@ -73,8 +106,9 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
       if (item.passageNumber !== passageNumber) return item;
       return {
         ...item,
-        variantCount: Array.isArray(variants) ? variants.length : 0,
-        hasAnalysis: Array.isArray(variants) && variants.length > 0,
+        variants: Array.isArray(variants) ? variants : item.variants || [],
+        variantCount: Array.isArray(variants) ? variants.length : (typeof item.variantCount === 'number' ? item.variantCount : 0),
+        hasAnalysis: Array.isArray(variants) ? variants.length > 0 : item.hasAnalysis,
         originalPassage: originalPassage || item.originalPassage || item.text
       };
     }));
@@ -113,6 +147,38 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
     fetchDocumentsList();
   }, [fetchDocumentsList]);
 
+  useEffect(() => {
+    if (step === STEPS.PASSAGE && !selectedDocument) {
+      navigateToStep(STEPS.DOCUMENT);
+    } else if (step === STEPS.ANALYSIS) {
+      if (!selectedDocument) {
+        navigateToStep(STEPS.DOCUMENT);
+      } else if (!selectedPassage) {
+        navigateToStep(STEPS.PASSAGE);
+      }
+    }
+  }, [step, selectedDocument, selectedPassage, navigateToStep]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [step]);
+
+  const normalizedDocumentSearch = documentSearch.trim().toLowerCase();
+  const filteredDocuments = useMemo(() => {
+    if (!normalizedDocumentSearch) return documents;
+    return documents.filter((doc) => {
+      const title = String(doc.title || '').toLowerCase();
+      const school = String(doc.school || '').toLowerCase();
+      const category = String(doc.category || '').toLowerCase();
+      return (
+        title.includes(normalizedDocumentSearch) ||
+        school.includes(normalizedDocumentSearch) ||
+        category.includes(normalizedDocumentSearch)
+      );
+    });
+  }, [documents, normalizedDocumentSearch]);
+
   const handleDocumentClick = async (document) => {
     try {
       setLoading(true);
@@ -135,57 +201,33 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
         message: null
       });
 
-      const [analysisResponse, passageResponse] = await Promise.all([
-        api.analysis.get(document.id),
-        api.analysis.listPassageSummaries(document.id)
-      ]);
+      // 즉시 지문 선택 화면으로 전환해 기존 분석이 보이지 않도록 초기화
+      navigateToStep(STEPS.PASSAGE);
+      setPassageList([]);
 
-      if (!analysisResponse.success) {
-        raiseError('지문 분석 결과를 불러오는데 실패했습니다.', analysisResponse.message || 'success: false');
+      const passageResponse = await api.analysis.listPassageSummaries(document.id);
+
+      if (!passageResponse.success) {
+        raiseError('지문 목록을 불러오는데 실패했습니다.', passageResponse.message || 'success: false');
         setPassageList([]);
+        navigateToStep(STEPS.DOCUMENT);
         return;
       }
 
-      const normalizedAnalyses = (analysisResponse.data || []).map(normalizePassage);
-
-      const analysisMap = new Map(
-        normalizedAnalyses.map((item) => [item.passageNumber, item])
-      );
-
       const rawPassages = Array.isArray(passageResponse?.data) ? passageResponse.data : [];
-      const merged = rawPassages.map((entry) => {
-        const analysis = analysisMap.get(entry.passageNumber);
-        const variants = analysis?.variants || [];
-        return {
+      const mappedPassages = rawPassages
+        .map((entry) => ({
           ...entry,
-          hasAnalysis: variants.length > 0,
-          variantCount: variants.length,
-          variants,
-          originalPassage: analysis?.originalPassage || entry.text || entry.excerpt
-        };
-      });
+          hasAnalysis: Boolean(entry.analyzed || entry.variantCount),
+          variants: Array.isArray(entry.variants) ? entry.variants : []
+        }))
+        .sort((a, b) => a.passageNumber - b.passageNumber);
 
-      // Ensure analyses without matching raw passage are still visible
-      analysisMap.forEach((analysis, number) => {
-        if (!merged.find((item) => item.passageNumber === number)) {
-          merged.push({
-            passageNumber: number,
-            excerpt: analysis.originalPassage?.slice(0, 160) || '원문을 찾을 수 없습니다.',
-            text: analysis.originalPassage || '',
-            hasAnalysis: true,
-            variantCount: analysis.variants?.length || 0,
-            variants: analysis.variants || [],
-            originalPassage: analysis.originalPassage || ''
-          });
-        }
-      });
-
-      merged.sort((a, b) => a.passageNumber - b.passageNumber);
-      setPassageList(merged);
-      setStep(2);
+      setPassageList(mappedPassages);
     } catch (err) {
       raiseError('지문 목록을 불러오는 중 문제가 발생했습니다.', err?.message || '');
       setPassageList([]);
+      navigateToStep(STEPS.DOCUMENT);
     } finally {
       setLoading(false);
     }
@@ -217,7 +259,7 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
         updatePassageVariantsState(passage.passageNumber, normalized.variants, normalized.originalPassage);
         setSelectedPassage(normalized);
         setActiveVariantIndex(0);
-        setStep(3);
+        navigateToStep(STEPS.ANALYSIS);
         setFeedbackMessage(null);
         setReportModal({ open: false, variantIndex: null, reason: '' });
       } else {
@@ -230,6 +272,7 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
       } else {
         raiseError('분석을 불러오는 중 오류가 발생했습니다.', err?.message || '');
       }
+      navigateToStep(STEPS.PASSAGE);
     } finally {
       setPassageLoading(false);
     }
@@ -321,7 +364,7 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
   };
 
   const handleBackToDocuments = () => {
-    setStep(1);
+    navigateToStep(STEPS.DOCUMENT);
     setSelectedDocument(null);
     setSelectedPassage(null);
     setActiveVariantIndex(0);
@@ -329,7 +372,7 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
   };
 
   const handleBackToPassages = () => {
-    setStep(2);
+    navigateToStep(STEPS.PASSAGE);
     setSelectedPassage(null);
     setActiveVariantIndex(0);
     setAnalysisLimitError(null);
@@ -337,7 +380,12 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
     setReportModal({ open: false, variantIndex: null, reason: '' });
   };
 
-  const remainingSlots = (passage) => Math.max(0, MAX_VARIANTS_PER_PASSAGE - (passage?.variants?.length || 0));
+  const remainingSlots = (passage) => {
+    const count = typeof passage?.variantCount === 'number'
+      ? passage.variantCount
+      : (Array.isArray(passage?.variants) ? passage.variants.length : 0);
+    return Math.max(0, MAX_VARIANTS_PER_PASSAGE - count);
+  };
 
   const renderDocumentList = () => (
     <div style={analysisStyles.container}>
@@ -346,36 +394,58 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
         <p style={analysisStyles.subtitle}>분석할 문서를 선택해 주세요</p>
       </div>
 
-      {loading && (
+      {loading ? (
         <div style={analysisStyles.loadingContainer}>
           <div style={analysisStyles.spinner} />
           <p>문서 목록을 불러오는 중이에요...</p>
         </div>
-      )}
+      ) : (
+        <>
+          <div style={analysisStyles.searchRow}>
+            <input
+              type="search"
+              value={documentSearch}
+              onChange={(event) => setDocumentSearch(event.target.value)}
+              placeholder="문서 제목, 학교, 유형으로 검색해 보세요"
+              style={analysisStyles.searchInput}
+            />
+            {documentSearch && (
+              <button type="button" style={analysisStyles.searchClear} onClick={() => setDocumentSearch('')}>
+                지우기
+              </button>
+            )}
+          </div>
 
-      {!loading && !error && (
-        <div style={analysisStyles.grid}>
-          {documents.map((doc) => (
-            <div
-              key={doc.id}
-              style={analysisStyles.card}
-              onClick={() => handleDocumentClick(doc)}
-            >
-              <div style={analysisStyles.cardHeader}>
-                <h3 style={analysisStyles.cardTitle}>{doc.title}</h3>
-                <span style={analysisStyles.badge}>{doc.category}</span>
-              </div>
-              <div style={analysisStyles.cardContent}>
-                <p><strong>학교:</strong> {doc.school}</p>
-                <p><strong>학년:</strong> {doc.grade}학년</p>
-                <p><strong>업로드:</strong> {new Date(doc.created_at).toLocaleDateString()}</p>
-              </div>
-              <div style={analysisStyles.cardFooter}>
-                <span style={analysisStyles.clickHint}>클릭하면 지문 목록을 볼 수 있어요 →</span>
-              </div>
+          {filteredDocuments.length === 0 ? (
+            <div style={analysisStyles.emptySearch}>
+              <h3>검색 결과가 없어요 😢</h3>
+              <p>다른 키워드(예: 학교명, 문서명, 학년)를 입력해 보거나 새 문서를 업로드해 보세요.</p>
             </div>
-          ))}
-        </div>
+          ) : (
+            <div style={analysisStyles.grid}>
+              {filteredDocuments.map((doc) => (
+                <div
+                  key={doc.id}
+                  style={analysisStyles.card}
+                  onClick={() => handleDocumentClick(doc)}
+                >
+                  <div style={analysisStyles.cardHeader}>
+                    <h3 style={analysisStyles.cardTitle}>{doc.title}</h3>
+                    <span style={analysisStyles.badge}>{doc.category}</span>
+                  </div>
+                  <div style={analysisStyles.cardContent}>
+                    <p><strong>학교:</strong> {doc.school}</p>
+                    <p><strong>학년:</strong> {doc.grade}학년</p>
+                    <p><strong>업로드:</strong> {new Date(doc.created_at).toLocaleDateString()}</p>
+                  </div>
+                  <div style={analysisStyles.cardFooter}>
+                    <span style={analysisStyles.clickHint}>클릭하면 지문 목록을 볼 수 있어요 →</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
@@ -583,46 +653,105 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
     return variants[Math.min(activeVariantIndex, variants.length - 1)];
   }, [selectedPassage, activeVariantIndex]);
 
+  useEffect(() => {
+    setSelectedVariantIndexes([]);
+  }, [selectedPassage?.passageNumber]);
+
+  const toggleVariantSelection = (variantIndex) => {
+    if (typeof variantIndex !== 'number') return;
+    setSelectedVariantIndexes((prev) => (
+      prev.includes(variantIndex)
+        ? prev.filter((item) => item !== variantIndex)
+        : [...prev, variantIndex]
+    ));
+  };
+
+  const toggleSelectAllVariants = () => {
+    if (!Array.isArray(selectedPassage?.variants)) return;
+    const allIndexes = selectedPassage.variants
+      .map((variant) => variant.variantIndex)
+      .filter((idx) => typeof idx === 'number');
+    if (!allIndexes.length) return;
+    const allSelected = allIndexes.every((idx) => selectedVariantIndexes.includes(idx));
+    setSelectedVariantIndexes(allSelected ? [] : allIndexes);
+  };
+
+  const handleBulkDeleteVariants = async () => {
+    if (!selectedDocument || !selectedPassage) return;
+    if (!selectedVariantIndexes.length) return;
+    const confirmDelete = window.confirm(`선택한 분석본 ${selectedVariantIndexes.length}개를 삭제할까요? 삭제 후에는 복구할 수 없어요.`);
+    if (!confirmDelete) return;
+
+    try {
+      setVariantDeleteLoading(true);
+      const response = await api.analysis.deleteVariants(
+        selectedDocument.id,
+        selectedPassage.passageNumber,
+        selectedVariantIndexes
+      );
+
+      if (!response?.success) {
+        throw new Error(response?.message || '선택한 분석본을 삭제하지 못했습니다.');
+      }
+
+      const normalized = normalizePassage(response.data || {});
+      updatePassageVariantsState(normalized.passageNumber, normalized.variants, normalized.originalPassage);
+      setSelectedPassage(normalized);
+      setActiveVariantIndex(0);
+      setSelectedVariantIndexes([]);
+      setFeedbackMessage('선택한 분석본을 깔끔하게 정리했어요! ✅');
+    } catch (err) {
+      setFeedbackMessage(err?.message || '분석본 삭제 중 문제가 발생했어요.');
+    } finally {
+      setVariantDeleteLoading(false);
+    }
+  };
+
   const renderVariantMeta = (variant) => {
     const { meta = {} } = variant || {};
     const deepDive = meta.deepDive || {};
-    const englishTitles = Array.isArray(meta.englishTitles) ? meta.englishTitles : [];
-    const modernApplications = Array.isArray(meta.modernApplications) ? meta.modernApplications : [];
+    const englishTitles = Array.isArray(meta.englishTitles) ? meta.englishTitles.slice(0, 2) : [];
+    const modernApplications = Array.isArray(meta.modernApplications) ? meta.modernApplications.slice(0, 2) : [];
+
+    const koreanTitle = meta.koreanTitle || meta.koreanMainIdea || '한글 제목이 아직 준비되지 않았어요.';
+    const authorsClaim = meta.authorsClaim || '작가의 주장을 간단히 정리해 보세요.';
+    const englishSummary = meta.englishSummary || '영어 한 줄 요약이 준비되는 중이에요.';
+    const englishSummaryKorean = meta.englishSummaryKorean || '한 줄 요약을 우리말로 직접 정리해 보세요.';
 
     return (
       <div style={analysisStyles.variantMetaGrid}>
         <div style={analysisStyles.metaCard}>
-          <div style={analysisStyles.metaTitle}>🎯 핵심 의미</div>
-          <p><strong>핵심 메시지:</strong> {deepDive.coreMessage || '핵심 메시지가 아직 정리되지 않았어요.'}</p>
-          <p><strong>논리 흐름:</strong> {deepDive.logicalFlow || '글의 흐름을 정리 중이에요.'}</p>
-          <p><strong>톤 & 수사법:</strong> {deepDive.toneAndStyle || '톤 정보가 아직 없어요.'}</p>
-        </div>
-        <div style={analysisStyles.metaCard}>
-          <div style={analysisStyles.metaTitle}>📝 영어 제목 & 요약</div>
-          <p><strong>영어 한 줄 요약:</strong> {meta.englishSummary || '요약이 준비되는 중이에요.'}</p>
-          <p><strong>한글 해석:</strong> {meta.englishSummaryKorean || '요약 해석이 아직 없어요.'}</p>
-          <p><strong>작가의 주장:</strong> {meta.authorsClaim || '저자의 주장을 분석 중입니다.'}</p>
+          <div style={analysisStyles.metaTitle}>📝 제목 & 주장</div>
           <ul style={analysisStyles.metaList}>
             {englishTitles.map((title, index) => (
               <li key={`title-${index}`}>
-                {title.title} — {title.korean}
-                {title.isQuestion ? ' (의문형)' : ''}
+                {title.title}
+                {title.isQuestion ? ' (?)' : ''}
+                {title.korean ? ` — ${title.korean}` : ''}
               </li>
             ))}
           </ul>
+          <p><strong>한글 제목:</strong> {koreanTitle}</p>
+          <p><strong>작가의 주장:</strong> {authorsClaim}</p>
         </div>
         <div style={analysisStyles.metaCard}>
-          <div style={analysisStyles.metaTitle}>🌍 현대 사례</div>
-          {modernApplications.length ? (
+          <div style={analysisStyles.metaTitle}>🎯 핵심 요약</div>
+          <p><strong>영어 한 줄 요약:</strong> {englishSummary}</p>
+          <p><strong>한글 요약:</strong> {englishSummaryKorean}</p>
+          <p><strong>핵심 메시지:</strong> {deepDive.coreMessage || '핵심 메시지를 한 줄로 정리해 보세요.'}</p>
+          <p><strong>논리 흐름:</strong> {deepDive.logicalFlow || '글의 흐름을 한 번 더 정리해 보세요.'}</p>
+          <p><strong>톤 & 관점:</strong> {deepDive.toneAndStyle || '필자의 톤과 관점을 한 줄로 요약해 보세요.'}</p>
+        </div>
+        {modernApplications.length ? (
+          <div style={analysisStyles.metaCard}>
+            <div style={analysisStyles.metaTitle}>🌍 실천 팁</div>
             <ul style={analysisStyles.metaList}>
               {modernApplications.map((item, index) => (
                 <li key={`modern-${index}`}>{item}</li>
               ))}
             </ul>
-          ) : (
-            <p>현대 사례는 앞으로 추가될 예정이에요.</p>
-          )}
-        </div>
+          </div>
+        ) : null}
       </div>
     );
   };
@@ -632,18 +761,19 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
     const topicMatch = englishRaw.match(/^\*\*(.*)\*\*$/);
     const cleanEnglish = topicMatch ? topicMatch[1].trim() : englishRaw;
 
-    const koreanLine = sentence.korean || '*** 한글 해석: 우리말 해석을 준비하는 중이에요. 잠시만 기다려 주세요! 😊';
-    const analysisLine = sentence.analysis || '*** 분석: 의미를 정리하는 중이에요. 조금만 기다리면 완성됩니다! ✨';
-    const backgroundLine = sentence.background || '*** 이 문장에 필요한 배경지식: 관련 배경을 모으는 중이에요. 곧 업데이트됩니다. 📚';
-    const exampleLine = sentence.example || '*** 이 문장에 필요한 사례: 생활 속 예시를 정리하는 중이에요. 잠시 후 확인해 보세요! 🏫';
-    const grammarLine = sentence.grammar || '✏️ 어법 포인트: 중요한 구문을 점검하는 중이에요. 다시 시도해 보세요.';
-    const vocabularyIntro = sentence.vocabulary?.intro || '*** 어휘 포인트: 핵심 어휘를 직접 정리해 보아요. 비슷한 말과 반대말을 찾아보면 더 좋아요! 😊';
+    const koreanLine = sentence.korean || '*** 한글 해석: 문장을 우리말로 직접 정리해 보세요.';
+    const analysisLine = sentence.analysis || '*** 내용 분석: 문장이 전달하는 핵심을 한 줄로 정리해 보세요.';
+    const grammarLine = sentence.grammar || '✏️ 어법 포인트: 중요한 구문을 한 줄로 메모해 보세요.';
+    const vocabularyIntro = sentence.vocabulary?.intro || '*** 필수 어휘: 꼭 외워야 할 단어를 직접 정리해 보세요.';
     const vocabWords = Array.isArray(sentence.vocabulary?.words) ? sentence.vocabulary.words : [];
 
     const cardStyle = {
       ...analysisStyles.sentenceCard,
       ...(index === total - 1 ? analysisStyles.sentenceCardLast : {})
     };
+
+    const stripLabel = (value) => String(value || '').replace(/^\*{2,3}\s*[^:：]+[:：]\s*/u, '').trim();
+    const stripGrammar = (value) => String(value || '').replace(/^✏️\s*어법 포인트\s*[:：]\s*/u, '').trim();
 
     return (
       <div key={`sentence-${index}`} style={cardStyle}>
@@ -657,33 +787,48 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
           </span>
           {sentence.isTopicSentence && <span style={analysisStyles.topicBadge}>주제문</span>}
         </div>
-        <div style={analysisStyles.sentenceKorean}>{koreanLine}</div>
         <div style={analysisStyles.sentenceBody}>
-          <div style={analysisStyles.sentenceBlock}>{analysisLine}</div>
-          <div style={analysisStyles.sentenceBlock}>{backgroundLine}</div>
-          <div style={analysisStyles.sentenceBlock}>{exampleLine}</div>
-          <div style={analysisStyles.sentenceBlock}>{grammarLine}</div>
-          <div style={analysisStyles.sentenceBlock}>{vocabularyIntro}</div>
-          {vocabWords.length ? (
-            <ul style={analysisStyles.vocabList}>
-              {vocabWords.map((word, idx) => (
-                <li key={`word-${index}-${idx}`} style={analysisStyles.vocabListItem}>
-                  <strong>{word.term}</strong>: {word.meaning}
-                  {word.synonyms?.length ? ` · 동의어: ${word.synonyms.join(', ')}` : ''}
-                  {word.antonyms?.length ? ` · 반의어: ${word.antonyms.join(', ')}` : ''}
-                  {word.note ? ` · 노트: ${word.note}` : ''}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <div style={analysisStyles.sentenceBlock}>*** 어휘 포인트: 핵심 어휘가 아직 준비되지 않았어요. 직접 정리해 보면 어휘력이 쑥 자라요! 💪</div>
-          )}
+          <div style={analysisStyles.sentenceSection}>
+            <span style={analysisStyles.sentenceLabel}>한글 해석</span>
+            <p style={analysisStyles.sentenceText}>{stripLabel(koreanLine)}</p>
+          </div>
+          <div style={analysisStyles.sentenceSection}>
+            <span style={analysisStyles.sentenceLabel}>내용 분석</span>
+            <p style={analysisStyles.sentenceText}>{stripLabel(analysisLine)}</p>
+          </div>
+          <div style={analysisStyles.sentenceSection}>
+            <span style={analysisStyles.sentenceLabel}>필수 어휘</span>
+            <p style={analysisStyles.sentenceText}>{stripLabel(vocabularyIntro)}</p>
+            {vocabWords.length ? (
+              <ul style={analysisStyles.vocabList}>
+                {vocabWords.map((word, idx) => (
+                  <li key={`word-${index}-${idx}`} style={analysisStyles.vocabListItem}>
+                    <strong>{word.term}</strong>: {word.meaning}
+                    {word.synonyms?.length ? ` · 동의어: ${word.synonyms.join(', ')}` : ''}
+                    {word.antonyms?.length ? ` · 반의어: ${word.antonyms.join(', ')}` : ''}
+                    {word.note ? ` · 노트: ${word.note}` : ''}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p style={analysisStyles.sentenceText}>꼭 외워야 할 단어를 직접 정리해 보세요.</p>
+            )}
+          </div>
+          <div style={analysisStyles.sentenceSection}>
+            <span style={analysisStyles.sentenceLabel}>어법 포인트</span>
+            <p style={analysisStyles.sentenceText}>{stripGrammar(grammarLine)}</p>
+          </div>
         </div>
       </div>
     );
   };
 
-  const renderPassageAnalysis = () => (
+  const renderPassageAnalysis = () => {
+    const variants = Array.isArray(selectedPassage?.variants) ? selectedPassage.variants : [];
+    const totalVariants = variants.length;
+    const allSelected = totalVariants > 0 && selectedVariantIndexes.length === totalVariants;
+
+    return (
     <div style={analysisStyles.container}>
       <div style={analysisStyles.header}>
         <button onClick={handleBackToPassages} style={analysisStyles.backButton}>← 지문 목록으로</button>
@@ -730,6 +875,55 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
             ))}
           </div>
 
+          {variants.length > 0 && (
+            <div style={analysisStyles.variantToolbar}>
+              <div style={analysisStyles.variantToolbarLeft}>
+                <label style={analysisStyles.variantSelectAll}>
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={toggleSelectAllVariants}
+                  />
+                  전체 선택
+                </label>
+                <span style={analysisStyles.variantSelectionInfo}>
+                  선택 {selectedVariantIndexes.length} / {variants.length}
+                </span>
+              </div>
+              <button
+                type="button"
+                style={{
+                  ...analysisStyles.variantDeleteButton,
+                  ...(selectedVariantIndexes.length ? {} : analysisStyles.variantDeleteButtonDisabled)
+                }}
+                onClick={handleBulkDeleteVariants}
+                disabled={!selectedVariantIndexes.length || variantDeleteLoading}
+              >
+                {variantDeleteLoading ? '삭제 중...' : '선택 삭제'}
+              </button>
+            </div>
+          )}
+
+          {variants.length > 0 && (
+            <div style={analysisStyles.variantSelectionRow}>
+              {variants.map((variant, index) => {
+                const variantIndex = typeof variant.variantIndex === 'number' ? variant.variantIndex : null;
+                if (variantIndex === null) return null;
+                const checked = selectedVariantIndexes.includes(variantIndex);
+                return (
+                  <label key={`variant-select-${variantIndex}`} style={analysisStyles.variantSelectionItem}>
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => toggleVariantSelection(variantIndex)}
+                    />
+                    분석본 {index + 1}
+                  </label>
+                );
+              })}
+            </div>
+          )}
+
           {activeVariant ? (
             <>
               <p style={{ color: 'var(--text-secondary)', marginBottom: '12px' }}>
@@ -757,6 +951,7 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
       )}
     </div>
   );
+  };
 
   const handleGlobalRetry = () => {
     setError(null);
@@ -798,7 +993,7 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
           onRetry={handleGlobalRetry}
           onHome={() => {
             setError(null);
-            setStep(1);
+            navigateToStep(STEPS.DOCUMENT);
           }}
         />
         <PassagePreviewModal

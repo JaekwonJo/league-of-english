@@ -1,32 +1,57 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 const ThemeContext = createContext({
-  theme: 'dark',
+  theme: 'light',
   toggleTheme: () => {},
   setTheme: () => {}
 });
 
 const STORAGE_KEY = 'loe-theme-preference';
 
+const getPreferredTheme = () => {
+  if (typeof window === 'undefined') return 'light';
+  try {
+    const stored = window.localStorage.getItem(STORAGE_KEY);
+    if (stored === 'light' || stored === 'dark') {
+      return stored;
+    }
+  } catch {}
+
+  if (typeof window !== 'undefined' && window.matchMedia) {
+    try {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    } catch {}
+  }
+
+  return 'light';
+};
+
+const applyTheme = (theme) => {
+  if (typeof document === 'undefined') return;
+  if (theme === 'dark') {
+    document.documentElement.dataset.theme = 'dark';
+  } else {
+    delete document.documentElement.dataset.theme;
+  }
+};
+
 export const ThemeProvider = ({ children }) => {
-  // Force dark mode only
-  const [theme, setTheme] = useState('dark');
+  const [theme, setThemeState] = useState(() => getPreferredTheme());
 
   useEffect(() => {
-    if (typeof document !== 'undefined') {
-      document.documentElement.dataset.theme = 'dark';
-    }
+    applyTheme(theme);
     if (typeof window !== 'undefined') {
-      try { window.localStorage.setItem(STORAGE_KEY, 'dark'); } catch {}
+      try { window.localStorage.setItem(STORAGE_KEY, theme); } catch {}
     }
-  }, []);
+  }, [theme]);
 
   const toggleTheme = () => {
-    // No-op: dark mode only
-    setTheme('dark');
-    if (typeof document !== 'undefined') {
-      document.documentElement.dataset.theme = 'dark';
-    }
+    setThemeState((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
+
+  const setTheme = (value) => {
+    const next = value === 'dark' ? 'dark' : 'light';
+    setThemeState(next);
   };
 
   const value = useMemo(() => ({ theme, setTheme, toggleTheme }), [theme]);

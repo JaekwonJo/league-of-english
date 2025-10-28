@@ -8,7 +8,7 @@ import uiConfig from '../../config/ui.config.json';
 const MainLayout = ({ children, currentPath }) => {
   const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const { theme } = useTheme();
+  const { theme, toggleTheme } = useTheme();
   const breakpoint = uiConfig.layout.sidebar.breakpoint || 768;
   const [isMobile, setIsMobile] = useState(() => (typeof window !== 'undefined' ? window.innerWidth < breakpoint : false));
 
@@ -73,7 +73,9 @@ const MainLayout = ({ children, currentPath }) => {
         <nav style={styles.nav}>
           {visibleRoutes.map((route) => {
             const Icon = LucideIcons[route.icon] || LucideIcons.Circle;
-            const isActive = currentPath === route.path;
+            const normalizedPath = route.path === '/' ? '/' : `${route.path}`;
+            const isActive = currentPath === normalizedPath
+              || (normalizedPath !== '/' && currentPath.startsWith(`${normalizedPath}/`));
 
             return (
               <button
@@ -102,7 +104,14 @@ const MainLayout = ({ children, currentPath }) => {
             )}
           </div>
 
-          {/* Theme toggle removed: dark-only */}
+          <button
+            style={styles.themeToggle}
+            onClick={toggleTheme}
+            aria-label={theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}
+          >
+            {theme === 'dark' ? <LucideIcons.Sun size={18} /> : <LucideIcons.Moon size={18} />}
+            {sidebarOpen && <span>{theme === 'dark' ? '라이트 모드' : '다크 모드'}</span>}
+          </button>
 
           <button style={styles.logoutButton} onClick={handleLogout}>
             <LucideIcons.LogOut size={20} />
@@ -130,18 +139,32 @@ const MainLayout = ({ children, currentPath }) => {
       >
         {isMobile && (
           <div style={styles.mobileTopBar}>
-            <button style={styles.mobileMenuBtn} onClick={() => setSidebarOpen(!sidebarOpen)} aria-label="메뉴 열기">
-              <LucideIcons.Menu />
-            </button>
-            <div style={styles.mobileTitle}>League of English</div>
             <button
-              style={styles.mobileActionBtn}
-              onClick={handleLogout}
-              aria-label="로그아웃"
-              title="로그아웃"
+              style={styles.mobileMenuBtn}
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              aria-label={sidebarOpen ? '메뉴 닫기' : '메뉴 열기'}
             >
-              <LucideIcons.LogOut size={18} />
+              {sidebarOpen ? <LucideIcons.X size={20} /> : <LucideIcons.Menu size={20} />}
             </button>
+            <div style={styles.mobileTitle}>🦉 League of English</div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                style={styles.mobileActionBtn}
+                onClick={toggleTheme}
+                aria-label={theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}
+                title={theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}
+              >
+                {theme === 'dark' ? <LucideIcons.Sun size={18} /> : <LucideIcons.Moon size={18} />}
+              </button>
+              <button
+                style={styles.mobileActionBtn}
+                onClick={handleLogout}
+                aria-label="로그아웃"
+                title="로그아웃"
+              >
+                <LucideIcons.LogOut size={18} />
+              </button>
+            </div>
           </div>
         )}
         {children}
@@ -216,7 +239,10 @@ const styles = {
   },
   userSection: {
     padding: '20px',
-    borderTop: '1px solid var(--sidebar-divider)'
+    borderTop: '1px solid var(--sidebar-divider)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px'
   },
   userInfo: {
     display: 'flex',
@@ -315,9 +341,11 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 8,
+    borderRadius: 10,
     border: '1px solid var(--border-subtle)',
-    background: 'var(--surface-soft)'
+    background: 'var(--surface-soft)',
+    color: 'var(--text-primary)',
+    cursor: 'pointer'
   },
   mobileTitle: {
     fontWeight: 800,

@@ -34,7 +34,7 @@ describe('ResultCard component', () => {
     expect(screen.getByText(/잘했어요!/)).toBeInTheDocument();
     expect(screen.getByText('4개')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /복습하기/ }));
+    fireEvent.click(screen.getByRole('button', { name: /해설보기/ }));
     fireEvent.click(screen.getByRole('button', { name: /다시 풀기/ }));
     fireEvent.click(screen.getByRole('button', { name: /홈으로/ }));
 

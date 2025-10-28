@@ -29,6 +29,10 @@ export function useAdminDocuments() {
     return api.documents.upload(file, payload);
   }, []);
 
+  const updateDocument = useCallback(async (documentId, payload) => {
+    await api.documents.update(documentId, payload);
+  }, []);
+
   const deleteDocument = useCallback(async (documentId) => {
     await api.documents.delete(documentId);
   }, []);
@@ -53,6 +57,7 @@ export function useAdminDocuments() {
     loading,
     fetchDocuments,
     uploadDocument,
+    updateDocument,
     deleteDocument,
     fetchShares,
     updateShares

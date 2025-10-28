@@ -73,11 +73,44 @@ export const analysisStyles = {
     padding: '80px 20px',
     color: 'var(--text-secondary)'
   },
+  emptySearch: {
+    textAlign: 'center',
+    padding: '40px 20px',
+    border: '1px dashed var(--border-muted)',
+    borderRadius: '16px',
+    background: 'var(--surface-soft)',
+    color: 'var(--text-secondary)'
+  },
   grid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
     gap: '20px',
     marginTop: '20px'
+  },
+  searchRow: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '12px',
+    marginBottom: '20px'
+  },
+  searchInput: {
+    flex: '1 1 280px',
+    minWidth: '220px',
+    borderRadius: '12px',
+    border: '1px solid var(--border-muted)',
+    padding: '12px 14px',
+    fontSize: '0.95rem',
+    background: 'var(--surface-soft)',
+    color: 'var(--text-primary)'
+  },
+  searchClear: {
+    borderRadius: '12px',
+    border: '1px solid var(--border-muted)',
+    padding: '10px 18px',
+    background: 'var(--surface-soft)',
+    color: 'var(--text-secondary)',
+    fontWeight: 600,
+    cursor: 'pointer'
   },
   card: {
     background: 'var(--surface-card)',
@@ -226,6 +259,62 @@ export const analysisStyles = {
     borderColor: 'transparent',
     boxShadow: '0 10px 18px var(--submit-shadow)'
   },
+  variantToolbar: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: '12px',
+    flexWrap: 'wrap',
+    marginBottom: '16px'
+  },
+  variantToolbarLeft: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px'
+  },
+  variantSelectAll: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    fontWeight: 600,
+    color: 'var(--text-secondary)'
+  },
+  variantSelectionInfo: {
+    fontSize: '0.9rem',
+    color: 'var(--text-muted)'
+  },
+  variantDeleteButton: {
+    border: '1px solid var(--danger-border)',
+    background: 'var(--danger-surface)',
+    color: 'var(--danger-strong)',
+    borderRadius: '10px',
+    padding: '10px 16px',
+    fontWeight: 600,
+    cursor: 'pointer',
+    transition: 'opacity 0.2s ease'
+  },
+  variantDeleteButtonDisabled: {
+    opacity: 0.4,
+    cursor: 'not-allowed'
+  },
+  variantSelectionRow: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '12px',
+    marginBottom: '24px'
+  },
+  variantSelectionItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '8px 12px',
+    borderRadius: '999px',
+    border: '1px solid var(--border-muted)',
+    background: 'var(--surface-soft)',
+    fontSize: '0.9rem',
+    fontWeight: 600,
+    color: 'var(--text-secondary)'
+  },
   variantMetaGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
@@ -295,6 +384,22 @@ export const analysisStyles = {
     display: 'flex',
     flexDirection: 'column',
     gap: '10px'
+  },
+  sentenceSection: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px'
+  },
+  sentenceLabel: {
+    fontSize: '0.85rem',
+    fontWeight: 700,
+    color: 'var(--accent-primary)'
+  },
+  sentenceText: {
+    fontSize: '0.98rem',
+    lineHeight: 1.75,
+    color: 'var(--text-primary)',
+    whiteSpace: 'pre-wrap'
   },
   sentenceBlock: {
     fontSize: '0.98rem',

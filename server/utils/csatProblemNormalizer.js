@@ -184,6 +184,9 @@ function normaliseProblem(problem, index) {
     else if (type === 'insertion') question = '빈칸에 들어갈 문장의 위치로 가장 적절한 것은?';
     else question = FALLBACK_QUESTION;
   }
+  if (type === 'blank' && (!question || question === FALLBACK_QUESTION)) {
+    question = '다음 빈칸에 들어갈 말로 가장 적절한 것은?';
+  }
 
   const fallbackChoices = Array.isArray(problem.multipleChoices) ? problem.multipleChoices : undefined;
   const options = toOptionArray(problem.options || problem.choices || problem.answers, fallbackChoices);

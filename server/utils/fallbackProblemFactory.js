@@ -11,26 +11,29 @@ const rotationCursor = new Map();
 const blankBank = [
   {
     docTitle: 'LoE 핵심 빈칸',
+    question: '다음 빈칸에 들어갈 말로 가장 적절한 것은?',
     mainText: 'Students who keep a reading journal notice steady (____) in their confidence and comprehension over time.',
     options: ['① growth', '② shortage', '③ confusion', '④ distance'],
     answer: '①',
-    explanation: "문맥상 자신감과 이해도가 꾸준히 '성장(growth)'하고 있음을 나타내야 자연스럽습니다.",
+    explanation: "본문은 독서 일지를 꾸준히 쓰는 학생들이 자신감과 이해력에서 긍정적인 변화를 체감한다고 설명합니다. steady 뒤에는 긍정적 의미의 명사가 와야 하므로 성장과 향상을 뜻하는 growth가 어울립니다. shortage, confusion, distance는 각각 부족·혼란·거리감을 의미하여 문장 흐름을 갑작스럽게 부정적으로 바꾸기 때문에 적절하지 않습니다.",
     difficulty: 'basic'
   },
   {
     docTitle: 'LoE 핵심 빈칸',
+    question: '다음 빈칸에 들어갈 말로 가장 적절한 것은?',
     mainText: 'The club designed weekly challenges so that everyone could celebrate small (____) together.',
     options: ['① victories', '② arguments', '③ delays', '④ expenses'],
     answer: '①',
-    explanation: '함께 축하할 수 있는 대상은 긍정적인 성취이므로 victories가 적절합니다.',
+    explanation: '모임이 주간 도전을 기획한 이유가 학생들이 작은 성취를 서로 축하하기 위함이라는 점에서 빈칸에는 긍정적인 단어가 필요합니다. victories는 함께 이룬 성과를 뜻해 문맥과 자연스럽게 이어집니다. arguments와 delays, expenses는 각각 다툼·지연·비용을 나타내어 축하의 대상이 될 수 없으므로 배경 설명과 어긋납니다.',
     difficulty: 'basic'
   },
   {
     docTitle: 'LoE 핵심 빈칸',
+    question: '다음 빈칸에 들어갈 말로 가장 적절한 것은?',
     mainText: 'Sharing feedback kindly helps classmates feel (____) to ask more questions in the next discussion.',
     options: ['① safe', '② silent', '③ distant', '④ doubtful'],
     answer: '①',
-    explanation: '긍정적인 피드백은 안전감을 주어 질문을 더하게 만들므로 safe가 어울립니다.',
+    explanation: '친절한 피드백은 동료에게 심리적 안전감을 주어 다음 토론에서 더 많은 질문을 하도록 돕는다는 흐름입니다. 따라서 빈칸에는 안전하고 편안하다는 의미의 safe가 들어가야 문장이 자연스럽습니다. silent, distant, doubtful은 각각 침묵·거리감·의심을 유발하는 부정적 정서를 표현해 본문이 강조한 효과와 상반됩니다.',
     difficulty: 'basic'
   }
 ];

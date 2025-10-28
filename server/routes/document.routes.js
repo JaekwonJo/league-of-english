@@ -194,6 +194,65 @@ router.get('/documents/:id', verifyToken, async (req, res) => {
   }
 });
 
+// Update document metadata
+router.put('/documents/:id', verifyToken, requireTeacherOrAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const document = await database.get('SELECT * FROM documents WHERE id = ?', [id]);
+    if (!document) {
+      return res.status(404).json({ message: '문서를 찾을 수 없습니다.' });
+    }
+
+    if (req.user.role !== 'admin' && document.created_by !== req.user.id) {
+      return res.status(403).json({ message: '권한이 없습니다.' });
+    }
+
+    const payload = req.body || {};
+    const allowedFields = ['title', 'category', 'school', 'grade', 'difficulty', 'worksheet_type'];
+    const updates = [];
+    const params = [];
+
+    if (Object.prototype.hasOwnProperty.call(payload, 'title')) {
+      const trimmedTitle = typeof payload.title === 'string' ? payload.title.trim() : '';
+      if (!trimmedTitle) {
+        return res.status(400).json({ message: '제목은 비워둘 수 없습니다.' });
+      }
+    }
+
+    allowedFields.forEach((field) => {
+      if (Object.prototype.hasOwnProperty.call(payload, field)) {
+        if (field === 'grade') {
+          const numericGrade = Number.isFinite(payload.grade) ? parseInt(payload.grade, 10) : parseInt(String(payload.grade || '').trim(), 10);
+          params.push(Number.isInteger(numericGrade) ? numericGrade : null);
+        } else {
+          const value = payload[field];
+          if (typeof value === 'string') {
+            params.push(value.trim());
+          } else {
+            params.push(value);
+          }
+        }
+        updates.push(`${field} = ?`);
+      }
+    });
+
+    if (!updates.length) {
+      return res.status(400).json({ message: '수정할 항목이 없습니다.' });
+    }
+
+    await database.run(`UPDATE documents SET ${updates.join(', ')} WHERE id = ?`, [...params, id]);
+    const updated = await database.get(
+      'SELECT id, title, type, category, school, grade, difficulty, worksheet_type, created_at FROM documents WHERE id = ?',
+      [id]
+    );
+
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('[documents] update error:', error);
+    res.status(500).json({ message: '문서 정보를 수정하는 중 오류가 발생했습니다.' });
+  }
+});
+
 // Delete document
 router.delete('/documents/:id', verifyToken, requireTeacherOrAdmin, async (req, res) => {
   try {

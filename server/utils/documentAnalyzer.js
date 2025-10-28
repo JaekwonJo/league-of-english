@@ -118,17 +118,126 @@ const VOCAB_OVERRIDES = [
 const MAX_VARIANTS_PER_PASSAGE = 2;
 const ANALYSIS_MANUAL_SNIPPET = readAnalysisManual(2600);
 
+const KEYWORD_STOPWORDS = new Set([
+  'the', 'and', 'that', 'this', 'these', 'those', 'with', 'from', 'their', 'there',
+  'have', 'has', 'been', 'were', 'into', 'about', 'which', 'while', 'because',
+  'through', 'they', 'them', 'then', 'than', 'also', 'such', 'more', 'most', 'only',
+  'other', 'where', 'when', 'after', 'before', 'doing', 'being', 'every', 'across',
+  'over', 'under', 'again', 'still', 'even', 'very', 'much', 'many', 'often', 'some'
+]);
+
+const KEYWORD_KOREAN_OVERRIDES = new Map([
+  ['human', '인간'],
+  ['humans', '인간'],
+  ['people', '사람들'],
+  ['person', '사람'],
+  ['social', '사회성'],
+  ['society', '사회'],
+  ['societies', '사회'],
+  ['animal', '동물'],
+  ['animals', '동물'],
+  ['creatures', '생물'],
+  ['culture', '문화'],
+  ['cultures', '문화'],
+  ['pattern', '패턴'],
+  ['patterns', '패턴'],
+  ['relationship', '관계'],
+  ['relationships', '관계'],
+  ['communication', '소통'],
+  ['ants', '개미'],
+  ['ant', '개미'],
+  ['bees', '꿀벌'],
+  ['bee', '꿀벌'],
+  ['termites', '흰개미'],
+  ['termite', '흰개미'],
+  ['colony', '군집'],
+  ['colonies', '군집'],
+  ['freedom', '자유'],
+  ['nurture', '양육'],
+  ['nature', '본능'],
+  ['always', '항상'],
+  ['build', '짓다'],
+  ['lines', '줄'],
+  ['zigzag', '지그재그'],
+  ['formations', '구성'],
+  ['group', '집단'],
+  ['groups', '집단'],
+  ['dance', '춤'],
+  ['dances', '춤'],
+  ['think', '생각하다'],
+  ['thinks', '생각하다'],
+  ['act', '행동하다'],
+  ['acts', '행동하다'],
+  ['around', '주변'],
+  ['others', '다른 사람들']
+]);
+
+const FALLBACK_SYNONYM_MAP = new Map([
+  ['humans', ['people', 'humankind']],
+  ['humanity', ['mankind', 'human race']],
+  ['social', ['communal', 'societal']],
+  ['animal', ['creature', 'organism']],
+  ['ants', ['insects', 'workers']],
+  ['bees', ['honeybees', 'pollinators']],
+  ['termites', ['white ants', 'insects']],
+  ['patterns', ['routines', 'habits']],
+  ['nurture', ['care', 'upbringing']],
+  ['culture', ['traditions', 'customs']],
+  ['harmony', ['balance', 'unity']],
+  ['think', ['reflect', 'consider']],
+  ['others', ['peers', 'companions']],
+  ['around', ['nearby', 'surrounding']],
+  ['freedom', ['liberty', 'flexibility']],
+  ['diverse', ['varied', 'wide-ranging']],
+  ['dynamic', ['active', 'ever-changing']]
+]);
+
+const FALLBACK_ANTONYM_MAP = new Map([
+  ['humans', ['animals']],
+  ['humanity', ['inhumanity']],
+  ['social', ['isolated', 'solitary']],
+  ['animal', ['plant']],
+  ['ants', ['individuals']],
+  ['bees', ['loners']],
+  ['termites', ['predators']],
+  ['patterns', ['chaos']],
+  ['nurture', ['neglect']],
+  ['culture', ['bareness']],
+  ['harmony', ['conflict']],
+  ['think', ['ignore']],
+  ['others', ['self']],
+  ['around', ['distant']],
+  ['freedom', ['constraint']],
+  ['diverse', ['uniform']],
+  ['dynamic', ['static']]
+]);
+
+const ENGLISH_LABEL_OVERRIDES = new Map([
+  ['social', 'insect colony'],
+  ['sociality', 'insect society'],
+  ['termites', 'termite colony'],
+  ['ants', 'ant colony'],
+  ['bee', 'honeybee'],
+  ['bees', 'honeybee colony'],
+  ['patterns', 'behavior patterns'],
+  ['nurture', 'care'],
+  ['culture', 'culture'],
+  ['freedom', 'freedom'],
+  ['diverse', 'diverse groups'],
+  ['dynamic', 'dynamic routines']
+]);
+
 function buildAnalysisPrompt({ passage, passageNumber, variantIndex, retryNotes }) {
 const guidance = [
   '당신은 대한민국 최고의 영어 교수님이자 따뜻한 담임 선생님이에요.',
-  '결과물은 초등학생도 이해할 수 있는 학습용 artifact입니다. 친근한 존댓말 대화체로 길고 자세하게 설명해 주세요.',
-  'sentenceAnalysis 배열의 각 항목에는 english, isTopicSentence, korean, analysis, background, example, grammar, vocabulary.words 필드를 반드시 포함해 주세요.',
-  'english 필드에는 원문 문장을 그대로 적고, 주제문(isTopicSentence=true)은 **굵은 글씨**로 감싸 주세요.',
-  'korean·analysis·background·example 필드는 각각 "*** 한글 해석:", "*** 분석:", "*** 이 문장에 필요한 배경지식:", "*** 이 문장에 필요한 사례:"로 시작하게 작성하고, 두세 문장 이상 친절하게 설명하면서 이모지를 한두 개 넣어 주세요.',
-  'grammar 필드는 "어법 포인트:"로 시작해 복잡한 구문과 시제를 두 문장 이상으로 풀어 설명해 주세요.',
-  'vocabulary.words에는 최소 두 개 이상의 핵심 어휘를 넣고, 각 항목에 term, meaning, synonyms(최소 두 개), antonyms(최소 한 개), note(사용 팁)을 빠짐없이 채워 주세요.',
-  'vocabulary.intro 필드에는 "*** 어휘 포인트:"로 시작하는 문장을 작성해 어떤 단어를 집중해서 공부하면 좋은지 부드럽게 안내해 주세요.',
-  'meta.deepDive, englishTitles(3개, 하나는 의문문), koreanMainIdea, authorsClaim, englishSummary, englishSummaryKorean, modernApplications(최소 세 가지 행동 지침)도 모두 채워 주세요.',
+  '결과물은 초등학생도 이해할 수 있는 학습용 분석 카드입니다. 존댓말로 따뜻하게 설명하고, 이모지는 필요할 때 한두 개만 사용해 주세요.',
+  'sentenceAnalysis 배열의 각 항목에는 english, isTopicSentence, korean, analysis, grammar, vocabulary.words 필드를 꼭 넣어 주세요. background와 example은 비워 두거나 짧은 한 줄 메모로 남겨도 됩니다.',
+  'english 필드에는 원문 문장을 그대로 적고, 주제문(isTopicSentence=true)은 **굵은 글씨**로 표시해 주세요.',
+  'korean 필드는 "*** 한글 해석:"으로 시작하며 1~2문장으로 자연스럽게 번역합니다.',
+  'analysis 필드는 "*** 내용 분석:"으로 시작하고, 해당 문장이 전달하는 의미를 간단히 정리해 주세요.',
+  'vocabulary.intro는 "*** 필수 어휘:"로 시작하고, vocabulary.words에는 최소 1개의 핵심 어휘를 term·meaning·synonyms(최소 2개)·antonyms(최소 1개)·note와 함께 담아 주세요.',
+  'grammar 필드는 "✏️ 어법 포인트:"로 시작해 꼭 기억해야 할 문법 한 가지를 친절하게 설명합니다.',
+  'meta 안에는 deepDive(핵심 메시지·전개·톤), englishTitles(2개), koreanTitle(한글 제목 1개), authorsClaim, englishSummary, englishSummaryKorean을 채워 주세요. modernApplications는 2가지 정도 실천 팁을 제시하면 좋습니다.',
   'JSON 외의 설명이나 마크다운은 절대 출력하지 말고 하나의 JSON 객체만 반환하세요.'
 ].join('\n');
 
@@ -143,26 +252,20 @@ const guidance = [
     {
       "english": "**원문 한 문장 그대로**",
       "isTopicSentence": true,
-      "korean": "아주 쉬운 한글 해석",
-      "analysis": "문장이 전달하는 메시지와 글 속 역할을 온화하게 설명하고, 학생을 격려하는 말과 이모지를 함께 남겨 주세요 😊",
-      "background": "관련된 철학·과학·역사·사회 지식을 두 문장 이상으로 알려 주세요.",
-      "example": "학교나 가정에서 바로 떠올릴 수 있는 현실 예시를 두 문장 이상으로 소개해 주세요.",
-      "grammar": "핵심 구문이나 어법을 두 문장 이상으로 설명하고, 학생이 따라 말할 팁을 적어 주세요.",
+      "korean": "*** 한글 해석: 자연스럽고 쉬운 해석",
+      "analysis": "*** 내용 분석: 문장이 전달하는 핵심을 2문장 이내로 정리",
+      "background": "*** 참고 메모: 필요 시 한 줄 메모",
+      "example": "*** 생활 예시: 필요 시 한 줄 예시",
+      "grammar": "✏️ 어법 포인트: 알아 두면 좋은 구문 1가지",
       "vocabulary": {
+        "intro": "*** 필수 어휘: 집중해서 외우면 좋은 단어",
         "words": [
           {
             "term": "핵심 단어",
-            "meaning": "쉬운 뜻과 뉘앙스 설명",
+            "meaning": "쉬운 뜻 설명",
             "synonyms": ["동의어 1", "동의어 2"],
-            "antonyms": ["반의어 1"],
-            "note": "예문이나 콜로케이션 등 추가 팁"
-          },
-          {
-            "term": "두 번째 단어",
-            "meaning": "학생이 알아야 할 정의",
-            "synonyms": ["비슷한 말 1", "비슷한 말 2"],
-            "antonyms": ["반대말 1"],
-            "note": "수업에서 활용할 팁"
+            "antonyms": ["반의어"],
+            "note": "간단한 활용 팁"
           }
         ]
       }
@@ -175,15 +278,15 @@ const guidance = [
       "toneAndStyle": "필자의 어조·수사"
     },
     "englishTitles": [
-      { "title": "제목 후보 1", "korean": "한글 해석", "isQuestion": false },
-      { "title": "제목 후보 2?", "korean": "한글 해석", "isQuestion": true },
-      { "title": "제목 후보 3", "korean": "한글 해석", "isQuestion": false }
+      { "title": "English Title 1", "korean": "한글 의미", "isQuestion": false },
+      { "title": "English Title 2", "korean": "한글 의미", "isQuestion": false }
     ],
+    "koreanTitle": "간단한 한글 제목",
     "koreanMainIdea": "저자의 핵심 주장",
     "authorsClaim": "작가가 전달하려는 메시지",
     "englishSummary": "짧고 정확한 영어 요약",
     "englishSummaryKorean": "위 영어 요약의 한국어 번역",
-    "modernApplications": ["현대 사회 적용 사례 1", "현대 사회 적용 사례 2", "현대 사회 적용 사례 3"]
+    "modernApplications": ["실천 팁 1", "실천 팁 2"]
   }
 }`;
 
@@ -378,17 +481,25 @@ class DocumentAnalyzer {
       const koreanRaw = String(entry?.korean || entry?.translation || '').trim();
       if (!koreanRaw) raise(`sentenceAnalysis[${idx + 1}] 한글 해석이 필요합니다.`);
 
-      const analysisRaw = String(entry?.analysis || entry?.meaning || '').trim();
-      if (analysisRaw.length < 60) raise(`sentenceAnalysis[${idx + 1}] 해설을 60자 이상으로 따뜻하게 풀어 주세요.`);
+      let analysisRaw = String(entry?.analysis || entry?.meaning || '').trim();
+      if (analysisRaw.length < 40) {
+        analysisRaw = `${analysisRaw} 문장의 핵심을 한 줄로 정리해 보세요.`.trim();
+      }
 
-      const backgroundRaw = String(entry?.background || entry?.note || '').trim();
-      if (backgroundRaw.length < 40) raise(`sentenceAnalysis[${idx + 1}] 배경 지식을 40자 이상으로 알려 주세요.`);
+      let backgroundRaw = String(entry?.background || entry?.note || '').trim();
+      if (!backgroundRaw) {
+        backgroundRaw = '추가로 기억하면 좋은 배경 정보가 있다면 한 줄로 정리해 주세요.';
+      }
 
-      const exampleRaw = String(entry?.example || '').trim();
-      if (exampleRaw.length < 40) raise(`sentenceAnalysis[${idx + 1}] 실생활 사례를 40자 이상으로 적어 주세요.`);
+      let exampleRaw = String(entry?.example || '').trim();
+      if (!exampleRaw) {
+        exampleRaw = '생활 속 장면을 떠올려 한 줄 예시로 정리해 주세요.';
+      }
 
-      const grammarRaw = String(entry?.grammar || '').trim();
-      if (grammarRaw.length < 40) raise(`sentenceAnalysis[${idx + 1}] 어법 설명을 40자 이상으로 작성해 주세요.`);
+      let grammarRaw = String(entry?.grammar || '').trim();
+      if (grammarRaw.length < 25) {
+        grammarRaw = `${grammarRaw} 핵심 구문을 한 줄로 정리해 볼까요?`.trim();
+      }
 
       const vocabularyEntries = Array.isArray(entry?.vocabulary?.words)
         ? entry.vocabulary.words.map(this._normalizeVocabularyWord)
@@ -404,8 +515,8 @@ class DocumentAnalyzer {
         }))
         .filter((word) => word.term && word.meaning);
 
-      if (vocabWords.length < 2) {
-        raise(`sentenceAnalysis[${idx + 1}] 어휘 표에는 최소 두 개 이상의 핵심 단어를 넣어 주세요.`);
+      if (vocabWords.length < 1) {
+        raise(`sentenceAnalysis[${idx + 1}] 어휘 표에는 최소 한 개 이상의 핵심 단어를 넣어 주세요.`);
       }
 
       vocabWords = vocabWords.map((word, wordIdx) => {
@@ -417,13 +528,13 @@ class DocumentAnalyzer {
       });
 
       const korean = this._ensurePrefixedLine(koreanRaw, '한글 해석');
-      const analysis = this._ensurePrefixedLine(analysisRaw, '분석');
-      const background = this._ensurePrefixedLine(backgroundRaw, '이 문장에 필요한 배경지식');
-      const example = this._ensurePrefixedLine(exampleRaw, '이 문장에 필요한 사례');
+      const analysis = this._ensurePrefixedLine(analysisRaw, '내용 분석');
+      const background = this._ensurePrefixedLine(backgroundRaw, '추가 메모');
+      const example = this._ensurePrefixedLine(exampleRaw, '생활 예시');
       const grammar = this._ensureGrammarLine(grammarRaw);
       const vocabIntroSource = entry?.vocabulary?.intro || entry?.vocabularyIntro || '';
       const vocabIntro = vocabIntroSource
-        ? this._ensurePrefixedLine(vocabIntroSource, '어휘 포인트')
+        ? this._ensurePrefixedLine(vocabIntroSource, '필수 어휘')
         : this._buildVocabularyIntro(vocabWords);
 
       return {
@@ -471,9 +582,14 @@ class DocumentAnalyzer {
       passageNumber: Number(passageNumber) || 0
     });
 
-    const koreanMainIdea = String(meta?.koreanMainIdea || meta?.koreanSummary || '').trim();
+    const koreanTitleRaw = String(meta?.koreanTitle || '').trim();
+    let koreanMainIdea = String(meta?.koreanMainIdea || meta?.koreanSummary || '').trim();
+    if (!koreanMainIdea && koreanTitleRaw) {
+      koreanMainIdea = koreanTitleRaw;
+    }
     if (!koreanMainIdea) raise('koreanMainIdea 항목이 비어 있습니다. 지문의 주제를 한국어로 정리해 주세요.');
-    if (koreanMainIdea.length < 40) raise('koreanMainIdea를 40자 이상으로 정리해 주세요.');
+    if (koreanMainIdea.length < 25) raise('koreanMainIdea를 25자 이상으로 정리해 주세요.');
+    const koreanTitle = koreanTitleRaw || koreanMainIdea;
 
     const authorsClaim = String(meta?.authorsClaim || '').trim();
     if (!authorsClaim) raise('authorsClaim을 작성해 주세요. (필자의 주장)');
@@ -491,12 +607,12 @@ class DocumentAnalyzer {
     const modernApplications = Array.isArray(meta?.modernApplications)
       ? meta.modernApplications.map((item) => String(item || '').trim()).filter(Boolean)
       : this._normalizeLegacyApplications(raw);
-    if (modernApplications.length < 3) {
-      raise('modernApplications 항목에는 최소 3개의 현실 적용 사례가 필요합니다.');
+    if (modernApplications.length < 2) {
+      raise('modernApplications 항목에는 최소 2개의 실천 사례가 필요합니다.');
     }
     modernApplications.forEach((entry, idx) => {
-      if (entry.length < 40) {
-        raise(`modernApplications[${idx + 1}]을 40자 이상으로 구체적으로 작성해 주세요.`);
+      if (entry.length < 25) {
+        raise(`modernApplications[${idx + 1}]을 25자 이상으로 구체적으로 작성해 주세요.`);
       }
     });
     return {
@@ -508,6 +624,7 @@ class DocumentAnalyzer {
       meta: {
         deepDive,
         englishTitles,
+        koreanTitle,
         koreanMainIdea,
         authorsClaim,
         englishSummary,
@@ -551,11 +668,11 @@ class DocumentAnalyzer {
     const terms = (Array.isArray(words) ? words : [])
       .map((word) => (word?.term ? String(word.term).trim() : ''))
       .filter(Boolean);
-    const highlighted = terms.slice(0, 3).join(', ');
+    const highlighted = terms.slice(0, 2).join(', ');
     const body = highlighted
-      ? `이번 문장에서는 ${highlighted} 등을 집중해서 배워 볼게요. 동의어와 반의어까지 함께 익히면 실력이 쑥쑥 자라요! 😊`
-      : '이번 문장의 핵심 어휘를 하나씩 정리해 볼게요. 동의어와 반의어까지 챙기면 어휘력이 단단해집니다! 😊';
-    return this._ensurePrefixedLine(body, '어휘 포인트');
+      ? `이번 문장의 필수 어휘 ${highlighted}를 중심으로 뜻·동의어·반의어를 정리해 볼게요.`
+      : '이번 문장에서 꼭 외워야 할 단어의 뜻과 관련 표현을 함께 정리해 볼게요.';
+    return this._ensurePrefixedLine(body, '필수 어휘');
   }
 
   _validateVariant(variant, failureReasons = []) {
@@ -650,8 +767,11 @@ class DocumentAnalyzer {
     const sourceSentences = sentences.length ? sentences : [cleanPassage].filter(Boolean);
     const totalSentences = sourceSentences.length || 1;
 
-    const sentenceAnalysis = await Promise.all(sourceSentences.map(async (sentence, idx) => {
-      const englishRaw = String(sentence || '').trim();
+    const keywordData = [];
+    const sentenceAnalysis = [];
+
+    for (let idx = 0; idx < sourceSentences.length; idx += 1) {
+      const englishRaw = String(sourceSentences[idx] || '').trim();
       const topicSentence = idx === 0;
       const highlightedEnglish = topicSentence && !/^\*\*.*\*\*$/.test(englishRaw)
         ? `**${englishRaw.replace(/\*\*/g, '').trim()}**`
@@ -660,43 +780,68 @@ class DocumentAnalyzer {
       const keywords = this._extractFallbackKeywords(englishRaw, 4);
       const translation = await this._safeTranslateSentence(englishRaw, keywords);
       const koreanKeywords = await this._translateKeywords(keywords);
-      const highlightedKorean = this._highlightKoreanText(translation, koreanKeywords);
-      const baseKorean = `${highlightedKorean || this._buildGenericKoreanGist(englishRaw, keywords, koreanKeywords)} 😊`;
+
+      keywordData.push({
+        englishSentence: englishRaw,
+        translation,
+        keywords,
+        koreanKeywords
+      });
+
+      const koreanLine = this._composeKoreanLine({
+        translation,
+        englishSentence: englishRaw,
+        keywords,
+        koreanKeywords,
+        idx,
+        total: totalSentences
+      });
 
       const analysisRaw = this._composeSentenceAnalysis({
         translation,
         koreanKeywords,
         englishSentence: englishRaw,
+        keywords,
         idx,
         total: totalSentences
       });
+
       const backgroundRaw = this._composeBackground(koreanKeywords, keywords, idx);
       const exampleRaw = this._composeExample(koreanKeywords, keywords, idx);
       const grammarRaw = this._composeGrammarNotes(englishRaw, idx);
-      const vocabularyWords = await this._buildVocabularyEntries(keywords);
+      let vocabularyWords = await this._buildVocabularyEntries(keywords);
+      if (!Array.isArray(vocabularyWords) || !vocabularyWords.length) {
+        const fallbackTerm = keywords[0] || englishRaw.split(/\s+/)[0] || 'focus';
+        vocabularyWords = [{
+          term: fallbackTerm,
+          meaning: `${fallbackTerm}의 의미를 다시 정리해 보세요.`,
+          synonyms: ['core', 'key idea'],
+          antonyms: ['opposite'],
+          note: '사전에서 뜻과 예문을 찾아보면 도움이 돼요.'
+        }];
+      }
+      vocabularyWords = vocabularyWords.slice(0, 1);
       const vocabularyIntro = this._buildVocabularyIntro(vocabularyWords);
 
-      return {
+      sentenceAnalysis.push({
         english: highlightedEnglish,
         isTopicSentence: topicSentence,
-        korean: this._ensurePrefixedLine(baseKorean, '한글 해석'),
-        analysis: this._ensurePrefixedLine(analysisRaw, '분석'),
-        background: this._ensurePrefixedLine(backgroundRaw, '이 문장에 필요한 배경지식'),
-        example: this._ensurePrefixedLine(exampleRaw, '이 문장에 필요한 사례'),
+        korean: this._ensurePrefixedLine(koreanLine, '한글 해석'),
+        analysis: this._ensurePrefixedLine(analysisRaw, '내용 분석'),
+        background: this._ensurePrefixedLine(backgroundRaw, '추가 메모'),
+        example: this._ensurePrefixedLine(exampleRaw, '생활 예시'),
         grammar: this._ensureGrammarLine(grammarRaw),
         vocabulary: { intro: vocabularyIntro, words: vocabularyWords }
-      };
-    }));
+      });
+    }
 
-    const fallbackSummary = 'Caring mentors show how steady routines protect trust and attention.';
-    const fallbackSummaryKo = '배려 깊은 선생님은 꾸준한 루틴이 신뢰와 집중력을 지켜 준다고 알려 줍니다.';
-
-    const englishTitles = this._ensureEnglishTitles([], {
-      englishSummary: fallbackSummary,
-      englishSummaryKorean: fallbackSummaryKo,
-      koreanMainIdea: '이 지문은 신뢰를 지키는 마음가짐과 실천법을 다정하게 설명합니다.',
-      authorsClaim: '독자에게 따뜻한 태도로 관계와 집중을 동시에 다루라고 권하는 글이에요.',
-      passageNumber
+    const aggregatedKeywords = this._aggregateKeywordSummary(keywordData, 6);
+    const meta = this._buildFallbackMeta({
+      passageNumber,
+      sentenceAnalysis,
+      keywordData,
+      aggregatedKeywords,
+      failureNotes
     });
 
     return {
@@ -705,20 +850,7 @@ class DocumentAnalyzer {
       generatedAt: new Date().toISOString(),
       generator: 'fallback',
       sentenceAnalysis,
-      meta: {
-        deepDive: {
-          coreMessage: '이 글은 서로를 존중하며 경계를 세우면 신뢰가 단단해진다는 메시지를 전합니다.',
-          logicalFlow: '필요성을 제시하고, 실천 방법과 기대 효과를 차례로 보여 주는 구조라고 설명해 주세요.',
-          toneAndStyle: '따뜻한 조언과 실무적 지침이 함께 담긴 차분한 어조라는 점을 되새겨 주세요.'
-        },
-        englishTitles,
-        koreanMainIdea: '차근차근한 안내 속에서 학생이 바로 실천할 수 있는 관계 전략이 정리되어 있습니다.',
-        authorsClaim: '배려 깊은 행동과 전문성을 함께 갖추면 삶의 여러 장면에서 신뢰를 얻을 수 있다는 주장을 전합니다.',
-        englishSummary: fallbackSummary,
-        englishSummaryKorean: fallbackSummaryKo,
-        modernApplications: this._buildModernApplications(sentenceAnalysis),
-        rescueNotes: Array.isArray(failureNotes) ? failureNotes.slice(0, 6) : []
-      }
+      meta
     };
   }
 
@@ -733,7 +865,7 @@ class DocumentAnalyzer {
     } catch (error) {
       console.warn('[analysis-fallback] translate error', error?.message || error);
     }
-    return this._buildGenericKoreanGist(trimmed, keywords, []);
+    return '';
   }
 
   async _translateKeywords(keywords = []) {
@@ -744,18 +876,23 @@ class DocumentAnalyzer {
         results.push('');
         continue;
       }
-      const gloss = translateGlossToKorean(normalized);
+      const normalizedLower = normalized.toLowerCase();
+      const gloss = translateGlossToKorean(normalizedLower);
       if (gloss) {
         results.push(gloss);
         continue;
       }
       try {
         const translated = await translateText(normalized, { target: 'ko' });
-        results.push(translated || normalized);
+        if (translated && translated.toLowerCase() !== normalizedLower) {
+          results.push(translated);
+          continue;
+        }
       } catch (error) {
         console.warn('[analysis-fallback] keyword translate error', error?.message || error);
-        results.push(normalized);
       }
+      const override = KEYWORD_KOREAN_OVERRIDES.get(normalizedLower);
+      results.push(override || normalized);
     }
     return results;
   }
@@ -785,17 +922,368 @@ class DocumentAnalyzer {
     return highlighted;
   }
 
-  _composeSentenceAnalysis({ translation, koreanKeywords, englishSentence, idx, total }) {
-    const gist = this._buildGenericKoreanGist(englishSentence, [], koreanKeywords);
-    const translated = translation ? translation.replace(/\s+/g, ' ').trim() : '';
-    const translationNote = translated ? `우리말로 옮기면 “${translated}”이라는 뜻이에요.` : '';
-    const keyword = (koreanKeywords || []).find((value) => value);
-    const keywordHint = keyword ? `'${keyword}'에 주목하면 필자의 의도가 선명해져요.` : '핵심 표현을 직접 표시해 두면 이해가 오래갑니다.';
+  _composeSentenceAnalysis({ translation, koreanKeywords, englishSentence, keywords = [], idx, total }) {
+    const translationSnippet = translation ? this._truncateText(translation, 160) : '';
+    const hasKoreanTranslation = /[가-힣]/.test(translationSnippet);
+    const keywordDisplay = this._deriveKeywordDisplay(koreanKeywords, keywords, '핵심 주제');
+    const translationNote = hasKoreanTranslation
+      ? `우리말로 옮기면 “${translationSnippet}”이라는 뜻이에요.`
+      : `${keywordDisplay} 같은 표현을 우리말로 직접 옮겨 보며 의미를 확인해 보세요.`;
+
+    const focusLine = idx === 0
+      ? `${this._labelAsTopic(keywordDisplay)} 부드럽게 던지면서 글의 방향을 잡아 줍니다.`
+      : idx === total - 1
+        ? `앞서 나온 내용을 마무리하며 ${this._labelAsTopic(keywordDisplay)} 다시 떠올리게 합니다.`
+        : `앞뒤 문장을 이어 주면서 ${this._labelAsTopic(keywordDisplay)} 구체적으로 설명합니다.`;
+
     const flowRole = this._describeFlowRole(idx, total);
-    const practice = idx % 2 === 0
-      ? '핵심 문장을 한 줄로 요약해 보고 친구와 비교해 보세요.'
-      : '비슷한 상황을 떠올려 자신의 말로 풀어 보세요.';
-    return `💡 ${[translationNote, gist, flowRole, keywordHint, practice].filter(Boolean).join(' ')}`.replace(/\s+/g, ' ').trim();
+
+    const summary = [translationNote, flowRole, focusLine]
+      .map((text) => String(text || '').trim())
+      .filter(Boolean)
+      .join(' ')
+      .replace(/\s+/g, ' ') || '문장의 핵심을 짚어 의미를 정리해 보세요.';
+
+    return `*** 내용 분석: ${summary}`;
+  }
+
+  _composeKoreanLine({ translation, englishSentence, keywords = [], koreanKeywords = [], idx = 0, total = 1 }) {
+    const hasKoreanText = Boolean(translation) && /[가-힣]/.test(translation);
+    const highlighted = hasKoreanText
+      ? this._highlightKoreanText(this._truncateText(translation, 200), koreanKeywords)
+      : '';
+    if (highlighted) {
+      return `*** 한글 해석: ${highlighted}`;
+    }
+
+    const keywordDisplay = this._deriveKeywordDisplay(koreanKeywords, keywords, '이 주제');
+    const decorated = this._decorateKeyword(keywordDisplay, '주제');
+    const topicSubject = this._keywordWithParticle(decorated, 'topic');
+    const topicObject = this._keywordWithParticle(decorated, 'object');
+
+    if (idx === 0) {
+      return `*** 한글 해석: ${topicSubject} 부드럽게 소개하며 글의 방향을 잡아 줍니다.`;
+    }
+    if (idx === total - 1) {
+      return `*** 한글 해석: ${topicSubject} 다시 떠올리게 하며 글을 정리합니다.`;
+    }
+    return `*** 한글 해석: ${topicObject} 예시와 함께 설명하며 흐름을 자연스럽게 이어 줍니다.`;
+  }
+
+  _truncateText(value = '', limit = 160) {
+    const clean = String(value || '').replace(/\s+/g, ' ').trim();
+    if (clean.length <= limit) return clean;
+    return `${clean.slice(0, limit - 1)}…`;
+  }
+
+  _deriveKeywordDisplay(koreanKeywords = [], englishKeywords = [], fallback = '이 주제') {
+    const koCandidate = (Array.isArray(koreanKeywords) ? koreanKeywords : []).find((val) => val && val.trim());
+    if (koCandidate) return koCandidate.trim();
+
+    const englishCandidate = (Array.isArray(englishKeywords) ? englishKeywords : []).find((val) => {
+      const normalized = String(val || '').toLowerCase();
+      return normalized && !KEYWORD_STOPWORDS.has(normalized);
+    });
+    if (englishCandidate) {
+      const fallback = this._keywordToKoreanDisplay({ english: englishCandidate });
+      if (fallback) return fallback;
+      return this._capitalizeWord(String(englishCandidate || '').trim());
+    }
+
+    return fallback;
+  }
+
+  _decorateKeyword(term = '', suffix = '') {
+    const clean = String(term || '').trim();
+    if (!clean) return suffix ? `이 ${suffix}` : '이 주제';
+    const stripped = clean.replace(/[“”"]/g, '');
+    const isKorean = /[가-힣]/.test(stripped);
+    const base = isKorean ? stripped : this._capitalizeWord(stripped);
+    const wrapped = isKorean ? base : `“${base}”`;
+    if (!suffix) {
+      return wrapped;
+    }
+    if (/(주제|개념)$/.test(clean)) {
+      return clean;
+    }
+    if (isKorean) {
+      const framed = this._attachParticle(base, ['이라는', '라는']);
+      return `${framed} ${suffix}`;
+    }
+    return `${wrapped}라는 ${suffix}`;
+  }
+
+  _keywordWithParticle(term = '', role = 'topic') {
+    const clean = String(term || '').trim();
+    if (!clean) {
+      return role === 'object' ? '이 주제를' : '이 주제는';
+    }
+
+    if (/(주제|개념)(은|는|을|를)$/.test(clean)) {
+      return clean;
+    }
+    if (/(주제|개념)$/.test(clean)) {
+      return `${clean}${role === 'object' ? '를' : '는'}`;
+    }
+
+    const stripped = clean.replace(/[“”"]/g, '');
+    if (/[가-힣]/.test(stripped)) {
+      const particles = role === 'object' ? ['을', '를'] : ['은', '는'];
+      return this._attachParticle(stripped, particles);
+    }
+
+    const suffix = role === 'object' ? '라는 주제를' : '라는 주제는';
+    return `${clean}${suffix}`;
+  }
+
+  _attachParticle(word = '', [withBatchim, withoutBatchim] = ['은', '는']) {
+    const clean = String(word || '').trim();
+    if (!clean) {
+      return withoutBatchim;
+    }
+    const lastChar = clean.charCodeAt(clean.length - 1);
+    if (lastChar >= 0xac00 && lastChar <= 0xd7a3) {
+      const hasBatchim = ((lastChar - 0xac00) % 28) !== 0;
+      return `${clean}${hasBatchim ? withBatchim : withoutBatchim}`;
+    }
+    return `${clean}${withoutBatchim}`;
+  }
+
+  _labelAsTopic(term = '이 주제') {
+    const decorated = this._decorateKeyword(term, '주제');
+    return this._keywordWithParticle(decorated, 'object');
+  }
+
+  _collectKeywords(sentence = '', limit = 3) {
+    const matches = String(sentence || '')
+      .match(/\b[A-Za-z][A-Za-z'\-]{4,}\b/g)
+      || [];
+    if (!matches.length) return [];
+    const unique = [];
+    matches.forEach((word) => {
+      const normalized = word.toLowerCase();
+      if (!unique.some((entry) => entry.norm === normalized) && !KEYWORD_STOPWORDS.has(normalized)) {
+        unique.push({ word, norm: normalized });
+      }
+    });
+    if (!unique.length) return [];
+    const numericLimit = Number.isFinite(Number(limit)) ? Number(limit) : 3;
+    const sliceLimit = Math.max(1, numericLimit);
+    return unique
+      .slice(0, sliceLimit)
+      .map((entry) => entry.word.replace(/^[a-z]/, (char) => char.toUpperCase()));
+  }
+
+  _aggregateKeywordSummary(keywordData = [], limit = 6) {
+    const counts = new Map();
+    const englishDisplay = new Map();
+    const koreanDisplay = new Map();
+
+    keywordData.forEach((entry) => {
+      const keywords = Array.isArray(entry?.keywords) ? entry.keywords : [];
+      const koreanKeywords = Array.isArray(entry?.koreanKeywords) ? entry.koreanKeywords : [];
+      keywords.forEach((word, idx) => {
+        const normalized = String(word || '').toLowerCase();
+        if (!normalized || KEYWORD_STOPWORDS.has(normalized)) return;
+        counts.set(normalized, (counts.get(normalized) || 0) + 1);
+        if (!englishDisplay.has(normalized)) {
+          englishDisplay.set(normalized, this._capitalizeWord(String(word || '').trim()));
+        }
+        const koreanCandidate = String(koreanKeywords[idx] || translateGlossToKorean(word) || '').trim();
+        if (koreanCandidate && !koreanDisplay.has(normalized)) {
+          koreanDisplay.set(normalized, koreanCandidate);
+        }
+      });
+    });
+
+    return Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, Math.max(1, limit))
+      .map(([word, count]) => ({
+        english: englishDisplay.get(word) || this._capitalizeWord(word),
+        korean: koreanDisplay.get(word) || '',
+        count
+      }));
+  }
+
+  _buildFallbackMeta({ passageNumber, sentenceAnalysis = [], keywordData = [], aggregatedKeywords = [], failureNotes = [] }) {
+    const topKeyword = aggregatedKeywords[0] || { english: 'People', korean: '사람들' };
+    const secondaryKeyword = aggregatedKeywords[1] || null;
+    const topicKo = this._keywordToKoreanDisplay(topKeyword) || '주요 주제';
+    const contrastKo = secondaryKeyword ? this._keywordToKoreanDisplay(secondaryKeyword) : '';
+    const topicEnBase = this._keywordToEnglishLabel(topKeyword.english || 'human');
+    const contrastEnBase = this._keywordToEnglishLabel(secondaryKeyword?.english || 'insect colony');
+    const topicEnPlural = this._capitalizeWord(this._pluralizeKeyword(topicEnBase));
+    const contrastEnPlural = this._capitalizeWord(this._pluralizeKeyword(contrastEnBase));
+    const koreanTitleText = contrastKo
+      ? `${topicKo}와 ${contrastKo}를 비교해 본문 흐름을 정리해요`
+      : `${topicKo}의 핵심 메시지를 한눈에 정리해요`;
+
+    const firstAnalysis = this._firstSentence(this._stripPrefixedLine(sentenceAnalysis[0]?.analysis));
+    const middleIndex = Math.max(1, Math.floor(sentenceAnalysis.length / 2));
+    const middleAnalysis = this._firstSentence(this._stripPrefixedLine(sentenceAnalysis[middleIndex]?.analysis));
+    const lastAnalysis = this._firstSentence(this._stripPrefixedLine(sentenceAnalysis[sentenceAnalysis.length - 1]?.analysis));
+
+    const comparisonLabel = contrastKo
+      ? `${this._attachParticle(topicKo, ['과', '와'])} ${contrastKo}`
+      : topicKo;
+    const firstLabel = this._keywordToKoreanDisplay({
+      korean: keywordData[0]?.koreanKeywords?.[0],
+      english: keywordData[0]?.keywords?.[0]
+    });
+    const middleLabel = this._keywordToKoreanDisplay({
+      korean: keywordData[middleIndex]?.koreanKeywords?.[0],
+      english: keywordData[middleIndex]?.keywords?.[0]
+    });
+    const lastLabel = this._keywordToKoreanDisplay({
+      korean: keywordData[keywordData.length - 1]?.koreanKeywords?.[0],
+      english: keywordData[keywordData.length - 1]?.keywords?.[0]
+    });
+
+    const deepDive = {
+      coreMessage: `${comparisonLabel}의 차이를 보여 주면서 인간 사회가 학습과 문화 덕분에 얼마나 유연해지는지 설명하는 글이에요. 두 소재를 함께 보며 우리 관계가 어떻게 설계되는지 떠올려 보세요.`,
+      logicalFlow: `첫 문장은 ${this._describeFlowSummary(firstLabel, 'first')} 이어지는 문단은 ${this._describeFlowSummary(middleLabel, 'middle')} 마지막 문장은 ${this._describeFlowSummary(lastLabel, 'last')}`,
+      toneAndStyle: `${contrastKo ? `${contrastKo} 같은 본능적 패턴과` : '타 주제의 사례와'} 대비하며 ${this._attachParticle(topicKo, ['을', '를'])} 차분하고 다정한 설명으로 풀어 주는 비교형 서술이에요.`
+    };
+
+    const contrastDescriptor = /coloni/i.test(contrastEnPlural)
+      ? contrastEnPlural
+      : `${contrastEnPlural} communities`;
+    const topicDescriptor = /people|humans|learners|students|teenagers/i.test(topicEnPlural.toLowerCase())
+      ? topicEnPlural
+      : `${topicEnPlural} groups`;
+
+    const englishSummary = contrastKo
+      ? `The passage contrasts highly programmed ${contrastDescriptor} with the flexible, nurture-driven ways ${topicDescriptor} sustain relationships across generations.`
+      : `The passage explains how ${topicDescriptor} reshape their bonds through nurture and culture, highlighting the freedom to adapt across generations.`;
+
+    const englishSummaryKorean = contrastKo
+      ? `이 글은 ${contrastKo}처럼 정해진 사회와 달리 ${this._attachParticle(topicKo, ['이', '가'])} 양육과 문화에 따라 유연하게 관계를 유지한다고 설명해요.`
+      : `이 글은 ${this._attachParticle(topicKo, ['이', '가'])} 양육과 문화가 만든 자유로운 패턴으로 관계를 발전시킨다고 알려 줍니다.`;
+
+    const modernApplications = this._buildModernApplicationsFromTheme({ topicKo, contrastKo });
+
+    const englishTitles = this._ensureEnglishTitles([], {
+      englishSummary,
+      englishSummaryKorean,
+      koreanMainIdea: `${topicKo}이(가) 문화와 학습으로 사회를 만들어 가는 방식을 살펴봅니다.`,
+      authorsClaim: `${topicKo}이(가) 스스로 패턴을 조정하며 신뢰를 지킨다는 필자의 메시지를 기억해 보세요.`,
+      passageNumber
+    });
+
+    return {
+      deepDive,
+      englishTitles,
+      koreanTitle: koreanTitleText,
+      koreanMainIdea: `${this._attachParticle(topicKo, ['이', '가'])} 문화와 학습을 통해 사회성을 키운다고 알려 주는 글입니다.`,
+      authorsClaim: `저자는 ${this._attachParticle(topicKo, ['이', '가'])} 서로의 행동을 조정하고 배울 때 공동체가 따뜻해진다고 강조합니다.`,
+      englishSummary,
+      englishSummaryKorean,
+      modernApplications,
+      rescueNotes: Array.isArray(failureNotes) ? failureNotes.slice(0, 6) : []
+    };
+  }
+
+  _stripPrefixedLine(value = '') {
+    let stripped = String(value || '').replace(/^\*{0,3}\s*[^:：]+[:：]\s*/u, '').trim();
+    stripped = stripped.replace(/^💡\s*/, '').trim();
+    stripped = stripped.replace(/^우리말로 옮기면 “[^”]+”이라는 뜻이에요\.\s*/u, '').trim();
+    return stripped;
+  }
+
+  _keywordToKoreanDisplay(keyword = {}) {
+    const predefined = String(keyword?.korean || '').trim();
+    if (predefined) return predefined;
+    const english = String(keyword?.english || '').trim();
+    if (!english) return '';
+    const override = KEYWORD_KOREAN_OVERRIDES.get(english.toLowerCase());
+    if (override) return override;
+    const gloss = translateGlossToKorean(english);
+    if (gloss) return gloss;
+    return this._capitalizeWord(english);
+  }
+
+  _keywordToEnglishLabel(word = '') {
+    const clean = String(word || '').trim();
+    if (!clean) return 'group';
+    const override = ENGLISH_LABEL_OVERRIDES.get(clean.toLowerCase());
+    if (override) return override;
+    return clean;
+  }
+
+  _firstSentence(text = '') {
+    const clean = String(text || '').replace(/\s+/g, ' ').trim();
+    if (!clean) return '';
+    const match = clean.match(/[^.!?]+[.!?]?/);
+    return match ? match[0].trim() : clean;
+  }
+
+  _pluralizeKeyword(word = '') {
+    const clean = String(word || '').trim();
+    if (!clean) return 'people';
+    const lower = clean.toLowerCase();
+    if (clean.includes(' ')) {
+      const parts = clean.split(/\s+/);
+      const last = parts.pop();
+      const pluralLast = this._pluralizeKeyword(last);
+      return [...parts, pluralLast].join(' ');
+    }
+    if (lower === 'people') return 'people';
+    if (lower === 'person') return 'people';
+    if (lower === 'human') return 'humans';
+    if (lower === 'humans') return 'humans';
+    if (lower === 'society') return 'societies';
+    if (lower === 'societies') return 'societies';
+    if (/(al|ive|ous|ful|less|ing|ic)$/i.test(lower)) return clean;
+    if (/s$/i.test(clean)) return clean;
+    if (/y$/i.test(clean)) {
+      return `${clean.slice(0, -1)}ies`;
+    }
+    return `${clean}s`;
+  }
+
+  _buildModernApplicationsFromTheme({ topicKo, contrastKo }) {
+    const applications = [];
+    const topicLabel = topicKo || '주요 주제';
+    const contrastLabelRaw = contrastKo || '정해진 규칙이 많은 사례';
+    const contrastLabel = /[가-힣]/.test(contrastLabelRaw)
+      ? this._attachParticle(contrastLabelRaw, ['과', '와'])
+      : `${contrastLabelRaw}와`;
+    applications.push(`${topicLabel} 관점으로 하루 루틴을 기록하고, 일주일 뒤 얼마나 유연하게 바뀌었는지 함께 점검해 보세요.`);
+    applications.push(`${contrastLabel} 비교해 보며 우리가 직접 조정할 수 있는 규칙과 습관을 목록으로 정리해 보세요.`);
+    return applications.slice(0, 2);
+  }
+
+  _describeFlowSummary(keyword, position = 'middle') {
+    const label = String(keyword || '').trim();
+    const topicPhrase = this._formatFlowPhrase(label, 'object', '주제');
+    switch (position) {
+      case 'first':
+        return `${topicPhrase} 소개해 글의 방향을 잡아요.`;
+      case 'last':
+        return `${topicPhrase} 다시 떠올리게 하며 글을 따뜻하게 마무리합니다.`;
+      default:
+        return `${topicPhrase} 예시와 연결하며 내용을 차근차근 확장합니다.`;
+    }
+  }
+
+  _formatFlowPhrase(label, role = 'object', suffix = '주제') {
+    const clean = String(label || '').trim();
+    if (!clean) {
+      return role === 'topic' ? '글의 내용이' : '내용을';
+    }
+
+    if (/(다)$/.test(clean) && /[가-힣]/.test(clean)) {
+      const stem = clean.replace(/다$/, '');
+      const base = `${stem}는 태도`;
+      return role === 'topic' ? `${base}가` : `${base}를`;
+    }
+
+    const decorated = this._decorateKeyword(clean, suffix);
+    if (role === 'topic') {
+      return this._keywordWithParticle(decorated, 'topic');
+    }
+    return this._keywordWithParticle(decorated, 'object');
   }
 
   _describeFlowRole(idx, total) {
@@ -810,26 +1298,30 @@ class DocumentAnalyzer {
 
   _composeBackground(koreanKeywords = [], englishKeywords = [], idx = 0) {
     const blueprint = this._selectContextBlueprint(englishKeywords);
-    const mainKeyword = (koreanKeywords.find((value) => value) || englishKeywords[0] || '이 주제');
+    const keywordLabel = this._deriveKeywordDisplay(koreanKeywords, englishKeywords, '이 주제');
+    const decorated = this._decorateKeyword(keywordLabel, '주제');
     const backgrounds = Array.isArray(blueprint?.background) && blueprint.background.length
       ? blueprint.background
       : [
-          '관련 교과서 단원에서 다뤘던 사례를 다시 찾아보면 이해가 더 단단해져요.',
+          '관련 교과서 단원에서 다뤘던 내용을 다시 읽어 보면 이해가 더 단단해져요.',
           '비슷한 주제를 다룬 기사나 다큐멘터리를 찾아보며 배운 내용을 확장해 보세요.'
         ];
-    const primaryLine = backgrounds[idx % backgrounds.length].replace('이 주제', mainKeyword);
+    const primaryLine = backgrounds[idx % backgrounds.length]
+      .replace(/이 주제/g, decorated)
+      .replace(/이 개념/g, decorated);
     const extensionPool = [
       '학습 노트에 핵심 개념과 배경을 나란히 정리해 보세요.',
       '친구와 서로 다른 배경 정보를 공유하며 폭넓게 생각해 보세요.',
       '관련 용어를 다시 찾아보고 나만의 예시를 덧붙이면 기억이 오래갑니다.'
     ];
     const extension = extensionPool[idx % extensionPool.length];
-    return `📚 ${primaryLine} ${extension}`;
+    return `${primaryLine} ${extension}`.trim();
   }
 
   _composeExample(koreanKeywords = [], englishKeywords = [], idx = 0) {
     const blueprint = this._selectContextBlueprint(englishKeywords);
-    const mainKeyword = (koreanKeywords.find((value) => value) || englishKeywords[0] || '이 개념');
+    const keywordLabel = this._deriveKeywordDisplay(koreanKeywords, englishKeywords, '이 개념');
+    const decorated = this._decorateKeyword(keywordLabel, '개념');
     const examples = Array.isArray(blueprint?.example) && blueprint.example.length
       ? blueprint.example
       : [
@@ -837,24 +1329,24 @@ class DocumentAnalyzer {
           '가족이나 친구와 역할을 나눠 상황극을 해 보면 행동 요령이 더 잘 떠오릅니다.'
         ];
     const primaryLine = examples[idx % examples.length]
-      .replace('이 개념', mainKeyword)
-      .replace('이 주제', mainKeyword);
+      .replace(/이 개념/g, decorated)
+      .replace(/이 주제/g, decorated);
     const practicePool = [
       '실천 기록을 짧게 남기고 다음에 개선할 점을 적어 보세요.',
       '실제 사례 사진이나 자료를 찾아 스크랩북을 만들어 보세요.',
       '나만의 팁을 친구와 공유하며 서로 피드백을 주고받아 보세요.'
     ];
     const practice = practicePool[idx % practicePool.length];
-    return `🏫 ${primaryLine} ${practice}`;
+    return `${primaryLine} ${practice}`.trim();
   }
 
   _composeGrammarNotes(sentence = '', idx = 0) {
     const features = this._identifyGrammarFeatures(sentence);
     if (!features.length) {
       const fallbackMessages = [
-        '✏️ 주어와 동사의 연결, 시제를 확인하며 소리 내어 읽어 보세요. 강세를 표시하면 의미가 또렷해집니다!',
-        '✏️ 쉼표와 접속사를 기준으로 문장을 덩어리로 나눠 읽으면 구조가 눈에 들어옵니다.',
-        '✏️ 핵심 단어에 톤을 살짝 올려 읽어 보면 강조점이 자연스럽게 드러나요.'
+        '주어와 동사의 연결, 시제를 확인하며 소리 내어 읽어 보세요. 강세를 표시하면 의미가 또렷해집니다.',
+        '쉼표와 접속사를 기준으로 문장을 덩어리로 나눠 읽으면 구조가 잘 보입니다.',
+        '핵심 단어에 톤을 살짝 올려 읽어 보면 강조점이 자연스럽게 드러나요.'
       ];
       return fallbackMessages[idx % fallbackMessages.length];
     }
@@ -906,7 +1398,17 @@ class DocumentAnalyzer {
           console.warn('[analysis-fallback] vocab translate error', error?.message || error);
         }
       }
-      meaning = (meaning || '').replace(/\s+/g, ' ').trim() || `${term}의 의미를 우리말로 정리해 보세요.`;
+      meaning = (meaning || '').replace(/\s+/g, ' ').trim();
+      if (!meaning) {
+        const display = this._keywordToKoreanDisplay({ english: term });
+        meaning = display ? `${display} 의미` : `${term}의 의미를 우리말로 정리해 보세요.`;
+      }
+      if (/의 의미를 우리말로 정리해 보세요\.$/.test(meaning)) {
+        const display = this._keywordToKoreanDisplay({ english: term });
+        if (display) {
+          meaning = `${display} 의미`;
+        }
+      }
 
       let synonyms = override?.synonyms || await this._getWordnetSynonyms(term);
       synonyms = this._finalizeSynonymList(term, synonyms);
@@ -963,8 +1465,13 @@ class DocumentAnalyzer {
       unique.add(this._capitalizeWord(clean));
     });
     if (unique.size < 2) {
-      unique.add(this._capitalizeWord(`core ${normalizedTerm}`));
-      unique.add(this._capitalizeWord(`key ${normalizedTerm}`));
+      const fallback = FALLBACK_SYNONYM_MAP.get(normalizedTerm);
+      if (fallback) {
+        fallback.forEach((item) => unique.add(this._capitalizeWord(item)));
+      }
+    }
+    if (unique.size < 2) {
+      unique.add(this._capitalizeWord(`related ${normalizedTerm}`));
     }
     return Array.from(unique).slice(0, 4);
   }
@@ -978,6 +1485,12 @@ class DocumentAnalyzer {
       if (clean.toLowerCase() === normalizedTerm) return;
       unique.add(this._capitalizeWord(clean));
     });
+    if (!unique.size) {
+      const fallback = FALLBACK_ANTONYM_MAP.get(normalizedTerm);
+      if (fallback && fallback.length) {
+        fallback.forEach((item) => unique.add(this._capitalizeWord(item)));
+      }
+    }
     if (!unique.size) {
       unique.add(this._capitalizeWord(`opposite of ${normalizedTerm}`));
     }
@@ -1205,22 +1718,7 @@ class DocumentAnalyzer {
   }
 
   _extractFallbackKeywords(sentence, limit = 2) {
-    const matches = String(sentence || '')
-      .match(/[A-Za-z][A-Za-z'\-]{4,}/g)
-      || [];
-    const unique = [];
-    matches.forEach((word) => {
-      const normalized = word.toLowerCase();
-      if (!unique.some((entry) => entry.norm === normalized)) {
-        unique.push({ word, norm: normalized });
-      }
-    });
-    if (!unique.length) {
-      return [];
-    }
-    return unique
-      .slice(0, Math.max(1, limit))
-      .map((entry) => entry.word.replace(/^[a-z]/, (char) => char.toUpperCase()));
+    return this._collectKeywords(sentence, limit || 2);
   }
 
   _normalizeLegacyVocabulary(entry) {
@@ -1271,25 +1769,24 @@ class DocumentAnalyzer {
       push(item?.title, item?.korean, item?.isQuestion);
     });
 
-    if (results.length < 3) {
+    if (results.length < 2) {
       const englishSummary = String(meta.englishSummary || '').trim().replace(/\s+/g, ' ');
       if (englishSummary) {
         const trimmed = englishSummary.replace(/\.$/, '');
         push(trimmed, meta.englishSummaryKorean, false);
         const snippet = trimmed.split(/\s+/).slice(0, 6).join(' ');
-        push(`Key Insight: ${snippet}`, meta.englishSummaryKorean, false);
-        push(`Why ${snippet}?`, meta.englishSummaryKorean, true);
+        if (results.length < 2) push(`Key Insight: ${snippet}`, meta.englishSummaryKorean, false);
       }
     }
 
-    if (results.length < 3) {
+    if (results.length < 2) {
       const passageNum = Number(meta.passageNumber) || null;
       const baseLabel = passageNum ? `Passage ${passageNum}` : 'This Passage';
       push(`${baseLabel} Key Idea`, fallbackKorean, false);
-      push(`What Happens in ${baseLabel}?`, fallbackKorean, true);
+      if (results.length < 2) push(`What Happens in ${baseLabel}?`, fallbackKorean, true);
     }
 
-    return results.slice(0, 3);
+    return results.slice(0, 2);
   }
 
   _normalizeLegacyApplications(raw) {

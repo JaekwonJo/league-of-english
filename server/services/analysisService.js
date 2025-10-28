@@ -106,15 +106,13 @@ class AnalysisService {
         const variants = Array.isArray(formatted?.variants) ? formatted.variants : [];
         existingMap.set(row.passage_number, {
           variantCount: variants.length,
-          updatedAt: row.updated_at,
-          variants
+          updatedAt: row.updated_at
         });
       } catch (error) {
         console.warn('[analysis] failed to parse existing variants:', error?.message || error);
         existingMap.set(row.passage_number, {
           variantCount: 0,
-          updatedAt: row.updated_at,
-          variants: []
+          updatedAt: row.updated_at
         });
       }
     });
@@ -134,7 +132,6 @@ class AnalysisService {
         charCount: clean.length,
         analyzed: Boolean(existing),
         variantCount: existing?.variantCount || 0,
-        variants: existing?.variants || [],
         updatedAt: existing?.updatedAt || null,
         remainingSlots: Math.max(0, MAX_VARIANTS_PER_PASSAGE - (existing?.variantCount || 0))
       };
@@ -259,8 +256,22 @@ class AnalysisService {
   }
 
   async generateVariants(documentId, passageNumber, count = 1, userRole, userId) {
-    if (userRole !== 'admin' && userRole !== 'teacher') {
-      throw new Error('분석 생성을 수행하려면 교사 이상 권한이 필요합니다.');
+    let membership = null;
+    if (userId) {
+      try {
+        const userRow = await database.get('SELECT membership FROM users WHERE id = ?', [userId]);
+        membership = String(userRow?.membership || '').toLowerCase();
+      } catch (error) {
+        console.warn('[analysis] membership 조회 실패:', error?.message || error);
+      }
+    }
+
+    const normalizedRole = String(userRole || '').toLowerCase();
+    const isElevatedRole = normalizedRole === 'admin' || normalizedRole === 'teacher';
+    const isEligibleMembership = membership === 'pro' || membership === 'premium';
+
+    if (!isElevatedRole && !isEligibleMembership) {
+      throw new Error('프로 등급 이상에서만 분석 생성을 사용할 수 있습니다.');
     }
 
     const document = await database.get(
@@ -454,6 +465,119 @@ class AnalysisService {
         variants: enriched
       },
       message: `분석본 ${targetIndex}번을 삭제했어요.`
+    };
+  }
+
+  async removeVariants(documentId, passageNumber, variantIndexes = [], userRole, userId = null) {
+    if (userRole !== 'admin') {
+      throw new Error('분석본 삭제는 관리자만 할 수 있어요.');
+    }
+
+    const normalizedIndexes = Array.from(new Set(
+      (Array.isArray(variantIndexes) ? variantIndexes : [])
+        .map((value) => Number(value))
+        .filter((value) => Number.isInteger(value) && value > 0)
+    )).sort((a, b) => a - b);
+
+    if (!normalizedIndexes.length) {
+      throw new Error('삭제할 분석본 번호를 선택해 주세요.');
+    }
+
+    const row = await database.get(
+      'SELECT * FROM passage_analyses WHERE document_id = ? AND passage_number = ?',
+      [documentId, passageNumber]
+    );
+
+    if (!row) {
+      throw new Error('삭제할 분석본을 찾을 수 없습니다.');
+    }
+
+    const formatted = this.analyzer.formatFromDatabase(row);
+    const variants = Array.isArray(formatted?.variants) ? [...formatted.variants] : [];
+    if (!variants.length) {
+      throw new Error('등록된 분석본이 없습니다.');
+    }
+
+    const availableIndexes = variants.map((variant) => Number(variant.variantIndex));
+    const validIndexes = normalizedIndexes.filter((index) => availableIndexes.includes(index));
+    if (!validIndexes.length) {
+      throw new Error('선택한 분석본을 찾을 수 없습니다.');
+    }
+
+    const survivorsWithOriginal = variants
+      .filter((variant) => !validIndexes.includes(Number(variant.variantIndex)))
+      .map((variant) => ({
+        originalIndex: Number(variant.variantIndex),
+        data: variant
+      }));
+
+    const placeholders = validIndexes.map(() => '?').join(', ');
+    await database.run(
+      `DELETE FROM analysis_feedback
+        WHERE document_id = ?
+          AND passage_number = ?
+          AND variant_index IN (${placeholders})`,
+      [documentId, passageNumber, ...validIndexes]
+    );
+
+    if (!survivorsWithOriginal.length) {
+      await database.run('DELETE FROM analysis_feedback WHERE document_id = ? AND passage_number = ?', [documentId, passageNumber]);
+      await database.run('DELETE FROM analysis_group_permissions WHERE analysis_id = ?', [row.id]);
+      await database.run('DELETE FROM passage_analyses WHERE id = ?', [row.id]);
+      return {
+        success: true,
+        data: {
+          passageNumber,
+          originalPassage: formatted.originalPassage,
+          variants: []
+        },
+        message: `선택한 분석본 ${validIndexes.length}개를 삭제했고, 남은 분석본이 없어 기록을 정리했어요.`
+      };
+    }
+
+    const reindexed = survivorsWithOriginal.map(({ data }, idx) => ({
+      ...data,
+      variantIndex: idx + 1
+    }));
+
+    for (let idx = 0; idx < survivorsWithOriginal.length; idx += 1) {
+      const originalIndex = survivorsWithOriginal[idx].originalIndex;
+      const newIndex = idx + 1;
+      if (originalIndex !== newIndex) {
+        await database.run(
+          'UPDATE analysis_feedback SET variant_index = ? WHERE document_id = ? AND passage_number = ? AND variant_index = ?',
+          [newIndex, documentId, passageNumber, originalIndex]
+        );
+      }
+    }
+
+    const dbPayload = this.analyzer.formatForDatabase(reindexed);
+    await database.run(
+      `UPDATE passage_analyses
+         SET original_passage = ?, summary = ?, key_points = ?, vocabulary = ?, grammar_points = ?, study_guide = ?, comprehension_questions = ?, variants = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
+      [
+        formatted.originalPassage,
+        dbPayload.summary,
+        dbPayload.key_points,
+        dbPayload.vocabulary,
+        dbPayload.grammar_points,
+        dbPayload.study_guide,
+        dbPayload.comprehension_questions,
+        dbPayload.variants,
+        row.id
+      ]
+    );
+
+    const enriched = await this._attachFeedbackMetadata(documentId, passageNumber, reindexed, userId);
+    return {
+      success: true,
+      data: {
+        passageNumber,
+        originalPassage: formatted.originalPassage,
+        variants: enriched
+      },
+      message: `선택한 분석본 ${validIndexes.length}개를 삭제했습니다.`
     };
   }
 

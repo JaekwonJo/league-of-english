@@ -50,9 +50,17 @@ const AppRouter = () => {
   }
 
   // 현재 라우트 찾기
-  const currentRoute = routesConfig.routes.find(
-    route => route.path === currentPath
-  ) || routesConfig.routes[0];
+  let currentRoute = routesConfig.routes.find((route) => route.path === currentPath);
+  if (!currentRoute) {
+    currentRoute = routesConfig.routes.find((route) => {
+      if (route.path === '/') return false;
+      const normalized = route.path.endsWith('/') ? route.path : `${route.path}/`;
+      return currentPath.startsWith(normalized);
+    });
+  }
+  if (!currentRoute) {
+    currentRoute = routesConfig.routes[0];
+  }
 
   // 권한 체크
   if (!hasPermission(user, currentRoute)) {

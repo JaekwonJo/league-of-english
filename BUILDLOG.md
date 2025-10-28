@@ -1,3 +1,10 @@
+## 2025-10-29 (multi-step routes + rename sync + gen limits)
+- Issue: 단일 페이지에서 단계가 바뀌어도 주소가 그대로라 뒤로가기/북마크가 불편했고, 모바일 헤더가 🦉·햄버거 아이콘 겹침으로 헷갈렸어요. 관리자 문서 이름을 바꿔도 어휘/학습 목록에 반영되지 않았습니다.
+- Cause: Vocabulary/Study/Analysis 페이지가 내부 state만 바꾸고 URL 변경 없이 동작했으며, 문서 수정 API 자체가 없었습니다. 문제 생성은 유형별 제한이 없어 긴 요청에서 타임아웃이 잦았어요.
+- Fix: 단계별 URL(`/vocabulary/days`, `/study/solve`, `/analysis/detail` 등)로 나누고 브라우저 이동과 연동했어요. 모바일 헤더는 단일 토글(☰/✕)과 중앙 🦉 제목으로 정리했습니다. `/documents/:id` PUT API로 제목/카테고리/학교/학년을 수정하면 학습·어휘 메뉴에 즉시 반영돼요. AI 유형 합산 5문항, 비AI 유형 10문항 상한을 추가해 요청을 안정화했습니다.
+- Files: client/src/pages/VocabularyPage.js, client/src/pages/StudyPage.js, client/src/pages/AnalysisPage.js, client/src/components/layout/MainLayout.js, client/src/services/api.service.js, server/routes/document.routes.js, server/services/problemSetService.js 등.
+- Tests: `npm run lint`, `npm test` (기존 `analysisFallbackVariant.test.js` 한 건은 fallback 해석 prefix 보정 필요로 여전히 실패 – 후속 예정).
+
 ## 2025-10-27 (vocab stepper + analysis bulk delete + theme toggle)
 - Issue: 모바일에서 어휘 메뉴와 분석 홈이 혼란스러워 사용자들이 어느 버튼을 눌러야 할지 갈팡질팡했고, 관리자들은 분석본을 하나씩만 삭제할 수 있어 반복 작업에서 404가 났습니다.
 - Cause: VocabularyPage가 단일 화면에 모든 옵션을 노출했고, AnalysisPage가 문서 로딩 시 자동으로 분석 API를 호출했습니다. 삭제 API도 단일 variant만 처리했습니다.

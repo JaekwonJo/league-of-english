@@ -8,7 +8,7 @@ const { buildFallbackProblems } = require('../utils/fallbackProblemFactory');
 const { ensureSourceLabel } = require('./ai-problem/shared');
 
 // Time budget (ms) for AI-backed generation before falling back
-const AI_TIME_BUDGET_MS = Number(process.env.LOE_AIGEN_BUDGET_MS || 25000);
+const AI_TIME_BUDGET_MS = Number(process.env.LOE_AIGEN_BUDGET_MS || 12000);
 
 function withTimeout(promise, timeoutMs, onTimeout) {
   if (!timeoutMs || timeoutMs <= 0) return promise;
@@ -30,7 +30,10 @@ function withTimeout(promise, timeoutMs, onTimeout) {
 }
 
 const STEP_SIZE = 1;
-const MAX_TOTAL = 10;
+const NON_AI_TYPES = new Set(['order', 'insertion']);
+const MAX_NON_AI_PER_TYPE = 10;
+const MAX_AI_TOTAL = Number.parseInt(process.env.LOE_AI_TYPE_TOTAL_LIMIT, 10) || 5;
+const MAX_TOTAL = (MAX_NON_AI_PER_TYPE * NON_AI_TYPES.size) + MAX_AI_TOTAL;
 const SUPPORTED_TYPES = new Set([
   'blank',
   'order',
@@ -64,31 +67,73 @@ function normalizeTypeCounts(rawCounts = {}) {
   let total = 0;
 
   Object.entries(rawCounts).forEach(([type, value]) => {
+    const normalizedType = String(type || '').trim();
+    if (!SUPPORTED_TYPES.has(normalizedType)) return;
     const snapped = snapToStep(value);
-    if (snapped > 0) {
-      const clamped = Math.min(snapped, MAX_TOTAL);
-      counts[type] = clamped;
+    if (snapped <= 0) return;
+
+    const isNonAi = NON_AI_TYPES.has(normalizedType);
+    const perTypeLimit = isNonAi ? MAX_NON_AI_PER_TYPE : Math.min(MAX_AI_TOTAL, MAX_TOTAL);
+    const clamped = Math.min(snapped, perTypeLimit);
+    if (clamped > 0) {
+      counts[normalizedType] = clamped;
       total += clamped;
     }
   });
 
-  if (total > MAX_TOTAL) {
-    const types = Object.keys(counts);
-    let overflow = total - MAX_TOTAL;
-    while (overflow > 0 && types.length) {
-      for (const type of types) {
+  const aiTypes = Object.keys(counts).filter((key) => AI_GENERATOR_MAP[key]);
+  let aiTotal = aiTypes.reduce((sum, key) => sum + counts[key], 0);
+  if (aiTotal > MAX_AI_TOTAL) {
+    let overflow = aiTotal - MAX_AI_TOTAL;
+    while (overflow > 0 && aiTypes.length) {
+      let reduced = false;
+      for (const type of aiTypes) {
         if (overflow <= 0) break;
-        if (counts[type] >= STEP_SIZE) {
-          counts[type] -= STEP_SIZE;
-          overflow -= STEP_SIZE;
-        }
+        const previous = counts[type] || 0;
+        if (previous <= 0) continue;
+        const next = Math.max(0, previous - STEP_SIZE);
+        const delta = previous - next;
+        if (delta <= 0) continue;
+        counts[type] = next;
+        overflow -= delta;
+        total -= delta;
+        reduced = true;
       }
-      if (types.every((type) => counts[type] === 0)) break;
+      if (!reduced) break;
     }
-    Object.keys(counts).forEach((type) => {
-      if (counts[type] <= 0) delete counts[type];
+    aiTypes.forEach((type) => {
+      if (!counts[type] || counts[type] <= 0) {
+        delete counts[type];
+      }
     });
   }
+
+  if (total > MAX_TOTAL) {
+    let overflow = total - MAX_TOTAL;
+    const orderedTypes = Object.keys(counts).sort((a, b) => (counts[b] || 0) - (counts[a] || 0));
+    while (overflow > 0 && orderedTypes.length) {
+      let trimmed = false;
+      for (const type of orderedTypes) {
+        if (overflow <= 0) break;
+        const previous = counts[type] || 0;
+        if (previous <= 0) continue;
+        const next = Math.max(0, previous - STEP_SIZE);
+        const delta = previous - next;
+        if (delta <= 0) continue;
+        counts[type] = next;
+        overflow -= delta;
+        total -= delta;
+        trimmed = true;
+      }
+      if (!trimmed) break;
+    }
+  }
+
+  Object.keys(counts).forEach((type) => {
+    if (counts[type] <= 0) {
+      delete counts[type];
+    }
+  });
 
   return counts;
 }

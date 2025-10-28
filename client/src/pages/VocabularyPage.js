@@ -4,6 +4,11 @@ import { useAuth } from '../contexts/AuthContext';
 
 const QUIZ_SIZE = 30;
 const tierOrder = ['Iron', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond', 'Master', 'Challenger'];
+const STEPS = {
+  SELECT_SET: 1,
+  SELECT_DAY: 2,
+  CONFIGURE: 3
+};
 
 const formatSeconds = (value = 0) => {
   const total = Math.max(0, Math.floor(value));
@@ -14,6 +19,39 @@ const formatSeconds = (value = 0) => {
 
 const VocabularyPage = () => {
   const { user, updateUser } = useAuth();
+
+  const stepPathMap = useMemo(() => ({
+    [STEPS.SELECT_SET]: '/vocabulary',
+    [STEPS.SELECT_DAY]: '/vocabulary/days',
+    [STEPS.CONFIGURE]: '/vocabulary/setup'
+  }), []);
+
+  const getStepFromPath = useCallback((pathname) => {
+    if (pathname.startsWith('/vocabulary/setup')) return STEPS.CONFIGURE;
+    if (pathname.startsWith('/vocabulary/days')) return STEPS.SELECT_DAY;
+    return STEPS.SELECT_SET;
+  }, []);
+
+  const [step, setStep] = useState(() => getStepFromPath(window.location.pathname));
+
+  const navigateToStep = useCallback((nextStep) => {
+    const targetPath = stepPathMap[nextStep] || '/vocabulary';
+    if (window.location.pathname !== targetPath) {
+      window.history.pushState({}, '', targetPath);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    } else {
+      setStep(nextStep);
+    }
+  }, [stepPathMap]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      setStep(getStepFromPath(window.location.pathname));
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [getStepFromPath]);
+
   const [sets, setSets] = useState([]);
   const [setsLoading, setSetsLoading] = useState(true);
   const [setsError, setSetsError] = useState('');
@@ -112,21 +150,52 @@ const resetQuizState = useCallback(() => {
   setTimeLeft(0);
 }, []);
 
-  const goBackToDays = useCallback(() => {
+const goBackToDays = useCallback(() => {
     resetQuizState();
     setError('');
     setPracticeState({ active: false, items: [], index: 0, showBack: false, againQueue: [], front: 'term' });
-  }, [resetQuizState]);
+    navigateToStep(STEPS.SELECT_DAY);
+  }, [resetQuizState, navigateToStep]);
+
+  const handleBackToSetList = useCallback(() => {
+    resetQuizState();
+    setPracticeState({ active: false, items: [], index: 0, showBack: false, againQueue: [], front: 'term' });
+    setSelectedSet(null);
+    setSelectedDayKey('');
+    setSelectedDayKeys([]);
+    navigateToStep(STEPS.SELECT_SET);
+    setMessage('원하는 단어장을 다시 골라볼까요?');
+    setError('');
+  }, [resetQuizState, navigateToStep]);
+
+  const handleProceedToSetup = useCallback(() => {
+    const selectedCount = selectedDayKeys.length || (selectedDayKey ? 1 : 0);
+    if (!selectedCount) {
+      setError('먼저 Day를 최소 1개 선택해 주세요!');
+      return;
+    }
+    if (!selectedDayKey && selectedDayKeys.length === 1) {
+      setSelectedDayKey(selectedDayKeys[0]);
+    }
+    setError('');
+    setMessage('아래에서 시험 유형을 골라 시작해 보세요!');
+    navigateToStep(STEPS.CONFIGURE);
+  }, [selectedDayKey, selectedDayKeys, navigateToStep]);
 
   const handleSelectSet = async (setInfo) => {
     if (!setInfo) return;
-    if (selectedSet?.id === setInfo.id) return;
+    if (selectedSet?.id === setInfo.id) {
+      navigateToStep(STEPS.SELECT_DAY);
+      return;
+    }
     setDaysLoading(true);
     setError('');
     setMessage('');
     resetQuizState();
     setSelectedDayKey('');
     setSelectedDayKeys([]);
+    setSelectedSet(setInfo);
+    navigateToStep(STEPS.SELECT_DAY);
 
     try {
       const response = await api.vocabulary.detail(setInfo.id);
@@ -136,6 +205,8 @@ const resetQuizState = useCallback(() => {
       setSelectedSet(response.data);
     } catch (err) {
       setError(err?.message || '단어장을 불러오지 못했어요.');
+      setSelectedSet(null);
+      navigateToStep(STEPS.SELECT_SET);
     } finally {
       setDaysLoading(false);
     }
@@ -379,7 +450,8 @@ const resetQuizState = useCallback(() => {
     }
     setPracticeState({ active: true, items, index: 0, showBack: false, againQueue: [], front: 'term' });
     setMessage('카드를 뒤집어 뜻을 확인하고, 알겠으면 “알겠어요”, 헷갈리면 “다시 보기”로 표시해요.');
-  }, [buildPracticeItems]);
+    navigateToStep(STEPS.CONFIGURE);
+  }, [buildPracticeItems, navigateToStep]);
 
   const practiceFlip = useCallback(() => {
     setPracticeState((prev) => ({ ...prev, showBack: !prev.showBack }));
@@ -427,6 +499,7 @@ const resetQuizState = useCallback(() => {
     setQuizState((prev) => ({ ...prev, loading: true }));
     setError('');
     setMessage('');
+    navigateToStep(STEPS.CONFIGURE);
 
     try {
       const payload = hasMulti
@@ -533,6 +606,57 @@ const resetQuizState = useCallback(() => {
     return selectedSet.days?.find((day) => day.key === selectedDayKey) || null;
   }, [selectedSet, selectedDayKey, selectedDayKeys.length]);
 
+  const selectedDays = useMemo(() => {
+    if (!selectedSet) return [];
+    const keys = selectedDayKeys.length ? selectedDayKeys : (selectedDayKey ? [selectedDayKey] : []);
+    if (!keys.length) return [];
+    const keySet = new Set(keys);
+    return (selectedSet.days || []).filter((day) => keySet.has(day.key));
+  }, [selectedSet, selectedDayKey, selectedDayKeys]);
+
+  const selectedDayLabels = useMemo(
+    () => selectedDays.map((day) => day.label || day.key),
+    [selectedDays]
+  );
+  const selectedWordsCount = useMemo(
+    () => selectedDays.reduce((sum, day) => sum + Number(day.count || 0), 0),
+    [selectedDays]
+  );
+
+  const selectionLocked = practiceState.active || quizState.active;
+  const stepDescriptors = useMemo(() => ([
+    { id: STEPS.SELECT_SET, label: '단어장 고르기' },
+    { id: STEPS.SELECT_DAY, label: 'Day 선택 & 미리보기' },
+    { id: STEPS.CONFIGURE, label: '시험 준비하기' }
+  ]), []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const scrollTo = (anchor) => {
+      const element = document.getElementById(anchor);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    };
+    if (step === STEPS.SELECT_DAY) {
+      scrollTo('vocab-step-2');
+    } else if (step === STEPS.CONFIGURE) {
+      scrollTo('vocab-step-3');
+    }
+  }, [step]);
+
+  useEffect(() => {
+    if (step === STEPS.SELECT_DAY && !selectedSet) {
+      navigateToStep(STEPS.SELECT_SET);
+    } else if (step === STEPS.CONFIGURE) {
+      if (!selectedSet) {
+        navigateToStep(STEPS.SELECT_SET);
+      } else if (!selectedDayLabels.length) {
+        navigateToStep(STEPS.SELECT_DAY);
+      }
+    }
+  }, [step, selectedSet, selectedDayLabels.length, navigateToStep]);
+
   return (
     <div style={styles.container}>
       <header style={styles.header}>
@@ -543,80 +667,108 @@ const resetQuizState = useCallback(() => {
       </p>
       </header>
 
-      {!quizState.active && (
+      <div style={styles.stepper}>
+        {stepDescriptors.map((descriptor, index) => {
+          const isActive = step === descriptor.id;
+          const isCompleted = step > descriptor.id;
+          return (
+            <div
+              key={descriptor.id}
+              style={{
+                ...styles.stepperItem,
+                ...(isActive ? styles.stepperItemActive : {}),
+                ...(isCompleted ? styles.stepperItemCompleted : {})
+              }}
+            >
+              <span style={styles.stepperIndex}>{index + 1}</span>
+              <span style={styles.stepperLabel}>{descriptor.label}</span>
+            </div>
+          );
+        })}
+      </div>
+
+      {selectionLocked && (
+        <div style={styles.lockNotice}>
+          현재 연습 또는 시험을 진행 중이에요! 아래 카드에서 마무리하거나 종료하면 다시 단계별로 이동할 수 있어요. 💪
+        </div>
+      )}
+
+      {!selectionLocked && message && <div style={styles.notice}>{message}</div>}
+      {!selectionLocked && error && <div style={{ ...styles.notice, color: 'var(--danger)' }}>{error}</div>}
+
+      {!selectionLocked && (
         <>
-          {setsLoading ? (
-            <div style={styles.notice}>단어장을 불러오는 중이에요...</div>
-          ) : setsError ? (
-            <div style={{ ...styles.notice, color: 'var(--danger)' }}>{setsError}</div>
-          ) : (
-            <section style={styles.section}>
-              <h2 style={styles.sectionTitle}>1️⃣ 단어장 고르기</h2>
-              <div style={styles.searchRow}>
-                <input
-                  type="search"
-                  style={styles.searchInput}
-                  placeholder="단어장 이름을 검색해 보세요"
-                  value={setQuery}
-                  onChange={(event) => setSetQuery(event.target.value)}
-                  disabled={sets.length === 0}
-                />
-                {setQuery && (
-                  <button
-                    type="button"
-                    style={styles.searchClear}
-                    onClick={() => setSetQuery('')}
-                  >
-                    지우기
-                  </button>
+          {step === STEPS.SELECT_SET && (
+            setsLoading ? (
+              <div style={styles.notice}>단어장을 불러오는 중이에요...</div>
+            ) : setsError ? (
+              <div style={{ ...styles.notice, color: 'var(--danger)' }}>{setsError}</div>
+            ) : (
+              <section style={styles.section}>
+                <h2 style={styles.sectionTitle}>1️⃣ 단어장 고르기</h2>
+                <div style={styles.searchRow}>
+                  <input
+                    type="search"
+                    style={styles.searchInput}
+                    placeholder="단어장 이름을 검색해 보세요"
+                    value={setQuery}
+                    onChange={(event) => setSetQuery(event.target.value)}
+                    disabled={sets.length === 0}
+                  />
+                  {setQuery && (
+                    <button
+                      type="button"
+                      style={styles.searchClear}
+                      onClick={() => setSetQuery('')}
+                    >
+                      지우기
+                    </button>
+                  )}
+                </div>
+                {filteredSets.length === 0 ? (
+                  <div style={styles.emptySearch}>
+                    {sets.length === 0
+                      ? '아직 업로드된 단어장이 없어요. 관리자 페이지에서 단어장을 등록하면 바로 여기에서 연습할 수 있어요!'
+                      : '검색 결과가 없어요. 다른 키워드로 다시 검색해 볼까요?'}
+                  </div>
+                ) : (
+                  <div style={styles.setGrid}>
+                    {filteredSets.map((set) => {
+                      const isActive = selectedSet?.id === set.id;
+                      return (
+                        <button
+                          key={set.id}
+                          type="button"
+                          style={{
+                            ...styles.setCard,
+                            borderColor: isActive ? 'var(--color-blue-500)' : 'transparent',
+                            boxShadow: isActive ? '0 12px 32px rgba(52, 118, 246, 0.25)' : styles.setCard.boxShadow
+                          }}
+                          onClick={() => handleSelectSet(set)}
+                        >
+                          <span style={styles.setTitle}>{set.title}</span>
+                          <span style={styles.setMeta}>총 {set.totalDays} Day / {set.totalWords} 단어</span>
+                          <span style={styles.setMeta}>최근 업로드: {new Date(set.createdAt).toLocaleDateString()}</span>
+                          <div style={styles.previewWords}>
+                            {set.preview?.map((day) => (
+                              <div key={day.key} style={styles.previewDay}>
+                                <strong>{day.key}</strong>
+                                <span>{day.count} 단어</span>
+                                <span style={{ fontStyle: 'italic', color: 'var(--text-muted)' }}>미리보기는 시험에서 확인해요!</span>
+                              </div>
+                            ))}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
                 )}
-              </div>
-              {filteredSets.length === 0 ? (
-                <div style={styles.emptySearch}>
-                  {sets.length === 0
-                    ? '아직 업로드된 단어장이 없어요. 관리자 페이지에서 단어장을 등록하면 바로 여기에서 연습할 수 있어요!'
-                    : '검색 결과가 없어요. 다른 키워드로 다시 검색해 볼까요?'}
-                </div>
-              ) : (
-                <div style={styles.setGrid}>
-                  {filteredSets.map((set) => {
-                    const isActive = selectedSet?.id === set.id;
-                    return (
-                      <button
-                        key={set.id}
-                        type="button"
-                        style={{
-                          ...styles.setCard,
-                          borderColor: isActive ? 'var(--color-blue-500)' : 'transparent',
-                          boxShadow: isActive ? '0 12px 32px rgba(52, 118, 246, 0.25)' : styles.setCard.boxShadow
-                        }}
-                        onClick={() => handleSelectSet(set)}
-                      >
-                        <span style={styles.setTitle}>{set.title}</span>
-                        <span style={styles.setMeta}>총 {set.totalDays} Day / {set.totalWords} 단어</span>
-                        <span style={styles.setMeta}>최근 업로드: {new Date(set.createdAt).toLocaleDateString()}</span>
-                        <div style={styles.previewWords}>
-                          {set.preview?.map((day) => (
-                            <div key={day.key} style={styles.previewDay}>
-                              <strong>{day.key}</strong>
-                              <span>{day.count} 단어</span>
-                              <span style={{ fontStyle: 'italic', color: 'var(--text-muted)' }}>미리보기는 시험에서 확인해요!</span>
-                            </div>
-                          ))}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </section>
+              </section>
+            )
           )}
 
-          {message && <div style={styles.notice}>{message}</div>}
-          {error && <div style={{ ...styles.notice, color: 'var(--danger)' }}>{error}</div>}
-
-          {selectedSet && (
-            <section style={styles.section}>
+          {selectedSet && step === STEPS.SELECT_DAY && (
+            <section style={styles.section} id="vocab-step-2">
               <h2 style={styles.sectionTitle}>2️⃣ Day 선택 & 단어 미리보기</h2>
               {daysLoading ? (
                 <div style={styles.notice}>Day 정보를 불러오는 중이에요...</div>
@@ -664,46 +816,123 @@ const resetQuizState = useCallback(() => {
                 </div>
               )}
 
-              {(activeDay || selectedDayKeys.length > 1) && (
-                <div style={styles.actionBar}>
-                  <div>
-                    {selectedDayKeys.length > 1 ? (
-                      <>
-                        <h3 style={styles.actionTitle}>📝 선택한 Day {selectedDayKeys.length}개</h3>
-                        <p style={styles.actionHint}>아래에서 유형을 고르고 시험을 시작해 보세요!</p>
-                      </>
-                    ) : (
-                      <>
-                        <h3 style={styles.actionTitle}>📝 {activeDay?.label} | {activeDay?.count}개 단어</h3>
-                        <p style={styles.actionHint}>아래에서 유형을 고르고 시험을 시작해 보세요!</p>
-                      </>
-                    )}
-                    <div style={{ display: 'flex', gap: '12px', marginTop: '8px', flexWrap: 'wrap' }}>
-                      <label><input type="radio" name="mode" checked={quizMode==='mixed'} onChange={()=>setQuizMode('mixed')} /> 혼합(뜻→단어/단어→뜻)</label>
-                      <label><input type="radio" name="mode" checked={quizMode==='term_to_meaning'} onChange={()=>setQuizMode('term_to_meaning')} /> 단어→뜻</label>
-                      <label><input type="radio" name="mode" checked={quizMode==='meaning_to_term'} onChange={()=>setQuizMode('meaning_to_term')} /> 뜻→단어</label>
-                      <span style={{ marginLeft: 16, color: 'var(--text-secondary)' }}>|</span>
-                      <label><input type="radio" name="orderPolicy" checked={orderPolicy==='random'} onChange={()=>setOrderPolicy('random')} /> 출제 순서: 랜덤</label>
-                      <label><input type="radio" name="orderPolicy" checked={orderPolicy==='sequential'} onChange={()=>setOrderPolicy('sequential')} /> 출제 순서: 순차</label>
-                    </div>
-                  </div>
+              <div style={styles.stepActions}>
+                <button type="button" style={styles.stepLinkButton} onClick={handleBackToSetList}>
+                  ← 단어장 다시 고르기
+                </button>
+                <div style={styles.stepSummaryBox}>
+                  <h3 style={styles.stepSummaryTitle}>
+                    {(() => {
+                      if (!selectedDayLabels.length) return '📝 Day를 선택해 주세요';
+                      if (selectedDayLabels.length === 1) {
+                        const label = selectedDayLabels[0];
+                        const count = activeDay?.count ?? selectedWordsCount;
+                        return `📝 ${label} | ${count}개 단어`;
+                      }
+                      return `📝 선택한 Day ${selectedDayLabels.length}개 | 총 ${selectedWordsCount}개 단어`;
+                    })()}
+                  </h3>
+                  <p style={styles.stepSummaryHint}>
+                    {selectedDayLabels.length
+                      ? '다음 단계에서 시험 유형과 출제 방식을 고른 뒤 바로 시작해 볼까요?'
+                      : '위에서 Day를 최소 1개 선택해야 다음 단계로 이동할 수 있어요!'}
+                  </p>
                   <button
                     type="button"
-                    style={styles.primaryButton}
-                    onClick={handleStartQuiz}
-                    disabled={quizState.loading}
+                    style={{
+                      ...styles.primaryButton,
+                      ...(selectedDayLabels.length ? {} : styles.primaryButtonDisabled)
+                    }}
+                    onClick={handleProceedToSetup}
+                    disabled={!selectedDayLabels.length}
                   >
-                    {quizState.loading ? '문제를 준비 중...' : (selectedDayKeys.length > 1 ? `선택한 ${selectedDayKeys.length}개로 시작` : 'Day 시험 시작하기')}
-                  </button>
-                  <button
-                    type="button"
-                    style={{ ...styles.secondaryButton, marginLeft: 8 }}
-                    onClick={handleStartPractice}
-                  >
-                    연습하기
+                    다음 단계: 시험 준비로 이동 →
                   </button>
                 </div>
-              )}
+              </div>
+            </section>
+          )}
+
+          {selectedSet && step === STEPS.CONFIGURE && selectedDayLabels.length > 0 && (
+            <section style={styles.section} id="vocab-step-3">
+              <div style={styles.configureHeader}>
+                <div>
+                  <h2 style={styles.sectionTitle}>3️⃣ 시험 준비하기</h2>
+                  <p style={styles.configureSubtitle}>유형과 출제 순서를 고르고, 연습 또는 시험을 바로 시작해 보세요!</p>
+                </div>
+                <button type="button" style={styles.stepLinkButton} onClick={() => navigateToStep(STEPS.SELECT_DAY)}>
+                  ← Day 다시 선택
+                </button>
+              </div>
+
+              <div style={styles.configureSummary}>
+                <div>
+                  <h3 style={styles.actionTitle}>
+                    {(() => {
+                      if (!selectedDayLabels.length) return '📝 Day 선택 필요';
+                      if (selectedDayLabels.length === 1) {
+                        const label = selectedDayLabels[0];
+                        const count = activeDay?.count ?? selectedWordsCount;
+                        return `📝 ${label} | ${count}개 단어`;
+                      }
+                      return `📝 선택한 Day ${selectedDayLabels.length}개 | 총 ${selectedWordsCount}개 단어`;
+                    })()}
+                  </h3>
+                  <p style={styles.actionHint}>기본 문제 수는 {QUIZ_SIZE}문이며, 정답 즉시 피드백이 제공돼요.</p>
+                </div>
+                <div style={styles.configureChipList}>
+                  {selectedDayLabels.map((label) => (
+                    <span key={label} style={styles.configureChip}>{label}</span>
+                  ))}
+                </div>
+              </div>
+
+              <div style={styles.modeGrid}>
+                <div style={styles.modeGroup}>
+                  <p style={styles.modeGroupTitle}>시험 유형</p>
+                  <label style={styles.modeOption}>
+                    <input type="radio" name="mode" checked={quizMode === 'mixed'} onChange={() => setQuizMode('mixed')} />
+                    혼합(뜻→단어 · 단어→뜻)
+                  </label>
+                  <label style={styles.modeOption}>
+                    <input type="radio" name="mode" checked={quizMode === 'term_to_meaning'} onChange={() => setQuizMode('term_to_meaning')} />
+                    단어 → 뜻
+                  </label>
+                  <label style={styles.modeOption}>
+                    <input type="radio" name="mode" checked={quizMode === 'meaning_to_term'} onChange={() => setQuizMode('meaning_to_term')} />
+                    뜻 → 단어
+                  </label>
+                </div>
+                <div style={styles.modeGroup}>
+                  <p style={styles.modeGroupTitle}>출제 순서</p>
+                  <label style={styles.modeOption}>
+                    <input type="radio" name="orderPolicy" checked={orderPolicy === 'random'} onChange={() => setOrderPolicy('random')} />
+                    랜덤 (추천)
+                  </label>
+                  <label style={styles.modeOption}>
+                    <input type="radio" name="orderPolicy" checked={orderPolicy === 'sequential'} onChange={() => setOrderPolicy('sequential')} />
+                    순차 (원문 순서 그대로)
+                  </label>
+                </div>
+              </div>
+
+              <div style={styles.configureActions}>
+                <button
+                  type="button"
+                  style={styles.secondaryButton}
+                  onClick={handleStartPractice}
+                >
+                  연습하기
+                </button>
+                <button
+                  type="button"
+                  style={styles.primaryButton}
+                  onClick={handleStartQuiz}
+                  disabled={quizState.loading}
+                >
+                  {quizState.loading ? '문제를 준비 중...' : '시험 시작하기'}
+                </button>
+              </div>
             </section>
           )}
         </>
@@ -1013,6 +1242,60 @@ const styles = {
     color: 'var(--text-muted)',
     lineHeight: 1.6
   },
+  stepper: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '12px',
+    margin: '0 0 24px'
+  },
+  stepperItem: {
+    flex: '1 1 160px',
+    minWidth: '140px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    padding: '12px 16px',
+    borderRadius: '14px',
+    border: '1px solid var(--surface-border)',
+    background: 'var(--surface-soft)',
+    color: 'var(--text-secondary)',
+    fontWeight: 600,
+    transition: 'all 0.2s ease'
+  },
+  stepperItemActive: {
+    borderColor: 'var(--color-blue-500)',
+    color: 'var(--color-blue-500)',
+    background: 'rgba(59,130,246,0.12)'
+  },
+  stepperItemCompleted: {
+    borderColor: 'var(--color-green-500)',
+    color: 'var(--color-green-600, #16a34a)',
+    background: 'rgba(34,197,94,0.14)'
+  },
+  stepperIndex: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 26,
+    height: 26,
+    borderRadius: '999px',
+    background: 'var(--surface-card)',
+    border: '1px solid var(--surface-border)',
+    fontWeight: 700,
+    fontSize: '0.9rem'
+  },
+  stepperLabel: {
+    fontSize: '0.95rem'
+  },
+  lockNotice: {
+    background: 'var(--surface-card)',
+    border: '1px solid var(--surface-border)',
+    borderRadius: '16px',
+    padding: '16px',
+    marginBottom: '20px',
+    color: 'var(--text-secondary)',
+    fontWeight: 600
+  },
   section: {
     marginBottom: '32px'
   },
@@ -1112,15 +1395,44 @@ const styles = {
     fontSize: '0.9rem',
     color: 'var(--text-muted)'
   },
-  actionBar: {
+  stepActions: {
     marginTop: '24px',
     padding: '20px',
     background: 'var(--surface-muted)',
     borderRadius: '16px',
     display: 'flex',
-    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: '16px',
     alignItems: 'center',
-    gap: '16px'
+    justifyContent: 'space-between'
+  },
+  stepLinkButton: {
+    background: 'transparent',
+    border: '1px solid transparent',
+    color: 'var(--color-blue-500)',
+    fontWeight: 600,
+    cursor: 'pointer',
+    padding: '10px 12px',
+    borderRadius: '10px'
+  },
+  stepSummaryBox: {
+    flex: '1 1 320px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px'
+  },
+  stepSummaryTitle: {
+    fontSize: '1.15rem',
+    margin: 0
+  },
+  stepSummaryHint: {
+    fontSize: '0.95rem',
+    color: 'var(--text-muted)',
+    margin: 0
+  },
+  primaryButtonDisabled: {
+    opacity: 0.4,
+    cursor: 'not-allowed'
   },
   actionTitle: {
     fontSize: '1.1rem',
@@ -1129,6 +1441,75 @@ const styles = {
   actionHint: {
     fontSize: '0.95rem',
     color: 'var(--text-muted)'
+  },
+  configureHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: '12px',
+    flexWrap: 'wrap',
+    marginBottom: '16px'
+  },
+  configureSubtitle: {
+    color: 'var(--text-muted)',
+    marginTop: '6px'
+  },
+  configureSummary: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: '16px',
+    padding: '20px',
+    borderRadius: '18px',
+    border: '1px solid var(--surface-border)',
+    background: 'var(--surface-card)'
+  },
+  configureChipList: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '8px'
+  },
+  configureChip: {
+    background: 'rgba(59,130,246,0.15)',
+    color: 'var(--color-blue-500)',
+    padding: '6px 12px',
+    borderRadius: '999px',
+    fontSize: '0.85rem',
+    fontWeight: 600
+  },
+  modeGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+    gap: '16px',
+    marginTop: '24px'
+  },
+  modeGroup: {
+    background: 'var(--surface-soft)',
+    borderRadius: '16px',
+    border: '1px solid var(--surface-border)',
+    padding: '18px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px'
+  },
+  modeGroupTitle: {
+    fontSize: '1rem',
+    fontWeight: 700,
+    margin: 0
+  },
+  modeOption: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    fontSize: '0.95rem',
+    color: 'var(--text-primary)'
+  },
+  configureActions: {
+    marginTop: '24px',
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '12px',
+    justifyContent: 'flex-end'
   },
   quizSection: {
     marginBottom: '32px',

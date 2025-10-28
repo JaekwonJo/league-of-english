@@ -309,6 +309,7 @@ export const api = {
     list: (params) => apiService.get('/documents', params),
     get: (id) => apiService.get(`/documents/${id}`),
     upload: (file, data) => apiService.uploadFile('/upload-document', file, data),
+    update: (id, payload) => apiService.put(`/documents/${id}`, payload),
     delete: (id) => apiService.delete(`/documents/${id}`),
     getShares: (id) => apiService.get(`/documents/${id}/shares`),
     updateShares: (id, payload) => apiService.post(`/documents/${id}/share`, payload)
@@ -417,6 +418,10 @@ export const api = {
     listPassageSummaries: (documentId) => apiService.get(`/analysis/${documentId}/passage-list`),
     generate: (documentId, passageNumber, count = 1) => apiService.post(`/analysis/${documentId}/analyze-passage`, { passageNumber, count }),
     generateBatch: (documentId, passageNumbers = []) => apiService.post(`/analysis/${documentId}/analyze-passages`, { passageNumbers }),
+    deleteVariants: (documentId, passageNumber, variantIndexes = []) => apiService.post(
+      `/analysis/${documentId}/passage/${passageNumber}/delete-variants`,
+      { variantIndexes }
+    ),
     status: (documentId) => apiService.get(`/analysis/status/${documentId}`),
     delete: (documentId) => apiService.delete(`/analysis/${documentId}`),
     feedback: {
