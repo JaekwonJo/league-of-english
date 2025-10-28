@@ -1,3 +1,11 @@
+## 2025-10-27 (vocab stepper + analysis bulk delete + theme toggle)
+- Issue: 모바일에서 어휘 메뉴와 분석 홈이 혼란스러워 사용자들이 어느 버튼을 눌러야 할지 갈팡질팡했고, 관리자들은 분석본을 하나씩만 삭제할 수 있어 반복 작업에서 404가 났습니다.
+- Cause: VocabularyPage가 단일 화면에 모든 옵션을 노출했고, AnalysisPage가 문서 로딩 시 자동으로 분석 API를 호출했습니다. 삭제 API도 단일 variant만 처리했습니다.
+- Fix: 어휘 흐름을 3단계(세트→Day→시험)로 쪼개고 안내 문구를 정비했으며, 모바일 헤더를 🦉 아이콘+토글 방식으로 단순화했습니다. 분석 홈은 검색/목록만 담당하도록 분리하고, 일괄 삭제 엔드포인트(`removeVariants`)를 추가했습니다.
+- Fix: Sidebar·모바일 상단에 테마 토글을 복구하고, 분석/어휘 스타일 토큰을 통일해 라이트/다크 대비를 올렸습니다.
+- Files: client/src/pages/VocabularyPage.js, client/src/pages/AnalysisPage.js, client/src/components/layout/MainLayout.js, client/src/styles/analysisStyles.js, client/src/services/api.service.js, server/services/analysisService.js, server/routes/analysis/passageRoutes.js 등.
+- Tests: `npm run lint`, `npm test` (analysisFallbackVariant.test.js는 라벨 prefix 보정 필요로 실패 – 후속 작업 예정).
+
 ## 2025-10-22 (multi-answer vocab + analysis labels + finish flow)
 - Issue: 어휘 문제에서 단일/복수 정답 변형이 뒤섞일 때 정답 개수·옵션 사유가 불일치했고, 분석(fallback)은 라벨이 없어 빈/짧은 문구가 섞였어요. 학습 마무리 버튼이 미답 항목에서 막히기도 했습니다.
 - Cause: 답안 파싱이 단일값 전제였고, 질문 변형(올바른 것/모두 고르시오) 대응이 부족했습니다. 분석 생성은 필드 길이/라벨 보장이 없고, 밑줄 치환 정규식의 공백 처리도 허술했어요.
