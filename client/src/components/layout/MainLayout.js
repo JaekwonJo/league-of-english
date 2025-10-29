@@ -77,10 +77,8 @@ const MainLayout = ({ children, currentPath }) => {
       <aside
         ref={sidebarRef}
         style={{
-          {
-            ...styles.sidebar,
-            ...(isMobile ? { overflow: 'hidden' } : { overflow: 'visible' })
-          },
+          ...styles.sidebar,
+          ...(isMobile ? { overflow: 'hidden' } : { overflow: 'visible' }),
           ...(isMobile
             ? {
                 width: sidebarOpen ? uiConfig.layout.sidebar.width : 0,
