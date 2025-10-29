@@ -1,3 +1,10 @@
+## 2025-10-29 (study popstate fix + mobile sidebar close)
+- Issue: 문제 학습 진입 즉시 "Cannot access 'J' before initialization"가 발생했고, 모바일에서는 메뉴를 연 뒤 바깥을 눌러도 사이드바가 닫히지 않았어요.
+- Cause: `handlePopState`가 선언되기 전에 `useEffect`에서 실행되면서 참조 오류가 났고, 모바일 사이드바에 외부 클릭 감지가 없었습니다.
+- Fix: StudyPage의 히스토리 핸들러를 `useCallback`으로 재구성해 선언 순서를 보장했고, 모드 동기화/이벤트 등록을 분리했습니다. 사이드바에는 outside-click/touch 감지를 추가하고 닫힐 때 투명도 전환을 적용했습니다.
+- Files: client/src/pages/StudyPage.js, client/src/components/layout/MainLayout.js.
+- Tests: `npm run lint` (기존 `analysisFallbackVariant.test.js`는 여전히 prefix 보정 필요).
+
 ## 2025-10-29 (multi-step routes + rename sync + gen limits)
 - Issue: 단일 페이지에서 단계가 바뀌어도 주소가 그대로라 뒤로가기/북마크가 불편했고, 모바일 헤더가 🦉·햄버거 아이콘 겹침으로 헷갈렸어요. 관리자 문서 이름을 바꿔도 어휘/학습 목록에 반영되지 않았습니다.
 - Cause: Vocabulary/Study/Analysis 페이지가 내부 state만 바꾸고 URL 변경 없이 동작했으며, 문서 수정 API 자체가 없었습니다. 문제 생성은 유형별 제한이 없어 긴 요청에서 타임아웃이 잦았어요.

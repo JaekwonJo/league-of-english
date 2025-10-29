@@ -9,14 +9,15 @@
 
 ### 오늘의 Top 3 (베타 직전)
 1. **Fallback 분석 prefix 보정** – `analysisFallbackVariant.test.js`가 요구하는 형식으로 프롬프트/후처리를 정리
-2. **단계별 URL E2E 스냅샷 추가** – 어휘/학습/분석 새 경로를 Playwright로 캡처해 회귀 방지
-3. **Render/Vercel 재배포 + 스모크 점검** – 새 플로우가 실서버에 반영됐는지 확인
+2. **단계별 URL + popstate 회귀 테스트** – Playwright/통합 테스트로 뒤로가기·재시작 흐름을 보호
+3. **Render/Vercel 재배포 + 모바일 스모크** – 최신 빌드 반영 후 사이드바/학습 진입을 점검
 
 ### Known Issues
 - `analysisFallbackVariant.test.js`가 fallback 해석 prefix 누락으로 실패 중 – 프롬프트/포맷 교정 예정.
 - 일부 문서 grade/school 메타가 비어 있을 때 학생 노출 정책이 과/소노출될 수 있음(정책 튜닝 예정).
 - UI 캡처(`npm run capture:ui`)는 Playwright 설치 안내가 수동입니다.
 - Google Translate 무료 API 호출 제한: 캐시 삭제 시 주의.
+- 클라이언트 오류 리포트(`/api/errors/report`)는 아직 미구현이라 405가 반환됩니다 – 서버 라우트 보강 예정.
 
 ## 2. 빠른 시작 (로컬 개발)
 ```bash
@@ -73,7 +74,8 @@ npm run lint
 
 ## 6. 최근 업데이트 (2025-10-29)
 - Vocabulary/Study/Analysis를 단계별 경로(`/vocabulary/days`, `/study/solve`, `/analysis/detail`)로 분리해 뒤로가기·딥링크가 자연스럽게 동작합니다.
-- 모바일 헤더를 단일 토글(☰/✕)과 중앙 🦉 제목으로 정리해 메뉴/로고 겹침을 없앴습니다.
+- StudyPage의 히스토리 핸들러를 재구성해 "Cannot access 'J' before initialization" 오류 없이 복귀/재시작이 됩니다.
+- 모바일 헤더를 단일 토글(☰/✕)과 중앙 🦉 제목으로 정리하고, 메뉴 바깥을 누르면 즉시 닫히도록 outside-click 감지를 넣었습니다.
 - `/documents/:id` PUT API로 관리자 문서 제목·학년을 수정하면 학습/어휘 목록에 즉시 반영됩니다.
 - 문제 생성 한도를 유형별로 재조정(AI 합산 5문, 비AI 유형 10문)해 긴 요청에서 타임아웃이 크게 줄었습니다.
 - 빈칸 fallback 문제의 질문·해설을 KSAT 스타일로 강화했으며, `analysisFallbackVariant.test.js` 보정 작업은 진행 중입니다.
