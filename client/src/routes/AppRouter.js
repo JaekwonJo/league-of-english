@@ -14,6 +14,7 @@ const pageComponents = {
   HomePage: lazy(() => import('../pages/HomePage')),
   StudyPage: lazy(() => import('../pages/StudyPage')),
   VocabularyPage: lazy(() => import('../pages/VocabularyPage')),
+  WorkbookPage: lazy(() => import('../pages/WorkbookPage')),
   StatsPage: lazy(() => import('../pages/StatsPage')),
   RankingPage: lazy(() => import('../pages/RankingPage')),
   ProfilePage: lazy(() => import('../pages/ProfilePage')),

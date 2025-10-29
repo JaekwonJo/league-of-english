@@ -33,6 +33,14 @@
       "roles": ["student", "teacher", "admin"]
     },
     {
+      "path": "/workbook",
+      "name": "워크북 학습",
+      "icon": "NotebookPen",
+      "component": "WorkbookPage",
+      "requiresAuth": true,
+      "roles": ["student", "teacher", "admin"]
+    },
+    {
       "path": "/stats",
       "name": "학습 통계",
       "icon": "TrendingUp",
