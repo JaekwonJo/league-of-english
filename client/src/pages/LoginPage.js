@@ -22,6 +22,19 @@ const LoginPage = () => {
   const [codeSent, setCodeSent] = useState(false);
   const [codeCountdown, setCodeCountdown] = useState(0);
   const [infoMessage, setInfoMessage] = useState('');
+  const [isCompact, setIsCompact] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.innerWidth <= 480;
+  });
+
+  React.useEffect(() => {
+    const handleResize = () => {
+      if (typeof window === 'undefined') return;
+      setIsCompact(window.innerWidth <= 480);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   React.useEffect(() => {
     if (!codeSent || codeCountdown <= 0) return;
@@ -143,14 +156,18 @@ const LoginPage = () => {
                   placeholder="이메일"
                   value={formData.email}
                   onChange={handleChange}
-                  style={{ ...styles.input, flex: 1 }}
+                  style={{ ...styles.input, flex: '1 1 200px', minWidth: 0 }}
                   required
                 />
                 <button
                   type="button"
                   onClick={handleSendCode}
                   disabled={sendingCode || codeCountdown > 0}
-                  style={styles.codeButton}
+                  style={{
+                    ...styles.codeButton,
+                    width: isCompact ? '100%' : 'auto',
+                    marginTop: isCompact ? 8 : 0
+                  }}
                 >
                   {sendingCode ? '전송 중…' : codeCountdown > 0 ? `${codeCountdown}초` : '인증코드'}
                 </button>
@@ -295,7 +312,9 @@ const styles = {
   },
   emailRow: {
     display: 'flex',
-    gap: '8px'
+    gap: '8px',
+    flexWrap: 'wrap',
+    alignItems: 'center'
   },
   input: {
     padding: '12px 16px',
@@ -324,10 +343,15 @@ const styles = {
     color: 'var(--text-on-accent)',
     border: 'none',
     borderRadius: '10px',
-    padding: '0 16px',
+    padding: '12px 16px',
     fontWeight: 'bold',
     cursor: 'pointer',
-    minWidth: '110px'
+    minWidth: '110px',
+    flexShrink: 0,
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '44px'
   },
   info: {
     background: 'rgba(99, 102, 241, 0.2)',
