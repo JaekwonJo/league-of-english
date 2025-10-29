@@ -12,6 +12,13 @@
 - Files: client/src/pages/StudyPage.js, client/src/components/layout/MainLayout.js.
 - Tests: `npm run lint` (기존 `analysisFallbackVariant.test.js`는 여전히 prefix 보정 필요).
 
+## 2025-10-29 (teacher API mount + error intake + analysis budget)
+- Issue: 프로필의 반 코드/학생 목록이 404·타임아웃으로 깜빡이며 표시되지 않고, 클라이언트 오류 리포트 `/api/errors/report`는 405를 반환했습니다. 분석 생성은 오래 걸려 프런트에서 타임아웃이 났습니다.
+- Cause: 서버에 `teacher.routes`가 마운트되지 않았고, `teacher_student_links`/에러 수집 테이블이 없었습니다. 분석 자동 생성의 시간 예산이 넉넉해(25초/2개) 환경에 따라 지연됐습니다.
+- Fix: 서버에 `/api/teacher` 라우트를 마운트하고, `teacher_student_links`와 `client_error_reports` 테이블을 보강했습니다. `/api/errors/report` POST 엔드포인트를 추가했습니다. 분석 자동 생성 기본값을 12초/1개로 낮춰 타임아웃을 줄였습니다.
+- Files: server/server.js, server/routes/errors.routes.js, server/services/analysisService.js.
+- Verify: 프로필 → 반 코드/학생 섹션이 즉시 로딩. 콘솔의 405 사라짐. 분석 개별 생성은 정상, 자동 생성은 1개까지만 빠르게 반환.
+
 ## 2025-10-29 (multi-step routes + rename sync + gen limits)
 - Issue: 단일 페이지에서 단계가 바뀌어도 주소가 그대로라 뒤로가기/북마크가 불편했고, 모바일 헤더가 🦉·햄버거 아이콘 겹침으로 헷갈렸어요. 관리자 문서 이름을 바꿔도 어휘/학습 목록에 반영되지 않았습니다.
 - Cause: Vocabulary/Study/Analysis 페이지가 내부 state만 바꾸고 URL 변경 없이 동작했으며, 문서 수정 API 자체가 없었습니다. 문제 생성은 유형별 제한이 없어 긴 요청에서 타임아웃이 잦았어요.

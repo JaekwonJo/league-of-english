@@ -87,9 +87,14 @@ const StudyPage = () => {
 
   const syncPathToMode = useCallback((modeValue) => {
     const target = studyPathMap[modeValue] || '/study';
-    if (window.location.pathname !== target) {
-      window.history.pushState({}, '', target);
-      window.dispatchEvent(new PopStateEvent('popstate'));
+    try {
+      if (window.location.pathname !== target) {
+        window.history.pushState({}, '', target);
+        // Avoid synthetic popstate to prevent early references during init in some bundles
+        // Consumers relying on popstate should handle back/forward only.
+      }
+    } catch (e) {
+      /* noop */
     }
   }, [studyPathMap]);
 

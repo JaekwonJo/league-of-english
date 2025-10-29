@@ -898,8 +898,8 @@ class AnalysisService {
       if (!document) throw new Error('문서를 찾을 수 없습니다.');
 
       const passages = this.extractPassages(document.content);
-      const maxPerCall = Math.max(1, parseInt(process.env.LOE_ANALYSIS_MAX_PASSAGES_PER_CALL || '2', 10));
-      const budgetMs = Math.max(5000, parseInt(process.env.LOE_ANALYSIS_TIME_BUDGET_MS || '25000', 10));
+      const maxPerCall = Math.max(1, parseInt(process.env.LOE_ANALYSIS_MAX_PASSAGES_PER_CALL || '1', 10));
+      const budgetMs = Math.max(5000, parseInt(process.env.LOE_ANALYSIS_TIME_BUDGET_MS || '12000', 10));
       const start = Date.now();
       const saved = [];
 

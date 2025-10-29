@@ -39,6 +39,8 @@ const adminRoutes = require('./routes/admin.routes');
 const vocabRoutes = require('./routes/vocab.routes');
 const studyRoutes = require('./routes/study.routes');
 const membershipRoutes = require('./routes/membership.routes');
+const teacherRoutes = require('./routes/teacher.routes');
+const clientErrorRoutes = require('./routes/errors.routes');
 const workbookRoutes = require('./routes/workbook.routes');
 
 // App init
@@ -88,6 +90,8 @@ app.use('/api', vocabRoutes);
 app.use('/api/study', studyRoutes);
 app.use('/api/membership', membershipRoutes);
 app.use('/api', workbookRoutes);
+app.use('/api/teacher', teacherRoutes);
+app.use('/api/errors', clientErrorRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
@@ -120,6 +124,21 @@ async function startServer() {
         used_at DATETIME,
         expires_at DATETIME,
         active BOOLEAN DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`);
+      await database.run(`CREATE TABLE IF NOT EXISTS teacher_student_links (
+        teacher_id INTEGER NOT NULL,
+        student_id INTEGER NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (teacher_id, student_id)
+      )`);
+      await database.run(`CREATE TABLE IF NOT EXISTS client_error_reports (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        path TEXT,
+        message TEXT,
+        stack TEXT,
+        payload TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )`);
     } catch(e) { console.warn('[init] teacher_codes table ensure failed:', e?.message || e); }
