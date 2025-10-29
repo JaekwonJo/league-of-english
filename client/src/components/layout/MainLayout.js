@@ -77,7 +77,10 @@ const MainLayout = ({ children, currentPath }) => {
       <aside
         ref={sidebarRef}
         style={{
-          ...styles.sidebar,
+          {
+            ...styles.sidebar,
+            ...(isMobile ? { overflow: 'hidden' } : { overflow: 'visible' })
+          },
           ...(isMobile
             ? {
                 width: sidebarOpen ? uiConfig.layout.sidebar.width : 0,
@@ -231,8 +234,7 @@ const styles = {
     transition: 'width 0.3s ease, transform 0.3s ease, opacity 0.2s ease',
     display: 'flex',
     flexDirection: 'column',
-    zIndex: 1000,
-    overflow: 'hidden'
+    zIndex: 1000
   },
   sidebarOverlay: {
     boxShadow: '0 0 0 9999px rgba(2,6,23,0.6)'

@@ -489,6 +489,8 @@ const WorkbookPage = () => {
     }
   }, [selectedWorkbook, currentStepNumber]);
 
+  const isDetailPending = Boolean(selectedWorkbookId) && (!selectedWorkbook || detailLoading);
+
   if (listError) {
     return (
       <FriendlyError
@@ -503,6 +505,14 @@ const WorkbookPage = () => {
     return (
       <div style={styles.emptyState}>
         워크북 목록을 불러오는 중이에요... ⏳
+      </div>
+    );
+  }
+
+  if (isDetailPending) {
+    return (
+      <div style={styles.emptyState}>
+        워크북을 불러오는 중이에요... ⏳
       </div>
     );
   }
@@ -622,10 +632,10 @@ const WorkbookPage = () => {
     );
   }
 
-  if (detailLoading || !currentStep) {
+  if (!currentStep) {
     return (
       <div style={styles.emptyState}>
-        워크북을 불러오는 중이에요... ⏳
+        워크북 정보를 준비하는 중이에요... ⏳
       </div>
     );
   }
