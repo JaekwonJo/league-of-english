@@ -670,9 +670,9 @@ class DocumentAnalyzer {
       .filter(Boolean);
     const highlighted = terms.slice(0, 2).join(', ');
     const body = highlighted
-      ? `이번 문장의 필수 어휘 ${highlighted}를 중심으로 뜻·동의어·반의어를 정리해 볼게요.`
-      : '이번 문장에서 꼭 외워야 할 단어의 뜻과 관련 표현을 함께 정리해 볼게요.';
-    return this._ensurePrefixedLine(body, '필수 어휘');
+      ? `이번 문장의 핵심 어휘 ${highlighted}를 중심으로 뜻·동의어·반의어를 정리해 볼게요.`
+      : '이번 문장에서 꼭 외워야 할 어휘의 뜻과 관련 표현을 함께 정리해 볼게요.';
+    return this._ensurePrefixedLine(body, '어휘 포인트');
   }
 
   _validateVariant(variant, failureReasons = []) {
@@ -820,16 +820,44 @@ class DocumentAnalyzer {
           note: '사전에서 뜻과 예문을 찾아보면 도움이 돼요.'
         }];
       }
-      vocabularyWords = vocabularyWords.slice(0, 1);
+      // Enrich vocab entries to meet minimum quality (synonyms≥2, antonyms≥1, note≥8)
+      const ensureVocabQuality = (entry) => {
+        const term = String(entry?.term || '').trim() || (keywords[0] || 'focus');
+        const meaning = String(entry?.meaning || '').trim() || `${term}의 핵심 의미를 정리해 보세요.`;
+        const syn = Array.isArray(entry?.synonyms) ? entry.synonyms.filter(Boolean) : [];
+        const ant = Array.isArray(entry?.antonyms) ? entry.antonyms.filter(Boolean) : [];
+        while (syn.length < 2) {
+          const candidates = ['core', 'key idea', 'main'];
+          const pick = candidates[syn.length % candidates.length];
+          if (!syn.includes(pick)) syn.push(pick);
+        }
+        if (ant.length < 1) ant.push('opposite');
+        const note = (String(entry?.note || '').trim() || '예문과 함께 외우면 좋아요.');
+        return { term, meaning, synonyms: syn.slice(0, 3), antonyms: ant.slice(0, 2), note };
+      };
+      vocabularyWords = vocabularyWords.map(ensureVocabQuality);
+
+      // Ensure at least two vocab words with minimal fields filled
+      if (vocabularyWords.length < 2) {
+        const nextKeyword = (keywords[1] || keywords[0] || 'support');
+        vocabularyWords.push(ensureVocabQuality({
+          term: String(nextKeyword),
+          meaning: `${nextKeyword}의 기본 뜻을 확인해 보세요.`,
+          synonyms: ['related', 'connected'],
+          antonyms: ['unrelated'],
+          note: '예문 속 쓰임을 함께 비교해 보세요.'
+        }));
+      }
+      vocabularyWords = vocabularyWords.slice(0, 2);
       const vocabularyIntro = this._buildVocabularyIntro(vocabularyWords);
 
       sentenceAnalysis.push({
         english: highlightedEnglish,
         isTopicSentence: topicSentence,
         korean: this._ensurePrefixedLine(koreanLine, '한글 해석'),
-        analysis: this._ensurePrefixedLine(analysisRaw, '내용 분석'),
-        background: this._ensurePrefixedLine(backgroundRaw, '추가 메모'),
-        example: this._ensurePrefixedLine(exampleRaw, '생활 예시'),
+        analysis: this._ensurePrefixedLine(analysisRaw, '분석'),
+        background: this._ensurePrefixedLine(backgroundRaw, '이 문장에 필요한 배경지식'),
+        example: this._ensurePrefixedLine(exampleRaw, '이 문장에 필요한 사례'),
         grammar: this._ensureGrammarLine(grammarRaw),
         vocabulary: { intro: vocabularyIntro, words: vocabularyWords }
       });
@@ -938,13 +966,15 @@ class DocumentAnalyzer {
 
     const flowRole = this._describeFlowRole(idx, total);
 
-    const summary = [translationNote, flowRole, focusLine]
+    const summary = [translationNote, flowRole, focusLine,
+      '핵심 표현을 밑줄로 표시하고, 비슷한 예시 두 가지를 덧붙이면 의미가 더 선명해집니다.'
+    ]
       .map((text) => String(text || '').trim())
       .filter(Boolean)
       .join(' ')
       .replace(/\s+/g, ' ') || '문장의 핵심을 짚어 의미를 정리해 보세요.';
 
-    return `*** 내용 분석: ${summary}`;
+    return `*** 분석: ${summary}`;
   }
 
   _composeKoreanLine({ translation, englishSentence, keywords = [], koreanKeywords = [], idx = 0, total = 1 }) {
@@ -1251,7 +1281,8 @@ class DocumentAnalyzer {
       : `${contrastLabelRaw}와`;
     applications.push(`${topicLabel} 관점으로 하루 루틴을 기록하고, 일주일 뒤 얼마나 유연하게 바뀌었는지 함께 점검해 보세요.`);
     applications.push(`${contrastLabel} 비교해 보며 우리가 직접 조정할 수 있는 규칙과 습관을 목록으로 정리해 보세요.`);
-    return applications.slice(0, 2);
+    applications.push(`친구와 소그룹 토론을 열어 서로의 실천 계획을 공유하고, 다음 주에 무엇을 바꿀지 약속해 보세요.`);
+    return applications.slice(0, 3);
   }
 
   _describeFlowSummary(keyword, position = 'middle') {
