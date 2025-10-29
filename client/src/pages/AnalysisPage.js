@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api.service';
 import { analysisStyles } from '../styles/analysisStyles';
 import PassagePickerGrid from '../components/shared/PassagePickerGrid';
@@ -37,6 +38,7 @@ const STEPS = {
 };
 
 const AnalysisPage = () => {
+  const { isAdmin } = useAuth();
   const [documents, setDocuments] = useState([]);
   const [documentSearch, setDocumentSearch] = useState('');
   const [selectedDocument, setSelectedDocument] = useState(null);
@@ -875,7 +877,7 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
             ))}
           </div>
 
-          {variants.length > 0 && (
+          {isAdmin && variants.length > 0 && (
             <div style={analysisStyles.variantToolbar}>
               <div style={analysisStyles.variantToolbarLeft}>
                 <label style={analysisStyles.variantSelectAll}>
@@ -904,7 +906,7 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
             </div>
           )}
 
-          {variants.length > 0 && (
+          {isAdmin && variants.length > 0 && (
             <div style={analysisStyles.variantSelectionRow}>
               {variants.map((variant, index) => {
                 const variantIndex = typeof variant.variantIndex === 'number' ? variant.variantIndex : null;

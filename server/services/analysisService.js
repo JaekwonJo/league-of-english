@@ -222,8 +222,8 @@ class AnalysisService {
       throw new Error('유효한 지문 번호가 없습니다.');
     }
 
-    if (uniqueNumbers.length > 3) {
-      throw new Error('한 번에 최대 3개의 지문만 분석할 수 있어요.');
+    if (uniqueNumbers.length > 1) {
+      throw new Error('한 번에 1개의 지문만 분석할 수 있어요.');
     }
 
     const outcomes = [];

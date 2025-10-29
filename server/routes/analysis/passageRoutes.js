@@ -90,15 +90,15 @@ router.get('/passage/:passageNumber', verifyToken, async (req, res) => {
 router.post('/analyze-passage', verifyToken, async (req, res) => {
   try {
     const { documentId } = req.params;
-    const { passageNumber, count = 1 } = req.body || {};
+    const { passageNumber } = req.body || {};
     const userRole = req.user.role;
 
     if (!passageNumber) {
       return res.status(400).json({ success: false, message: 'passageNumber가 필요합니다.' });
     }
 
-    console.log(`[analysis] generate variants request - document: ${documentId}, passage: ${passageNumber}, count: ${count}`);
-    const result = await analysisService.generateVariants(documentId, Number(passageNumber), Number(count) || 1, userRole, req.user.id);
+    console.log(`[analysis] generate variants request - document: ${documentId}, passage: ${passageNumber}, count: 1`);
+    const result = await analysisService.generateVariants(documentId, Number(passageNumber), 1, userRole, req.user.id);
     res.json(result);
   } catch (error) {
     console.error('개별 지문 분석 오류:', error);
@@ -124,6 +124,10 @@ router.post('/analyze-passages', verifyToken, async (req, res) => {
     const { passageNumbers } = req.body || {};
     const userRole = req.user.role;
 
+    // 제한: 한 번에 1개 지문만 허용 (실행 시간/안정성)
+    if (!Array.isArray(passageNumbers) || passageNumbers.length !== 1) {
+      return res.status(400).json({ success: false, message: '한 번에 1개의 지문만 분석할 수 있어요.' });
+    }
     const result = await analysisService.analyzePassages(documentId, passageNumbers, userRole, req.user.id);
     if (!result.success && (!result.failures || result.failures.length === 0)) {
       return res.status(400).json({ success: false, message: '분석을 생성하지 못했어요. 지문 선택을 확인해 주세요.' });
