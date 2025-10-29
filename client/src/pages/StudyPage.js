@@ -93,76 +93,77 @@ const StudyPage = () => {
     }
   }, [studyPathMap]);
 
-  useEffect(() => {
-    syncPathToMode(mode);
-  }, [mode, syncPathToMode]);
-
-  useEffect(() => {
-    const handlePopState = () => {
-      const desiredMode = getModeFromPath(window.location.pathname);
-      if (desiredMode === mode) return;
-
-      if (desiredMode === 'config') {
-        if (mode !== 'config') {
-          restart();
-        }
-        return;
-      }
-
-      if (desiredMode === 'study') {
-        if (mode === 'study') return;
-        if (savedSession) {
-          const resumed = handleResumeSavedSession();
-          if (!resumed) {
-            syncPathToMode('config');
-          }
-        } else {
-          syncPathToMode(mode);
-        }
-        return;
-      }
-
-      if (desiredMode === 'result') {
-        if (mode === 'result') return;
-        if (mode === 'review') {
-          exitReview();
-          return;
-        }
-        if (results) {
-          exitReview();
-        } else {
-          syncPathToMode(mode);
-        }
-        return;
-      }
-
-      if (desiredMode === 'review') {
-        if (mode === 'review') return;
-        if (results) {
-          enterReview();
-        } else {
-          syncPathToMode(mode);
-        }
-      }
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    handlePopState();
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, [mode, getModeFromPath, savedSession, handleResumeSavedSession, syncPathToMode, restart, exitReview, enterReview, results]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [mode]);
-
   const handleResumeSavedSession = useCallback(() => {
     if (typeof restoreSavedSession !== 'function') return;
     const restored = restoreSavedSession();
     if (restored === false) {
       window.alert('저장된 학습 세션을 불러오지 못했어요. 새로 시작해 주세요.');
     }
+    return restored;
   }, [restoreSavedSession]);
+
+  const handlePopState = useCallback(() => {
+    const desiredMode = getModeFromPath(window.location.pathname);
+    if (desiredMode === mode) return;
+
+    if (desiredMode === 'config') {
+      if (mode !== 'config') {
+        restart();
+      }
+      return;
+    }
+
+    if (desiredMode === 'study') {
+      if (mode === 'study') return;
+      if (savedSession) {
+        const resumed = handleResumeSavedSession();
+        if (!resumed) {
+          syncPathToMode('config');
+        }
+      } else {
+        syncPathToMode(mode);
+      }
+      return;
+    }
+
+    if (desiredMode === 'result') {
+      if (mode === 'result') return;
+      if (mode === 'review') {
+        exitReview();
+        return;
+      }
+      if (results) {
+        exitReview();
+      } else {
+        syncPathToMode(mode);
+      }
+      return;
+    }
+
+    if (desiredMode === 'review') {
+      if (mode === 'review') return;
+      if (results) {
+        enterReview();
+      } else {
+        syncPathToMode(mode);
+      }
+    }
+  }, [getModeFromPath, mode, restart, savedSession, handleResumeSavedSession, syncPathToMode, exitReview, results, enterReview]);
+
+  useEffect(() => {
+    syncPathToMode(mode);
+  }, [mode, syncPathToMode]);
+
+  useEffect(() => {
+    window.addEventListener('popstate', handlePopState);
+    handlePopState();
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [handlePopState]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [mode]);
 
   const clearReviewQuery = useCallback(() => {
     try {

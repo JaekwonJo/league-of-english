@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import * as LucideIcons from 'lucide-react';
@@ -11,6 +11,7 @@ const MainLayout = ({ children, currentPath }) => {
   const { theme, toggleTheme } = useTheme();
   const breakpoint = uiConfig.layout.sidebar.breakpoint || 768;
   const [isMobile, setIsMobile] = useState(() => (typeof window !== 'undefined' ? window.innerWidth < breakpoint : false));
+  const sidebarRef = useRef(null);
 
   useEffect(() => {
     const onResize = () => {
@@ -41,23 +42,48 @@ const MainLayout = ({ children, currentPath }) => {
   };
 
   const navigate = (path) => {
-    window.location.href = path;
+    if (typeof window === 'undefined') return;
+    if (window.location.pathname === path) {
+      if (isMobile) setSidebarOpen(false);
+      return;
+    }
+    window.history.pushState({}, '', path);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    if (isMobile) setSidebarOpen(false);
   };
 
   const visibleRoutes = routesConfig.routes.filter((route) =>
     route.roles && route.roles.includes(user?.role || 'student')
   );
 
+  useEffect(() => {
+    if (!isMobile || !sidebarOpen) return;
+    const handleOutsideClick = (event) => {
+      if (!sidebarRef.current) return;
+      if (sidebarRef.current.contains(event.target)) return;
+      setSidebarOpen(false);
+    };
+
+    document.addEventListener('click', handleOutsideClick);
+    document.addEventListener('touchstart', handleOutsideClick);
+    return () => {
+      document.removeEventListener('click', handleOutsideClick);
+      document.removeEventListener('touchstart', handleOutsideClick);
+    };
+  }, [isMobile, sidebarOpen]);
+
   return (
     <div style={styles.container}>
       <aside
+        ref={sidebarRef}
         style={{
           ...styles.sidebar,
           ...(isMobile
             ? {
                 width: sidebarOpen ? uiConfig.layout.sidebar.width : 0,
                 transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
-                pointerEvents: sidebarOpen ? 'auto' : 'none'
+                pointerEvents: sidebarOpen ? 'auto' : 'none',
+                opacity: sidebarOpen ? 1 : 0
               }
             : { width: sidebarOpen ? uiConfig.layout.sidebar.width : uiConfig.layout.sidebar.collapsedWidth }
           ),
@@ -65,10 +91,12 @@ const MainLayout = ({ children, currentPath }) => {
           ...(isMobile && !sidebarOpen ? styles.sidebarCollapsedMobile : {})
         }}
       >
-        <div style={styles.logo}>
-          <span style={styles.logoIcon}>🦉</span>
-          {sidebarOpen && <span style={styles.logoText}>League of English</span>}
-        </div>
+        {(!isMobile || sidebarOpen) && (
+          <div style={styles.logo}>
+            <span style={styles.logoIcon}>🦉</span>
+            {sidebarOpen && <span style={styles.logoText}>League of English</span>}
+          </div>
+        )}
 
         <nav style={styles.nav}>
           {visibleRoutes.map((route) => {
@@ -130,12 +158,26 @@ const MainLayout = ({ children, currentPath }) => {
         )}
       </aside>
 
+      {isMobile && sidebarOpen && (
+        <button
+          type="button"
+          aria-label="메뉴 닫기"
+          style={styles.mobileOverlay}
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       <main
         style={{
           ...styles.main,
           marginLeft: isMobile ? 0 : (sidebarOpen ? uiConfig.layout.sidebar.width : uiConfig.layout.sidebar.collapsedWidth)
         }}
         className="main-content"
+        onClick={() => {
+          if (isMobile && sidebarOpen) {
+            setSidebarOpen(false);
+          }
+        }}
       >
         {isMobile && (
           <div style={styles.mobileTopBar}>
@@ -146,7 +188,7 @@ const MainLayout = ({ children, currentPath }) => {
             >
               {sidebarOpen ? <LucideIcons.X size={20} /> : <LucideIcons.Menu size={20} />}
             </button>
-            <div style={styles.mobileTitle}>🦉 League of English</div>
+            <div style={styles.mobileTitle}>League of English</div>
             <div style={{ display: 'flex', gap: '8px' }}>
               <button
                 style={styles.mobileActionBtn}
@@ -186,10 +228,11 @@ const styles = {
     height: '100vh',
     background: 'var(--sidebar-gradient)',
     color: 'var(--sidebar-text-primary)',
-    transition: 'width 0.3s ease, transform 0.3s ease',
+    transition: 'width 0.3s ease, transform 0.3s ease, opacity 0.2s ease',
     display: 'flex',
     flexDirection: 'column',
-    zIndex: 1000
+    zIndex: 1000,
+    overflow: 'hidden'
   },
   sidebarOverlay: {
     boxShadow: '0 0 0 9999px rgba(2,6,23,0.6)'
@@ -362,6 +405,16 @@ const styles = {
     background: 'var(--surface-soft)',
     color: 'var(--text-primary)',
     cursor: 'pointer'
+  },
+  mobileOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: 'rgba(15, 23, 42, 0.45)',
+    border: 'none',
+    zIndex: 900
   }
 };
 
