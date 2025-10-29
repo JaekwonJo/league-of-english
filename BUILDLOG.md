@@ -1,3 +1,10 @@
+## 2025-10-29 (workbook auto generation + light theme contrast)
+- Issue: 워크북 학습이 정적 데이터에 의존해 업데이트가 어려웠고, 라이트 모드에서 사이드바/안내문이 흐릿했습니다.
+- Cause: 워크북 콘텐츠를 JS 파일에 하드코딩했고, `/workbooks` API가 없어 자동 생성/저장이 불가능했습니다. 라이트 테마 팔레트도 대비값이 낮았습니다.
+- Fix: `workbook_sets` 테이블과 `/api/workbooks` 라우트를 추가하고, 분석 데이터를 바탕으로 10단계 카드/미션을 자동 구성하도록 서비스 계층을 구현했습니다. 라이트 테마 변수(사이드바 그라디언트, 텍스트 색, 카드 배경)를 재조정해 시인성을 높였습니다.
+- Files: server/services/workbookService.js, server/routes/workbook.routes.js, server/models/database.js, server/server.js, client/src/pages/WorkbookPage.js, client/src/services/api.service.js, client/src/index.css.
+- Tests: `npm run lint` (기존 `analysisFallbackVariant.test.js`는 여전히 pending).
+
 ## 2025-10-29 (study popstate fix + mobile sidebar close)
 - Issue: 문제 학습 진입 즉시 "Cannot access 'J' before initialization"가 발생했고, 모바일에서는 메뉴를 연 뒤 바깥을 눌러도 사이드바가 닫히지 않았어요.
 - Cause: `handlePopState`가 선언되기 전에 `useEffect`에서 실행되면서 참조 오류가 났고, 모바일 사이드바에 외부 클릭 감지가 없었습니다.

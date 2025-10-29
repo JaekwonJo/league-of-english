@@ -9,13 +9,13 @@
 
 ### 오늘의 Top 3 (베타 직전)
 1. **Fallback 분석 prefix 보정** – `analysisFallbackVariant.test.js`가 요구하는 형식으로 프롬프트/후처리를 정리
-2. **단계별 URL + popstate 회귀 테스트** – Playwright/통합 테스트로 뒤로가기·재시작 흐름을 보호
-3. **Render/Vercel 재배포 + 모바일 스모크** – 최신 빌드 반영 후 사이드바/학습 진입을 점검
+2. **워크북 자동 생성 E2E 테스트** – 카드 흐름을 Playwright로 확인해 회귀를 예방
+3. **Render/Vercel 재배포 + 라이트 테마 스모크** – 최신 빌드 반영 후 워크북/문제 학습 대비 점검
 
 ### Known Issues
 - `analysisFallbackVariant.test.js`가 fallback 해석 prefix 누락으로 실패 중 – 프롬프트/포맷 교정 예정.
 - 일부 문서 grade/school 메타가 비어 있을 때 학생 노출 정책이 과/소노출될 수 있음(정책 튜닝 예정).
-- UI 캡처(`npm run capture:ui`)는 Playwright 설치 안내가 수동입니다.
+- 워크북 자동 생성이 fallback만 사용될 때 품질 검수가 필요합니다.
 - Google Translate 무료 API 호출 제한: 캐시 삭제 시 주의.
 - 클라이언트 오류 리포트(`/api/errors/report`)는 아직 미구현이라 405가 반환됩니다 – 서버 라우트 보강 예정.
 
@@ -73,12 +73,12 @@ npm run lint
 - **UI 캡처 가이드**: `docs/ui-regression-guide.md`에 분석/학습/랭킹 화면 캡처 순서와 공유 템플릿이 정리돼 있고, `npm run capture:ui`로 Playwright 캡처 스크립트를 실행할 수 있어요.
 
 ## 6. 최근 업데이트 (2025-10-29)
-- Vocabulary/Study/Analysis를 단계별 경로(`/vocabulary/days`, `/study/solve`, `/analysis/detail`)로 분리해 뒤로가기·딥링크가 자연스럽게 동작합니다.
+- 워크북 학습 메뉴가 `/api/workbooks` + `workbook_sets`를 통해 자동 생성·저장되고, 10단계 카드 학습 플로우로 바로 이어집니다.
+- 라이트 모드 팔레트를 재정비해 사이드바·단계 안내문·카드가 모두 높은 대비로 표시됩니다.
 - StudyPage의 히스토리 핸들러를 재구성해 "Cannot access 'J' before initialization" 오류 없이 복귀/재시작이 됩니다.
 - 모바일 헤더를 단일 토글(☰/✕)과 중앙 🦉 제목으로 정리하고, 메뉴 바깥을 누르면 즉시 닫히도록 outside-click 감지를 넣었습니다.
 - `/documents/:id` PUT API로 관리자 문서 제목·학년을 수정하면 학습/어휘 목록에 즉시 반영됩니다.
 - 문제 생성 한도를 유형별로 재조정(AI 합산 5문, 비AI 유형 10문)해 긴 요청에서 타임아웃이 크게 줄었습니다.
-- 빈칸 fallback 문제의 질문·해설을 KSAT 스타일로 강화했으며, `analysisFallbackVariant.test.js` 보정 작업은 진행 중입니다.
 
 궁금한 점이 생기면 “어디에서 막혔어요?”라고 바로 알려 주세요. 함께 해결해 드릴게요! 😊
 
