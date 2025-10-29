@@ -429,6 +429,12 @@ export const api = {
       pending: () => apiService.get('/analysis/feedback/pending'),
       resolve: (feedbackId, status) => apiService.put(`/analysis/feedback/${feedbackId}`, { status })
     }
+  },
+
+  workbooks: {
+    list: (params) => apiService.get('/workbooks', params),
+    detail: (id) => apiService.get(`/workbooks/${id}`),
+    generate: (payload) => apiService.post('/workbooks/generate', payload)
   }
 };
 

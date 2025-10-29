@@ -349,6 +349,24 @@ class Database {
           FOREIGN KEY (document_id) REFERENCES documents(id)
         )`,
 
+        `CREATE TABLE IF NOT EXISTS workbook_sets (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          document_id INTEGER NOT NULL,
+          passage_number INTEGER NOT NULL,
+          title TEXT NOT NULL,
+          description TEXT,
+          cover_emoji TEXT DEFAULT '📘',
+          steps_json TEXT NOT NULL,
+          meta_json TEXT,
+          status TEXT DEFAULT 'ready',
+          created_by INTEGER,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(document_id, passage_number),
+          FOREIGN KEY (document_id) REFERENCES documents(id),
+          FOREIGN KEY (created_by) REFERENCES users(id)
+        )`,
+
         `CREATE TABLE IF NOT EXISTS inquiries (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           user_id INTEGER NOT NULL,

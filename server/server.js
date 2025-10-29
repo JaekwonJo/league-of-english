@@ -39,6 +39,7 @@ const adminRoutes = require('./routes/admin.routes');
 const vocabRoutes = require('./routes/vocab.routes');
 const studyRoutes = require('./routes/study.routes');
 const membershipRoutes = require('./routes/membership.routes');
+const workbookRoutes = require('./routes/workbook.routes');
 
 // App init
 const app = express();
@@ -86,6 +87,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api', vocabRoutes);
 app.use('/api/study', studyRoutes);
 app.use('/api/membership', membershipRoutes);
+app.use('/api', workbookRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
