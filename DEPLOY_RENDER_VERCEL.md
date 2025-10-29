@@ -1,66 +1,72 @@
-# 베타 배포 가이드 (Render + Vercel)
+## Render + Vercel 자동 배포 설정 (5분 컷)
 
-> 😊 아래 순서를 따라 하면 백엔드(Render)와 프런트엔드(Vercel)를 각각 몇 분 안에 올릴 수 있어요. 헷갈리는 부분은 그대로 복사해 붙이면 됩니다!
+이 문서 그대로 따라 하면, `main`에 푸시될 때마다 자동으로:
 
-## 0. 준비물 체크
-- GitHub 저장소: `JaekwonJo/league-of-english`
-- Render 계정 + Vercel 계정
-- 환경 변수 값
-  - `OPENAI_API_KEY` (필수)
-  - `JWT_SECRET` (필수, 임의의 긴 문자열 추천)
-  - `EMAIL_USER`/`EMAIL_PASS` 같은 메일 발송 정보 (선택)
-- 로컬에서 `npm install` / `npm run build`가 통과하는지 확인 (이미 완료 ✅)
+- GitHub Actions가 테스트를 돌리고
+- Render(API 서버)에 배포 Hook을 호출하고
+- Vercel(프런트)을 프로덕션으로 배포합니다.
 
 ---
 
-## 1. Render에서 서버 올리기
-1. Render 대시보드 → **New +** → **Blueprint Instance** 선택.
-2. GitHub 저장소를 연결하고 루트에 있는 `render.yaml`을 그대로 사용해 주세요.
-3. 빌드·시작 명령은 blueprint가 자동으로 채워 줍니다.
-   - Build: `npm ci --omit=dev`
-   - Start: `node server/server.js`
-4. **Environment Variables** 탭에서 아래 값을 설정합니다.
-   - `OPENAI_API_KEY` → 본인 키 입력
-   - `JWT_SECRET` → 원하는 긴 문자열
-   - `DB_FILE` → `/var/data/loe.db` (이미 YAML에 기본값, 확인만 하면 돼요)
-   - `NODE_VERSION` → `20` (blueprint 기본값)
-   - 필요하면 `CORS_ORIGIN`을 `https://<당신의-vercel-도메인>`으로 추가하세요.
-5. **Disk** 설정에서 이름 `data`, 경로 `/var/data`, 용량 1GB가 되어 있는지 체크합니다. (SQLite DB를 영구 보관하는 곳이에요.)
-6. Deploy 버튼을 누르면 첫 배포가 시작됩니다. 완료 후 Render가 발급한 URL 예시: `https://loe-server.onrender.com`.
-7. 건강 상태 확인: 브라우저에서 `https://<render-url>/api/health`에 접속해 `{ "status": "ok" }`가 나오면 성공입니다.
+### 0) 사전 확인
+
+- Render에 API 서비스가 이미 연결되어 있어야 합니다.
+- Vercel에 클라이언트(React) 프로젝트가 연결되어 있어야 합니다.
 
 ---
 
-## 2. Vercel에서 프런트 올리기
-1. Vercel 대시보드 → **Add New Project** → 위 저장소에서 `client` 디렉터리를 선택합니다.
-2. Root directory는 `client`입니다.
-3. Build Command: `npm run build`
-4. Output Directory: `build`
-5. Environment Variables 탭에 `REACT_APP_API_URL`을 추가하고 값으로 Render에서 받은 서버 URL 뒤에 `/api`를 붙입니다.
-   - 예: `https://loe-server.onrender.com/api`
-6. Deploy를 실행하면 Vercel이 `https://<something>.vercel.app` 주소를 줍니다.
+### 1) GitHub Actions 시크릿/변수 등록
+
+GitHub → 리포지토리(league-of-english) → Settings → Secrets and variables → Actions
+
+1) New repository secret 추가
+
+- `RENDER_DEPLOY_HOOK_URL` → Render 대시보드 → 서비스(API) → Settings → Deploy Hooks에서 복사
+- `VERCEL_TOKEN` → https://vercel.com/account/tokens 에서 생성한 토큰
+- `VERCEL_ORG_ID` → Vercel 프로젝트 → Settings → General → “Team ID / Org ID”
+- `VERCEL_PROJECT_ID` → Vercel 프로젝트 → Settings → General → “Project ID”
+
+2) (선택) Repository variables
+
+- `RENDER_DEPLOY_HOOK_URL`을 깃헙 변수로도 추가하면 시크릿 대신 변수로도 읽을 수 있습니다.
+
+이미 리포에는 `.github/workflows/ci.yml`가 준비되어 있어, 위 값만 넣으면 main 푸시 시 자동으로 Render/Vercel 배포를 수행합니다.
 
 ---
 
-## 3. 배포 후 체크리스트
-1. **관리자 로그인** → (예시 계정이 있다면) 테스트하거나, 새 계정을 만들어 로그인 흐름을 확인해 주세요.
-2. **지문 업로드 → 분석 생성**: 새 분석이나 fallback이 제대로 뜨는지 확인합니다.
-3. **분석 삭제 버튼**: 방금 만든 삭제 기능이 실제 서버에서도 동작하는지 클릭 테스트!
-4. **학습 화면**: 문제 불러오기, 풀이, 신고/좋아요 버튼을 눌러 반응을 살펴봅니다.
-5. Render 로그 탭에서 에러가 없는지, Vercel 로그에서 API 호출이 CORS 에러 없이 성공하는지 확인합니다.
+### 2) Render 설정 (API)
+
+- Environment → `JWT_SECRET`, `OPENAI_API_KEY`, `DB_FILE=/var/data/loe.db`, `CORS_ORIGIN=https://league-of-english.com,https://www.league-of-english.com`
+- Build Command: `npm ci` (추천: 프런트 빌드는 Vercel에서 수행)
+- Start Command: `npm start`
+
+자동 배포(Repository → Auto-Deploy ON)를 켜면, GitHub Actions를 쓰지 않아도 main 푸시 시 배포됩니다. 다만, CI 테스트를 통과한 빌드만 배포하고 싶으면 Actions Hook을 쓰는 것이 더 안전합니다.
 
 ---
 
-## 4. 베타 운영 팁
-- **환경 변수 변경**은 Render/Vercel에서 저장 후 재배포해야 적용돼요.
-- OpenAI 키가 빠지면 fallback 분석만 동작하니, 키 만료 여부를 수시로 점검해 주세요.
-- Vercel에서 새 URL이 발급되면 Render의 `CORS_ORIGIN`도 함께 업데이트해야 합니다.
-- SQLite 파일(`/var/data/loe.db`)은 Render 디스크에 저장됩니다. 필요하면 Render의 자동 백업 기능을 켜 두세요.
+### 3) Vercel 설정 (프런트)
+
+- Git 연동: Settings → Git → “Automatically deploy your Git commits” ON
+- Production Branch: `main`
+- Environment Variables: `REACT_APP_API_URL=https://loe-server.onrender.com/api`
+
+GitHub Actions를 켰다면, `VERCEL_*` 시크릿을 이용해 main 푸시 시 프로덕션 배포가 자동으로 일어납니다.
 
 ---
 
-## 5. 더 진행하고 싶다면
-- Stripe 등 결제를 붙일 계획이 있다면 Render에 Webhook URL을 추가하고, Vercel 환경 변수도 함께 관리하세요.
-- 베타 기간 동안에는 QA 계정을 따로 만들어 실제 학생 데이터와 섞이지 않도록 운영하는 것이 안전해요.
+### 4) 동작 확인
 
-필요한 단계는 여기까지예요! 언제든지 "어디서 막혔어요" 라고 말씀해 주시면, 그 지점부터 다시 도와드릴게요. 😊
+1) README 상단 배지를 참고하거나, GitHub → Actions 탭에서 CI가 초록색으로 끝나는지 확인합니다.
+2) Render 대시보드에서 새 배포가 시작되는지(Deploys 탭) 확인합니다.
+3) Vercel 대시보드에서 Production Deployment가 생성되는지 확인합니다.
+
+---
+
+### 5) 문제 해결 팁
+
+- Render 빌드 실패: 콘솔의 “Syntax error” 위치를 확인 후 커밋/푸시 → 다시 Hook 호출로 해결됩니다.
+- Vercel 404: 클라이언트 라우팅 시 `homepage` 설정 불필요(CRA). 프리뷰/프로덕션 도메인 확인.
+- CORS 오류: Render 환경변수 `CORS_ORIGIN`에 도메인을 콤마로 모두 추가(https://league-of-english.com, https://www.league-of-english.com).
+
+필요 시 원격으로 로그를 함께 보며 조정해 드리겠습니다.
+

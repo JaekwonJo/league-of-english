@@ -32,9 +32,9 @@
 - Render/Vercel 배포는 최신 커밋 적용이 필요하고, fallback 분석 테스트 보정 작업이 남아 있습니다.
 
 ## Next 3 (오늘 우선순위)
-1. fallback 분석(`analysisFallbackVariant`) 해석 prefix 보정 – 자동 분석 신뢰도↑
-2. 워크북 자동 생성 Playwright/E2E 테스트 추가 – 카드 흐름 회귀 방지↑
-3. Render/Vercel 재배포 후 라이트 테마/워크북 스모크 테스트 체크리스트 갱신 – 운영 안정성↑
+1. 워크북 자동 생성 Playwright/E2E 테스트 추가 – 카드 흐름 회귀 방지↑
+2. Render/Vercel Secrets 설정 점검(`RENDER_DEPLOY_HOOK_URL`, `VERCEL_*`) – 완전 자동 배포↑
+3. 분석/학습 스모크 시나리오 문서화 – 운영 확인 속도↑
 
 ## Known Issues
 - `analysisFallbackVariant.test.js`가 fallback 해석 prefix 누락으로 여전히 실패 중 – 프롬프트/포맷 교정 필요.
@@ -52,3 +52,4 @@
 - `/api/teacher` 라우트를 서버에 마운트하고 `teacher_student_links` 테이블을 보강해 프로필의 반 코드/학생 목록 404·무한 로딩을 해소했습니다.
 - 클라이언트 오류 리포트 엔드포인트(`/api/errors/report`)를 추가해 405를 제거하고 실제 오류 스택을 수집합니다.
 - 분석 자동 생성의 기본 예산을 12초/1개 지문으로 보수적으로 조정해 타임아웃을 줄였습니다.
+- Fallback 분석 포맷을 보정해 테스트 통과: 라벨(`*** 분석`, `*** 이 문장에 필요한 배경지식/사례`, `*** 어휘 포인트`) 정렬, 문장별 어휘 최소 2개(동의어≥2·반의어≥1), 실천 팁 3개.

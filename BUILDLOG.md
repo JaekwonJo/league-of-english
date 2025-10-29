@@ -19,6 +19,12 @@
 - Files: server/server.js, server/routes/errors.routes.js, server/services/analysisService.js.
 - Verify: 프로필 → 반 코드/학생 섹션이 즉시 로딩. 콘솔의 405 사라짐. 분석 개별 생성은 정상, 자동 생성은 1개까지만 빠르게 반환.
 
+## 2025-10-29 (fallback analysis format + CRA build fix)
+- Issue: Render 빌드가 `MainLayout.js` 스타일 객체 문법 오류로 실패했고, fallback 분석 테스트가 라벨/어휘 요건 미달로 실패했습니다.
+- Fix: 스타일 병합 구문을 올바르게 수정하여 CRA 빌드 통과. Fallback 분석은 라벨을 `*** 분석/이 문장에 필요한 배경지식/이 문장에 필요한 사례/*** 어휘 포인트`로 통일하고, 문장별 어휘를 최소 2개(동의어≥2·반의어≥1·노트≥8자) 보장, 실천 팁을 3개로 확장했습니다.
+- Files: client/src/components/layout/MainLayout.js, server/utils/documentAnalyzer.js, server/tests/analysisFallbackVariant.test.js(참조)
+- Result: `npm test` 50/50 통과. Render 재배포 준비 완료.
+
 ## 2025-10-29 (multi-step routes + rename sync + gen limits)
 - Issue: 단일 페이지에서 단계가 바뀌어도 주소가 그대로라 뒤로가기/북마크가 불편했고, 모바일 헤더가 🦉·햄버거 아이콘 겹침으로 헷갈렸어요. 관리자 문서 이름을 바꿔도 어휘/학습 목록에 반영되지 않았습니다.
 - Cause: Vocabulary/Study/Analysis 페이지가 내부 state만 바꾸고 URL 변경 없이 동작했으며, 문서 수정 API 자체가 없었습니다. 문제 생성은 유형별 제한이 없어 긴 요청에서 타임아웃이 잦았어요.
