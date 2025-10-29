@@ -1016,25 +1016,21 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
         const passage = generationPrompt.passage;
         if (!passage) return null;
         const slots = remainingSlots(passage);
-        const options = Array.from({ length: slots }, (_, idx) => idx + 1);
         return (
           <div style={analysisStyles.generationOverlay}>
             <div style={analysisStyles.generationCard}>
               <div style={analysisStyles.generationBadge}>#{String(passage.passageNumber || 0).padStart(2, '0')}</div>
-              <h3 style={analysisStyles.generationTitle}>몇 개 만들까요?</h3>
-              <p style={analysisStyles.generationSubtitle}>남은 칸: {slots}개 · 만들고 싶은 분석본 수를 골라 주세요.</p>
-              {options.length ? (
+              <h3 style={analysisStyles.generationTitle}>분석본 1개 생성</h3>
+              <p style={analysisStyles.generationSubtitle}>요청마다 분석본 한 개씩 생성돼요. 남은 자리: {slots}개</p>
+              {slots > 0 ? (
                 <div style={analysisStyles.generationButtons}>
-                  {options.map((count) => (
-                    <button
-                      key={`analysis-generation-count-${count}`}
-                      type="button"
-                      style={analysisStyles.generationButton}
-                      onClick={() => startGeneration(count)}
-                    >
-                      {count}개 만들기
-                    </button>
-                  ))}
+                  <button
+                    type="button"
+                    style={analysisStyles.generationButton}
+                    onClick={() => startGeneration(1)}
+                  >
+                    1개 만들기
+                  </button>
                 </div>
               ) : (
                 <div style={analysisStyles.generationEmpty}>이미 두 개의 분석본이 준비되어 있어요.</div>
