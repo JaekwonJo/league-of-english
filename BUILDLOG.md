@@ -25,6 +25,12 @@
 - Files: client/src/components/layout/MainLayout.js, server/utils/documentAnalyzer.js, server/tests/analysisFallbackVariant.test.js(참조)
 - Result: `npm test` 50/50 통과. Render 재배포 준비 완료.
 
+## 2025-10-29 (workbook e2e + test ids)
+- Issue: 워크북 흐름을 수동으로만 검증하고 있어 회귀 여부를 빠르게 확인하기 어려웠습니다.
+- Fix: Playwright E2E(`npm run test:e2e`)를 추가해 로그인→문서 선택→워크북 생성→카드 학습→Step 완료 토글까지 자동 점검합니다. 안정적인 셀렉터를 위해 Workbook 페이지에 `data-testid`를 부여했습니다.
+- Files: client/src/pages/WorkbookPage.js, tests/e2e/workbook.spec.js, playwright.config.js, package.json
+- Note: E2E 실행 전 `npm run dev:all`로 로컬 서버를 띄우고, 필요 시 `PLAYWRIGHT_BASE_URL`/`PLAYWRIGHT_API_URL`을 설정하세요.
+
 ## 2025-10-29 (multi-step routes + rename sync + gen limits)
 - Issue: 단일 페이지에서 단계가 바뀌어도 주소가 그대로라 뒤로가기/북마크가 불편했고, 모바일 헤더가 🦉·햄버거 아이콘 겹침으로 헷갈렸어요. 관리자 문서 이름을 바꿔도 어휘/학습 목록에 반영되지 않았습니다.
 - Cause: Vocabulary/Study/Analysis 페이지가 내부 state만 바꾸고 URL 변경 없이 동작했으며, 문서 수정 API 자체가 없었습니다. 문제 생성은 유형별 제한이 없어 긴 요청에서 타임아웃이 잦았어요.

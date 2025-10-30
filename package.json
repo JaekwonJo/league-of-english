@@ -30,6 +30,7 @@
     "session:auto:5m": "node scripts/auto-session-daemon.js 300000",
     "doctor:client": "node scripts/doctor-client.js",
     "test": "node --test server/tests",
+    "test:e2e": "npx playwright test",
     "capture:ui": "node scripts/capture-ui-playwright.js"
   },
   "pretest": "npm run check:grammar-manual",

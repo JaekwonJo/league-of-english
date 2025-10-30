@@ -67,7 +67,8 @@ npm run lint
 - 무료: 기본 스타일
 
 ## 5. 품질 전략
-- **테스트**: `npm test` (49개) – fallback 한글 변환, 문제 포맷, 신고·랭킹·variant 회전 등 검증
+- **테스트**: `npm test` (50개) – fallback 한글 변환, 문제 포맷, 신고·랭킹·variant 회전 등 검증
+- **E2E**: `npm run test:e2e` (Playwright) – 로컬에서 `npm run dev:all` 실행 후, 기본 관리자(`admin`/`admin123`)로 워크북 생성·카드 학습 플로우를 자동 점검합니다. API/앱 주소는 `PLAYWRIGHT_API_URL`, `PLAYWRIGHT_BASE_URL` 환경변수로 조정할 수 있어요.
 - **빌드**: `npm run build` – CRA 기반 프로덕션 빌드 (경고는 Known Issues 참고)
 - **로그**: Render/Vercel 콘솔에서 실시간 확인, OpenAI 실패 시 fallback 로그 기록
 - **UI 캡처 가이드**: `docs/ui-regression-guide.md`에 분석/학습/랭킹 화면 캡처 순서와 공유 템플릿이 정리돼 있고, `npm run capture:ui`로 Playwright 캡처 스크립트를 실행할 수 있어요.

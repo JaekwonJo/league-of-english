@@ -528,7 +528,12 @@ const WorkbookPage = () => {
             주제 잡기 → 어휘 익히기 → 구조 분석 → 실천 아이디어 정리까지 이어집니다.
           </p>
           {isTeacherOrAdmin(user?.role) && (
-            <button type="button" style={{ ...styles.primaryButton, marginTop: '16px' }} onClick={handleOpenGenerator}>
+            <button
+              type="button"
+              data-testid="open-workbook-generator"
+              style={{ ...styles.primaryButton, marginTop: '16px' }}
+              onClick={handleOpenGenerator}
+            >
               + 새 워크북 생성하기
             </button>
           )}
@@ -548,6 +553,7 @@ const WorkbookPage = () => {
                 style={styles.select}
                 value={selectedDocumentId}
                 onChange={(e) => handleSelectDocument(e.target.value)}
+                data-testid="workbook-document-select"
               >
                 <option value="">문서를 선택하세요</option>
                 {documents.map((doc) => (
@@ -560,6 +566,7 @@ const WorkbookPage = () => {
                 style={styles.select}
                 value={selectedPassage}
                 onChange={(e) => setSelectedPassage(e.target.value)}
+                data-testid="workbook-passage-select"
                 disabled={!passages.length}
               >
                 {passages.length === 0 && <option value="1">지문을 먼저 선택하세요</option>}
@@ -573,6 +580,7 @@ const WorkbookPage = () => {
             <div style={styles.formRow}>
               <button
                 type="button"
+                data-testid="generate-workbook"
                 style={{ ...styles.primaryButton, opacity: generatorLoading ? 0.7 : 1 }}
                 onClick={handleGenerateWorkbook}
                 disabled={generatorLoading}
@@ -599,6 +607,8 @@ const WorkbookPage = () => {
                 <button
                   key={workbook.id}
                   style={styles.cardButton}
+                  data-testid="workbook-card"
+                  data-workbook-id={workbook.id}
                   onClick={() => handleOpenWorkbook(workbook.id, 1)}
                 >
                   <div style={styles.cardMeta}>
@@ -651,7 +661,10 @@ const WorkbookPage = () => {
           </button>
           <div style={styles.pill}>Workbook · {selectedWorkbook.documentTitle}</div>
         </div>
-        <h2 style={{ fontSize: '26px', fontWeight: 800, color: 'var(--text-primary)' }}>
+        <h2
+          style={{ fontSize: '26px', fontWeight: 800, color: 'var(--text-primary)' }}
+          data-testid="workbook-detail-title"
+        >
           {selectedWorkbook.coverEmoji || '📘'} {selectedWorkbook.title}
         </h2>
         <p style={{ fontSize: '15px', lineHeight: 1.7, color: 'var(--text-secondary)' }}>
@@ -676,25 +689,30 @@ const WorkbookPage = () => {
           })}
         </div>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-          <span style={styles.tag}>
+          <span style={styles.tag} data-testid="workbook-card-counter">
             카드 {cardIndex + 1}/{currentStep.cards.length}
           </span>
-          <button type="button" style={styles.secondaryButton} onClick={handleToggleCompletion}>
+          <button
+            type="button"
+            style={styles.secondaryButton}
+            data-testid="workbook-step-complete"
+            onClick={handleToggleCompletion}
+          >
             {isStepCompleted ? '✅ Step 완료 표시 해제' : 'Step 완료 체크'}
           </button>
         </div>
       </div>
 
-      <div style={styles.missionBox}>
+      <div style={styles.missionBox} data-testid="workbook-mission">
         <div style={{ fontWeight: 700, marginBottom: '6px' }}>🎯 오늘의 미션</div>
         {currentStep.mission}
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
-        <div style={styles.flashcard}>
-          <div style={styles.flashcardFront}>{currentCard?.front}</div>
+        <div style={styles.flashcard} data-testid="workbook-flashcard">
+          <div style={styles.flashcardFront} data-testid="workbook-flashcard-front">{currentCard?.front}</div>
           {showBack && currentCard?.back && (
-            <div style={styles.flashcardBack}>{currentCard.back}</div>
+            <div style={styles.flashcardBack} data-testid="workbook-flashcard-back">{currentCard.back}</div>
           )}
         </div>
         <div style={styles.cardControls}>
