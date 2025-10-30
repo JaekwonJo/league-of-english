@@ -75,7 +75,15 @@ class ApiService {
         const errorData = await error.json();
         throw new Error(errorData.message || `서버 오류 (${error.status})`);
       } catch (jsonError) {
-        throw new Error(`서버 오류 (${error.status}): ${error.statusText}`);
+        try {
+          const text = await error.text();
+          if (text) {
+            throw new Error(text);
+          }
+        } catch (textError) {
+          /* ignore */
+        }
+        throw new Error(`서버 오류 (${error.status}): ${error.statusText || '요청을 처리하지 못했습니다.'}`);
       }
     } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
       // 네트워크 에러

@@ -324,17 +324,21 @@ const WorkbookPage = () => {
       const response = await api.workbooks.list();
       const items = Array.isArray(response?.data) ? response.data : [];
       setWorkbooks(items);
-      const cacheUpdates = {};
-      items.forEach((item) => {
-        cacheUpdates[item.id] = workbookCache[item.id] || null;
+      setWorkbookCache((prev) => {
+        const next = { ...prev };
+        items.forEach((item) => {
+          if (!next[item.id]) {
+            next[item.id] = prev[item.id] || null;
+          }
+        });
+        return next;
       });
-      setWorkbookCache((prev) => ({ ...cacheUpdates, ...prev }));
     } catch (error) {
       setListError(error.message || '워크북 목록을 불러오지 못했습니다.');
     } finally {
       setLoadingList(false);
     }
-  }, [workbookCache]);
+  }, []);
 
   const fetchWorkbookDetail = useCallback(async (id) => {
     if (!id) return;

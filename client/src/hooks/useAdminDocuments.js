@@ -16,7 +16,12 @@ export function useAdminDocuments() {
     setLoading(true);
     try {
       const response = await api.documents.list();
-      setDocuments(Array.isArray(response) ? response : []);
+      const data = Array.isArray(response)
+        ? response
+        : Array.isArray(response?.data)
+          ? response.data
+          : [];
+      setDocuments(data);
     } finally {
       setLoading(false);
     }
