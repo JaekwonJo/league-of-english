@@ -184,7 +184,10 @@ const MainLayout = ({ children, currentPath }) => {
           <div style={styles.mobileTopBar}>
             <button
               style={styles.mobileMenuBtn}
-              onClick={() => setSidebarOpen(!sidebarOpen)}
+              onClick={(event) => {
+                event.stopPropagation();
+                setSidebarOpen((prev) => !prev);
+              }}
               aria-label={sidebarOpen ? '메뉴 닫기' : '메뉴 열기'}
             >
               {sidebarOpen ? <LucideIcons.X size={20} /> : <LucideIcons.Menu size={20} />}
