@@ -8,6 +8,467 @@ class WorkbookService {
     this.analysisService = analysisService;
   }
 
+  _buildClassicWorkbookSteps({
+    document,
+    passageNumber,
+    passageText,
+    sentences,
+    vocabularyPool,
+    grammarPoints,
+    englishTitles,
+    englishSummary,
+    englishSummaryKo,
+    koreanMainIdea,
+    authorsClaim,
+    deepDive,
+    modernApps
+  }) {
+    const readingCards = this._ensureCards(
+      this._buildReadingPracticeCards(sentences, englishTitles, englishSummaryKo),
+      '지문 문장이 아직 준비되지 않았어요. 분석본을 먼저 생성해 주세요.'
+    );
+
+    const blankKoCards = this._ensureCards(
+      this._buildBlankPracticeCards(sentences, vocabularyPool, { hintType: 'korean' }),
+      '지문 속 어휘가 부족하여 빈칸 연습을 만들지 못했습니다.'
+    );
+
+    const blankEnCards = this._ensureCards(
+      this._buildBlankPracticeCards(sentences, vocabularyPool, { hintType: 'english' }),
+      '동의어/반의어 힌트를 만들 수 있는 어휘가 부족합니다.'
+    );
+
+    const translationCards = this._ensureCards(
+      this._buildTranslationPracticeCards(sentences),
+      '연습할 문장을 찾지 못했습니다. 분석본을 다시 확인해 주세요.'
+    );
+
+    const verbCards = this._ensureCards(
+      this._buildVerbPracticeCards(sentences),
+      '동사 변형 연습에 사용할 문장이 부족합니다.'
+    );
+
+    const grammarChoiceCards = this._ensureCards(
+      this._buildGrammarChoiceCards(sentences, vocabularyPool, grammarPoints),
+      '어법/어휘 선택 문제를 만들 수 있는 예시가 부족합니다.'
+    );
+
+    const awkwardCards = this._ensureCards(
+      this._buildAwkwardCards(sentences, vocabularyPool),
+      '어색한 표현 찾기 문제를 만들 수 있는 문장이 부족합니다.'
+    );
+
+    const sequenceCards = this._ensureCards(
+      this._buildSequenceCards(sentences, englishSummaryKo || englishSummary),
+      '순서 배열 연습을 구성할 수 있는 정보가 부족합니다.'
+    );
+
+    const paragraphCards = this._ensureCards(
+      this._buildParagraphCards(sentences, koreanMainIdea || englishSummaryKo, authorsClaim),
+      '문단 배열 연습을 만들 수 있는 정보가 부족합니다.'
+    );
+
+    const writingCards = this._ensureCards(
+      this._buildWritingCards(modernApps, englishSummary, englishSummaryKo, deepDive),
+      '영작 아이디어가 부족합니다. 분석본의 modernApplications 항목을 확인해 주세요.'
+    );
+
+    return [
+      this._createStep(1, '지문 연습', '📖', '원문을 천천히 읽으며 의미 단위로 나눠 보세요.', '각 문장을 소리 내어 읽고, 모르는 표현은 별표로 표시해 보세요.', readingCards, [
+        '모르는 표현은 노트에 정리',
+        '소리 내어 읽으며 억양 익히기'
+      ]),
+      this._createStep(2, '빈칸 완성 (우리말)', '🧩', '우리말 힌트를 보고 빈칸을 채워 보세요.', '힌트를 참고해 문장에 알맞은 영어 단어를 채워 보세요.', blankKoCards, [
+        '힌트 해석과 정답을 연결해 보기',
+        '정답 단어의 철자를 정확히 확인'
+      ]),
+      this._createStep(3, '빈칸 완성 (영문)', '🧠', '영문 힌트(동의어/반의어)를 활용해 빈칸을 채워 보세요.', '문장 분위기에 맞는 표현을 골라 빈칸을 채우세요.', blankEnCards, [
+        '동의어·반의어와 의미 비교',
+        '완성된 문장을 다시 읽어 자연스럽게 만들기'
+      ]),
+      this._createStep(4, '해석 연습', '📝', '원문을 다시 읽으며 자연스러운 우리말 해석을 연습하세요.', '직접 해석을 적은 뒤 정답 예시와 비교해 보세요.', translationCards, [
+        '직접 해석한 문장을 소리 내어 읽기',
+        '핵심 표현에 밑줄 긋기'
+      ]),
+      this._createStep(5, '동사형 연습', '⚙️', '문장 속 주요 동사를 찾아 다양한 시제로 바꿔 보세요.', '표시된 동사를 원형·과거형·현재분사로 정리해 보세요.', verbCards, [
+        '원형-과거형-현재분사 묶어 학습',
+        '새로운 시제로 문장 다시 써보기'
+      ]),
+      this._createStep(6, '어법·어휘 고르기', '🧐', '문맥에 가장 자연스러운 표현을 선택해 보세요.', '보기 중 올바른 표현을 고르고, 나머지 선택지가 어색한 이유를 설명해 보세요.', grammarChoiceCards, [
+        '틀린 보기의 이유 분석',
+        '정답 표현으로 예문 다시 만들기'
+      ]),
+      this._createStep(7, '어색한 곳 찾기', '🚨', '살짝 어색하게 바꾼 문장을 자연스럽게 고쳐 보세요.', '어색한 표현을 찾아 자연스럽게 바꾸고 이유를 적어 보세요.', awkwardCards, [
+        '교정 전·후 문장을 비교해서 읽기',
+        '어색했던 이유를 짧게 메모'
+      ]),
+      this._createStep(8, '순서 배열', '🔄', '흩어진 핵심 문장을 올바른 순서로 정리해 보세요.', '조각 문장을 읽고 자연스러운 순서를 적어 보세요.', sequenceCards, [
+        '정답 순서를 말로 설명',
+        '앞뒤 연결 표현 표시해 보기'
+      ]),
+      this._createStep(9, '문단 배열', '📚', '문단 요약을 읽고 글의 전개 흐름을 정리해 보세요.', '도입-전개-마무리 순서를 확인하고 다시 적어 보세요.', paragraphCards, [
+        '각 문단의 역할(도입/전환/마무리) 표시',
+        '핵심 문장을 한 줄로 다시 쓰기'
+      ]),
+      this._createStep(10, '영작 연습', '✍️', '지문에서 얻은 아이디어로 나만의 문장을 작성해 보세요.', '주어진 주제에 맞춰 2~3문장을 영어로 작성해 보세요.', writingCards, [
+        '작성한 문장을 스스로 점검',
+        '다음 학습에서 공유할 문장 고르기'
+      ])
+    ];
+  }
+
+  _createStep(stepNumber, title, mood, intro, mission, cards, takeaways) {
+    return {
+      step: stepNumber,
+      label: `STEP ${stepNumber}`,
+      title,
+      mood,
+      intro,
+      mission,
+      cards,
+      takeaways
+    };
+  }
+
+  _ensureCards(cards, fallbackMessage) {
+    if (Array.isArray(cards) && cards.length) {
+      return cards;
+    }
+    return [{
+      front: fallbackMessage,
+      back: '필요한 데이터를 먼저 준비해 주세요.'
+    }];
+  }
+
+  _buildReadingPracticeCards(sentences, englishTitles, summaryKo) {
+    if (!Array.isArray(sentences) || !sentences.length) {
+      return [];
+    }
+    const cards = sentences.slice(0, 6).map((entry, idx) => ({
+      front: `[지문 문장 ${idx + 1}]\n${this._cleanEnglish(entry.english)}`,
+      back: this._cleanLine(entry.korean) || this._cleanLine(entry.analysis)
+    }));
+    if (!cards.length && Array.isArray(englishTitles)) {
+      englishTitles.slice(0, 2).forEach((titleEntry, idx) => {
+        cards.push({
+          front: `[제목 힌트 ${idx + 1}] ${this._clean(titleEntry?.title)}`,
+          back: this._clean(titleEntry?.korean) || summaryKo || '제목 느낌을 직접 정리해 보세요.'
+        });
+      });
+    }
+    return cards;
+  }
+
+  _buildBlankPracticeCards(sentences, vocabularyPool, { hintType }) {
+    const cards = [];
+    const used = new Set();
+    (sentences || []).forEach((entry) => {
+      if (cards.length >= 5) return;
+      const selection = this._selectBlankTarget(entry, vocabularyPool);
+      if (!selection) return;
+      const english = this._cleanEnglish(entry.english);
+      if (!english || used.has(selection.word.toLowerCase())) return;
+      used.add(selection.word.toLowerCase());
+      const blanked = this._blankWordInSentence(english, selection.word);
+      const hint = hintType === 'english'
+        ? this._buildEnglishHint(selection.word, selection.vocab, entry)
+        : this._cleanLine(entry.korean) || '우리말 뜻을 떠올려 보세요.';
+      cards.push({
+        front: `[빈칸] ${blanked}\n힌트: ${hint}`,
+        back: `정답: ${selection.word}`
+      });
+    });
+    return cards;
+  }
+
+  _buildTranslationPracticeCards(sentences) {
+    return (sentences || []).slice(0, 6).map((entry, idx) => ({
+      front: `[해석 연습 ${idx + 1}]\n${this._cleanEnglish(entry.english)}\n→ 자연스러운 우리말로 적어 보세요.`,
+      back: `정답 예시: ${this._cleanLine(entry.korean) || this._cleanLine(entry.analysis) || '스스로 해석을 적어 보고 비교해 보세요.'}`
+    }));
+  }
+
+  _buildVerbPracticeCards(sentences) {
+    const cards = [];
+    (sentences || []).forEach((entry) => {
+      if (cards.length >= 4) return;
+      const english = this._cleanEnglish(entry.english);
+      if (!english) return;
+      const verbs = this._extractVerbCandidates(english);
+      if (!verbs.length) return;
+      const variants = verbs.map((verb) => this._suggestVerbVariants(verb)).join('\n');
+      cards.push({
+        front: `[동사형 연습]\n${english}`,
+        back: `예시 변형:\n${variants}`
+      });
+    });
+    return cards;
+  }
+
+  _buildGrammarChoiceCards(sentences, vocabularyPool, grammarPoints) {
+    const cards = [];
+    (vocabularyPool || []).slice(0, 3).forEach((word, idx) => {
+      if (!word?.term) return;
+      const correct = word.term;
+      const distractors = this._makeChoiceDistractors(correct);
+      cards.push({
+        front: `[어법·어휘 고르기 ${idx + 1}]\n문맥에 가장 자연스러운 표현을 고르세요.\n① ${correct}\n② ${distractors[0]}\n③ ${distractors[1]}\n힌트: ${word.meaning || '문맥을 떠올려 보세요.'}`,
+        back: `정답: ① ${correct}${word.note ? `\n설명: ${word.note}` : ''}`
+      });
+    });
+
+    if (!cards.length && Array.isArray(grammarPoints)) {
+      grammarPoints.slice(0, 2).forEach((point, idx) => {
+        cards.push({
+          front: `[어법 확인 ${idx + 1}]\n${point}`,
+          back: '힌트를 읽고 지문 속 예시 문장을 다시 확인해 보세요.'
+        });
+      });
+    }
+
+    return cards;
+  }
+
+  _buildAwkwardCards(sentences, vocabularyPool) {
+    const cards = [];
+    (sentences || []).forEach((entry, idx) => {
+      if (cards.length >= 3) return;
+      const selection = this._selectBlankTarget(entry, vocabularyPool);
+      const english = this._cleanEnglish(entry.english);
+      if (!selection || !english) return;
+      const incorrect = this._distortWord(selection.word);
+      const awkwardSentence = this._blankWordInSentence(english, selection.word).replace('_____', `${incorrect} (?)`);
+      cards.push({
+        front: `[어색한 곳 찾기 ${idx + 1}]\n${awkwardSentence}`,
+        back: `어색한 부분: ${incorrect} → ${selection.word}`
+      });
+    });
+    return cards;
+  }
+
+  _buildSequenceCards(sentences, summaryLine) {
+    const fragments = this._createSequenceFragments(sentences, summaryLine);
+    if (!fragments.length) return [];
+    const labels = ['A', 'B', 'C', 'D'];
+    const lines = fragments.map((frag, idx) => `${labels[idx]}. ${frag}`);
+    const answer = labels.slice(0, fragments.length).join(' → ');
+    return [{
+      front: '[순서 배열]\n흩어진 문장을 읽고 자연스러운 순서를 적어 보세요.\n' + lines.join('\n'),
+      back: `정답 예시: ${answer}`
+    }];
+  }
+
+  _buildParagraphCards(sentences, mainIdea, authorsClaim) {
+    const fragments = this._createParagraphFragments(sentences, mainIdea, authorsClaim);
+    if (!fragments.length) return [];
+    const labels = ['①', '②', '③'];
+    const lines = fragments.map((frag, idx) => `${labels[idx]} ${frag}`);
+    return [{
+      front: '[문단 배열]\n각 문단의 역할을 읽고 올바른 순서를 적어 보세요.\n' + lines.join('\n'),
+      back: `정답 예시: ${labels.slice(0, fragments.length).join(' → ')}`
+    }];
+  }
+
+  _buildWritingCards(modernApps, englishSummary, englishSummaryKo, deepDive) {
+    const prompts = [];
+    const ideas = Array.isArray(modernApps) ? modernApps.filter(Boolean) : [];
+    if (ideas.length) {
+      ideas.slice(0, 2).forEach((idea, idx) => {
+        prompts.push({
+          front: `영작 연습 ${idx + 1}\n아이디어: ${this._trim(idea, 150)}\n→ 이 아이디어로 2~3문장을 작성해 보세요.`,
+          back: '예시 답안은 직접 작성해 보세요.'
+        });
+      });
+    }
+    const tone = this._clean(deepDive.toneAndStyle) || englishSummary || englishSummaryKo;
+    prompts.push({
+      front: '한 문장 요약을 활용해 영작해 보세요.\n→ 글의 핵심을 한 문장으로 정리한 뒤, 자신의 생각을 덧붙여 보세요.',
+      back: tone ? `참고 요약: ${this._trim(tone, 180)}` : '핵심 내용을 한 줄로 정리하고 내 생각을 덧붙여 보세요.'
+    });
+    return prompts;
+  }
+
+  _selectBlankTarget(sentence, vocabularyPool) {
+    const english = this._cleanEnglish(sentence?.english);
+    if (!english) return null;
+    const candidates = Array.isArray(vocabularyPool) ? vocabularyPool : [];
+    for (const vocab of candidates) {
+      const term = this._clean(vocab?.term);
+      if (!term) continue;
+      const regex = new RegExp(`\\b${this._escapeRegex(term)}\\b`, 'i');
+      const match = english.match(regex);
+      if (match) {
+        return { word: match[0], vocab };
+      }
+    }
+    const fallback = this._pickKeywordFromSentence(english);
+    if (!fallback) return null;
+    return { word: fallback, vocab: null };
+  }
+
+  _blankWordInSentence(sentence, word) {
+    const regex = new RegExp(`\\b${this._escapeRegex(word)}\\b`, 'gi');
+    return sentence.replace(regex, '_____');
+  }
+
+  _buildEnglishHint(word, vocabEntry, sentence) {
+    if (vocabEntry) {
+      if (Array.isArray(vocabEntry.synonyms) && vocabEntry.synonyms.length) {
+        return `동의어: ${vocabEntry.synonyms.slice(0, 2).join(', ')}`;
+      }
+      if (Array.isArray(vocabEntry.antonyms) && vocabEntry.antonyms.length) {
+        return `반의어: ${vocabEntry.antonyms.slice(0, 2).join(', ')}`;
+      }
+      if (vocabEntry.meaning) {
+        return vocabEntry.meaning;
+      }
+    }
+    return this._cleanLine(sentence?.analysis) || '문맥을 떠올려 보고 알맞은 표현을 적어 보세요.';
+  }
+
+  _createSequenceFragments(sentences, summaryLine) {
+    const fragments = [];
+    if (Array.isArray(sentences) && sentences.length) {
+      const first = sentences[0];
+      const middle = sentences[Math.floor(sentences.length / 2)];
+      const last = sentences[sentences.length - 1];
+      if (first) fragments.push(this._trim(this._cleanLine(first.analysis) || first.english || '', 120));
+      if (middle && middle !== first && middle !== last) {
+        fragments.push(this._trim(this._cleanLine(middle.analysis) || middle.english || '', 120));
+      }
+      if (last && last !== first) fragments.push(this._trim(this._cleanLine(last.analysis) || last.english || '', 120));
+    }
+    if (summaryLine) {
+      fragments.push(this._trim(summaryLine, 120));
+    }
+    return fragments.slice(0, 4);
+  }
+
+  _createParagraphFragments(sentences, mainIdea, authorsClaim) {
+    const fragments = [];
+    if (mainIdea) {
+      fragments.push(`도입: ${this._trim(mainIdea, 120)}`);
+    }
+    if (Array.isArray(sentences) && sentences.length > 1) {
+      const middle = sentences[Math.floor(sentences.length / 2)];
+      if (middle) {
+        fragments.push(`전개: ${this._trim(this._cleanLine(middle.analysis) || middle.english || '', 120)}`);
+      }
+    }
+    if (authorsClaim) {
+      fragments.push(`마무리: ${this._trim(authorsClaim, 120)}`);
+    }
+    return fragments.slice(0, 3);
+  }
+
+  _escapeRegex(value) {
+    return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  _pickKeywordFromSentence(sentence) {
+    if (!sentence) return '';
+    const stop = new Set(['the', 'a', 'an', 'and', 'with', 'for', 'from', 'into', 'of', 'to', 'in', 'on', 'at', 'as', 'but', 'or', 'is', 'are', 'was', 'were', 'be', 'this', 'that', 'these', 'those']);
+    const words = sentence.split(/[^A-Za-z]+/).filter((word) => {
+      const lower = word.toLowerCase();
+      return lower.length >= 4 && !stop.has(lower);
+    });
+    words.sort((a, b) => b.length - a.length);
+    return words[0] || '';
+  }
+
+  _extractVerbCandidates(sentence) {
+    const tokens = sentence.split(/[^A-Za-z]+/).filter(Boolean);
+    const verbs = new Set();
+    const pronouns = new Set(['i', 'you', 'we', 'they', 'he', 'she', 'it', 'mentors', 'students', 'teachers', 'people', 'everyone']);
+    const stop = new Set(['the', 'a', 'an', 'and', 'with', 'for', 'from', 'into', 'of', 'to', 'in', 'on', 'at', 'as', 'but', 'or', 'is', 'are', 'was', 'were', 'be']);
+    tokens.forEach((token, index) => {
+      const lower = token.toLowerCase();
+      if (lower.length < 3 || stop.has(lower)) return;
+      const prev = tokens[index - 1]?.toLowerCase();
+      if (prev === 'to') {
+        verbs.add(lower);
+        return;
+      }
+      if (pronouns.has(prev) || (prev && prev.endsWith('s'))) {
+        verbs.add(lower);
+        return;
+      }
+      if (lower.endsWith('ing') || lower.endsWith('ed')) {
+        verbs.add(lower);
+      }
+    });
+    return Array.from(verbs).slice(0, 3);
+  }
+
+  _suggestVerbVariants(verb) {
+    const base = this._normalizeVerbBase(verb);
+    if (!base) {
+      return `${verb} → 다양한 시제로 바꾸어 보세요.`;
+    }
+    const past = base.endsWith('e') ? `${base}d` : base.endsWith('y') ? `${base.slice(0, -1)}ied` : `${base}ed`;
+    const ing = base.endsWith('e') ? `${base.slice(0, -1)}ing` : `${base}ing`;
+    return `${verb} → 원형 ${base}, 과거형 ${past}, 현재분사 ${ing}`;
+  }
+
+  _normalizeVerbBase(word) {
+    if (!word) return '';
+    const lower = word.toLowerCase();
+    if (lower.endsWith('ing')) {
+      let core = lower.slice(0, -3);
+      if (core.endsWith(core.slice(-1).repeat(2))) {
+        core = core.slice(0, -1);
+      }
+      if (core && !core.endsWith('e')) {
+        core += 'e';
+      }
+      return core;
+    }
+    if (lower.endsWith('ied')) {
+      return `${lower.slice(0, -3)}y`;
+    }
+    if (lower.endsWith('ed')) {
+      let core = lower.slice(0, -2);
+      if (core.endsWith(core.slice(-1).repeat(2))) {
+        core = core.slice(0, -1);
+      }
+      return core;
+    }
+    if (lower.endsWith('ies')) {
+      return `${lower.slice(0, -3)}y`;
+    }
+    if (lower.endsWith('es')) {
+      return lower.slice(0, -2);
+    }
+    if (lower.endsWith('s')) {
+      return lower.slice(0, -1);
+    }
+    return lower;
+  }
+
+  _makeChoiceDistractors(word) {
+    const lower = word.toLowerCase();
+    const variations = new Set();
+    variations.add(lower.endsWith('ing') ? `${lower.slice(0, -3)}ed` : `${lower}ing`);
+    variations.add(lower.endsWith('ed') ? `${lower.slice(0, -2)}ing` : `${lower}ed`);
+    variations.add(lower.endsWith('ly') ? `${lower.slice(0, -2)}` : `${lower}ly`);
+    const result = Array.from(variations).filter((item) => item !== lower);
+    if (result.length < 2) {
+      result.push(`${lower}s`);
+    }
+    return result.slice(0, 2);
+  }
+
+  _distortWord(word) {
+    const lower = word.toLowerCase();
+    if (lower.endsWith('e')) {
+      return `${lower}ly`;
+    }
+    if (lower.endsWith('ly')) {
+      return `${lower.slice(0, -2)}ness`;
+    }
+    return `${lower}ness`;
+  }
+
   async listWorkbooks(filter = {}) {
     const conditions = [];
     const params = [];
@@ -217,8 +678,6 @@ class WorkbookService {
 
     const vocabularyPool = this._collectVocabulary(sentences);
     const grammarPoints = this._collectGrammar(sentences);
-    const examples = this._collectExamples(sentences);
-    const backgrounds = this._collectBackgrounds(sentences);
 
     const englishSummary = this._clean(meta.englishSummary);
     const englishSummaryKo = this._clean(meta.englishSummaryKorean);
@@ -227,170 +686,25 @@ class WorkbookService {
     const deepDive = meta.deepDive || {};
     const modernApps = Array.isArray(meta.modernApplications) ? meta.modernApplications : [];
 
-    const coreMessage = this._clean(deepDive.coreMessage || koreanMainIdea || authorsClaim);
-    const logicalFlow = this._clean(deepDive.logicalFlow || englishSummaryKo);
-    const toneAndStyle = this._clean(deepDive.toneAndStyle || '필자의 어조를 한 줄로 정리해 보세요.');
-
-    const steps = [];
-
-    // Step 1
-    steps.push({
-      step: 1,
-      label: 'Step 1',
-      title: 'Warm-up · 주제 감 잡기',
-      mood: '🌅',
-      intro: '제목 아이디어와 핵심 요약을 보고 오늘 지문의 분위기를 가볍게 예측해 보세요.',
-      mission: '카드 앞면을 읽고 ✔ 체크하기 → 내가 떠올린 주제를 한 줄로 적어보세요.',
-      cards: this._buildTitleCards(englishTitles, coreMessage, englishSummaryKo),
-      takeaways: [
-        '예상 주제를 한 문장으로 작성',
-        '느껴지는 감정/톤을 단어 2개로 정리'
-      ]
-    });
-
-    // Step 2 Vocabulary
-    steps.push({
-      step: 2,
-      label: 'Step 2',
-      title: 'Vocabulary Sprint',
-      mood: '🔤',
-      intro: '핵심 어휘를 카드로 익히고, 동의어·반의어를 함께 외워 보세요.',
-      mission: '카드 뒷면까지 읽고 나만의 예문을 소리 내어 말해보기 → 모르는 단어 별표 표시',
-      cards: this._buildVocabularyCards(vocabularyPool),
-      takeaways: [
-        '어휘 3개 이상 소리 내어 말하기',
-        '동의어·반의어를 노트에 정리'
-      ]
-    });
-
-    // Step 3 Skimming
-    steps.push({
-      step: 3,
-      label: 'Step 3',
-      title: 'Skimming Route',
-      mood: '🛤️',
-      intro: '문장의 핵심을 빠르게 훑으며 흐름을 파악해요.',
-      mission: '카드를 읽고 핵심 동사/명사에 밑줄 → 흐름을 3단계로 요약해보기',
-      cards: this._buildSkimmingCards(sentences),
-      takeaways: [
-        '문장별 핵심 키워드 2개 표시',
-        '전체 흐름을 한 줄로 설명'
-      ]
-    });
-
-    // Step 4 Detail scanning
-    steps.push({
-      step: 4,
-      label: 'Step 4',
-      title: 'Scanning Challenge',
-      mood: '🔍',
-      intro: '세부 정보를 정확히 찾아보고 배경 지식을 함께 정리해요.',
-      mission: '카드 뒷면 정보를 지문에서 찾아 표시 → 비슷한 표현 찾으면 ✔ 체크',
-      cards: this._buildDetailCards(sentences, backgrounds),
-      takeaways: [
-        '세부 정보를 지문에서 표시',
-        '배경 설명을 한 줄로 요약'
-      ]
-    });
-
-    // Step 5 Inference
-    steps.push({
-      step: 5,
-      label: 'Step 5',
-      title: 'Inference Lab',
-      mood: '🧠',
-      intro: '필자의 숨은 의도와 강조점을 스스로 설명해 보세요.',
-      mission: '카드를 뒤집고 "왜?"라는 질문에 답하기 → 근거 문장 찾아 표시',
-      cards: this._buildInferenceCards(authorsClaim, coreMessage, logicalFlow, toneAndStyle),
-      takeaways: [
-        '주장을 뒷받침하는 문장 2개 찾기',
-        '필자의 어조를 설명하는 형용사 2개 적기'
-      ]
-    });
-
-    // Step 6 Structure
-    steps.push({
-      step: 6,
-      label: 'Step 6',
-      title: 'Structure Mapping',
-      mood: '🧩',
-      intro: '글의 구조를 부분별로 정리해 보며 연결 고리를 이해합니다.',
-      mission: '카드를 읽고 흐름을 그림으로 표현 → 각 단계 제목 붙여보기',
-      cards: this._buildStructureCards(logicalFlow, sentences),
-      takeaways: [
-        '서론-전개-결론 구조로 정리',
-        '각 구조 파트에 핵심 문장 적기'
-      ]
-    });
-
-    // Step 7 Grammar
-    steps.push({
-      step: 7,
-      label: 'Step 7',
-      title: 'Grammar Clinic',
-      mood: '✏️',
-      intro: '지문에서 포착한 핵심 문법 패턴을 재확인합니다.',
-      mission: '카드 내용을 참고해 같은 패턴으로 문장을 바꿔 보기 → 오류 없이 다시 쓰기',
-      cards: this._buildGrammarCards(grammarPoints),
-      takeaways: [
-        '핵심 구문 2개 이상 나만의 문장으로 만들기',
-        '수동태/관계절 등 문법 포인트 체크'
-      ]
-    });
-
-    // Step 8 Expression
-    steps.push({
-      step: 8,
-      label: 'Step 8',
-      title: 'Expression Upgrade',
-      mood: '💬',
-      intro: '실제로 써먹을 만한 표현과 예시를 확보해 보세요.',
-      mission: '카드 표현으로 회화/글쓰기 문장 1개씩 작성 → 친구에게 설명하듯 말하기',
-      cards: this._buildExpressionCards(vocabularyPool, examples),
-      takeaways: [
-        '표현 2개 녹음하거나 말해보기',
-        'SNS/에세이용 문장 초안 작성'
-      ]
-    });
-
-    // Step 9 Quiz
-    steps.push({
-      step: 9,
-      label: 'Step 9',
-      title: 'Self-Check Quiz',
-      mood: '📝',
-      intro: 'O/X 형태로 내용을 점검하며 헷갈린 부분을 다시 복습합니다.',
-      mission: '카드를 보고 답한 뒤, 근거 문장을 찾아 표시하기',
-      cards: this._buildQuizCards({
-        authorsClaim,
-        koreanMainIdea,
-        modernApps,
-        englishSummaryKo
-      }),
-      takeaways: [
-        '틀린 문제는 해당 Step으로 돌아가 복습',
-        '정답 근거 문장을 지문에서 표시'
-      ]
-    });
-
-    // Step 10 Reflection
-    steps.push({
-      step: 10,
-      label: 'Step 10',
-      title: 'Reflection & Action',
-      mood: '🚀',
-      intro: '학습 내용을 내 삶과 수업에 어떻게 연결할지 구체적으로 정리합니다.',
-      mission: '카드 아이디어를 참고해 나만의 실천 계획 작성 → 다음 스터디에서 공유할 목표 만들기',
-      cards: this._buildReflectionCards(modernApps, englishSummary, englishSummaryKo),
-      takeaways: [
-        '실천 아이디어 2가지 이상 작성',
-        '다음 학습에서 시도할 목표 정하기'
-      ]
+    const steps = this._buildClassicWorkbookSteps({
+      document,
+      passageNumber,
+      passageText,
+      sentences,
+      vocabularyPool,
+      grammarPoints,
+      englishTitles,
+      englishSummary,
+      englishSummaryKo,
+      koreanMainIdea,
+      authorsClaim,
+      deepDive,
+      modernApps
     });
 
     return {
-      title: `${document.title || '워크북'} · ${passageNumber}단계 학습`,
-      description: koreanMainIdea || englishSummaryKo || '지문의 핵심 아이디어를 10단계로 정리한 워크북입니다.',
+      title: `${document.title || '워크북'} 10단계 학습`,
+      description: koreanMainIdea || englishSummaryKo || '지문의 핵심을 10단계 워크북으로 재구성했습니다.',
       coverEmoji: DEFAULT_EMOJI,
       steps,
       meta: {

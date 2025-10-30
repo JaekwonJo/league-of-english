@@ -75,6 +75,147 @@ const styles = {
     flexDirection: 'column',
     gap: '16px'
   },
+  generatorWrapper: {
+    marginTop: '16px',
+    padding: '24px',
+    borderRadius: '18px',
+    border: '1px solid var(--surface-border)',
+    background: 'linear-gradient(135deg, rgba(59,130,246,0.08), rgba(16,185,129,0.08))',
+    display: 'grid',
+    gap: '20px',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))'
+  },
+  generatorStepBox: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '14px',
+    padding: '18px',
+    borderRadius: '16px',
+    background: 'var(--surface-card)',
+    border: '1px solid var(--surface-border)'
+  },
+  generatorStepHeader: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px'
+  },
+  generatorBadge: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '4px 10px',
+    borderRadius: '999px',
+    background: 'rgba(37,99,235,0.12)',
+    color: 'var(--indigo-strong)',
+    fontSize: '12px',
+    fontWeight: 700,
+    letterSpacing: '0.08em'
+  },
+  generatorDescription: {
+    fontSize: '13px',
+    color: 'var(--text-secondary)',
+    lineHeight: 1.5
+  },
+  generatorSearchRow: {
+    display: 'flex'
+  },
+  generatorSearchInput: {
+    flex: 1,
+    padding: '12px',
+    borderRadius: '12px',
+    border: '1px solid var(--border-subtle)',
+    background: 'var(--surface-soft)',
+    color: 'var(--text-primary)',
+    fontSize: '14px'
+  },
+  generatorDocGrid: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px',
+    maxHeight: '340px',
+    overflowY: 'auto',
+    paddingRight: '4px'
+  },
+  generatorDocCard: {
+    textAlign: 'left',
+    padding: '14px',
+    borderRadius: '14px',
+    border: '1px solid var(--border-subtle)',
+    background: 'var(--surface-soft)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px',
+    cursor: 'pointer',
+    transition: 'border 0.2s ease, background 0.2s ease'
+  },
+  generatorDocCardActive: {
+    borderColor: 'var(--indigo)',
+    background: 'rgba(99,102,241,0.12)'
+  },
+  generatorDocTitle: {
+    fontWeight: 700,
+    fontSize: '15px',
+    color: 'var(--text-primary)',
+    margin: 0
+  },
+  generatorDocMeta: {
+    fontSize: '12px',
+    color: 'var(--text-secondary)',
+    margin: 0
+  },
+  generatorEmpty: {
+    padding: '16px',
+    borderRadius: '12px',
+    background: 'var(--surface-soft)',
+    color: 'var(--text-secondary)',
+    textAlign: 'center',
+    fontSize: '13px'
+  },
+  generatorErrorBox: {
+    padding: '12px',
+    borderRadius: '10px',
+    background: 'rgba(248,113,113,0.15)',
+    color: 'var(--danger-strong)',
+    fontSize: '13px'
+  },
+  generatorPassageList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px',
+    maxHeight: '320px',
+    overflowY: 'auto',
+    paddingRight: '4px'
+  },
+  generatorPassageCard: {
+    textAlign: 'left',
+    padding: '14px',
+    borderRadius: '14px',
+    border: '1px solid var(--border-subtle)',
+    background: 'var(--surface-soft)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+    cursor: 'pointer'
+  },
+  generatorPassageCardActive: {
+    borderColor: 'var(--success-strong)',
+    background: 'rgba(34,197,94,0.15)'
+  },
+  generatorPassageExcerpt: {
+    fontSize: '12px',
+    color: 'var(--text-secondary)',
+    lineHeight: 1.4
+  },
+  generatorSummaryBox: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px'
+  },
+  generatorButtonRow: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px'
+  },
   formRow: {
     display: 'flex',
     flexWrap: 'wrap',
@@ -266,13 +407,46 @@ const WorkbookPage = () => {
 
   const [showGenerator, setShowGenerator] = useState(false);
   const [documents, setDocuments] = useState([]);
+  const [documentSearch, setDocumentSearch] = useState('');
   const [passages, setPassages] = useState([]);
+  const [passagesLoading, setPassagesLoading] = useState(false);
+  const [passagesError, setPassagesError] = useState('');
   const [selectedDocumentId, setSelectedDocumentId] = useState('');
   const [selectedPassage, setSelectedPassage] = useState('1');
   const [generatorLoading, setGeneratorLoading] = useState(false);
   const [generatorError, setGeneratorError] = useState('');
 
   const selectedWorkbook = selectedWorkbookId ? workbookCache[selectedWorkbookId] : null;
+  const documentsForWorkbook = useMemo(() => (
+    Array.isArray(documents)
+      ? documents.filter((doc) => String(doc.type || '').toLowerCase() !== 'vocabulary')
+      : []
+  ), [documents]);
+
+  const filteredDocuments = useMemo(() => {
+    if (!documentSearch.trim()) return documentsForWorkbook;
+    const keyword = documentSearch.trim().toLowerCase();
+    return documentsForWorkbook.filter((doc) => {
+      const fields = [doc.title, doc.category, doc.school];
+      return fields.some((field) => String(field || '').toLowerCase().includes(keyword));
+    });
+  }, [documentsForWorkbook, documentSearch]);
+
+  const selectedDocument = useMemo(() => {
+    if (!selectedDocumentId) return null;
+    return documentsForWorkbook.find((doc) => String(doc.id) === String(selectedDocumentId)) || null;
+  }, [documentsForWorkbook, selectedDocumentId]);
+
+  const selectedPassageNumber = useMemo(() => {
+    const numeric = Number(selectedPassage);
+    return Number.isFinite(numeric) && numeric > 0 ? numeric : 1;
+  }, [selectedPassage]);
+
+  const isReadyToGenerate = useMemo(() => {
+    if (!selectedDocument) return false;
+    if (!passages.length) return false;
+    return passages.some((item) => Number(item.passageNumber) === selectedPassageNumber);
+  }, [selectedDocument, passages, selectedPassageNumber]);
   const totalSteps = selectedWorkbook?.steps?.length || 0;
   const currentStep = useMemo(() => {
     if (!selectedWorkbook || totalSteps === 0) return null;
@@ -410,11 +584,20 @@ const WorkbookPage = () => {
 
   const handleOpenGenerator = useCallback(async () => {
     setGeneratorError('');
+    setPassagesError('');
+    setDocumentSearch('');
+    setPassages([]);
+    setSelectedDocumentId('');
+    setSelectedPassage('1');
     setShowGenerator(true);
-    if (documents.length === 0) {
+    if (!documents.length) {
       try {
         const response = await api.documents.list();
-        const docs = Array.isArray(response) ? response : response?.data || [];
+        const docs = Array.isArray(response)
+          ? response
+          : Array.isArray(response?.data)
+            ? response.data
+            : [];
         setDocuments(docs);
       } catch (error) {
         setGeneratorError(error.message || '문서 목록을 불러오지 못했습니다.');
@@ -422,12 +605,15 @@ const WorkbookPage = () => {
     }
   }, [documents.length]);
 
-  const handleSelectDocument = useCallback(async (value) => {
+  const handleSelectDocument = useCallback(async (doc) => {
+    const value = doc ? String(doc.id) : '';
     setSelectedDocumentId(value);
     setSelectedPassage('1');
     setPassages([]);
+    setPassagesError('');
     if (!value) return;
     try {
+      setPassagesLoading(true);
       const response = await api.analysis.listPassageSummaries(value);
       const list = Array.isArray(response?.data) ? response.data : [];
       setPassages(list);
@@ -435,7 +621,9 @@ const WorkbookPage = () => {
         setSelectedPassage(String(list[0].passageNumber || 1));
       }
     } catch (error) {
-      setGeneratorError(error.message || '지문 목록을 불러오지 못했습니다.');
+      setPassagesError(error.message || '지문 목록을 불러오지 못했습니다.');
+    } finally {
+      setPassagesLoading(false);
     }
   }, []);
 
@@ -544,56 +732,133 @@ const WorkbookPage = () => {
         </section>
 
         {showGenerator && isTeacherOrAdmin(user?.role) && (
-          <section style={styles.generatorCard}>
-            <h3 style={{ fontWeight: 700, fontSize: '18px', color: 'var(--text-primary)' }}>워크북 생성기</h3>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
-              원문 문서를 선택하고, 워크북으로 만들 지문 번호를 고르면 리그오브잉글리시 스타일의 10단계 학습 코스가 자동으로 만들어져요.
-            </p>
-            {generatorError && (
-              <div style={{ color: 'var(--danger-strong)', fontSize: '14px' }}>{generatorError}</div>
-            )}
-            <div style={styles.formRow}>
-              <select
-                style={styles.select}
-                value={selectedDocumentId}
-                onChange={(e) => handleSelectDocument(e.target.value)}
-                data-testid="workbook-document-select"
-              >
-                <option value="">문서를 선택하세요</option>
-                {documents.map((doc) => (
-                  <option key={doc.id} value={doc.id}>
-                    {doc.title} (id: {doc.id})
-                  </option>
-                ))}
-              </select>
-              <select
-                style={styles.select}
-                value={selectedPassage}
-                onChange={(e) => setSelectedPassage(e.target.value)}
-                data-testid="workbook-passage-select"
-                disabled={!passages.length}
-              >
-                {passages.length === 0 && <option value="1">지문을 먼저 선택하세요</option>}
-                {passages.map((item) => (
-                  <option key={item.passageNumber} value={item.passageNumber}>
-                    지문 {item.passageNumber} · {item.excerpt}
-                  </option>
-                ))}
-              </select>
+          <section style={styles.generatorWrapper}>
+            <div style={styles.generatorStepBox}>
+              <div style={styles.generatorStepHeader}>
+                <span style={styles.generatorBadge}>1단계 · 자료 선택</span>
+                <p style={styles.generatorDescription}>
+                  문제 학습 화면처럼, 워크북으로 만들 자료를 먼저 골라 주세요.
+                </p>
+              </div>
+              <div style={styles.generatorSearchRow}>
+                <input
+                  type="search"
+                  value={documentSearch}
+                  onChange={(event) => setDocumentSearch(event.target.value)}
+                  placeholder="자료 제목이나 분류를 검색해 보세요"
+                  style={styles.generatorSearchInput}
+                />
+              </div>
+              <div style={styles.generatorDocGrid}>
+                {filteredDocuments.length === 0 ? (
+                  <div style={styles.generatorEmpty}>검색 결과가 없어요. 다른 키워드를 입력해 볼까요?</div>
+                ) : (
+                  filteredDocuments.map((doc) => {
+                    const isActive = String(doc.id) === String(selectedDocumentId);
+                    const uploadedAt = doc.created_at ? new Date(doc.created_at).toLocaleDateString() : '-';
+                    return (
+                      <button
+                        key={doc.id}
+                        type="button"
+                        data-testid="workbook-document-card"
+                        style={{
+                          ...styles.generatorDocCard,
+                          ...(isActive ? styles.generatorDocCardActive : {})
+                        }}
+                        onClick={() => handleSelectDocument(doc)}
+                      >
+                        <h4 style={styles.generatorDocTitle}>{doc.title}</h4>
+                        <p style={styles.generatorDocMeta}>분류: {doc.category || '미지정'}</p>
+                        <p style={styles.generatorDocMeta}>업로드: {uploadedAt}</p>
+                      </button>
+                    );
+                  })
+                )}
+              </div>
             </div>
-            <div style={styles.formRow}>
-              <button
-                type="button"
-                data-testid="generate-workbook"
-                style={{ ...styles.primaryButton, opacity: generatorLoading ? 0.7 : 1 }}
-                onClick={handleGenerateWorkbook}
-                disabled={generatorLoading}
-              >
-                {generatorLoading ? '생성 중...' : '워크북 생성하기'}
-              </button>
-              <button type="button" style={styles.secondaryButton} onClick={() => setShowGenerator(false)}>
-                닫기
-              </button>
+
+            <div style={styles.generatorStepBox}>
+              <div style={styles.generatorStepHeader}>
+                <span style={styles.generatorBadge}>2단계 · 지문 선택</span>
+                <p style={styles.generatorDescription}>
+                  선택한 문서에서 워크북으로 만들 지문을 고르세요.
+                </p>
+              </div>
+              {passagesLoading ? (
+                <div style={styles.generatorEmpty}>지문 목록을 불러오는 중이에요... ⏳</div>
+              ) : passagesError ? (
+                <div style={styles.generatorErrorBox}>{passagesError}</div>
+              ) : !selectedDocument ? (
+                <div style={styles.generatorEmpty}>왼쪽에서 자료를 먼저 선택해 주세요.</div>
+              ) : passages.length === 0 ? (
+                <div style={styles.generatorEmpty}>등록된 지문이 아직 없어요. 분석을 먼저 생성해 주세요.</div>
+              ) : (
+                <div style={styles.generatorPassageList}>
+                  {passages.map((item) => {
+                    const isActive = Number(item.passageNumber) === selectedPassageNumber;
+                    return (
+                      <button
+                        key={`passage-${item.passageNumber}`}
+                        type="button"
+                        data-testid="workbook-passage-card"
+                        style={{
+                          ...styles.generatorPassageCard,
+                          ...(isActive ? styles.generatorPassageCardActive : {})
+                        }}
+                        onClick={() => setSelectedPassage(String(item.passageNumber))}
+                      >
+                        <strong>지문 {item.passageNumber}</strong>
+                        <div style={styles.generatorPassageExcerpt}>
+                          {item.excerpt || '지문 미리보기를 준비했어요.'}
+                        </div>
+                        {typeof item.variantCount === 'number' && (
+                          <span style={styles.generatorDocMeta}>분석본 {item.variantCount}개</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div style={styles.generatorStepBox}>
+              <div style={styles.generatorStepHeader}>
+                <span style={styles.generatorBadge}>3단계 · 워크북 만들기</span>
+                <p style={styles.generatorDescription}>
+                  지문을 확인한 뒤, 10단계 워크북 생성을 시작해 보세요.
+                </p>
+              </div>
+              {selectedDocument ? (
+                <div style={styles.generatorSummaryBox}>
+                  <h4 style={styles.generatorDocTitle}>{selectedDocument.title}</h4>
+                  <p style={styles.generatorDocMeta}>지문 {selectedPassageNumber} 선택됨</p>
+                  {generatorError && <div style={styles.generatorErrorBox}>{generatorError}</div>}
+                  <div style={styles.generatorButtonRow}>
+                    <button
+                      type="button"
+                      data-testid="generate-workbook"
+                      onClick={handleGenerateWorkbook}
+                      disabled={!isReadyToGenerate || generatorLoading}
+                      style={{
+                        ...styles.primaryButton,
+                        width: '100%',
+                        opacity: generatorLoading || !isReadyToGenerate ? 0.7 : 1
+                      }}
+                    >
+                      {generatorLoading ? '생성 중...' : '워크북 생성하기'}
+                    </button>
+                    <button
+                      type="button"
+                      style={{ ...styles.secondaryButton, width: '100%' }}
+                      onClick={() => setShowGenerator(false)}
+                    >
+                      닫기
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div style={styles.generatorEmpty}>자료를 선택하면 요약과 생성 버튼이 나타나요.</div>
+              )}
             </div>
           </section>
         )}

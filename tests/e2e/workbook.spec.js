@@ -76,14 +76,12 @@ test('관리자가 워크북을 생성하고 카드 학습을 진행한다', asy
   await page.waitForSelector('[data-testid="open-workbook-generator"]');
   await page.click('[data-testid="open-workbook-generator"]');
 
-  const documentSelect = page.locator('[data-testid="workbook-document-select"]');
-  await documentSelect.waitFor({ state: 'visible' });
-  await documentSelect.selectOption(`${documentId}`);
+  const documentCard = page.locator('[data-testid="workbook-document-card"]', { hasText: documentTitle });
+  await documentCard.first().click();
 
-  const passageSelect = page.locator('[data-testid="workbook-passage-select"]');
-  await passageSelect.waitFor({ state: 'visible' });
-  await expect(passageSelect).not.toBeDisabled();
-  await passageSelect.selectOption('1');
+  const passageCard = page.locator('[data-testid="workbook-passage-card"]', { hasText: '지문 1' });
+  await passageCard.waitFor({ state: 'visible' });
+  await passageCard.click();
 
   await page.click('[data-testid="generate-workbook"]');
 

@@ -92,16 +92,23 @@ router.post(
         finalContent = extractEnglishOnly(rawText);
       }
 
+      const hasParsedPassages = Array.isArray(parsedData?.passages) && parsedData.passages.length > 0;
       if (type !== 'vocabulary' && (!finalContent || finalContent.length < 100)) {
-        try { fs.unlinkSync(req.file.path); } catch {}
-        return res.status(400).json({ message: '유효한 영어 본문을 찾지 못했습니다.' });
+        if (hasParsedPassages) {
+          finalContent = parsedData.totalContent || parsedData.content || extractEnglishOnly(rawText) || rawText;
+        } else if (rawText && extractEnglishOnly(rawText).length >= 80) {
+          finalContent = extractEnglishOnly(rawText);
+        } else {
+          try { fs.unlinkSync(req.file.path); } catch {}
+          return res.status(400).json({ message: '문서에서 충분한 영어 문장을 찾지 못했습니다. PDF 형식을 확인해 주세요.' });
+        }
       }
 
       // Prepare content to store: JSON if parsedData exists
       let contentToStore;
       if (type === 'vocabulary' && vocabularyData) {
         contentToStore = finalContent;
-      } else if (parsedData && Array.isArray(parsedData.passages) && parsedData.passages.length > 0) {
+      } else if (hasParsedPassages) {
         contentToStore = JSON.stringify({
           content: finalContent,
           passages: parsedData.passages,
