@@ -42,6 +42,7 @@ router.post(
       if (!req.file) return res.status(400).json({ message: '파일이 필요합니다.' });
 
       const { title = 'Untitled', type = 'worksheet', category = '기본', grade } = req.body;
+      let resolvedType = String(type || 'worksheet').toLowerCase();
 
       let rawText = '';
       let parsedData = null;
@@ -55,7 +56,7 @@ router.post(
         const pdfData = await pdfParse(dataBuffer);
         const pdfText = pdfData.text || '';
 
-        if (type === 'vocabulary') {
+        if (resolvedType === 'vocabulary') {
           const VocabularyParser = require('../utils/vocabularyParser');
           const parser = new VocabularyParser();
           vocabularyData = parser.parse(pdfText);
@@ -93,7 +94,28 @@ router.post(
       }
 
       const hasParsedPassages = Array.isArray(parsedData?.passages) && parsedData.passages.length > 0;
-      if (type !== 'vocabulary' && (!finalContent || finalContent.length < 100)) {
+
+      if (resolvedType !== 'vocabulary' && rawText) {
+        try {
+          const VocabularyParser = require('../utils/vocabularyParser');
+          const parser = new VocabularyParser();
+          const detected = parser.parse(rawText);
+          if (detected?.totalWords >= 5) {
+            resolvedType = 'vocabulary';
+            vocabularyData = detected;
+            finalContent = JSON.stringify({
+              vocabulary: {
+                ...detected,
+                sourceFilename: req.file.originalname
+              }
+            });
+          }
+        } catch (autoError) {
+          console.warn('[documents] auto vocab detect failed:', autoError?.message || autoError);
+        }
+      }
+
+      if (resolvedType !== 'vocabulary' && (!finalContent || finalContent.length < 100)) {
         if (hasParsedPassages) {
           finalContent = parsedData.totalContent || parsedData.content || extractEnglishOnly(rawText) || rawText;
         } else if (rawText && extractEnglishOnly(rawText).length >= 80) {
@@ -106,7 +128,7 @@ router.post(
 
       // Prepare content to store: JSON if parsedData exists
       let contentToStore;
-      if (type === 'vocabulary' && vocabularyData) {
+      if (resolvedType === 'vocabulary' && vocabularyData) {
         contentToStore = finalContent;
       } else if (hasParsedPassages) {
         contentToStore = JSON.stringify({
@@ -126,7 +148,7 @@ router.post(
       const result = await database.run(
         `INSERT INTO documents (title, content, type, category, school, grade, created_by)
          VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [finalTitle, contentToStore, type, category, user?.school || '전체', grade || null, req.user.id]
+        [finalTitle, contentToStore, resolvedType, category, user?.school || '전체', grade || null, req.user.id]
       );
 
       const responsePayload = {
@@ -136,7 +158,7 @@ router.post(
         passages: parsedData?.passages?.length || 0
       };
 
-      if (type === 'vocabulary' && vocabularyData) {
+      if (resolvedType === 'vocabulary' && vocabularyData) {
         responsePayload.vocabularyDays = vocabularyData.totalDays;
         responsePayload.totalWords = vocabularyData.totalWords;
       }
