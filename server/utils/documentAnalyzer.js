@@ -1473,10 +1473,20 @@ class DocumentAnalyzer {
         }
       }
 
-      let synonyms = override?.synonyms || await this._getWordnetSynonyms(term);
+      let synonyms;
+      if (this.fastMode) {
+        synonyms = override?.synonyms || this._buildFallbackSynonyms(term);
+      } else {
+        synonyms = override?.synonyms || await this._getWordnetSynonyms(term);
+      }
       synonyms = this._finalizeSynonymList(term, synonyms);
 
-      let antonyms = override?.antonyms || await this._getWordnetAntonyms(term);
+      let antonyms;
+      if (this.fastMode) {
+        antonyms = override?.antonyms || this._buildFallbackAntonyms(term);
+      } else {
+        antonyms = override?.antonyms || await this._getWordnetAntonyms(term);
+      }
       antonyms = this._finalizeAntonymList(term, antonyms);
 
       const note = override?.note || this._composeVocabularyNote(term, meaning);
@@ -1560,12 +1570,37 @@ class DocumentAnalyzer {
     return Array.from(unique).slice(0, 2);
   }
 
+  _buildFallbackSynonyms(term = '') {
+    const normalized = String(term || '').toLowerCase().trim();
+    if (!normalized) return [];
+    const preset = FALLBACK_SYNONYM_MAP.get(normalized);
+    if (preset && preset.length) {
+      return preset;
+    }
+    return [
+      `similar ${normalized}`,
+      `${normalized} idea`,
+      `core ${normalized}`
+    ];
+  }
+
+  _buildFallbackAntonyms(term = '') {
+    const normalized = String(term || '').toLowerCase().trim();
+    if (!normalized) return [];
+    const preset = FALLBACK_ANTONYM_MAP.get(normalized);
+    if (preset && preset.length) {
+      return preset;
+    }
+    return [`opposite of ${normalized}`];
+  }
+
   _composeVocabularyNote(term, meaning) {
     const cleanMeaning = String(meaning || '').replace(/\s+/g, ' ').trim();
     return `${term}라는 표현은 ${cleanMeaning}라는 뜻이에요. 짧은 예문을 직접 만들어 친구와 서로 피드백해 보세요. ✍️`;
   }
 
   async _getWordnetSynonyms(term) {
+    if (this.fastMode) return [];
     const normalized = this._normalizeKeyword(term);
     if (!normalized) return [];
     if (!this._wordnetSynonymCache) {
@@ -1611,6 +1646,7 @@ class DocumentAnalyzer {
   }
 
   async _getWordnetAntonyms(term) {
+    if (this.fastMode) return [];
     const normalized = this._normalizeKeyword(term);
     if (!normalized) return [];
     if (!this._wordnetAntonymCache) {
