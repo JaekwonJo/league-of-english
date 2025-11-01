@@ -1,5 +1,13 @@
 {
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+  "redirects": [
+    {
+      "has": [
+        { "type": "host", "value": "www.league-of-english.com" }
+      ],
+      "source": "/(.*)",
+      "destination": "https://league-of-english.com/$1",
+      "statusCode": 308
+    }
   ]
 }
+
