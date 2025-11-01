@@ -43,6 +43,21 @@ router.post('/workbooks/generate', verifyToken, requireTeacherOrAdmin, async (re
   }
 });
 
+router.post('/workbooks/generate-all', verifyToken, requireTeacherOrAdmin, async (req, res) => {
+  try {
+    const { documentId, regenerate } = req.body || {};
+    const result = await workbookService.generateAllWorkbooks({
+      documentId,
+      regenerate,
+      userId: req.user?.id || null
+    });
+    res.json({ success: true, data: result });
+  } catch (error) {
+    console.error('[workbooks] generate-all error:', error);
+    res.status(400).json({ message: error.message || '워크북을 생성하지 못했습니다.' });
+  }
+});
+
 router.delete('/workbooks/:id', verifyToken, requireTeacherOrAdmin, async (req, res) => {
   try {
     const result = await workbookService.deleteWorkbook(req.params.id);

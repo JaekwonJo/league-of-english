@@ -445,6 +445,7 @@ export const api = {
     list: (params) => apiService.get('/workbooks', params),
     detail: (id) => apiService.get(`/workbooks/${id}`),
     generate: (payload) => apiService.post('/workbooks/generate', payload),
+    generateAll: (payload) => apiService.post('/workbooks/generate-all', payload),
     delete: (id) => apiService.delete(`/workbooks/${id}`),
     test: (id) => apiService.get(`/workbooks/${id}/test`),
     submitTest: (id, payload) => apiService.post(`/workbooks/${id}/test/submit`, payload)

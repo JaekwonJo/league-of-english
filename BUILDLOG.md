@@ -1,3 +1,10 @@
+## 2025-11-01 (workbook bulk generation + grouped UI)
+- Issue: 문서 하나에 지문이 많을 때 워크북을 손수 여러 번 생성해야 했고, 학생/관리자 화면에서 워크북이 뒤섞여 찾아보기 어렵습니다.
+- Cause: 서버에 문서 단위 일괄 생성 API가 없고, 프런트가 단일 카드 목록 UI만 제공해 문서·지문 관계가 드러나지 않았습니다.
+- Fix: `/workbooks/generate-all` 엔드포인트와 `_fetchDocumentContext` 헬퍼를 추가해 지문 전체를 한 번에 생성하고, 클라이언트 워크북 페이지를 문서 사이드바 + 세부 패널 구조로 리팩터링했습니다.
+- Files: server/services/workbookService.js, server/routes/workbook.routes.js, client/src/services/api.service.js, client/src/pages/WorkbookPage.js.
+- Tests: `npm run lint`.
+
 ## 2025-11-01 (analysis manual sync + UI alignment)
 - Issue: 분석본이 교수님 매뉴얼 포맷으로 통일되지 않아 학생/관리자 화면이 불일치했고, UI에는 배경지식·사례·순번 표기가 빠져 있었습니다.
 - Cause: DocumentAnalyzer 프롬프트/폴백이 구 라벨(`내용 분석`, `추가 메모`, `필수 어휘`)을 유지했고, AnalysisPage 렌더러는 번역/해석만 노출했습니다.

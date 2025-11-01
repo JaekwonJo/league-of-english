@@ -106,33 +106,106 @@ class WorkbookService {
       throw new Error('documentId가 필요합니다.');
     }
 
-    const numericPassage = Number(passageNumber) || 1;
-    const document = await database.get('SELECT id, title, content FROM documents WHERE id = ?', [documentId]);
+    const context = await this._fetchDocumentContext(documentId);
+    return this._generateWorkbookEntry({
+      document: context.document,
+      passages: context.passages,
+      passageNumber: Number(passageNumber) || 1,
+      userId,
+      regenerate
+    });
+  }
+
+  async generateAllWorkbooks({ documentId, userId = null, regenerate = false }) {
+    if (!documentId) {
+      throw new Error('documentId가 필요합니다.');
+    }
+
+    const context = await this._fetchDocumentContext(documentId);
+    const results = [];
+    const failures = [];
+
+    for (let index = 0; index < context.passages.length; index += 1) {
+      const passageNumber = index + 1;
+      try {
+        const workbook = await this._generateWorkbookEntry({
+          document: context.document,
+          passages: context.passages,
+          passageNumber,
+          userId,
+          regenerate
+        });
+        results.push(workbook);
+      } catch (error) {
+        failures.push({
+          passageNumber,
+          message: error?.message || String(error)
+        });
+      }
+    }
+
+    return { workbooks: results, failures };
+  }
+
+  async _fetchDocumentContext(documentId) {
+    const document = await database.get(
+      'SELECT id, title, content FROM documents WHERE id = ?',
+      [documentId]
+    );
+
     if (!document) {
       throw new Error('문서를 찾을 수 없습니다.');
     }
 
-    const passages = this.analysisService.extractPassages(document.content);
+    let passages;
+    try {
+      passages = this.analysisService.extractPassages(document.content);
+    } catch (error) {
+      console.warn('[workbook] passage extract 실패:', error?.message || error);
+      throw new Error('이 문서에는 사용할 수 있는 지문이 없습니다.');
+    }
+
     if (!Array.isArray(passages) || passages.length === 0) {
       throw new Error('이 문서에는 사용할 수 있는 지문이 없습니다.');
     }
 
+    return { document, passages };
+  }
+
+  async _generateWorkbookEntry({ document, passages, passageNumber, userId = null, regenerate = false }) {
+    if (!document || !document.id) {
+      throw new Error('문서를 찾을 수 없습니다.');
+    }
+
+    if (!Array.isArray(passages) || passages.length === 0) {
+      throw new Error('이 문서에는 사용할 수 있는 지문이 없습니다.');
+    }
+
+    const numericPassage = Number(passageNumber) || 1;
     if (numericPassage < 1 || numericPassage > passages.length) {
       throw new Error(`유효하지 않은 지문 번호입니다. (1-${passages.length})`);
     }
 
     const existing = await database.get(
       'SELECT * FROM workbook_sets WHERE document_id = ? AND passage_number = ?',
-      [documentId, numericPassage]
+      [document.id, numericPassage]
     );
 
     if (existing && !regenerate) {
-      const formatted = this._formatRow(existing, { includeSteps: true, documentTitle: document.title });
+      const formatted = this._formatRow(existing, {
+        includeSteps: true,
+        documentTitle: document.title
+      });
       formatted.cached = true;
       return formatted;
     }
 
-    const { payload: workbookPayload } = await this._prepareWorkbookPayload(document, numericPassage, passages[numericPassage - 1] || '');
+    const rawPassage = passages[numericPassage - 1] || '';
+    const { payload: workbookPayload } = await this._prepareWorkbookPayload(
+      document,
+      numericPassage,
+      rawPassage
+    );
 
     if (!Array.isArray(workbookPayload.steps) || workbookPayload.steps.length === 0) {
       throw new Error('워크북 단계를 생성하지 못했습니다.');
@@ -142,6 +215,7 @@ class WorkbookService {
     const metaJson = JSON.stringify(workbookPayload.meta || {});
 
     let workbookId = existing?.id || null;
+
     if (existing) {
       await database.run(
         `UPDATE workbook_sets
@@ -171,7 +245,7 @@ class WorkbookService {
            (document_id, passage_number, title, description, cover_emoji, steps_json, meta_json, status, created_by)
          VALUES (?, ?, ?, ?, ?, ?, ?, 'ready', ?)`,
         [
-          documentId,
+          document.id,
           numericPassage,
           workbookPayload.title,
           workbookPayload.description,

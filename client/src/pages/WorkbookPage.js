@@ -244,6 +244,173 @@ const styles = {
     flexDirection: 'column',
     gap: '10px'
   },
+  generatorSuccessBox: {
+    padding: '12px',
+    borderRadius: '12px',
+    border: '1px solid rgba(16,185,129,0.3)',
+    background: 'rgba(16,185,129,0.12)',
+    color: 'var(--success-strong)',
+    fontSize: '13px',
+    lineHeight: 1.5
+  },
+  overviewLayout: {
+    display: 'grid',
+    gridTemplateColumns: 'minmax(260px, 320px) 1fr',
+    gap: '20px',
+    alignItems: 'flex-start'
+  },
+  docColumn: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '14px',
+    padding: '20px',
+    borderRadius: '16px',
+    border: '1px solid var(--surface-border)',
+    background: 'var(--surface-card)'
+  },
+  docSearchInput: {
+    width: '100%',
+    padding: '12px',
+    borderRadius: '12px',
+    border: '1px solid var(--border-subtle)',
+    background: 'var(--surface-soft)',
+    color: 'var(--text-primary)',
+    fontSize: '14px'
+  },
+  docList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px',
+    maxHeight: '480px',
+    overflowY: 'auto',
+    paddingRight: '4px'
+  },
+  docListButton: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: '4px',
+    padding: '12px',
+    borderRadius: '12px',
+    border: '1px solid var(--border-subtle)',
+    background: 'var(--surface-soft)',
+    cursor: 'pointer',
+    transition: 'border 0.2s ease, background 0.2s ease',
+    textAlign: 'left'
+  },
+  docListButtonActive: {
+    border: '1px solid var(--indigo)',
+    background: 'rgba(99,102,241,0.12)'
+  },
+  docListTitle: {
+    fontWeight: 700,
+    fontSize: '14px',
+    margin: 0,
+    color: 'var(--text-primary)'
+  },
+  docListMeta: {
+    fontSize: '12px',
+    color: 'var(--text-secondary)'
+  },
+  docDetail: {
+    padding: '24px',
+    borderRadius: '16px',
+    border: '1px solid var(--surface-border)',
+    background: 'var(--surface-card)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px'
+  },
+  docHeaderRow: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px'
+  },
+  docHeaderTop: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: '12px'
+  },
+  docMetaInfo: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '10px',
+    fontSize: '12px',
+    color: 'var(--text-secondary)'
+  },
+  workbookList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+    marginTop: '8px'
+  },
+  workbookListItem: {
+    padding: '16px',
+    borderRadius: '14px',
+    border: '1px solid var(--surface-border)',
+    background: 'var(--surface-soft)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px'
+  },
+  workbookListItemHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: '12px',
+    flexWrap: 'wrap'
+  },
+  workbookIndexBadge: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: '32px',
+    padding: '4px 10px',
+    borderRadius: '999px',
+    background: 'rgba(99,102,241,0.12)',
+    color: 'var(--indigo-strong)',
+    fontWeight: 700,
+    fontSize: '12px'
+  },
+  workbookListTitle: {
+    fontSize: '16px',
+    fontWeight: 700,
+    color: 'var(--text-primary)',
+    margin: 0
+  },
+  workbookStats: {
+    fontSize: '12px',
+    color: 'var(--text-muted)'
+  },
+  workbookListActions: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '10px'
+  },
+  bulkStatusBox: {
+    padding: '12px',
+    borderRadius: '12px',
+    border: '1px solid rgba(16,185,129,0.25)',
+    background: 'rgba(16,185,129,0.12)',
+    color: 'var(--success-strong)',
+    fontSize: '13px',
+    lineHeight: 1.5
+  },
+  bulkStatusBoxError: {
+    border: '1px solid rgba(248,113,113,0.3)',
+    background: 'rgba(248,113,113,0.12)',
+    color: 'rgb(220,38,38)'
+  },
+  docEmpty: {
+    padding: '20px',
+    borderRadius: '16px',
+    border: '1px dashed var(--border-subtle)',
+    background: 'var(--surface-soft)',
+    color: 'var(--text-secondary)',
+    textAlign: 'center'
+  },
   formRow: {
     display: 'flex',
     flexWrap: 'wrap',
@@ -922,6 +1089,7 @@ const WorkbookPage = () => {
   const [showGenerator, setShowGenerator] = useState(false);
   const [documents, setDocuments] = useState([]);
   const [documentSearch, setDocumentSearch] = useState('');
+  const [overviewSearch, setOverviewSearch] = useState('');
   const [passages, setPassages] = useState([]);
   const [passagesLoading, setPassagesLoading] = useState(false);
   const [passagesError, setPassagesError] = useState('');
@@ -929,6 +1097,9 @@ const WorkbookPage = () => {
   const [selectedPassage, setSelectedPassage] = useState('1');
   const [generatorLoading, setGeneratorLoading] = useState(false);
   const [generatorError, setGeneratorError] = useState('');
+  const [activeDocumentId, setActiveDocumentId] = useState('');
+  const [bulkGeneratingId, setBulkGeneratingId] = useState('');
+  const [bulkStatus, setBulkStatus] = useState(null);
   const [deletingIds, setDeletingIds] = useState(() => new Set());
 
   const [isTestMode, setIsTestMode] = useState(false);
@@ -960,6 +1131,112 @@ const WorkbookPage = () => {
     if (!selectedDocumentId) return null;
     return documentsForWorkbook.find((doc) => String(doc.id) === String(selectedDocumentId)) || null;
   }, [documentsForWorkbook, selectedDocumentId]);
+
+  const documentsById = useMemo(() => {
+    const map = {};
+    (documents || []).forEach((doc) => {
+      map[String(doc.id)] = doc;
+    });
+    return map;
+  }, [documents]);
+
+  const workbookGroups = useMemo(() => {
+    if (!Array.isArray(workbooks) || workbooks.length === 0) {
+      return [];
+    }
+
+    const lookup = {};
+    const groups = [];
+
+    workbooks.forEach((item) => {
+      const key = String(item.documentId);
+      if (!lookup[key]) {
+        const docMeta = documentsById[key] || {};
+        lookup[key] = {
+          documentId: item.documentId,
+          documentTitle: item.documentTitle || docMeta.title || '제목 미지정 자료',
+          category: docMeta.category || '미지정',
+          grade: docMeta.grade || null,
+          type: docMeta.type || null,
+          school: docMeta.school || null,
+          workbooks: []
+        };
+        groups.push(lookup[key]);
+      }
+      lookup[key].workbooks.push(item);
+    });
+
+    groups.forEach((group) => {
+      group.workbooks.sort((a, b) => {
+        const left = Number(a.passageNumber) || 0;
+        const right = Number(b.passageNumber) || 0;
+        return left - right;
+      });
+    });
+
+    groups.sort((a, b) => {
+      const left = (a.documentTitle || '').toLowerCase();
+      const right = (b.documentTitle || '').toLowerCase();
+      return left.localeCompare(right, 'ko');
+    });
+
+    return groups;
+  }, [workbooks, documentsById]);
+
+  const workbookGroupsById = useMemo(() => {
+    const map = {};
+    workbookGroups.forEach((group) => {
+      map[String(group.documentId)] = group;
+    });
+    return map;
+  }, [workbookGroups]);
+
+  const filteredDocumentGroups = useMemo(() => {
+    if (!overviewSearch.trim()) {
+      return workbookGroups;
+    }
+    const keyword = overviewSearch.trim().toLowerCase();
+    return workbookGroups.filter((group) => {
+      const docMeta = documentsById[String(group.documentId)] || {};
+      const fields = [
+        group.documentTitle,
+        group.category,
+        docMeta.school,
+        docMeta.type
+      ];
+      return fields.some((field) => String(field || '').toLowerCase().includes(keyword));
+    });
+  }, [overviewSearch, workbookGroups, documentsById]);
+
+  const activeGroup = useMemo(() => {
+    if (activeDocumentId && workbookGroupsById[activeDocumentId]) {
+      return workbookGroupsById[activeDocumentId];
+    }
+    if (filteredDocumentGroups.length > 0) {
+      return filteredDocumentGroups[0];
+    }
+    return workbookGroups[0] || null;
+  }, [activeDocumentId, workbookGroupsById, filteredDocumentGroups, workbookGroups]);
+
+  useEffect(() => {
+    if (!workbookGroups.length) {
+      setActiveDocumentId('');
+      return;
+    }
+
+    setActiveDocumentId((prev) => {
+      const prevKey = String(prev || '');
+      if (prevKey && workbookGroupsById[prevKey]) {
+        const stillVisible = filteredDocumentGroups.some((group) => String(group.documentId) === prevKey);
+        if (stillVisible) {
+          return prevKey;
+        }
+      }
+
+      const fallback = filteredDocumentGroups[0] || workbookGroups[0];
+      return fallback ? String(fallback.documentId) : '';
+    });
+  }, [workbookGroups, workbookGroupsById, filteredDocumentGroups]);
 
   const selectedPassageNumber = useMemo(() => {
     const numeric = Number(selectedPassage);
@@ -1081,13 +1358,6 @@ const WorkbookPage = () => {
     window.history.pushState({}, '', `/workbook/${id}?step=${normalizedStep}`);
     window.dispatchEvent(new PopStateEvent('popstate'));
   }, []);
-
-  const handleCardKeyDown = useCallback((event, id) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      handleOpenWorkbook(id, 1);
-    }
-  }, [handleOpenWorkbook]);
 
   const handleBackToOverview = useCallback(() => {
     if (typeof window === 'undefined') return;
@@ -1479,28 +1749,39 @@ const WorkbookPage = () => {
     );
   };
 
-  const handleOpenGenerator = useCallback(async () => {
+  const handleOpenGenerator = useCallback(async (initialDocumentId = '') => {
     setGeneratorError('');
     setPassagesError('');
     setDocumentSearch('');
     setPassages([]);
-    setSelectedDocumentId('');
     setSelectedPassage('1');
+
+    const normalizedId = initialDocumentId ? String(initialDocumentId) : '';
+    setSelectedDocumentId(normalizedId);
     setShowGenerator(true);
-    if (!documents.length) {
-      try {
+
+    try {
+      let docs = documents;
+      if (!docs.length) {
         const response = await api.documents.list();
-        const docs = Array.isArray(response)
+        docs = Array.isArray(response)
           ? response
           : Array.isArray(response?.data)
             ? response.data
             : [];
         setDocuments(docs);
-      } catch (error) {
-        setGeneratorError(error.message || '문서 목록을 불러오지 못했습니다.');
       }
+
+      if (normalizedId) {
+        const targetDoc = docs.find((doc) => String(doc.id) === normalizedId);
+        if (targetDoc) {
+          await handleSelectDocument(targetDoc);
+        }
+      }
+    } catch (error) {
+      setGeneratorError(error.message || '문서 목록을 불러오지 못했습니다.');
     }
-  }, [documents.length]);
+  }, [documents, handleSelectDocument]);
 
   const handleSelectDocument = useCallback(async (doc) => {
     const value = doc ? String(doc.id) : '';
@@ -1550,6 +1831,88 @@ const WorkbookPage = () => {
       setGeneratorLoading(false);
     }
   }, [fetchWorkbooks, handleOpenWorkbook, selectedDocumentId, selectedPassage]);
+
+  const handleSelectOverviewDocument = useCallback((docId) => {
+    const key = String(docId || '');
+    setActiveDocumentId(key);
+  }, []);
+
+  const handleGenerateAllForDocument = useCallback(async (documentId, options = {}) => {
+    if (!documentId) {
+      if (options.fromGenerator) {
+        setGeneratorError('문서를 선택해 주세요.');
+      }
+      return;
+    }
+
+    if (!options.skipConfirm && typeof window !== 'undefined') {
+      const ok = window.confirm('선택한 문서의 모든 지문으로 워크북을 생성할까요? 기존 워크북은 새로 덮어쓰여요.');
+      if (!ok) {
+        return;
+      }
+    }
+
+    const docKey = String(documentId);
+    setBulkGeneratingId(docKey);
+    setBulkStatus(null);
+    if (options.fromGenerator) {
+      setGeneratorError('');
+    }
+
+    try {
+      const payload = {
+        documentId: Number(documentId),
+        regenerate: Boolean(options.regenerate)
+      };
+      const response = await api.workbooks.generateAll(payload);
+      const data = response?.data || response || {};
+      const generated = Array.isArray(data.workbooks) ? data.workbooks : [];
+      const failures = Array.isArray(data.failures) ? data.failures : [];
+      const newCount = generated.filter((item) => !item.cached).length;
+      const cachedCount = generated.length - newCount;
+
+      if (generated.length) {
+        setWorkbookCache((prev) => {
+          const next = { ...prev };
+          generated.forEach((item) => {
+            next[item.id] = item;
+          });
+          return next;
+        });
+      }
+
+      await fetchWorkbooks();
+
+      setBulkStatus({
+        documentId: docKey,
+        successCount: newCount,
+        cachedCount,
+        totalCount: generated.length,
+        failureCount: failures.length,
+        failures
+      });
+
+      if (options.closeGenerator) {
+        setShowGenerator(false);
+      }
+
+      if (options.openFirst && generated[0]) {
+        handleOpenWorkbook(generated[0].id, 1);
+      }
+    } catch (error) {
+      const message = error?.message || '모든 지문 워크북을 생성하지 못했습니다.';
+      if (options.fromGenerator) {
+        setGeneratorError(message);
+      }
+      setBulkStatus({
+        documentId: docKey,
+        error: message,
+        failures: []
+      });
+    } finally {
+      setBulkGeneratingId('');
+    }
+  }, [fetchWorkbooks, handleOpenWorkbook]);
 
   const handleDeleteWorkbook = useCallback(async (id, title) => {
     if (!id) return;
@@ -1603,12 +1966,6 @@ const WorkbookPage = () => {
     }
   }, [fetchWorkbooks, handleBackToOverview, selectedWorkbookId]);
 
-  const handleDeleteButtonClick = useCallback((event, workbook) => {
-    event.preventDefault();
-    event.stopPropagation();
-    handleDeleteWorkbook(workbook.id, workbook.title);
-  }, [handleDeleteWorkbook]);
-
   useEffect(() => {
     fetchWorkbooks();
   }, [fetchWorkbooks]);
@@ -1619,6 +1976,29 @@ const WorkbookPage = () => {
     window.addEventListener('popstate', parseLocation);
     return () => window.removeEventListener('popstate', parseLocation);
   }, [parseLocation]);
+
+  useEffect(() => {
+    let ignore = false;
+    const loadDocuments = async () => {
+      try {
+        const response = await api.documents.list();
+        const docs = Array.isArray(response)
+          ? response
+          : Array.isArray(response?.data)
+            ? response.data
+            : [];
+        if (!ignore && Array.isArray(docs)) {
+          setDocuments(docs);
+        }
+      } catch (error) {
+        console.warn('[workbooks] 문서 목록 로드 실패:', error?.message || error);
+      }
+    };
+    loadDocuments();
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!selectedWorkbookId) return;
@@ -1788,6 +2168,27 @@ const WorkbookPage = () => {
                   <h4 style={styles.generatorDocTitle}>{selectedDocument.title}</h4>
                   <p style={styles.generatorDocMeta}>지문 {selectedPassageNumber} 선택됨</p>
                   {generatorError && <div style={styles.generatorErrorBox}>{generatorError}</div>}
+                  {bulkStatus && String(bulkStatus.documentId) === String(selectedDocumentId) && (
+                    <div
+                      style={{
+                        ...styles.generatorSuccessBox,
+                        ...(bulkStatus.error ? styles.bulkStatusBoxError : {})
+                      }}
+                    >
+                      {bulkStatus.error
+                        ? bulkStatus.error
+                        : `새 워크북 ${bulkStatus.successCount || 0}개 · 기존 유지 ${bulkStatus.cachedCount || 0}개 · 실패 ${bulkStatus.failureCount || 0}개`}
+                      {bulkStatus.failures && bulkStatus.failures.length > 0 && (
+                        <ul style={{ margin: '8px 0 0 18px', padding: 0, listStyle: 'disc' }}>
+                          {bulkStatus.failures.map((item) => (
+                            <li key={`gen-bulk-failure-${item.passageNumber}`} style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                              지문 {item.passageNumber}번: {item.message}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  )}
                   <div style={styles.generatorButtonRow}>
                     <button
                       type="button"
@@ -1801,6 +2202,18 @@ const WorkbookPage = () => {
                       }}
                     >
                       {generatorLoading ? '생성 중...' : '워크북 생성하기'}
+                    </button>
+                    <button
+                      type="button"
+                      style={{
+                        ...styles.secondaryButton,
+                        width: '100%',
+                        opacity: !selectedDocumentId || bulkGeneratingId === String(selectedDocumentId) ? 0.7 : 1
+                      }}
+                      onClick={() => handleGenerateAllForDocument(selectedDocumentId, { fromGenerator: true })}
+                      disabled={!selectedDocumentId || bulkGeneratingId === String(selectedDocumentId)}
+                    >
+                      {bulkGeneratingId === String(selectedDocumentId) ? '전체 생성 중...' : '모든 지문 워크북 생성'}
                     </button>
                     <button
                       type="button"
@@ -1823,53 +2236,174 @@ const WorkbookPage = () => {
             아직 생성된 워크북이 없어요. 교사/관리자 계정으로 문서를 선택하고 워크북을 만들어 볼까요? 😊
           </div>
         ) : (
-          <section style={styles.stepGrid}>
-            {workbooks.map((workbook) => {
-              const progress = completionSummary[workbook.id] || { completed: 0, total: workbook.totalSteps };
-              const percent = progress.total ? Math.round((progress.completed / progress.total) * 100) : 0;
-              const workbookKey = String(workbook.id);
-              const isDeleting = deletingIds.has(workbookKey);
-              return (
-                <div
-                  key={workbook.id}
-                  role="button"
-                  tabIndex={0}
-                  style={styles.cardButton}
-                  data-testid="workbook-card"
-                  data-workbook-id={workbook.id}
-                  onClick={() => handleOpenWorkbook(workbook.id, 1)}
-                  onKeyDown={(event) => handleCardKeyDown(event, workbook.id)}
-                >
-                  <div style={styles.cardHeaderRow}>
-                    <div style={styles.cardHeaderMeta}>
-                      <span>{workbook.coverEmoji || '📘'}</span>
-                      <span>{percent}% 완료</span>
-                    </div>
-                    {canManageWorkbooks && (
+          <section style={styles.overviewLayout}>
+            <aside style={styles.docColumn}>
+              <div>
+                <input
+                  type="search"
+                  value={overviewSearch}
+                  onChange={(event) => setOverviewSearch(event.target.value)}
+                  placeholder="문서 제목이나 분류를 검색해 보세요"
+                  style={styles.docSearchInput}
+                />
+              </div>
+              <div style={styles.docList}>
+                {filteredDocumentGroups.length === 0 ? (
+                  <div style={styles.generatorEmpty}>검색 결과가 없어요. 다른 키워드를 입력해 볼까요?</div>
+                ) : (
+                  filteredDocumentGroups.map((group) => {
+                    const key = String(group.documentId);
+                    const isActive = activeGroup && String(activeGroup.documentId) === key;
+                    return (
                       <button
+                        key={key}
                         type="button"
                         style={{
-                          ...styles.deleteButton,
-                          ...(isDeleting ? styles.deleteButtonDisabled : {})
+                          ...styles.docListButton,
+                          ...(isActive ? styles.docListButtonActive : {})
                         }}
-                        onClick={(event) => handleDeleteButtonClick(event, workbook)}
-                        disabled={isDeleting}
+                        onClick={() => handleSelectOverviewDocument(key)}
                       >
-                        {isDeleting ? '삭제 중...' : '삭제'}
+                        <p style={styles.docListTitle}>{group.documentTitle}</p>
+                        <p style={styles.docListMeta}>
+                          {group.category || '분류 미지정'} · 워크북 {group.workbooks.length}개
+                        </p>
                       </button>
-                    )}
-                  </div>
-                  <h3 style={{ fontWeight: 700, fontSize: '18px', color: 'var(--text-primary)' }}>{workbook.title}</h3>
-                  <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                    {workbook.description || '10단계 학습 코스로 구성된 워크북입니다.'}
-                  </p>
-                  <div style={styles.cardMeta}>
-                    <span>{workbook.documentTitle || '문서'}</span>
-                    <span>지문 {workbook.passageNumber}</span>
-                  </div>
-                </div>
-              );
-            })}
+                    );
+                  })
+                )}
+              </div>
+            </aside>
+
+            <div style={styles.docDetail}>
+              {activeGroup ? (
+                (() => {
+                  const docKey = String(activeGroup.documentId);
+                  const docMeta = documentsById[docKey] || {};
+                  return (
+                    <>
+                      <div style={styles.docHeaderRow}>
+                        <div style={styles.docHeaderTop}>
+                          <div>
+                            <div style={styles.pill}>Workbook Series</div>
+                            <h2 style={{ fontSize: '22px', fontWeight: 800, margin: '8px 0 0', color: 'var(--text-primary)' }}>
+                              {activeGroup.documentTitle}
+                            </h2>
+                          </div>
+                          {canManageWorkbooks && (
+                            <div style={styles.workbookListActions}>
+                              <button
+                                type="button"
+                                style={styles.primaryButton}
+                                onClick={() => handleGenerateAllForDocument(activeGroup.documentId)}
+                                disabled={bulkGeneratingId === docKey}
+                              >
+                                {bulkGeneratingId === docKey ? '전체 생성 중...' : '모든 지문 워크북 생성'}
+                              </button>
+                              <button
+                                type="button"
+                                style={styles.secondaryButton}
+                                onClick={() => handleOpenGenerator(activeGroup.documentId)}
+                              >
+                                지문 선택 후 생성
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                        <div style={styles.docMetaInfo}>
+                          {activeGroup.category && <span>분류: {activeGroup.category}</span>}
+                          {docMeta.grade ? <span>학년: {docMeta.grade}학년</span> : null}
+                          {docMeta.school ? <span>학교: {docMeta.school}</span> : null}
+                        </div>
+                      </div>
+
+                      {bulkStatus && String(bulkStatus.documentId) === docKey && (
+                        <div
+                          style={{
+                            ...styles.bulkStatusBox,
+                            ...(bulkStatus.error ? styles.bulkStatusBoxError : {})
+                          }}
+                        >
+                          {bulkStatus.error
+                            ? bulkStatus.error
+                            : `새 워크북 ${bulkStatus.successCount || 0}개 · 기존 유지 ${bulkStatus.cachedCount || 0}개 · 실패 ${bulkStatus.failureCount || 0}개`}
+                          {bulkStatus.failures && bulkStatus.failures.length > 0 && (
+                            <ul style={{ margin: '8px 0 0 18px', padding: 0, listStyle: 'disc' }}>
+                              {bulkStatus.failures.map((item) => (
+                                <li key={`bulk-failure-${item.passageNumber}`} style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                                  지문 {item.passageNumber}번: {item.message}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      )}
+
+                      {activeGroup.workbooks.length === 0 ? (
+                        <div style={styles.docEmpty}>
+                          이 문서로 만든 워크북이 아직 없어요. 상단 버튼으로 바로 생성해 볼까요? 😊
+                        </div>
+                      ) : (
+                        <div style={styles.workbookList}>
+                          {activeGroup.workbooks.map((workbook, index) => {
+                            const progress = completionSummary[workbook.id] || { completed: 0, total: workbook.totalSteps };
+                            const percent = progress.total ? Math.round((progress.completed / progress.total) * 100) : 0;
+                            const workbookKey = String(workbook.id);
+                            const isDeleting = deletingIds.has(workbookKey);
+                            return (
+                              <div key={workbook.id} style={styles.workbookListItem}>
+                                <div style={styles.workbookListItemHeader}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                                    <span style={styles.workbookIndexBadge}>{index + 1}</span>
+                                    <div>
+                                      <p style={styles.workbookListTitle}>지문 {workbook.passageNumber}</p>
+                                      <p style={styles.workbookStats}>
+                                        Step {workbook.totalSteps} · 완료 {progress.completed}/{progress.total} ({percent}%)
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div style={styles.workbookListActions}>
+                                    <button
+                                      type="button"
+                                      style={styles.primaryButton}
+                                      onClick={() => handleOpenWorkbook(workbook.id, 1)}
+                                    >
+                                      학습 시작하기
+                                    </button>
+                                    {canManageWorkbooks && (
+                                      <button
+                                        type="button"
+                                        style={{
+                                          ...styles.deleteButton,
+                                          ...(isDeleting ? styles.deleteButtonDisabled : {})
+                                        }}
+                                        onClick={() => handleDeleteWorkbook(workbook.id, workbook.title)}
+                                        disabled={isDeleting}
+                                      >
+                                        {isDeleting ? '삭제 중...' : '삭제'}
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                                <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: 0 }}>
+                                  {workbook.description || '10단계 학습 코스로 구성된 워크북입니다.'}
+                                </p>
+                                <div style={styles.docMetaInfo}>
+                                  <span>최근 수정: {workbook.updatedAt ? new Date(workbook.updatedAt).toLocaleDateString() : '-'}</span>
+                                  <span>Passage {workbook.passageNumber}</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </>
+                  );
+                })()
+              ) : (
+                <div style={styles.docEmpty}>왼쪽에서 문서를 선택해 주세요.</div>
+              )}
+            </div>
           </section>
         )}
       </div>
