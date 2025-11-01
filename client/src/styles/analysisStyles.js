@@ -359,6 +359,16 @@ export const analysisStyles = {
     alignItems: 'baseline',
     marginBottom: '10px'
   },
+  sentenceTitleRow: {
+    display: 'flex',
+    alignItems: 'baseline',
+    gap: '10px'
+  },
+  sentenceNumber: {
+    fontSize: '1.15rem',
+    fontWeight: 700,
+    color: 'var(--accent-primary)'
+  },
   sentenceEnglish: {
     fontSize: '1.08rem',
     fontWeight: 600,
@@ -390,6 +400,12 @@ export const analysisStyles = {
     flexDirection: 'column',
     gap: '6px'
   },
+  sentenceSectionEmphasis: {
+    background: 'var(--surface-soft-solid)',
+    borderRadius: '12px',
+    padding: '12px 14px',
+    border: '1px solid var(--border-subtle)'
+  },
   sentenceLabel: {
     fontSize: '0.85rem',
     fontWeight: 700,
@@ -419,6 +435,11 @@ export const analysisStyles = {
     lineHeight: 1.7,
     fontSize: '0.96rem',
     color: 'var(--text-secondary)'
+  },
+  vocabMeta: {
+    fontSize: '0.9rem',
+    color: 'var(--text-muted)',
+    lineHeight: 1.5
   },
   emptyVariant: {
     background: 'var(--surface-card)',

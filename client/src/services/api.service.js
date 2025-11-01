@@ -105,7 +105,7 @@ class ApiService {
       // Allow longer timeouts for analysis endpoints
       let timeoutMs = 15000;
       if (/^\/analysis\//.test(endpoint) || endpoint === '/analysis/list' || /^\/analysis\/status\//.test(endpoint)) {
-        timeoutMs = 60000;
+        timeoutMs = 120000;
       }
       
       console.log('🔍 API GET Request:', {
@@ -161,7 +161,7 @@ class ApiService {
       // Long-running endpoints need longer timeouts
       let timeoutMs = 20000;
       if (/\/generate\/csat-set$/.test(endpoint)) timeoutMs = 60000;
-      if (/\/analysis\//.test(endpoint)) timeoutMs = Math.max(timeoutMs, 60000);
+      if (/\/analysis\//.test(endpoint)) timeoutMs = Math.max(timeoutMs, 120000);
       if (/\/vocabulary\/sets\/.+\/quiz$/.test(endpoint)) timeoutMs = Math.max(timeoutMs, 30000);
       if (/\/problems\/export\/pdf$/.test(endpoint)) timeoutMs = Math.max(timeoutMs, 60000);
 
@@ -308,6 +308,8 @@ export const api = {
     login: (credentials) => apiService.post('/auth/login', credentials),
     register: (userData) => apiService.post('/auth/register', userData),
     sendCode: (email) => apiService.post('/auth/send-code', { email }),
+    forgotPassword: (email) => apiService.post('/auth/forgot-password', { email }),
+    resetPassword: (payload) => apiService.post('/auth/reset-password', payload),
     logout: () => apiService.post('/auth/logout'),
     refresh: () => apiService.post('/auth/refresh')
   },
@@ -442,7 +444,10 @@ export const api = {
   workbooks: {
     list: (params) => apiService.get('/workbooks', params),
     detail: (id) => apiService.get(`/workbooks/${id}`),
-    generate: (payload) => apiService.post('/workbooks/generate', payload)
+    generate: (payload) => apiService.post('/workbooks/generate', payload),
+    delete: (id) => apiService.delete(`/workbooks/${id}`),
+    test: (id) => apiService.get(`/workbooks/${id}/test`),
+    submitTest: (id, payload) => apiService.post(`/workbooks/${id}/test/submit`, payload)
   }
 };
 

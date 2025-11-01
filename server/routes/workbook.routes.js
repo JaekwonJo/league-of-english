@@ -43,4 +43,39 @@ router.post('/workbooks/generate', verifyToken, requireTeacherOrAdmin, async (re
   }
 });
 
+router.delete('/workbooks/:id', verifyToken, requireTeacherOrAdmin, async (req, res) => {
+  try {
+    const result = await workbookService.deleteWorkbook(req.params.id);
+    res.json({ success: true, data: result });
+  } catch (error) {
+    const status = /찾을 수 없습니다/.test(String(error?.message || '')) ? 404 : 400;
+    console.error('[workbooks] delete error:', error);
+    res.status(status).json({ message: error.message || '워크북을 삭제하지 못했습니다.' });
+  }
+});
+
+router.get('/workbooks/:id/test', verifyToken, async (req, res) => {
+  try {
+    const data = await workbookService.getWorkbookTest(req.params.id);
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('[workbooks] test fetch error:', error);
+    res.status(400).json({ message: error.message || '워크북 테스트를 준비하지 못했습니다.' });
+  }
+});
+
+router.post('/workbooks/:id/test/submit', verifyToken, async (req, res) => {
+  try {
+    const { answers } = req.body || {};
+    if (!Array.isArray(answers) || answers.length === 0) {
+      return res.status(400).json({ message: '답안을 제출해 주세요.' });
+    }
+    const result = await workbookService.submitWorkbookTest(req.params.id, req.user.id, answers);
+    res.json({ success: true, data: result });
+  } catch (error) {
+    console.error('[workbooks] test submit error:', error);
+    res.status(400).json({ message: error.message || '워크북 테스트를 채점하지 못했습니다.' });
+  }
+});
+
 module.exports = router;

@@ -1,3 +1,17 @@
+## 2025-11-01 (analysis manual sync + UI alignment)
+- Issue: 분석본이 교수님 매뉴얼 포맷으로 통일되지 않아 학생/관리자 화면이 불일치했고, UI에는 배경지식·사례·순번 표기가 빠져 있었습니다.
+- Cause: DocumentAnalyzer 프롬프트/폴백이 구 라벨(`내용 분석`, `추가 메모`, `필수 어휘`)을 유지했고, AnalysisPage 렌더러는 번역/해석만 노출했습니다.
+- Fix: 프롬프트·폴백을 개편해 배경지식·사례·어휘 포인트·응원 이모지·영어 제목 3개를 강제하고, AnalysisPage를 ①~⑳ 번호·배경/사례 강조·어휘 표 UI로 리디자인했습니다. WorkbookService는 새 라벨을 파싱하도록 보강했습니다.
+- Files: server/utils/documentAnalyzer.js, server/services/workbookService.js, client/src/pages/AnalysisPage.js, client/src/styles/analysisStyles.js.
+- Tests: `npm test` (서버 51개 케이스 통과).
+
+## 2025-11-01 (analysis fast mode)
+- Issue: OpenAI 키 없이 분석본을 생성할 때 Google Translate 호출이 누적되며 60초 이상 지연·타임아웃이 발생했습니다.
+- Cause: fallback 분석이 문장마다 번역 API를 호출해 dev 환경에서 응답이 늦어졌습니다.
+- Fix: DocumentAnalyzer fast mode에서 번역 호출을 생략하고, 클라이언트 타임아웃도 120초로 확장했습니다. `LOE_FAST_MODE`가 자동으로 활성화되어 폴백 분석이 5~10초 내에 완료됩니다.
+- Files: server/utils/documentAnalyzer.js, client/src/services/api.service.js.
+- Tests: `npm test`.
+
 ## 2025-10-29 (workbook auto generation + light theme contrast)
 - Issue: 워크북 학습이 정적 데이터에 의존해 업데이트가 어려웠고, 라이트 모드에서 사이드바/안내문이 흐릿했습니다.
 - Cause: 워크북 콘텐츠를 JS 파일에 하드코딩했고, `/workbooks` API가 없어 자동 생성/저장이 불가능했습니다. 라이트 테마 팔레트도 대비값이 낮았습니다.

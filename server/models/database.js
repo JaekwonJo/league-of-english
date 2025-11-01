@@ -367,6 +367,20 @@ class Database {
           FOREIGN KEY (created_by) REFERENCES users(id)
         )`,
 
+        `CREATE TABLE IF NOT EXISTS workbook_test_logs (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          workbook_id INTEGER NOT NULL,
+          user_id INTEGER NOT NULL,
+          total_questions INTEGER NOT NULL,
+          correct INTEGER NOT NULL,
+          incorrect INTEGER NOT NULL,
+          score INTEGER NOT NULL,
+          points_delta INTEGER NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (workbook_id) REFERENCES workbook_sets(id),
+          FOREIGN KEY (user_id) REFERENCES users(id)
+        )`,
+
         `CREATE TABLE IF NOT EXISTS inquiries (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           user_id INTEGER NOT NULL,
@@ -636,6 +650,19 @@ class Database {
     fs.mkdirSync(path.dirname(this.dbPath), { recursive: true });
     fs.writeFileSync(this.dbPath, Buffer.from(data));
     this._dirty = false;
+  }
+
+  async hasColumn(tableName, columnName) {
+    const safeTable = String(tableName || '').replace(/[^A-Za-z0-9_]/g, '');
+    const safeColumn = String(columnName || '').trim();
+    if (!safeTable || !safeColumn) return false;
+    try {
+      const rows = await this.all(`PRAGMA table_info(${safeTable})`);
+      return rows.some((row) => String(row?.name).toLowerCase() === safeColumn.toLowerCase());
+    } catch (error) {
+      console.warn('[db] hasColumn check failed:', error?.message || error);
+      return false;
+    }
   }
 }
 

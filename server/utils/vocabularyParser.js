@@ -8,6 +8,8 @@ const NO_MARKER_REGEX = /^(?:\d+\s*)?(?:no\.?|문항|번호)\s*(\d{1,3})\s*$/i;
 const LESSON_MARKER_REGEX = /^(?:\d+\s*)?Lesson\s*(\d{1,2})\s*$/i;
 // Inline entries like: "367no.41~42 generate 뜻..." or "no.18 express 뜻..."
 const INLINE_NO_ENTRY_REGEX = /^(?:\d+\s*)?no\.?\s*(\d{1,3})(?:~\d+)?\s+([A-Za-z][A-Za-z\s'\-]*)\s+(.+)$/i;
+const NUMBER_MARKER_REGEX = /^(\d{1,5})\s*번$/i;
+const NUMBER_ONLY_REGEX = /^(\d{2,5})$/;
 
 class VocabularyParser {
   parse(rawText = '') {
@@ -51,6 +53,24 @@ class VocabularyParser {
       return dayMap.get(label);
     };
 
+    const extractStandaloneNumber = (input) => {
+      if (!input) return null;
+      const compact = String(input).replace(/\s+/g, '');
+      let match = compact.match(NUMBER_MARKER_REGEX);
+      if (!match && NUMBER_ONLY_REGEX.test(compact)) {
+        match = [compact, compact];
+      }
+      if (!match) return null;
+      const [, digits] = match;
+      let numeric = parseInt(digits, 10);
+      if (Number.isNaN(numeric) || numeric <= 0) return null;
+      if (numeric >= 100) {
+        const modHundred = numeric % 100;
+        if (modHundred) numeric = modHundred;
+      }
+      return numeric;
+    };
+
     for (const line of lines) {
       // 0) Inline entry handling: noXX + term + meaning on one line
       const inlineNo = line.match(INLINE_NO_ENTRY_REGEX);
@@ -69,7 +89,10 @@ class VocabularyParser {
       const dayMatch = line.match(DAY_MARKER_REGEX);
       const noMatch = dayMatch ? null : line.match(NO_MARKER_REGEX);
       const lessonMatch = (dayMatch || noMatch) ? null : line.match(LESSON_MARKER_REGEX);
-      if (dayMatch || noMatch || lessonMatch) {
+      const standaloneNumber = (dayMatch || noMatch || lessonMatch)
+        ? null
+        : extractStandaloneNumber(line);
+      if (dayMatch || noMatch || lessonMatch || standaloneNumber !== null) {
         finalizeEntry();
         if (dayMatch) {
           const [, index, dayNumber] = dayMatch;
@@ -97,6 +120,16 @@ class VocabularyParser {
           // Lesson N → N과 로 표기
           const [, lessonNumber] = lessonMatch;
           const label = `${parseInt(lessonNumber, 10)}과`;
+          currentDay = ensureDay(label);
+          currentEntry = {
+            index: currentDay.entries.length + 1,
+            term: '',
+            meaningLines: []
+          };
+          continue;
+        }
+        if (standaloneNumber !== null) {
+          const label = `no${standaloneNumber}`;
           currentDay = ensureDay(label);
           currentEntry = {
             index: currentDay.entries.length + 1,

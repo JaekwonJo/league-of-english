@@ -1,11 +1,16 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import appConfig from '../config/appConfig.json';
 import apiService, { api } from '../services/api.service';
 
+const MODE_LOGIN = 'login';
+const MODE_REGISTER = 'register';
+const MODE_RESET = 'reset';
+
 const LoginPage = () => {
   const { login } = useAuth();
-  const [isLogin, setIsLogin] = useState(true);
+
+  const [mode, setMode] = useState(MODE_LOGIN);
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -14,20 +19,19 @@ const LoginPage = () => {
     name: '',
     school: '',
     grade: '1',
-    role: 'student'
+    role: 'student',
+    newPassword: '',
+    confirmPassword: ''
   });
   const [error, setError] = useState('');
+  const [infoMessage, setInfoMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [sendingCode, setSendingCode] = useState(false);
   const [codeSent, setCodeSent] = useState(false);
   const [codeCountdown, setCodeCountdown] = useState(0);
-  const [infoMessage, setInfoMessage] = useState('');
-  const [isCompact, setIsCompact] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return window.innerWidth <= 480;
-  });
+  const [isCompact, setIsCompact] = useState(() => (typeof window === 'undefined' ? false : window.innerWidth <= 480));
 
-  React.useEffect(() => {
+  useEffect(() => {
     const handleResize = () => {
       if (typeof window === 'undefined') return;
       setIsCompact(window.innerWidth <= 480);
@@ -36,7 +40,7 @@ const LoginPage = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!codeSent || codeCountdown <= 0) return;
     const timer = setInterval(() => {
       setCodeCountdown((prev) => {
@@ -50,14 +54,63 @@ const LoginPage = () => {
     return () => clearInterval(timer);
   }, [codeSent, codeCountdown]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const resetFeedback = () => {
     setError('');
     setInfoMessage('');
+  };
+
+  const switchMode = useCallback((nextMode) => {
+    setMode(nextMode);
+    resetFeedback();
+    setCodeSent(false);
+    setCodeCountdown(0);
+    setSendingCode(false);
+    setFormData((prev) => ({
+      ...prev,
+      verificationCode: '',
+      newPassword: '',
+      confirmPassword: ''
+    }));
+  }, []);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSendCode = async () => {
+    resetFeedback();
+    if (!formData.email) {
+      setError('이메일을 먼저 입력해 주세요.');
+      return;
+    }
+
+    try {
+      setSendingCode(true);
+      if (mode === MODE_REGISTER) {
+        await api.auth.sendCode(formData.email);
+      } else if (mode === MODE_RESET) {
+        await api.auth.forgotPassword(formData.email);
+      } else {
+        return;
+      }
+      setCodeSent(true);
+      setCodeCountdown(60);
+      setInfoMessage('이메일로 인증 코드를 전송했어요. 10분 안에 입력해 주세요!');
+    } catch (err) {
+      setError(err?.message || '인증 코드를 전송하지 못했어요.');
+    } finally {
+      setSendingCode(false);
+    }
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    resetFeedback();
     setLoading(true);
 
     try {
-      if (isLogin) {
+      if (mode === MODE_LOGIN) {
         const data = await api.auth.login({
           username: formData.username,
           password: formData.password
@@ -69,53 +122,60 @@ const LoginPage = () => {
         } else {
           setError('로그인 응답이 올바르지 않습니다.');
         }
-      } else {
+      }
+
+      if (mode === MODE_REGISTER) {
         await api.auth.register(formData);
-        setIsLogin(true);
-        setFormData((prev) => ({
-          ...prev,
-          username: prev.username,
-          password: '',
-          verificationCode: ''
-        }));
-        setCodeSent(false);
-        setCodeCountdown(0);
-        setInfoMessage('회원가입이 완료되었습니다. 로그인해주세요.');
         alert('회원가입이 완료되었습니다. 로그인해주세요.');
+        setInfoMessage('회원가입이 완료되었습니다. 로그인해주세요.');
+        switchMode(MODE_LOGIN);
+      }
+
+      if (mode === MODE_RESET) {
+        if (!formData.email || !formData.verificationCode) {
+          setError('이메일과 인증코드를 입력해 주세요.');
+          return;
+        }
+        if (!formData.newPassword || formData.newPassword.length < 8) {
+          setError('새 비밀번호를 8자 이상 입력해 주세요.');
+          return;
+        }
+        if (!/[0-9]/.test(formData.newPassword) || !/[A-Za-z]/.test(formData.newPassword)) {
+          setError('새 비밀번호는 숫자와 영문을 모두 포함해야 합니다.');
+          return;
+        }
+        if (formData.newPassword !== formData.confirmPassword) {
+          setError('새 비밀번호와 확인 비밀번호가 일치하지 않습니다.');
+          return;
+        }
+
+        await api.auth.resetPassword({
+          email: formData.email,
+          code: formData.verificationCode,
+          newPassword: formData.newPassword
+        });
+
+        alert('비밀번호가 재설정되었습니다. 새 비밀번호로 로그인해 주세요.');
+        setInfoMessage('비밀번호가 재설정되었어요! 새 비밀번호로 로그인해 주세요.');
+        switchMode(MODE_LOGIN);
       }
     } catch (err) {
-      setError(err.message || '서버 연결에 실패했습니다.');
+      setError(err?.message || '요청을 처리하지 못했습니다.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
+  const isLogin = mode === MODE_LOGIN;
+  const isRegister = mode === MODE_REGISTER;
+  const isReset = mode === MODE_RESET;
 
-  const handleSendCode = async () => {
-    setError('');
-    setInfoMessage('');
-    if (!formData.email) {
-      setError('이메일을 먼저 입력해 주세요.');
-      return;
-    }
-    try {
-      setSendingCode(true);
-      await api.auth.sendCode(formData.email);
-      setCodeSent(true);
-      setCodeCountdown(60);
-      setInfoMessage('인증 코드를 이메일로 전송했어요. 10분 안에 입력해 주세요!');
-    } catch (err) {
-      setError(err?.message || '인증 코드를 전송하지 못했어요.');
-    } finally {
-      setSendingCode(false);
-    }
-  };
+  const submitLabel = useMemo(() => {
+    if (loading) return '처리 중...';
+    if (isLogin) return '로그인';
+    if (isRegister) return '회원가입';
+    return '비밀번호 재설정';
+  }, [loading, isLogin, isRegister]);
 
   return (
     <div style={styles.container}>
@@ -127,28 +187,49 @@ const LoginPage = () => {
         </div>
 
         <form onSubmit={handleSubmit} style={styles.form}>
-          <input
-            type="text"
-            name="username"
-            placeholder="아이디"
-            value={formData.username}
-            onChange={handleChange}
-            style={styles.input}
-            required
-          />
-          
-          <input
-            type="password"
-            name="password"
-            placeholder="비밀번호"
-            value={formData.password}
-            onChange={handleChange}
-            style={styles.input}
-            required
-          />
-
-          {!isLogin && (
+          {isLogin && (
             <>
+              <input
+                type="text"
+                name="username"
+                placeholder="아이디"
+                value={formData.username}
+                onChange={handleChange}
+                style={styles.input}
+                required
+              />
+              <input
+                type="password"
+                name="password"
+                placeholder="비밀번호"
+                value={formData.password}
+                onChange={handleChange}
+                style={styles.input}
+                required
+              />
+            </>
+          )}
+
+          {isRegister && (
+            <>
+              <input
+                type="text"
+                name="username"
+                placeholder="아이디 (로그인 시 사용)"
+                value={formData.username}
+                onChange={handleChange}
+                style={styles.input}
+                required
+              />
+              <input
+                type="password"
+                name="password"
+                placeholder="비밀번호"
+                value={formData.password}
+                onChange={handleChange}
+                style={styles.input}
+                required
+              />
               <div style={styles.emailRow}>
                 <input
                   type="email"
@@ -172,7 +253,6 @@ const LoginPage = () => {
                   {sendingCode ? '전송 중…' : codeCountdown > 0 ? `${codeCountdown}초` : '인증코드'}
                 </button>
               </div>
-
               <input
                 type="text"
                 name="verificationCode"
@@ -182,7 +262,6 @@ const LoginPage = () => {
                 style={styles.input}
                 required
               />
-
               <input
                 type="text"
                 name="name"
@@ -192,7 +271,6 @@ const LoginPage = () => {
                 style={styles.input}
                 required
               />
-              
               <input
                 type="text"
                 name="school"
@@ -202,7 +280,6 @@ const LoginPage = () => {
                 style={styles.input}
                 required
               />
-              
               <select
                 name="grade"
                 value={formData.grade}
@@ -214,7 +291,6 @@ const LoginPage = () => {
                 <option value="2">고2</option>
                 <option value="3">고3</option>
               </select>
-
               <select
                 name="role"
                 value={formData.role}
@@ -228,38 +304,113 @@ const LoginPage = () => {
             </>
           )}
 
+          {isReset && (
+            <>
+              <input
+                type="email"
+                name="email"
+                placeholder="가입한 이메일"
+                value={formData.email}
+                onChange={handleChange}
+                style={styles.input}
+                required
+              />
+              <div style={styles.emailRow}>
+                <input
+                  type="text"
+                  name="verificationCode"
+                  placeholder="이메일로 받은 인증코드"
+                  value={formData.verificationCode}
+                  onChange={handleChange}
+                  style={{ ...styles.input, flex: '1 1 200px', minWidth: 0 }}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={handleSendCode}
+                  disabled={sendingCode || codeCountdown > 0}
+                  style={{
+                    ...styles.codeButton,
+                    width: isCompact ? '100%' : 'auto',
+                    marginTop: isCompact ? 8 : 0
+                  }}
+                >
+                  {sendingCode ? '전송 중…' : codeCountdown > 0 ? `${codeCountdown}초` : '코드 전송'}
+                </button>
+              </div>
+              <input
+                type="password"
+                name="newPassword"
+                placeholder="새 비밀번호 (8자 이상, 영문·숫자 포함)"
+                value={formData.newPassword}
+                onChange={handleChange}
+                style={styles.input}
+                required
+              />
+              <input
+                type="password"
+                name="confirmPassword"
+                placeholder="새 비밀번호 확인"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                style={styles.input}
+                required
+              />
+              <div style={styles.helperBox}>
+                <div style={styles.helperTitle}>아이디가 기억나지 않으세요?</div>
+                <p style={styles.helperText}>
+                  아이디는 회원가입할 때 직접 정한 로그인용 이름이에요. 가입 완료 안내 메일(제목에 “League of English”가 포함돼요)에서 다시 확인할 수 있습니다.
+                </p>
+                <p style={styles.helperText}>
+                  메일을 찾기 어렵다면 담당 선생님이나 운영팀(<strong>jaekwonim@gmail.com</strong>)에게 알려 주세요. 바로 아이디를 안내해 드릴게요.
+                </p>
+              </div>
+            </>
+          )}
+
           {infoMessage && <div style={styles.info}>{infoMessage}</div>}
           {error && <div style={styles.error}>{error}</div>}
 
-          <button 
-            type="submit" 
-            style={styles.submitButton}
-            disabled={loading}
-          >
-            {loading ? '처리중...' : (isLogin ? '로그인' : '회원가입')}
+          <button type="submit" style={styles.submitButton} disabled={loading}>
+            {submitLabel}
           </button>
         </form>
 
         <div style={styles.toggleContainer}>
-          <span style={styles.toggleText}>
-            {isLogin ? '계정이 없으신가요?' : '이미 계정이 있으신가요?'}
-          </span>
-          <button
-            onClick={() => {
-              setIsLogin(!isLogin);
-              setError('');
-              setInfoMessage('');
-              setCodeSent(false);
-              setCodeCountdown(0);
-              setFormData((prev) => ({
-                ...prev,
-                verificationCode: ''
-              }));
-            }}
-            style={styles.toggleButton}
-          >
-            {isLogin ? '회원가입' : '로그인'}
-          </button>
+          {isLogin && (
+            <>
+              <div style={styles.toggleRow}>
+                <span style={styles.toggleText}>처음 오셨나요?</span>
+                <button type="button" onClick={() => switchMode(MODE_REGISTER)} style={styles.toggleButton}>
+                  회원가입
+                </button>
+              </div>
+              <div style={styles.toggleRow}>
+                <span style={styles.toggleText}>비밀번호를 잊으셨나요?</span>
+                <button type="button" onClick={() => switchMode(MODE_RESET)} style={styles.toggleButton}>
+                  비밀번호 재설정
+                </button>
+              </div>
+            </>
+          )}
+
+          {isRegister && (
+            <div style={styles.toggleRow}>
+              <span style={styles.toggleText}>이미 계정이 있으신가요?</span>
+              <button type="button" onClick={() => switchMode(MODE_LOGIN)} style={styles.toggleButton}>
+                로그인
+              </button>
+            </div>
+          )}
+
+          {isReset && (
+            <div style={styles.toggleRow}>
+              <span style={styles.toggleText}>비밀번호가 기억나셨나요?</span>
+              <button type="button" onClick={() => switchMode(MODE_LOGIN)} style={styles.toggleButton}>
+                로그인으로 돌아가기
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -280,7 +431,7 @@ const styles = {
     borderRadius: '20px',
     padding: '40px',
     width: '100%',
-    maxWidth: '400px',
+    maxWidth: '420px',
     boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
     backdropFilter: 'blur(10px)',
     border: '1px solid rgba(255, 255, 255, 0.1)'
@@ -310,84 +461,98 @@ const styles = {
     flexDirection: 'column',
     gap: '15px'
   },
+  input: {
+    padding: '12px 16px',
+    borderRadius: '12px',
+    border: '1px solid rgba(148, 163, 184, 0.4)',
+    background: 'rgba(15, 23, 42, 0.8)',
+    color: '#fff',
+    fontSize: '15px',
+    outline: 'none'
+  },
   emailRow: {
     display: 'flex',
     gap: '8px',
     flexWrap: 'wrap',
     alignItems: 'center'
   },
-  input: {
+  codeButton: {
     padding: '12px 16px',
+    borderRadius: '12px',
+    border: '1px solid rgba(99, 102, 241, 0.6)',
+    background: 'rgba(99, 102, 241, 0.12)',
+    color: '#c7d2fe',
+    fontWeight: 600,
+    cursor: 'pointer'
+  },
+  info: {
+    background: 'rgba(34, 197, 94, 0.15)',
     borderRadius: '10px',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
-    background: 'rgba(255, 255, 255, 0.05)',
-    color: 'var(--text-on-accent)',
-    fontSize: '14px',
-    outline: 'none',
-    transition: 'all 0.3s'
+    padding: '10px 14px',
+    color: '#bbf7d0',
+    fontSize: '13px'
+  },
+  error: {
+    background: 'rgba(248, 113, 113, 0.15)',
+    borderRadius: '10px',
+    padding: '10px 14px',
+    color: '#fecaca',
+    fontSize: '13px'
   },
   submitButton: {
     padding: '14px',
-    borderRadius: '10px',
+    borderRadius: '14px',
+    background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+    color: '#fff',
     border: 'none',
-    background: 'linear-gradient(135deg, var(--indigo) 0%, var(--indigo-strong) 100%)',
-    color: 'var(--text-on-accent)',
     fontSize: '16px',
-    fontWeight: 'bold',
+    fontWeight: 700,
     cursor: 'pointer',
-    transition: 'all 0.3s',
-    marginTop: '10px'
-  },
-  codeButton: {
-    background: 'var(--indigo)',
-    color: 'var(--text-on-accent)',
-    border: 'none',
-    borderRadius: '10px',
-    padding: '12px 16px',
-    fontWeight: 'bold',
-    cursor: 'pointer',
-    minWidth: '110px',
-    flexShrink: 0,
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '44px'
-  },
-  info: {
-    background: 'rgba(99, 102, 241, 0.2)',
-    color: '#cbd5f5',
-    padding: '10px',
-    borderRadius: '10px',
-    fontSize: '14px'
-  },
-  error: {
-    background: 'rgba(239, 68, 68, 0.1)',
-    border: '1px solid rgba(239, 68, 68, 0.3)',
-    color: 'var(--danger)',
-    padding: '10px',
-    borderRadius: '8px',
-    fontSize: '14px',
-    textAlign: 'center'
+    marginTop: '6px'
   },
   toggleContainer: {
-    textAlign: 'center',
-    marginTop: '20px',
-    paddingTop: '20px',
-    borderTop: '1px solid rgba(255, 255, 255, 0.1)'
+    marginTop: '24px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px'
+  },
+  toggleRow: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '10px',
+    justifyContent: 'center'
   },
   toggleText: {
     color: 'var(--text-muted)',
-    fontSize: '14px',
-    marginRight: '8px'
+    fontSize: '13px'
   },
   toggleButton: {
-    background: 'none',
+    background: 'transparent',
+    color: '#c7d2fe',
     border: 'none',
-    color: 'var(--indigo)',
-    fontSize: '14px',
-    fontWeight: 'bold',
     cursor: 'pointer',
+    fontWeight: 600,
     textDecoration: 'underline'
+  },
+  helperBox: {
+    marginTop: '16px',
+    padding: '16px',
+    borderRadius: '14px',
+    background: 'rgba(148,163,184,0.12)',
+    color: 'var(--text-on-accent)',
+    lineHeight: 1.6,
+    textAlign: 'left'
+  },
+  helperTitle: {
+    fontWeight: 700,
+    fontSize: '14px',
+    marginBottom: '6px',
+    color: '#e2e8f0'
+  },
+  helperText: {
+    fontSize: '13px',
+    margin: '4px 0',
+    color: '#cbd5f5'
   }
 };
 

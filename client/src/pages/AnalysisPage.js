@@ -29,6 +29,9 @@ const LOADING_MESSAGES = [
   '실생활 예시와 어법 포인트를 챙기고 있어요... 📚'
 ];
 
+const CIRCLED_DIGITS = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩', '⑪', '⑫', '⑬', '⑭', '⑮', '⑯', '⑰', '⑱', '⑲', '⑳'];
+const getCircledDigit = (index) => CIRCLED_DIGITS[index] || `${index + 1}.`;
+
 const pickRandom = (items) => items[Math.floor(Math.random() * items.length)];
 
 const STEPS = {
@@ -712,10 +715,11 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
   const renderVariantMeta = (variant) => {
     const { meta = {} } = variant || {};
     const deepDive = meta.deepDive || {};
-    const englishTitles = Array.isArray(meta.englishTitles) ? meta.englishTitles.slice(0, 2) : [];
-    const modernApplications = Array.isArray(meta.modernApplications) ? meta.modernApplications.slice(0, 2) : [];
+    const englishTitles = Array.isArray(meta.englishTitles) ? meta.englishTitles.slice(0, 3) : [];
+    const modernApplications = Array.isArray(meta.modernApplications) ? meta.modernApplications.slice(0, 3) : [];
 
-    const koreanTitle = meta.koreanTitle || meta.koreanMainIdea || '한글 제목이 아직 준비되지 않았어요.';
+    const koreanTitle = meta.koreanTitle || '한글 제목이 아직 준비되지 않았어요.';
+    const koreanMainIdea = meta.koreanMainIdea || '지문의 핵심 내용을 우리말로 다시 정리해 보세요.';
     const authorsClaim = meta.authorsClaim || '작가의 주장을 간단히 정리해 보세요.';
     const englishSummary = meta.englishSummary || '영어 한 줄 요약이 준비되는 중이에요.';
     const englishSummaryKorean = meta.englishSummaryKorean || '한 줄 요약을 우리말로 직접 정리해 보세요.';
@@ -727,13 +731,14 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
           <ul style={analysisStyles.metaList}>
             {englishTitles.map((title, index) => (
               <li key={`title-${index}`}>
-                {title.title}
-                {title.isQuestion ? ' (?)' : ''}
+                <strong>{index + 1}.</strong> {title.title}
+                {title.isQuestion ? ' ❓' : ''}
                 {title.korean ? ` — ${title.korean}` : ''}
               </li>
             ))}
           </ul>
           <p><strong>한글 제목:</strong> {koreanTitle}</p>
+          <p><strong>한글 요지:</strong> {koreanMainIdea}</p>
           <p><strong>작가의 주장:</strong> {authorsClaim}</p>
         </div>
         <div style={analysisStyles.metaCard}>
@@ -762,11 +767,14 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
     const englishRaw = String(sentence.english || '');
     const topicMatch = englishRaw.match(/^\*\*(.*)\*\*$/);
     const cleanEnglish = topicMatch ? topicMatch[1].trim() : englishRaw;
+    const circledDigit = getCircledDigit(index);
 
     const koreanLine = sentence.korean || '*** 한글 해석: 문장을 우리말로 직접 정리해 보세요.';
-    const analysisLine = sentence.analysis || '*** 내용 분석: 문장이 전달하는 핵심을 한 줄로 정리해 보세요.';
+    const analysisLine = sentence.analysis || '*** 분석: 문장의 핵심을 한 줄로 정리해 보세요.';
+    const backgroundLine = sentence.background || '*** 이 문장에 필요한 배경지식: 관련 교과 내용을 직접 찾아 정리해 보세요.';
+    const exampleLine = sentence.example || '*** 이 문장에 필요한 사례: 떠오른 실제 장면을 두 문장 이상으로 적어 보세요.';
     const grammarLine = sentence.grammar || '✏️ 어법 포인트: 중요한 구문을 한 줄로 메모해 보세요.';
-    const vocabularyIntro = sentence.vocabulary?.intro || '*** 필수 어휘: 꼭 외워야 할 단어를 직접 정리해 보세요.';
+    const vocabularyIntro = sentence.vocabulary?.intro || '*** 어휘 포인트: 꼭 외워야 할 단어를 직접 정리해 보세요.';
     const vocabWords = Array.isArray(sentence.vocabulary?.words) ? sentence.vocabulary.words : [];
 
     const cardStyle = {
@@ -774,51 +782,75 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
       ...(index === total - 1 ? analysisStyles.sentenceCardLast : {})
     };
 
-    const stripLabel = (value) => String(value || '').replace(/^\*{2,3}\s*[^:：]+[:：]\s*/u, '').trim();
-    const stripGrammar = (value) => String(value || '').replace(/^✏️\s*어법 포인트\s*[:：]\s*/u, '').trim();
+    const stripPrefixedLine = (value) => String(value || '').replace(/^(?:[*✏️\s]+)?[^:：]+[:：]\s*/u, '').trim();
+
+    const sections = [
+      { key: 'korean', label: '한글 해석', value: koreanLine },
+      { key: 'analysis', label: '내용 분석', value: analysisLine },
+      { key: 'background', label: '이 문장에 필요한 배경지식', value: backgroundLine },
+      { key: 'example', label: '이 문장에 필요한 사례', value: exampleLine },
+      { key: 'grammar', label: '어법 포인트', value: grammarLine }
+    ];
+
+    const fallbackMessages = {
+      korean: '문장을 우리말로 직접 정리해 보세요.',
+      analysis: '문장의 핵심 메시지를 정리해 보세요.',
+      background: '관련 교과 지식을 찾아 메모해 보세요.',
+      example: '비슷한 상황을 떠올려 예시를 써 보세요.',
+      grammar: '핵심 문법 포인트를 직접 정리해 보세요.'
+    };
 
     return (
       <div key={`sentence-${index}`} style={cardStyle}>
         <div style={analysisStyles.sentenceHeader}>
-          <span style={analysisStyles.sentenceEnglish}>
-            {sentence.isTopicSentence ? (
-              <strong>⭐ {cleanEnglish}</strong>
-            ) : (
-              cleanEnglish
-            )}
-          </span>
+          <div style={analysisStyles.sentenceTitleRow}>
+            <span style={analysisStyles.sentenceNumber}>{circledDigit}</span>
+            <span style={analysisStyles.sentenceEnglish}>
+              {sentence.isTopicSentence ? (
+                <strong>⭐ {cleanEnglish}</strong>
+              ) : (
+                cleanEnglish
+              )}
+            </span>
+          </div>
           {sentence.isTopicSentence && <span style={analysisStyles.topicBadge}>주제문</span>}
         </div>
         <div style={analysisStyles.sentenceBody}>
+          {sections.map((section) => {
+            const text = stripPrefixedLine(section.value) || fallbackMessages[section.key] || '';
+            const sectionStyle = (section.key === 'background' || section.key === 'example')
+              ? { ...analysisStyles.sentenceSection, ...analysisStyles.sentenceSectionEmphasis }
+              : analysisStyles.sentenceSection;
+            return (
+              <div key={`${section.key}-${index}`} style={sectionStyle}>
+                <span style={analysisStyles.sentenceLabel}>{section.label}</span>
+                <p style={analysisStyles.sentenceText}>{text}</p>
+              </div>
+            );
+          })}
           <div style={analysisStyles.sentenceSection}>
-            <span style={analysisStyles.sentenceLabel}>한글 해석</span>
-            <p style={analysisStyles.sentenceText}>{stripLabel(koreanLine)}</p>
-          </div>
-          <div style={analysisStyles.sentenceSection}>
-            <span style={analysisStyles.sentenceLabel}>내용 분석</span>
-            <p style={analysisStyles.sentenceText}>{stripLabel(analysisLine)}</p>
-          </div>
-          <div style={analysisStyles.sentenceSection}>
-            <span style={analysisStyles.sentenceLabel}>필수 어휘</span>
-            <p style={analysisStyles.sentenceText}>{stripLabel(vocabularyIntro)}</p>
+            <span style={analysisStyles.sentenceLabel}>어휘 포인트</span>
+            <p style={analysisStyles.sentenceText}>{stripPrefixedLine(vocabularyIntro)}</p>
             {vocabWords.length ? (
               <ul style={analysisStyles.vocabList}>
                 {vocabWords.map((word, idx) => (
                   <li key={`word-${index}-${idx}`} style={analysisStyles.vocabListItem}>
-                    <strong>{word.term}</strong>: {word.meaning}
-                    {word.synonyms?.length ? ` · 동의어: ${word.synonyms.join(', ')}` : ''}
-                    {word.antonyms?.length ? ` · 반의어: ${word.antonyms.join(', ')}` : ''}
-                    {word.note ? ` · 노트: ${word.note}` : ''}
+                    <div><strong>{word.term}</strong> — {word.meaning}</div>
+                    {word.synonyms?.length ? (
+                      <div style={analysisStyles.vocabMeta}>동의어: {word.synonyms.join(', ')}</div>
+                    ) : null}
+                    {word.antonyms?.length ? (
+                      <div style={analysisStyles.vocabMeta}>반의어: {word.antonyms.join(', ')}</div>
+                    ) : null}
+                    {word.note ? (
+                      <div style={analysisStyles.vocabMeta}>노트: {word.note}</div>
+                    ) : null}
                   </li>
                 ))}
               </ul>
             ) : (
               <p style={analysisStyles.sentenceText}>꼭 외워야 할 단어를 직접 정리해 보세요.</p>
             )}
-          </div>
-          <div style={analysisStyles.sentenceSection}>
-            <span style={analysisStyles.sentenceLabel}>어법 포인트</span>
-            <p style={analysisStyles.sentenceText}>{stripGrammar(grammarLine)}</p>
           </div>
         </div>
       </div>

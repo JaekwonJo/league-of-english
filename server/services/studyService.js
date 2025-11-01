@@ -235,25 +235,20 @@ async function getUserRank(userId) {
     throw new Error('Invalid userId');
   }
 
-  const rankRow = await database.get(
-    `SELECT rank, points
-       FROM (
-         SELECT id,
-                points,
-                ROW_NUMBER() OVER (ORDER BY points DESC, created_at ASC, id ASC) AS rank
-           FROM users
-          WHERE points > 0
-       )
-      WHERE id = ?`,
+  const hasIsActive = await database.hasColumn('users', 'is_active');
+
+  const userRow = await database.get(
+    hasIsActive
+      ? 'SELECT id, points, COALESCE(created_at, "1970-01-01") AS created_at, COALESCE(is_active, 1) AS is_active FROM users WHERE id = ?'
+      : 'SELECT id, points, COALESCE(created_at, "1970-01-01") AS created_at, 1 AS is_active FROM users WHERE id = ?',
     [numericUserId]
   );
 
-  const userRow = await database.get('SELECT points FROM users WHERE id = ?', [numericUserId]);
   const points = Number(userRow?.points) || 0;
   const tier = getTierInfo(points);
   const nextTier = getNextTier(tier);
 
-  if (!rankRow) {
+  if (!userRow || !userRow.is_active) {
     return {
       rank: null,
       points,
@@ -263,9 +258,33 @@ async function getUserRank(userId) {
     };
   }
 
+  let rank = null;
+  if (points > 0) {
+    const activeClause = hasIsActive ? ' AND COALESCE(is_active, 1) = 1' : '';
+    const rankRow = await database.get(
+      `SELECT COUNT(*) + 1 AS rank
+         FROM users
+        WHERE points > 0${activeClause}
+          AND (
+                points > ?
+             OR (points = ? AND COALESCE(created_at, '1970-01-01') < COALESCE(?, '1970-01-01'))
+             OR (points = ? AND COALESCE(created_at, '1970-01-01') = COALESCE(?, '1970-01-01') AND id < ?)
+          )`,
+      [
+        points,
+        points,
+        userRow.created_at,
+        points,
+        userRow.created_at,
+        numericUserId
+      ]
+    );
+    rank = rankRow?.rank ?? 1;
+  }
+
   return {
-    rank: rankRow.rank,
-    points: Number(rankRow.points) || points,
+    rank,
+    points,
     tier,
     nextTier,
     progressToNext: nextTier ? calculateProgress(points, tier, nextTier) : 100

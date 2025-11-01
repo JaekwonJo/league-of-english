@@ -16,66 +16,52 @@ const { getUserRank } = require('../services/studyService');
  */
 router.get('/leaderboard', verifyToken, async (req, res) => {
   try {
-    const { limit = 100, offset = 0 } = req.query;
-    
-    // 상위 랭커들 조회 (포인트 순)
-    const rankings = await database.all(`
-      SELECT 
-        id, 
-        name, 
-        username,
-        points, 
-        school,
-        grade,
-        role,
-        COALESCE(membership, 'free') AS membership,
-        created_at,
-        last_login_at,
-        ROW_NUMBER() OVER (ORDER BY points DESC, created_at ASC) as rank
-      FROM users 
-      WHERE points > 0 AND COALESCE(is_active, 1) = 1
-      ORDER BY points DESC, created_at ASC
-      LIMIT ? OFFSET ?
-    `, [parseInt(limit), parseInt(offset)]);
+    const limit = clampPositiveInt(req.query?.limit, 100, 1, 200);
+    const offset = clampPositiveInt(req.query?.offset, 0, 0, 100000);
+    const activeClause = await getActiveFilterClause();
 
-    // 각 사용자의 티어 정보 추가
-    const enrichedRankings = rankings.map(user => {
+    const rankingsRaw = await database.all(
+      `SELECT 
+         id,
+         name,
+         username,
+         points,
+         school,
+         grade,
+         role,
+         COALESCE(membership, 'free') AS membership,
+         created_at,
+         last_login_at
+       FROM users
+      WHERE points > 0${activeClause}
+      ORDER BY points DESC, created_at ASC, id ASC
+      LIMIT ? OFFSET ?`,
+      [limit, offset]
+    );
+
+    const enrichedRankings = rankingsRaw.map((user, index) => {
       const tier = getTierInfo(user.points);
       return {
         ...user,
+        rank: offset + index + 1,
         tier,
         isActive: isRecentlyActive(user.last_login_at)
       };
     });
 
-    // 현재 사용자의 랭킹 정보
-    const currentUser = req.user;
-    const userRanking = await database.get(`
-      SELECT 
-        rank,
-        points
-      FROM (
-        SELECT 
-          id,
-          points,
-          ROW_NUMBER() OVER (ORDER BY points DESC, created_at ASC) as rank
-        FROM users
-        WHERE points > 0 AND COALESCE(is_active, 1) = 1
-      )
-      WHERE id = ?
-    `, [currentUser.id]);
+    const rankSnapshot = await getUserRank(req.user.id);
 
     res.json({
       rankings: enrichedRankings,
       currentUser: {
-        rank: userRanking?.rank || null,
-        points: currentUser.points,
-        tier: getTierInfo(currentUser.points)
+        rank: rankSnapshot?.rank ?? null,
+        points: rankSnapshot?.points ?? req.user.points,
+        tier: rankSnapshot?.tier ?? getTierInfo(req.user.points)
       },
       metadata: {
         total: await getTotalRankedUsers(),
-        limit: parseInt(limit),
-        offset: parseInt(offset)
+        limit,
+        offset
       }
     });
   } catch (error) {
@@ -90,7 +76,8 @@ router.get('/leaderboard', verifyToken, async (req, res) => {
  */
 router.get('/tier-distribution', verifyToken, async (req, res) => {
   try {
-    const users = await database.all('SELECT points FROM users WHERE points > 0 AND COALESCE(is_active, 1) = 1');
+    const activeClause = await getActiveFilterClause();
+    const users = await database.all(`SELECT points FROM users WHERE points > 0${activeClause}`);
     
     const distribution = tierConfig.tiers.map(tier => {
       const count = users.filter(user => {
@@ -127,42 +114,40 @@ router.get('/my-rank', verifyToken, async (req, res) => {
     const userId = req.user.id;
     const rankData = await getUserRank(userId);
 
-    if (!rankData || (!rankData.rank && (rankData.points || 0) <= 0)) {
+    if (!rankData || rankData.rank === null || (rankData.points || 0) <= 0) {
       return res.json({
         myRank: rankData || { rank: null, points: 0 },
         nearbyUsers: []
       });
     }
 
-    const windowStart = Math.max(1, (rankData.rank || 1) - 2);
-    const windowEnd = (rankData.rank || 1) + 2;
+    const windowSize = 5;
+    const windowStart = Math.max(1, rankData.rank - 2);
+    const offset = windowStart - 1;
+    const activeClause = await getActiveFilterClause();
 
-    const nearbyUsers = await database.all(`
-      SELECT 
-        rank,
-        name,
-        points,
-        id
-      FROM (
-        SELECT 
-          id,
-          name,
-          points,
-          ROW_NUMBER() OVER (ORDER BY points DESC, created_at ASC) as rank
-        FROM users
-        WHERE points > 0 AND COALESCE(is_active, 1) = 1
-      )
-      WHERE rank BETWEEN ? AND ?
-      ORDER BY rank
-    `, [windowStart, windowEnd]);
+    const nearbyRows = await database.all(
+      `SELECT id, name, points, last_login_at
+         FROM users
+        WHERE points > 0${activeClause}
+        ORDER BY points DESC, created_at ASC, id ASC
+        LIMIT ? OFFSET ?`,
+      [windowSize, offset]
+    );
+
+    const nearbyUsers = nearbyRows.map((user, index) => ({
+      id: user.id,
+      name: user.name,
+      points: user.points,
+      rank: offset + index + 1,
+      tier: getTierInfo(user.points),
+      isMe: user.id === userId,
+      isActive: isRecentlyActive(user.last_login_at)
+    }));
 
     res.json({
       myRank: rankData,
-      nearbyUsers: nearbyUsers.map((user) => ({
-        ...user,
-        tier: getTierInfo(user.points),
-        isMe: user.id === userId
-      }))
+      nearbyUsers
     });
   } catch (error) {
     console.error('내 순위 조회 오류:', error);
@@ -178,9 +163,28 @@ function isRecentlyActive(lastActivity) {
   return new Date(lastActivity) > threeDaysAgo;
 }
 
+let hasIsActiveColumnCache = null;
+
+async function getActiveFilterClause() {
+  if (hasIsActiveColumnCache === null) {
+    hasIsActiveColumnCache = await database.hasColumn('users', 'is_active');
+  }
+  return hasIsActiveColumnCache ? ' AND COALESCE(is_active, 1) = 1' : '';
+}
+
 async function getTotalRankedUsers() {
-  const result = await database.get('SELECT COUNT(*) as count FROM users WHERE points > 0');
-  return result.count;
+  const activeClause = await getActiveFilterClause();
+  const result = await database.get(
+    `SELECT COUNT(*) as count FROM users WHERE points > 0${activeClause}`
+  );
+  return result?.count || 0;
+}
+
+function clampPositiveInt(value, fallback, min, max) {
+  const parsed = parseInt(value, 10);
+  if (Number.isNaN(parsed)) return fallback;
+  const clamped = Math.min(Math.max(parsed, min), max);
+  return clamped;
 }
 
 module.exports = router;

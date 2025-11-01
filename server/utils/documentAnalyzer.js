@@ -227,18 +227,24 @@ const ENGLISH_LABEL_OVERRIDES = new Map([
   ['dynamic', 'dynamic routines']
 ]);
 
+const FRIENDLY_EMOJIS = ['😊', '🌟', '✨', '📚', '💡'];
+
 function buildAnalysisPrompt({ passage, passageNumber, variantIndex, retryNotes }) {
 const guidance = [
   '당신은 대한민국 최고의 영어 교수님이자 따뜻한 담임 선생님이에요.',
   '결과물은 초등학생도 이해할 수 있는 학습용 분석 카드입니다. 존댓말로 따뜻하게 설명하고, 이모지는 필요할 때 한두 개만 사용해 주세요.',
-  'sentenceAnalysis 배열의 각 항목에는 english, isTopicSentence, korean, analysis, grammar, vocabulary.words 필드를 꼭 넣어 주세요. background와 example은 비워 두거나 짧은 한 줄 메모로 남겨도 됩니다.',
+  'sentenceAnalysis 배열의 각 항목에는 english, isTopicSentence, korean, analysis, background, example, grammar, vocabulary.words 필드를 꼭 넣어 주세요.',
   'english 필드에는 원문 문장을 그대로 적고, 주제문(isTopicSentence=true)은 **굵은 글씨**로 표시해 주세요.',
-  'korean 필드는 "*** 한글 해석:"으로 시작하며 1~2문장으로 자연스럽게 번역합니다.',
-  'analysis 필드는 "*** 내용 분석:"으로 시작하고, 해당 문장이 전달하는 의미를 간단히 정리해 주세요.',
-  'vocabulary.intro는 "*** 필수 어휘:"로 시작하고, vocabulary.words에는 최소 1개의 핵심 어휘를 term·meaning·synonyms(최소 2개)·antonyms(최소 1개)·note와 함께 담아 주세요.',
-  'grammar 필드는 "✏️ 어법 포인트:"로 시작해 꼭 기억해야 할 문법 한 가지를 친절하게 설명합니다.',
-  'meta 안에는 deepDive(핵심 메시지·전개·톤), englishTitles(2개), koreanTitle(한글 제목 1개), authorsClaim, englishSummary, englishSummaryKorean을 채워 주세요. modernApplications는 2가지 정도 실천 팁을 제시하면 좋습니다.',
-  'JSON 외의 설명이나 마크다운은 절대 출력하지 말고 하나의 JSON 객체만 반환하세요.'
+  'korean 필드는 "*** 한글 해석:"으로 시작하고 자연스럽게 번역하며, 마지막에는 작은 응원 이모지를 하나 붙여 주세요.',
+  'analysis 필드는 "*** 분석:"으로 시작하고, 문장의 역할과 핵심 의미를 2~3문장으로 정리해 주세요.',
+  'background 필드는 "*** 이 문장에 필요한 배경지식:"으로 시작하고, 관련 교과/학문 배경이나 역사·사회 맥락을 2문장 이상 친절하게 설명해 주세요.',
+  'example 필드는 "*** 이 문장에 필요한 사례:"로 시작하고, 학생이 바로 적용해 볼 수 있는 생생한 실생활 예시를 존댓말로 2문장 이상 제시해 주세요.',
+  'grammar 필드는 "✏️ 어법 포인트:"로 시작하고, 반드시 핵심 구문이나 패턴을 풀어서 설명해 주세요.',
+  'vocabulary.intro는 "*** 어휘 포인트:"로 시작하고, vocabulary.words에는 최소 2개의 핵심 어휘를 term·meaning·synonyms(최소 2개)·antonyms(최소 1개)·note(8자 이상)와 함께 담아 주세요.',
+  'meta.englishTitles에는 서로 다른 강조점을 담은 영어 제목 3개를 넣고, 각각 korean 번역을 제공하며 적어도 하나는 의문문이어야 합니다.',
+  'meta.koreanMainIdea, meta.authorsClaim, meta.englishSummary, meta.englishSummaryKorean은 모두 풍부한 문장으로 채워 주세요.',
+  'meta.modernApplications에는 학생이 당장 실천할 수 있는 활동 3가지를 존댓말로 제시해 주세요.',
+  'JSON 외의 형식(마크다운, 설명 문장 등)은 절대 출력하지 말고, 하나의 JSON 객체만 반환하세요.'
 ].join('\n');
 
   const manualSection = ANALYSIS_MANUAL_SNIPPET
@@ -252,13 +258,13 @@ const guidance = [
     {
       "english": "**원문 한 문장 그대로**",
       "isTopicSentence": true,
-      "korean": "*** 한글 해석: 자연스럽고 쉬운 해석",
-      "analysis": "*** 내용 분석: 문장이 전달하는 핵심을 2문장 이내로 정리",
-      "background": "*** 참고 메모: 필요 시 한 줄 메모",
-      "example": "*** 생활 예시: 필요 시 한 줄 예시",
+      "korean": "*** 한글 해석: 자연스럽고 쉬운 해석을 덧붙이고 😊",
+      "analysis": "*** 분석: 문장이 전달하는 핵심을 2~3문장으로 정리",
+      "background": "*** 이 문장에 필요한 배경지식: 관련 교과/학문 정보를 소개",
+      "example": "*** 이 문장에 필요한 사례: 실생활 예시를 2문장 이상 제시",
       "grammar": "✏️ 어법 포인트: 알아 두면 좋은 구문 1가지",
       "vocabulary": {
-        "intro": "*** 필수 어휘: 집중해서 외우면 좋은 단어",
+        "intro": "*** 어휘 포인트: 집중해서 외우면 좋은 단어",
         "words": [
           {
             "term": "핵심 단어",
@@ -279,14 +285,15 @@ const guidance = [
     },
     "englishTitles": [
       { "title": "English Title 1", "korean": "한글 의미", "isQuestion": false },
-      { "title": "English Title 2", "korean": "한글 의미", "isQuestion": false }
+      { "title": "English Title 2", "korean": "한글 의미", "isQuestion": false },
+      { "title": "English Question Title?", "korean": "한글 의미", "isQuestion": true }
     ],
     "koreanTitle": "간단한 한글 제목",
     "koreanMainIdea": "저자의 핵심 주장",
     "authorsClaim": "작가가 전달하려는 메시지",
     "englishSummary": "짧고 정확한 영어 요약",
     "englishSummaryKorean": "위 영어 요약의 한국어 번역",
-    "modernApplications": ["실천 팁 1", "실천 팁 2"]
+    "modernApplications": ["실천 팁 1", "실천 팁 2", "실천 팁 3"]
   }
 }`;
 
@@ -312,8 +319,10 @@ const guidance = [
 
 class DocumentAnalyzer {
   constructor() {
-    const fastMode = String(process.env.LOE_FAST_MODE || '').trim() === '1';
-    this.openai = (!fastMode) && OpenAI && process.env.OPENAI_API_KEY
+    const fastModeFlag = String(process.env.LOE_FAST_MODE || '').trim();
+    const hasOpenAiKey = Boolean(OpenAI && process.env.OPENAI_API_KEY);
+    this.fastMode = fastModeFlag === '1' || !hasOpenAiKey;
+    this.openai = (!this.fastMode) && hasOpenAiKey
       ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
       : null;
   }
@@ -488,12 +497,12 @@ class DocumentAnalyzer {
 
       let backgroundRaw = String(entry?.background || entry?.note || '').trim();
       if (!backgroundRaw) {
-        backgroundRaw = '추가로 기억하면 좋은 배경 정보가 있다면 한 줄로 정리해 주세요.';
+        backgroundRaw = '이 문장에 필요한 배경지식을 교과서·학문 흐름과 연결해 2문장 이상으로 정리해 주세요.';
       }
 
       let exampleRaw = String(entry?.example || '').trim();
       if (!exampleRaw) {
-        exampleRaw = '생활 속 장면을 떠올려 한 줄 예시로 정리해 주세요.';
+        exampleRaw = '이 문장을 실생활에 적용할 수 있는 상황을 두 문장 이상으로 친절하게 설명해 주세요.';
       }
 
       let grammarRaw = String(entry?.grammar || '').trim();
@@ -528,13 +537,13 @@ class DocumentAnalyzer {
       });
 
       const korean = this._ensurePrefixedLine(koreanRaw, '한글 해석');
-      const analysis = this._ensurePrefixedLine(analysisRaw, '내용 분석');
-      const background = this._ensurePrefixedLine(backgroundRaw, '추가 메모');
-      const example = this._ensurePrefixedLine(exampleRaw, '생활 예시');
+      const analysis = this._ensurePrefixedLine(analysisRaw, '분석');
+      const background = this._ensurePrefixedLine(backgroundRaw, '이 문장에 필요한 배경지식');
+      const example = this._ensurePrefixedLine(exampleRaw, '이 문장에 필요한 사례');
       const grammar = this._ensureGrammarLine(grammarRaw);
       const vocabIntroSource = entry?.vocabulary?.intro || entry?.vocabularyIntro || '';
       const vocabIntro = vocabIntroSource
-        ? this._ensurePrefixedLine(vocabIntroSource, '필수 어휘')
+        ? this._ensurePrefixedLine(vocabIntroSource, '어휘 포인트')
         : this._buildVocabularyIntro(vocabWords);
 
       return {
@@ -647,6 +656,18 @@ class DocumentAnalyzer {
     const labelPattern = new RegExp(`^${escape(label)}\s*[:：]\s*`, 'i');
     const cleaned = trimmed.replace(labelPattern, '').trim();
     return `${prefix} ${label}: ${cleaned}`;
+  }
+
+  _ensureFriendlyEmoji(text, seed = 0) {
+    const clean = String(text || '').trim();
+    if (!clean) return '';
+    const emojiPattern = /\p{Extended_Pictographic}/u;
+    if (emojiPattern.test(clean)) {
+      return clean;
+    }
+    const index = Math.abs(Number(seed) || 0) % FRIENDLY_EMOJIS.length;
+    const emoji = FRIENDLY_EMOJIS[index];
+    return `${clean} ${emoji}`;
   }
 
   _ensureGrammarLine(value, label = '어법 포인트') {
@@ -885,6 +906,8 @@ class DocumentAnalyzer {
   async _safeTranslateSentence(sentence, keywords = []) {
     const trimmed = String(sentence || '').trim();
     if (!trimmed) return '';
+    if (this.fastMode) return '';
+
     try {
       const translated = await translateText(trimmed, { target: 'ko' });
       if (translated) {
@@ -908,6 +931,11 @@ class DocumentAnalyzer {
       const gloss = translateGlossToKorean(normalizedLower);
       if (gloss) {
         results.push(gloss);
+        continue;
+      }
+      if (this.fastMode) {
+        const override = KEYWORD_KOREAN_OVERRIDES.get(normalizedLower);
+        results.push(override || normalized);
         continue;
       }
       try {
@@ -983,7 +1011,8 @@ class DocumentAnalyzer {
       ? this._highlightKoreanText(this._truncateText(translation, 200), koreanKeywords)
       : '';
     if (highlighted) {
-      return `*** 한글 해석: ${highlighted}`;
+      const friendly = this._ensureFriendlyEmoji(highlighted, idx);
+      return `*** 한글 해석: ${friendly}`;
     }
 
     const keywordDisplay = this._deriveKeywordDisplay(koreanKeywords, keywords, '이 주제');
@@ -992,12 +1021,15 @@ class DocumentAnalyzer {
     const topicObject = this._keywordWithParticle(decorated, 'object');
 
     if (idx === 0) {
-      return `*** 한글 해석: ${topicSubject} 부드럽게 소개하며 글의 방향을 잡아 줍니다.`;
+      const line = `${topicSubject} 부드럽게 소개하며 글의 방향을 잡아 줍니다.`;
+      return `*** 한글 해석: ${this._ensureFriendlyEmoji(line, idx)}`;
     }
     if (idx === total - 1) {
-      return `*** 한글 해석: ${topicSubject} 다시 떠올리게 하며 글을 정리합니다.`;
+      const line = `${topicSubject} 다시 떠올리게 하며 글을 정리합니다.`;
+      return `*** 한글 해석: ${this._ensureFriendlyEmoji(line, idx)}`;
     }
-    return `*** 한글 해석: ${topicObject} 예시와 함께 설명하며 흐름을 자연스럽게 이어 줍니다.`;
+    const line = `${topicObject} 예시와 함께 설명하며 흐름을 자연스럽게 이어 줍니다.`;
+    return `*** 한글 해석: ${this._ensureFriendlyEmoji(line, idx)}`;
   }
 
   _truncateText(value = '', limit = 160) {
@@ -1779,45 +1811,72 @@ class DocumentAnalyzer {
     const seen = new Set();
     const fallbackKorean = String(meta.koreanMainIdea || meta.englishSummaryKorean || meta.authorsClaim || '').trim()
       || '지문의 핵심을 다시 생각해 보아요.';
+    let hasQuestion = false;
 
     const push = (title, korean, isQuestion = false) => {
       const cleanTitle = String(title || '').trim();
       if (!cleanTitle) return;
-      const normalized = cleanTitle.toLowerCase();
+      const normalized = cleanTitle.toLowerCase().replace(/\?+$/, '');
       if (seen.has(normalized)) return;
       const cleanKorean = String(korean || '').trim() || fallbackKorean;
       const normalizedTitle = cleanTitle.replace(/\?+$/, '');
-      const finalTitle = isQuestion ? `${normalizedTitle}?` : normalizedTitle;
+      const finalTitle = (isQuestion || /\?$/.test(cleanTitle)) ? `${normalizedTitle}?` : normalizedTitle;
+      const questionFlag = finalTitle.endsWith('?');
       results.push({
         title: finalTitle,
         korean: cleanKorean,
-        isQuestion: Boolean(isQuestion) || /\?$/.test(cleanTitle)
+        isQuestion: questionFlag
       });
-      seen.add(normalized);
+      seen.add(finalTitle.toLowerCase().replace(/\?+$/, ''));
+      if (questionFlag) {
+        hasQuestion = true;
+      }
     };
 
     (Array.isArray(existing) ? existing : []).forEach((item) => {
       push(item?.title, item?.korean, item?.isQuestion);
     });
 
-    if (results.length < 2) {
-      const englishSummary = String(meta.englishSummary || '').trim().replace(/\s+/g, ' ');
-      if (englishSummary) {
-        const trimmed = englishSummary.replace(/\.$/, '');
-        push(trimmed, meta.englishSummaryKorean, false);
-        const snippet = trimmed.split(/\s+/).slice(0, 6).join(' ');
-        if (results.length < 2) push(`Key Insight: ${snippet}`, meta.englishSummaryKorean, false);
+    const englishSummary = String(meta.englishSummary || '').trim().replace(/\s+/g, ' ');
+    const trimmedSummary = englishSummary ? englishSummary.replace(/\.$/, '') : '';
+    if (trimmedSummary) {
+      push(trimmedSummary, meta.englishSummaryKorean, false);
+    }
+
+    if (results.length < 3 && trimmedSummary) {
+      const summaryWords = trimmedSummary.split(/\s+/);
+      const snippet = summaryWords.slice(0, Math.min(6, summaryWords.length)).join(' ');
+      if (snippet && snippet.toLowerCase() !== trimmedSummary.toLowerCase()) {
+        push(`Key Insight: ${snippet}`, meta.englishSummaryKorean, false);
       }
     }
 
-    if (results.length < 2) {
-      const passageNum = Number(meta.passageNumber) || null;
-      const baseLabel = passageNum ? `Passage ${passageNum}` : 'This Passage';
-      push(`${baseLabel} Key Idea`, fallbackKorean, false);
-      if (results.length < 2) push(`What Happens in ${baseLabel}?`, fallbackKorean, true);
+    if (!hasQuestion) {
+      const questionTitle = trimmedSummary
+        ? `Why Does This Passage Highlight ${this._capitalizeWord(trimmedSummary.split(/\s+/)[0] || 'Its Message')}?`
+        : 'Why Does This Passage Matter?';
+      push(questionTitle, fallbackKorean, true);
     }
 
-    return results.slice(0, 2);
+    if (results.length < 3) {
+      push('From Insight to Action', fallbackKorean, false);
+    }
+
+    const fallbackPool = [
+      { title: 'Professor\'s Highlight', korean: fallbackKorean },
+      { title: 'Guided Reading Focus', korean: fallbackKorean }
+    ];
+    fallbackPool.forEach((item) => {
+      if (results.length < 3) {
+        push(item.title, item.korean, false);
+      }
+    });
+
+    while (results.length < 3) {
+      push(`Learning Spotlight ${results.length + 1}`, fallbackKorean, false);
+    }
+
+    return results.slice(0, 3);
   }
 
   _normalizeLegacyApplications(raw) {
