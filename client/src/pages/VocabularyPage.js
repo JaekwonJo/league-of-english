@@ -10,6 +10,54 @@ const STEPS = {
   CONFIGURE: 3
 };
 
+const CATEGORY_SECTIONS = [
+  {
+    key: 'textbook',
+    title: '교과서',
+    icon: '📘',
+    description: '학교 교과서와 내신 대비용 단어장이에요.'
+  },
+  {
+    key: 'mock',
+    title: '모의고사',
+    icon: '📝',
+    description: '수능·모의고사·기출 기반 단어 모음입니다.'
+  },
+  {
+    key: 'supplement',
+    title: '부교재',
+    icon: '📚',
+    description: '심화 학습이나 보충교재 단어장이에요.'
+  },
+  {
+    key: 'vocab',
+    title: '단어',
+    icon: '🔤',
+    description: '테마/암기용 단어장입니다.'
+  },
+  {
+    key: 'other',
+    title: '기타',
+    icon: '🔖',
+    description: '아직 분류되지 않은 자료들이에요.'
+  }
+];
+
+const CATEGORY_TITLE_MAP = CATEGORY_SECTIONS.reduce((acc, section) => {
+  acc[section.key] = section.title;
+  return acc;
+}, {});
+
+const normalizeCategoryKey = (value) => {
+  const raw = String(value || '').trim().toLowerCase();
+  if (!raw) return 'other';
+  if (raw.includes('교과') || raw.includes('내신') || raw.includes('수업')) return 'textbook';
+  if (raw.includes('모의') || raw.includes('수능') || raw.includes('평가') || raw.includes('기출')) return 'mock';
+  if (raw.includes('부교') || raw.includes('보충') || raw.includes('특강') || raw.includes('워크북')) return 'supplement';
+  if (raw.includes('단어') || raw.includes('voca') || raw.includes('word') || raw.includes('워드')) return 'vocab';
+  return 'other';
+};
+
 const formatSeconds = (value = 0) => {
   const total = Math.max(0, Math.floor(value));
   const mins = Math.floor(total / 60);
@@ -600,6 +648,24 @@ const goBackToDays = useCallback(() => {
     return sets.filter((set) => String(set.title || '').toLowerCase().includes(normalizedSetQuery));
   }, [sets, normalizedSetQuery]);
 
+  const groupedSets = useMemo(() => {
+    const base = CATEGORY_SECTIONS.reduce((acc, section) => {
+      acc[section.key] = [];
+      return acc;
+    }, {});
+    filteredSets.forEach((set) => {
+      const key = normalizeCategoryKey(set.category);
+      if (!base[key]) base[key] = [];
+      base[key].push(set);
+    });
+    return base;
+  }, [filteredSets]);
+
+  const hasGroupedSets = useMemo(
+    () => CATEGORY_SECTIONS.some((section) => (groupedSets[section.key] || []).length > 0),
+    [groupedSets]
+  );
+
   const activeDay = useMemo(() => {
     if (!selectedSet) return null;
     if (selectedDayKeys.length > 1) return null;
@@ -725,43 +791,64 @@ const goBackToDays = useCallback(() => {
                     </button>
                   )}
                 </div>
-                {filteredSets.length === 0 ? (
+                {!hasGroupedSets ? (
                   <div style={styles.emptySearch}>
                     {sets.length === 0
                       ? '아직 업로드된 단어장이 없어요. 관리자 페이지에서 단어장을 등록하면 바로 여기에서 연습할 수 있어요!'
                       : '검색 결과가 없어요. 다른 키워드로 다시 검색해 볼까요?'}
                   </div>
                 ) : (
-                  <div style={styles.setGrid}>
-                    {filteredSets.map((set) => {
-                      const isActive = selectedSet?.id === set.id;
-                      return (
-                        <button
-                          key={set.id}
-                          type="button"
-                          style={{
-                            ...styles.setCard,
-                            borderColor: isActive ? 'var(--color-blue-500)' : 'transparent',
-                            boxShadow: isActive ? '0 12px 32px rgba(52, 118, 246, 0.25)' : styles.setCard.boxShadow
-                          }}
-                          onClick={() => handleSelectSet(set)}
-                        >
-                          <span style={styles.setTitle}>{set.title}</span>
-                          <span style={styles.setMeta}>총 {set.totalDays} Day / {set.totalWords} 단어</span>
-                          <span style={styles.setMeta}>최근 업로드: {new Date(set.createdAt).toLocaleDateString()}</span>
-                          <div style={styles.previewWords}>
-                            {set.preview?.map((day) => (
-                              <div key={day.key} style={styles.previewDay}>
-                                <strong>{day.key}</strong>
-                                <span>{day.count} 단어</span>
-                                <span style={{ fontStyle: 'italic', color: 'var(--text-muted)' }}>미리보기는 시험에서 확인해요!</span>
-                              </div>
-                            ))}
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
+                  CATEGORY_SECTIONS.map((section) => {
+                    const items = groupedSets[section.key] || [];
+                    if (!items.length) return null;
+                    const sectionLabel = `${section.icon} ${section.title}`;
+                    return (
+                      <div key={section.key} style={styles.categorySection}>
+                        <div style={styles.categoryHeader}>
+                          <h3 style={styles.categoryTitle}>{sectionLabel}</h3>
+                          {section.description && (
+                            <p style={styles.categoryDescription}>{section.description}</p>
+                          )}
+                        </div>
+                        <div style={styles.setGrid}>
+                          {items.map((set) => {
+                            const isActive = selectedSet?.id === set.id;
+                            const displayCategory = section.title;
+                            const originalCategory = (set.category || '').trim();
+                            const categoryDisplayText = originalCategory && originalCategory !== displayCategory
+                              ? `${displayCategory} · (${originalCategory})`
+                              : displayCategory;
+                            return (
+                              <button
+                                key={set.id}
+                                type="button"
+                                style={{
+                                  ...styles.setCard,
+                                  borderColor: isActive ? 'var(--color-blue-500)' : 'transparent',
+                                  boxShadow: isActive ? '0 12px 32px rgba(52, 118, 246, 0.25)' : styles.setCard.boxShadow
+                                }}
+                                onClick={() => handleSelectSet(set)}
+                              >
+                                <span style={styles.setTitle}>{set.title}</span>
+                                <span style={styles.setMeta}>분류: {categoryDisplayText}</span>
+                                <span style={styles.setMeta}>총 {set.totalDays} Day / {set.totalWords} 단어</span>
+                                <span style={styles.setMeta}>최근 업로드: {new Date(set.createdAt).toLocaleDateString()}</span>
+                                <div style={styles.previewWords}>
+                                  {set.preview?.map((day) => (
+                                    <div key={day.key} style={styles.previewDay}>
+                                      <strong>{day.key}</strong>
+                                      <span>{day.count} 단어</span>
+                                      <span style={{ fontStyle: 'italic', color: 'var(--text-muted)' }}>미리보기는 시험에서 확인해요!</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })
                 )}
               </section>
             )
@@ -1302,6 +1389,26 @@ const styles = {
   sectionTitle: {
     fontSize: '1.4rem',
     marginBottom: '16px'
+  },
+  categorySection: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+    marginTop: '24px'
+  },
+  categoryHeader: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px'
+  },
+  categoryTitle: {
+    fontSize: '1.1rem',
+    fontWeight: 800,
+    color: 'var(--text-primary)'
+  },
+  categoryDescription: {
+    fontSize: '0.95rem',
+    color: 'var(--text-secondary)'
   },
   searchRow: {
     display: 'flex',

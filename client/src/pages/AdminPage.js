@@ -22,7 +22,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 const initialUploadForm = {
   title: '',
-  category: '수능',
+  category: '교과서',
   school: '',
   grade: 1,
   type: 'worksheet',
@@ -112,7 +112,7 @@ const AdminPage = () => {
   const isAdmin = user?.role === 'admin';
   const isTeacherOnly = user?.role === 'teacher';
 
-  const [categories, setCategories] = useState(['수능', '내신', '모의고사', '기출문제', '기타']);
+  const [categories, setCategories] = useState(['교과서', '모의고사', '부교재', '단어', '기타']);
   const [loading, setLoading] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
