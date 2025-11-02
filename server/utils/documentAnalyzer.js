@@ -227,24 +227,24 @@ const ENGLISH_LABEL_OVERRIDES = new Map([
   ['dynamic', 'dynamic routines']
 ]);
 
-const FRIENDLY_EMOJIS = ['😊', '🌟', '✨', '📚', '💡'];
+const EMOJI_PATTERN = /\p{Extended_Pictographic}/gu;
 
 function buildAnalysisPrompt({ passage, passageNumber, variantIndex, retryNotes }) {
 const guidance = [
-  '당신은 대한민국 최고의 영어 교수님이자 따뜻한 담임 선생님이에요.',
-  '결과물은 초등학생도 이해할 수 있는 학습용 분석 카드입니다. 존댓말로 따뜻하게 설명하고, 이모지는 필요할 때 한두 개만 사용해 주세요.',
-  'sentenceAnalysis 배열의 각 항목에는 english, isTopicSentence, korean, analysis, background, example, grammar, vocabulary.words 필드를 꼭 넣어 주세요.',
-  'english 필드에는 원문 문장을 그대로 적고, 주제문(isTopicSentence=true)은 **굵은 글씨**로 표시해 주세요.',
-  'korean 필드는 "*** 한글 해석:"으로 시작하고 자연스럽게 번역하며, 마지막에는 작은 응원 이모지를 하나 붙여 주세요.',
-  'analysis 필드는 "*** 분석:"으로 시작하고, 문장의 역할과 핵심 의미를 2~3문장으로 정리해 주세요.',
-  'background 필드는 "*** 이 문장에 필요한 배경지식:"으로 시작하고, 관련 교과/학문 배경이나 역사·사회 맥락을 2문장 이상 친절하게 설명해 주세요.',
-  'example 필드는 "*** 이 문장에 필요한 사례:"로 시작하고, 학생이 바로 적용해 볼 수 있는 생생한 실생활 예시를 존댓말로 2문장 이상 제시해 주세요.',
-  'grammar 필드는 "✏️ 어법 포인트:"로 시작하고, 반드시 핵심 구문이나 패턴을 풀어서 설명해 주세요.',
-  'vocabulary.intro는 "*** 어휘 포인트:"로 시작하고, vocabulary.words에는 최소 2개의 핵심 어휘를 term·meaning·synonyms(최소 2개)·antonyms(최소 1개)·note(8자 이상)와 함께 담아 주세요.',
+  '당신은 대한민국 고등학교 영어 시험 출제위원입니다.',
+  '결과물은 수능형 학습 분석 카드입니다. 분석적이고 중립적인 어조로 작성하고, 이모지·감탄사·격려 문구는 사용하지 마세요.',
+  'sentenceAnalysis 배열의 각 항목에는 english, isTopicSentence, korean, analysis, background, example, grammar, vocabulary.words 필드를 반드시 포함합니다.',
+  'english 필드에는 원문 문장을 그대로 적고, 주제문(isTopicSentence=true)은 **굵은 글씨**로 표시합니다.',
+  'korean 필드는 "*** 한글 해석:"으로 시작하고 자연스럽게 번역된 문장을 한두 문장으로 정리합니다.',
+  'analysis 필드는 "*** 분석:"으로 시작하고, 문장의 논리적 역할과 의미를 2~3문장으로 객관적으로 설명합니다.',
+  'background 필드는 "*** 이 문장에 필요한 배경지식:"으로 시작하며, 교과/학문적 맥락이나 시험에서 알아야 할 개념을 2문장 이상 기술합니다. 실천 조언이나 감성 표현은 금지합니다.',
+  'example 필드는 "*** 이 문장에 필요한 사례:"로 시작하고, 실제 적용 사례나 시험 제시문 유형을 2문장 이상 예시합니다. 학습 조언이나 감탄은 넣지 마세요.',
+  'grammar 필드는 "✏️ 어법 포인트:"로 시작하고, 수능·모의고사에서 확인되는 구문·형태를 간결히 서술합니다.',
+  'vocabulary.intro는 "*** 어휘 포인트:"로 시작하고, vocabulary.words에는 핵심 단어를 term·meaning·synonyms·antonyms 형식으로 제공합니다. 각 단어는 동의어 2~3개, 반의어 1~3개로 제한하고 활용 팁은 넣지 않습니다.',
   'meta.englishTitles에는 서로 다른 강조점을 담은 영어 제목 3개를 넣고, 각각 korean 번역을 제공하며 적어도 하나는 의문문이어야 합니다.',
-  'meta.koreanMainIdea, meta.authorsClaim, meta.englishSummary, meta.englishSummaryKorean은 모두 풍부한 문장으로 채워 주세요.',
-  'meta.modernApplications에는 학생이 당장 실천할 수 있는 활동 3가지를 존댓말로 제시해 주세요.',
-  'JSON 외의 형식(마크다운, 설명 문장 등)은 절대 출력하지 말고, 하나의 JSON 객체만 반환하세요.'
+  'meta.koreanMainIdea, meta.authorsClaim, meta.englishSummary, meta.englishSummaryKorean은 모두 시험식 요약 문장으로 작성합니다.',
+  'meta.modernApplications에는 학습자가 개념을 점검할 때 참고할 수 있는 확인 질문이나 간단한 점검 과제를 2~3개 적습니다. 감성 표현은 금지합니다.',
+  'JSON 외의 형식(마크다운 코드블록, 설명 문장 등)은 출력하지 말고, 하나의 JSON 객체만 반환하세요.'
 ].join('\n');
 
   const manualSection = ANALYSIS_MANUAL_SNIPPET
@@ -487,28 +487,24 @@ class DocumentAnalyzer {
         ? `**${englishRaw.replace(/\*\*/g, '').trim()}**`
         : englishRaw;
 
-      const koreanRaw = String(entry?.korean || entry?.translation || '').trim();
+      const koreanRaw = this._sanitizeAcademicTone(String(entry?.korean || entry?.translation || ''));
       if (!koreanRaw) raise(`sentenceAnalysis[${idx + 1}] 한글 해석이 필요합니다.`);
 
-      let analysisRaw = String(entry?.analysis || entry?.meaning || '').trim();
-      if (analysisRaw.length < 40) {
-        analysisRaw = `${analysisRaw} 문장의 핵심을 한 줄로 정리해 보세요.`.trim();
-      }
+      let analysisRaw = this._sanitizeAcademicTone(String(entry?.analysis || entry?.meaning || ''));
+      if (!analysisRaw) raise(`sentenceAnalysis[${idx + 1}] 분석 필드를 채워 주세요.`);
+      if (analysisRaw.length < 30) raise(`sentenceAnalysis[${idx + 1}] 분석을 30자 이상으로 구체화해 주세요.`);
 
-      let backgroundRaw = String(entry?.background || entry?.note || '').trim();
-      if (!backgroundRaw) {
-        backgroundRaw = '이 문장에 필요한 배경지식을 교과서·학문 흐름과 연결해 2문장 이상으로 정리해 주세요.';
-      }
+      let backgroundRaw = this._sanitizeAcademicTone(String(entry?.background || entry?.note || ''));
+      if (!backgroundRaw) raise(`sentenceAnalysis[${idx + 1}] 배경지식 항목이 비어 있습니다.`);
+      if (backgroundRaw.length < 40) raise(`sentenceAnalysis[${idx + 1}] 배경지식을 40자 이상으로 작성해 주세요.`);
 
-      let exampleRaw = String(entry?.example || '').trim();
-      if (!exampleRaw) {
-        exampleRaw = '이 문장을 실생활에 적용할 수 있는 상황을 두 문장 이상으로 친절하게 설명해 주세요.';
-      }
+      let exampleRaw = this._sanitizeAcademicTone(String(entry?.example || ''));
+      if (!exampleRaw) raise(`sentenceAnalysis[${idx + 1}] 사례 항목을 채워 주세요.`);
+      if (exampleRaw.length < 40) raise(`sentenceAnalysis[${idx + 1}] 사례를 40자 이상으로 작성해 주세요.`);
 
-      let grammarRaw = String(entry?.grammar || '').trim();
-      if (grammarRaw.length < 25) {
-        grammarRaw = `${grammarRaw} 핵심 구문을 한 줄로 정리해 볼까요?`.trim();
-      }
+      let grammarRaw = this._sanitizeAcademicTone(String(entry?.grammar || ''));
+      if (!grammarRaw) raise(`sentenceAnalysis[${idx + 1}] 어법 포인트를 제시해 주세요.`);
+      if (grammarRaw.length < 20) raise(`sentenceAnalysis[${idx + 1}] 어법 포인트를 20자 이상으로 설명해 주세요.`);
 
       const vocabularyEntries = Array.isArray(entry?.vocabulary?.words)
         ? entry.vocabulary.words.map(this._normalizeVocabularyWord)
@@ -516,11 +512,14 @@ class DocumentAnalyzer {
 
       let vocabWords = vocabularyEntries
         .map((word) => ({
-          term: String(word.term || '').trim(),
-          meaning: String(word.meaning || '').trim(),
-          synonyms: Array.isArray(word.synonyms) ? [...new Set(word.synonyms.map((syn) => String(syn || '').trim()).filter(Boolean))] : [],
-          antonyms: Array.isArray(word.antonyms) ? [...new Set(word.antonyms.map((ant) => String(ant || '').trim()).filter(Boolean))] : [],
-          note: String(word.note || '').trim()
+          term: this._sanitizeAcademicTone(String(word.term || '')),
+          meaning: this._sanitizeAcademicTone(String(word.meaning || '')),
+          synonyms: Array.isArray(word.synonyms)
+            ? [...new Set(word.synonyms.map((syn) => this._sanitizeAcademicTone(syn)).filter(Boolean))]
+            : [],
+          antonyms: Array.isArray(word.antonyms)
+            ? [...new Set(word.antonyms.map((ant) => this._sanitizeAcademicTone(ant)).filter(Boolean))]
+            : []
         }))
         .filter((word) => word.term && word.meaning);
 
@@ -529,22 +528,30 @@ class DocumentAnalyzer {
       }
 
       vocabWords = vocabWords.map((word, wordIdx) => {
-        if (word.meaning.length < 12) raise(`sentenceAnalysis[${idx + 1}] vocabulary.words[${wordIdx + 1}] meaning을 더 구체적으로 작성해 주세요.`);
-        if (word.synonyms.length < 2) raise(`sentenceAnalysis[${idx + 1}] vocabulary.words[${wordIdx + 1}] synonyms를 두 개 이상 채워 주세요.`);
-        if (word.antonyms.length < 1) raise(`sentenceAnalysis[${idx + 1}] vocabulary.words[${wordIdx + 1}] antonyms를 최소 한 개 이상 채워 주세요.`);
-        if (!word.note || word.note.length < 8) raise(`sentenceAnalysis[${idx + 1}] vocabulary.words[${wordIdx + 1}] note에 활용 팁을 적어 주세요.`);
-        return word;
+        const synonyms = word.synonyms.slice(0, 3);
+        const antonyms = word.antonyms.slice(0, 3);
+        if (word.meaning.length < 6) raise(`sentenceAnalysis[${idx + 1}] vocabulary.words[${wordIdx + 1}] meaning을 더 구체적으로 작성해 주세요.`);
+        if (synonyms.length < 2) raise(`sentenceAnalysis[${idx + 1}] vocabulary.words[${wordIdx + 1}] synonyms를 두 개 이상 채워 주세요.`);
+        if (antonyms.length < 1) raise(`sentenceAnalysis[${idx + 1}] vocabulary.words[${wordIdx + 1}] antonyms를 최소 한 개 이상 채워 주세요.`);
+        return {
+          term: word.term,
+          meaning: word.meaning,
+          synonyms,
+          antonyms
+        };
       });
 
-      const korean = this._ensurePrefixedLine(koreanRaw, '한글 해석');
-      const analysis = this._ensurePrefixedLine(analysisRaw, '분석');
-      const background = this._ensurePrefixedLine(backgroundRaw, '이 문장에 필요한 배경지식');
-      const example = this._ensurePrefixedLine(exampleRaw, '이 문장에 필요한 사례');
-      const grammar = this._ensureGrammarLine(grammarRaw);
+      const korean = this._sanitizeAcademicTone(this._ensurePrefixedLine(koreanRaw, '한글 해석'));
+      const analysis = this._sanitizeAcademicTone(this._ensurePrefixedLine(analysisRaw, '분석'));
+      const background = this._sanitizeAcademicTone(this._ensurePrefixedLine(backgroundRaw, '이 문장에 필요한 배경지식'));
+      const example = this._sanitizeAcademicTone(this._ensurePrefixedLine(exampleRaw, '이 문장에 필요한 사례'));
+      const grammar = this._sanitizeAcademicTone(this._ensureGrammarLine(grammarRaw));
       const vocabIntroSource = entry?.vocabulary?.intro || entry?.vocabularyIntro || '';
-      const vocabIntro = vocabIntroSource
-        ? this._ensurePrefixedLine(vocabIntroSource, '어휘 포인트')
-        : this._buildVocabularyIntro(vocabWords);
+      const vocabIntro = this._sanitizeAcademicTone(
+        vocabIntroSource
+          ? this._ensurePrefixedLine(vocabIntroSource, '어휘 포인트')
+          : this._buildVocabularyIntro(vocabWords)
+      );
 
       return {
         english,
@@ -658,16 +665,9 @@ class DocumentAnalyzer {
     return `${prefix} ${label}: ${cleaned}`;
   }
 
-  _ensureFriendlyEmoji(text, seed = 0) {
-    const clean = String(text || '').trim();
-    if (!clean) return '';
-    const emojiPattern = /\p{Extended_Pictographic}/u;
-    if (emojiPattern.test(clean)) {
-      return clean;
-    }
-    const index = Math.abs(Number(seed) || 0) % FRIENDLY_EMOJIS.length;
-    const emoji = FRIENDLY_EMOJIS[index];
-    return `${clean} ${emoji}`;
+  _sanitizeAcademicTone(value) {
+    const text = String(value || '').replace(EMOJI_PATTERN, '').replace(/[\u200B-\u200D\uFEFF]/g, '');
+    return text.replace(/\s+/g, ' ').trim();
   }
 
   _ensureGrammarLine(value, label = '어법 포인트') {
@@ -691,8 +691,8 @@ class DocumentAnalyzer {
       .filter(Boolean);
     const highlighted = terms.slice(0, 2).join(', ');
     const body = highlighted
-      ? `이번 문장의 핵심 어휘 ${highlighted}를 중심으로 뜻·동의어·반의어를 정리해 볼게요.`
-      : '이번 문장에서 꼭 외워야 할 어휘의 뜻과 관련 표현을 함께 정리해 볼게요.';
+      ? `이번 문장의 핵심 어휘 ${highlighted}의 의미와 관련 표현을 정리합니다.`
+      : '이번 문장에서 출제 가능성이 높은 어휘의 뜻과 대응 표현을 정리합니다.';
     return this._ensurePrefixedLine(body, '어휘 포인트');
   }
 
@@ -978,30 +978,11 @@ class DocumentAnalyzer {
     return highlighted;
   }
 
-  _composeSentenceAnalysis({ translation, koreanKeywords, englishSentence, keywords = [], idx, total }) {
-    const translationSnippet = translation ? this._truncateText(translation, 160) : '';
-    const hasKoreanTranslation = /[가-힣]/.test(translationSnippet);
+  _composeSentenceAnalysis({ koreanKeywords, englishSentence, keywords = [], idx, total }) {
     const keywordDisplay = this._deriveKeywordDisplay(koreanKeywords, keywords, '핵심 주제');
-    const translationNote = hasKoreanTranslation
-      ? `우리말로 옮기면 “${translationSnippet}”이라는 뜻이에요.`
-      : `${keywordDisplay} 같은 표현을 우리말로 직접 옮겨 보며 의미를 확인해 보세요.`;
-
-    const focusLine = idx === 0
-      ? `${this._labelAsTopic(keywordDisplay)} 부드럽게 던지면서 글의 방향을 잡아 줍니다.`
-      : idx === total - 1
-        ? `앞서 나온 내용을 마무리하며 ${this._labelAsTopic(keywordDisplay)} 다시 떠올리게 합니다.`
-        : `앞뒤 문장을 이어 주면서 ${this._labelAsTopic(keywordDisplay)} 구체적으로 설명합니다.`;
-
+    const theme = this._labelAsTopic(keywordDisplay);
     const flowRole = this._describeFlowRole(idx, total);
-
-    const summary = [translationNote, flowRole, focusLine,
-      '핵심 표현을 밑줄로 표시하고, 비슷한 예시 두 가지를 덧붙이면 의미가 더 선명해집니다.'
-    ]
-      .map((text) => String(text || '').trim())
-      .filter(Boolean)
-      .join(' ')
-      .replace(/\s+/g, ' ') || '문장의 핵심을 짚어 의미를 정리해 보세요.';
-
+    const summary = `${theme}를 중심으로 의미를 전개하며 ${flowRole}`.replace(/\s+/g, ' ').trim();
     return `*** 분석: ${summary}`;
   }
 
@@ -1011,25 +992,12 @@ class DocumentAnalyzer {
       ? this._highlightKoreanText(this._truncateText(translation, 200), koreanKeywords)
       : '';
     if (highlighted) {
-      const friendly = this._ensureFriendlyEmoji(highlighted, idx);
-      return `*** 한글 해석: ${friendly}`;
+      return `*** 한글 해석: ${this._sanitizeAcademicTone(highlighted)}`;
     }
 
-    const keywordDisplay = this._deriveKeywordDisplay(koreanKeywords, keywords, '이 주제');
-    const decorated = this._decorateKeyword(keywordDisplay, '주제');
-    const topicSubject = this._keywordWithParticle(decorated, 'topic');
-    const topicObject = this._keywordWithParticle(decorated, 'object');
-
-    if (idx === 0) {
-      const line = `${topicSubject} 부드럽게 소개하며 글의 방향을 잡아 줍니다.`;
-      return `*** 한글 해석: ${this._ensureFriendlyEmoji(line, idx)}`;
-    }
-    if (idx === total - 1) {
-      const line = `${topicSubject} 다시 떠올리게 하며 글을 정리합니다.`;
-      return `*** 한글 해석: ${this._ensureFriendlyEmoji(line, idx)}`;
-    }
-    const line = `${topicObject} 예시와 함께 설명하며 흐름을 자연스럽게 이어 줍니다.`;
-    return `*** 한글 해석: ${this._ensureFriendlyEmoji(line, idx)}`;
+    const keywordDisplay = this._deriveKeywordDisplay(koreanKeywords, keywords, '이 문장');
+    const fallback = `${keywordDisplay}의 의미를 정확한 우리말 문장으로 정리할 필요가 있습니다.`;
+    return `*** 한글 해석: ${this._sanitizeAcademicTone(fallback)}`;
   }
 
   _truncateText(value = '', limit = 160) {
@@ -1311,9 +1279,9 @@ class DocumentAnalyzer {
     const contrastLabel = /[가-힣]/.test(contrastLabelRaw)
       ? this._attachParticle(contrastLabelRaw, ['과', '와'])
       : `${contrastLabelRaw}와`;
-    applications.push(`${topicLabel} 관점으로 하루 루틴을 기록하고, 일주일 뒤 얼마나 유연하게 바뀌었는지 함께 점검해 보세요.`);
-    applications.push(`${contrastLabel} 비교해 보며 우리가 직접 조정할 수 있는 규칙과 습관을 목록으로 정리해 보세요.`);
-    applications.push(`친구와 소그룹 토론을 열어 서로의 실천 계획을 공유하고, 다음 주에 무엇을 바꿀지 약속해 보세요.`);
+    applications.push(`${topicLabel} 관점에서 사례를 분류하고 변화 요인을 표로 정리하십시오.`);
+    applications.push(`${contrastLabel} 대비하여 자율적으로 조정 가능한 규칙과 고정된 요소를 구분해 보십시오.`);
+    applications.push(`${topicLabel} 관련 기출 문항을 찾아 근거 제시 방식과 논리 전개를 비교 분석하십시오.`);
     return applications.slice(0, 3);
   }
 
@@ -1322,11 +1290,11 @@ class DocumentAnalyzer {
     const topicPhrase = this._formatFlowPhrase(label, 'object', '주제');
     switch (position) {
       case 'first':
-        return `${topicPhrase} 소개해 글의 방향을 잡아요.`;
+        return `${topicPhrase} 소개해 글의 방향을 설정합니다.`;
       case 'last':
-        return `${topicPhrase} 다시 떠올리게 하며 글을 따뜻하게 마무리합니다.`;
+        return `${topicPhrase} 다시 환기하며 글을 마무리합니다.`;
       default:
-        return `${topicPhrase} 예시와 연결하며 내용을 차근차근 확장합니다.`;
+        return `${topicPhrase} 예시와 연결하며 논지를 확장합니다.`;
     }
   }
 
@@ -1351,12 +1319,12 @@ class DocumentAnalyzer {
 
   _describeFlowRole(idx, total) {
     if (idx === 0) {
-      return '글의 첫머리에서 주제를 소개하며 분위기를 잡아 줍니다.';
+      return '글의 도입부에서 주제를 제시합니다.';
     }
     if (idx === total - 1) {
-      return '마지막 문장이라 앞 내용을 정리하고 다정하게 마무리해 줍니다.';
+      return '결말에서 앞 문장을 정리하며 논지를 마무리합니다.';
     }
-    return '중간에서 앞 문장의 생각을 이어 받아 구체적인 설명을 덧붙이는 연결 고리 역할을 해요.';
+    return '중간에서 앞 문장을 이어 받아 세부 근거를 보강합니다.';
   }
 
   _composeBackground(koreanKeywords = [], englishKeywords = [], idx = 0) {
@@ -1366,19 +1334,12 @@ class DocumentAnalyzer {
     const backgrounds = Array.isArray(blueprint?.background) && blueprint.background.length
       ? blueprint.background
       : [
-          '관련 교과서 단원에서 다뤘던 내용을 다시 읽어 보면 이해가 더 단단해져요.',
-          '비슷한 주제를 다룬 기사나 다큐멘터리를 찾아보며 배운 내용을 확장해 보세요.'
+          `${decorated}와 관련된 핵심 개념을 교과서에서 다시 확인하면 문맥이 분명해집니다.`,
+          `${decorated}가 논의된 대표적 사례(역사·사회·과학)를 정리하면 필자의 논리가 선명해집니다.`
         ];
-    const primaryLine = backgrounds[idx % backgrounds.length]
+    return this._sanitizeAcademicTone(backgrounds[idx % backgrounds.length]
       .replace(/이 주제/g, decorated)
-      .replace(/이 개념/g, decorated);
-    const extensionPool = [
-      '학습 노트에 핵심 개념과 배경을 나란히 정리해 보세요.',
-      '친구와 서로 다른 배경 정보를 공유하며 폭넓게 생각해 보세요.',
-      '관련 용어를 다시 찾아보고 나만의 예시를 덧붙이면 기억이 오래갑니다.'
-    ];
-    const extension = extensionPool[idx % extensionPool.length];
-    return `${primaryLine} ${extension}`.trim();
+      .replace(/이 개념/g, decorated));
   }
 
   _composeExample(koreanKeywords = [], englishKeywords = [], idx = 0) {
@@ -1388,55 +1349,48 @@ class DocumentAnalyzer {
     const examples = Array.isArray(blueprint?.example) && blueprint.example.length
       ? blueprint.example
       : [
-          '하루 계획표에 작은 실천 항목을 적고 체크하면서 변화 과정을 느껴 보세요.',
-          '가족이나 친구와 역할을 나눠 상황극을 해 보면 행동 요령이 더 잘 떠오릅니다.'
+          `${decorated}이 적용된 학교·사회 사례를 확인하면 세부 근거 파악에 도움이 됩니다.`,
+          `${decorated}을 다룬 학술 기사나 통계 자료를 비교하면 추론·적용 문제에 대비할 수 있습니다.`
         ];
-    const primaryLine = examples[idx % examples.length]
+    return this._sanitizeAcademicTone(examples[idx % examples.length]
       .replace(/이 개념/g, decorated)
-      .replace(/이 주제/g, decorated);
-    const practicePool = [
-      '실천 기록을 짧게 남기고 다음에 개선할 점을 적어 보세요.',
-      '실제 사례 사진이나 자료를 찾아 스크랩북을 만들어 보세요.',
-      '나만의 팁을 친구와 공유하며 서로 피드백을 주고받아 보세요.'
-    ];
-    const practice = practicePool[idx % practicePool.length];
-    return `${primaryLine} ${practice}`.trim();
+      .replace(/이 주제/g, decorated));
   }
 
   _composeGrammarNotes(sentence = '', idx = 0) {
     const features = this._identifyGrammarFeatures(sentence);
     if (!features.length) {
       const fallbackMessages = [
-        '주어와 동사의 연결, 시제를 확인하며 소리 내어 읽어 보세요. 강세를 표시하면 의미가 또렷해집니다.',
-        '쉼표와 접속사를 기준으로 문장을 덩어리로 나눠 읽으면 구조가 잘 보입니다.',
-        '핵심 단어에 톤을 살짝 올려 읽어 보면 강조점이 자연스럽게 드러나요.'
+        '주어와 동사의 일치를 확인하고 시제 변화를 체크하십시오.',
+        '쉼표와 접속사를 기준으로 절을 나누면 문장 구조가 선명해집니다.',
+        '핵심 단어와 수식 관계를 표시해 두면 시험형 어법 문항을 대비할 수 있습니다.'
       ];
       return fallbackMessages[idx % fallbackMessages.length];
     }
     const detail = features.join(' ');
-    return `✏️ ${detail} 소리 내어 읽으며 강세와 리듬을 익히면 문장이 훨씬 자연스럽게 느껴져요!`;
+    return `✏️ ${detail}`;
   }
 
   _identifyGrammarFeatures(sentence = '') {
     const lower = String(sentence || '').toLowerCase();
     const features = [];
     if (/^when\s/.test(lower)) {
-      features.push('When으로 시작한 부사절이 조건을 먼저 말하고, 뒤 문장에서 핵심 메시지를 전달합니다.');
+      features.push('When으로 시작한 부사절이 조건을 먼저 제시하고 주절에서 결과를 설명합니다.');
     }
     if (/^by\s+[a-z\-]+ing/.test(lower) || /,\s*by\s+[a-z\-]+ing/.test(lower)) {
-      features.push('By + 동명사 구조가 “~함으로써”의 의미를 만들어 앞뒤 내용의 인과관계를 자연스럽게 이어 줍니다.');
+      features.push('By + 동명사 구조가 “~함으로써” 의미를 만들어 인과관계를 형성합니다.');
     }
     if (/it\s+is\s+(very\s+)?important\s+to/i.test(sentence)) {
-      features.push('It is + 형용사 + to부정사 구조는 가주어 it을 쓰고, 뒤의 to부정사가 진주어 역할을 하는 표현이에요.');
+      features.push('It is + 형용사 + to부정사 구조는 가주어 it과 진주어 to부정사를 사용하는 표현입니다.');
     }
     if (/self-/.test(lower)) {
-      features.push('self- 접두사가 붙은 명사는 “자기 자신과 관련된” 의미를 더해요.');
+      features.push('self- 접두사가 붙은 명사는 “자기 자신과 관련된” 의미를 강조합니다.');
     }
     if (/\bbe\s+[a-z]+ed\b/.test(lower)) {
-      features.push('be + 과거분사 형태가 수동태를 만들어 행동의 대상이 되는 사람을 강조합니다.');
+      features.push('be + 과거분사 형태가 수동태를 이루어 행위의 대상을 부각합니다.');
     }
     if (!features.length && sentence.includes(',')) {
-      features.push('콤마(,)가 절을 나누어 주어 호흡을 조절하면 의미가 더 또렷해집니다.');
+      features.push('콤마(,)로 절을 구분해 병렬 구조나 삽입을 파악해야 합니다.');
     }
     return features;
   }

@@ -244,6 +244,15 @@ const styles = {
     flexDirection: 'column',
     gap: '10px'
   },
+  generatorInProgressBox: {
+    padding: '12px',
+    borderRadius: '12px',
+    border: '1px solid rgba(37,99,235,0.25)',
+    background: 'rgba(37,99,235,0.08)',
+    color: 'var(--text-secondary)',
+    fontSize: '13px',
+    lineHeight: 1.5
+  },
   generatorSuccessBox: {
     padding: '12px',
     borderRadius: '12px',
@@ -2168,6 +2177,11 @@ const WorkbookPage = () => {
                   <h4 style={styles.generatorDocTitle}>{selectedDocument.title}</h4>
                   <p style={styles.generatorDocMeta}>지문 {selectedPassageNumber} 선택됨</p>
                   {generatorError && <div style={styles.generatorErrorBox}>{generatorError}</div>}
+                  {bulkGeneratingId === String(selectedDocumentId) && (
+                    <div style={styles.generatorInProgressBox}>
+                      전체 지문을 생성하는 중입니다. 최대 5분 정도 기다려 주세요.
+                    </div>
+                  )}
                   {bulkStatus && String(bulkStatus.documentId) === String(selectedDocumentId) && (
                     <div
                       style={{
@@ -2310,6 +2324,11 @@ const WorkbookPage = () => {
                             </div>
                           )}
                         </div>
+                        {bulkGeneratingId === docKey && (
+                          <div style={styles.generatorInProgressBox}>
+                            전체 지문을 생성하고 있습니다. 최대 5분 정도 소요될 수 있습니다.
+                          </div>
+                        )}
                         <div style={styles.docMetaInfo}>
                           {activeGroup.category && <span>분류: {activeGroup.category}</span>}
                           {docMeta.grade ? <span>학년: {docMeta.grade}학년</span> : null}
