@@ -161,6 +161,7 @@ class ApiService {
       // Long-running endpoints need longer timeouts
       let timeoutMs = 20000;
       if (/\/generate\/csat-set$/.test(endpoint)) timeoutMs = 60000;
+      if (endpoint === '/workbooks/generate-all') timeoutMs = Math.max(timeoutMs, 120000);
       if (/\/analysis\//.test(endpoint)) timeoutMs = Math.max(timeoutMs, 120000);
       if (/\/vocabulary\/sets\/.+\/quiz$/.test(endpoint)) timeoutMs = Math.max(timeoutMs, 30000);
       if (/\/problems\/export\/pdf$/.test(endpoint)) timeoutMs = Math.max(timeoutMs, 60000);

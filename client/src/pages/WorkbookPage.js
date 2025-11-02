@@ -1749,6 +1749,28 @@ const WorkbookPage = () => {
     );
   };
 
+  const handleSelectDocument = useCallback(async (doc) => {
+    const value = doc ? String(doc.id) : '';
+    setSelectedDocumentId(value);
+    setSelectedPassage('1');
+    setPassages([]);
+    setPassagesError('');
+    if (!value) return;
+    try {
+      setPassagesLoading(true);
+      const response = await api.analysis.listPassageSummaries(value);
+      const list = Array.isArray(response?.data) ? response.data : [];
+      setPassages(list);
+      if (list.length > 0) {
+        setSelectedPassage(String(list[0].passageNumber || 1));
+      }
+    } catch (error) {
+      setPassagesError(error.message || '지문 목록을 불러오지 못했습니다.');
+    } finally {
+      setPassagesLoading(false);
+    }
+  }, []);
+
   const handleOpenGenerator = useCallback(async (initialDocumentId = '') => {
     setGeneratorError('');
     setPassagesError('');
@@ -1782,28 +1804,6 @@ const WorkbookPage = () => {
       setGeneratorError(error.message || '문서 목록을 불러오지 못했습니다.');
     }
   }, [documents, handleSelectDocument]);
-
-  const handleSelectDocument = useCallback(async (doc) => {
-    const value = doc ? String(doc.id) : '';
-    setSelectedDocumentId(value);
-    setSelectedPassage('1');
-    setPassages([]);
-    setPassagesError('');
-    if (!value) return;
-    try {
-      setPassagesLoading(true);
-      const response = await api.analysis.listPassageSummaries(value);
-      const list = Array.isArray(response?.data) ? response.data : [];
-      setPassages(list);
-      if (list.length > 0) {
-        setSelectedPassage(String(list[0].passageNumber || 1));
-      }
-    } catch (error) {
-      setPassagesError(error.message || '지문 목록을 불러오지 못했습니다.');
-    } finally {
-      setPassagesLoading(false);
-    }
-  }, []);
 
   const handleGenerateWorkbook = useCallback(async () => {
     if (!selectedDocumentId) {
