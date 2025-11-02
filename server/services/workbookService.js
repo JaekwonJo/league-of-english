@@ -878,20 +878,18 @@ class WorkbookService {
         passageLines.push(`${endMarker} (문단 끝)`);
       }
 
-      const optionEntries = markers.map((marker, optionIdx) => ({
-        label: marker,
-        text: optionIdx === reduced.length ? `${marker} (문단 끝)` : `${marker} 위치`
-      }));
-
       const resolvedParagraph = this._insertSentenceAtPosition(reduced, idx, targetSentence);
 
       cards.push({
         type: 'sentence-insert',
         givenSentence: targetSentence,
         contextLines: passageLines,
-        options: optionEntries,
+        options: markers.map((marker, optionIdx) => ({
+          label: marker,
+          text: optionIdx === reduced.length ? `${marker} (문단 끝)` : `${marker} 위치`
+        })),
         correctOption: markers[idx],
-        front: `[문장 삽입 ${cards.length + 1}]\n[주어진 문장]\n${targetSentence}\n\n본문:\n${passageLines.join('\n')}\n\n선택지:\n${optionEntries.map((entry) => entry.text).join('\n')}`,
+        front: `[문장 삽입 ${cards.length + 1}]\n[주어진 문장]\n${targetSentence}\n\n본문:\n${passageLines.join('\n')}`,
         back: `정답: ${markers[idx]}\n삽입 후 문장: ${resolvedParagraph}${summaryLine ? `\n단락 요약: ${this._trim(summaryLine, 120)}` : ''}`
       });
     }
@@ -1539,7 +1537,7 @@ class WorkbookService {
     for (let i = 0; i < 3; i += 1) {
       const slice = cleaned.slice(i * chunkSize, (i + 1) * chunkSize);
       if (!slice.length) continue;
-      chunks.push(this._trim(slice.join(' '), 220));
+      chunks.push(slice.join(' '));
     }
     return chunks;
   }
@@ -1603,7 +1601,7 @@ class WorkbookService {
   }
 
   _choiceLabel(index) {
-    const circled = ['①', '②', '③', '④', '⑤', '⑥'];
+    const circled = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩', '⑪', '⑫', '⑬', '⑭', '⑮', '⑯', '⑰', '⑱', '⑲', '⑳'];
     return circled[index - 1] || `${index}.`;
   }
 
