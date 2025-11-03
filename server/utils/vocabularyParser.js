@@ -6,6 +6,7 @@ const DAY_MARKER_REGEX = /^(\d+\s*)?Day\s*(\d{1,2})\s*$/i;
 const NO_MARKER_REGEX = /^(?:\d+\s*)?(?:no\.?|문항|번호)\s*(\d{1,3})\s*$/i;
 // Accept textbook style markers like "Lesson 3", "1Lesson 4"
 const LESSON_MARKER_REGEX = /^(?:\d+\s*)?Lesson\s*(\d{1,2})\s*$/i;
+const UNIT_MARKER_REGEX = /^(?:\d+\s*)?Unit\s*(\d{1,2})\s*$/i;
 // Inline entries like: "367no.41~42 generate 뜻..." or "no.18 express 뜻..."
 const INLINE_NO_ENTRY_REGEX = /^(?:\d+\s*)?no\.?\s*(\d{1,3})(?:~\d+)?\s+([A-Za-z][A-Za-z\s'\-]*)\s+(.+)$/i;
 const NUMBER_MARKER_REGEX = /^(\d{1,5})\s*번$/i;
@@ -89,10 +90,11 @@ class VocabularyParser {
       const dayMatch = line.match(DAY_MARKER_REGEX);
       const noMatch = dayMatch ? null : line.match(NO_MARKER_REGEX);
       const lessonMatch = (dayMatch || noMatch) ? null : line.match(LESSON_MARKER_REGEX);
-      const standaloneNumber = (dayMatch || noMatch || lessonMatch)
+      const unitMatch = (dayMatch || noMatch || lessonMatch) ? null : line.match(UNIT_MARKER_REGEX);
+      const standaloneNumber = (dayMatch || noMatch || lessonMatch || unitMatch)
         ? null
         : extractStandaloneNumber(line);
-      if (dayMatch || noMatch || lessonMatch || standaloneNumber !== null) {
+      if (dayMatch || noMatch || lessonMatch || unitMatch || standaloneNumber !== null) {
         finalizeEntry();
         if (dayMatch) {
           const [, index, dayNumber] = dayMatch;
@@ -120,6 +122,17 @@ class VocabularyParser {
           // Lesson N → N과 로 표기
           const [, lessonNumber] = lessonMatch;
           const label = `${parseInt(lessonNumber, 10)}과`;
+          currentDay = ensureDay(label);
+          currentEntry = {
+            index: currentDay.entries.length + 1,
+            term: '',
+            meaningLines: []
+          };
+          continue;
+        }
+        if (unitMatch) {
+          const [, unitNumber] = unitMatch;
+          const label = `Unit ${String(parseInt(unitNumber, 10)).padStart(2, '0')}`;
           currentDay = ensureDay(label);
           currentEntry = {
             index: currentDay.entries.length + 1,
