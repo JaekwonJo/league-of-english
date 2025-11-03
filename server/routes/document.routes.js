@@ -26,8 +26,23 @@ const upload = multer({
   storage,
   limits: { fileSize: config.upload.maxFileSize },
   fileFilter: (req, file, cb) => {
-    if (config.upload.allowedMimeTypes.includes(file.mimetype)) cb(null, true);
-    else cb(new Error('Only PDF and TXT files are allowed.'));
+    try {
+      const allowedMime = new Set(config.upload.allowedMimeTypes || []);
+      const allowedExt = new Set((config.upload.allowedExtensions || []).map((ext) => ext.toLowerCase()));
+      const ext = path.extname(file.originalname || '').toLowerCase();
+      const mime = (file.mimetype || '').toLowerCase();
+
+      if (allowedMime.has(mime) || (ext && allowedExt.has(ext))) {
+        cb(null, true);
+        return;
+      }
+
+      const error = new multer.MulterError('LIMIT_UNEXPECTED_FILE');
+      error.message = 'PDF 또는 TXT 파일만 업로드할 수 있어요.';
+      cb(error);
+    } catch (error) {
+      cb(error);
+    }
   }
 });
 
@@ -36,138 +51,155 @@ router.post(
   '/upload-document',
   verifyToken,
   requireTeacherOrAdmin,
-  upload.single('file'),
-  async (req, res) => {
-    try {
-      if (!req.file) return res.status(400).json({ message: '파일이 필요합니다.' });
+  (req, res) => {
+    upload.single('file')(req, res, async (err) => {
+      if (err) {
+        console.error('[documents] upload validation error:', err);
 
-      const { title = 'Untitled', type = 'worksheet', category = '기본', grade } = req.body;
-      let resolvedType = String(type || 'worksheet').toLowerCase();
-
-      let rawText = '';
-      let parsedData = null;
-      let finalContent = '';
-      let finalTitle = title || 'Untitled';
-      let sources = [];
-      let vocabularyData = null;
-
-      if (req.file.mimetype === 'application/pdf') {
-        const dataBuffer = fs.readFileSync(req.file.path);
-        const pdfData = await pdfParse(dataBuffer);
-        const pdfText = pdfData.text || '';
-
-        if (resolvedType === 'vocabulary') {
-          const VocabularyParser = require('../utils/vocabularyParser');
-          const parser = new VocabularyParser();
-          vocabularyData = parser.parse(pdfText);
-
-          if (!vocabularyData.days || vocabularyData.days.length === 0) {
-            try { fs.unlinkSync(req.file.path); } catch {}
-            return res.status(400).json({ message: 'PDF에서 단어 목록을 찾지 못했습니다. 문서 형식을 확인해 주세요.' });
+        if (err instanceof multer.MulterError) {
+          if (err.code === 'LIMIT_FILE_SIZE') {
+            return res.status(400).json({ message: '파일 용량은 10MB를 넘을 수 없어요.' });
           }
-
-          finalContent = JSON.stringify({
-            vocabulary: {
-              ...vocabularyData,
-              sourceFilename: req.file.originalname
-            }
-          });
-          rawText = pdfText;
-        } else {
-          rawText = cleanPDFText(pdfText);
-
-          // Use NewPDFParser for auto passage extraction
-          try {
-            const parser = new NewPDFParser();
-            parsedData = await parser.parse(rawText);
-            finalContent = parsedData.totalContent || '';
-            finalTitle = title === 'Auto Extract' ? (parsedData.title || title) : (title || parsedData.title || 'Untitled');
-            sources = parsedData.sources || [];
-          } catch (e) {
-            console.warn('[documents] PDF parser failed, falling back:', e.message);
-            finalContent = extractEnglishOnly(rawText);
-          }
+          return res.status(400).json({ message: err.message || '업로드할 수 없는 파일 형식입니다.' });
         }
-      } else {
-        rawText = fs.readFileSync(req.file.path, 'utf-8');
-        finalContent = extractEnglishOnly(rawText);
+
+        return res.status(400).json({ message: err?.message || '파일을 업로드하지 못했습니다.' });
       }
 
-      const hasParsedPassages = Array.isArray(parsedData?.passages) && parsedData.passages.length > 0;
+      try {
+        if (!req.file) return res.status(400).json({ message: '파일이 필요합니다.' });
 
-      if (resolvedType !== 'vocabulary' && rawText) {
-        try {
-          const VocabularyParser = require('../utils/vocabularyParser');
-          const parser = new VocabularyParser();
-          const detected = parser.parse(rawText);
-          if (detected?.totalWords >= 5) {
-            resolvedType = 'vocabulary';
-            vocabularyData = detected;
+        const { title = 'Untitled', type = 'worksheet', category = '기본', grade } = req.body;
+        let resolvedType = String(type || 'worksheet').toLowerCase();
+
+        let rawText = '';
+        let parsedData = null;
+        let finalContent = '';
+        let finalTitle = title || 'Untitled';
+        let sources = [];
+        let vocabularyData = null;
+
+        const mimetype = (req.file.mimetype || '').toLowerCase();
+        const isPdf = mimetype === 'application/pdf' || path.extname(req.file.originalname || '').toLowerCase() === '.pdf';
+
+        if (isPdf) {
+          const dataBuffer = fs.readFileSync(req.file.path);
+          const pdfData = await pdfParse(dataBuffer);
+          const pdfText = pdfData.text || '';
+
+          if (resolvedType === 'vocabulary') {
+            const VocabularyParser = require('../utils/vocabularyParser');
+            const parser = new VocabularyParser();
+            vocabularyData = parser.parse(pdfText);
+
+            if (!vocabularyData.days || vocabularyData.days.length === 0) {
+              try { fs.unlinkSync(req.file.path); } catch {}
+              return res.status(400).json({ message: 'PDF에서 단어 목록을 찾지 못했습니다. 문서 형식을 확인해 주세요.' });
+            }
+
             finalContent = JSON.stringify({
               vocabulary: {
-                ...detected,
+                ...vocabularyData,
                 sourceFilename: req.file.originalname
               }
             });
+            rawText = pdfText;
+          } else {
+            rawText = cleanPDFText(pdfText);
+
+            // Use NewPDFParser for auto passage extraction
+            try {
+              const parser = new NewPDFParser();
+              parsedData = await parser.parse(rawText);
+              finalContent = parsedData.totalContent || '';
+              finalTitle = title === 'Auto Extract' ? (parsedData.title || title) : (title || parsedData.title || 'Untitled');
+              sources = parsedData.sources || [];
+            } catch (e) {
+              console.warn('[documents] PDF parser failed, falling back:', e.message);
+              finalContent = extractEnglishOnly(rawText);
+            }
           }
-        } catch (autoError) {
-          console.warn('[documents] auto vocab detect failed:', autoError?.message || autoError);
-        }
-      }
-
-      if (resolvedType !== 'vocabulary' && (!finalContent || finalContent.length < 100)) {
-        if (hasParsedPassages) {
-          finalContent = parsedData.totalContent || parsedData.content || extractEnglishOnly(rawText) || rawText;
-        } else if (rawText && extractEnglishOnly(rawText).length >= 80) {
-          finalContent = extractEnglishOnly(rawText);
         } else {
-          try { fs.unlinkSync(req.file.path); } catch {}
-          return res.status(400).json({ message: '문서에서 충분한 영어 문장을 찾지 못했습니다. PDF 형식을 확인해 주세요.' });
+          rawText = fs.readFileSync(req.file.path, 'utf-8');
+          finalContent = extractEnglishOnly(rawText);
         }
+
+        const hasParsedPassages = Array.isArray(parsedData?.passages) && parsedData.passages.length > 0;
+
+        if (resolvedType !== 'vocabulary' && rawText) {
+          try {
+            const VocabularyParser = require('../utils/vocabularyParser');
+            const parser = new VocabularyParser();
+            const detected = parser.parse(rawText);
+            if (detected?.totalWords >= 5) {
+              resolvedType = 'vocabulary';
+              vocabularyData = detected;
+              finalContent = JSON.stringify({
+                vocabulary: {
+                  ...detected,
+                  sourceFilename: req.file.originalname
+                }
+              });
+            }
+          } catch (autoError) {
+            console.warn('[documents] auto vocab detect failed:', autoError?.message || autoError);
+          }
+        }
+
+        if (resolvedType !== 'vocabulary' && (!finalContent || finalContent.length < 100)) {
+          if (hasParsedPassages) {
+            finalContent = parsedData.totalContent || parsedData.content || extractEnglishOnly(rawText) || rawText;
+          } else if (rawText && extractEnglishOnly(rawText).length >= 80) {
+            finalContent = extractEnglishOnly(rawText);
+          } else {
+            try { fs.unlinkSync(req.file.path); } catch {}
+            return res.status(400).json({ message: '문서에서 충분한 영어 문장을 찾지 못했습니다. PDF 형식을 확인해 주세요.' });
+          }
+        }
+
+        // Prepare content to store: JSON if parsedData exists
+        let contentToStore;
+        if (resolvedType === 'vocabulary' && vocabularyData) {
+          contentToStore = finalContent;
+        } else if (hasParsedPassages) {
+          contentToStore = JSON.stringify({
+            content: finalContent,
+            passages: parsedData.passages,
+            sources,
+            title: parsedData.title,
+            metadata: parsedData.metadata
+          });
+        } else {
+          contentToStore = finalContent;
+        }
+
+        // get user's school
+        const user = await database.get('SELECT school FROM users WHERE id = ?', [req.user.id]);
+
+        const result = await database.run(
+          `INSERT INTO documents (title, content, type, category, school, grade, created_by)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [finalTitle, contentToStore, resolvedType, category, user?.school || '전체', grade || null, req.user.id]
+        );
+
+        const responsePayload = {
+          id: result.id,
+          message: '문서가 업로드되었습니다.',
+          parsed: !!parsedData,
+          passages: parsedData?.passages?.length || 0
+        };
+
+        if (resolvedType === 'vocabulary' && vocabularyData) {
+          responsePayload.vocabularyDays = vocabularyData.totalDays;
+          responsePayload.totalWords = vocabularyData.totalWords;
+        }
+
+        res.status(201).json(responsePayload);
+      } catch (error) {
+        console.error('[documents] upload error:', error);
+        res.status(500).json({ message: '문서 업로드 중 오류가 발생했습니다.' });
       }
-
-      // Prepare content to store: JSON if parsedData exists
-      let contentToStore;
-      if (resolvedType === 'vocabulary' && vocabularyData) {
-        contentToStore = finalContent;
-      } else if (hasParsedPassages) {
-        contentToStore = JSON.stringify({
-          content: finalContent,
-          passages: parsedData.passages,
-          sources,
-          title: parsedData.title,
-          metadata: parsedData.metadata
-        });
-      } else {
-        contentToStore = finalContent;
-      }
-
-      // get user's school
-      const user = await database.get('SELECT school FROM users WHERE id = ?', [req.user.id]);
-
-      const result = await database.run(
-        `INSERT INTO documents (title, content, type, category, school, grade, created_by)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [finalTitle, contentToStore, resolvedType, category, user?.school || '전체', grade || null, req.user.id]
-      );
-
-      const responsePayload = {
-        id: result.id,
-        message: '문서가 업로드되었습니다.',
-        parsed: !!parsedData,
-        passages: parsedData?.passages?.length || 0
-      };
-
-      if (resolvedType === 'vocabulary' && vocabularyData) {
-        responsePayload.vocabularyDays = vocabularyData.totalDays;
-        responsePayload.totalWords = vocabularyData.totalWords;
-      }
-
-      res.status(201).json(responsePayload);
-    } catch (error) {
-      console.error('[documents] upload error:', error);
-      res.status(500).json({ message: '문서 업로드 중 오류가 발생했습니다.' });
-    }
+    });
   }
 );
 
