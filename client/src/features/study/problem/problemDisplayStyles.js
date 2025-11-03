@@ -14,7 +14,7 @@ export const problemDisplayStyles = {
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: '20px',
-    color: 'var(--text-secondary)'
+    color: 'var(--text-primary)'
   },
   progress: {
     fontSize: '18px',
@@ -53,7 +53,7 @@ export const problemDisplayStyles = {
   feedbackLabel: {
     fontSize: '15px',
     fontWeight: 600,
-    color: 'var(--text-secondary)'
+    color: 'var(--text-primary)'
   },
   feedbackButtons: {
     display: 'flex',
@@ -84,7 +84,7 @@ export const problemDisplayStyles = {
   },
   feedbackCount: {
     fontSize: '13px',
-    color: 'var(--text-secondary)'
+    color: 'var(--text-primary)'
   },
   feedbackError: {
     color: 'var(--danger)',
@@ -92,7 +92,7 @@ export const problemDisplayStyles = {
   },
   feedbackHint: {
     fontSize: '13px',
-    color: 'var(--text-secondary)',
+    color: 'var(--text-primary)',
     display: 'flex',
     alignItems: 'center',
     gap: '6px'
@@ -126,7 +126,7 @@ export const problemDisplayStyles = {
   },
   previewSource: {
     fontSize: '14px',
-    color: 'var(--text-secondary)'
+    color: 'var(--text-primary)'
   },
   previewQuestion: {
     fontSize: '18px',
@@ -137,7 +137,7 @@ export const problemDisplayStyles = {
   previewPassage: {
     whiteSpace: 'pre-wrap',
     fontSize: '16px',
-    color: 'var(--text-secondary)',
+    color: 'var(--text-primary)',
     marginBottom: '20px',
     letterSpacing: '0.01em'
   },
@@ -164,7 +164,7 @@ export const problemDisplayStyles = {
     borderRadius: '14px',
     padding: '16px',
     fontSize: '14px',
-    color: 'var(--text-secondary)',
+    color: 'var(--text-primary)',
     marginBottom: '16px'
   },
   previewFootnotes: {
@@ -172,7 +172,7 @@ export const problemDisplayStyles = {
     paddingTop: '12px',
     borderTop: '1px dashed var(--border-muted)',
     fontSize: '13px',
-    color: 'var(--text-secondary)'
+    color: 'var(--text-primary)'
   },
   previewFooterNote: {
     marginTop: '18px',

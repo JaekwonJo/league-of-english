@@ -250,7 +250,7 @@ const styles = {
   },
   subtitle: {
     fontSize: '16px',
-    color: 'var(--text-secondary)',
+    color: 'var(--text-primary)',
     marginBottom: '32px'
   },
   tierCard: {
@@ -277,7 +277,7 @@ const styles = {
   tierPoints: {
     fontSize: '18px',
     margin: '6px 0 0',
-    color: 'var(--text-secondary)'
+    color: 'var(--text-primary)'
   },
   progressBox: {
     marginTop: '20px'
@@ -286,7 +286,7 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     fontSize: '14px',
-    color: 'var(--text-secondary)',
+    color: 'var(--text-primary)',
     marginBottom: '8px'
   },
   progressBar: {
@@ -374,7 +374,7 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     gap: '12px',
-    color: 'var(--text-secondary)'
+    color: 'var(--text-primary)'
   },
   spinner: {
     width: '48px',
@@ -419,7 +419,7 @@ const styles = {
   },
   reviewHint: {
     fontSize: '14px',
-    color: 'var(--review-hint)',
+    color: 'var(--text-primary)',
     margin: 0
   },
   reviewActionButton: {

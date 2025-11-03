@@ -1,5 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { api } from '../services/api.service';
+import {
+  ResponsiveContainer,
+  PieChart, Pie, Cell,
+  BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip
+} from 'recharts';
 
 const formatPercent = (value) => {
   if (value === null || value === undefined || Number.isNaN(value)) return '0%';
@@ -50,6 +55,24 @@ const StatsPage = () => {
     };
   }, [stats]);
 
+  const perTypeData = useMemo(() => {
+    if (!Array.isArray(stats?.perType)) return [];
+    return stats.perType
+      .slice(0, 6)
+      .map((d) => ({ name: d.type, total: Number(d.total) || 0, accuracy: Number(d.accuracy) || 0 }));
+  }, [stats]);
+
+  const vocabPieData = useMemo(() => {
+    if (!vocabularyStats) return [];
+    return [
+      { name: '정답', value: vocabularyStats.correct },
+      { name: '오답', value: vocabularyStats.incorrect }
+    ];
+  }, [vocabularyStats]);
+
+  const COLORS = ['#2563EB', '#A855F7', '#14B8A6', '#7C3AED'];
+  const PIE_COLORS = ['#2563EB', '#DC2626'];
+
   const comingSoonItems = useMemo(() => ([
     {
       title: '워크북 학습 분석',
@@ -99,10 +122,39 @@ const StatsPage = () => {
               <span style={styles.sectionHint}>시험 결과를 자동으로 집계해요.</span>
             </div>
             {vocabularyStats ? (
-              <div style={styles.grid3}>
-                <StatCard label="단어 문제 풀이" value={`${formatNumber(vocabularyStats.total)}문제`} helper="지금까지 답한 단어 문제 수" />
-                <StatCard label="단어 정확도" value={formatPercent(vocabularyStats.accuracy)} helper="모든 Day/세트 기준" />
-                <StatCard label="맞힌 단어" value={`${formatNumber(vocabularyStats.correct)}개`} helper={`틀린 단어 ${formatNumber(vocabularyStats.incorrect)}개`} />
+              <div style={styles.grid2}>
+                <div style={styles.statCard}>
+                  <span style={styles.statLabel}>단어 정확도</span>
+                  <div style={{ width: '100%', height: 220 }}>
+                    <ResponsiveContainer>
+                      <PieChart>
+                        <Pie data={vocabPieData} innerRadius={60} outerRadius={90} paddingAngle={2} dataKey="value">
+                          {vocabPieData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(v) => `${formatNumber(v)}개`} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <strong style={{ ...styles.statValue, marginTop: 8 }}>{formatPercent(vocabularyStats.accuracy)}</strong>
+                  <span style={styles.statHelper}>총 {formatNumber(vocabularyStats.total)}문 · 정답 {formatNumber(vocabularyStats.correct)}개 · 오답 {formatNumber(vocabularyStats.incorrect)}개</span>
+                </div>
+                <div style={styles.statCard}>
+                  <span style={styles.statLabel}>유형별 학습량</span>
+                  <div style={{ width: '100%', height: 220 }}>
+                    <ResponsiveContainer>
+                      <BarChart data={perTypeData} margin={{ top: 8, right: 8, left: -12, bottom: 8 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.45)" />
+                        <XAxis dataKey="name" tick={{ fill: 'var(--text-primary)', fontSize: 12 }} />
+                        <YAxis tick={{ fill: 'var(--text-primary)', fontSize: 12 }} />
+                        <Tooltip formatter={(v, n) => n === 'total' ? `${formatNumber(v)}문` : `${formatPercent(v)}`} />
+                        <Bar dataKey="total" name="문항수" fill={COLORS[0]} radius={[6,6,0,0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <span style={styles.statHelper}>최근 풀이 유형 TOP {perTypeData.length}</span>
+                </div>
               </div>
             ) : (
               <div style={styles.emptyCard}>

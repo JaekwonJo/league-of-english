@@ -68,7 +68,7 @@ const styles = {
   quickGuideText: {
     margin: 0,
     fontSize: '14px',
-    color: 'var(--text-secondary)',
+    color: 'var(--text-primary)',
     lineHeight: 1.6
   },
   headerSlot: {
@@ -95,12 +95,12 @@ const styles = {
   },
   savedSessionMeta: {
     fontSize: '14px',
-    color: 'var(--text-secondary)',
+    color: 'var(--text-primary)',
     marginTop: '4px'
   },
   savedSessionMetaMuted: {
     fontSize: '12px',
-    color: 'var(--text-muted)',
+    color: 'var(--text-primary)',
     marginTop: '4px'
   },
   savedSessionActions: {
