@@ -1385,7 +1385,7 @@ const styles = {
   },
   subtitle: {
     fontSize: '1.05rem',
-    color: 'var(--text-muted)',
+    color: 'var(--text-secondary)',
     lineHeight: 1.6
   },
   howtoBox: {
@@ -1531,13 +1531,13 @@ const styles = {
   },
   categoryToggle: {
     fontSize: '0.85rem',
-    color: 'var(--text-muted)',
+    color: 'var(--text-secondary)',
     fontWeight: 600
   },
   categoryCollapsedHint: {
     marginTop: '6px',
     fontSize: '0.85rem',
-    color: 'var(--text-muted)'
+    color: 'var(--text-secondary)'
   },
   searchRow: {
     display: 'flex',
@@ -1590,7 +1590,7 @@ const styles = {
   },
   setMeta: {
     display: 'block',
-    color: 'var(--text-muted)',
+    color: 'var(--text-secondary)',
     fontSize: '0.9rem',
     marginBottom: '4px'
   },
@@ -1599,7 +1599,7 @@ const styles = {
     borderTop: '1px dashed var(--border-color)',
     paddingTop: '12px',
     fontSize: '0.85rem',
-    color: 'var(--text-muted)',
+    color: 'var(--text-secondary)',
     display: 'grid',
     gap: '8px'
   },
@@ -1629,7 +1629,7 @@ const styles = {
   },
   daySummary: {
     fontSize: '0.9rem',
-    color: 'var(--text-muted)'
+    color: 'var(--text-secondary)'
   },
   stepActions: {
     marginTop: '24px',
@@ -1663,7 +1663,7 @@ const styles = {
   },
   stepSummaryHint: {
     fontSize: '0.95rem',
-    color: 'var(--text-muted)',
+    color: 'var(--text-secondary)',
     margin: 0
   },
   primaryButtonDisabled: {
@@ -1676,7 +1676,7 @@ const styles = {
   },
   actionHint: {
     fontSize: '0.95rem',
-    color: 'var(--text-muted)'
+    color: 'var(--text-secondary)'
   },
   configureHeader: {
     display: 'flex',
@@ -1687,7 +1687,7 @@ const styles = {
     marginBottom: '16px'
   },
   configureSubtitle: {
-    color: 'var(--text-muted)',
+    color: 'var(--text-secondary)',
     marginTop: '6px'
   },
   configureSummary: {
@@ -1825,7 +1825,7 @@ const styles = {
   resultSubtitle: {
     marginTop: '8px',
     fontSize: '0.95rem',
-    color: 'var(--text-muted)'
+    color: 'var(--text-secondary)'
   },
   reviewList: {
     display: 'grid',
@@ -1967,7 +1967,7 @@ const styles = {
   },
   timerSub: {
     fontSize: '0.75rem',
-    color: 'var(--text-muted)'
+    color: 'var(--text-secondary)'
   }
 };
 
