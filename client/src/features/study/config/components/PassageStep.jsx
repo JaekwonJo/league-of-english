@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import PassagePickerGrid from '../../../../components/shared/PassagePickerGrid';
 import styles from '../configStyles';
 
@@ -15,13 +15,21 @@ const PassageStep = ({
   onPreview,
   selectionLabel,
   metaRenderer,
-}) => (
-  <div style={styles.section}>
-    <div style={styles.sectionTitleRow}>
-      <h3 style={styles.sectionTitle}>2단계 · 지문 선택</h3>
-      <span style={styles.selectionBadge}>{selectedPassages.length}개 선택</span>
-    </div>
-    <p style={styles.sectionHint}>
+}) => {
+  const actionRef = useRef(null);
+
+  useEffect(() => {
+    if (selectedPassages.length === 0 || !actionRef.current) return;
+    actionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [selectedPassages.length]);
+
+  return (
+    <div style={styles.section}>
+      <div style={styles.sectionTitleRow}>
+        <h3 style={styles.sectionTitle}>2단계 · 지문 선택</h3>
+        <span style={styles.selectionBadge}>{selectedPassages.length}개 선택</span>
+      </div>
+      <p style={styles.sectionHint}>
       문제에 사용할 지문을 골라주세요. 카드 왼쪽 상단의 체크 박스를 눌러 선택하고,
       전체 보기를 누르면 원문을 확인할 수 있어요.
     </p>
@@ -56,7 +64,7 @@ const PassageStep = ({
     ) : (
       <div style={styles.loadingCard}>선택한 자료에서 지문을 찾지 못했어요.</div>
     )}
-    <div style={styles.stepActionsSplit}>
+    <div style={styles.stepActionsSplit} ref={actionRef}>
       <button type="button" style={styles.secondaryButton} onClick={onBack}>
         ← 이전 단계
       </button>
@@ -72,7 +80,8 @@ const PassageStep = ({
         유형 고르러 가기 →
       </button>
     </div>
-  </div>
-);
+    </div>
+  );
+};
 
 export default PassageStep;

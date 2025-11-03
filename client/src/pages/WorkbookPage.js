@@ -26,6 +26,53 @@ const styles = {
     padding: '20px',
     borderRadius: '16px'
   },
+  howtoBox: {
+    padding: '22px 24px',
+    borderRadius: '20px',
+    background: 'var(--surface-card)',
+    border: '1px solid rgba(148, 163, 184, 0.32)',
+    boxShadow: '0 16px 32px rgba(15, 23, 42, 0.12)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px'
+  },
+  howtoBoxMobile: {
+    padding: '18px 20px',
+    borderRadius: '18px'
+  },
+  howtoHeading: {
+    margin: 0,
+    fontSize: '20px',
+    fontWeight: 800,
+    color: 'var(--text-primary)'
+  },
+  howtoList: {
+    margin: 0,
+    padding: 0,
+    listStyle: 'none',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px'
+  },
+  howtoItem: {
+    display: 'flex',
+    gap: '12px',
+    alignItems: 'flex-start',
+    background: 'var(--surface-soft)',
+    borderRadius: '14px',
+    padding: '12px 14px',
+    boxShadow: '0 10px 22px rgba(15, 23, 42, 0.08)'
+  },
+  howtoIcon: {
+    fontSize: '20px',
+    lineHeight: 1
+  },
+  howtoText: {
+    margin: 0,
+    fontSize: '14px',
+    color: 'var(--text-secondary)',
+    lineHeight: 1.6
+  },
   heroTitle: {
     fontSize: '28px',
     fontWeight: 800,
@@ -1301,6 +1348,19 @@ const WorkbookPage = () => {
   const responsiveStyle = useCallback((base, mobileOverrides = {}) => (
     isMobile ? { ...base, ...(mobileOverrides || {}) } : base
   ), [isMobile]);
+
+  const scrollToAnchor = useCallback((anchor) => {
+    if (typeof window === 'undefined' || !anchor) return;
+    const element = document.getElementById(anchor);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: isMobile ? 'start' : 'center' });
+    }
+  }, [isMobile]);
+
+  useEffect(() => {
+    if (!showGenerator || !canManageWorkbooks) return;
+    scrollToAnchor('workbook-step-documents');
+  }, [showGenerator, canManageWorkbooks, scrollToAnchor]);
   const documentsForWorkbook = useMemo(() => (
     Array.isArray(documents)
       ? documents.filter((doc) => String(doc.type || '').toLowerCase() !== 'vocabulary')
@@ -1320,6 +1380,12 @@ const WorkbookPage = () => {
     if (!selectedDocumentId) return null;
     return documentsForWorkbook.find((doc) => String(doc.id) === String(selectedDocumentId)) || null;
   }, [documentsForWorkbook, selectedDocumentId]);
+
+  useEffect(() => {
+    if (!showGenerator || !selectedDocumentId || passagesLoading) return;
+    if (!Array.isArray(passages) || passages.length === 0) return;
+    scrollToAnchor('workbook-step-passages');
+  }, [showGenerator, selectedDocumentId, passagesLoading, passages, scrollToAnchor]);
 
   const documentsById = useMemo(() => {
     const map = {};
@@ -1437,6 +1503,12 @@ const WorkbookPage = () => {
     if (!passages.length) return false;
     return passages.some((item) => Number(item.passageNumber) === selectedPassageNumber);
   }, [selectedDocument, passages, selectedPassageNumber]);
+
+  useEffect(() => {
+    if (!showGenerator || !selectedDocumentId) return;
+    if (!isReadyToGenerate) return;
+    scrollToAnchor('workbook-step-actions');
+  }, [showGenerator, selectedDocumentId, isReadyToGenerate, selectedPassageNumber, scrollToAnchor]);
   const totalSteps = selectedWorkbook?.steps?.length || 0;
   const currentStep = useMemo(() => {
     if (!selectedWorkbook || totalSteps === 0) return null;
@@ -1468,6 +1540,18 @@ const WorkbookPage = () => {
   const currentStepNumberValue = Number(currentStep?.step || 1);
   const hasPrevStep = currentStepNumberValue > 1;
   const hasNextStep = totalSteps > 0 && currentStepNumberValue < totalSteps;
+
+  const handleOpenWorkbook = useCallback((id, step = 1) => {
+    if (typeof window === 'undefined') return;
+    const normalizedStep = Math.max(1, step);
+    window.history.pushState({}, '', `/workbook/${id}?step=${normalizedStep}`);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  }, []);
+
+  const handleStepChange = useCallback((stepNumber) => {
+    if (!selectedWorkbookId) return;
+    handleOpenWorkbook(selectedWorkbookId, stepNumber);
+  }, [handleOpenWorkbook, selectedWorkbookId]);
 
   const renderStepButtons = useCallback(() => {
     if (!selectedWorkbook) return null;
@@ -1565,23 +1649,11 @@ const WorkbookPage = () => {
     }
   }, []);
 
-  const handleOpenWorkbook = useCallback((id, step = 1) => {
-    if (typeof window === 'undefined') return;
-    const normalizedStep = Math.max(1, step);
-    window.history.pushState({}, '', `/workbook/${id}?step=${normalizedStep}`);
-    window.dispatchEvent(new PopStateEvent('popstate'));
-  }, []);
-
   const handleBackToOverview = useCallback(() => {
     if (typeof window === 'undefined') return;
     window.history.pushState({}, '', '/workbook');
     window.dispatchEvent(new PopStateEvent('popstate'));
   }, []);
-
-  const handleStepChange = useCallback((stepNumber) => {
-    if (!selectedWorkbookId) return;
-    handleOpenWorkbook(selectedWorkbookId, stepNumber);
-  }, [handleOpenWorkbook, selectedWorkbookId]);
 
   const handleToggleCompletion = useCallback(() => {
     if (!selectedWorkbookId || !currentStep) return;
@@ -2282,9 +2354,30 @@ const WorkbookPage = () => {
           )}
         </section>
 
+        <section style={responsiveStyle(styles.howtoBox, styles.howtoBoxMobile)}>
+          <h2 style={styles.howtoHeading}>세 단계로 워크북 완성해요 ✨</h2>
+          <ul style={styles.howtoList}>
+            <li style={styles.howtoItem}>
+              <span style={styles.howtoIcon}>📂</span>
+              <p style={styles.howtoText}>“새 워크북 생성하기”를 누르고 문서를 선택해요. 문서를 누르는 순간 다음 단계가 바로 아래에 열립니다.</p>
+            </li>
+            <li style={styles.howtoItem}>
+              <span style={styles.howtoIcon}>🧩</span>
+              <p style={styles.howtoText}>필요한 지문을 체크하면 화면이 자동으로 생성 버튼 영역까지 이동해서 다음 행동을 안내해 줘요.</p>
+            </li>
+            <li style={styles.howtoItem}>
+              <span style={styles.howtoIcon}>🎯</span>
+              <p style={styles.howtoText}>생성된 워크북은 문서별로 정리돼요. 학생은 문서 → 번호 순으로 눌러서 모바일에서도 카드 한 장씩 넘겨 볼 수 있어요.</p>
+            </li>
+          </ul>
+        </section>
+
         {showGenerator && canManageWorkbooks && (
           <section style={responsiveStyle(styles.generatorWrapper, styles.generatorWrapperMobile)}>
-            <div style={responsiveStyle(styles.generatorStepBox, styles.generatorStepBoxMobile)}>
+            <div
+              id="workbook-step-documents"
+              style={responsiveStyle(styles.generatorStepBox, styles.generatorStepBoxMobile)}
+            >
               <div style={styles.generatorStepHeader}>
                 <span style={styles.generatorBadge}>1단계 · 자료 선택</span>
                 <p style={styles.generatorDescription}>
@@ -2328,7 +2421,10 @@ const WorkbookPage = () => {
               </div>
             </div>
 
-            <div style={responsiveStyle(styles.generatorStepBox, styles.generatorStepBoxMobile)}>
+            <div
+              id="workbook-step-passages"
+              style={responsiveStyle(styles.generatorStepBox, styles.generatorStepBoxMobile)}
+            >
               <div style={styles.generatorStepHeader}>
                 <span style={styles.generatorBadge}>2단계 · 지문 선택</span>
                 <p style={styles.generatorDescription}>
@@ -2372,7 +2468,10 @@ const WorkbookPage = () => {
               )}
             </div>
 
-            <div style={responsiveStyle(styles.generatorStepBox, styles.generatorStepBoxMobile)}>
+            <div
+              id="workbook-step-actions"
+              style={responsiveStyle(styles.generatorStepBox, styles.generatorStepBoxMobile)}
+            >
               <div style={styles.generatorStepHeader}>
                 <span style={styles.generatorBadge}>3단계 · 워크북 만들기</span>
                 <p style={styles.generatorDescription}>
@@ -2739,18 +2838,17 @@ const WorkbookPage = () => {
       )}
 
       <div style={responsiveStyle({ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }, { gap: '10px' })}>
-          <span style={styles.tag} data-testid="workbook-card-counter">
-            카드 {cardIndex + 1}/{currentStep.cards.length}
-          </span>
-          <button
-            type="button"
-            style={responsiveStyle(styles.secondaryButton, styles.secondaryButtonMobile)}
-            data-testid="workbook-step-complete"
-            onClick={handleToggleCompletion}
-          >
-            {isStepCompleted ? '✅ Step 완료 표시 해제' : 'Step 완료 체크'}
-          </button>
-        </div>
+        <span style={styles.tag} data-testid="workbook-card-counter">
+          카드 {cardIndex + 1}/{currentStep.cards.length}
+        </span>
+        <button
+          type="button"
+          style={responsiveStyle(styles.secondaryButton, styles.secondaryButtonMobile)}
+          data-testid="workbook-step-complete"
+          onClick={handleToggleCompletion}
+        >
+          {isStepCompleted ? '✅ Step 완료 표시 해제' : 'Step 완료 체크'}
+        </button>
       </div>
 
       <div style={responsiveStyle(styles.missionBox, styles.missionBoxMobile)} data-testid="workbook-mission">

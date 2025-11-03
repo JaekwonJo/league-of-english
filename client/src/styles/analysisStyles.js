@@ -803,6 +803,12 @@ export const analysisStyles = {
     fontSize: '1.1rem',
     color: 'var(--text-primary)'
   },
+  loadingWordStack: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 10,
+    width: '100%'
+  },
   loadingWordBox: {
     background: 'var(--surface-soft)',
     borderRadius: 14,
@@ -819,6 +825,12 @@ export const analysisStyles = {
   },
   loadingMeaning: {
     color: 'var(--text-secondary)'
+  },
+  loadingQuoteStack: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 10,
+    width: '100%'
   },
   loadingQuoteBox: {
     background: 'rgba(148, 163, 184, 0.12)',

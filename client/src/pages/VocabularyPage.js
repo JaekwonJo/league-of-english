@@ -43,11 +43,6 @@ const CATEGORY_SECTIONS = [
   }
 ];
 
-const CATEGORY_TITLE_MAP = CATEGORY_SECTIONS.reduce((acc, section) => {
-  acc[section.key] = section.title;
-  return acc;
-}, {});
-
 const normalizeCategoryKey = (value) => {
   const raw = String(value || '').trim().toLowerCase();
   if (!raw) return 'other';
@@ -110,6 +105,20 @@ const VocabularyPage = () => {
   const [selectedDayKeys, setSelectedDayKeys] = useState([]);
   const [quizMode, setQuizMode] = useState('mixed'); // 'mixed' | 'term_to_meaning' | 'meaning_to_term'
   const [orderPolicy, setOrderPolicy] = useState('random'); // 'random' | 'sequential'
+  const [collapsedSections, setCollapsedSections] = useState(() => (
+    CATEGORY_SECTIONS.reduce((acc, section) => {
+      acc[section.key] = true;
+      return acc;
+    }, {})
+  ));
+
+  const toggleSectionCollapsed = useCallback((key) => {
+    if (!key) return;
+    setCollapsedSections((prev) => ({
+      ...prev,
+      [key]: !prev?.[key]
+    }));
+  }, []);
 
   const [quizState, setQuizState] = useState({
     active: false,
@@ -178,27 +187,27 @@ const getTimeLimitSeconds = useCallback(() => {
     }
   }, []);
 
-const resetQuizState = useCallback(() => {
-  if (timerRef.current) {
-    clearInterval(timerRef.current);
-    timerRef.current = null;
-  }
-  questionStartRef.current = null;
-  setQuizState({
-    active: false,
-    loading: false,
-    data: null,
-    index: 0,
-    answers: [],
-    completed: false,
-    submitting: false,
-    result: null
-  });
-  setTotalTime(0);
-  setTimeLeft(0);
-}, []);
+  const resetQuizState = useCallback(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    questionStartRef.current = null;
+    setQuizState({
+      active: false,
+      loading: false,
+      data: null,
+      index: 0,
+      answers: [],
+      completed: false,
+      submitting: false,
+      result: null
+    });
+    setTotalTime(0);
+    setTimeLeft(0);
+  }, []);
 
-const goBackToDays = useCallback(() => {
+  const goBackToDays = useCallback(() => {
     resetQuizState();
     setError('');
     setPracticeState({ active: false, items: [], index: 0, showBack: false, againQueue: [], front: 'term' });
@@ -230,6 +239,16 @@ const goBackToDays = useCallback(() => {
     navigateToStep(STEPS.CONFIGURE);
   }, [selectedDayKey, selectedDayKeys, navigateToStep]);
 
+  useEffect(() => {
+    if (!selectedSet) return;
+    const key = normalizeCategoryKey(selectedSet.category || selectedSet.groupKey || '');
+    if (!key) return;
+    setCollapsedSections((prev) => ({
+      ...prev,
+      [key]: false
+    }));
+  }, [selectedSet]);
+
   const handleSelectSet = async (setInfo) => {
     if (!setInfo) return;
     if (selectedSet?.id === setInfo.id) {
@@ -242,6 +261,13 @@ const goBackToDays = useCallback(() => {
     resetQuizState();
     setSelectedDayKey('');
     setSelectedDayKeys([]);
+    const sectionKey = normalizeCategoryKey(setInfo.category || setInfo.groupKey || '');
+    if (sectionKey) {
+      setCollapsedSections((prev) => ({
+        ...prev,
+        [sectionKey]: false
+      }));
+    }
     setSelectedSet(setInfo);
     navigateToStep(STEPS.SELECT_DAY);
 
@@ -393,7 +419,7 @@ const goBackToDays = useCallback(() => {
     } finally {
       setQuizState((prev) => ({ ...prev, submitting: false }));
     }
-  }, [selectedDayKey, selectedSet?.id]);
+  }, [selectedDayKey, selectedSet?.id, updateUser, user]);
 
   const restartQuiz = () => {
     if (!quizState.data) return;
@@ -610,7 +636,7 @@ const goBackToDays = useCallback(() => {
       setQuizState((prev) => ({ ...prev, loading: false }));
       setError(err?.message || '퀴즈를 시작하지 못했어요. 다시 시도해 주세요.');
     }
-  }, [finalizeAndSubmit, getTimeLimitSeconds, selectedDayKey, selectedDayKeys, selectedSet]);
+  }, [finalizeAndSubmit, getTimeLimitSeconds, navigateToStep, orderPolicy, quizMode, selectedDayKey, selectedDayKeys, selectedSet]);
 
   const handleSubmit = useCallback(() => {
     if (!quizState.data) return;
@@ -733,6 +759,24 @@ const goBackToDays = useCallback(() => {
       </p>
       </header>
 
+      <section style={styles.howtoBox}>
+        <h2 style={styles.howtoHeading}>3단계로 바로 연습해요 😊</h2>
+        <ul style={styles.howtoList}>
+          <li style={styles.howtoItem}>
+            <span style={styles.howtoIcon}>1️⃣</span>
+            <p style={styles.howtoText}>위에서 원하는 단어장 묶음을 눌러 펼친 뒤, 단어장을 선택해요. 카테고리는 기본으로 접혀 있어서 화면이 깔끔해요.</p>
+          </li>
+          <li style={styles.howtoItem}>
+            <span style={styles.howtoIcon}>2️⃣</span>
+            <p style={styles.howtoText}>Day(또는 번호)를 체크하면 화면이 자동으로 다음 단계로 이동해요. 여러 Day를 함께 선택한 뒤 “시험 준비하기”를 눌러요.</p>
+          </li>
+          <li style={styles.howtoItem}>
+            <span style={styles.howtoIcon}>3️⃣</span>
+            <p style={styles.howtoText}>시험 유형과 문제 수를 정하고 “연습 시작” 버튼을 누르면 즉시 퀴즈가 시작돼요. 문제를 풀면 정답·LP·티어가 바로 반영돼요!</p>
+          </li>
+        </ul>
+      </section>
+
       <div style={styles.stepper}>
         {stepDescriptors.map((descriptor, index) => {
           const isActive = step === descriptor.id;
@@ -802,50 +846,66 @@ const goBackToDays = useCallback(() => {
                     const items = groupedSets[section.key] || [];
                     if (!items.length) return null;
                     const sectionLabel = `${section.icon} ${section.title}`;
+                    const isCollapsed = collapsedSections?.[section.key] ?? true;
                     return (
                       <div key={section.key} style={styles.categorySection}>
-                        <div style={styles.categoryHeader}>
-                          <h3 style={styles.categoryTitle}>{sectionLabel}</h3>
-                          {section.description && (
-                            <p style={styles.categoryDescription}>{section.description}</p>
-                          )}
-                        </div>
-                        <div style={styles.setGrid}>
-                          {items.map((set) => {
-                            const isActive = selectedSet?.id === set.id;
-                            const displayCategory = section.title;
-                            const originalCategory = (set.category || '').trim();
-                            const categoryDisplayText = originalCategory && originalCategory !== displayCategory
-                              ? `${displayCategory} · (${originalCategory})`
-                              : displayCategory;
-                            return (
-                              <button
-                                key={set.id}
-                                type="button"
-                                style={{
-                                  ...styles.setCard,
-                                  borderColor: isActive ? 'var(--color-blue-500)' : 'transparent',
-                                  boxShadow: isActive ? '0 12px 32px rgba(52, 118, 246, 0.25)' : styles.setCard.boxShadow
-                                }}
-                                onClick={() => handleSelectSet(set)}
-                              >
-                                <span style={styles.setTitle}>{set.title}</span>
-                                <span style={styles.setMeta}>분류: {categoryDisplayText}</span>
-                                <span style={styles.setMeta}>총 {set.totalDays} Day / {set.totalWords} 단어</span>
-                                <span style={styles.setMeta}>최근 업로드: {new Date(set.createdAt).toLocaleDateString()}</span>
-                                <div style={styles.previewWords}>
-                                  {set.preview?.map((day) => (
-                                    <div key={day.key} style={styles.previewDay}>
-                                      <strong>{day.key}</strong>
-                                      <span>{day.count} 단어</span>
-                                      <span style={{ fontStyle: 'italic', color: 'var(--text-muted)' }}>미리보기는 시험에서 확인해요!</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </button>
-                            );
-                          })}
-                        </div>
+                        <button
+                          type="button"
+                          style={{
+                            ...styles.categoryHeaderButton,
+                            ...(isCollapsed ? styles.categoryHeaderButtonCollapsed : {})
+                          }}
+                          onClick={() => toggleSectionCollapsed(section.key)}
+                          aria-expanded={!isCollapsed}
+                        >
+                          <div style={styles.categoryHeaderText}>
+                            <span style={styles.categoryTitle}>{sectionLabel}</span>
+                            {section.description && (
+                              <span style={styles.categoryDescription}>{section.description}</span>
+                            )}
+                          </div>
+                          <span style={styles.categoryToggle}>{isCollapsed ? '열기' : '접기'}</span>
+                        </button>
+                        {isCollapsed ? (
+                          <div style={styles.categoryCollapsedHint}>클릭하면 단어장 목록이 펼쳐져요</div>
+                        ) : (
+                          <div style={styles.setGrid}>
+                            {items.map((set) => {
+                              const isActive = selectedSet?.id === set.id;
+                              const displayCategory = section.title;
+                              const originalCategory = (set.category || '').trim();
+                              const categoryDisplayText = originalCategory && originalCategory !== displayCategory
+                                ? `${displayCategory} · (${originalCategory})`
+                                : displayCategory;
+                              return (
+                                <button
+                                  key={set.id}
+                                  type="button"
+                                  style={{
+                                    ...styles.setCard,
+                                    borderColor: isActive ? 'var(--color-blue-500)' : 'transparent',
+                                    boxShadow: isActive ? '0 12px 32px rgba(52, 118, 246, 0.25)' : styles.setCard.boxShadow
+                                  }}
+                                  onClick={() => handleSelectSet(set)}
+                                >
+                                  <span style={styles.setTitle}>{set.title}</span>
+                                  <span style={styles.setMeta}>분류: {categoryDisplayText}</span>
+                                  <span style={styles.setMeta}>총 {set.totalDays} Day / {set.totalWords} 단어</span>
+                                  <span style={styles.setMeta}>최근 업로드: {new Date(set.createdAt).toLocaleDateString()}</span>
+                                  <div style={styles.previewWords}>
+                                    {set.preview?.map((day) => (
+                                      <div key={day.key} style={styles.previewDay}>
+                                        <strong>{day.key}</strong>
+                                        <span>{day.count} 단어</span>
+                                        <span style={{ fontStyle: 'italic', color: 'var(--text-muted)' }}>미리보기는 시험에서 확인해요!</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
                     );
                   })
@@ -1189,16 +1249,15 @@ const QuizBox = ({
 };
 
 const QuizSummary = ({ summary, detail, stats, rank, submitting, onRetry, onBack }) => {
-  // Hooks must be called unconditionally
-  const safeDetail = Array.isArray(detail) ? detail : [];
   const computed = useMemo(() => {
     if (summary && typeof summary === 'object') return summary;
+    const safeDetail = Array.isArray(detail) ? detail : [];
     const total = safeDetail.length;
     const correct = safeDetail.filter((e) => e && e.isCorrect).length;
     const incorrect = Math.max(0, total - correct);
     const accuracy = total ? Math.round((correct / total) * 1000) / 10 : 0;
     return total ? { total, correct, incorrect, accuracy, pointsDelta: 0 } : null;
-  }, [summary, safeDetail]);
+  }, [summary, detail]);
 
   if (submitting) {
     return (
@@ -1329,6 +1388,48 @@ const styles = {
     color: 'var(--text-muted)',
     lineHeight: 1.6
   },
+  howtoBox: {
+    margin: '0 0 24px',
+    padding: '20px 24px',
+    borderRadius: '18px',
+    background: 'linear-gradient(135deg, rgba(59,130,246,0.12), rgba(244,114,182,0.12))',
+    border: '1px solid rgba(148, 163, 184, 0.32)',
+    boxShadow: '0 16px 30px rgba(15, 23, 42, 0.1)'
+  },
+  howtoHeading: {
+    margin: '0 0 14px',
+    fontSize: '1.3rem',
+    fontWeight: 800,
+    color: 'var(--text-primary)'
+  },
+  howtoList: {
+    margin: 0,
+    padding: 0,
+    listStyle: 'none',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px'
+  },
+  howtoItem: {
+    display: 'flex',
+    gap: '10px',
+    alignItems: 'flex-start',
+    background: 'var(--surface-card)',
+    borderRadius: '14px',
+    padding: '12px 14px',
+    boxShadow: '0 12px 24px rgba(15, 23, 42, 0.08)'
+  },
+  howtoIcon: {
+    fontSize: '1.1rem',
+    lineHeight: 1,
+    fontWeight: 700
+  },
+  howtoText: {
+    margin: 0,
+    fontSize: '0.95rem',
+    color: 'var(--text-secondary)',
+    lineHeight: 1.6
+  },
   stepper: {
     display: 'flex',
     flexWrap: 'wrap',
@@ -1396,19 +1497,47 @@ const styles = {
     gap: '12px',
     marginTop: '24px'
   },
-  categoryHeader: {
+  categoryHeaderButton: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: '12px',
+    width: '100%',
+    borderRadius: '16px',
+    border: '1px solid var(--surface-border)',
+    background: 'var(--surface-card)',
+    padding: '14px 16px',
+    cursor: 'pointer',
+    boxShadow: '0 12px 24px rgba(15, 23, 42, 0.08)'
+  },
+  categoryHeaderButtonCollapsed: {
+    background: 'var(--surface-soft)',
+    boxShadow: 'none'
+  },
+  categoryHeaderText: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '4px'
+    gap: '4px',
+    alignItems: 'flex-start'
   },
   categoryTitle: {
-    fontSize: '1.1rem',
+    fontSize: '1.05rem',
     fontWeight: 800,
     color: 'var(--text-primary)'
   },
   categoryDescription: {
-    fontSize: '0.95rem',
+    fontSize: '0.9rem',
     color: 'var(--text-secondary)'
+  },
+  categoryToggle: {
+    fontSize: '0.85rem',
+    color: 'var(--text-muted)',
+    fontWeight: 600
+  },
+  categoryCollapsedHint: {
+    marginTop: '6px',
+    fontSize: '0.85rem',
+    color: 'var(--text-muted)'
   },
   searchRow: {
     display: 'flex',

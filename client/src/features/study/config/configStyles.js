@@ -21,6 +21,56 @@ const styles = {
     textAlign: 'center',
     marginBottom: '36px',
   },
+  quickGuide: {
+    padding: '22px 24px',
+    borderRadius: '20px',
+    background: 'linear-gradient(135deg, rgba(59,130,246,0.12), rgba(16,185,129,0.12))',
+    border: '1px solid rgba(148, 163, 184, 0.32)',
+    boxShadow: '0 18px 38px rgba(15, 23, 42, 0.12)'
+  },
+  quickGuideTitle: {
+    margin: '0 0 16px',
+    fontSize: '20px',
+    fontWeight: 800,
+    color: 'var(--text-primary)'
+  },
+  quickGuideList: {
+    margin: 0,
+    padding: 0,
+    listStyle: 'none',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px'
+  },
+  quickGuideItem: {
+    display: 'flex',
+    gap: '12px',
+    alignItems: 'flex-start',
+    background: 'var(--surface-card)',
+    borderRadius: '16px',
+    padding: '14px 16px',
+    boxShadow: '0 12px 26px rgba(15, 23, 42, 0.08)'
+  },
+  quickGuideIcon: {
+    fontSize: '22px',
+    lineHeight: 1
+  },
+  quickGuideBody: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px'
+  },
+  quickGuideLabel: {
+    fontSize: '15px',
+    fontWeight: 700,
+    color: 'var(--text-primary)'
+  },
+  quickGuideText: {
+    margin: 0,
+    fontSize: '14px',
+    color: 'var(--text-secondary)',
+    lineHeight: 1.6
+  },
   headerSlot: {
     marginTop: '32px',
     marginBottom: '24px',

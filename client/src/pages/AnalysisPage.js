@@ -90,8 +90,57 @@ const AnalysisPage = () => {
     meaning: null,
     quote: null,
     quoteAuthor: null,
-    message: null
+    message: null,
+    wordHistory: [],
+    quoteHistory: []
   });
+  useEffect(() => {
+    if (!generationLoading.active) return undefined;
+
+    const rotateWord = () => {
+      setGenerationLoading((prev) => {
+        if (!prev.active) return prev;
+        const history = Array.isArray(prev.wordHistory) ? prev.wordHistory : [];
+        const usedWords = new Set(history.map((item) => item.word));
+        const candidates = GENERATION_WORDS.filter((item) => !usedWords.has(item.word));
+        const next = candidates.length ? pickRandom(candidates) : pickRandom(GENERATION_WORDS);
+        const alreadyIncluded = history.some((item) => item.word === next.word);
+        const nextHistory = alreadyIncluded ? history : [...history, next];
+        return {
+          ...prev,
+          word: next.word,
+          meaning: next.meaning,
+          wordHistory: nextHistory
+        };
+      });
+    };
+
+    const rotateQuote = () => {
+      setGenerationLoading((prev) => {
+        if (!prev.active) return prev;
+        const history = Array.isArray(prev.quoteHistory) ? prev.quoteHistory : [];
+        const usedQuotes = new Set(history.map((item) => item.text));
+        const candidates = GENERATION_QUOTES.filter((item) => !usedQuotes.has(item.text));
+        const next = candidates.length ? pickRandom(candidates) : pickRandom(GENERATION_QUOTES);
+        const alreadyIncluded = history.some((item) => item.text === next.text);
+        const nextHistory = alreadyIncluded ? history : [...history, { text: next.text, author: next.author }];
+        return {
+          ...prev,
+          quote: next.text,
+          quoteAuthor: next.author,
+          quoteHistory: nextHistory
+        };
+      });
+    };
+
+    const wordTimer = window.setInterval(rotateWord, 5000);
+    const quoteTimer = window.setInterval(rotateQuote, 7000);
+
+    return () => {
+      window.clearInterval(wordTimer);
+      window.clearInterval(quoteTimer);
+    };
+  }, [generationLoading.active]);
   const [selectedVariantIndexes, setSelectedVariantIndexes] = useState([]);
   const [variantDeleteLoading, setVariantDeleteLoading] = useState(false);
 
@@ -340,7 +389,9 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
       meaning: null,
       quote: null,
       quoteAuthor: null,
-      message: null
+      message: null,
+      wordHistory: [],
+      quoteHistory: []
     });
   };
 
@@ -357,7 +408,9 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
       meaning: flavor.meaning,
       quote: flavor.quote,
       quoteAuthor: flavor.quoteAuthor,
-      message: flavor.message
+      message: flavor.message,
+      wordHistory: flavor.word ? [{ word: flavor.word, meaning: flavor.meaning }] : [],
+      quoteHistory: flavor.quote ? [{ text: flavor.quote, author: flavor.quoteAuthor }] : []
     });
 
     const ok = await handleGenerateVariants(passageNumber, count);
@@ -1078,16 +1131,24 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
           <div style={analysisStyles.loadingCard}>
             <div style={analysisStyles.loadingSpinner} />
             <p style={analysisStyles.loadingMessage}>{generationLoading.message || 'AI가 분석본을 정성껏 만드는 중이에요... ⏳'}</p>
-            {generationLoading.word && (
-              <div style={analysisStyles.loadingWordBox}>
-                <span style={analysisStyles.loadingWord}>{generationLoading.word}</span>
-                <span style={analysisStyles.loadingMeaning}>{generationLoading.meaning}</span>
+            {generationLoading.wordHistory?.length > 0 && (
+              <div style={analysisStyles.loadingWordStack}>
+                {generationLoading.wordHistory.map((item, index) => (
+                  <div key={`loading-word-${item.word}-${index}`} style={analysisStyles.loadingWordBox}>
+                    <span style={analysisStyles.loadingWord}>{item.word}</span>
+                    <span style={analysisStyles.loadingMeaning}>{item.meaning}</span>
+                  </div>
+                ))}
               </div>
             )}
-            {generationLoading.quote && (
-              <div style={analysisStyles.loadingQuoteBox}>
-                <blockquote style={analysisStyles.loadingQuote}>“{generationLoading.quote}”</blockquote>
-                <cite style={analysisStyles.loadingQuoteAuthor}>— {generationLoading.quoteAuthor}</cite>
+            {generationLoading.quoteHistory?.length > 0 && (
+              <div style={analysisStyles.loadingQuoteStack}>
+                {generationLoading.quoteHistory.map((item, index) => (
+                  <div key={`loading-quote-${index}`} style={analysisStyles.loadingQuoteBox}>
+                    <blockquote style={analysisStyles.loadingQuote}>“{item.text}”</blockquote>
+                    <cite style={analysisStyles.loadingQuoteAuthor}>— {item.author}</cite>
+                  </div>
+                ))}
               </div>
             )}
           </div>
