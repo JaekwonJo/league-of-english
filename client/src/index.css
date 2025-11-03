@@ -24,7 +24,7 @@ html, body {
   /* 강화된 라이트 모드 대비 (가독성 향상) */
   --text-primary: #0B1220;   /* 거의 블랙에 가까운 남청색 */
   --text-secondary: #0F172A; /* 본문/설명도 충분히 진하게 */
-  --text-muted: #334155;     /* 보조 텍스트도 눈에 띄게 */
+  --text-muted: #0F172A;     /* 라이트모드에서는 회색 느낌 제거: 모두 진하게 */
   --text-inverse: #FFFFFF;
   --accent: #2563EB;
   --accent-strong: #1E3A8A;
@@ -47,7 +47,7 @@ html, body {
   --reset-bg: #FFFFFF;
   --reset-border: #CBD5F5;
   --reset-text: #1F2937;
-  --review-hint: #334155;
+  --review-hint: #0F172A;
   --review-shadow: rgba(37, 99, 235, 0.18);
   --glass-border: rgba(148, 163, 184, 0.35);
   --sidebar-gradient: linear-gradient(135deg, #FFFFFF 0%, #E2E8F0 100%);
