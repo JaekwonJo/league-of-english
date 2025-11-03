@@ -11,6 +11,10 @@ const styles = {
     flexDirection: 'column',
     gap: '24px'
   },
+  containerMobile: {
+    gap: '16px',
+    padding: '0 16px 32px'
+  },
   hero: {
     padding: '32px',
     borderRadius: '18px',
@@ -18,21 +22,37 @@ const styles = {
     border: '1px solid var(--surface-border)',
     boxShadow: '0 12px 28px -24px rgba(30,41,59,0.4)'
   },
+  heroMobile: {
+    padding: '20px',
+    borderRadius: '16px'
+  },
   heroTitle: {
     fontSize: '28px',
     fontWeight: 800,
     marginBottom: '12px',
     color: 'var(--text-primary)'
   },
+  heroTitleMobile: {
+    fontSize: '22px'
+  },
   heroDesc: {
     fontSize: '16px',
     lineHeight: 1.6,
     color: 'var(--text-secondary)'
   },
+  heroDescMobile: {
+    fontSize: '14px',
+    lineHeight: 1.5
+  },
   stepGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
     gap: '18px'
+  },
+  stepGridMobile: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '14px'
   },
   cardButton: {
     padding: '20px',
@@ -46,6 +66,9 @@ const styles = {
     cursor: 'pointer',
     transition: 'transform 0.2s ease, box-shadow 0.2s ease',
     position: 'relative'
+  },
+  cardButtonMobile: {
+    padding: '16px'
   },
   cardHeaderRow: {
     display: 'flex',
@@ -113,6 +136,10 @@ const styles = {
     gap: '20px',
     gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))'
   },
+  generatorWrapperMobile: {
+    padding: '16px',
+    gridTemplateColumns: '1fr'
+  },
   generatorStepBox: {
     display: 'flex',
     flexDirection: 'column',
@@ -121,6 +148,9 @@ const styles = {
     borderRadius: '16px',
     background: 'var(--surface-card)',
     border: '1px solid var(--surface-border)'
+  },
+  generatorStepBoxMobile: {
+    padding: '16px'
   },
   generatorStepHeader: {
     display: 'flex',
@@ -163,6 +193,9 @@ const styles = {
     maxHeight: '340px',
     overflowY: 'auto',
     paddingRight: '4px'
+  },
+  generatorDocGridMobile: {
+    maxHeight: '260px'
   },
   generatorDocCard: {
     textAlign: 'left',
@@ -213,6 +246,9 @@ const styles = {
     maxHeight: '320px',
     overflowY: 'auto',
     paddingRight: '4px'
+  },
+  generatorPassageListMobile: {
+    maxHeight: '260px'
   },
   generatorPassageCard: {
     textAlign: 'left',
@@ -268,6 +304,11 @@ const styles = {
     gap: '20px',
     alignItems: 'flex-start'
   },
+  overviewLayoutMobile: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px'
+  },
   docColumn: {
     display: 'flex',
     flexDirection: 'column',
@@ -276,6 +317,10 @@ const styles = {
     borderRadius: '16px',
     border: '1px solid var(--surface-border)',
     background: 'var(--surface-card)'
+  },
+  docColumnMobile: {
+    padding: '16px',
+    borderRadius: '14px'
   },
   docSearchInput: {
     width: '100%',
@@ -294,6 +339,13 @@ const styles = {
     overflowY: 'auto',
     paddingRight: '4px'
   },
+  docListMobile: {
+    flexDirection: 'row',
+    gap: '8px',
+    maxHeight: 'unset',
+    overflowX: 'auto',
+    padding: '0 0 4px'
+  },
   docListButton: {
     display: 'flex',
     flexDirection: 'column',
@@ -306,6 +358,9 @@ const styles = {
     cursor: 'pointer',
     transition: 'border 0.2s ease, background 0.2s ease',
     textAlign: 'left'
+  },
+  docListButtonMobile: {
+    minWidth: '160px'
   },
   docListButtonActive: {
     border: '1px solid var(--indigo)',
@@ -330,6 +385,10 @@ const styles = {
     flexDirection: 'column',
     gap: '16px'
   },
+  docDetailMobile: {
+    padding: '16px',
+    borderRadius: '14px'
+  },
   docHeaderRow: {
     display: 'flex',
     flexDirection: 'column',
@@ -342,12 +401,18 @@ const styles = {
     justifyContent: 'space-between',
     gap: '12px'
   },
+  docHeaderTopMobile: {
+    gap: '10px'
+  },
   docMetaInfo: {
     display: 'flex',
     flexWrap: 'wrap',
     gap: '10px',
     fontSize: '12px',
     color: 'var(--text-secondary)'
+  },
+  docMetaInfoMobile: {
+    gap: '8px'
   },
   workbookList: {
     display: 'flex',
@@ -364,12 +429,19 @@ const styles = {
     flexDirection: 'column',
     gap: '12px'
   },
+  workbookListItemMobile: {
+    padding: '14px',
+    gap: '10px'
+  },
   workbookListItemHeader: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: '12px',
     flexWrap: 'wrap'
+  },
+  workbookListItemHeaderMobile: {
+    alignItems: 'flex-start'
   },
   workbookIndexBadge: {
     display: 'inline-flex',
@@ -397,6 +469,10 @@ const styles = {
     display: 'flex',
     flexWrap: 'wrap',
     gap: '10px'
+  },
+  workbookListActionsMobile: {
+    width: '100%',
+    flexDirection: 'column'
   },
   bulkStatusBox: {
     padding: '12px',
@@ -443,6 +519,10 @@ const styles = {
     cursor: 'pointer',
     minWidth: '160px'
   },
+  primaryButtonMobile: {
+    width: '100%',
+    minWidth: 'unset'
+  },
   secondaryButton: {
     padding: '12px 20px',
     borderRadius: '12px',
@@ -453,10 +533,17 @@ const styles = {
     cursor: 'pointer',
     minWidth: '140px'
   },
+  secondaryButtonMobile: {
+    width: '100%',
+    minWidth: 'unset'
+  },
   detailContainer: {
     display: 'flex',
     flexDirection: 'column',
     gap: '24px'
+  },
+  detailContainerMobile: {
+    gap: '18px'
   },
   detailHeader: {
     padding: '24px',
@@ -467,10 +554,20 @@ const styles = {
     flexDirection: 'column',
     gap: '12px'
   },
+  detailHeaderMobile: {
+    padding: '18px',
+    borderRadius: '16px'
+  },
   stepSelector: {
     display: 'flex',
     gap: '8px',
     flexWrap: 'wrap'
+  },
+  stepSelectorMobile: {
+    display: 'flex',
+    gap: '6px',
+    overflowX: 'auto',
+    paddingBottom: '4px'
   },
   stepButton: {
     padding: '8px 14px',
@@ -481,10 +578,42 @@ const styles = {
     fontWeight: 600,
     color: 'var(--text-secondary)'
   },
+  stepButtonMobile: {
+    flex: '0 0 auto',
+    padding: '8px 12px'
+  },
   stepButtonActive: {
     background: 'var(--indigo)',
     color: 'var(--text-on-accent)',
     borderColor: 'transparent'
+  },
+  mobileStepHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: '12px'
+  },
+  mobileStepIndicator: {
+    fontWeight: 700,
+    fontSize: '15px',
+    color: 'var(--text-primary)'
+  },
+  mobileStepNav: {
+    display: 'flex',
+    gap: '8px'
+  },
+  mobileNavButton: {
+    padding: '8px 12px',
+    borderRadius: '10px',
+    border: '1px solid var(--border-subtle)',
+    background: 'var(--surface-soft)',
+    fontWeight: 600,
+    color: 'var(--text-primary)',
+    cursor: 'pointer'
+  },
+  mobileNavButtonDisabled: {
+    opacity: 0.4,
+    cursor: 'not-allowed'
   },
   missionBox: {
     padding: '18px',
@@ -494,6 +623,10 @@ const styles = {
     fontSize: '15px',
     color: 'var(--text-primary)',
     lineHeight: 1.6
+  },
+  missionBoxMobile: {
+    padding: '14px',
+    fontSize: '14px'
   },
   flashcard: {
     width: '100%',
@@ -508,6 +641,12 @@ const styles = {
     flexDirection: 'column',
     justifyContent: 'center',
     gap: '12px'
+  },
+  flashcardMobile: {
+    maxWidth: '100%',
+    padding: '20px',
+    borderRadius: '16px',
+    minHeight: '180px'
   },
   flashcardCenter: {
     textAlign: 'center',
@@ -524,15 +663,24 @@ const styles = {
     lineHeight: 1.5,
     whiteSpace: 'pre-line'
   },
+  flashcardFrontMobile: {
+    fontSize: '18px'
+  },
   flashcardFrontInteractive: {
     width: '100%',
     textAlign: 'left'
+  },
+  flashcardFrontInteractiveMobile: {
+    fontSize: '16px'
   },
   flashcardBack: {
     color: 'var(--text-secondary)',
     fontSize: '18px',
     lineHeight: 1.7,
     whiteSpace: 'pre-line'
+  },
+  flashcardBackMobile: {
+    fontSize: '16px'
   },
   puzzleContainer: {
     display: 'flex',
@@ -559,6 +707,10 @@ const styles = {
     fontWeight: 600,
     fontSize: '14px',
     transition: 'background 0.2s ease, transform 0.2s ease'
+  },
+  puzzleTokenButtonMobile: {
+    padding: '8px 12px',
+    fontSize: '13px'
   },
   puzzleTokenDisabled: {
     opacity: 0.5,
@@ -600,6 +752,9 @@ const styles = {
     background: 'var(--surface-soft)',
     color: 'var(--text-primary)',
     fontSize: '15px'
+  },
+  puzzleInputMobile: {
+    fontSize: '14px'
   },
   cardControls: {
     display: 'flex',
@@ -784,7 +939,7 @@ const saveCompletedToStorage = (value) => {
 
 const isTeacherOrAdmin = (role) => ['teacher', 'admin'].includes(String(role || '').toLowerCase());
 
-const WordOrderPuzzle = ({ card, reveal }) => {
+const WordOrderPuzzle = ({ card, reveal, compact = false }) => {
   const [available, setAvailable] = useState([]);
   const [picked, setPicked] = useState([]);
 
@@ -827,6 +982,12 @@ const WordOrderPuzzle = ({ card, reveal }) => {
   const assembled = picked.map((token) => token.text).join(' ');
   const answer = (card?.answer || '').trim();
   const isCorrect = assembled.trim() === answer && answer.length > 0;
+  const tokenButtonStyle = compact
+    ? { ...styles.puzzleTokenButton, ...styles.puzzleTokenButtonMobile }
+    : styles.puzzleTokenButton;
+  const resetButtonStyle = compact
+    ? { ...styles.secondaryButton, ...styles.secondaryButtonMobile }
+    : styles.secondaryButton;
 
   return (
     <div style={styles.puzzleContainer}>
@@ -849,7 +1010,7 @@ const WordOrderPuzzle = ({ card, reveal }) => {
           <button
             type="button"
             key={`available-${token.key}`}
-            style={styles.puzzleTokenButton}
+            style={tokenButtonStyle}
             onClick={() => handlePick(token)}
           >
             {token.text}
@@ -860,7 +1021,7 @@ const WordOrderPuzzle = ({ card, reveal }) => {
         )}
       </div>
       <div style={styles.puzzleControls}>
-        <button type="button" style={styles.secondaryButton} onClick={handleReset}>
+        <button type="button" style={resetButtonStyle} onClick={handleReset}>
           퍼즐 초기화
         </button>
         <span style={{ ...styles.puzzleStatus, color: isCorrect ? 'var(--success-strong)' : 'var(--text-muted)' }}>
@@ -874,7 +1035,7 @@ const WordOrderPuzzle = ({ card, reveal }) => {
   );
 };
 
-const WordOrderInputPuzzle = ({ card, reveal }) => {
+const WordOrderInputPuzzle = ({ card, reveal, compact = false }) => {
   const [value, setValue] = useState('');
 
   useEffect(() => {
@@ -898,7 +1059,9 @@ const WordOrderInputPuzzle = ({ card, reveal }) => {
             <button
               key={`input-token-${index}`}
               type="button"
-              style={styles.puzzleTokenButton}
+              style={compact
+                ? { ...styles.puzzleTokenButton, ...styles.puzzleTokenButtonMobile }
+                : styles.puzzleTokenButton}
               onClick={() => handleTokenClick(token)}
             >
               {token}
@@ -911,7 +1074,9 @@ const WordOrderInputPuzzle = ({ card, reveal }) => {
         value={value}
         onChange={(event) => setValue(event.target.value)}
         placeholder="힌트를 참고해 문장을 완성해 보세요."
-        style={styles.puzzleInput}
+        style={compact
+          ? { ...styles.puzzleInput, ...styles.puzzleInputMobile }
+          : styles.puzzleInput}
       />
       <div style={styles.puzzleStatus}>
         현재 입력: {value || '—'} {normalizedAnswer ? (isCorrect ? '✅' : '') : ''}
@@ -1080,6 +1245,7 @@ const WorkbookPage = () => {
   const { user, updateUser } = useAuth();
   const canManageWorkbooks = isTeacherOrAdmin(user?.role);
 
+  const [isMobile, setIsMobile] = useState(false);
   const [workbooks, setWorkbooks] = useState([]);
   const [workbookCache, setWorkbookCache] = useState({});
   const [loadingList, setLoadingList] = useState(true);
@@ -1121,6 +1287,20 @@ const WorkbookPage = () => {
   const [testWorkbookMeta, setTestWorkbookMeta] = useState(null);
 
   const selectedWorkbook = selectedWorkbookId ? workbookCache[selectedWorkbookId] : null;
+
+  useEffect(() => {
+    const updateViewport = () => {
+      if (typeof window === 'undefined') return;
+      setIsMobile(window.innerWidth <= 768);
+    };
+    updateViewport();
+    window.addEventListener('resize', updateViewport);
+    return () => window.removeEventListener('resize', updateViewport);
+  }, []);
+
+  const responsiveStyle = useCallback((base, mobileOverrides = {}) => (
+    isMobile ? { ...base, ...(mobileOverrides || {}) } : base
+  ), [isMobile]);
   const documentsForWorkbook = useMemo(() => (
     Array.isArray(documents)
       ? documents.filter((doc) => String(doc.type || '').toLowerCase() !== 'vocabulary')
@@ -1284,6 +1464,30 @@ const WorkbookPage = () => {
     }
     return false;
   }, [currentStep, currentCard]);
+
+  const currentStepNumberValue = Number(currentStep?.step || 1);
+  const hasPrevStep = currentStepNumberValue > 1;
+  const hasNextStep = totalSteps > 0 && currentStepNumberValue < totalSteps;
+
+  const renderStepButtons = useCallback(() => {
+    if (!selectedWorkbook) return null;
+    return selectedWorkbook.steps.map((step) => {
+      const isActive = Number(step.step) === Number(currentStepNumber);
+      return (
+        <button
+          key={step.step}
+          type="button"
+          style={{
+            ...responsiveStyle(styles.stepButton, styles.stepButtonMobile),
+            ...(isActive ? styles.stepButtonActive : {})
+          }}
+          onClick={() => handleStepChange(step.step)}
+        >
+          {step.label}
+        </button>
+      );
+    });
+  }, [selectedWorkbook, currentStepNumber, handleStepChange, responsiveStyle]);
 
   const isStepCompleted = useMemo(() => {
     if (!selectedWorkbookId) return false;
@@ -2055,11 +2259,11 @@ const WorkbookPage = () => {
 
   if (!selectedWorkbook) {
     return (
-      <div style={styles.container}>
-        <section style={styles.hero}>
+      <div style={responsiveStyle(styles.container, styles.containerMobile)}>
+        <section style={responsiveStyle(styles.hero, styles.heroMobile)}>
           <div style={styles.pill}>Workbook Practice</div>
-          <h1 style={styles.heroTitle}>워크북 학습</h1>
-          <p style={styles.heroDesc}>
+          <h1 style={responsiveStyle(styles.heroTitle, styles.heroTitleMobile)}>워크북 학습</h1>
+          <p style={responsiveStyle(styles.heroDesc, styles.heroDescMobile)}>
             문제 학습과 분석 자료를 기반으로, 지문 하나를 10단계로 쪼개서 카드 뒤집기 방식으로 연습할 수 있어요.
             주제 잡기 → 어휘 익히기 → 구조 분석 → 실천 아이디어 정리까지 이어집니다.
           </p>
@@ -2067,7 +2271,10 @@ const WorkbookPage = () => {
             <button
               type="button"
               data-testid="open-workbook-generator"
-              style={{ ...styles.primaryButton, marginTop: '16px' }}
+              style={{
+                ...responsiveStyle(styles.primaryButton, styles.primaryButtonMobile),
+                marginTop: isMobile ? '12px' : '16px'
+              }}
               onClick={handleOpenGenerator}
             >
               + 새 워크북 생성하기
@@ -2076,8 +2283,8 @@ const WorkbookPage = () => {
         </section>
 
         {showGenerator && canManageWorkbooks && (
-          <section style={styles.generatorWrapper}>
-            <div style={styles.generatorStepBox}>
+          <section style={responsiveStyle(styles.generatorWrapper, styles.generatorWrapperMobile)}>
+            <div style={responsiveStyle(styles.generatorStepBox, styles.generatorStepBoxMobile)}>
               <div style={styles.generatorStepHeader}>
                 <span style={styles.generatorBadge}>1단계 · 자료 선택</span>
                 <p style={styles.generatorDescription}>
@@ -2093,7 +2300,7 @@ const WorkbookPage = () => {
                   style={styles.generatorSearchInput}
                 />
               </div>
-              <div style={styles.generatorDocGrid}>
+              <div style={responsiveStyle(styles.generatorDocGrid, styles.generatorDocGridMobile)}>
                 {filteredDocuments.length === 0 ? (
                   <div style={styles.generatorEmpty}>검색 결과가 없어요. 다른 키워드를 입력해 볼까요?</div>
                 ) : (
@@ -2121,7 +2328,7 @@ const WorkbookPage = () => {
               </div>
             </div>
 
-            <div style={styles.generatorStepBox}>
+            <div style={responsiveStyle(styles.generatorStepBox, styles.generatorStepBoxMobile)}>
               <div style={styles.generatorStepHeader}>
                 <span style={styles.generatorBadge}>2단계 · 지문 선택</span>
                 <p style={styles.generatorDescription}>
@@ -2137,7 +2344,7 @@ const WorkbookPage = () => {
               ) : passages.length === 0 ? (
                 <div style={styles.generatorEmpty}>등록된 지문이 아직 없어요. 분석을 먼저 생성해 주세요.</div>
               ) : (
-                <div style={styles.generatorPassageList}>
+                <div style={responsiveStyle(styles.generatorPassageList, styles.generatorPassageListMobile)}>
                   {passages.map((item) => {
                     const isActive = Number(item.passageNumber) === selectedPassageNumber;
                     return (
@@ -2165,7 +2372,7 @@ const WorkbookPage = () => {
               )}
             </div>
 
-            <div style={styles.generatorStepBox}>
+            <div style={responsiveStyle(styles.generatorStepBox, styles.generatorStepBoxMobile)}>
               <div style={styles.generatorStepHeader}>
                 <span style={styles.generatorBadge}>3단계 · 워크북 만들기</span>
                 <p style={styles.generatorDescription}>
@@ -2179,7 +2386,7 @@ const WorkbookPage = () => {
                   {generatorError && <div style={styles.generatorErrorBox}>{generatorError}</div>}
                   {bulkGeneratingId === String(selectedDocumentId) && (
                     <div style={styles.generatorInProgressBox}>
-                      전체 지문을 생성하는 중입니다. 최대 5분 정도 기다려 주세요.
+                      전체 지문을 생성하는 중입니다. 최대 10분 정도 기다려 주세요.
                     </div>
                   )}
                   {bulkStatus && String(bulkStatus.documentId) === String(selectedDocumentId) && (
@@ -2210,7 +2417,7 @@ const WorkbookPage = () => {
                       onClick={handleGenerateWorkbook}
                       disabled={!isReadyToGenerate || generatorLoading}
                       style={{
-                        ...styles.primaryButton,
+                        ...responsiveStyle(styles.primaryButton, styles.primaryButtonMobile),
                         width: '100%',
                         opacity: generatorLoading || !isReadyToGenerate ? 0.7 : 1
                       }}
@@ -2220,7 +2427,7 @@ const WorkbookPage = () => {
                     <button
                       type="button"
                       style={{
-                        ...styles.secondaryButton,
+                        ...responsiveStyle(styles.secondaryButton, styles.secondaryButtonMobile),
                         width: '100%',
                         opacity: !selectedDocumentId || bulkGeneratingId === String(selectedDocumentId) ? 0.7 : 1
                       }}
@@ -2250,8 +2457,8 @@ const WorkbookPage = () => {
             아직 생성된 워크북이 없어요. 교사/관리자 계정으로 문서를 선택하고 워크북을 만들어 볼까요? 😊
           </div>
         ) : (
-          <section style={styles.overviewLayout}>
-            <aside style={styles.docColumn}>
+          <section style={responsiveStyle(styles.overviewLayout, styles.overviewLayoutMobile)}>
+            <aside style={responsiveStyle(styles.docColumn, styles.docColumnMobile)}>
               <div>
                 <input
                   type="search"
@@ -2261,7 +2468,7 @@ const WorkbookPage = () => {
                   style={styles.docSearchInput}
                 />
               </div>
-              <div style={styles.docList}>
+              <div style={responsiveStyle(styles.docList, styles.docListMobile)}>
                 {filteredDocumentGroups.length === 0 ? (
                   <div style={styles.generatorEmpty}>검색 결과가 없어요. 다른 키워드를 입력해 볼까요?</div>
                 ) : (
@@ -2273,7 +2480,7 @@ const WorkbookPage = () => {
                         key={key}
                         type="button"
                         style={{
-                          ...styles.docListButton,
+                          ...responsiveStyle(styles.docListButton, styles.docListButtonMobile),
                           ...(isActive ? styles.docListButtonActive : {})
                         }}
                         onClick={() => handleSelectOverviewDocument(key)}
@@ -2289,7 +2496,7 @@ const WorkbookPage = () => {
               </div>
             </aside>
 
-            <div style={styles.docDetail}>
+            <div style={responsiveStyle(styles.docDetail, styles.docDetailMobile)}>
               {activeGroup ? (
                 (() => {
                   const docKey = String(activeGroup.documentId);
@@ -2297,7 +2504,7 @@ const WorkbookPage = () => {
                   return (
                     <>
                       <div style={styles.docHeaderRow}>
-                        <div style={styles.docHeaderTop}>
+                        <div style={responsiveStyle(styles.docHeaderTop, styles.docHeaderTopMobile)}>
                           <div>
                             <div style={styles.pill}>Workbook Series</div>
                             <h2 style={{ fontSize: '22px', fontWeight: 800, margin: '8px 0 0', color: 'var(--text-primary)' }}>
@@ -2305,10 +2512,10 @@ const WorkbookPage = () => {
                             </h2>
                           </div>
                           {canManageWorkbooks && (
-                            <div style={styles.workbookListActions}>
+                            <div style={responsiveStyle(styles.workbookListActions, styles.workbookListActionsMobile)}>
                               <button
                                 type="button"
-                                style={styles.primaryButton}
+                                style={responsiveStyle(styles.primaryButton, styles.primaryButtonMobile)}
                                 onClick={() => handleGenerateAllForDocument(activeGroup.documentId)}
                                 disabled={bulkGeneratingId === docKey}
                               >
@@ -2316,7 +2523,7 @@ const WorkbookPage = () => {
                               </button>
                               <button
                                 type="button"
-                                style={styles.secondaryButton}
+                                style={responsiveStyle(styles.secondaryButton, styles.secondaryButtonMobile)}
                                 onClick={() => handleOpenGenerator(activeGroup.documentId)}
                               >
                                 지문 선택 후 생성
@@ -2326,10 +2533,10 @@ const WorkbookPage = () => {
                         </div>
                         {bulkGeneratingId === docKey && (
                           <div style={styles.generatorInProgressBox}>
-                            전체 지문을 생성하고 있습니다. 최대 5분 정도 소요될 수 있습니다.
+                            전체 지문을 생성하고 있습니다. 최대 10분 정도 소요될 수 있습니다.
                           </div>
                         )}
-                        <div style={styles.docMetaInfo}>
+                        <div style={responsiveStyle(styles.docMetaInfo, styles.docMetaInfoMobile)}>
                           {activeGroup.category && <span>분류: {activeGroup.category}</span>}
                           {docMeta.grade ? <span>학년: {docMeta.grade}학년</span> : null}
                           {docMeta.school ? <span>학교: {docMeta.school}</span> : null}
@@ -2370,8 +2577,8 @@ const WorkbookPage = () => {
                             const workbookKey = String(workbook.id);
                             const isDeleting = deletingIds.has(workbookKey);
                             return (
-                              <div key={workbook.id} style={styles.workbookListItem}>
-                                <div style={styles.workbookListItemHeader}>
+                              <div key={workbook.id} style={responsiveStyle(styles.workbookListItem, styles.workbookListItemMobile)}>
+                                <div style={responsiveStyle(styles.workbookListItemHeader, styles.workbookListItemHeaderMobile)}>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                                     <span style={styles.workbookIndexBadge}>{index + 1}</span>
                                     <div>
@@ -2381,10 +2588,10 @@ const WorkbookPage = () => {
                                       </p>
                                     </div>
                                   </div>
-                                  <div style={styles.workbookListActions}>
+                                  <div style={responsiveStyle(styles.workbookListActions, styles.workbookListActionsMobile)}>
                                     <button
                                       type="button"
-                                      style={styles.primaryButton}
+                                      style={responsiveStyle(styles.primaryButton, styles.primaryButtonMobile)}
                                       onClick={() => handleOpenWorkbook(workbook.id, 1)}
                                     >
                                       학습 시작하기
@@ -2407,7 +2614,7 @@ const WorkbookPage = () => {
                                 <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: 0 }}>
                                   {workbook.description || '10단계 학습 코스로 구성된 워크북입니다.'}
                                 </p>
-                                <div style={styles.docMetaInfo}>
+                                <div style={responsiveStyle(styles.docMetaInfo, styles.docMetaInfoMobile)}>
                                   <span>최근 수정: {workbook.updatedAt ? new Date(workbook.updatedAt).toLocaleDateString() : '-'}</span>
                                   <span>Passage {workbook.passageNumber}</span>
                                 </div>
@@ -2454,19 +2661,19 @@ const WorkbookPage = () => {
   const renderFrontContent = () => {
     if (!currentCard) return null;
     if (currentCard.type === 'word-order') {
-      return <WordOrderPuzzle card={currentCard} reveal={showBack} />;
+      return <WordOrderPuzzle card={currentCard} reveal={showBack} compact={isMobile} />;
     }
     if (currentCard.type === 'word-order-input') {
-      return <WordOrderInputPuzzle card={currentCard} reveal={showBack} />;
+      return <WordOrderInputPuzzle card={currentCard} reveal={showBack} compact={isMobile} />;
     }
     return currentCard.front;
   };
 
   return (
-    <div style={styles.detailContainer}>
-      <div style={styles.detailHeader}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-          <button type="button" style={styles.secondaryButton} onClick={handleBackToOverview}>
+    <div style={responsiveStyle(styles.detailContainer, styles.detailContainerMobile)}>
+      <div style={responsiveStyle(styles.detailHeader, styles.detailHeaderMobile)}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '10px' : '12px', flexWrap: 'wrap' }}>
+          <button type="button" style={responsiveStyle(styles.secondaryButton, styles.secondaryButtonMobile)} onClick={handleBackToOverview}>
             ← 개요로 돌아가기
           </button>
           <div style={styles.pill}>Workbook · {selectedWorkbook.documentTitle}</div>
@@ -2477,39 +2684,67 @@ const WorkbookPage = () => {
         >
           {selectedWorkbook.coverEmoji || '📘'} {selectedWorkbook.title}
         </h2>
-        <p style={{ fontSize: '15px', lineHeight: 1.7, color: 'var(--text-secondary)' }}>
+        <p
+          style={responsiveStyle(
+            { fontSize: '15px', lineHeight: 1.7, color: 'var(--text-secondary)' },
+            { fontSize: '14px', lineHeight: 1.6 }
+          )}
+        >
           {selectedWorkbook.description || '지문의 핵심을 10단계로 정리했어요.'}
         </p>
-        <div style={styles.stepSelector}>
-          {selectedWorkbook.steps.map((step) => {
-            const isActive = Number(step.step) === Number(currentStepNumber);
-            return (
-              <button
-                key={step.step}
-                type="button"
-                style={{
-                  ...styles.stepButton,
-                  ...(isActive ? styles.stepButtonActive : {})
-                }}
-                onClick={() => handleStepChange(step.step)}
-              >
-                {step.label}
-              </button>
-            );
-          })}
-        </div>
         <div style={styles.testSubmitRow}>
-          <button type="button" style={styles.primaryButton} onClick={handleStartTest}>
+          <button type="button" style={responsiveStyle(styles.primaryButton, styles.primaryButtonMobile)} onClick={handleStartTest}>
             워크북 TEST 시작하기
           </button>
         </div>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+      </div>
+
+      {isMobile ? (
+        <>
+          <div style={styles.mobileStepHeader}>
+            <span style={styles.mobileStepIndicator}>STEP {currentStepNumberValue}/{totalSteps || 0}</span>
+            <div style={styles.mobileStepNav}>
+              <button
+                type="button"
+                style={{
+                  ...styles.mobileNavButton,
+                  ...(hasPrevStep ? {} : styles.mobileNavButtonDisabled)
+                }}
+                onClick={() => hasPrevStep && handleStepChange(currentStepNumberValue - 1)}
+                disabled={!hasPrevStep}
+              >
+                이전
+              </button>
+              <button
+                type="button"
+                style={{
+                  ...styles.mobileNavButton,
+                  ...(hasNextStep ? {} : styles.mobileNavButtonDisabled)
+                }}
+                onClick={() => hasNextStep && handleStepChange(currentStepNumberValue + 1)}
+                disabled={!hasNextStep}
+              >
+                다음
+              </button>
+            </div>
+          </div>
+          <div style={styles.stepSelectorMobile}>
+            {renderStepButtons()}
+          </div>
+        </>
+      ) : (
+        <div style={styles.stepSelector}>
+          {renderStepButtons()}
+        </div>
+      )}
+
+      <div style={responsiveStyle({ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }, { gap: '10px' })}>
           <span style={styles.tag} data-testid="workbook-card-counter">
             카드 {cardIndex + 1}/{currentStep.cards.length}
           </span>
           <button
             type="button"
-            style={styles.secondaryButton}
+            style={responsiveStyle(styles.secondaryButton, styles.secondaryButtonMobile)}
             data-testid="workbook-step-complete"
             onClick={handleToggleCompletion}
           >
@@ -2518,7 +2753,7 @@ const WorkbookPage = () => {
         </div>
       </div>
 
-      <div style={styles.missionBox} data-testid="workbook-mission">
+      <div style={responsiveStyle(styles.missionBox, styles.missionBoxMobile)} data-testid="workbook-mission">
         <div style={{ fontWeight: 700, marginBottom: '6px' }}>🎯 오늘의 미션</div>
         {currentStep.mission}
       </div>
@@ -2526,15 +2761,15 @@ const WorkbookPage = () => {
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
         <div
           style={{
-            ...styles.flashcard,
+            ...responsiveStyle(styles.flashcard, styles.flashcardMobile),
             ...(shouldLeftAlignCard ? styles.flashcardLeft : styles.flashcardCenter)
           }}
           data-testid="workbook-flashcard"
         >
           <div
             style={currentCard && (currentCard.type === 'word-order' || currentCard.type === 'word-order-input')
-              ? styles.flashcardFrontInteractive
-              : styles.flashcardFront}
+              ? responsiveStyle(styles.flashcardFrontInteractive, styles.flashcardFrontInteractiveMobile)
+              : responsiveStyle(styles.flashcardFront, styles.flashcardFrontMobile)}
             data-testid="workbook-flashcard-front"
           >
             {renderFrontContent()}
@@ -2542,7 +2777,7 @@ const WorkbookPage = () => {
           {showBack && currentCard?.back && (
             <div
               style={{
-                ...styles.flashcardBack,
+                ...responsiveStyle(styles.flashcardBack, styles.flashcardBackMobile),
                 ...(shouldLeftAlignCard ? { textAlign: 'left' } : { textAlign: 'center' })
               }}
               data-testid="workbook-flashcard-back"
@@ -2555,7 +2790,7 @@ const WorkbookPage = () => {
           <button
             type="button"
             style={{
-              ...styles.secondaryButton,
+              ...responsiveStyle(styles.secondaryButton, styles.secondaryButtonMobile),
               ...(cardIndex === 0 ? { opacity: 0.5, cursor: 'not-allowed' } : {})
             }}
             onClick={handlePrevCard}
@@ -2563,13 +2798,17 @@ const WorkbookPage = () => {
           >
             이전 카드
           </button>
-          <button type="button" style={styles.primaryButton} onClick={handleFlipCard}>
+          <button
+            type="button"
+            style={responsiveStyle(styles.primaryButton, styles.primaryButtonMobile)}
+            onClick={handleFlipCard}
+          >
             {showBack ? '앞면 보기' : '뒷면 보기'}
           </button>
           <button
             type="button"
             style={{
-              ...styles.secondaryButton,
+              ...responsiveStyle(styles.secondaryButton, styles.secondaryButtonMobile),
               ...(cardIndex === currentStep.cards.length - 1 ? { opacity: 0.5, cursor: 'not-allowed' } : {})
             }}
             onClick={handleNextCard}
