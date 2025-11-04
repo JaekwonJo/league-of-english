@@ -820,7 +820,8 @@ const getTimeLimitSeconds = useCallback(() => {
                       : '검색 결과가 없어요. 다른 키워드로 다시 검색해 볼까요?'}
                   </div>
                 ) : (
-                  CATEGORY_SECTIONS.map((section) => {
+                  <div style={styles.categoryGrid}>
+                  {CATEGORY_SECTIONS.map((section) => {
                     const items = groupedSets[section.key] || [];
                     if (!items.length) return null;
                     const sectionLabel = `${section.icon} ${section.title}`;
@@ -876,7 +877,8 @@ const getTimeLimitSeconds = useCallback(() => {
                         )}
                       </div>
                     );
-                  })
+                  })}
+                  </div>
                 )}
               </section>
             )
@@ -1169,7 +1171,7 @@ const QuizBox = ({
         onClick={() => onSelect(idx)}
       >
         <span style={styles.optionNumber}>{choiceNumber}.</span>
-        <span>{option}</span>
+        <span style={styles.optionText}>{option}</span>
       </button>
     );
   });
@@ -1464,6 +1466,11 @@ const styles = {
     gap: '12px',
     marginTop: '24px'
   },
+  categoryGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+    gap: '12px'
+  },
   categoryHeaderButton: {
     display: 'flex',
     justifyContent: 'space-between',
@@ -1490,9 +1497,10 @@ const styles = {
     color: 'var(--tone-strong)'
   },
   categoryTitle: {
-    fontSize: '1.05rem',
-    fontWeight: 800,
-    color: 'var(--text-primary)'
+    fontSize: '1.08rem',
+    fontWeight: 900,
+    letterSpacing: '-0.01em',
+    color: 'var(--tone-hero)'
   },
   categoryDescription: {
     fontSize: '0.9rem',
@@ -1699,15 +1707,17 @@ const styles = {
   },
   modeGroupTitle: {
     fontSize: '1rem',
-    fontWeight: 700,
-    margin: 0
+    fontWeight: 800,
+    margin: 0,
+    color: 'var(--tone-hero)'
   },
   modeOption: {
     display: 'flex',
     alignItems: 'center',
     gap: '10px',
-    fontSize: '0.95rem',
-    color: 'var(--text-primary)'
+    fontSize: '0.98rem',
+    fontWeight: 600,
+    color: 'var(--tone-strong)'
   },
   configureActions: {
     marginTop: '24px',
@@ -1777,6 +1787,10 @@ const styles = {
   optionNumber: {
     fontWeight: 700,
     color: 'var(--color-blue-500)'
+  },
+  optionText: {
+    color: 'var(--text-primary)',
+    fontWeight: 600
   },
   summaryStats: {
     display: 'flex',
