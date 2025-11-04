@@ -278,7 +278,8 @@ const styles = {
   },
   logoText: {
     fontSize: '18px',
-    fontWeight: 'bold'
+    fontWeight: 'bold',
+    color: 'var(--tone-hero)'
   },
   nav: {
     flex: 1,
@@ -418,7 +419,7 @@ const styles = {
   },
   mobileTitle: {
     fontWeight: 800,
-    color: 'var(--text-primary)'
+    color: 'var(--tone-hero)'
   },
   mobileActionBtn: {
     width: 40,
