@@ -1463,7 +1463,8 @@ const styles = {
     fontSize: '0.9rem'
   },
   stepperLabel: {
-    fontSize: '0.95rem'
+    fontSize: '0.95rem',
+    color: 'var(--tone-strong)'
   },
   lockNotice: {
     background: 'var(--surface-card)',
@@ -1479,7 +1480,8 @@ const styles = {
   },
   sectionTitle: {
     fontSize: '1.4rem',
-    marginBottom: '16px'
+    marginBottom: '16px',
+    color: 'var(--tone-hero)'
   },
   categorySection: {
     display: 'flex',
@@ -1498,7 +1500,8 @@ const styles = {
     background: 'var(--surface-card)',
     padding: '14px 16px',
     cursor: 'pointer',
-    boxShadow: '0 12px 24px rgba(15, 23, 42, 0.08)'
+    boxShadow: '0 12px 24px rgba(15, 23, 42, 0.08)',
+    color: 'var(--tone-strong)'
   },
   categoryHeaderButtonCollapsed: {
     background: 'var(--surface-soft)',
@@ -1508,7 +1511,8 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     gap: '4px',
-    alignItems: 'flex-start'
+    alignItems: 'flex-start',
+    color: 'var(--tone-strong)'
   },
   categoryTitle: {
     fontSize: '1.05rem',
@@ -1521,7 +1525,7 @@ const styles = {
   },
   categoryToggle: {
     fontSize: '0.85rem',
-    color: 'var(--tone-strong)',
+    color: 'var(--tone-hero)',
     fontWeight: 600
   },
   categoryCollapsedHint: {

@@ -11,7 +11,8 @@ const gridStyles = {
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: '10px',
-    flexWrap: 'wrap'
+    flexWrap: 'wrap',
+    color: 'var(--tone-strong)'
   },
   grid: {
     display: 'grid',

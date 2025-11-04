@@ -1,13 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import styles from '../configStyles';
 
-const formatDate = (value) => {
-  if (!value) return null;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-  return date.toLocaleDateString();
-};
-
 const DocumentStep = ({
   documents,
   selectedDocumentId,
@@ -71,7 +64,6 @@ const DocumentStep = ({
         ) : (
           filteredDocuments.map((doc) => {
             const isActive = selectedDocumentId === doc.id;
-            const createdAt = formatDate(doc.createdAt || doc.created_at);
             const category = doc.category ? String(doc.category) : '';
             return (
               <button
@@ -86,9 +78,6 @@ const DocumentStep = ({
                 <span style={styles.documentTitle}>{doc.title || `자료 ${doc.id}`}</span>
                 {category && (
                   <span style={styles.documentMeta}>분류: {category}</span>
-                )}
-                {createdAt && (
-                  <span style={styles.documentMeta}>업로드: {createdAt}</span>
                 )}
               </button>
             );

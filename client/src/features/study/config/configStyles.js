@@ -175,7 +175,7 @@ const styles = {
     borderRadius: '12px',
     border: '1px solid var(--surface-border)',
     background: 'var(--surface-soft)',
-    color: 'var(--tone-muted)',
+    color: 'var(--tone-strong)',
     fontWeight: 600,
     cursor: 'pointer',
   },
@@ -193,7 +193,7 @@ const styles = {
     borderRadius: '14px',
     border: '2px solid transparent',
     background: 'var(--surface-soft)',
-    color: 'var(--text-primary)',
+    color: 'var(--tone-strong)',
     cursor: 'pointer',
     transition: 'border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease',
     boxShadow: '0 8px 20px rgba(15, 23, 42, 0.12)',
@@ -202,16 +202,18 @@ const styles = {
     borderColor: 'var(--accent-primary)',
     boxShadow: '0 12px 28px rgba(59, 130, 246, 0.25)',
     transform: 'translateY(-2px)',
+    color: 'var(--tone-hero)'
   },
   documentTitle: {
     fontWeight: 700,
     fontSize: '1rem',
     marginBottom: '6px',
+    color: 'var(--tone-hero)'
   },
   documentMeta: {
     display: 'block',
     fontSize: '0.85rem',
-    color: 'var(--tone-muted)',
+    color: 'var(--tone-strong)',
     marginBottom: '4px',
   },
   emptyDocumentList: {
@@ -219,7 +221,7 @@ const styles = {
     padding: '24px',
     borderRadius: '14px',
     background: 'var(--surface-soft)',
-    color: 'var(--tone-muted)',
+    color: 'var(--tone-strong)',
     textAlign: 'center',
     border: '1px dashed var(--surface-border)',
   },
@@ -264,7 +266,7 @@ const styles = {
   secondaryButton: {
     ...baseButton,
     background: 'var(--surface-soft)',
-    color: 'var(--text-primary)',
+    color: 'var(--tone-strong)',
     boxShadow: '0 8px 16px rgba(15, 23, 42, 0.12)',
     border: '1px solid var(--surface-border)',
   },
@@ -413,6 +415,7 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     gap: '12px',
+    color: 'var(--tone-strong)'
   },
   typeHeader: {
     display: 'flex',
@@ -421,10 +424,12 @@ const styles = {
   },
   typeIcon: {
     fontSize: '26px',
+    color: 'var(--tone-hero)'
   },
   typeName: {
     fontSize: '17px',
     fontWeight: 700,
+    color: 'var(--tone-hero)'
   },
   typeDescription: {
     fontSize: '13px',
