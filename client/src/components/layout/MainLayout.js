@@ -181,7 +181,12 @@ const MainLayout = ({ children, currentPath }) => {
         <button
           type="button"
           aria-label="메뉴 닫기"
-          style={styles.mobileOverlay}
+          style={{
+            ...styles.mobileOverlay,
+            // Overlay should not block the sidebar area; start right after sidebar width
+            left: uiConfig.layout.sidebar.width,
+            zIndex: 900
+          }}
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -462,7 +467,7 @@ const styles = {
     bottom: 0,
     background: 'rgba(15, 23, 42, 0.45)',
     border: 'none',
-    zIndex: 1000
+    zIndex: 900
   }
 };
 
