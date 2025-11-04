@@ -28,7 +28,7 @@ export const analysisStyles = {
     margin: '0 0 10px 0'
   },
   subtitle: {
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     fontSize: '1.1rem',
     margin: 0
   },
@@ -38,7 +38,7 @@ export const analysisStyles = {
     alignItems: 'center',
     justifyContent: 'center',
     padding: '80px 20px',
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-strong)'
   },
   spinner: {
     width: '40px',
@@ -71,7 +71,7 @@ export const analysisStyles = {
   emptyState: {
     textAlign: 'center',
     padding: '80px 20px',
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-strong)'
   },
   emptySearch: {
     textAlign: 'center',
@@ -79,7 +79,7 @@ export const analysisStyles = {
     border: '1px dashed var(--border-muted)',
     borderRadius: '16px',
     background: 'var(--surface-soft)',
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-strong)'
   },
   grid: {
     display: 'grid',
@@ -108,7 +108,7 @@ export const analysisStyles = {
     border: '1px solid var(--border-muted)',
     padding: '10px 18px',
     background: 'var(--surface-soft)',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     fontWeight: 600,
     cursor: 'pointer'
   },
@@ -146,14 +146,14 @@ export const analysisStyles = {
     fontWeight: 'bold'
   },
   meta: {
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     fontSize: '14px'
   },
   cardContent: {
     marginBottom: '16px'
   },
   summary: {
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     lineHeight: '1.6',
     fontSize: '14px',
     margin: 0,
@@ -167,7 +167,7 @@ export const analysisStyles = {
     paddingTop: '12px'
   },
   date: {
-    color: 'var(--text-muted)',
+    color: 'var(--tone-muted)',
     fontSize: '12px'
   },
   detailContainer: {
@@ -187,7 +187,7 @@ export const analysisStyles = {
     margin: '0 0 8px 0'
   },
   documentMeta: {
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     fontSize: '14px',
     margin: 0
   },
@@ -205,7 +205,7 @@ export const analysisStyles = {
     borderBottom: '2px solid var(--border-muted)'
   },
   sectionContent: {
-    color: 'var(--text-secondary)',
+    color: 'var(--text-primary)',
     lineHeight: '1.7',
     fontSize: '15px'
   },
@@ -248,7 +248,7 @@ export const analysisStyles = {
     borderRadius: '999px',
     border: '1px solid var(--border-muted)',
     background: 'var(--surface-soft-solid)',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     cursor: 'pointer',
     fontWeight: 600,
     transition: 'all 0.2s ease'
@@ -277,11 +277,11 @@ export const analysisStyles = {
     alignItems: 'center',
     gap: '6px',
     fontWeight: 600,
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-strong)'
   },
   variantSelectionInfo: {
     fontSize: '0.9rem',
-    color: 'var(--text-muted)'
+    color: 'var(--tone-muted)'
   },
   variantDeleteButton: {
     border: '1px solid var(--danger-border)',
@@ -313,7 +313,7 @@ export const analysisStyles = {
     background: 'var(--surface-soft)',
     fontSize: '0.9rem',
     fontWeight: 600,
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-strong)'
   },
   variantMetaGrid: {
     display: 'grid',
@@ -386,7 +386,7 @@ export const analysisStyles = {
   sentenceKorean: {
     fontSize: '1.02rem',
     fontWeight: 500,
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     marginBottom: '14px',
     lineHeight: 1.7
   },
@@ -434,11 +434,11 @@ export const analysisStyles = {
   vocabListItem: {
     lineHeight: 1.7,
     fontSize: '0.96rem',
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-strong)'
   },
   vocabMeta: {
     fontSize: '0.9rem',
-    color: 'var(--text-muted)',
+    color: 'var(--tone-muted)',
     lineHeight: 1.5
   },
   emptyVariant: {
@@ -446,7 +446,7 @@ export const analysisStyles = {
     borderRadius: '18px',
     padding: '28px',
     textAlign: 'center',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     border: '1px dashed var(--border-muted)'
   },
   feedbackBar: {
@@ -464,7 +464,7 @@ export const analysisStyles = {
     borderRadius: '12px',
     border: '1px solid var(--border-muted)',
     background: 'var(--surface-soft-solid)',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     cursor: 'pointer',
     fontWeight: 600,
     transition: 'all 0.2s ease'
@@ -477,12 +477,12 @@ export const analysisStyles = {
   },
   feedbackCount: {
     fontSize: '0.9rem',
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-muted)'
   },
   metaButtonGhost: {
     background: 'rgba(148, 163, 184, 0.18)',
     border: 'none',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     padding: '6px 12px',
     borderRadius: '8px',
     fontSize: '12px',
@@ -514,7 +514,7 @@ export const analysisStyles = {
   },
   feedbackMessage: {
     marginTop: '8px',
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-strong)'
   },
   modalOverlay: {
     position: 'fixed',
@@ -569,7 +569,7 @@ export const analysisStyles = {
   },
   modalSecondaryButton: {
     background: 'var(--surface-soft-solid)',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     border: '1px solid var(--border-subtle)',
     borderRadius: '10px',
     padding: '10px 18px',
@@ -595,7 +595,7 @@ export const analysisStyles = {
     flexDirection: 'column',
     alignItems: 'center',
     padding: '60px 20px',
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-strong)'
   },
 
   errorContainer: {
@@ -617,7 +617,7 @@ export const analysisStyles = {
   compactEmptyState: {
     textAlign: 'center',
     padding: '60px 20px',
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-strong)'
   },
 
   analyzeButton: {
@@ -668,7 +668,7 @@ export const analysisStyles = {
 
   passagePreview: {
     padding: '16px',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     fontSize: '0.9rem',
     lineHeight: '1.5'
   },
@@ -744,7 +744,7 @@ export const analysisStyles = {
   },
   generationSubtitle: {
     margin: 0,
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     lineHeight: 1.5
   },
   generationButtons: {
@@ -769,14 +769,14 @@ export const analysisStyles = {
     marginTop: 4,
     background: 'none',
     border: 'none',
-    color: 'var(--text-muted)',
+    color: 'var(--tone-muted)',
     cursor: 'pointer'
   },
   generationEmpty: {
     padding: 16,
     borderRadius: 12,
     background: 'var(--surface-soft)',
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-strong)'
   },
   loadingCard: {
     width: 'min(460px, 94%)',
@@ -824,7 +824,7 @@ export const analysisStyles = {
     color: 'var(--accent-primary)'
   },
   loadingMeaning: {
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-strong)'
   },
   loadingQuoteStack: {
     display: 'flex',
@@ -843,12 +843,12 @@ export const analysisStyles = {
   },
   loadingQuote: {
     margin: 0,
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     fontStyle: 'italic'
   },
   loadingQuoteAuthor: {
     alignSelf: 'flex-end',
-    color: 'var(--text-muted)',
+    color: 'var(--tone-muted)',
     fontSize: '0.9rem'
   },
   word: {
@@ -858,7 +858,7 @@ export const analysisStyles = {
   },
 
   meaning: {
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     fontSize: '0.9rem'
   },
 

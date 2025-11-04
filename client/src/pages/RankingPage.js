@@ -445,7 +445,7 @@ const styles = {
   tab: {
     padding: '12px 24px',
     background: 'var(--surface-soft)',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     border: 'none',
     borderRadius: '12px',
     cursor: 'pointer',
@@ -476,7 +476,7 @@ const styles = {
   leaderboardMeta: {
     textAlign: 'center',
     marginBottom: '16px',
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-strong)'
   },
   rankingList: {
     display: 'flex',
@@ -488,7 +488,7 @@ const styles = {
     borderRadius: '16px',
     background: 'rgba(148, 163, 184, 0.12)',
     textAlign: 'center',
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-strong)'
   },
   rankingItem: {
     display: 'flex',
@@ -520,7 +520,7 @@ const styles = {
   rank: {
     fontSize: '18px',
     fontWeight: 'bold',
-    color: 'var(--text-muted)',
+    color: 'var(--tone-strong)',
     minWidth: '40px'
   },
   userInfo: {
@@ -541,7 +541,7 @@ const styles = {
     alignItems: 'center',
     gap: '6px',
     fontSize: '12px',
-    color: 'var(--text-muted)'
+    color: 'var(--tone-muted)'
   },
   activeBadge: {
     padding: '2px 8px',
@@ -599,7 +599,7 @@ const styles = {
   myRankName: {
     fontSize: '20px',
     fontWeight: 'bold',
-    color: 'var(--surface-soft-solid)'
+    color: 'var(--tone-hero)'
   },
   userNamePremium: {
     padding: '2px 10px',
@@ -625,7 +625,7 @@ const styles = {
   myTierName: {
     fontSize: '14px',
     fontWeight: 'bold',
-    color: 'var(--surface-soft-solid)',
+    color: 'var(--tone-hero)',
     marginTop: '5px'
   },
   progressSection: {
@@ -636,7 +636,7 @@ const styles = {
     justifyContent: 'space-between',
     marginBottom: '10px',
     fontSize: '14px',
-    color: 'var(--text-muted)'
+    color: 'var(--tone-muted)'
   },
   progressBar: {
     height: '10px',
@@ -691,7 +691,7 @@ const styles = {
   },
   nearbyPoints: {
     fontWeight: 600,
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-strong)'
   },
   noRank: {
     textAlign: 'center',
@@ -704,12 +704,12 @@ const styles = {
   noRankTitle: {
     fontSize: '24px',
     fontWeight: 'bold',
-    color: 'var(--surface-soft-solid)',
+    color: 'var(--tone-hero)',
     marginBottom: '10px'
   },
   noRankDescription: {
     fontSize: '16px',
-    color: 'var(--text-muted)',
+    color: 'var(--tone-muted)',
     marginBottom: '30px'
   },
   startButton: {
@@ -753,7 +753,7 @@ const styles = {
   },
   tierCardCount: {
     fontSize: '14px',
-    color: 'var(--text-muted)'
+    color: 'var(--surface-soft-solid)'
   },
   tierProgressBar: {
     height: '6px',

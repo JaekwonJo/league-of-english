@@ -20,6 +20,7 @@ const styles = {
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: '36px',
+    color: 'var(--tone-hero)'
   },
   quickGuide: {
     padding: '22px 24px',
@@ -32,7 +33,7 @@ const styles = {
     margin: '0 0 16px',
     fontSize: '20px',
     fontWeight: 800,
-    color: 'var(--text-primary)'
+    color: 'var(--tone-hero)'
   },
   quickGuideList: {
     margin: 0,
@@ -63,12 +64,12 @@ const styles = {
   quickGuideLabel: {
     fontSize: '15px',
     fontWeight: 700,
-    color: 'var(--text-primary)'
+    color: 'var(--tone-strong)'
   },
   quickGuideText: {
     margin: 0,
     fontSize: '14px',
-    color: 'var(--text-primary)',
+    color: 'var(--tone-muted)',
     lineHeight: 1.6
   },
   headerSlot: {
@@ -91,16 +92,16 @@ const styles = {
   savedSessionTitle: {
     fontSize: '16px',
     fontWeight: 700,
-    color: 'var(--text-primary)'
+    color: 'var(--tone-strong)'
   },
   savedSessionMeta: {
     fontSize: '14px',
-    color: 'var(--text-primary)',
+    color: 'var(--tone-muted)',
     marginTop: '4px'
   },
   savedSessionMetaMuted: {
     fontSize: '12px',
-    color: 'var(--text-primary)',
+    color: 'var(--tone-muted)',
     marginTop: '4px'
   },
   savedSessionActions: {
@@ -146,10 +147,11 @@ const styles = {
     fontSize: '20px',
     fontWeight: 700,
     margin: 0,
+    color: 'var(--tone-strong)'
   },
   sectionHint: {
     fontSize: '13px',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-muted)',
     marginBottom: '18px',
   },
   searchRow: {
@@ -173,7 +175,7 @@ const styles = {
     borderRadius: '12px',
     border: '1px solid var(--surface-border)',
     background: 'var(--surface-soft)',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-muted)',
     fontWeight: 600,
     cursor: 'pointer',
   },
@@ -209,7 +211,7 @@ const styles = {
   documentMeta: {
     display: 'block',
     fontSize: '0.85rem',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-muted)',
     marginBottom: '4px',
   },
   emptyDocumentList: {
@@ -217,7 +219,7 @@ const styles = {
     padding: '24px',
     borderRadius: '14px',
     background: 'var(--surface-soft)',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-muted)',
     textAlign: 'center',
     border: '1px dashed var(--surface-border)',
   },
@@ -307,7 +309,7 @@ const styles = {
     borderRadius: '16px',
     padding: '28px',
     textAlign: 'center',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-muted)',
     border: '1px solid var(--surface-border)',
   },
   spinner: {
@@ -357,7 +359,7 @@ const styles = {
   },
   selectionBadge: {
     fontSize: '14px',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-muted)',
     background: 'var(--surface-soft)',
     padding: '4px 12px',
     borderRadius: '999px',

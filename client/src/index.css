@@ -26,6 +26,9 @@ html, body {
   --text-secondary: #0F172A; /* 본문/설명도 충분히 진하게 */
   --text-muted: #0F172A;     /* 라이트모드에서는 회색 느낌 제거: 모두 진하게 */
   --text-inverse: #FFFFFF;
+  --tone-hero: #1E3A8A;
+  --tone-strong: #1D4ED8;
+  --tone-muted: #1F2937;
   --accent: #2563EB;
   --accent-strong: #1E3A8A;
   --accent-soft: rgba(59, 130, 246, 0.14);
@@ -198,6 +201,9 @@ html, body {
   --text-secondary: #CBD5F5;
   --text-muted: #94A3B8;
   --text-inverse: #F8FAFC;
+  --tone-hero: #7C3AED;
+  --tone-strong: #A855F7;
+  --tone-muted: #C4B5FD;
   --accent: #60A5FA;
   --accent-strong: #BFDBFE;
   --accent-soft: rgba(96, 165, 250, 0.3);

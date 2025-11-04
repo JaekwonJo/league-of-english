@@ -69,7 +69,7 @@ const gridStyles = {
     flex: 1,
     fontSize: '14px',
     lineHeight: 1.6,
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     margin: 0,
     whiteSpace: 'pre-wrap'
   },
@@ -100,7 +100,7 @@ const gridStyles = {
     borderRadius: '12px',
     padding: '32px',
     textAlign: 'center',
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-muted)'
   }
 };
 
@@ -134,7 +134,7 @@ const PassagePickerGrid = ({
         <div style={gridStyles.metaRow}>
           <span>{selectionLabel}</span>
           {selectionEnabled && maxSelection > 0 && (
-            <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+            <span style={{ fontSize: '13px', color: 'var(--tone-muted)' }}>
               {selectedList.length} / {maxSelection}
             </span>
           )}

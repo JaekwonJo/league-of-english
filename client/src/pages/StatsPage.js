@@ -197,18 +197,20 @@ const styles = {
   container: {
     padding: '24px',
     maxWidth: '1200px',
-    margin: '0 auto'
+    margin: '0 auto',
+    color: 'var(--text-primary)'
   },
   header: {
     marginBottom: '28px'
   },
   title: {
     fontSize: '2.2rem',
-    marginBottom: '6px'
+    marginBottom: '6px',
+    color: 'var(--tone-hero)'
   },
   subtitle: {
     fontSize: '1.05rem',
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-strong)'
   },
   section: {
     marginBottom: '32px'
@@ -227,7 +229,7 @@ const styles = {
   },
   sectionHint: {
     fontSize: '0.9rem',
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-muted)'
   },
   grid3: {
     display: 'grid',
@@ -251,7 +253,7 @@ const styles = {
   },
   statLabel: {
     fontSize: '0.9rem',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     fontWeight: 600
   },
   statValue: {
@@ -260,7 +262,7 @@ const styles = {
   },
   statHelper: {
     fontSize: '0.85rem',
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-muted)'
   },
   pendingCard: {
     background: 'var(--surface-card)',
@@ -271,7 +273,7 @@ const styles = {
   },
   pendingText: {
     fontSize: '1rem',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     fontWeight: 600
   },
   errorCard: {
@@ -297,7 +299,7 @@ const styles = {
     color: 'var(--text-primary)'
   },
   emptyBody: {
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     lineHeight: 1.5
   },
   comingCard: {
@@ -315,7 +317,7 @@ const styles = {
     color: 'var(--text-primary)'
   },
   comingBody: {
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     lineHeight: 1.6
   },
   comingBadge: {

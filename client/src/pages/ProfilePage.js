@@ -496,7 +496,7 @@ const styles = {
     alignItems: 'center',
     marginBottom: '15px',
     fontSize: '16px',
-    color: 'var(--text-muted)',
+    color: 'var(--tone-muted)',
     fontWeight: '600'
   },
   progressBar: {
@@ -537,7 +537,7 @@ const styles = {
     padding: '18px',
     borderRadius: '16px',
     background: 'rgba(15, 23, 42, 0.6)',
-    color: 'var(--text-muted)',
+    color: 'var(--tone-muted)',
     textAlign: 'center'
   },
   reviewQueueSection: {
@@ -576,7 +576,7 @@ const styles = {
   reviewQueueHint: {
     margin: 0,
     fontSize: '14px',
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-strong)'
   },
   reviewQueueButton: {
     padding: '12px 26px',
@@ -616,13 +616,13 @@ const styles = {
     padding: '4px 10px',
     borderRadius: '999px',
     background: 'var(--accent-soft)',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     fontSize: '12px',
     fontWeight: 700
   },
   reviewQueueSource: {
     fontSize: '12px',
-    color: 'var(--text-muted)'
+    color: 'var(--tone-muted)'
   },
   reviewQueueCount: {
     fontSize: '12px',
@@ -639,7 +639,7 @@ const styles = {
     padding: '24px',
     borderRadius: '14px',
     background: 'rgba(226, 232, 240, 0.65)',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     fontWeight: 600
   },
   profileStatCard: {
@@ -648,12 +648,12 @@ const styles = {
     padding: '22px',
     textAlign: 'center',
     transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     border: '1px solid var(--surface-border)'
   },
   profileStatLabel: {
     fontSize: '14px',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     marginBottom: '12px'
   },
   profileStatValue: {
@@ -664,7 +664,7 @@ const styles = {
   profileStatSuffix: {
     fontSize: '16px',
     marginLeft: '4px',
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-strong)'
   },
   typeSection: {
     marginTop: '40px'
@@ -684,7 +684,7 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     fontWeight: 700,
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     marginBottom: '10px'
   },
   typeBar: {
@@ -703,7 +703,7 @@ const styles = {
     gap: '12px',
     marginTop: '10px',
     fontSize: '13px',
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-strong)'
   },
   infoCard: {
     background: 'rgba(51, 65, 85, 0.8)',
@@ -726,7 +726,7 @@ const styles = {
   },
   cardLabel: {
     fontSize: '14px',
-    color: 'var(--text-muted)',
+    color: 'var(--tone-muted)',
     fontWeight: '600',
     marginBottom: '5px',
     textTransform: 'uppercase',
@@ -797,7 +797,7 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     gap: '6px',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     fontSize: '14px'
   },
   planPrice: {
@@ -808,7 +808,7 @@ const styles = {
   },
   membershipText: {
     fontSize: '14px',
-    color: 'var(--text-muted)',
+    color: 'var(--tone-muted)',
     margin: 0
   },
   membershipSummary: {
@@ -819,7 +819,7 @@ const styles = {
   membershipLabel: {
     display: 'block',
     fontSize: '13px',
-    color: 'var(--text-muted)'
+    color: 'var(--tone-muted)'
   },
   membershipValue: {
     fontSize: '18px',
@@ -959,7 +959,7 @@ const styles = {
   },
   teacherCodeMeta: {
     margin: 0,
-    color: 'var(--text-muted)',
+    color: 'var(--tone-muted)',
     fontSize: '13px'
   },
   teacherCodeBadge: {
@@ -971,7 +971,7 @@ const styles = {
     fontWeight: 600
   },
   teacherCodeEmpty: {
-    color: 'var(--text-muted)',
+    color: 'var(--tone-muted)',
     fontSize: '13px',
     padding: '12px'
   },
@@ -1059,7 +1059,7 @@ const styles = {
   },
   analyticsFilterLabel: {
     fontSize: '13px',
-    color: 'var(--text-muted)',
+    color: 'var(--tone-muted)',
     fontWeight: 600
   },
   analyticsSelect: {
@@ -1076,7 +1076,7 @@ const styles = {
     margin: 0
   },
   analyticsInfo: {
-    color: 'var(--text-muted)',
+    color: 'var(--tone-muted)',
     fontSize: '14px',
     margin: 0
   },
@@ -1095,7 +1095,7 @@ const styles = {
   },
   analyticsSummaryLabel: {
     fontSize: '12px',
-    color: 'var(--text-muted)',
+    color: 'var(--tone-muted)',
     fontWeight: 600,
     letterSpacing: '0.04em',
     textTransform: 'uppercase'
@@ -1117,7 +1117,7 @@ const styles = {
   analyticsTableHead: {
     textAlign: 'left',
     fontSize: '12px',
-    color: 'var(--text-muted)',
+    color: 'var(--tone-muted)',
     textTransform: 'uppercase',
     letterSpacing: '0.04em',
     padding: '12px 16px',
@@ -1196,7 +1196,7 @@ const styles = {
   analyticsDetailClose: {
     border: 'none',
     background: 'transparent',
-    color: 'var(--text-muted)',
+    color: 'var(--tone-muted)',
     fontSize: '12px',
     cursor: 'pointer',
     padding: '6px 8px'

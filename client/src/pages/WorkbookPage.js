@@ -70,7 +70,7 @@ const styles = {
   howtoText: {
     margin: 0,
     fontSize: '14px',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     lineHeight: 1.6
   },
   heroTitle: {
@@ -85,7 +85,7 @@ const styles = {
   heroDesc: {
     fontSize: '16px',
     lineHeight: 1.6,
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-strong)'
   },
   heroDescMobile: {
     fontSize: '14px',
@@ -128,14 +128,14 @@ const styles = {
     alignItems: 'center',
     gap: '10px',
     fontSize: '12px',
-    color: 'var(--text-muted)'
+    color: 'var(--tone-muted)'
   },
   cardMeta: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
     fontSize: '12px',
-    color: 'var(--text-muted)'
+    color: 'var(--tone-muted)'
   },
   deleteButton: {
     padding: '4px 10px',
@@ -218,7 +218,7 @@ const styles = {
   },
   generatorDescription: {
     fontSize: '13px',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     lineHeight: 1.5
   },
   generatorSearchRow: {
@@ -268,14 +268,14 @@ const styles = {
   },
   generatorDocMeta: {
     fontSize: '12px',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-muted)',
     margin: 0
   },
   generatorEmpty: {
     padding: '16px',
     borderRadius: '12px',
     background: 'var(--surface-soft)',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     textAlign: 'center',
     fontSize: '13px'
   },
@@ -314,7 +314,7 @@ const styles = {
   },
   generatorPassageExcerpt: {
     fontSize: '12px',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     lineHeight: 1.4
   },
   generatorSummaryBox: {
@@ -332,7 +332,7 @@ const styles = {
     borderRadius: '12px',
     border: '1px solid rgba(37,99,235,0.25)',
     background: 'rgba(37,99,235,0.08)',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     fontSize: '13px',
     lineHeight: 1.5
   },
@@ -421,7 +421,7 @@ const styles = {
   },
   docListMeta: {
     fontSize: '12px',
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-muted)'
   },
   docDetail: {
     padding: '24px',
@@ -456,7 +456,7 @@ const styles = {
     flexWrap: 'wrap',
     gap: '10px',
     fontSize: '12px',
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-strong)'
   },
   docMetaInfoMobile: {
     gap: '8px'
@@ -510,7 +510,7 @@ const styles = {
   },
   workbookStats: {
     fontSize: '12px',
-    color: 'var(--text-muted)'
+    color: 'var(--tone-muted)'
   },
   workbookListActions: {
     display: 'flex',
@@ -540,7 +540,7 @@ const styles = {
     borderRadius: '16px',
     border: '1px dashed var(--border-subtle)',
     background: 'var(--surface-soft)',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     textAlign: 'center'
   },
   formRow: {
@@ -623,7 +623,7 @@ const styles = {
     background: 'var(--surface-soft)',
     cursor: 'pointer',
     fontWeight: 600,
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-strong)'
   },
   stepButtonMobile: {
     flex: '0 0 auto',
@@ -721,7 +721,7 @@ const styles = {
     fontSize: '16px'
   },
   flashcardBack: {
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     fontSize: '18px',
     lineHeight: 1.7,
     whiteSpace: 'pre-line'
@@ -784,7 +784,7 @@ const styles = {
   },
   puzzleStatus: {
     fontSize: '13px',
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-strong)'
   },
   puzzleControls: {
     display: 'flex',
@@ -822,7 +822,7 @@ const styles = {
     display: 'flex',
     alignItems: 'flex-start',
     gap: '12px',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     fontSize: '14px',
     lineHeight: 1.6
   },
@@ -843,7 +843,7 @@ const styles = {
     border: '1px dashed var(--border-strong)',
     background: 'var(--surface-soft)',
     textAlign: 'center',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     lineHeight: 1.6
   },
   testContainer: {
@@ -883,11 +883,11 @@ const styles = {
   testQuestionPrompt: {
     fontSize: '15px',
     lineHeight: 1.7,
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-strong)'
   },
   testHint: {
     fontSize: '13px',
-    color: 'var(--text-muted)'
+    color: 'var(--tone-muted)'
   },
   testOptionList: {
     display: 'flex',
@@ -1071,7 +1071,7 @@ const WordOrderPuzzle = ({ card, reveal, compact = false }) => {
         <button type="button" style={resetButtonStyle} onClick={handleReset}>
           퍼즐 초기화
         </button>
-        <span style={{ ...styles.puzzleStatus, color: isCorrect ? 'var(--success-strong)' : 'var(--text-muted)' }}>
+        <span style={{ ...styles.puzzleStatus, color: isCorrect ? 'var(--success-strong)' : 'var(--tone-muted)' }}>
           현재 조합: {assembled || '—'}
         </span>
       </div>
@@ -1860,7 +1860,7 @@ const WorkbookPage = () => {
       <div key={question.id} style={styles.testQuestionCard}>
         <div style={styles.testQuestionHeader}>
           <span>문항 {questionNumber}</span>
-          <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>{question.stepLabel || ''}</span>
+          <span style={{ color: 'var(--tone-muted)', fontSize: '12px' }}>{question.stepLabel || ''}</span>
         </div>
         {question.prompt && <div style={styles.testQuestionPrompt}>{question.prompt}</div>}
         {question.givenSentence && (
@@ -1922,7 +1922,7 @@ const WorkbookPage = () => {
         <div style={styles.testQuestionHeader}>
           <span>문항 {index + 1}</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {question.stepLabel && <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>{question.stepLabel}</span>}
+            {question.stepLabel && <span style={{ color: 'var(--tone-muted)', fontSize: '12px' }}>{question.stepLabel}</span>}
             <span style={badgeStyle}>{detail.correct ? '정답' : '오답'}</span>
           </div>
         </div>
@@ -1960,7 +1960,7 @@ const WorkbookPage = () => {
             <div style={styles.pill}>Workbook · {workbookMeta.documentTitle || selectedWorkbook?.documentTitle || '선택한 자료'}</div>
           </div>
           <h2 style={{ fontSize: '26px', fontWeight: 800, color: 'var(--text-primary)' }}>워크북 TEST</h2>
-          <p style={{ fontSize: '15px', lineHeight: 1.7, color: 'var(--text-secondary)' }}>
+          <p style={{ fontSize: '15px', lineHeight: 1.7, color: 'var(--tone-strong)' }}>
             학습한 내용을 바탕으로 테스트를 진행해 보세요. 모든 문항을 풀고 제출하면 즉시 채점되고 LP가 반영됩니다.
           </p>
         </div>
@@ -2501,7 +2501,7 @@ const WorkbookPage = () => {
                       {bulkStatus.failures && bulkStatus.failures.length > 0 && (
                         <ul style={{ margin: '8px 0 0 18px', padding: 0, listStyle: 'disc' }}>
                           {bulkStatus.failures.map((item) => (
-                            <li key={`gen-bulk-failure-${item.passageNumber}`} style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                            <li key={`gen-bulk-failure-${item.passageNumber}`} style={{ fontSize: '12px', color: 'var(--tone-strong)' }}>
                               지문 {item.passageNumber}번: {item.message}
                             </li>
                           ))}
@@ -2655,7 +2655,7 @@ const WorkbookPage = () => {
                           {bulkStatus.failures && bulkStatus.failures.length > 0 && (
                             <ul style={{ margin: '8px 0 0 18px', padding: 0, listStyle: 'disc' }}>
                               {bulkStatus.failures.map((item) => (
-                                <li key={`bulk-failure-${item.passageNumber}`} style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                                <li key={`bulk-failure-${item.passageNumber}`} style={{ fontSize: '12px', color: 'var(--tone-strong)' }}>
                                   지문 {item.passageNumber}번: {item.message}
                                 </li>
                               ))}
@@ -2710,7 +2710,7 @@ const WorkbookPage = () => {
                                     )}
                                   </div>
                                 </div>
-                                <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: 0 }}>
+                                <p style={{ fontSize: '14px', color: 'var(--tone-strong)', margin: 0 }}>
                                   {workbook.description || '10단계 학습 코스로 구성된 워크북입니다.'}
                                 </p>
                                 <div style={responsiveStyle(styles.docMetaInfo, styles.docMetaInfoMobile)}>
@@ -2785,7 +2785,7 @@ const WorkbookPage = () => {
         </h2>
         <p
           style={responsiveStyle(
-            { fontSize: '15px', lineHeight: 1.7, color: 'var(--text-secondary)' },
+            { fontSize: '15px', lineHeight: 1.7, color: 'var(--tone-strong)' },
             { fontSize: '14px', lineHeight: 1.6 }
           )}
         >

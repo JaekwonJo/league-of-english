@@ -395,7 +395,7 @@ const AdminPage = () => {
         <div>
           <h1 style={adminStyles.title}>{isAdmin ? '⚙️ 관리자 페이지' : '🍎 선생님 모드'}</h1>
           {isTeacherOnly && (
-            <p style={{ margin: '6px 0 0', color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+            <p style={{ margin: '6px 0 0', color: 'var(--tone-strong)', fontSize: '0.95rem' }}>
               자기 반 학생들의 학습 기록을 편하게 확인할 수 있도록 통계 보드도 준비 중이에요. 😊
             </p>
           )}

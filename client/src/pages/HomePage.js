@@ -244,13 +244,15 @@ const styles = {
   },
   title: {
     fontSize: '32px',
-    fontWeight: 'bold',
+    fontWeight: 900,
+    letterSpacing: '-0.02em',
     marginBottom: '8px',
-    color: 'var(--text-primary)'
+    color: 'var(--tone-hero)'
   },
   subtitle: {
-    fontSize: '16px',
-    color: 'var(--text-primary)',
+    fontSize: '18px',
+    color: 'var(--tone-strong)',
+    fontWeight: 600,
     marginBottom: '32px'
   },
   tierCard: {
@@ -277,7 +279,7 @@ const styles = {
   tierPoints: {
     fontSize: '18px',
     margin: '6px 0 0',
-    color: 'var(--text-primary)'
+    color: 'var(--tone-hero)'
   },
   progressBox: {
     marginTop: '20px'
@@ -285,9 +287,10 @@ const styles = {
   progressInfo: {
     display: 'flex',
     justifyContent: 'space-between',
-    fontSize: '14px',
-    color: 'var(--text-primary)',
-    marginBottom: '8px'
+    fontSize: '15px',
+    fontWeight: 600,
+    color: 'var(--tone-strong)',
+    marginBottom: '10px'
   },
   progressBar: {
     width: '100%',
@@ -309,10 +312,11 @@ const styles = {
     marginTop: '36px'
   },
   sectionTitle: {
-    fontSize: '22px',
-    fontWeight: 'bold',
+    fontSize: '24px',
+    fontWeight: 800,
+    letterSpacing: '-0.01em',
     marginBottom: '20px',
-    color: 'var(--text-primary)'
+    color: 'var(--tone-hero)'
   },
   statGrid: {
     display: 'grid',
@@ -329,9 +333,10 @@ const styles = {
     boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)'
   },
   statLabel: {
-    fontSize: '14px',
-    color: 'var(--text-secondary)',
-    marginBottom: '10px'
+    fontSize: '15px',
+    color: 'var(--tone-strong)',
+    fontWeight: 600,
+    marginBottom: '12px'
   },
   statValue: {
     fontSize: '32px',
@@ -341,7 +346,7 @@ const styles = {
   statSuffix: {
     fontSize: '16px',
     marginLeft: '4px',
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-strong)'
   },
   quickGrid: {
     display: 'grid',
@@ -418,8 +423,9 @@ const styles = {
     color: 'var(--accent-strong)'
   },
   reviewHint: {
-    fontSize: '14px',
-    color: 'var(--text-primary)',
+    fontSize: '15px',
+    color: 'var(--tone-strong)',
+    fontWeight: 600,
     margin: 0
   },
   reviewActionButton: {
@@ -465,7 +471,7 @@ const styles = {
   },
   reviewItemSource: {
     fontSize: '12px',
-    color: 'var(--text-muted)'
+    color: 'var(--tone-muted)'
   },
   reviewItemText: {
     fontSize: '14px',
