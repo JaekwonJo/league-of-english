@@ -498,7 +498,8 @@ const styles = {
     background: 'var(--surface-soft)',
     borderRadius: '12px',
     border: '1px solid var(--surface-border)',
-    transition: 'all 0.3s ease'
+    transition: 'all 0.3s ease',
+    color: 'var(--tone-strong)'
   },
   myRankingItem: {
     border: '2px solid var(--success)',
@@ -676,7 +677,8 @@ const styles = {
     gap: '12px',
     padding: '10px 14px',
     borderRadius: '12px',
-    background: 'rgba(148, 163, 184, 0.12)'
+    background: 'rgba(148, 163, 184, 0.12)',
+    color: 'var(--tone-strong)'
   },
   nearbyMe: {
     background: 'rgba(59, 130, 246, 0.18)',

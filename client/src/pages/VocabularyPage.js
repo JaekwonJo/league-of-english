@@ -1568,15 +1568,15 @@ const styles = {
     transition: 'all 0.25s ease',
     border: '2px solid transparent',
     cursor: 'pointer',
-    boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)'
+    boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)',
+    color: 'var(--tone-strong)'
   },
   setTitle: {
     display: 'block',
     fontSize: '1.1rem',
     fontWeight: 600,
     marginBottom: '8px',
-    color: 'var(--text-primary)',
-    textShadow: '0 1px 2px rgba(0,0,0,0.25)'
+    color: 'var(--tone-hero)'
   },
   setMeta: {
     display: 'block',
