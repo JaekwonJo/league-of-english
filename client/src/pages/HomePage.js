@@ -420,7 +420,7 @@ const styles = {
     fontSize: '20px',
     fontWeight: 800,
     marginBottom: '6px',
-    color: 'var(--accent-strong)'
+    color: 'var(--tone-hero)'
   },
   reviewHint: {
     fontSize: '15px',

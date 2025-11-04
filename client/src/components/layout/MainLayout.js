@@ -413,8 +413,8 @@ const styles = {
     justifyContent: 'center',
     borderRadius: 10,
     border: '1px solid var(--border-subtle)',
-    background: 'var(--surface-soft)',
-    color: 'var(--text-primary)',
+    background: 'linear-gradient(135deg, rgba(59,130,246,0.15) 0%, rgba(125,211,252,0.12) 100%)',
+    color: 'var(--tone-hero)',
     cursor: 'pointer'
   },
   mobileTitle: {

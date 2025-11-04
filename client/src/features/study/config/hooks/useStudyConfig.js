@@ -3,7 +3,6 @@ import { api } from '../../../../services/api.service';
 import logger from '../../../../utils/logger';
 import {
   MAX_TOTAL_PROBLEMS,
-  PROBLEM_STEP,
   TYPE_KEYS,
 } from '../constants';
 import {
@@ -14,6 +13,7 @@ import {
 
 const STORAGE_KEY = 'studyConfig';
 const VALID_STEPS = [1, 2, 3];
+const MAX_PASSAGE_SELECTION = Math.min(MAX_TOTAL_PROBLEMS, 5);
 
 const readStepFromLocation = () => {
   if (typeof window === 'undefined') return 1;
@@ -49,10 +49,21 @@ const useStudyConfig = ({ onStart, initialFocusType }) => {
   const popHandlingRef = useRef(false);
   const lastAppliedStepRef = useRef(step);
 
-  const selectedCount = selectedPassages.length;
-
   const totalProblems = useMemo(
     () => calculateTotalProblems(config.types),
+    [config.types],
+  );
+
+  const defaultProblemCount = useMemo(
+    () => Math.min(
+      MAX_TOTAL_PROBLEMS,
+      Math.max(1, selectedPassages.length || MAX_TOTAL_PROBLEMS)
+    ),
+    [selectedPassages.length],
+  );
+
+  const selectedType = useMemo(
+    () => TYPE_KEYS.find((key) => Number(config.types?.[key] || 0) > 0) || null,
     [config.types],
   );
 
@@ -236,13 +247,13 @@ const useStudyConfig = ({ onStart, initialFocusType }) => {
       const hasSelection = Object.values(current).some((value) => Number(value) > 0);
       if (hasSelection) return current;
       const preset = TYPE_KEYS.reduce((acc, key) => {
-        acc[key] = key === initialFocusType ? PROBLEM_STEP : 0;
+        acc[key] = key === initialFocusType ? defaultProblemCount : 0;
         return acc;
       }, {});
       return preset;
     });
     setInitialFocusApplied(true);
-  }, [initialFocusType, initialFocusApplied, updateTypes]);
+  }, [defaultProblemCount, initialFocusType, initialFocusApplied, updateTypes]);
 
   useEffect(() => {
     if (step === 2) {
@@ -268,13 +279,19 @@ const useStudyConfig = ({ onStart, initialFocusType }) => {
       if (prev.includes(passageNumber)) {
         return prev.filter((value) => value !== passageNumber);
       }
+      if (prev.length >= MAX_PASSAGE_SELECTION) {
+        window.alert(`한 번에 선택할 수 있는 지문은 최대 ${MAX_PASSAGE_SELECTION}개예요.`);
+        return prev;
+      }
       return [...prev, passageNumber];
     });
   }, []);
 
   const selectAllPassages = useCallback(() => {
     if (!Array.isArray(passages) || passages.length === 0) return;
-    setSelectedPassages(passages.map((item) => item.passageNumber));
+    setSelectedPassages(passages
+      .slice(0, MAX_PASSAGE_SELECTION)
+      .map((item) => item.passageNumber));
   }, [passages]);
 
   const clearPassages = useCallback(() => {
@@ -286,7 +303,7 @@ const useStudyConfig = ({ onStart, initialFocusType }) => {
       setSelectedPassages([]);
       return;
     }
-    const maxSelectable = Math.min(passages.length, MAX_TOTAL_PROBLEMS);
+    const maxSelectable = Math.min(passages.length, MAX_PASSAGE_SELECTION);
     const count = Math.max(1, Math.floor(Math.random() * maxSelectable) + 1);
     const shuffled = [...passages].sort(() => Math.random() - 0.5);
     const randomSubset = shuffled
@@ -305,60 +322,13 @@ const useStudyConfig = ({ onStart, initialFocusType }) => {
 
   const closePreview = useCallback(() => setPreviewPassage(null), []);
 
-  const handleTypeChange = useCallback((type, value) => {
-    updateTypes((current) => {
-      const numeric = Number(value);
-      if (!Number.isFinite(numeric)) return current;
-      const snapped = Math.min(
-        MAX_TOTAL_PROBLEMS,
-        Math.max(0, Math.floor(numeric / PROBLEM_STEP) * PROBLEM_STEP),
-      );
-      return { ...current, [type]: snapped };
-    });
-  }, [updateTypes]);
-
-  const changeTypeByStep = useCallback((type, delta) => {
-    updateTypes((current) => {
-      const currentValue = Number(current[type] || 0);
-      let nextValue = currentValue + delta;
-      nextValue = Math.max(0, nextValue);
-      nextValue = Math.min(MAX_TOTAL_PROBLEMS, nextValue);
-
-      const candidate = { ...current, [type]: nextValue };
-      const candidateTotal = calculateTotalProblems(candidate);
-      if (candidateTotal > MAX_TOTAL_PROBLEMS) return current;
-      return candidate;
-    });
-  }, [updateTypes]);
-
-  const randomizeTypes = useCallback(() => {
-    if (!TYPE_KEYS.length) return;
-
-    const zeroed = TYPE_KEYS.reduce((acc, key) => {
-      acc[key] = 0;
+  const selectSingleType = useCallback((type) => {
+    updateTypes(() => TYPE_KEYS.reduce((acc, key) => {
+      acc[key] = key === type ? defaultProblemCount : 0;
       return acc;
-    }, {});
+    }, {}));
+  }, [defaultProblemCount, updateTypes]);
 
-    const baseTarget = totalProblems || selectedCount || 5;
-    const desiredTotal = Math.min(
-      MAX_TOTAL_PROBLEMS,
-      Math.max(PROBLEM_STEP, baseTarget)
-    );
-
-    const shuffledTypes = [...TYPE_KEYS].sort(() => Math.random() - 0.5);
-    const allocation = { ...zeroed };
-    let remaining = desiredTotal;
-    let index = 0;
-
-    while (remaining > 0) {
-      const key = shuffledTypes[index % shuffledTypes.length];
-      allocation[key] += PROBLEM_STEP;
-      remaining -= PROBLEM_STEP;
-      index += 1;
-    }
-
-    updateTypes(allocation);
-  }, [selectedCount, totalProblems, updateTypes]);
 
   const changeOrderMode = useCallback((mode) => {
     const normalized = ensureOrderMode(mode);
@@ -393,7 +363,7 @@ const useStudyConfig = ({ onStart, initialFocusType }) => {
       return;
     }
     if (!activeTypes.length) {
-      window.alert('출제할 문제 유형과 개수를 골라주세요.');
+      window.alert('출제할 문제 유형을 선택해주세요.');
       return;
     }
     if (totalProblems > MAX_TOTAL_PROBLEMS) {
@@ -426,6 +396,19 @@ const useStudyConfig = ({ onStart, initialFocusType }) => {
     return null;
   }, []);
 
+  useEffect(() => {
+    updateTypes((current) => {
+      const active = TYPE_KEYS.find((key) => Number(current[key] || 0) > 0);
+      if (!active) return current;
+      const desired = defaultProblemCount;
+      if (Number(current[active] || 0) === desired) return current;
+      return TYPE_KEYS.reduce((acc, key) => {
+        acc[key] = key === active ? desired : 0;
+        return acc;
+      }, {});
+    });
+  }, [defaultProblemCount, updateTypes]);
+
   return {
     step,
     safeStep,
@@ -446,9 +429,9 @@ const useStudyConfig = ({ onStart, initialFocusType }) => {
     randomPassages,
     openPreview,
     closePreview,
-    handleTypeChange,
-    changeTypeByStep,
-    randomizeTypes,
+    selectedType,
+    defaultProblemCount,
+    selectSingleType,
     resetTypes,
     changeOrderMode,
     prepareTypeStep,

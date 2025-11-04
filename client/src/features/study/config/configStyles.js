@@ -257,6 +257,19 @@ const styles = {
     marginTop: '24px',
     flexWrap: 'wrap',
   },
+  passageActionBar: {
+    marginTop: '20px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: '12px',
+    flexWrap: 'wrap',
+    position: 'sticky',
+    bottom: 0,
+    paddingTop: '16px',
+    background: 'linear-gradient(180deg, rgba(249,250,251,0) 0%, var(--surface-soft-shell) 45%)',
+    backdropFilter: 'blur(6px)'
+  },
   primaryButton: {
     ...baseButton,
     background: 'linear-gradient(135deg, var(--accent-primary) 0%, var(--indigo) 100%)',
@@ -354,17 +367,23 @@ const styles = {
     borderRadius: '10px',
     border: '1px solid var(--surface-border)',
     background: 'var(--surface-soft)',
-    color: 'var(--text-primary)',
+    color: 'var(--tone-strong)',
     fontWeight: 600,
     cursor: 'pointer',
     boxShadow: 'none',
   },
   selectionBadge: {
     fontSize: '14px',
-    color: 'var(--tone-muted)',
+    color: 'var(--tone-hero)',
     background: 'var(--surface-soft)',
     padding: '4px 12px',
     borderRadius: '999px',
+  },
+  selectionLimitHint: {
+    fontSize: '0.85rem',
+    color: 'var(--tone-strong)',
+    margin: '-6px 0 12px',
+    opacity: 0.85
   },
   countBadge: {
     display: 'inline-flex',
@@ -378,6 +397,17 @@ const styles = {
     color: 'var(--text-on-accent)',
     minWidth: '170px',
     justifyContent: 'center',
+  },
+  typeSelectionBadge: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '6px 14px',
+    borderRadius: '999px',
+    background: 'rgba(59,130,246,0.12)',
+    color: 'var(--tone-hero)',
+    fontWeight: 700,
+    fontSize: '0.9rem'
   },
   countLabel: {
     fontSize: '12px',
@@ -402,72 +432,61 @@ const styles = {
     fontWeight: 600,
     color: 'rgba(255, 255, 255, 0.85)',
   },
-  typeGrid: {
+  typeSelectGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-    gap: '18px',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
+    gap: '16px',
   },
-  typeCard: {
-    background: 'var(--surface-soft)',
-    borderRadius: '16px',
-    padding: '18px',
-    border: '1px solid var(--surface-border)',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '12px',
-    color: 'var(--tone-strong)'
-  },
-  typeHeader: {
+  typeSelectCard: {
     display: 'flex',
     alignItems: 'center',
-    gap: '12px',
+    gap: '14px',
+    padding: '18px',
+    borderRadius: '16px',
+    border: '1px solid var(--surface-border)',
+    background: 'var(--surface-soft)',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    color: 'var(--tone-strong)',
+    textAlign: 'left'
   },
-  typeIcon: {
-    fontSize: '26px',
+  typeSelectCardActive: {
+    borderColor: 'var(--color-blue-500)',
+    boxShadow: '0 10px 28px rgba(59,130,246,0.22)',
+    background: 'rgba(59,130,246,0.12)',
     color: 'var(--tone-hero)'
   },
-  typeName: {
-    fontSize: '17px',
+  typeSelectIcon: {
+    fontSize: '28px'
+  },
+  typeSelectBody: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px'
+  },
+  typeSelectName: {
+    fontSize: '1.05rem',
     fontWeight: 700,
     color: 'var(--tone-hero)'
   },
-  typeDescription: {
-    fontSize: '13px',
+  typeSelectDescription: {
+    fontSize: '0.85rem',
     color: 'var(--tone-strong)',
-    marginTop: '2px',
+    lineHeight: 1.5
   },
-  typeInstruction: {
-    fontSize: '12px',
-    color: 'var(--tone-strong)',
-    lineHeight: 1.5,
+  typeSelectBadge: {
+    width: 'fit-content',
+    padding: '4px 10px',
+    borderRadius: '999px',
+    background: 'rgba(34,197,94,0.16)',
+    color: 'var(--color-green-600)',
+    fontWeight: 700,
+    fontSize: '0.75rem'
   },
-  typeControls: {
+  previewButtonRow: {
+    marginTop: '18px',
     display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '12px',
-  },
-  controlButton: {
-    width: '42px',
-    height: '42px',
-    borderRadius: '10px',
-    border: '2px solid var(--surface-border)',
-    background: 'var(--surface-card)',
-    color: 'var(--text-primary)',
-    fontSize: '22px',
-    fontWeight: 'bold',
-    cursor: 'pointer',
-  },
-  numberInput: {
-    width: '70px',
-    padding: '10px',
-    textAlign: 'center',
-    borderRadius: '10px',
-    border: '2px solid var(--surface-border)',
-    background: 'var(--surface-card)',
-    color: 'var(--text-primary)',
-    fontSize: '18px',
-    fontWeight: 'bold',
+    justifyContent: 'flex-end'
   },
   orderModeGroup: {
     display: 'flex',
@@ -482,7 +501,7 @@ const styles = {
     borderRadius: '14px',
     border: '1px solid var(--surface-border)',
     background: 'var(--surface-soft)',
-    color: 'var(--text-primary)',
+    color: 'var(--tone-strong)',
     cursor: 'pointer',
   },
   orderModeLabel: {
@@ -494,6 +513,18 @@ const styles = {
     fontSize: '13px',
     color: 'var(--tone-strong)',
     lineHeight: 1.5,
+  },
+  studyFooterBar: {
+    position: 'sticky',
+    bottom: 0,
+    marginTop: '24px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    gap: '12px',
+    flexWrap: 'wrap',
+    paddingTop: '18px',
+    background: 'linear-gradient(180deg, rgba(249,250,251,0) 0%, var(--surface-soft-shell) 45%)',
+    backdropFilter: 'blur(6px)'
   },
 };
 

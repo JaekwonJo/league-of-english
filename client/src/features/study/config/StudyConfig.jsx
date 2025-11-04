@@ -37,9 +37,9 @@ const StudyConfig = ({
     openPreview,
     closePreview,
     handleTypeChange,
-    changeTypeByStep,
-    randomizeTypes,
-    resetTypes,
+    selectedType,
+    defaultProblemCount,
+    selectSingleType,
     changeOrderMode,
     prepareTypeStep,
     handleStart,
@@ -65,8 +65,8 @@ const StudyConfig = ({
     },
     {
       icon: '🚀',
-      label: '3단계 · 유형/문항 설정',
-      description: '어휘·어법 등 원하는 유형 수를 정하고 “학습 시작”을 누르면 바로 문제 풀이가 열려요.'
+      label: '3단계 · 유형 선택',
+      description: '집중 연습할 문제 유형 하나를 고르고 “학습 시작”을 누르면 바로 문제 풀이가 열려요.'
     }
   ]), []);
 
@@ -157,6 +157,7 @@ const StudyConfig = ({
             onRandom={randomPassages}
             onClear={clearPassages}
             onPreview={openPreview}
+            maxSelection={5}
             selectionLabel="학습에 포함할 지문을 골라주세요"
             metaRenderer={renderPassageMeta}
           />
@@ -165,21 +166,17 @@ const StudyConfig = ({
       default:
         return (
           <ProblemTypeStep
-            typeCounts={config.types}
-            totalProblems={totalProblems}
+            selectedType={selectedType}
+            problemCount={defaultProblemCount}
             orderMode={config.orderMode}
             onBack={() => goToStep(2)}
-            onReset={resetTypes}
-            onRandomize={randomizeTypes}
             onOrderModeChange={changeOrderMode}
-            onChangeByStep={changeTypeByStep}
-            onChangeValue={handleTypeChange}
+            onSelectType={selectSingleType}
             onStart={handleStart}
             canStart={
               !!config.documentId &&
               selectedPassages.length > 0 &&
-              totalProblems > 0 &&
-              totalProblems <= MAX_TOTAL_PROBLEMS
+              !!selectedType
             }
             onPreviewProblem={handleOpenProblemPreview}
           />
