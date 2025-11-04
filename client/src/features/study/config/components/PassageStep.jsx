@@ -26,9 +26,9 @@ const PassageStep = ({
         <span style={styles.selectionBadge}>{selectedPassages.length}개 선택</span>
       </div>
       <p style={styles.sectionHint}>
-      문제에 사용할 지문을 골라주세요. 카드 왼쪽 상단의 체크 박스를 눌러 선택하고,
-      전체 보기를 누르면 원문을 확인할 수 있어요.
-    </p>
+        문제에 사용할 지문을 골라주세요. 지문 카드를 눌러 선택/해제할 수 있고,
+        ‘전체 보기’로 원문을 확인할 수 있어요.
+      </p>
     <p style={styles.selectionLimitHint}>
       최대 {maxSelection}개까지 선택할 수 있어요. 남은 슬롯: {remaining}개
     </p>

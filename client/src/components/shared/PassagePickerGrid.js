@@ -50,22 +50,7 @@ const gridStyles = {
     borderRadius: '999px',
     color: 'var(--accent-strong)'
   },
-  checkbox: {
-    appearance: 'none',
-    width: '20px',
-    height: '20px',
-    borderRadius: '6px',
-    border: '2px solid var(--accent-primary)',
-    display: 'grid',
-    placeItems: 'center',
-    cursor: 'pointer',
-    background: 'transparent',
-    transition: 'all 0.2s ease'
-  },
-  checkboxChecked: {
-    background: 'var(--accent-primary)',
-    borderColor: 'var(--accent-primary)'
-  },
+  // 체크박스 제거: 카드 클릭으로 선택/해제
   excerpt: {
     flex: 1,
     fontSize: '14px',
@@ -155,22 +140,15 @@ const PassagePickerGrid = ({
                 ...(checked ? gridStyles.cardSelected : {}),
                 ...(disableSelection ? { opacity: 0.6 } : {})
               }}
+              role="button"
+              aria-pressed={checked}
+              onClick={() => {
+                if (!disableSelection && onToggle) onToggle(number);
+              }}
             >
               <div style={gridStyles.header}>
                 <span style={gridStyles.badge}>#{number.toString().padStart(2, '0')}</span>
-                {selectionEnabled && (
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    disabled={disableSelection}
-                    onChange={() => !disableSelection && onToggle && onToggle(number)}
-                    style={{
-                      ...gridStyles.checkbox,
-                      ...(checked ? gridStyles.checkboxChecked : {})
-                    }}
-                    aria-label={`${number}번 지문 선택`}
-                  />
-                )}
+                {/* 카드 클릭으로 선택/해제하도록 체크박스는 표시하지 않습니다. */}
               </div>
 
               <p style={gridStyles.excerpt}>

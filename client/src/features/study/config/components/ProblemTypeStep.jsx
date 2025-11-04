@@ -26,9 +26,7 @@ const ProblemTypeStep = ({
           <h3 style={styles.sectionTitle}>3단계 · 문항 유형 선택</h3>
           <div style={styles.typeSelectionBadge}>{selectionSummary}</div>
         </div>
-        <p style={styles.sectionHint}>
-          원하는 문제 유형을 하나 선택하면 최대 {MAX_TOTAL_PROBLEMS}문까지 집중 연습해요. 지문 수에 맞춰 문제 수가 자동으로 조정됩니다.
-        </p>
+        <p style={styles.sectionHint}>원하는 문제 유형 하나를 선택해 주세요.</p>
         <div style={styles.typeSelectGrid}>
           {typeEntries.map(([type, info]) => {
             const isActive = selectedType === type;
@@ -55,13 +53,7 @@ const ProblemTypeStep = ({
             );
           })}
         </div>
-        {typeof onPreviewProblem === 'function' && (
-          <div style={styles.previewButtonRow}>
-            <button type="button" style={styles.previewButton} onClick={onPreviewProblem}>
-              문항 예시 보기
-            </button>
-          </div>
-        )}
+        {/* 미리보기 버튼 제거 */}
       </div>
 
       <div style={styles.section}>

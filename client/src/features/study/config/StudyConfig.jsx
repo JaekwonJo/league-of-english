@@ -52,23 +52,8 @@ const StudyConfig = ({
     savedSession && Array.isArray(savedSession.problems) && savedSession.problems.length > 0
   ), [savedSession]);
 
-  const quickGuideItems = useMemo(() => ([
-    {
-      icon: '📝',
-      label: '1단계 · 자료 선택',
-      description: '연습하고 싶은 모의고사나 교재를 눌러요. 선택하면 지문 고르는 화면이 자동으로 열려요!'
-    },
-    {
-      icon: '📌',
-      label: '2단계 · 지문 선택',
-      description: '필요한 지문을 체크한 뒤 맨 아래 파란 버튼을 눌러요. 전체 선택·랜덤 선택 버튼도 있어요.'
-    },
-    {
-      icon: '🚀',
-      label: '3단계 · 유형 선택',
-      description: '집중 연습할 문제 유형 하나를 고르고 “학습 시작”을 누르면 바로 문제 풀이가 열려요.'
-    }
-  ]), []);
+  // 간단하고 직관적인 흐름을 위해 안내 문구를 숨깁니다.
+  const quickGuideItems = useMemo(() => ([]), []);
 
   const formatDuration = (seconds = 0) => {
     const total = Math.max(0, Math.floor(Number(seconds) || 0));
@@ -188,20 +173,7 @@ const StudyConfig = ({
     <div style={styles.container}>
       <h1 style={styles.title}>학습 설정</h1>
 
-      <section style={styles.quickGuide}>
-        <h2 style={styles.quickGuideTitle}>어떻게 진행할까요?</h2>
-        <ul style={styles.quickGuideList}>
-          {quickGuideItems.map((item) => (
-            <li key={item.label} style={styles.quickGuideItem}>
-              <span style={styles.quickGuideIcon}>{item.icon}</span>
-              <div style={styles.quickGuideBody}>
-                <strong style={styles.quickGuideLabel}>{item.label}</strong>
-                <p style={styles.quickGuideText}>{item.description}</p>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </section>
+      {/* 안내 섹션 제거: 바로 선택 화면만 보이게 */}
 
       {resumeAvailable && (
         <div style={styles.savedSessionCard}>

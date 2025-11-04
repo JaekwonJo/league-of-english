@@ -103,7 +103,15 @@ const MainLayout = ({ children, currentPath }) => {
         }}
       >
         {(!isMobile || sidebarOpen) && (
-          <div style={styles.logo}>
+          <div
+            style={styles.logo}
+            onClick={() => {
+              if (isMobile && sidebarOpen) setSidebarOpen(false);
+            }}
+            role={isMobile ? 'button' : undefined}
+            aria-label={isMobile ? '메뉴 닫기' : undefined}
+            title={isMobile ? '메뉴 닫기' : undefined}
+          >
             <span style={styles.logoIcon}>🦉</span>
             {sidebarOpen && <span style={styles.logoText}>League of English</span>}
           </div>
@@ -395,7 +403,7 @@ const styles = {
   mobileTopBar: {
     position: 'sticky',
     top: 0,
-    zIndex: 5,
+    zIndex: 1100,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -454,7 +462,7 @@ const styles = {
     bottom: 0,
     background: 'rgba(15, 23, 42, 0.45)',
     border: 'none',
-    zIndex: 900
+    zIndex: 1000
   }
 };
 
