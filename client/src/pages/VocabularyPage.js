@@ -718,7 +718,7 @@ const getTimeLimitSeconds = useCallback(() => {
   const selectionLocked = practiceState.active || quizState.active;
   const stepDescriptors = useMemo(() => ([
     { id: STEPS.SELECT_SET, label: '단어장 고르기' },
-    { id: STEPS.SELECT_DAY, label: 'Day 선택 & 미리보기' },
+    { id: STEPS.SELECT_DAY, label: '범위 선택' },
     { id: STEPS.CONFIGURE, label: '시험 준비하기' }
   ]), []);
 
@@ -752,30 +752,8 @@ const getTimeLimitSeconds = useCallback(() => {
   return (
     <div style={styles.container}>
       <header style={styles.header}>
-      <h1 style={styles.title}>🧠 어휘 훈련</h1>
-      <p style={styles.subtitle}>
-        세트 유형에 따라 단위가 달라요: 워드마스터는 <strong>Day</strong>, 모의고사는 <strong>번호(noXX)</strong>, 교과서는 <strong>과(예: 3과)</strong> 기준으로 정리되어 있어요.<br />
-        원하는 단위를 골라 시험을 시작해 보세요. 정답을 고를 때마다 바로 피드백이 제공되어 혼자서도 알차게 복습할 수 있어요. 😊
-      </p>
+        <h1 style={styles.title}>🧠 어휘 훈련</h1>
       </header>
-
-      <section style={styles.howtoBox}>
-        <h2 style={styles.howtoHeading}>3단계로 바로 연습해요 😊</h2>
-        <ul style={styles.howtoList}>
-          <li style={styles.howtoItem}>
-            <span style={styles.howtoIcon}>1️⃣</span>
-            <p style={styles.howtoText}>위에서 원하는 단어장 묶음을 눌러 펼친 뒤, 단어장을 선택해요. 카테고리는 기본으로 접혀 있어서 화면이 깔끔해요.</p>
-          </li>
-          <li style={styles.howtoItem}>
-            <span style={styles.howtoIcon}>2️⃣</span>
-            <p style={styles.howtoText}>Day(또는 번호)를 체크하면 화면이 자동으로 다음 단계로 이동해요. 여러 Day를 함께 선택한 뒤 “시험 준비하기”를 눌러요.</p>
-          </li>
-          <li style={styles.howtoItem}>
-            <span style={styles.howtoIcon}>3️⃣</span>
-            <p style={styles.howtoText}>시험 유형과 문제 수를 정하고 “연습 시작” 버튼을 누르면 즉시 퀴즈가 시작돼요. 문제를 풀면 정답·LP·티어가 바로 반영돼요!</p>
-          </li>
-        </ul>
-      </section>
 
       <div style={styles.stepper}>
         {stepDescriptors.map((descriptor, index) => {
@@ -1371,13 +1349,10 @@ const styles = {
   },
   title: {
     fontSize: '2.4rem',
-    marginBottom: '8px'
+    marginBottom: '8px',
+    color: 'var(--tone-hero)'
   },
-  subtitle: {
-    fontSize: '1.05rem',
-    color: 'var(--tone-strong)',
-    lineHeight: 1.6
-  },
+  subtitle: { display: 'none' },
   howtoBox: {
     margin: '0 0 24px',
     padding: '20px 24px',
@@ -1884,7 +1859,7 @@ const styles = {
   progressBar: {
     height: '10px',
     borderRadius: '999px',
-    background: 'rgba(255, 255, 255, 0.6)',
+    background: 'var(--surface-soft)',
     overflow: 'hidden'
   },
   progressFill: {
