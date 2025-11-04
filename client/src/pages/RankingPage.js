@@ -438,7 +438,7 @@ const styles = {
     borderRadius: '999px',
     border: 'none',
     background: 'rgba(248, 113, 113, 0.85)',
-    color: '#fff',
+    color: 'var(--text-on-accent)',
     cursor: 'pointer',
     fontWeight: 600
   },

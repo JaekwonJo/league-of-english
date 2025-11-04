@@ -913,7 +913,7 @@ const styles = {
     border: 'none',
     padding: '12px',
     background: 'linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%)',
-    color: '#fff',
+    color: 'var(--text-on-accent)',
     fontWeight: 700,
     cursor: 'pointer'
   },

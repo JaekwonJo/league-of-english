@@ -466,7 +466,7 @@ const styles = {
     borderRadius: '12px',
     border: '1px solid rgba(148, 163, 184, 0.4)',
     background: 'rgba(15, 23, 42, 0.8)',
-    color: '#fff',
+    color: 'var(--surface-soft-solid)',
     fontSize: '15px',
     outline: 'none'
   },
@@ -503,7 +503,7 @@ const styles = {
     padding: '14px',
     borderRadius: '14px',
     background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-    color: '#fff',
+    color: 'var(--text-on-accent)',
     border: 'none',
     fontSize: '16px',
     fontWeight: 700,
