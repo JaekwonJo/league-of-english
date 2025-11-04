@@ -42,7 +42,7 @@ export const studyModeStyles = {
   progressLabels: {
     display: 'flex',
     justifyContent: 'space-between',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     fontSize: '14px',
     fontWeight: 600
   },
@@ -59,7 +59,7 @@ export const studyModeStyles = {
     flexWrap: 'wrap'
   },
   submitHint: {
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     fontSize: '14px'
   },
   submitButton: {

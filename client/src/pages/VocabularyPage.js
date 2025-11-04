@@ -891,16 +891,6 @@ const getTimeLimitSeconds = useCallback(() => {
                                   <span style={styles.setTitle}>{set.title}</span>
                                   <span style={styles.setMeta}>분류: {categoryDisplayText}</span>
                                   <span style={styles.setMeta}>총 {set.totalDays} Day / {set.totalWords} 단어</span>
-                                  <span style={styles.setMeta}>최근 업로드: {new Date(set.createdAt).toLocaleDateString()}</span>
-                                  <div style={styles.previewWords}>
-                                    {set.preview?.map((day) => (
-                                      <div key={day.key} style={styles.previewDay}>
-                                        <strong>{day.key}</strong>
-                                        <span>{day.count} 단어</span>
-                                        <span style={{ fontStyle: 'italic', color: 'var(--text-muted)' }}>미리보기는 시험에서 확인해요!</span>
-                                      </div>
-                                    ))}
-                                  </div>
                                 </button>
                               );
                             })}
@@ -1385,7 +1375,7 @@ const styles = {
   },
   subtitle: {
     fontSize: '1.05rem',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     lineHeight: 1.6
   },
   howtoBox: {
@@ -1427,7 +1417,7 @@ const styles = {
   howtoText: {
     margin: 0,
     fontSize: '0.95rem',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     lineHeight: 1.6
   },
   stepper: {
@@ -1446,7 +1436,7 @@ const styles = {
     borderRadius: '14px',
     border: '1px solid var(--surface-border)',
     background: 'var(--surface-soft)',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     fontWeight: 600,
     transition: 'all 0.2s ease'
   },
@@ -1481,7 +1471,7 @@ const styles = {
     borderRadius: '16px',
     padding: '16px',
     marginBottom: '20px',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     fontWeight: 600
   },
   section: {
@@ -1527,17 +1517,17 @@ const styles = {
   },
   categoryDescription: {
     fontSize: '0.9rem',
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-strong)'
   },
   categoryToggle: {
     fontSize: '0.85rem',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     fontWeight: 600
   },
   categoryCollapsedHint: {
     marginTop: '6px',
     fontSize: '0.85rem',
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-strong)'
   },
   searchRow: {
     display: 'flex',
@@ -1560,7 +1550,7 @@ const styles = {
     borderRadius: '12px',
     border: '1px solid var(--surface-border)',
     background: 'var(--surface-soft)',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     fontWeight: 600,
     cursor: 'pointer'
   },
@@ -1590,7 +1580,7 @@ const styles = {
   },
   setMeta: {
     display: 'block',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     fontSize: '0.9rem',
     marginBottom: '4px'
   },
@@ -1599,7 +1589,7 @@ const styles = {
     borderTop: '1px dashed var(--border-color)',
     paddingTop: '12px',
     fontSize: '0.85rem',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     display: 'grid',
     gap: '8px'
   },
@@ -1629,7 +1619,7 @@ const styles = {
   },
   daySummary: {
     fontSize: '0.9rem',
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-strong)'
   },
   stepActions: {
     marginTop: '24px',
@@ -1663,7 +1653,7 @@ const styles = {
   },
   stepSummaryHint: {
     fontSize: '0.95rem',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     margin: 0
   },
   primaryButtonDisabled: {
@@ -1676,7 +1666,7 @@ const styles = {
   },
   actionHint: {
     fontSize: '0.95rem',
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-strong)'
   },
   configureHeader: {
     display: 'flex',
@@ -1687,7 +1677,7 @@ const styles = {
     marginBottom: '16px'
   },
   configureSubtitle: {
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     marginTop: '6px'
   },
   configureSummary: {
@@ -1779,7 +1769,7 @@ const styles = {
   quizTerm: {
     fontSize: '1.05rem',
     marginBottom: '16px',
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-strong)'
   },
   optionList: {
     display: 'grid',
@@ -1825,7 +1815,7 @@ const styles = {
   resultSubtitle: {
     marginTop: '8px',
     fontSize: '0.95rem',
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-strong)'
   },
   reviewList: {
     display: 'grid',
@@ -1877,7 +1867,7 @@ const styles = {
   },
   rankOrder: {
     fontWeight: 600,
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-strong)'
   },
   progressBlock: {
     display: 'grid',
@@ -1885,7 +1875,7 @@ const styles = {
   },
   progressLabel: {
     fontSize: '0.95rem',
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-strong)'
   },
   progressBar: {
     height: '10px',
@@ -1913,14 +1903,14 @@ const styles = {
     padding: '16px',
     borderRadius: '12px',
     marginBottom: '20px',
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-strong)'
   },
   emptySearch: {
     background: 'var(--surface-soft)',
     borderRadius: '16px',
     padding: '20px',
     textAlign: 'center',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     border: '1px dashed var(--surface-border)'
   },
   quizNavRow: {
@@ -1963,11 +1953,11 @@ const styles = {
     alignItems: 'flex-end',
     gap: '2px',
     fontWeight: 600,
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-strong)'
   },
   timerSub: {
     fontSize: '0.75rem',
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-strong)'
   }
 };
 

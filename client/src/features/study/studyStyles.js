@@ -43,7 +43,7 @@ export const studyStyles = {
     justifyContent: 'space-between',
     alignItems: 'center',
     fontSize: '13px',
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-strong)'
   },
   loadingSnippet: {
     maxWidth: '520px',
@@ -67,12 +67,12 @@ export const studyStyles = {
   quoteMeta: {
     margin: '6px 0 4px',
     fontSize: '14px',
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-strong)'
   },
   quoteTranslation: {
     margin: 0,
     fontSize: '14px',
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-strong)'
   },
   flashcardArea: {
     marginTop: '8px',
@@ -120,11 +120,11 @@ export const studyStyles = {
   },
   flashcardMeaning: {
     fontSize: '14px',
-    color: 'var(--text-muted)'
+    color: 'var(--tone-muted)'
   },
   flashcardCountdown: {
     fontSize: '13px',
-    color: 'var(--text-muted)'
+    color: 'var(--tone-muted)'
   },
   reviewCallout: {
     marginBottom: '24px',
@@ -203,7 +203,7 @@ export const studyStyles = {
   },
   reviewPreviewSource: {
     fontSize: '12px',
-    color: 'var(--text-muted)'
+    color: 'var(--tone-muted)'
   },
   reviewPreviewText: {
     fontSize: '14px',
@@ -294,7 +294,7 @@ export const studyStyles = {
     display: 'flex',
     gap: '12px',
     fontSize: '13px',
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-strong)'
   },
   generationSummaryWarning: {
     color: 'var(--warning)',
@@ -304,12 +304,12 @@ export const studyStyles = {
     padding: '16px 24px',
     borderTop: '1px solid var(--surface-border)',
     fontSize: '14px',
-    color: 'var(--text-secondary)'
+    color: 'var(--tone-strong)'
   },
   generationSummaryHint: {
     padding: '0 24px 20px',
     fontSize: '13px',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     display: 'flex',
     gap: '8px',
     alignItems: 'flex-start'

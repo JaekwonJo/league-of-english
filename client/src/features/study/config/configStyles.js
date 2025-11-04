@@ -428,12 +428,12 @@ const styles = {
   },
   typeDescription: {
     fontSize: '13px',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     marginTop: '2px',
   },
   typeInstruction: {
     fontSize: '12px',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     lineHeight: 1.5,
   },
   typeControls: {
@@ -487,7 +487,7 @@ const styles = {
   },
   orderModeDescription: {
     fontSize: '13px',
-    color: 'var(--text-secondary)',
+    color: 'var(--tone-strong)',
     lineHeight: 1.5,
   },
 };

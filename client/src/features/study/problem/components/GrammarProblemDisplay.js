@@ -224,7 +224,7 @@ const GrammarProblemDisplay = ({ problem, onAnswer, userAnswer, showResult }) =>
   return (
     <>
       {sourceLabel && (
-        <div style={{ fontSize: "14px", color: "var(--text-secondary)", marginBottom: "10px", fontStyle: "italic" }}>
+        <div style={{ fontSize: "14px", color: "var(--tone-strong)", marginBottom: "10px", fontStyle: "italic" }}>
           {sourceLabel.startsWith('출처') ? sourceLabel : `출처: ${sourceLabel}`}
         </div>
       )}
