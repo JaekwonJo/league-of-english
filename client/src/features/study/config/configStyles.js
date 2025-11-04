@@ -434,21 +434,24 @@ const styles = {
   },
   typeSelectGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
-    gap: '16px',
+    gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+    gap: '10px',
   },
   typeSelectCard: {
     display: 'flex',
+    flexDirection: 'column',
     alignItems: 'center',
-    gap: '14px',
-    padding: '18px',
-    borderRadius: '16px',
+    justifyContent: 'center',
+    gap: '8px',
+    padding: '12px',
+    minHeight: '90px',
+    borderRadius: '14px',
     border: '1px solid var(--surface-border)',
     background: 'var(--surface-soft)',
     cursor: 'pointer',
     transition: 'all 0.2s ease',
     color: 'var(--tone-strong)',
-    textAlign: 'left'
+    textAlign: 'center'
   },
   typeSelectCardActive: {
     borderColor: 'var(--color-blue-500)',
@@ -457,20 +460,20 @@ const styles = {
     color: 'var(--tone-hero)'
   },
   typeSelectIcon: {
-    fontSize: '28px'
+    fontSize: '20px'
   },
   typeSelectBody: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '6px'
+    gap: '4px'
   },
   typeSelectName: {
-    fontSize: '1.05rem',
-    fontWeight: 700,
+    fontSize: '0.95rem',
+    fontWeight: 800,
     color: 'var(--tone-hero)'
   },
   typeSelectDescription: {
-    fontSize: '0.85rem',
+    fontSize: '0.78rem',
     color: 'var(--tone-strong)',
     lineHeight: 1.5
   },

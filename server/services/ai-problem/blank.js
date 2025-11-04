@@ -269,6 +269,9 @@ function deriveBlankDirectives(lastFailure = '') {
   if (message.includes('explanation')) {
     directives.push('- Write the explanation in Korean as 최소 3문장으로, 정답 근거와 두 개 이상의 오답 결함을 분명히 언급하세요.');
   }
+  if (message.includes('deviates') || message.includes('except blank')) {
+    directives.push('- Return the original passage verbatim and replace only the target expression with "____"; do not paraphrase or reorder any sentence.');
+  }
   if (message.includes('distractor') || message.includes('reason')) {
     directives.push('- Provide distractorReasons for every incorrect option with 한 문장짜리 한국어 근거를 채워 주세요.');
   }
@@ -467,6 +470,16 @@ function normalizeBlankPayload(payload, context = {}) {
       const normalizedSentenceCount = countSentences(normalizedText);
       if (normalizedSentenceCount + 1 < originalSentenceCount) {
         throw new Error('blank text missing sentence count');
+      }
+    }
+
+    // Strict check: original passage must be identical except for the single blank
+    if (targetExpression) {
+      const restored = String(normalizedText).replace(BLANK_PLACEHOLDER_REGEX, String(targetExpression));
+      const restoredNormalized = normalizeWhitespace(restored);
+      const originalNormalized = normalizeWhitespace(normalizedOriginalPassage);
+      if (restoredNormalized !== originalNormalized) {
+        throw new Error('blank passage deviates from original except blank');
       }
     }
   }
