@@ -921,8 +921,8 @@ const getTimeLimitSeconds = useCallback(() => {
                         }}
                       >
                         <div style={styles.dayHeader}>
-                          <strong>{day.label}</strong>
-                          <span>{day.count} 단어</span>
+                          <strong style={styles.dayLabel}>{day.label}</strong>
+                          <span style={styles.dayCount}>{day.count} 단어</span>
                         </div>
                         <div style={styles.daySummary}>
                           총 {day.count}개의 단어가 숨어 있어요. 시험에서 뜻을 맞혀볼까요?
@@ -1034,6 +1034,13 @@ const getTimeLimitSeconds = useCallback(() => {
               </div>
 
               <div style={styles.configureActions}>
+                <button
+                  type="button"
+                  style={styles.secondaryButton}
+                  onClick={() => navigateToStep(STEPS.SELECT_DAY)}
+                >
+                  ← 범위 다시 선택
+                </button>
                 <button
                   type="button"
                   style={styles.secondaryButton}
@@ -1596,17 +1603,27 @@ const styles = {
     cursor: 'pointer',
     border: '2px solid transparent',
     transition: 'all 0.2s ease',
-    boxShadow: '0 6px 18px rgba(15, 23, 42, 0.08)'
+    boxShadow: '0 6px 18px rgba(15, 23, 42, 0.08)',
+    color: 'var(--text-primary)'
   },
   dayHeader: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '10px'
+    marginBottom: '10px',
+    color: 'var(--text-primary)'
+  },
+  dayLabel: {
+    fontWeight: 700,
+    color: 'var(--text-primary)'
+  },
+  dayCount: {
+    fontWeight: 600,
+    color: 'var(--tone-strong)'
   },
   daySummary: {
     fontSize: '0.9rem',
-    color: 'var(--tone-strong)'
+    color: 'var(--text-primary)'
   },
   stepActions: {
     marginTop: '24px',
@@ -1675,7 +1692,8 @@ const styles = {
     padding: '20px',
     borderRadius: '18px',
     border: '1px solid var(--surface-border)',
-    background: 'var(--surface-card)'
+    background: 'var(--surface-card)',
+    color: 'var(--text-primary)'
   },
   configureChipList: {
     display: 'flex',
@@ -1797,13 +1815,15 @@ const styles = {
     flexWrap: 'wrap',
     gap: '12px',
     marginBottom: '16px',
-    fontWeight: 600
+    fontWeight: 600,
+    color: 'var(--text-primary)'
   },
   resultBanner: {
     background: 'linear-gradient(135deg, rgba(96, 165, 250, 0.25) 0%, rgba(165, 180, 252, 0.2) 100%)',
     padding: '20px',
     borderRadius: '18px',
-    marginBottom: '18px'
+    marginBottom: '18px',
+    color: 'var(--text-primary)'
   },
   resultSubtitle: {
     marginTop: '8px',
@@ -1821,12 +1841,14 @@ const styles = {
     padding: '14px',
     background: 'var(--surface-card)',
     display: 'grid',
-    gap: '4px'
+    gap: '4px',
+    color: 'var(--text-primary)'
   },
   reviewHeader: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '4px'
+    gap: '4px',
+    color: 'var(--text-primary)'
   },
   rankCard: {
     padding: '18px 20px',
@@ -1843,7 +1865,8 @@ const styles = {
     gap: '12px',
     alignItems: 'center',
     fontWeight: 700,
-    fontSize: '1.05rem'
+    fontSize: '1.05rem',
+    color: 'var(--text-primary)'
   },
   rankTier: {
     display: 'inline-flex',
@@ -1885,7 +1908,8 @@ const styles = {
     borderRadius: '14px',
     background: 'var(--surface-soft)',
     marginBottom: '16px',
-    fontSize: '0.95rem'
+    fontSize: '0.95rem',
+    color: 'var(--text-primary)'
   },
   summaryActions: {
     display: 'flex',
@@ -1946,7 +1970,7 @@ const styles = {
     alignItems: 'flex-end',
     gap: '2px',
     fontWeight: 600,
-    color: 'var(--tone-strong)'
+    color: 'var(--text-primary)'
   },
   timerSub: {
     fontSize: '0.75rem',

@@ -52,9 +52,15 @@ const MainLayout = ({ children, currentPath }) => {
     if (isMobile) setSidebarOpen(false);
   };
 
-  const visibleRoutes = routesConfig.routes.filter((route) =>
-    route.roles && route.roles.includes(user?.role || 'student')
-  );
+  const userRole = user?.role || 'student';
+  const userMembership = String(user?.membership || '').toLowerCase();
+  const visibleRoutes = routesConfig.routes.filter((route) => {
+    if (!route.roles || !route.roles.includes(userRole)) return false;
+    if (!route.memberships || route.memberships.length === 0) return true;
+    if (userRole === 'teacher' || userRole === 'admin') return true;
+    const allowed = route.memberships.map((item) => String(item).toLowerCase());
+    return allowed.includes(userMembership);
+  });
 
   useEffect(() => {
     if (!isMobile || !sidebarOpen) return;

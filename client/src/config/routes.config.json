@@ -49,6 +49,15 @@
       "roles": ["student", "teacher", "admin"]
     },
     {
+      "path": "/videos",
+      "name": "동영상 강의",
+      "icon": "PlaySquare",
+      "component": "VideoPlaylistPage",
+      "requiresAuth": true,
+      "roles": ["student", "teacher", "admin"],
+      "memberships": ["premium", "pro"]
+    },
+    {
       "path": "/ranking",
       "name": "랭킹",
       "icon": "Trophy",

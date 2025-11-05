@@ -20,6 +20,7 @@ const pageComponents = {
   ProfilePage: lazy(() => import('../pages/ProfilePage')),
   AdminPage: lazy(() => import('../pages/AdminPage')),
   AnalysisPage: lazy(() => import('../pages/AnalysisPage')),
+  VideoPlaylistPage: lazy(() => import('../pages/VideoPlaylistPage')),
   LoginPage: lazy(() => import('../pages/LoginPage'))
 };
 
@@ -88,7 +89,20 @@ const hasPermission = (user, route) => {
   if (!route.requiresAuth) return true;
   if (!user) return false;
   if (!route.roles || route.roles.length === 0) return true;
-  return route.roles.includes(user.role);
+  if (!route.roles.includes(user.role)) return false;
+
+  if (route.memberships && route.memberships.length) {
+    if (user.role === 'teacher' || user.role === 'admin') {
+      return true;
+    }
+    const membership = String(user.membership || '').toLowerCase();
+    const allowed = route.memberships.map((item) => String(item).toLowerCase());
+    if (!allowed.includes(membership)) {
+      return false;
+    }
+  }
+
+  return true;
 };
 
 // 로딩 화면
