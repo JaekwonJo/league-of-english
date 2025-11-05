@@ -466,7 +466,7 @@ const styles = {
     borderRadius: '12px',
     border: '1px solid rgba(148, 163, 184, 0.4)',
     background: 'rgba(15, 23, 42, 0.8)',
-    color: 'var(--surface-soft-solid)',
+    color: 'var(--text-on-accent)',
     fontSize: '15px',
     outline: 'none'
   },
