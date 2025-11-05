@@ -1401,7 +1401,7 @@ const styles = {
   howtoText: {
     margin: 0,
     fontSize: '0.95rem',
-    color: 'var(--tone-strong)',
+    color: 'var(--text-primary)',
     lineHeight: 1.6
   },
   stepper: {
@@ -1420,7 +1420,7 @@ const styles = {
     borderRadius: '14px',
     border: '1px solid var(--surface-border)',
     background: 'var(--surface-soft)',
-    color: 'var(--tone-strong)',
+    color: 'var(--text-primary)',
     fontWeight: 600,
     transition: 'all 0.2s ease'
   },
@@ -1448,7 +1448,7 @@ const styles = {
   },
   stepperLabel: {
     fontSize: '0.95rem',
-    color: 'var(--tone-strong)'
+    color: 'var(--text-primary)'
   },
   lockNotice: {
     background: 'var(--surface-card)',
@@ -1456,7 +1456,7 @@ const styles = {
     borderRadius: '16px',
     padding: '16px',
     marginBottom: '20px',
-    color: 'var(--tone-strong)',
+    color: 'var(--text-primary)',
     fontWeight: 600
   },
   section: {
@@ -1490,7 +1490,7 @@ const styles = {
     padding: '14px 16px',
     cursor: 'pointer',
     boxShadow: '0 12px 24px rgba(15, 23, 42, 0.08)',
-    color: 'var(--tone-strong)'
+    color: 'var(--text-primary)'
   },
   categoryHeaderButtonCollapsed: {
     background: 'var(--surface-soft)',
@@ -1501,7 +1501,7 @@ const styles = {
     flexDirection: 'column',
     gap: '4px',
     alignItems: 'flex-start',
-    color: 'var(--tone-strong)'
+    color: 'var(--text-primary)'
   },
   categoryTitle: {
     fontSize: '1.08rem',
@@ -1511,7 +1511,7 @@ const styles = {
   },
   categoryDescription: {
     fontSize: '0.9rem',
-    color: 'var(--tone-strong)'
+    color: 'var(--text-primary)'
   },
   categoryToggle: {
     fontSize: '0.85rem',
@@ -1521,7 +1521,7 @@ const styles = {
   categoryCollapsedHint: {
     marginTop: '6px',
     fontSize: '0.85rem',
-    color: 'var(--tone-strong)'
+    color: 'var(--text-primary)'
   },
   searchRow: {
     display: 'flex',
@@ -1544,7 +1544,7 @@ const styles = {
     borderRadius: '12px',
     border: '1px solid var(--surface-border)',
     background: 'var(--surface-soft)',
-    color: 'var(--tone-strong)',
+    color: 'var(--text-primary)',
     fontWeight: 600,
     cursor: 'pointer'
   },
@@ -1563,7 +1563,7 @@ const styles = {
     border: '2px solid transparent',
     cursor: 'pointer',
     boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)',
-    color: 'var(--tone-strong)'
+    color: 'var(--text-primary)'
   },
   setTitle: {
     display: 'block',
@@ -1574,7 +1574,7 @@ const styles = {
   },
   setMeta: {
     display: 'block',
-    color: 'var(--tone-strong)',
+    color: 'var(--text-primary)',
     fontSize: '0.9rem',
     marginBottom: '4px'
   },
@@ -1583,7 +1583,7 @@ const styles = {
     borderTop: '1px dashed var(--border-color)',
     paddingTop: '12px',
     fontSize: '0.85rem',
-    color: 'var(--tone-strong)',
+    color: 'var(--text-primary)',
     display: 'grid',
     gap: '8px'
   },
@@ -1619,7 +1619,7 @@ const styles = {
   },
   dayCount: {
     fontWeight: 600,
-    color: 'var(--tone-strong)'
+    color: 'var(--text-primary)'
   },
   daySummary: {
     fontSize: '0.9rem',
@@ -1657,7 +1657,7 @@ const styles = {
   },
   stepSummaryHint: {
     fontSize: '0.95rem',
-    color: 'var(--tone-strong)',
+    color: 'var(--text-primary)',
     margin: 0
   },
   primaryButtonDisabled: {
@@ -1670,7 +1670,7 @@ const styles = {
   },
   actionHint: {
     fontSize: '0.95rem',
-    color: 'var(--tone-strong)'
+    color: 'var(--text-primary)'
   },
   configureHeader: {
     display: 'flex',
@@ -1681,7 +1681,7 @@ const styles = {
     marginBottom: '16px'
   },
   configureSubtitle: {
-    color: 'var(--tone-strong)',
+    color: 'var(--text-primary)',
     marginTop: '6px'
   },
   configureSummary: {
@@ -1735,7 +1735,7 @@ const styles = {
     gap: '10px',
     fontSize: '0.98rem',
     fontWeight: 600,
-    color: 'var(--tone-strong)'
+    color: 'var(--text-primary)'
   },
   configureActions: {
     marginTop: '24px',
@@ -1776,7 +1776,7 @@ const styles = {
   quizTerm: {
     fontSize: '1.05rem',
     marginBottom: '16px',
-    color: 'var(--tone-strong)'
+    color: 'var(--text-primary)'
   },
   optionList: {
     display: 'grid',
@@ -1828,7 +1828,7 @@ const styles = {
   resultSubtitle: {
     marginTop: '8px',
     fontSize: '0.95rem',
-    color: 'var(--tone-strong)'
+    color: 'var(--text-primary)'
   },
   reviewList: {
     display: 'grid',
@@ -1883,7 +1883,7 @@ const styles = {
   },
   rankOrder: {
     fontWeight: 600,
-    color: 'var(--tone-strong)'
+    color: 'var(--text-primary)'
   },
   progressBlock: {
     display: 'grid',
@@ -1891,7 +1891,7 @@ const styles = {
   },
   progressLabel: {
     fontSize: '0.95rem',
-    color: 'var(--tone-strong)'
+    color: 'var(--text-primary)'
   },
   progressBar: {
     height: '10px',
@@ -1920,14 +1920,14 @@ const styles = {
     padding: '16px',
     borderRadius: '12px',
     marginBottom: '20px',
-    color: 'var(--tone-strong)'
+    color: 'var(--text-primary)'
   },
   emptySearch: {
     background: 'var(--surface-soft)',
     borderRadius: '16px',
     padding: '20px',
     textAlign: 'center',
-    color: 'var(--tone-strong)',
+    color: 'var(--text-primary)',
     border: '1px dashed var(--surface-border)'
   },
   quizNavRow: {
@@ -1974,7 +1974,7 @@ const styles = {
   },
   timerSub: {
     fontSize: '0.75rem',
-    color: 'var(--tone-strong)'
+    color: 'var(--text-primary)'
   }
 };
 
