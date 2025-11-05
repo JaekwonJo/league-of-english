@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import PassagePickerGrid from '../../../../components/shared/PassagePickerGrid';
 import styles from '../configStyles';
 
@@ -21,11 +21,49 @@ const PassageStep = ({
   backLabel = '← 이전 단계',
 }) => {
   const remaining = Math.max(0, maxSelection - selectedPassages.length);
+  const actionBarRef = useRef(null);
+  const [showScrollHint, setShowScrollHint] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => (typeof window !== 'undefined' ? window.innerWidth < 768 : false));
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    const target = actionBarRef.current;
+    if (!target || typeof IntersectionObserver === 'undefined') {
+      setShowScrollHint(false);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setShowScrollHint(!entry.isIntersecting);
+      },
+      {
+        threshold: 0.6,
+      }
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [selectedPassages.length, passages]);
+
+  const scrollToActions = () => {
+    if (actionBarRef.current) {
+      actionBarRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
+  };
 
   return (
     <div style={styles.section}>
-      <div style={styles.sectionTitleRow}>
-        <h3 style={styles.sectionTitle}>2단계 · 지문 선택</h3>
+        <div style={styles.sectionTitleRow}>
+          <h3 style={styles.sectionTitle}>3단계 · 지문 선택</h3>
         <span style={styles.selectionBadge}>{selectedPassages.length}개 선택</span>
       </div>
       <p style={styles.sectionHint}>
@@ -67,7 +105,7 @@ const PassageStep = ({
     ) : (
       <div style={styles.loadingCard}>선택한 자료에서 지문을 찾지 못했어요.</div>
     )}
-    <div style={styles.passageActionBar}>
+    <div ref={actionBarRef} style={styles.passageActionBar}>
       <button type="button" style={styles.secondaryButton} onClick={onBack}>
         {backLabel}
       </button>
@@ -83,6 +121,29 @@ const PassageStep = ({
         {primaryLabel}
       </button>
     </div>
+    {showScrollHint && (
+      <button type="button" style={styles.scrollHintButton} onClick={scrollToActions}>
+        ⬇️ 학습 시작 버튼 보기
+      </button>
+    )}
+    {finalStep && selectedPassages.length > 0 && isMobile && (
+      <button
+        type="button"
+        style={{
+          ...styles.floatingStartButton,
+        }}
+        onClick={() => {
+          if (typeof actionBarRef.current?.scrollIntoView === 'function') {
+            actionBarRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+          }
+          if (typeof onNext === 'function') {
+            onNext();
+          }
+        }}
+      >
+        🚀 {primaryLabel || '학습 시작'}
+      </button>
+    )}
     </div>
   );
 };

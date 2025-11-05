@@ -7,7 +7,7 @@
       "minLP": 0,
       "maxLP": 999,
       "color": "var(--color-slate-500)",
-      "icon": "⚔️",
+      "icon": "🪨",
       "badge": "/badges/iron.svg",
       "features": {
         "profileBadge": false,
@@ -45,7 +45,7 @@
       "minLP": 2000,
       "maxLP": 2999,
       "color": "var(--color-slate-400)",
-      "icon": "⚔️",
+      "icon": "🥈",
       "badge": "/badges/silver.svg",
       "features": {
         "profileBadge": true,

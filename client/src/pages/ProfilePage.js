@@ -790,6 +790,14 @@ const styles = {
     marginBottom: '10px',
     color: 'var(--text-primary)'
   },
+  planHeaderPremium: {
+    color: '#bfdbfe',
+    textShadow: '0 0 12px rgba(96,165,250,0.55)'
+  },
+  planHeaderPro: {
+    color: '#fbbf24',
+    textShadow: '0 0 14px rgba(250,204,21,0.75)'
+  },
   planList: {
     listStyle: 'none',
     margin: 0,
@@ -800,11 +808,26 @@ const styles = {
     color: 'var(--tone-strong)',
     fontSize: '14px'
   },
+  planListPremium: {
+    color: '#dbeafe'
+  },
+  planListPro: {
+    color: '#fef3c7'
+  },
   planPrice: {
     marginTop: '12px',
     fontWeight: 900,
     fontSize: '18px',
     color: 'var(--warning-strong)'
+  },
+  planPricePremium: {
+    color: '#bfdbfe',
+    textShadow: '0 0 16px rgba(96,165,250,0.55)'
+  },
+  planPricePro: {
+    color: '#fde68a',
+    fontSize: '19px',
+    textShadow: '0 0 18px rgba(250,204,21,0.65)'
   },
   membershipText: {
     fontSize: '14px',
@@ -825,6 +848,23 @@ const styles = {
     fontSize: '18px',
     fontWeight: 700,
     color: 'var(--surface-soft-strong)'
+  },
+  membershipValuePremium: {
+    color: '#bfdbfe',
+    textShadow: '0 0 12px rgba(96,165,250,0.55)'
+  },
+  membershipValuePro: {
+    color: '#facc15',
+    textShadow: '0 0 14px rgba(250,204,21,0.7)'
+  },
+  membershipRefreshing: {
+    gridColumn: '1 / -1',
+    fontSize: '13px',
+    color: 'var(--accent-primary)',
+    fontWeight: 600,
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px'
   },
   couponForm: {
     display: 'flex',
@@ -1282,6 +1322,7 @@ const MembershipCard = () => {
   const { user, updateUser } = useAuth();
   const [info, setInfo] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const [error, setError] = useState('');
   const [couponCode, setCouponCode] = useState('');
   const [message, setMessage] = useState(null);
@@ -1311,6 +1352,7 @@ const MembershipCard = () => {
       setError(err?.message || '멤버십 정보를 불러오지 못했어요.');
     } finally {
       setLoading(false);
+      setHasLoaded(true);
     }
   }, [updateUser, user]);
 
@@ -1364,12 +1406,23 @@ const MembershipCard = () => {
 
   const summary = info || {};
   const membershipType = (summary.type || user.membership || 'free').toUpperCase();
+  const membershipLabelMap = {
+    FREE: '무료 회원',
+    PREMIUM: '프리미엄',
+    PRO: '프로'
+  };
+  const membershipDisplay = membershipLabelMap[membershipType] || membershipType;
+  const membershipValueStyle = membershipType === 'PRO'
+    ? { ...styles.membershipValue, ...styles.membershipValuePro }
+    : membershipType === 'PREMIUM'
+      ? { ...styles.membershipValue, ...styles.membershipValuePremium }
+      : styles.membershipValue;
   const remainingToday = summary.remainingToday === -1 ? '무제한' : `${summary.remainingToday ?? 0}문제`;
 
   return (
     <div style={styles.membershipCard}>
       <h3 style={styles.membershipTitle}>멤버십 상태</h3>
-      {loading ? (
+      {loading && !hasLoaded ? (
         <p style={styles.membershipText}>멤버십 정보를 불러오는 중이에요...</p>
       ) : error ? (
         <p style={{ ...styles.membershipText, color: 'var(--danger-soft)' }}>{error}</p>
@@ -1377,7 +1430,7 @@ const MembershipCard = () => {
         <div style={styles.membershipSummary}>
           <div>
             <span style={styles.membershipLabel}>현재 등급</span>
-            <strong style={styles.membershipValue}>{membershipType}</strong>
+            <strong style={membershipValueStyle}>{membershipDisplay}</strong>
           </div>
           <div>
             <span style={styles.membershipLabel}>오늘 남은 횟수</span>
@@ -1388,6 +1441,9 @@ const MembershipCard = () => {
               <span style={styles.membershipLabel}>만료 예정</span>
               <strong style={styles.membershipValue}>{new Date(summary.expiresAt).toLocaleDateString()}</strong>
             </div>
+          )}
+          {loading && hasLoaded && (
+            <span style={styles.membershipRefreshing}>⏳ 정보를 최신 상태로 맞추는 중이에요...</span>
           )}
         </div>
       )}
@@ -1433,25 +1489,25 @@ const MembershipCard = () => {
           <div style={styles.planPrice}>무료</div>
         </div>
         <div style={styles.planCardPremium}>
-          <div style={styles.planHeader}>프리미엄</div>
-          <ul style={styles.planList}>
+          <div style={{ ...styles.planHeader, ...styles.planHeaderPremium }}>프리미엄</div>
+          <ul style={{ ...styles.planList, ...styles.planListPremium }}>
             <li>단어시험 무제한</li>
             <li>문제풀이 무제한</li>
             <li>학습 통계 제공</li>
             <li>프리미엄 뱃지 제공</li>
           </ul>
-          <div style={styles.planPrice}>월 12,900원</div>
+          <div style={{ ...styles.planPrice, ...styles.planPricePremium }}>월 12,900원</div>
         </div>
         <div style={styles.planCardPro}>
-          <div style={styles.planHeader}>프로</div>
-          <ul style={styles.planList}>
-            <li>단어시험 무제한</li>
-            <li>문제풀이 무제한</li>
-            <li>학습 통계 제공</li>
-            <li>분석 자료 무제한</li>
-            <li>프로 뱃지 제공</li>
+          <div style={{ ...styles.planHeader, ...styles.planHeaderPro }}>프로</div>
+          <ul style={{ ...styles.planList, ...styles.planListPro }}>
+            <li>프리미엄 혜택 모두 포함</li>
+            <li>분석 자료 무제한 열람</li>
+            <li>동영상 강의 · 유튜브 재생목록 무제한 제공</li>
+            <li>AI 코칭 & VIP 응대</li>
+            <li>프로 전용 뱃지 제공</li>
           </ul>
-          <div style={styles.planPrice}>월 19,900원</div>
+          <div style={{ ...styles.planPrice, ...styles.planPricePro }}>월 19,900원</div>
         </div>
       </div>
 

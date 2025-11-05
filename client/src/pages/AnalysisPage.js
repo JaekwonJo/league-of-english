@@ -464,7 +464,7 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
               type="search"
               value={documentSearch}
               onChange={(event) => setDocumentSearch(event.target.value)}
-              placeholder="문서 제목, 학교, 유형으로 검색해 보세요"
+              placeholder="문서 제목이나 코드(예: 1-25-10)를 입력해 보세요"
               style={analysisStyles.searchInput}
             />
             {documentSearch && (
@@ -477,7 +477,7 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
           {filteredDocuments.length === 0 ? (
             <div style={analysisStyles.emptySearch}>
               <h3>검색 결과가 없어요 😢</h3>
-              <p>다른 키워드(예: 학교명, 문서명, 학년)를 입력해 보거나 새 문서를 업로드해 보세요.</p>
+              <p>다른 키워드(예: 문서 코드, 제목, 출제 분류)를 입력해 보거나 새 문서를 업로드해 보세요.</p>
             </div>
           ) : (
             <div style={analysisStyles.grid}>
@@ -491,11 +491,11 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
                     <h3 style={analysisStyles.cardTitle}>{doc.title}</h3>
                     <span style={analysisStyles.badge}>{doc.category}</span>
                   </div>
-                  <div style={analysisStyles.cardContent}>
-                    <p><strong>학교:</strong> {doc.school}</p>
-                    <p><strong>학년:</strong> {doc.grade}학년</p>
-                    <p><strong>업로드:</strong> {new Date(doc.created_at).toLocaleDateString()}</p>
-                  </div>
+                  {doc.description ? (
+                    <div style={analysisStyles.cardContentSingle}>{doc.description}</div>
+                  ) : (
+                    <div style={analysisStyles.cardContentSingle}>지문을 선택해 분석을 시작해 보세요.</div>
+                  )}
                   <div style={analysisStyles.cardFooter}>
                     <span style={analysisStyles.clickHint}>클릭하면 지문 목록을 볼 수 있어요 →</span>
                   </div>
@@ -767,44 +767,53 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
 
   const renderVariantMeta = (variant) => {
     const { meta = {} } = variant || {};
-    const deepDive = meta.deepDive || {};
-    const englishTitles = Array.isArray(meta.englishTitles) ? meta.englishTitles.slice(0, 3) : [];
+    const englishTitles = Array.isArray(meta.englishTitles) ? meta.englishTitles.slice(0, 2) : [];
+    const authorClaims = Array.isArray(meta.authorClaims) ? meta.authorClaims : (meta.authorsClaim ? [meta.authorsClaim] : []);
+    const relatedExamples = Array.isArray(meta.relatedExamples) ? meta.relatedExamples : [];
     const modernApplications = Array.isArray(meta.modernApplications) ? meta.modernApplications.slice(0, 3) : [];
-
-    const koreanTitle = meta.koreanTitle || '한글 제목이 아직 준비되지 않았어요.';
-    const koreanMainIdea = meta.koreanMainIdea || '지문의 핵심 내용을 우리말로 다시 정리해 보세요.';
-    const authorsClaim = meta.authorsClaim || '작가의 주장을 간단히 정리해 보세요.';
     const englishSummary = meta.englishSummary || '영어 한 줄 요약이 준비되는 중이에요.';
     const englishSummaryKorean = meta.englishSummaryKorean || '한 줄 요약을 우리말로 직접 정리해 보세요.';
 
     return (
       <div style={analysisStyles.variantMetaGrid}>
         <div style={analysisStyles.metaCard}>
-          <div style={analysisStyles.metaTitle}>📝 제목 & 주장</div>
+          <div style={analysisStyles.metaTitle}>📝 영어 제목</div>
           <ul style={analysisStyles.metaList}>
-            {englishTitles.map((title, index) => (
+            {englishTitles.length ? englishTitles.map((title, index) => (
               <li key={`title-${index}`}>
                 <strong>{index + 1}.</strong> {title.title}
                 {title.isQuestion ? ' ❓' : ''}
                 {title.korean ? ` — ${title.korean}` : ''}
               </li>
-            ))}
+            )) : <li>영어 제목을 직접 정리해 보세요.</li>}
           </ul>
-          <p><strong>한글 제목:</strong> {koreanTitle}</p>
-          <p><strong>한글 요지:</strong> {koreanMainIdea}</p>
-          <p><strong>작가의 주장:</strong> {authorsClaim}</p>
         </div>
         <div style={analysisStyles.metaCard}>
-          <div style={analysisStyles.metaTitle}>🎯 핵심 요약</div>
-          <p><strong>영어 한 줄 요약:</strong> {englishSummary}</p>
-          <p><strong>한글 요약:</strong> {englishSummaryKorean}</p>
-          <p><strong>핵심 메시지:</strong> {deepDive.coreMessage || '핵심 메시지를 한 줄로 정리해 보세요.'}</p>
-          <p><strong>논리 흐름:</strong> {deepDive.logicalFlow || '글의 흐름을 한 번 더 정리해 보세요.'}</p>
-          <p><strong>톤 & 관점:</strong> {deepDive.toneAndStyle || '필자의 톤과 관점을 한 줄로 요약해 보세요.'}</p>
+          <div style={analysisStyles.metaTitle}>💡 작가의 주장</div>
+          <ul style={analysisStyles.metaList}>
+            {authorClaims.length ? authorClaims.map((claim, index) => (
+              <li key={`claim-${index}`}>{claim}</li>
+            )) : <li>작가의 주장을 직접 정리해 보세요.</li>}
+          </ul>
         </div>
+        <div style={analysisStyles.metaCard}>
+          <div style={analysisStyles.metaTitle}>🎯 한 줄 요약</div>
+          <p><strong>영어:</strong> {englishSummary}</p>
+          <p><strong>한국어:</strong> {englishSummaryKorean}</p>
+        </div>
+        {relatedExamples.length ? (
+          <div style={analysisStyles.metaCard}>
+            <div style={analysisStyles.metaTitle}>📚 관련 예시</div>
+            <ul style={analysisStyles.metaList}>
+              {relatedExamples.map((item, index) => (
+                <li key={`example-${index}`}>{item}</li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
         {modernApplications.length ? (
           <div style={analysisStyles.metaCard}>
-            <div style={analysisStyles.metaTitle}>🌍 실천 팁</div>
+            <div style={analysisStyles.metaTitle}>🌟 체크 포인트</div>
             <ul style={analysisStyles.metaList}>
               {modernApplications.map((item, index) => (
                 <li key={`modern-${index}`}>{item}</li>
@@ -822,12 +831,9 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
     const cleanEnglish = topicMatch ? topicMatch[1].trim() : englishRaw;
     const circledDigit = getCircledDigit(index);
 
-    const koreanLine = sentence.korean || '*** 한글 해석: 문장을 우리말로 직접 정리해 보세요.';
-    const analysisLine = sentence.analysis || '*** 분석: 문장의 핵심을 한 줄로 정리해 보세요.';
-    const backgroundLine = sentence.background || '*** 이 문장에 필요한 배경지식: 관련 교과 내용을 직접 찾아 정리해 보세요.';
-    const exampleLine = sentence.example || '*** 이 문장에 필요한 사례: 떠오른 실제 장면을 두 문장 이상으로 적어 보세요.';
-    const grammarLine = sentence.grammar || '✏️ 어법 포인트: 중요한 구문을 한 줄로 메모해 보세요.';
-    const vocabularyIntro = sentence.vocabulary?.intro || '*** 어휘 포인트: 꼭 외워야 할 단어를 직접 정리해 보세요.';
+    const koreanLine = sentence.korean || '📘 한글 해석: 문장을 우리말로 직접 정리해 보세요.';
+    const analysisLine = sentence.breakdown || sentence.analysis || '🧠 문장 분석: 문장의 핵심을 정리해 보세요.';
+    const vocabularyIntro = sentence.vocabulary?.intro || '🎯 어휘 노트: 꼭 외워야 할 단어를 직접 정리해 보세요.';
     const vocabWords = Array.isArray(sentence.vocabulary?.words) ? sentence.vocabulary.words : [];
 
     const cardStyle = {
@@ -835,22 +841,16 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
       ...(index === total - 1 ? analysisStyles.sentenceCardLast : {})
     };
 
-    const stripPrefixedLine = (value) => String(value || '').replace(/^(?:[*✏️\s]+)?[^:：]+[:：]\s*/u, '').trim();
+    const stripPrefixedLine = (value) => String(value || '').replace(/^(?:[📘🧠🎯✏️⭐*\s]+)?[^:：]+[:：]\s*/u, '').trim();
 
     const sections = [
-      { key: 'korean', label: '한글 해석', value: koreanLine },
-      { key: 'analysis', label: '내용 분석', value: analysisLine },
-      { key: 'background', label: '이 문장에 필요한 배경지식', value: backgroundLine },
-      { key: 'example', label: '이 문장에 필요한 사례', value: exampleLine },
-      { key: 'grammar', label: '어법 포인트', value: grammarLine }
+      { key: 'korean', label: '📘 한글 해석', value: koreanLine },
+      { key: 'analysis', label: '🧠 문장 분석', value: analysisLine }
     ];
 
     const fallbackMessages = {
       korean: '문장을 우리말로 직접 정리해 보세요.',
-      analysis: '문장의 핵심 메시지를 정리해 보세요.',
-      background: '관련 교과 지식을 찾아 메모해 보세요.',
-      example: '비슷한 상황을 떠올려 예시를 써 보세요.',
-      grammar: '핵심 문법 포인트를 직접 정리해 보세요.'
+      analysis: '문장의 핵심 메시지를 정리해 보세요.'
     };
 
     return (
@@ -871,33 +871,23 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
         <div style={analysisStyles.sentenceBody}>
           {sections.map((section) => {
             const text = stripPrefixedLine(section.value) || fallbackMessages[section.key] || '';
-            const sectionStyle = (section.key === 'background' || section.key === 'example')
-              ? { ...analysisStyles.sentenceSection, ...analysisStyles.sentenceSectionEmphasis }
-              : analysisStyles.sentenceSection;
             return (
-              <div key={`${section.key}-${index}`} style={sectionStyle}>
+              <div key={`${section.key}-${index}`} style={analysisStyles.sentenceSection}>
                 <span style={analysisStyles.sentenceLabel}>{section.label}</span>
                 <p style={analysisStyles.sentenceText}>{text}</p>
               </div>
             );
           })}
           <div style={analysisStyles.sentenceSection}>
-            <span style={analysisStyles.sentenceLabel}>어휘 포인트</span>
+            <span style={analysisStyles.sentenceLabel}>🎯 어휘 노트</span>
             <p style={analysisStyles.sentenceText}>{stripPrefixedLine(vocabularyIntro)}</p>
             {vocabWords.length ? (
               <ul style={analysisStyles.vocabList}>
                 {vocabWords.map((word, idx) => (
                   <li key={`word-${index}-${idx}`} style={analysisStyles.vocabListItem}>
                     <div><strong>{word.term}</strong> — {word.meaning}</div>
-                    {word.synonyms?.length ? (
-                      <div style={analysisStyles.vocabMeta}>동의어: {word.synonyms.join(', ')}</div>
-                    ) : null}
-                    {word.antonyms?.length ? (
-                      <div style={analysisStyles.vocabMeta}>반의어: {word.antonyms.join(', ')}</div>
-                    ) : null}
-                    {word.note ? (
-                      <div style={analysisStyles.vocabMeta}>노트: {word.note}</div>
-                    ) : null}
+                    <div style={analysisStyles.vocabMeta}>동의어: {word.synonyms?.length ? word.synonyms.join(', ') : '비슷한 표현을 스스로 정리해 보세요.'}</div>
+                    <div style={analysisStyles.vocabMeta}>반의어: {word.antonyms?.length ? word.antonyms.join(', ') : '반대 의미 표현을 직접 찾아보세요.'}</div>
                   </li>
                 ))}
               </ul>

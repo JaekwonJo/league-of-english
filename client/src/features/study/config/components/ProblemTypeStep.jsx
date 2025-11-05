@@ -23,7 +23,7 @@ const ProblemTypeStep = ({
     <>
       <div style={styles.section}>
         <div style={styles.sectionTitleRow}>
-          <h3 style={styles.sectionTitle}>3단계 · 문항 유형 선택</h3>
+          <h3 style={styles.sectionTitle}>2단계 · 문항 유형 선택</h3>
           <div style={styles.typeSelectionBadge}>{selectionSummary}</div>
         </div>
         <p style={styles.sectionHint}>원하는 문제 유형 하나를 선택해 주세요.</p>

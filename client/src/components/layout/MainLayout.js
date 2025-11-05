@@ -15,7 +15,7 @@ const MainLayout = ({ children, currentPath }) => {
     const onResize = () => {
       const mobile = window.innerWidth < breakpoint;
       setIsMobile(mobile);
-      if (mobile) setSidebarOpen(false);
+      if (mobile) toggleSidebar(false);
     };
     window.addEventListener('resize', onResize);
     // initialize
@@ -32,6 +32,10 @@ const MainLayout = ({ children, currentPath }) => {
     return roleMap[role] || role;
   };
 
+  const toggleSidebar = (nextState) => {
+    setSidebarOpen((prev) => (typeof nextState === 'boolean' ? nextState : !prev));
+  };
+
   const handleLogout = () => {
     if (window.confirm('로그아웃 하시겠어요?')) {
       logout();
@@ -42,18 +46,21 @@ const MainLayout = ({ children, currentPath }) => {
   const navigate = (path) => {
     if (typeof window === 'undefined') return;
     if (window.location.pathname === path) {
-      if (isMobile) setSidebarOpen(false);
+      if (isMobile) toggleSidebar(false);
       return;
     }
     window.history.pushState({}, '', path);
     window.dispatchEvent(new PopStateEvent('popstate'));
-    if (isMobile) setSidebarOpen(false);
+    if (isMobile) toggleSidebar(false);
   };
 
   const userRole = user?.role || 'student';
   const userMembership = String(user?.membership || '').toLowerCase();
+  const isGuest = userMembership === 'guest';
+  const guestAllowedRoutes = ['/vocabulary'];
   const visibleRoutes = routesConfig.routes.filter((route) => {
     if (!route.roles || !route.roles.includes(userRole)) return false;
+    if (isGuest && !guestAllowedRoutes.includes(route.path)) return false;
     if (!route.memberships || route.memberships.length === 0) return true;
     if (userRole === 'teacher' || userRole === 'admin') return true;
     const allowed = route.memberships.map((item) => String(item).toLowerCase());
@@ -65,17 +72,28 @@ const MainLayout = ({ children, currentPath }) => {
     const handleOutsideClick = (event) => {
       if (!sidebarRef.current) return;
       if (sidebarRef.current.contains(event.target)) return;
-      setSidebarOpen(false);
+      toggleSidebar(false);
     };
 
-    document.addEventListener('click', handleOutsideClick);
-    document.addEventListener('touchstart', handleOutsideClick);
+    document.addEventListener('click', handleOutsideClick, true);
+    document.addEventListener('touchstart', handleOutsideClick, true);
     return () => {
-      document.removeEventListener('click', handleOutsideClick);
-      document.removeEventListener('touchstart', handleOutsideClick);
+      document.removeEventListener('click', handleOutsideClick, true);
+      document.removeEventListener('touchstart', handleOutsideClick, true);
     };
   }, [isMobile, sidebarOpen]);
 
+  const desktopPadding = 'calc(env(safe-area-inset-top, 0px) + 20px) 20px 28px';
+  const mobilePadding = isMobile
+    ? sidebarOpen
+      ? '28px 16px 32px'
+      : '104px 16px 32px'
+    : desktopPadding;
+  const mainStyle = {
+    ...styles.main,
+    marginLeft: isMobile ? 0 : (sidebarOpen ? uiConfig.layout.sidebar.width : uiConfig.layout.sidebar.collapsedWidth),
+    padding: mobilePadding
+  };
 
   return (
     <div style={styles.container}>
@@ -101,7 +119,7 @@ const MainLayout = ({ children, currentPath }) => {
           <div
             style={styles.logo}
             onClick={() => {
-              if (isMobile && sidebarOpen) setSidebarOpen(false);
+              if (isMobile && sidebarOpen) toggleSidebar(false);
             }}
             role={isMobile ? 'button' : undefined}
             aria-label={isMobile ? '메뉴 닫기' : undefined}
@@ -155,7 +173,7 @@ const MainLayout = ({ children, currentPath }) => {
         {!isMobile && (
           <button
             style={styles.toggleButton}
-            onClick={() => setSidebarOpen(!sidebarOpen)}
+            onClick={() => toggleSidebar(!sidebarOpen)}
             aria-label="사이드바 접기/펼치기"
           >
             {sidebarOpen ? <LucideIcons.ChevronLeft /> : <LucideIcons.ChevronRight />}
@@ -173,29 +191,45 @@ const MainLayout = ({ children, currentPath }) => {
             left: uiConfig.layout.sidebar.width,
             zIndex: 900
           }}
-          onClick={() => setSidebarOpen(false)}
+          onClick={() => toggleSidebar(false)}
         />
       )}
 
       <main
-        style={{
-          ...styles.main,
-          marginLeft: isMobile ? 0 : (sidebarOpen ? uiConfig.layout.sidebar.width : uiConfig.layout.sidebar.collapsedWidth)
-        }}
+        style={mainStyle}
         className="main-content"
         onClick={() => {
           if (isMobile && sidebarOpen) {
-            setSidebarOpen(false);
+            toggleSidebar(false);
           }
         }}
       >
-      {isMobile && !sidebarOpen && (
-          <div style={styles.mobileTopBar}>
+        {isMobile && (
+          <button
+            type="button"
+            style={{
+              ...styles.mobileFloatingToggle,
+              ...(sidebarOpen ? styles.mobileFloatingToggleActive : {}),
+            }}
+            onClick={(event) => {
+              event.stopPropagation();
+              toggleSidebar();
+            }}
+            aria-label={sidebarOpen ? '메뉴 닫기' : '메뉴 열기'}
+          >
+            {sidebarOpen ? <LucideIcons.X size={18} /> : <LucideIcons.Menu size={18} />}
+          </button>
+        )}
+        {isMobile && !sidebarOpen && (
+          <div style={{
+            ...styles.mobileTopBar,
+            ...(sidebarOpen ? { visibility: 'hidden', pointerEvents: 'none' } : {}),
+          }}>
             <button
               style={styles.mobileMenuBtn}
               onClick={(event) => {
                 event.stopPropagation();
-                setSidebarOpen((prev) => !prev);
+                toggleSidebar();
               }}
               aria-label={sidebarOpen ? '메뉴 닫기' : '메뉴 열기'}
             >
@@ -351,20 +385,20 @@ const styles = {
   main: {
     flex: 1,
     transition: 'margin-left 0.3s ease',
-    padding: '20px',
     minHeight: '100vh',
     background: 'var(--main-background)',
-    color: 'var(--text-primary)'
+    color: 'var(--text-primary)',
+    overflowY: 'auto',
+    WebkitOverflowScrolling: 'touch'
   },
   mobileTopBar: {
     position: 'sticky',
     top: 0,
-    zIndex: 1100,
+    zIndex: 980,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 'calc(env(safe-area-inset-top, 0px) + 6px) 10px 10px',
-    marginTop: 'env(safe-area-inset-top, 0px)',
+    padding: '12px 16px',
     marginBottom: '12px',
     background: 'linear-gradient(135deg, rgba(59,130,246,0.18), rgba(148,163,184,0.22))',
     border: '1px solid rgba(59,130,246,0.25)',
@@ -412,6 +446,30 @@ const styles = {
     background: 'rgba(15, 23, 42, 0.45)',
     border: 'none',
     zIndex: 900
+  },
+  mobileFloatingToggle: {
+    position: 'fixed',
+    top: 16,
+    left: 16,
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: 'rgba(255,255,255,0.95)',
+    border: '1px solid rgba(148,163,184,0.45)',
+    boxShadow: '0 12px 28px rgba(15, 23, 42, 0.22)',
+    color: '#0B1220',
+    zIndex: 1200,
+    cursor: 'pointer',
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+  },
+  mobileFloatingToggleActive: {
+    background: 'linear-gradient(135deg, rgba(59,130,246,0.2) 0%, rgba(99,102,241,0.18) 100%)',
+    borderColor: 'rgba(59,130,246,0.55)',
+    color: '#0B1220',
+    transform: 'scale(0.96)'
   }
 };
 

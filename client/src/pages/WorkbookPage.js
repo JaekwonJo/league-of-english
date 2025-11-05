@@ -791,6 +791,197 @@ const styles = {
     gap: '12px',
     flexWrap: 'wrap'
   },
+  sequenceContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px'
+  },
+  sequenceHelperRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: '12px',
+    flexWrap: 'wrap'
+  },
+  sequenceHelperText: {
+    fontSize: '14px',
+    color: 'var(--tone-hero)',
+    fontWeight: 600
+  },
+  sequenceResetButton: {
+    padding: '8px 14px',
+    borderRadius: '10px',
+    border: '1px solid rgba(148, 163, 184, 0.5)',
+    background: 'var(--surface-soft)',
+    color: 'var(--tone-hero)',
+    fontWeight: 600,
+    cursor: 'pointer',
+    boxShadow: '0 6px 14px rgba(15, 23, 42, 0.12)'
+  },
+  sequenceResetButtonDisabled: {
+    opacity: 0.45,
+    cursor: 'not-allowed',
+    boxShadow: 'none'
+  },
+  sequenceCardGrid: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px'
+  },
+  sequenceCard: {
+    borderRadius: '14px',
+    border: '1px solid var(--surface-border)',
+    background: 'var(--surface-card)',
+    boxShadow: '0 10px 22px rgba(15,23,42,0.12)',
+    padding: '14px 16px',
+    color: 'var(--text-primary)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px',
+    textAlign: 'left',
+    cursor: 'pointer',
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease, border 0.2s ease'
+  },
+  sequenceCardSelected: {
+    borderColor: 'rgba(59,130,246,0.45)',
+    boxShadow: '0 16px 28px rgba(59,130,246,0.22)',
+    transform: 'translateY(-2px)',
+    background: 'linear-gradient(135deg, rgba(59,130,246,0.12), rgba(125,211,252,0.16))'
+  },
+  sequenceCardHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: '12px'
+  },
+  sequenceTag: {
+    minWidth: '40px',
+    height: '40px',
+    borderRadius: '12px',
+    background: 'var(--surface-soft)',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontWeight: 800,
+    fontSize: '18px'
+  },
+  sequenceBadge: {
+    minWidth: '40px',
+    height: '36px',
+    borderRadius: '999px',
+    background: 'linear-gradient(135deg, var(--indigo) 0%, var(--violet) 100%)',
+    color: 'var(--text-on-accent)',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontWeight: 800,
+    fontSize: '16px',
+    boxShadow: '0 12px 24px rgba(99,102,241,0.35)'
+  },
+  sequencePlaceholder: {
+    minWidth: '40px',
+    height: '36px',
+    borderRadius: '999px',
+    border: '1px dashed rgba(59,130,246,0.35)',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: 'var(--tone-muted)',
+    fontWeight: 700,
+    fontSize: '16px',
+    background: 'rgba(59,130,246,0.05)'
+  },
+  sequenceBody: {
+    fontSize: '15px',
+    lineHeight: 1.7
+  },
+  sequenceAnswer: {
+    fontSize: '14px',
+    color: 'var(--success-strong)',
+    fontWeight: 600
+  },
+  insertContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px',
+    textAlign: 'left'
+  },
+  insertGivenBox: {
+    borderRadius: '14px',
+    border: '1px solid var(--surface-border)',
+    background: 'var(--surface-soft)',
+    padding: '14px 16px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px'
+  },
+  insertGivenLabel: {
+    fontWeight: 700,
+    color: 'var(--tone-hero)',
+    fontSize: '14px'
+  },
+  insertGivenSentence: {
+    fontSize: '15px',
+    lineHeight: 1.6,
+    color: 'var(--text-primary)'
+  },
+  insertContextBox: {
+    borderRadius: '12px',
+    border: '1px solid var(--surface-border)',
+    background: 'var(--surface-card)',
+    padding: '14px 16px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px'
+  },
+  insertContextLine: {
+    fontSize: '14px',
+    color: 'var(--tone-strong)'
+  },
+  insertOptionGrid: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px'
+  },
+  insertOption: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    padding: '12px 16px',
+    borderRadius: '12px',
+    border: '1px solid var(--surface-border)',
+    background: 'var(--surface-card)',
+    color: 'var(--text-primary)',
+    cursor: 'pointer',
+    transition: 'border 0.2s ease, box-shadow 0.2s ease'
+  },
+  insertOptionSelected: {
+    border: '1px solid rgba(59,130,246,0.45)',
+    boxShadow: '0 12px 26px rgba(59,130,246,0.2)',
+    background: 'linear-gradient(135deg, rgba(59,130,246,0.12), rgba(125,211,252,0.16))'
+  },
+  insertOptionLabel: {
+    minWidth: '36px',
+    height: '36px',
+    borderRadius: '10px',
+    background: 'var(--surface-soft)',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontWeight: 800,
+    fontSize: '15px'
+  },
+  insertOptionText: {
+    flex: 1,
+    textAlign: 'left',
+    fontSize: '14px',
+    lineHeight: 1.6
+  },
+  insertAnswer: {
+    fontSize: '14px',
+    fontWeight: 600,
+    color: 'var(--success-strong)'
+  },
   puzzleInput: {
     width: '100%',
     padding: '12px 14px',
@@ -1077,6 +1268,137 @@ const WordOrderPuzzle = ({ card, reveal, compact = false }) => {
       </div>
       {reveal && (
         <div style={styles.puzzleStatus}>정답: {answer}</div>
+      )}
+    </div>
+  );
+};
+
+const ParagraphOrderInteractive = ({ card, reveal }) => {
+  const segments = Array.isArray(card?.segments) ? card.segments : [];
+  const [sequence, setSequence] = useState([]);
+
+  useEffect(() => {
+    setSequence([]);
+  }, [card]);
+
+  if (!segments.length) {
+    return card?.front || '문단 배열 자료가 준비되지 않았어요.';
+  }
+
+  const handleToggle = (label) => {
+    setSequence((prev) => {
+      const exists = prev.includes(label);
+      if (exists) {
+        return prev.filter((item) => item !== label);
+      }
+      return [...prev, label];
+    });
+  };
+
+  const handleReset = () => setSequence([]);
+  const answer = Array.isArray(card?.correctSequence) ? card.correctSequence.join(' → ') : '';
+
+  return (
+    <div style={styles.sequenceContainer}>
+      <div style={styles.sequenceHelperRow}>
+        <span style={styles.sequenceHelperText}>순서를 차례대로 눌러 보세요. 다시 누르면 취소돼요.</span>
+        <button
+          type="button"
+          style={{
+            ...styles.sequenceResetButton,
+            ...(sequence.length ? {} : styles.sequenceResetButtonDisabled),
+          }}
+          onClick={handleReset}
+          disabled={!sequence.length}
+        >
+          초기화
+        </button>
+      </div>
+      <div style={styles.sequenceCardGrid}>
+        {segments.map((segment) => {
+          const orderIndex = sequence.indexOf(segment.label);
+          const isSelected = orderIndex >= 0;
+          const displayNumber = isSelected ? orderIndex + 1 : null;
+          return (
+            <button
+              key={`segment-${segment.label}`}
+              type="button"
+              style={{
+                ...styles.sequenceCard,
+                ...(isSelected ? styles.sequenceCardSelected : {}),
+              }}
+              onClick={() => handleToggle(segment.label)}
+            >
+              <div style={styles.sequenceCardHeader}>
+                <span style={styles.sequenceTag}>{segment.label}</span>
+                {displayNumber ? (
+                  <span style={styles.sequenceBadge}>{displayNumber}</span>
+                ) : (
+                  <span style={styles.sequencePlaceholder}>＋</span>
+                )}
+              </div>
+              <div style={styles.sequenceBody}>{segment.text}</div>
+            </button>
+          );
+        })}
+      </div>
+      {reveal && (
+        <div style={styles.sequenceAnswer}>정답: {answer || '추후 제공 예정'}</div>
+      )}
+    </div>
+  );
+};
+
+const SentenceInsertInteractive = ({ card, reveal }) => {
+  const options = Array.isArray(card?.options) ? card.options : [];
+  const [selected, setSelected] = useState(null);
+
+  useEffect(() => {
+    setSelected(null);
+  }, [card]);
+
+  if (!options.length) {
+    return card?.front || '선택지가 준비되지 않았어요.';
+  }
+
+  const handleSelect = (label) => {
+    setSelected((prev) => (prev === label ? null : label));
+  };
+
+  const answer = card?.correctOption || '';
+
+  return (
+    <div style={styles.insertContainer}>
+      <div style={styles.insertGivenBox}>
+        <div style={styles.insertGivenLabel}>[주어진 문장]</div>
+        <div style={styles.insertGivenSentence}>{card?.givenSentence || '제공된 문장이 없습니다.'}</div>
+      </div>
+      <div style={styles.insertContextBox}>
+        {(card?.contextLines || []).map((line, idx) => (
+          <div key={`context-${idx}`} style={styles.insertContextLine}>{line}</div>
+        ))}
+      </div>
+      <div style={styles.insertOptionGrid}>
+        {options.map((option) => {
+          const isActive = selected === option.label;
+          return (
+            <button
+              key={`insert-${option.label}`}
+              type="button"
+              style={{
+                ...styles.insertOption,
+                ...(isActive ? styles.insertOptionSelected : {}),
+              }}
+              onClick={() => handleSelect(option.label)}
+            >
+              <span style={styles.insertOptionLabel}>{option.label}</span>
+              <span style={styles.insertOptionText}>{option.text}</span>
+            </button>
+          );
+        })}
+      </div>
+      {reveal && (
+        <div style={styles.insertAnswer}>정답: {answer || '추후 제공 예정'}</div>
       )}
     </div>
   );
@@ -2764,6 +3086,12 @@ const WorkbookPage = () => {
     }
     if (currentCard.type === 'word-order-input') {
       return <WordOrderInputPuzzle card={currentCard} reveal={showBack} compact={isMobile} />;
+    }
+    if (currentCard.type === 'paragraph-order') {
+      return <ParagraphOrderInteractive card={currentCard} reveal={showBack} />;
+    }
+    if (currentCard.type === 'sentence-insert') {
+      return <SentenceInsertInteractive card={currentCard} reveal={showBack} />;
     }
     return currentCard.front;
   };

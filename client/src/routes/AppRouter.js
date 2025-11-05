@@ -24,6 +24,8 @@ const pageComponents = {
   LoginPage: lazy(() => import('../pages/LoginPage'))
 };
 
+const GUEST_ALLOWED_ROUTES = ['/vocabulary'];
+
 const AppRouter = () => {
   const { user, loading } = useAuth();
   const [currentPath, setCurrentPath] = React.useState(window.location.pathname);
@@ -91,11 +93,18 @@ const hasPermission = (user, route) => {
   if (!route.roles || route.roles.length === 0) return true;
   if (!route.roles.includes(user.role)) return false;
 
+  const membership = String(user.membership || '').toLowerCase();
+
+  if (membership === 'guest') {
+    if (!GUEST_ALLOWED_ROUTES.includes(route.path)) {
+      return false;
+    }
+  }
+
   if (route.memberships && route.memberships.length) {
     if (user.role === 'teacher' || user.role === 'admin') {
       return true;
     }
-    const membership = String(user.membership || '').toLowerCase();
     const allowed = route.memberships.map((item) => String(item).toLowerCase());
     if (!allowed.includes(membership)) {
       return false;
@@ -114,18 +123,53 @@ const LoadingScreen = () => (
 );
 
 // 권한 없음 화면
-const UnauthorizedScreen = () => (
-  <div style={styles.centerContainer}>
-    <h2>접근 권한이 없습니다</h2>
-    <p>이 페이지에 접근할 권한이 없습니다.</p>
-    <button 
-      onClick={() => window.location.href = '/'}
-      style={styles.button}
-    >
-      홈으로
-    </button>
-  </div>
-);
+const UnauthorizedScreen = () => {
+  const { user, logout } = useAuth();
+  const membership = String(user?.membership || '').toLowerCase();
+  const isGuest = membership === 'guest';
+
+  if (isGuest) {
+    return (
+      <div style={styles.centerContainer}>
+        <h2 style={styles.title}>회원가입이 필요해요 ✨</h2>
+        <p style={styles.description}>
+          게스트 체험에서는 <strong>어휘 훈련</strong>만 이용할 수 있어요.<br />
+          전체 기능을 사용하려면 회원가입 후 로그인해 주세요.
+        </p>
+        <div style={styles.buttonRow}>
+          <button
+            onClick={() => { window.location.href = '/vocabulary'; }}
+            style={{ ...styles.button, ...styles.secondaryButton, marginTop: 0 }}
+          >
+            어휘 훈련으로 가기
+          </button>
+          <button
+            onClick={() => {
+              logout();
+              window.location.href = '/login';
+            }}
+            style={{ ...styles.button, marginTop: 0 }}
+          >
+            회원가입 / 로그인하기
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={styles.centerContainer}>
+      <h2>접근 권한이 없습니다</h2>
+      <p>이 페이지에 접근할 권한이 없습니다.</p>
+      <button 
+        onClick={() => window.location.href = '/'}
+        style={styles.button}
+      >
+        홈으로
+      </button>
+    </div>
+  );
+};
 
 // 404 화면
 const NotFoundScreen = () => (
@@ -150,6 +194,20 @@ const styles = {
     minHeight: '100vh',
     padding: '20px'
   },
+  title: {
+    fontSize: '28px',
+    fontWeight: 800,
+    color: 'var(--tone-hero)',
+    textAlign: 'center',
+    marginBottom: '16px'
+  },
+  description: {
+    fontSize: '16px',
+    color: 'var(--tone-muted)',
+    textAlign: 'center',
+    lineHeight: 1.6,
+    marginBottom: '24px'
+  },
   spinner: {
     width: '40px',
     height: '40px',
@@ -167,7 +225,21 @@ const styles = {
     borderRadius: '10px',
     fontSize: '16px',
     fontWeight: 'bold',
-    cursor: 'pointer'
+    cursor: 'pointer',
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+  },
+  secondaryButton: {
+    background: 'var(--surface-card)',
+    color: 'var(--tone-hero)',
+    border: '1px solid var(--surface-border)',
+    marginRight: '12px'
+  },
+  buttonRow: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '12px',
+    justifyContent: 'center',
+    marginTop: '12px'
   }
 };
 

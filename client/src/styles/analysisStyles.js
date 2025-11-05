@@ -152,6 +152,12 @@ export const analysisStyles = {
   cardContent: {
     marginBottom: '16px'
   },
+  cardContentSingle: {
+    marginBottom: '16px',
+    color: 'var(--tone-strong)',
+    fontSize: '14px',
+    lineHeight: 1.6
+  },
   summary: {
     color: 'var(--tone-strong)',
     lineHeight: '1.6',

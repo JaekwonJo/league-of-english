@@ -319,7 +319,103 @@ export const orderStyles = {
     border: '1px solid var(--surface-border)',
     boxShadow: '0 8px 18px rgba(15, 23, 42, 0.12)',
     textAlign: 'left',
-    whiteSpace: 'pre-line'
+    whiteSpace: 'pre-line',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px',
+    width: '100%',
+    cursor: 'pointer',
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease, border 0.2s ease',
+    outline: 'none'
+  },
+  orderSentenceSelected: {
+    borderColor: 'rgba(59,130,246,0.45)',
+    boxShadow: '0 14px 26px rgba(59, 130, 246, 0.25)',
+    transform: 'translateY(-2px)',
+    background: 'linear-gradient(135deg, rgba(59,130,246,0.12) 0%, rgba(125,211,252,0.18) 100%)'
+  },
+  orderSentenceHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: '12px'
+  },
+  orderSentenceTag: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: '40px',
+    height: '40px',
+    borderRadius: '12px',
+    fontWeight: 800,
+    fontSize: '18px',
+    color: 'var(--text-primary)',
+    background: 'var(--surface-soft)'
+  },
+  orderSequenceBadge: {
+    minWidth: '40px',
+    height: '36px',
+    borderRadius: '999px',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontWeight: 800,
+    fontSize: '16px',
+    color: 'var(--text-on-accent)',
+    background: 'linear-gradient(135deg, var(--indigo) 0%, var(--violet) 100%)',
+    boxShadow: '0 10px 22px rgba(99, 102, 241, 0.35)'
+  },
+  orderSequencePlaceholder: {
+    minWidth: '40px',
+    height: '36px',
+    borderRadius: '999px',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontWeight: 700,
+    fontSize: '16px',
+    color: 'var(--tone-muted)',
+    border: '1px dashed rgba(59,130,246,0.35)',
+    background: 'rgba(59,130,246,0.05)'
+  },
+  orderSentenceBody: {
+    fontSize: '15px',
+    lineHeight: 1.8
+  },
+  sequenceHelperRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: '12px',
+    marginBottom: '12px',
+    flexWrap: 'wrap'
+  },
+  sequenceHelperText: {
+    fontSize: '14px',
+    color: 'var(--tone-hero)',
+    fontWeight: 600
+  },
+  sequenceSummary: {
+    fontSize: '14px',
+    fontWeight: 700,
+    color: 'var(--accent-primary)',
+    marginBottom: '20px',
+    textAlign: 'center'
+  },
+  sequenceResetButton: {
+    padding: '8px 14px',
+    borderRadius: '10px',
+    border: '1px solid rgba(148, 163, 184, 0.5)',
+    background: 'var(--surface-soft)',
+    color: 'var(--tone-hero)',
+    fontWeight: 600,
+    cursor: 'pointer',
+    boxShadow: '0 6px 14px rgba(15, 23, 42, 0.12)'
+  },
+  sequenceResetButtonDisabled: {
+    opacity: 0.45,
+    cursor: 'not-allowed',
+    boxShadow: 'none'
   },
   multipleChoiceButton: {
     width: '100%',

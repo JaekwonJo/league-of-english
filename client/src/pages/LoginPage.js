@@ -174,7 +174,8 @@ const LoginPage = () => {
       if (data?.user && data?.token) {
         apiService.setToken(data.token);
         login(data.user, data.token);
-        setInfoMessage('게스트 모드로 체험 중입니다.');
+        setInfoMessage('게스트 모드로 체험 중입니다. 어휘 훈련만 이용할 수 있어요!');
+        window.location.href = '/vocabulary';
       } else {
         setError('게스트 로그인 응답이 올바르지 않습니다.');
       }

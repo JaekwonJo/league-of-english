@@ -30,7 +30,7 @@ class WorkbookService {
       }
       const seed = typeof card?.front === 'string'
         ? card.front
-        : JSON.stringify({ type: card?.type || 'card', hint: card?.hint || null });
+        : JSON.stringify({ type: card?.type || 'card', prompt: card?.prompt || card?.back || '' });
       return {
         ...card,
         id: this._createCardId(stepNumber, index, seed || `${stepNumber}-${index}`)
@@ -461,8 +461,7 @@ class WorkbookService {
   }) {
     const readingCardsRaw = this._buildReadingPracticeCards(sentences, englishTitles, englishSummaryKo);
     const blankKoCardsRaw = this._buildBlankPracticeCards(sentences, vocabularyPool, { hintType: 'korean', maxCards: 8 });
-    const multiBlankCardsRaw = this._buildMultiBlankCards(sentences, vocabularyPool, { blanks: 2 });
-    const grammarChoiceCardsRaw = this._buildGrammarChoiceCards(sentences, vocabularyPool, grammarPoints);
+    const dualBlankCardsRaw = this._buildMultiBlankCards(sentences, vocabularyPool, { blanks: 2 });
     const tripleBlankCardsRaw = this._buildMultiBlankCards(sentences, vocabularyPool, { blanks: 3, maxCards: 4 });
     const wordOrderCardsRaw = this._buildWordOrderCards(sentences);
     const paragraphCardsRaw = this._buildParagraphCards(sentences, koreanMainIdea || englishSummaryKo, authorsClaim);
@@ -479,14 +478,9 @@ class WorkbookService {
       '지문 속 어휘가 부족하여 빈칸 연습을 만들지 못했습니다.'
     );
 
-    const multiBlankCards = this._ensureCards(
-      multiBlankCardsRaw,
+    const dualBlankCards = this._ensureCards(
+      dualBlankCardsRaw,
       '두 개 이상 빈칸으로 만들 수 있는 문장이 부족합니다.'
-    );
-
-    const grammarChoiceCards = this._ensureCards(
-      grammarChoiceCardsRaw,
-      '어법/어휘 고치기 문제를 만들 수 있는 예시가 부족합니다.'
     );
 
     const tripleBlankCards = this._ensureCards(
@@ -514,61 +508,38 @@ class WorkbookService {
       '영작 퍼즐을 만들 수 있는 문장이 부족합니다.'
     );
 
-    const reviewCards = this._ensureCards(
-      this._buildReviewCards([
-        { label: 'STEP 1', cards: readingCardsRaw },
-        { label: 'STEP 2', cards: blankKoCardsRaw },
-        { label: 'STEP 3', cards: multiBlankCardsRaw },
-        { label: 'STEP 4', cards: grammarChoiceCardsRaw },
-        { label: 'STEP 5', cards: tripleBlankCardsRaw },
-        { label: 'STEP 6', cards: wordOrderCardsRaw },
-        { label: 'STEP 7', cards: paragraphCardsRaw },
-        { label: 'STEP 8', cards: insertionCardsRaw },
-        { label: 'STEP 9', cards: writingPuzzleCardsRaw }
-      ]),
-      '복습할 카드가 부족합니다. 앞 단계를 먼저 학습해 주세요.'
-    );
-
     return [
-      this._createStep(1, '한글 해석하기', '📖', '원문을 한 문장씩 읽고 자연스러운 우리말로 이해해 보세요.', '각 문장을 소리 내어 읽고, 모르는 표현은 별표로 표시해 보세요.', readingCards, [
-        '모르는 표현은 노트에 정리',
-        '소리 내어 읽으며 억양 익히기'
+      this._createStep(1, '해석 연습', '📖', '원문을 한 문장씩 읽고 우리말로 자연스럽게 정리해 보세요.', '각 문장을 소리 내어 읽고, 모르는 표현은 표시해 두세요.', readingCards, [
+        '생소한 표현은 노트에 따로 정리하기',
+        '소리 내며 리듬과 억양 익히기'
       ]),
-      this._createStep(2, '빈칸 완성 (우리말)', '🧩', '우리말 힌트를 보고 빈칸을 채워 보세요.', '힌트를 참고해 문장에 알맞은 영어 단어를 채워 보세요.', blankKoCards, [
-        '힌트 해석과 정답을 연결해 보기',
-        '정답 단어의 철자를 정확히 확인'
+      this._createStep(2, '빈칸 (1)', '🧩', '단 하나의 핵심 단어를 빈칸에서 찾아보세요.', '문맥을 먼저 읽고 가장 자연스러운 단어를 떠올려 보세요.', blankKoCards, [
+        '문장 전체 의미를 먼저 파악하기',
+        '정답 단어를 소리 내어 읽어 보기'
       ]),
-      this._createStep(3, '이중 빈칸 도전', '🧠', '두 개 이상의 핵심 표현을 동시에 채워 보세요.', '번호에 맞춰 빈칸을 채우고, 힌트를 활용해 정확한 단어를 찾으세요.', multiBlankCards, [
-        '문맥을 먼저 해석한 뒤 빈칸 채우기',
-        '정답 단어를 이용해 문장을 다시 소리 내어 읽기'
+      this._createStep(3, '빈칸 (2)', '🧠', '두 개의 빈칸을 함께 채우며 연결어를 점검해 보세요.', '번호에 맞춰 단어를 채우고 자연스러운 흐름인지 확인하세요.', dualBlankCards, [
+        '앞뒤 문장과 흐름 비교하기',
+        '정답 단어로 다시 한 번 읽어 보기'
       ]),
-      this._createStep(4, '어법·어휘 고치기', '🧐', '어색한 문장을 읽고 알맞은 표현으로 바로잡아 보세요.', '틀린 부분을 눈으로 확인한 뒤, 가장 자연스러운 표현을 골라 보세요.', grammarChoiceCards, [
-        '틀린 표현과 정답 표현 비교',
-        '수정된 문장을 소리 내어 읽기'
+      this._createStep(4, '영어 빈칸 (3)', '✏️', '세 개의 핵심 어휘를 영어로 떠올려 보며 문장을 완성해요.', '직접 떠올린 영어 단어를 넣고 자연스러운지 소리 내어 확인해 보세요.', tripleBlankCards, [
+        '빈칸마다 필요한 품사를 먼저 떠올리기',
+        '완성한 문장을 영어로 읽으며 리듬 익히기'
       ]),
-      this._createStep(5, '세 칸 빈칸 채우기', '✏️', '문맥을 떠올리며 세 개의 핵심 단어를 채워 보세요.', '힌트를 참고해 문장 속 세 개의 빈칸을 모두 채워 보세요.', tripleBlankCards, [
-        '먼저 문장을 소리 내어 읽기',
-        '정답 단어로 다시 한 번 문장 읽어 보기'
+      this._createStep(5, '낱말 배열', '🔀', '단어 조각을 눌러 올바른 문장을 재구성해요.', '필요하면 초기화하고 다시 도전해 보세요.', wordOrderCards, [
+        '주어·동사를 먼저 찾아보기',
+        '완성 후 문장을 음독하기'
       ]),
-      this._createStep(6, '단어 배열 퍼즐', '🧱', '단어 조각을 클릭해서 올바른 순서로 맞춰 보세요.', '퍼즐 조각을 눌러 문장을 완성하고, 완성되면 소리 내어 읽어 보세요.', wordOrderCards, [
-        '힌트를 먼저 읽고 핵심 어순 떠올리기',
-        '틀렸다면 초기화 후 다시 도전'
+      this._createStep(6, '순서 배열', '📚', 'A·B·C 단락을 올바른 순서로 정렬해 보세요.', '각 단락의 기능을 비교하며 순서를 결정하세요.', paragraphCards, [
+        '단락별 핵심어를 표시하기',
+        '선택한 순서를 말로 설명해 보기'
       ]),
-      this._createStep(7, '문단 배열', '📚', 'A·B·C 단락을 자연스러운 흐름으로 다시 정렬해 보세요.', '단락을 읽고 도입-전개-마무리 순서대로 배열해 보세요.', paragraphCards, [
-        '단락마다 핵심 문장을 표시',
-        '왜 그 순서가 자연스러운지 말로 설명'
+      this._createStep(7, '문장 삽입', '➕', '공백에 가장 자연스러운 문장을 골라 넣어 보세요.', '앞뒤 문장과 연결되는 표현을 확인하세요.', insertionCards, [
+        '연결어와 지시어에 주목하기',
+        '삽입 후 다시 읽으며 자연스러운지 점검하기'
       ]),
-      this._createStep(8, '문장 삽입', '➕', '단락 속 공백에 어울리는 문장을 골라 보세요.', '앞뒤 문맥을 비교해 가장 자연스러운 문장을 선택해 보세요.', insertionCards, [
-        '앞 문장과 뒤 문장의 연결 표현 체크',
-        '선택한 문장을 넣고 다시 읽어 보기'
-      ]),
-      this._createStep(9, '영작 퍼즐', '🧠✍️', '힌트 단어로 시작하고 나머지는 직접 타이핑해 보세요.', '제시된 단서를 활용해 문장을 입력하고, 완성 후 소리 내어 읽어 보세요.', writingPuzzleCards, [
-        '힌트 단어로 뼈대를 만들기',
-        '완성 문장을 소리 내어 읽으며 리듬 익히기'
-      ]),
-      this._createStep(10, '랜덤 복습', '🎯', '앞 단계에서 풀었던 카드 중 핵심만 다시 확인해 보세요.', '질문을 읽고 답을 떠올린 뒤 뒷면을 확인해 보세요.', reviewCards, [
-        '틀렸던 카드는 즐겨찾기에 추가',
-        '복습 후 난이도 다시 평가'
+      this._createStep(8, '영작하기', '🧠✍️', '힌트 단어를 활용해 문장을 직접 완성해 보세요.', '힌트로 뼈대를 만들고 나머지는 직접 타이핑해 보세요.', writingPuzzleCards, [
+        '힌트 단어로 문장 구조 세우기',
+        '완성된 문장을 크게 읽어 보기'
       ])
     ];
   }
@@ -577,7 +548,7 @@ class WorkbookService {
     const normalizedCards = this._assignCardIds(stepNumber, cards);
     return {
       step: stepNumber,
-      label: `STEP ${stepNumber}`,
+      label: `STEP ${stepNumber} - ${title}`,
       title,
       mood,
       intro,
@@ -637,17 +608,13 @@ class WorkbookService {
       if (!english || used.has(selection.word.toLowerCase())) return;
       used.add(selection.word.toLowerCase());
       const blanked = this._blankWordInSentence(english, selection.word);
-      const hint = hintType === 'english'
-        ? this._buildEnglishHint(selection.word, selection.vocab, entry)
-        : this._cleanLine(entry.korean) || '우리말 뜻을 떠올려 보세요.';
       cards.push({
         type: 'single-blank',
         blanks: 1,
         prompt: blanked,
-        hint,
         answers: [selection.word],
         sentence: english,
-        front: `[빈칸] ${blanked}\n힌트: ${hint}`,
+        front: `[빈칸 (1) ${cards.length + 1}]\n${blanked}`,
         back: `정답: ${selection.word}`
       });
     });
@@ -680,18 +647,14 @@ class WorkbookService {
       if (answers.length < blanks) return;
 
       const label = blanks === 3 ? '세 칸 빈칸' : blanks === 2 ? '이중 빈칸' : '빈칸 연습';
-      const hint = hintType === 'english'
-        ? this._buildEnglishHint(orderedTargets[0].word, orderedTargets[0].vocab, entry)
-        : this._cleanLine(entry.korean) || this._cleanLine(entry.analysis) || '문맥을 차분히 해석해 보세요.';
 
       cards.push({
         type: blanks === 1 ? 'single-blank' : 'multi-blank',
         blanks,
         prompt: display,
-        hint,
         answers: orderedTargets.map((target) => target.word),
         sentence: english,
-        front: `[${label} ${cards.length + 1}]\n${display}\n힌트: ${hint}`,
+        front: `[${label} ${cards.length + 1}]\n${display}`,
         back: `정답:\n${answers.join('\n')}`
       });
     });
@@ -835,21 +798,21 @@ class WorkbookService {
     const letters = ['A', 'B', 'C'];
     const original = blocks.slice(0, 3).map((text, idx) => ({ index: idx, text }));
     const shuffled = this._shuffleArray(original.slice()).map((item, displayIndex) => ({
-      displayLabel: letters[displayIndex],
+      label: letters[displayIndex],
       sourceIndex: item.index,
       text: item.text
     }));
-    const lines = shuffled.map((item) => `(${item.displayLabel}) ${item.text}`);
-    const answer = original
-      .map((item) => {
-        const match = shuffled.find((shuffledItem) => shuffledItem.sourceIndex === item.index);
-        return match ? `(${match.displayLabel})` : '';
-      })
-      .filter(Boolean)
-      .join(' → ');
+    const correctOrder = original.map((item) => {
+      const match = shuffled.find((candidate) => candidate.sourceIndex === item.index);
+      return match ? match.label : '';
+    }).filter(Boolean);
+
     return [{
-      front: '[문단 배열]\n다음 단락을 자연스러운 순서로 배열해 보세요.\n' + lines.join('\n'),
-      back: `정답: ${answer}`
+      type: 'paragraph-order',
+      segments: shuffled,
+      correctSequence: correctOrder,
+      front: '[문단 배열]\n각 단락을 읽고 자연스러운 순서를 골라 보세요.',
+      back: `정답: ${correctOrder.join(' → ')}`
     }];
   }
 
@@ -907,9 +870,9 @@ class WorkbookService {
       const promptLines = [];
       if (koreanHint) promptLines.push(koreanHint);
       if (hintTokens.length) {
-        promptLines.push(`힌트 단어: ${hintTokens.join(' · ')}`);
+        promptLines.push(`단어 단서: ${hintTokens.join(' · ')}`);
       }
-      const prompt = promptLines.length ? promptLines.join('\n') : '힌트 단어를 참고해 문장을 완성해 보세요.';
+      const prompt = promptLines.length ? promptLines.join('\n') : '단서를 참고해 문장을 완성해 보세요.';
       return {
         type: 'word-order-input',
         prompt,
@@ -1015,14 +978,12 @@ class WorkbookService {
         return {
           ...base,
           prompt: card.prompt || card.front,
-          hint: card.hint || null,
           blanks: 1
         };
       case 'multi-blank':
         return {
           ...base,
           prompt: card.prompt || card.front,
-          hint: card.hint || null,
           blanks: Array.isArray(card.answers) ? card.answers.length : (card.blanks || 2)
         };
       case 'grammar-choice': {
