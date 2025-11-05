@@ -202,6 +202,25 @@ const RankingPage = () => {
               )}
               {rankings.map((ranker, index) => {
                 const lpText = formatPoints(ranker.points);
+                const handle = ranker.username || ranker.handle || ranker.userId || ranker.login || ranker.email || `ID:${ranker.id}`;
+                const topNameStyle = index === 0
+                  ? styles.top1Name
+                  : index === 1
+                  ? styles.top2Name
+                  : index === 2
+                  ? styles.top3Name
+                  : {};
+                const tierId = (ranker.tier?.id || '').toLowerCase();
+                const tierBadgeStyle =
+                  tierId === 'iron' ? styles.tierBadgeIron :
+                  tierId === 'bronze' ? styles.tierBadgeBronze :
+                  tierId === 'silver' ? styles.tierBadgeSilver :
+                  tierId === 'gold' ? styles.tierBadgeGold :
+                  tierId === 'platinum' ? styles.tierBadgePlatinum :
+                  tierId === 'diamond' ? styles.tierBadgeDiamond :
+                  tierId === 'master' ? styles.tierBadgeMaster :
+                  tierId === 'challenger' ? styles.tierBadgeChallenger :
+                  {};
                 return (
                 <div
                   key={ranker.id}
@@ -216,10 +235,11 @@ const RankingPage = () => {
                     <div style={styles.userInfo}>
                       <div style={{
                         ...styles.userName,
+                        ...topNameStyle,
                         ...(ranker.membership === 'premium' ? styles.userNamePremium : {}),
                         ...(ranker.membership === 'pro' ? styles.userNamePro : {})
                       }}>
-                        {ranker.name}
+                        {ranker.name} <span style={styles.userId}>({handle})</span>
                         {ranker.id === user?.id && <span style={styles.youBadge}>YOU</span>}
                       </div>
                       <div style={styles.userDetails}>
@@ -231,7 +251,7 @@ const RankingPage = () => {
                   </div>
                   
                   <div style={styles.tierInfo}>
-                    <div style={styles.tierBadge}>
+                    <div style={{ ...styles.tierBadge, ...tierBadgeStyle }}>
                       <span style={{ color: ranker.tier.color }}>
                         {ranker.tier.icon}
                       </span>
@@ -468,7 +488,7 @@ const styles = {
     fontSize: '24px',
     marginBottom: '25px',
     textAlign: 'center',
-    color: 'var(--text-primary)'
+    color: 'var(--tone-hero)'
   },
   leaderboard: {
     width: '100%'
@@ -537,6 +557,28 @@ const styles = {
     alignItems: 'center',
     gap: '8px'
   },
+  userId: {
+    fontWeight: 600,
+    color: 'var(--tone-strong)'
+  },
+  top1Name: {
+    background: 'linear-gradient(135deg, #F59E0B 0%, #FDE68A 100%)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    textShadow: '0 1px 12px rgba(245, 158, 11, 0.35)'
+  },
+  top2Name: {
+    background: 'linear-gradient(135deg, #9CA3AF 0%, #E5E7EB 100%)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    textShadow: '0 1px 12px rgba(156, 163, 175, 0.35)'
+  },
+  top3Name: {
+    background: 'linear-gradient(135deg, #D97706 0%, #FCD34D 100%)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    textShadow: '0 1px 12px rgba(217, 119, 6, 0.35)'
+  },
   userDetails: {
     display: 'flex',
     alignItems: 'center',
@@ -569,7 +611,42 @@ const styles = {
   tierBadge: {
     display: 'flex',
     alignItems: 'center',
-    gap: '6px'
+    gap: '6px',
+    padding: '6px 10px',
+    borderRadius: '999px',
+    border: '1px solid var(--surface-border)'
+  },
+  tierBadgeIron: {
+    background: 'linear-gradient(135deg, #9CA3AF 0%, #6B7280 100%)',
+    boxShadow: '0 8px 18px rgba(107, 114, 128, 0.35)'
+  },
+  tierBadgeBronze: {
+    background: 'linear-gradient(135deg, #CD7F32 0%, #A97142 100%)',
+    boxShadow: '0 8px 18px rgba(169, 113, 66, 0.35)'
+  },
+  tierBadgeSilver: {
+    background: 'linear-gradient(135deg, #E5E7EB 0%, #9CA3AF 100%)',
+    boxShadow: '0 8px 18px rgba(156, 163, 175, 0.35)'
+  },
+  tierBadgeGold: {
+    background: 'linear-gradient(135deg, #F59E0B 0%, #FDE68A 100%)',
+    boxShadow: '0 8px 18px rgba(245, 158, 11, 0.35)'
+  },
+  tierBadgePlatinum: {
+    background: 'linear-gradient(135deg, #34D399 0%, #10B981 100%)',
+    boxShadow: '0 8px 18px rgba(16, 185, 129, 0.35)'
+  },
+  tierBadgeDiamond: {
+    background: 'linear-gradient(135deg, #93C5FD 0%, #60A5FA 100%)',
+    boxShadow: '0 8px 18px rgba(96, 165, 250, 0.35)'
+  },
+  tierBadgeMaster: {
+    background: 'linear-gradient(135deg, #C084FC 0%, #A78BFA 100%)',
+    boxShadow: '0 8px 18px rgba(167, 139, 250, 0.35)'
+  },
+  tierBadgeChallenger: {
+    background: 'linear-gradient(135deg, #EF4444 0%, #F59E0B 100%)',
+    boxShadow: '0 8px 18px rgba(239, 68, 68, 0.35)'
   },
   tierName: {
     fontSize: '14px',
