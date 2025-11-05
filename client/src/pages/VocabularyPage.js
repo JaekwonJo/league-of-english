@@ -562,6 +562,29 @@ const getTimeLimitSeconds = useCallback(() => {
     });
   }, []);
 
+  const selectedDays = useMemo(() => {
+    if (!selectedSet) return [];
+    const keys = selectedDayKeys.length ? selectedDayKeys : (selectedDayKey ? [selectedDayKey] : []);
+    if (!keys.length) return [];
+    const keySet = new Set(keys);
+    return (selectedSet.days || []).filter((day) => keySet.has(day.key));
+  }, [selectedSet, selectedDayKey, selectedDayKeys]);
+
+  const selectedDayLabels = useMemo(
+    () => selectedDays.map((day) => day.label || day.key),
+    [selectedDays]
+  );
+
+  const selectedWordsCount = useMemo(
+    () => selectedDays.reduce((sum, day) => sum + Number(day.count || 0), 0),
+    [selectedDays]
+  );
+
+  const plannedQuestionCount = useMemo(
+    () => Math.max(1, selectedWordsCount || DEFAULT_QUIZ_SIZE),
+    [selectedWordsCount]
+  );
+
   const handleStartQuiz = useCallback(async () => {
     const hasMulti = Array.isArray(selectedDayKeys) && selectedDayKeys.length > 1;
     const hasSingle = !!selectedDayKey;
@@ -697,28 +720,6 @@ const getTimeLimitSeconds = useCallback(() => {
     if (selectedDayKeys.length > 1) return null;
     return selectedSet.days?.find((day) => day.key === selectedDayKey) || null;
   }, [selectedSet, selectedDayKey, selectedDayKeys.length]);
-
-  const selectedDays = useMemo(() => {
-    if (!selectedSet) return [];
-    const keys = selectedDayKeys.length ? selectedDayKeys : (selectedDayKey ? [selectedDayKey] : []);
-    if (!keys.length) return [];
-    const keySet = new Set(keys);
-    return (selectedSet.days || []).filter((day) => keySet.has(day.key));
-  }, [selectedSet, selectedDayKey, selectedDayKeys]);
-
-  const selectedDayLabels = useMemo(
-    () => selectedDays.map((day) => day.label || day.key),
-    [selectedDays]
-  );
-  const selectedWordsCount = useMemo(
-    () => selectedDays.reduce((sum, day) => sum + Number(day.count || 0), 0),
-    [selectedDays]
-  );
-
-  const plannedQuestionCount = useMemo(
-    () => Math.max(1, selectedWordsCount || DEFAULT_QUIZ_SIZE),
-    [selectedWordsCount]
-  );
 
   const selectionLocked = practiceState.active || quizState.active;
   const stepDescriptors = useMemo(() => ([
