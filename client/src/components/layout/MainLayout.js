@@ -418,11 +418,14 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '10px 8px',
-    marginBottom: '10px',
-    background: 'var(--surface-card)',
-    border: '1px solid var(--surface-border)',
-    borderRadius: '12px'
+    padding: 'calc(env(safe-area-inset-top, 0px) + 6px) 10px 10px',
+    marginTop: 'env(safe-area-inset-top, 0px)',
+    marginBottom: '12px',
+    background: 'linear-gradient(135deg, rgba(59,130,246,0.18), rgba(148,163,184,0.22))',
+    border: '1px solid rgba(59,130,246,0.25)',
+    borderRadius: '14px',
+    boxShadow: '0 12px 28px rgba(15, 23, 42, 0.18)',
+    backdropFilter: 'blur(12px)'
   },
   mobileMenuBtn: {
     width: 40,
@@ -430,15 +433,16 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 10,
-    border: '1px solid var(--border-subtle)',
-    background: 'linear-gradient(135deg, rgba(59,130,246,0.15) 0%, rgba(125,211,252,0.12) 100%)',
-    color: 'var(--tone-hero)',
-    cursor: 'pointer'
+    borderRadius: 12,
+    border: '1px solid rgba(59,130,246,0.35)',
+    background: 'linear-gradient(135deg, rgba(59,130,246,0.22) 0%, rgba(125,211,252,0.18) 100%)',
+    color: '#0B1220',
+    cursor: 'pointer',
+    boxShadow: '0 8px 18px rgba(59, 130, 246, 0.28)'
   },
   mobileTitle: {
     fontWeight: 800,
-    color: 'var(--tone-hero)'
+    color: '#0B1220'
   },
   mobileActionBtn: {
     width: 40,
@@ -446,12 +450,13 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 8,
-    border: '1px solid var(--border-subtle)',
-    background: 'var(--surface-soft)',
-    color: 'var(--text-primary)',
+    borderRadius: 12,
+    border: '1px solid rgba(59,130,246,0.2)',
+    background: 'rgba(255,255,255,0.9)',
+    color: '#0B1220',
     cursor: 'pointer',
-    transition: 'transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease'
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease',
+    boxShadow: '0 8px 18px rgba(15, 23, 42, 0.18)'
   },
   mobileThemeButtonLight: {
     background: 'linear-gradient(135deg, rgba(59,130,246,0.18) 0%, rgba(125,211,252,0.15) 100%)',
