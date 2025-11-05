@@ -221,22 +221,12 @@ const MainLayout = ({ children, currentPath }) => {
           </button>
         )}
         {isMobile && !sidebarOpen && (
-          <div style={{
-            ...styles.mobileTopBar,
-            ...(sidebarOpen ? { visibility: 'hidden', pointerEvents: 'none' } : {}),
-          }}>
-            <button
-              style={styles.mobileMenuBtn}
-              onClick={(event) => {
-                event.stopPropagation();
-                toggleSidebar();
-              }}
-              aria-label={sidebarOpen ? '메뉴 닫기' : '메뉴 열기'}
-            >
-              {sidebarOpen ? <LucideIcons.X size={20} /> : <LucideIcons.Menu size={20} />}
-            </button>
-            <div style={styles.mobileTitle}>League of English</div>
-            <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={styles.mobileTopBar}>
+            <div style={styles.mobileBranding}>
+              <span style={styles.mobileBrandIcon}>🦉</span>
+              <span style={styles.mobileTitle}>League of English</span>
+            </div>
+            <div style={styles.mobileActions}>
               <button
                 style={styles.mobileActionBtn}
                 onClick={handleLogout}
@@ -398,30 +388,32 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '12px 16px',
+    padding: '14px 18px',
     marginBottom: '12px',
-    background: 'linear-gradient(135deg, rgba(59,130,246,0.18), rgba(148,163,184,0.22))',
-    border: '1px solid rgba(59,130,246,0.25)',
-    borderRadius: '14px',
-    boxShadow: '0 12px 28px rgba(15, 23, 42, 0.18)',
-    backdropFilter: 'blur(12px)'
+    background: 'linear-gradient(135deg, rgba(12, 74, 210, 0.18), rgba(79, 70, 229, 0.22))',
+    borderRadius: '16px',
+    boxShadow: '0 14px 32px rgba(15, 23, 42, 0.22)',
+    backdropFilter: 'blur(14px)'
   },
-  mobileMenuBtn: {
-    width: 40,
-    height: 36,
+  mobileBranding: {
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 12,
-    border: '1px solid rgba(59,130,246,0.35)',
-    background: 'linear-gradient(135deg, rgba(59,130,246,0.22) 0%, rgba(125,211,252,0.18) 100%)',
-    color: '#0B1220',
-    cursor: 'pointer',
-    boxShadow: '0 8px 18px rgba(59, 130, 246, 0.28)'
+    gap: '10px'
+  },
+  mobileBrandIcon: {
+    fontSize: '24px'
   },
   mobileTitle: {
     fontWeight: 800,
-    color: '#0B1220'
+    fontSize: '16px',
+    background: 'linear-gradient(135deg, var(--accent-primary) 0%, var(--violet) 100%)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    letterSpacing: '0.3px'
+  },
+  mobileActions: {
+    display: 'flex',
+    gap: '10px'
   },
   mobileActionBtn: {
     width: 40,
@@ -430,12 +422,12 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 12,
-    border: '1px solid rgba(59,130,246,0.2)',
-    background: 'rgba(255,255,255,0.9)',
-    color: '#0B1220',
+    border: '1px solid rgba(59,130,246,0.25)',
+    background: 'linear-gradient(135deg, rgba(59,130,246,0.32) 0%, rgba(99,102,241,0.28) 100%)',
+    color: 'var(--text-on-accent)',
     cursor: 'pointer',
     transition: 'transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease',
-    boxShadow: '0 8px 18px rgba(15, 23, 42, 0.18)'
+    boxShadow: '0 10px 22px rgba(37, 99, 235, 0.25)'
   },
   mobileOverlay: {
     position: 'fixed',
@@ -457,19 +449,18 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: 'rgba(255,255,255,0.95)',
-    border: '1px solid rgba(148,163,184,0.45)',
-    boxShadow: '0 12px 28px rgba(15, 23, 42, 0.22)',
-    color: '#0B1220',
+    background: 'linear-gradient(135deg, rgba(59,130,246,0.88) 0%, rgba(37,99,235,0.92) 100%)',
+    border: '1px solid rgba(191,219,254,0.65)',
+    boxShadow: '0 16px 32px rgba(30, 64, 175, 0.35)',
+    color: 'var(--text-on-accent)',
     zIndex: 1200,
     cursor: 'pointer',
     transition: 'transform 0.2s ease, box-shadow 0.2s ease',
   },
   mobileFloatingToggleActive: {
-    background: 'linear-gradient(135deg, rgba(59,130,246,0.2) 0%, rgba(99,102,241,0.18) 100%)',
-    borderColor: 'rgba(59,130,246,0.55)',
-    color: '#0B1220',
-    transform: 'scale(0.96)'
+    background: 'linear-gradient(135deg, rgba(30,64,175,0.85) 0%, rgba(88,28,135,0.88) 100%)',
+    borderColor: 'rgba(147,197,253,0.8)',
+    transform: 'scale(0.94)'
   }
 };
 

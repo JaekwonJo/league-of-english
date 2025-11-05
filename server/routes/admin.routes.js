@@ -17,7 +17,7 @@ async function singleValue(query, params = []) {
 router.get('/summary', verifyToken, requireAdmin, async (req, res) => {
   try {
     const [userCount, documentCount, problemCount] = await Promise.all([
-      singleValue('SELECT COUNT(*) AS value FROM users'),
+      singleValue('SELECT COUNT(*) AS value FROM users WHERE membership <> "guest"'),
       singleValue('SELECT COUNT(*) AS value FROM documents'),
       singleValue('SELECT COUNT(*) AS value FROM problems WHERE COALESCE(is_active, 1) = 1')
     ]);
@@ -172,7 +172,7 @@ module.exports = router;
 // --- User moderation ---
 router.get('/users', verifyToken, requireAdmin, async (req, res) => {
   try {
-    const { q = '', status = 'all', limit = 50 } = req.query || {};
+    const { q = '', status = 'all', limit = 50, includeGuests = '0' } = req.query || {};
     const like = `%${String(q).trim()}%`;
     const where = [];
     const params = [];
@@ -182,6 +182,9 @@ router.get('/users', verifyToken, requireAdmin, async (req, res) => {
     }
     if (status === 'active') where.push('COALESCE(is_active,1) = 1');
     if (status === 'inactive') where.push('COALESCE(is_active,1) = 0');
+    if (String(includeGuests || '0') !== '1') {
+      where.push("membership <> 'guest'");
+    }
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
     const rows = await database.all(
       `SELECT id, username, name, email, role, membership, points, tier, is_active, status, created_at, last_login_at

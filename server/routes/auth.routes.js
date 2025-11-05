@@ -6,6 +6,76 @@ const { generateToken, hashPassword, verifyPassword } = require('../middleware/a
 const { logAuthEvent, EVENT_TYPES } = require('../services/auditLogService');
 const emailVerificationService = require('../services/emailVerificationService');
 
+const DEFAULT_GUEST_RETENTION_MINUTES = parseInt(process.env.LOE_GUEST_RETENTION_MINUTES || '45', 10);
+const DEFAULT_GUEST_KEEP_RECENT = parseInt(process.env.LOE_GUEST_KEEP_RECENT || '2', 10);
+
+const toNumberArray = (input = []) =>
+  Array.isArray(input) ? input.map((value) => Number(value)).filter((value) => Number.isInteger(value)) : [];
+
+async function deleteGuestArtifacts(ids = []) {
+  if (!Array.isArray(ids) || ids.length === 0) return;
+  const placeholders = ids.map(() => '?').join(',');
+  const dependentTables = [
+    { table: 'usage_counters', column: 'user_id' },
+    { table: 'study_records', column: 'user_id' },
+    { table: 'study_session_logs', column: 'user_id' },
+    { table: 'study_sessions', column: 'user_id' },
+    { table: 'study_session_events', column: 'user_id' },
+    { table: 'problem_exposures', column: 'user_id' },
+    { table: 'problem_feedback', column: 'user_id' },
+    { table: 'problem_feedback_events', column: 'user_id' },
+    { table: 'auth_logs', column: 'user_id' },
+    { table: 'problem_generations', column: 'user_id' },
+    { table: 'problem_export_history', column: 'user_id' },
+    { table: 'analysis_feedback', column: 'user_id' }
+  ];
+
+  for (const { table, column } of dependentTables) {
+    try {
+      await database.run(`DELETE FROM ${table} WHERE ${column} IN (${placeholders})`, ids);
+    } catch (error) {
+      console.warn(`[auth] guest purge skipped ${table}:`, error?.message || error);
+    }
+  }
+
+  await database.run(`DELETE FROM users WHERE id IN (${placeholders})`, ids);
+}
+
+async function purgeGuestAccounts({ excludeIds = [], retentionMinutes = DEFAULT_GUEST_RETENTION_MINUTES, keepRecent = DEFAULT_GUEST_KEEP_RECENT } = {}) {
+  try {
+    const excludeSet = new Set(toNumberArray(excludeIds));
+    const keepCount = Math.max(keepRecent, 0);
+    const cutoffMs = retentionMinutes > 0 ? Date.now() - retentionMinutes * 60 * 1000 : null;
+
+    const guests = await database.all(
+      'SELECT id, created_at FROM users WHERE membership = ? ORDER BY datetime(created_at) DESC',
+      ['guest']
+    );
+
+    if (!guests.length) return;
+
+    const deletable = new Set();
+
+    guests.forEach((row, index) => {
+      const id = Number(row?.id);
+      if (!Number.isInteger(id) || excludeSet.has(id)) return;
+
+      const createdMs = row?.created_at ? Date.parse(row.created_at) : NaN;
+      const isOlderThanRetention = cutoffMs !== null && Number.isFinite(createdMs) && createdMs < cutoffMs;
+
+      if (index >= keepCount || isOlderThanRetention) {
+        deletable.add(id);
+      }
+    });
+
+    if (!deletable.size) return;
+
+    await deleteGuestArtifacts([...deletable]);
+  } catch (error) {
+    console.warn('[auth] purgeGuestAccounts error:', error?.message || error);
+  }
+}
+
 // 회원가입
 router.post('/register', async (req, res) => {
   const {
@@ -190,15 +260,18 @@ router.post('/reset-password', async (req, res) => {
 // 로그인
 router.post('/guest-login', async (req, res) => {
   try {
+    await purgeGuestAccounts();
+
     const suffix = `${Date.now()}_${Math.floor(Math.random() * 1000)}`;
     const username = `guest_${suffix}`;
     const email = `guest_${suffix}@trial.local`;
     const hashedPassword = await hashPassword(randomBytes(12).toString('hex'));
     const today = new Date().toISOString().split('T')[0];
+    const loginTimestamp = new Date().toISOString();
 
     const insertResult = await database.run(
-      `INSERT INTO users (username, password_hash, email, name, school, grade, role, membership, email_verified, is_active, daily_limit, used_today, last_reset_date)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)` ,
+      `INSERT INTO users (username, password_hash, email, name, school, grade, role, membership, email_verified, is_active, daily_limit, used_today, last_reset_date, last_login_at, login_count)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)` ,
       [
         username,
         hashedPassword,
@@ -212,7 +285,9 @@ router.post('/guest-login', async (req, res) => {
         1,
         0,
         0,
-        today
+        today,
+        loginTimestamp,
+        1
       ]
     );
 
@@ -237,11 +312,13 @@ router.post('/guest-login', async (req, res) => {
       used_today: 0,
       tier: 'Iron',
       points: 0,
-      last_login_at: null,
-      login_count: 0,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      last_login_at: loginTimestamp,
+      login_count: 1,
+      created_at: loginTimestamp,
+      updated_at: loginTimestamp
     };
+
+    await purgeGuestAccounts({ excludeIds: [userId] });
 
     res.json({ message: '게스트 모드로 입장했어요!', token, user: sanitizedUser });
   } catch (error) {

@@ -11,28 +11,34 @@ const DocumentList = ({
   onAnalyze,
   onPassageAnalyze,
   onShare,
-  onVocabularyPreview
+  onVocabularyPreview,
+  isMobile = false
 }) => {
+  const responsive = (base, mobileOverrides = {}) => (isMobile ? { ...base, ...(mobileOverrides || {}) } : base);
+
+  const items = Array.isArray(documents) ? documents : [];
+
   if (loading) {
     return (
-      <div style={adminStyles.card}>
-        <h2 style={adminStyles.cardTitle}>📚 문서 목록</h2>
+      <div style={responsive(adminStyles.card, adminStyles.cardMobile)}>
+        <h2 style={responsive(adminStyles.cardTitle, adminStyles.cardTitleMobile)}>📚 문서 목록</h2>
         <div style={adminStyles.loading}>로딩 중...</div>
       </div>
     );
   }
 
   return (
-    <div style={adminStyles.card}>
-      <h2 style={adminStyles.cardTitle}>{title}</h2>
+    <div style={responsive(adminStyles.card, adminStyles.cardMobile)}>
+      <h2 style={responsive(adminStyles.cardTitle, adminStyles.cardTitleMobile)}>{title}</h2>
       
-      <div style={adminStyles.documentsGrid}>
-        {documents.length === 0 ? (
-          <div style={adminStyles.emptyState}>{emptyMessage}</div>
+      <div style={responsive(adminStyles.documentsGrid, adminStyles.documentsGridMobile)}>
+        {items.length === 0 ? (
+          <div style={responsive(adminStyles.emptyState, adminStyles.emptyStateMobile)}>{emptyMessage}</div>
         ) : (
-          documents.map(doc => (
+          items.map(doc => (
             <DocumentCard
               key={doc.id}
+              isMobile={isMobile}
               document={doc}
               onEdit={onEdit}
               onDelete={onDelete}
@@ -48,13 +54,14 @@ const DocumentList = ({
   );
 };
 
-const DocumentCard = ({ document: doc, onEdit, onDelete, onAnalyze, onPassageAnalyze, onShare, onVocabularyPreview }) => {
+const DocumentCard = ({ document: doc, onEdit, onDelete, onAnalyze, onPassageAnalyze, onShare, onVocabularyPreview, isMobile }) => {
+  const responsive = (base, mobileOverrides = {}) => (isMobile ? { ...base, ...(mobileOverrides || {}) } : base);
   const isVocabulary = String(doc.type || '').toLowerCase() === 'vocabulary';
   return (
-    <div style={adminStyles.documentCard}>
-      <div style={adminStyles.documentHeader}>
-        <h3 style={adminStyles.documentTitle}>{doc.title}</h3>
-        <div style={adminStyles.documentActions}>
+    <div style={responsive(adminStyles.documentCard, adminStyles.documentCardMobile)}>
+      <div style={responsive(adminStyles.documentHeader, adminStyles.documentHeaderMobile)}>
+        <h3 style={responsive(adminStyles.documentTitle, adminStyles.documentTitleMobile)}>{doc.title}</h3>
+        <div style={responsive(adminStyles.documentActions, adminStyles.documentActionsMobile)}>
           {onShare && (
             <button
               style={{ ...adminStyles.analyzeButton, background: 'var(--color-purple-500)' }}
@@ -117,11 +124,16 @@ const DocumentCard = ({ document: doc, onEdit, onDelete, onAnalyze, onPassageAna
         </div>
       </div>
       
-      <div style={adminStyles.documentMeta}>
-        <span style={adminStyles.badge}>{doc.category || '기타'}</span>
+      <div style={responsive(adminStyles.documentMeta, adminStyles.documentMetaMobile)}>
+        <span style={responsive(adminStyles.badge, adminStyles.badgeMobile)}>{doc.category || '기타'}</span>
         {doc.type && (
           <span 
-            style={{ ...adminStyles.badge, opacity: 0.8, cursor: 'default', background: isVocabulary ? 'var(--color-blue-500)' : 'var(--badge-bg)' }}
+            style={{
+              ...responsive(adminStyles.badge, adminStyles.badgeMobile),
+              opacity: 0.8,
+              cursor: 'default',
+              background: isVocabulary ? 'var(--color-blue-500)' : 'var(--badge-bg)'
+            }}
           >
             {isVocabulary ? '단어장' : '지문'}
           </span>

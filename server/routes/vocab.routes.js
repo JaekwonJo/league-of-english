@@ -418,6 +418,11 @@ router.post('/vocabulary/sets/:documentId/quiz', verifyToken, checkDailyLimit, a
       label: normalizedKeys.join(', '),
       entries: mergedEntries
     };
+    const targetDay = selectedDays[0] || {
+      key: normalizedKeys[0] || 'TEMP_DAY',
+      label: normalizedKeys[0] || doc.title,
+      entries: mergedEntries
+    };
     const problems = builder(virtualDay, vocabulary.days, desiredCount);
 
     const responseProblems = [];

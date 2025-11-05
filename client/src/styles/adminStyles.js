@@ -5,20 +5,36 @@ export const adminStyles = {
     margin: '0 auto',
     fontFamily: "'Noto Sans KR', sans-serif"
   },
+  containerMobile: {
+    padding: '16px 14px'
+  },
   header: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: '30px'
   },
+  headerMobile: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: '16px'
+  },
   title: {
     color: 'var(--text-primary)',
     margin: 0,
     fontSize: '2rem'
   },
+  titleMobile: {
+    fontSize: '1.7rem'
+  },
   headerButtons: {
     display: 'flex',
     gap: '10px'
+  },
+  headerButtonsMobile: {
+    width: '100%',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start'
   },
   primaryButton: {
     background: 'var(--indigo-gradient)',
@@ -49,10 +65,16 @@ export const adminStyles = {
     padding: '30px',
     boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)'
   },
+  cardMobile: {
+    padding: '22px'
+  },
   cardTitle: {
     color: 'var(--text-primary)',
     marginBottom: '25px',
     fontSize: '1.5rem'
+  },
+  cardTitleMobile: {
+    fontSize: '1.25rem'
   },
   loading: {
     textAlign: 'center',
@@ -66,10 +88,18 @@ export const adminStyles = {
     color: 'var(--text-muted)',
     fontSize: '18px'
   },
+  emptyStateMobile: {
+    padding: '32px 16px',
+    fontSize: '1rem'
+  },
   documentsGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
     gap: '20px'
+  },
+  documentsGridMobile: {
+    gridTemplateColumns: '1fr',
+    gap: '16px'
   },
   documentCard: {
     background: 'var(--surface-soft-solid)',
@@ -78,11 +108,19 @@ export const adminStyles = {
     border: '1px solid var(--border-subtle)',
     transition: 'all 0.3s'
   },
+  documentCardMobile: {
+    padding: '18px'
+  },
   documentHeader: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: '15px'
+  },
+  documentHeaderMobile: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: '12px'
   },
   documentTitle: {
     color: 'var(--text-primary)',
@@ -92,9 +130,18 @@ export const adminStyles = {
     flex: 1,
     marginRight: '10px'
   },
+  documentTitleMobile: {
+    marginRight: 0,
+    fontSize: '15px'
+  },
   documentActions: {
     display: 'flex',
     gap: '5px'
+  },
+  documentActionsMobile: {
+    width: '100%',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start'
   },
   analyzeButton: {
     background: 'var(--accent-primary)',
@@ -132,6 +179,10 @@ export const adminStyles = {
     gap: '10px',
     marginBottom: '10px'
   },
+  documentMetaMobile: {
+    flexWrap: 'wrap',
+    gap: '8px'
+  },
   badge: {
     background: 'var(--indigo)',
     color: 'var(--text-on-accent)',
@@ -139,6 +190,10 @@ export const adminStyles = {
     borderRadius: '20px',
     fontSize: '12px',
     fontWeight: 'bold'
+  },
+  badgeMobile: {
+    padding: '4px 10px',
+    fontSize: '11px'
   },
   meta: {
     color: 'var(--text-secondary)',
@@ -309,11 +364,20 @@ export const adminStyles = {
     marginTop: '30px',
     boxShadow: '0 12px 30px rgba(15, 23, 42, 0.12)'
   },
+  feedbackSectionMobile: {
+    padding: '20px',
+    marginTop: '24px'
+  },
   feedbackHeader: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: '20px'
+  },
+  feedbackHeaderMobile: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: '12px'
   },
   feedbackBadge: {
     background: 'var(--danger-surface)',
@@ -350,12 +414,20 @@ export const adminStyles = {
     padding: '18px',
     background: 'var(--surface-soft-solid)'
   },
+  feedbackItemMobile: {
+    padding: '16px'
+  },
   feedbackMeta: {
     display: 'flex',
     flexWrap: 'wrap',
     gap: '12px',
     marginBottom: '12px',
     color: 'var(--text-secondary)'
+  },
+  feedbackMetaMobile: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: '8px'
   },
   feedbackReason: {
     background: 'var(--surface-soft-strong)',
@@ -368,6 +440,11 @@ export const adminStyles = {
   feedbackActions: {
     display: 'flex',
     gap: '10px'
+  },
+  feedbackActionsMobile: {
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    gap: '8px'
   },
   feedbackActionResolve: {
     background: 'var(--success)',

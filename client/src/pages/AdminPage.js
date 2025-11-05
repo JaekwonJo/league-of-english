@@ -111,6 +111,7 @@ const AdminPage = () => {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
   const isTeacherOnly = user?.role === 'teacher';
+  const [isMobile, setIsMobile] = useState(() => (typeof window !== 'undefined' ? window.innerWidth < 880 : false));
 
   const [categories, setCategories] = useState(['교과서', '모의고사', '부교재', '단어', '기타']);
   const [loading, setLoading] = useState(false);
@@ -133,6 +134,17 @@ const AdminPage = () => {
       setToasts((prev) => prev.filter((toast) => toast.id !== id));
     }, 3200);
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const handleResize = () => setIsMobile(window.innerWidth < 880);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const responsive = useCallback((base, mobileOverrides = {}) => (
+    isMobile ? { ...base, ...(mobileOverrides || {}) } : base
+  ), [isMobile]);
 
   const worksheetDocuments = documents.filter((doc) => String(doc.type || '').toLowerCase() !== 'vocabulary');
   const vocabularyDocuments = documents.filter((doc) => String(doc.type || '').toLowerCase() === 'vocabulary');
@@ -366,7 +378,7 @@ const AdminPage = () => {
   };
 
   return (
-    <div style={adminStyles.container}>
+    <div style={responsive(adminStyles.container, adminStyles.containerMobile)}>
       {toasts.length > 0 && (
         <div style={toastStyles.container}>
           {toasts.map((toast) => (
@@ -389,11 +401,11 @@ const AdminPage = () => {
         </div>
       )}
       <div style={{
-        ...adminStyles.header,
-        ...(isTeacherOnly ? { alignItems: 'flex-start', flexDirection: 'column', gap: '12px' } : {})
+        ...responsive(adminStyles.header, adminStyles.headerMobile),
+        ...(isTeacherOnly ? { alignItems: 'flex-start', gap: '12px' } : {})
       }}>
         <div>
-          <h1 style={adminStyles.title}>{isAdmin ? '⚙️ 관리자 페이지' : '🍎 선생님 모드'}</h1>
+          <h1 style={responsive(adminStyles.title, adminStyles.titleMobile)}>{isAdmin ? '⚙️ 관리자 페이지' : '🍎 선생님 모드'}</h1>
           {isTeacherOnly && (
             <p style={{ margin: '6px 0 0', color: 'var(--tone-strong)', fontSize: '0.95rem' }}>
               자기 반 학생들의 학습 기록을 편하게 확인할 수 있도록 통계 보드도 준비 중이에요. 😊
@@ -401,7 +413,7 @@ const AdminPage = () => {
           )}
         </div>
         <div style={{
-          ...adminStyles.headerButtons,
+          ...responsive(adminStyles.headerButtons, adminStyles.headerButtonsMobile),
           ...(isTeacherOnly ? { marginTop: '8px' } : {})
         }}>
           <button 
@@ -461,6 +473,7 @@ const AdminPage = () => {
         onAnalyze={handleDocumentAnalyze}
         onPassageAnalyze={handlePassageAnalyze}
         onShare={handleDocumentShare}
+        isMobile={isMobile}
       />
 
       <DocumentList
@@ -472,13 +485,14 @@ const AdminPage = () => {
         onDelete={handleDelete}
         onShare={handleDocumentShare}
         onVocabularyPreview={handleVocabularyPreview}
+        isMobile={isMobile}
       />
 
       <ProblemLibrary documents={documents} />
 
-      <div style={adminStyles.feedbackSection}>
-        <div style={adminStyles.feedbackHeader}>
-          <h2 style={adminStyles.cardTitle}>🚨 신고된 분석본</h2>
+      <div style={responsive(adminStyles.feedbackSection, adminStyles.feedbackSectionMobile)}>
+        <div style={responsive(adminStyles.feedbackHeader, adminStyles.feedbackHeaderMobile)}>
+          <h2 style={responsive(adminStyles.cardTitle, adminStyles.cardTitleMobile)}>🚨 신고된 분석본</h2>
           <span style={adminStyles.feedbackBadge}>{feedbackReports.length}건 대기</span>
         </div>
         {feedbackError && <div style={adminStyles.feedbackError}>{feedbackError}</div>}
@@ -489,15 +503,15 @@ const AdminPage = () => {
         ) : (
           <div style={adminStyles.feedbackList}>
             {feedbackReports.map((report) => (
-              <div key={report.id} style={adminStyles.feedbackItem}>
-                <div style={adminStyles.feedbackMeta}>
+              <div key={report.id} style={responsive(adminStyles.feedbackItem, adminStyles.feedbackItemMobile)}>
+                <div style={responsive(adminStyles.feedbackMeta, adminStyles.feedbackMetaMobile)}>
                   <span>📄 {report.documentTitle || `문서 ${report.document_id}`}</span>
                   <span>지문 {report.passage_number}</span>
                   <span>분석본 {report.variant_index}</span>
                   <span>{new Date(report.created_at).toLocaleString()} 신고</span>
                 </div>
                 <div style={adminStyles.feedbackReason}>{report.reason || '신고 사유가 작성되지 않았습니다.'}</div>
-                <div style={adminStyles.feedbackActions}>
+                <div style={responsive(adminStyles.feedbackActions, adminStyles.feedbackActionsMobile)}>
                   <button
                     type="button"
                     style={adminStyles.feedbackActionResolve}

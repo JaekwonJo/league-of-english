@@ -87,8 +87,9 @@ const AdminUsersPanel = () => {
     try {
       setLoading(true);
       setError('');
-      const res = await api.admin.users.list({ q: query, status, limit: 100 });
-      setUsers(Array.isArray(res?.users) ? res.users : []);
+      const res = await api.admin.users.list({ q: query, status, limit: 100, includeGuests: 0 });
+      const list = Array.isArray(res?.users) ? res.users : [];
+      setUsers(list.filter((user) => String(user?.membership || '').toLowerCase() !== 'guest'));
     } catch (e) {
       setError(e?.message || '사용자 목록을 불러오지 못했습니다.');
     } finally {
