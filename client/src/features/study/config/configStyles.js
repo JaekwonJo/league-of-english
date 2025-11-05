@@ -64,12 +64,12 @@ const styles = {
   quickGuideLabel: {
     fontSize: '15px',
     fontWeight: 700,
-    color: 'var(--tone-strong)'
+    color: 'var(--text-primary)'
   },
   quickGuideText: {
     margin: 0,
     fontSize: '14px',
-    color: 'var(--tone-muted)',
+    color: 'var(--text-secondary)',
     lineHeight: 1.6
   },
   headerSlot: {
@@ -92,16 +92,16 @@ const styles = {
   savedSessionTitle: {
     fontSize: '16px',
     fontWeight: 700,
-    color: 'var(--tone-strong)'
+    color: 'var(--text-primary)'
   },
   savedSessionMeta: {
     fontSize: '14px',
-    color: 'var(--tone-muted)',
+    color: 'var(--text-secondary)',
     marginTop: '4px'
   },
   savedSessionMetaMuted: {
     fontSize: '12px',
-    color: 'var(--tone-muted)',
+    color: 'var(--text-secondary)',
     marginTop: '4px'
   },
   savedSessionActions: {
@@ -147,11 +147,11 @@ const styles = {
     fontSize: '20px',
     fontWeight: 700,
     margin: 0,
-    color: 'var(--tone-strong)'
+    color: 'var(--text-primary)'
   },
   sectionHint: {
     fontSize: '13px',
-    color: 'var(--tone-muted)',
+    color: 'var(--text-secondary)',
     marginBottom: '18px',
   },
   searchRow: {
@@ -175,7 +175,7 @@ const styles = {
     borderRadius: '12px',
     border: '1px solid var(--surface-border)',
     background: 'var(--surface-soft)',
-    color: 'var(--tone-strong)',
+    color: 'var(--text-primary)',
     fontWeight: 600,
     cursor: 'pointer',
   },
@@ -193,7 +193,7 @@ const styles = {
     borderRadius: '14px',
     border: '2px solid transparent',
     background: 'var(--surface-soft)',
-    color: 'var(--tone-strong)',
+    color: 'var(--text-primary)',
     cursor: 'pointer',
     transition: 'border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease',
     boxShadow: '0 8px 20px rgba(15, 23, 42, 0.12)',
@@ -213,7 +213,7 @@ const styles = {
   documentMeta: {
     display: 'block',
     fontSize: '0.85rem',
-    color: 'var(--tone-strong)',
+    color: 'var(--text-primary)',
     marginBottom: '4px',
   },
   emptyDocumentList: {
@@ -221,7 +221,7 @@ const styles = {
     padding: '24px',
     borderRadius: '14px',
     background: 'var(--surface-soft)',
-    color: 'var(--tone-strong)',
+    color: 'var(--text-primary)',
     textAlign: 'center',
     border: '1px dashed var(--surface-border)',
   },
@@ -279,7 +279,7 @@ const styles = {
   secondaryButton: {
     ...baseButton,
     background: 'var(--surface-soft)',
-    color: 'var(--tone-strong)',
+    color: 'var(--text-primary)',
     boxShadow: '0 8px 16px rgba(15, 23, 42, 0.12)',
     border: '1px solid var(--surface-border)',
   },
@@ -324,7 +324,7 @@ const styles = {
     borderRadius: '16px',
     padding: '28px',
     textAlign: 'center',
-    color: 'var(--tone-muted)',
+    color: 'var(--text-secondary)',
     border: '1px solid var(--surface-border)',
   },
   spinner: {
@@ -367,7 +367,7 @@ const styles = {
     borderRadius: '10px',
     border: '1px solid var(--surface-border)',
     background: 'var(--surface-soft)',
-    color: 'var(--tone-strong)',
+    color: 'var(--text-primary)',
     fontWeight: 600,
     cursor: 'pointer',
     boxShadow: 'none',
@@ -381,7 +381,7 @@ const styles = {
   },
   selectionLimitHint: {
     fontSize: '0.85rem',
-    color: 'var(--tone-strong)',
+    color: 'var(--text-primary)',
     margin: '-6px 0 12px',
     opacity: 0.85
   },
@@ -450,7 +450,7 @@ const styles = {
     background: 'var(--surface-soft)',
     cursor: 'pointer',
     transition: 'all 0.2s ease',
-    color: 'var(--tone-strong)',
+    color: 'var(--text-primary)',
     textAlign: 'center'
   },
   typeSelectCardActive: {
@@ -474,7 +474,7 @@ const styles = {
   },
   typeSelectDescription: {
     fontSize: '0.78rem',
-    color: 'var(--tone-strong)',
+    color: 'var(--text-primary)',
     lineHeight: 1.5
   },
   typeSelectBadge: {
@@ -504,7 +504,7 @@ const styles = {
     borderRadius: '14px',
     border: '1px solid var(--surface-border)',
     background: 'var(--surface-soft)',
-    color: 'var(--tone-strong)',
+    color: 'var(--text-primary)',
     cursor: 'pointer',
   },
   orderModeLabel: {
@@ -514,7 +514,7 @@ const styles = {
   },
   orderModeDescription: {
     fontSize: '13px',
-    color: 'var(--tone-strong)',
+    color: 'var(--text-primary)',
     lineHeight: 1.5,
   },
   studyFooterBar: {

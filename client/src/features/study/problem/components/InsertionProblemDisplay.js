@@ -165,7 +165,7 @@ const insertionStyles = {
   },
   metadataItem: {
     fontSize: '14px',
-    color: 'var(--tone-strong)',
+    color: 'var(--text-primary)',
     padding: '8px 16px',
     background: 'var(--surface-soft)',
     borderRadius: '20px',

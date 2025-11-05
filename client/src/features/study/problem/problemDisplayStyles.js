@@ -177,7 +177,7 @@ export const problemDisplayStyles = {
   previewFooterNote: {
     marginTop: '18px',
     fontSize: '12px',
-    color: 'var(--tone-muted)',
+    color: 'var(--text-secondary)',
     textAlign: 'right'
   },
   navButton: {
@@ -254,7 +254,7 @@ export const orderStyles = {
   },
   orderNumberSection: {
     background: 'var(--surface-soft)',
-    color: 'var(--tone-strong)',
+    color: 'var(--text-primary)',
     padding: '12px 20px',
     borderRadius: '10px',
     marginBottom: '10px',
@@ -264,7 +264,7 @@ export const orderStyles = {
   },
   orderSourceSection: {
     background: 'var(--surface-soft)',
-    color: 'var(--tone-strong)',
+    color: 'var(--text-primary)',
     padding: '12px 20px',
     borderRadius: '10px',
     marginBottom: '16px',
