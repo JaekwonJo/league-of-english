@@ -68,12 +68,10 @@ const useStudyConfig = ({ onStart, initialFocusType }) => {
   );
 
   const safeStep = useMemo(() => {
-    if (step === 2 && !config.documentId) return 1;
-    if (step === 3 && (!config.documentId || !selectedPassages.length)) {
-      return config.documentId ? 2 : 1;
-    }
+    if (step === 2 && !config.documentId) return 1; // 유형 단계는 자료 선택 이후
+    if (step === 3 && !config.documentId) return 1; // 지문 선택도 자료 필요
     return step;
-  }, [step, config.documentId, selectedPassages.length]);
+  }, [step, config.documentId]);
 
   const persistConfig = useCallback((nextState) => {
     try {
@@ -256,7 +254,7 @@ const useStudyConfig = ({ onStart, initialFocusType }) => {
   }, [defaultProblemCount, initialFocusType, initialFocusApplied, updateTypes]);
 
   useEffect(() => {
-    if (step === 2) {
+    if (step === 3) {
       setSelectedPassages([]);
     }
   }, [step]);

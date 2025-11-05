@@ -752,7 +752,7 @@ const getTimeLimitSeconds = useCallback(() => {
   return (
     <div style={styles.container}>
       <header style={styles.header}>
-        <h1 style={styles.title}>🧠 어휘 훈련</h1>
+        <h1 style={styles.title}>🐣 어휘 훈련</h1>
       </header>
 
       <div style={styles.stepper}>
@@ -886,7 +886,7 @@ const getTimeLimitSeconds = useCallback(() => {
 
           {selectedSet && step === STEPS.SELECT_DAY && (
             <section style={styles.section} id="vocab-step-2">
-              <h2 style={styles.sectionTitle}>2️⃣ Day 선택 & 단어 미리보기</h2>
+              <h2 style={styles.sectionTitle}>2️⃣ 범위 선택하기</h2>
               {daysLoading ? (
                 <div style={styles.notice}>Day 정보를 불러오는 중이에요...</div>
               ) : (

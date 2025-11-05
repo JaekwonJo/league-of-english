@@ -131,12 +131,27 @@ const StudyConfig = ({
         );
       case 2:
         return (
+          <ProblemTypeStep
+            selectedType={selectedType}
+            problemCount={defaultProblemCount}
+            orderMode={config.orderMode}
+            onBack={() => goToStep(1)}
+            onOrderModeChange={changeOrderMode}
+            onSelectType={selectSingleType}
+            onNext={() => goToStep(3)}
+            canProceed={!!selectedType}
+            onPreviewProblem={handleOpenProblemPreview}
+          />
+        );
+      case 3:
+      default:
+        return (
           <PassageStep
             passages={passages}
             selectedPassages={selectedPassages}
             loading={passagesLoading}
-            onBack={() => goToStep(1)}
-            onNext={prepareTypeStep}
+            onBack={() => goToStep(2)}
+            onNext={handleStart}
             onToggle={togglePassageSelection}
             onSelectAll={selectAllPassages}
             onRandom={randomPassages}
@@ -145,25 +160,9 @@ const StudyConfig = ({
             maxSelection={5}
             selectionLabel="학습에 포함할 지문을 골라주세요"
             metaRenderer={renderPassageMeta}
-          />
-        );
-      case 3:
-      default:
-        return (
-          <ProblemTypeStep
-            selectedType={selectedType}
-            problemCount={defaultProblemCount}
-            orderMode={config.orderMode}
-            onBack={() => goToStep(2)}
-            onOrderModeChange={changeOrderMode}
-            onSelectType={selectSingleType}
-            onStart={handleStart}
-            canStart={
-              !!config.documentId &&
-              selectedPassages.length > 0 &&
-              !!selectedType
-            }
-            onPreviewProblem={handleOpenProblemPreview}
+            finalStep
+            primaryLabel={`학습 시작 (${defaultProblemCount}문)`}
+            backLabel="← 유형 다시 고르기"
           />
         );
     }

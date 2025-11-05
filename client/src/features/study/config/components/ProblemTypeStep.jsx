@@ -9,8 +9,8 @@ const ProblemTypeStep = ({
   onBack,
   onSelectType,
   onOrderModeChange,
-  onStart,
-  canStart,
+  onNext,
+  canProceed,
   onPreviewProblem,
 }) => {
   const typeEntries = Object.entries(PROBLEM_TYPES);
@@ -97,18 +97,18 @@ const ProblemTypeStep = ({
 
       <div style={styles.studyFooterBar}>
         <button type="button" style={styles.secondaryButton} onClick={onBack}>
-          ← 지문 다시 고르기
+          ← 자료 다시 고르기
         </button>
         <button
           type="button"
           style={{
-            ...styles.startButton,
-            ...(canStart ? {} : styles.startButtonDisabled),
+            ...styles.primaryButton,
+            ...(canProceed ? {} : styles.startButtonDisabled),
           }}
-          disabled={!canStart}
-          onClick={onStart}
+          disabled={!canProceed}
+          onClick={onNext}
         >
-          학습 시작 ({problemCount}문)
+          지문 고르러 가기 →
         </button>
       </div>
     </>

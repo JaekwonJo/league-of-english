@@ -203,7 +203,7 @@ const MainLayout = ({ children, currentPath }) => {
           }
         }}
       >
-        {isMobile && (
+        {isMobile && !sidebarOpen && (
           <div style={styles.mobileTopBar}>
             <button
               style={styles.mobileMenuBtn}

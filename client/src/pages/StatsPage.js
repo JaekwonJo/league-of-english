@@ -118,7 +118,7 @@ const StatsPage = () => {
 
           <section style={styles.section}>
             <div style={styles.sectionHeaderRow}>
-              <h2 style={styles.sectionTitle}>🧠 단어 훈련</h2>
+              <h2 style={styles.sectionTitle}>🐣 단어 훈련</h2>
               <span style={styles.sectionHint}>시험 결과를 자동으로 집계해요.</span>
             </div>
             {vocabularyStats ? (

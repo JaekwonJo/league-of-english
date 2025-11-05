@@ -16,6 +16,9 @@ const PassageStep = ({
   selectionLabel,
   metaRenderer,
   maxSelection = 5,
+  finalStep = false,
+  primaryLabel = '유형 고르러 가기 →',
+  backLabel = '← 이전 단계',
 }) => {
   const remaining = Math.max(0, maxSelection - selectedPassages.length);
 
@@ -66,18 +69,18 @@ const PassageStep = ({
     )}
     <div style={styles.passageActionBar}>
       <button type="button" style={styles.secondaryButton} onClick={onBack}>
-        ← 이전 단계
+        {backLabel}
       </button>
       <button
         type="button"
         style={{
-          ...styles.primaryButton,
+          ...(finalStep ? styles.startButton : styles.primaryButton),
           ...(selectedPassages.length ? {} : styles.startButtonDisabled),
         }}
         onClick={onNext}
         disabled={!selectedPassages.length}
       >
-        유형 고르러 가기 →
+        {primaryLabel}
       </button>
     </div>
     </div>
