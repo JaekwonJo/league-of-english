@@ -43,6 +43,14 @@ const MainLayout = ({ children, currentPath }) => {
     }
   };
 
+  const handleGuestUpgrade = () => {
+    window.location.href = '/login';
+  };
+
+  const handleGuestVocabulary = () => {
+    navigate('/vocabulary');
+  };
+
   const navigate = (path) => {
     if (typeof window === 'undefined') return;
     if (window.location.pathname === path) {
@@ -57,15 +65,45 @@ const MainLayout = ({ children, currentPath }) => {
   const userRole = user?.role || 'student';
   const userMembership = String(user?.membership || '').toLowerCase();
   const isGuest = userMembership === 'guest';
-  const guestAllowedRoutes = ['/vocabulary'];
+  const guestLockedRoutes = React.useMemo(() => new Set(['/ranking']), []);
   const visibleRoutes = routesConfig.routes.filter((route) => {
     if (!route.roles || !route.roles.includes(userRole)) return false;
-    if (isGuest && !guestAllowedRoutes.includes(route.path)) return false;
     if (!route.memberships || route.memberships.length === 0) return true;
+    if (isGuest) return true;
     if (userRole === 'teacher' || userRole === 'admin') return true;
     const allowed = route.memberships.map((item) => String(item).toLowerCase());
     return allowed.includes(userMembership);
   });
+
+  const basePath = React.useMemo(() => {
+    if (!currentPath) return '/';
+    if (currentPath === '/' || currentPath === '') return '/';
+    const direct = routesConfig.routes.find((route) => route.path === currentPath);
+    if (direct) return direct.path;
+    const partial = routesConfig.routes.find((route) => route.path !== '/' && currentPath.startsWith(`${route.path}/`));
+    if (partial) return partial.path;
+    return currentPath.replace(/\/$/, '') || '/';
+  }, [currentPath]);
+
+  const guestFeatureName = React.useMemo(() => {
+    const labelMap = {
+      '/study': '문제 학습',
+      '/analysis': '분석 자료',
+      '/workbook': '워크북 생성',
+      '/stats': '학습 통계',
+      '/videos': '동영상 강의',
+      '/profile': '프로필 관리',
+      '/ranking': '랭킹'
+    };
+    return labelMap[basePath] || '프리미엄 기능';
+  }, [basePath]);
+
+  const guestRouteLocked = isGuest && guestLockedRoutes.has(basePath);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentPath]);
 
   useEffect(() => {
     if (!isMobile || !sidebarOpen) return;
@@ -94,6 +132,14 @@ const MainLayout = ({ children, currentPath }) => {
     marginLeft: isMobile ? 0 : (sidebarOpen ? uiConfig.layout.sidebar.width : uiConfig.layout.sidebar.collapsedWidth),
     padding: mobilePadding
   };
+
+  const floatingToggleStyle = React.useMemo(() => ({
+    ...styles.mobileFloatingToggle,
+    ...(sidebarOpen ? styles.mobileFloatingToggleActive : {}),
+    ...(sidebarOpen
+      ? { left: `calc(${uiConfig.layout.sidebar.width} + 12px)` }
+      : { left: '16px' })
+  }), [sidebarOpen]);
 
   return (
     <div style={styles.container}>
@@ -136,21 +182,42 @@ const MainLayout = ({ children, currentPath }) => {
             const normalizedPath = route.path === '/' ? '/' : `${route.path}`;
             const isActive = currentPath === normalizedPath
               || (normalizedPath !== '/' && currentPath.startsWith(`${normalizedPath}/`));
+            const isLockedForGuest = isGuest && guestLockedRoutes.has(route.path);
 
             return (
               <button
                 key={route.path}
                 style={{
                   ...styles.navItem,
-                  ...(isActive ? styles.navItemActive : {})
+                  ...(isActive ? styles.navItemActive : {}),
+                  ...(isLockedForGuest ? styles.navItemLocked : {})
                 }}
                 onClick={() => navigate(route.path)}
+                title={isLockedForGuest ? '회원가입 후 이용 가능' : route.name}
               >
                 <Icon size={20} />
-                {sidebarOpen && <span>{route.name}</span>}
+                {sidebarOpen && (
+                  <span style={styles.navItemLabel}>
+                    {route.name}
+                    {isLockedForGuest && <span style={styles.navItemBadge}>체험</span>}
+                  </span>
+                )}
               </button>
             );
           })}
+          <div style={styles.navDivider} />
+          <button
+            type="button"
+            style={{
+              ...styles.navItem,
+              ...styles.navLogoutItem
+            }}
+            onClick={handleLogout}
+            title="로그아웃"
+          >
+            <LucideIcons.LogOut size={20} />
+            {sidebarOpen && <span style={styles.navLogoutLabel}>로그아웃</span>}
+          </button>
         </nav>
 
         <div style={styles.userSection}>
@@ -163,11 +230,6 @@ const MainLayout = ({ children, currentPath }) => {
               </div>
             )}
           </div>
-
-          <button style={styles.logoutButton} onClick={handleLogout}>
-            <LucideIcons.LogOut size={20} />
-            {sidebarOpen && <span>로그아웃</span>}
-          </button>
         </div>
 
         {!isMobile && (
@@ -207,10 +269,7 @@ const MainLayout = ({ children, currentPath }) => {
         {isMobile && (
           <button
             type="button"
-            style={{
-              ...styles.mobileFloatingToggle,
-              ...(sidebarOpen ? styles.mobileFloatingToggleActive : {}),
-            }}
+            style={floatingToggleStyle}
             onClick={(event) => {
               event.stopPropagation();
               toggleSidebar();
@@ -226,19 +285,29 @@ const MainLayout = ({ children, currentPath }) => {
               <span style={styles.mobileBrandIcon}>🦉</span>
               <span style={styles.mobileTitle}>League of English</span>
             </div>
-            <div style={styles.mobileActions}>
-              <button
-                style={styles.mobileActionBtn}
-                onClick={handleLogout}
-                aria-label="로그아웃"
-                title="로그아웃"
-              >
-                <LucideIcons.LogOut size={18} />
-              </button>
-            </div>
           </div>
         )}
         {children}
+        {guestRouteLocked && (
+          <div style={styles.guestOverlay}>
+            <div style={styles.guestOverlayCard}>
+              <span style={styles.guestOverlayIcon}>🔒</span>
+              <h2 style={styles.guestOverlayTitle}>{guestFeatureName}은(는) 회원 전용이에요</h2>
+              <p style={styles.guestOverlayDescription}>
+                가입하면 분석, 워크북, 통계까지 전부 자동으로 열려요!<br />
+                지금 회원가입하고 프리미엄 학습을 바로 시작해 볼까요?
+              </p>
+              <div style={styles.guestOverlayButtons}>
+                <button type="button" style={styles.guestOverlayPrimary} onClick={handleGuestUpgrade}>
+                  회원가입하고 이용하기
+                </button>
+                <button type="button" style={styles.guestOverlaySecondary} onClick={handleGuestVocabulary}>
+                  어휘 훈련 계속 체험하기
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
@@ -290,6 +359,11 @@ const styles = {
     flexDirection: 'column',
     gap: '5px'
   },
+  navDivider: {
+    height: 1,
+    background: 'var(--sidebar-divider)',
+    margin: '12px 4px'
+  },
   navItem: {
     display: 'flex',
     alignItems: 'center',
@@ -308,6 +382,33 @@ const styles = {
   navItemActive: {
     background: 'var(--sidebar-active-bg)',
     color: 'var(--sidebar-active-text)'
+  },
+  navItemLocked: {
+    opacity: 0.75
+  },
+  navItemLabel: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    fontWeight: 600
+  },
+  navItemBadge: {
+    fontSize: '10px',
+    letterSpacing: '0.4px',
+    padding: '2px 6px',
+    borderRadius: '999px',
+    background: 'rgba(59,130,246,0.18)',
+    color: 'var(--tone-hero)',
+    textTransform: 'uppercase'
+  },
+  navLogoutItem: {
+    marginTop: '4px',
+    color: '#fda4af',
+    border: '1px solid rgba(248,113,113,0.25)',
+    background: 'rgba(248,113,113,0.08)'
+  },
+  navLogoutLabel: {
+    fontWeight: 600
   },
   userSection: {
     padding: '20px',
@@ -343,19 +444,6 @@ const styles = {
     color: 'var(--sidebar-text-muted)',
     margin: 0
   },
-  logoutButton: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    width: '100%',
-    padding: '10px 15px',
-    background: 'var(--danger-bg)',
-    color: 'var(--danger-text)',
-    border: 'none',
-    borderRadius: '10px',
-    cursor: 'pointer',
-    transition: 'all 0.3s'
-  },
   toggleButton: {
     position: 'absolute',
     right: '-15px',
@@ -373,6 +461,7 @@ const styles = {
     color: 'var(--sidebar-button-text)'
   },
   main: {
+    position: 'relative',
     flex: 1,
     transition: 'margin-left 0.3s ease',
     minHeight: '100vh',
@@ -387,18 +476,20 @@ const styles = {
     zIndex: 980,
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     padding: '14px 18px',
     marginBottom: '12px',
     background: 'linear-gradient(135deg, rgba(12, 74, 210, 0.18), rgba(79, 70, 229, 0.22))',
     borderRadius: '16px',
     boxShadow: '0 14px 32px rgba(15, 23, 42, 0.22)',
-    backdropFilter: 'blur(14px)'
+    backdropFilter: 'blur(14px)',
+    width: '100%'
   },
   mobileBranding: {
     display: 'flex',
     alignItems: 'center',
-    gap: '10px'
+    gap: '10px',
+    justifyContent: 'center'
   },
   mobileBrandIcon: {
     fontSize: '24px'
@@ -409,25 +500,8 @@ const styles = {
     background: 'linear-gradient(135deg, var(--accent-primary) 0%, var(--violet) 100%)',
     WebkitBackgroundClip: 'text',
     WebkitTextFillColor: 'transparent',
-    letterSpacing: '0.3px'
-  },
-  mobileActions: {
-    display: 'flex',
-    gap: '10px'
-  },
-  mobileActionBtn: {
-    width: 40,
-    height: 36,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 12,
-    border: '1px solid rgba(59,130,246,0.25)',
-    background: 'linear-gradient(135deg, rgba(59,130,246,0.32) 0%, rgba(99,102,241,0.28) 100%)',
-    color: 'var(--text-on-accent)',
-    cursor: 'pointer',
-    transition: 'transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease',
-    boxShadow: '0 10px 22px rgba(37, 99, 235, 0.25)'
+    letterSpacing: '0.3px',
+    fontFamily: "'Pretendard', 'Noto Sans KR', sans-serif"
   },
   mobileOverlay: {
     position: 'fixed',
@@ -441,26 +515,90 @@ const styles = {
   },
   mobileFloatingToggle: {
     position: 'fixed',
-    top: 16,
-    left: 16,
-    width: 42,
-    height: 42,
-    borderRadius: 14,
+    top: 'calc(env(safe-area-inset-top, 0px) + 12px)',
+    left: '16px',
+    width: 46,
+    height: 46,
+    borderRadius: 16,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: 'linear-gradient(135deg, rgba(59,130,246,0.88) 0%, rgba(37,99,235,0.92) 100%)',
-    border: '1px solid rgba(191,219,254,0.65)',
-    boxShadow: '0 16px 32px rgba(30, 64, 175, 0.35)',
-    color: 'var(--text-on-accent)',
+    background: 'linear-gradient(135deg, rgba(59,130,246,0.16) 0%, rgba(99,102,241,0.2) 100%)',
+    border: '1px solid rgba(99, 102, 241, 0.45)',
+    boxShadow: '0 16px 32px rgba(15, 23, 42, 0.18)',
+    color: 'var(--accent-primary)',
     zIndex: 1200,
     cursor: 'pointer',
-    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease'
   },
   mobileFloatingToggleActive: {
-    background: 'linear-gradient(135deg, rgba(30,64,175,0.85) 0%, rgba(88,28,135,0.88) 100%)',
-    borderColor: 'rgba(147,197,253,0.8)',
-    transform: 'scale(0.94)'
+    background: 'linear-gradient(135deg, rgba(79,70,229,0.92) 0%, rgba(14,165,233,0.92) 100%)',
+    borderColor: 'rgba(191,219,254,0.85)',
+    color: '#fff',
+    transform: 'scale(0.95)'
+  },
+  guestOverlay: {
+    position: 'absolute',
+    inset: 0,
+    background: 'linear-gradient(135deg, rgba(15,23,42,0.72) 0%, rgba(30,64,175,0.55) 100%)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '24px',
+    textAlign: 'center',
+    backdropFilter: 'blur(6px)',
+    zIndex: 950
+  },
+  guestOverlayCard: {
+    maxWidth: '520px',
+    width: '100%',
+    borderRadius: '28px',
+    padding: '36px 28px',
+    background: 'rgba(255, 255, 255, 0.92)',
+    boxShadow: '0 24px 48px rgba(15, 23, 42, 0.3)'
+  },
+  guestOverlayIcon: {
+    fontSize: '42px',
+    display: 'block',
+    marginBottom: '12px'
+  },
+  guestOverlayTitle: {
+    fontSize: '24px',
+    fontWeight: 800,
+    margin: '0 0 10px',
+    color: 'var(--tone-hero)'
+  },
+  guestOverlayDescription: {
+    margin: '0 0 22px',
+    color: 'var(--text-muted)',
+    lineHeight: 1.6,
+    fontSize: '15px'
+  },
+  guestOverlayButtons: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px'
+  },
+  guestOverlayPrimary: {
+    padding: '16px 22px',
+    borderRadius: '14px',
+    border: 'none',
+    background: 'linear-gradient(135deg, rgba(37,99,235,0.95) 0%, rgba(79,70,229,0.95) 100%)',
+    color: '#fff',
+    fontWeight: 700,
+    fontSize: '16px',
+    cursor: 'pointer',
+    boxShadow: '0 18px 40px rgba(37,99,235,0.25)'
+  },
+  guestOverlaySecondary: {
+    padding: '14px 20px',
+    borderRadius: '14px',
+    border: '1px solid rgba(59,130,246,0.45)',
+    background: 'rgba(255,255,255,0.85)',
+    color: 'var(--tone-hero)',
+    fontWeight: 600,
+    fontSize: '15px',
+    cursor: 'pointer'
   }
 };
 

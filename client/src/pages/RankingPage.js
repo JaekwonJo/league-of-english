@@ -9,6 +9,17 @@ import tierConfig from '../config/tierConfig.json';
 import { api } from '../services/api.service';
 import logger from '../utils/logger';
 
+const TIER_EMBLEMS = {
+  iron: '🪨',
+  bronze: '🥉',
+  silver: '🥈',
+  gold: '🏆',
+  platinum: '💠',
+  diamond: '💎',
+  master: '👑',
+  challenger: '🌌'
+};
+
 const RankingPage = () => {
   const { user } = useAuth();
   const [rankings, setRankings] = useState([]);
@@ -18,6 +29,7 @@ const RankingPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedTab, setSelectedTab] = useState('leaderboard');
+  const [isMobile, setIsMobile] = useState(() => (typeof window !== 'undefined' ? window.innerWidth < 768 : false));
 
   const getTierInfo = useCallback((points) => {
     return tierConfig.tiers.find(tier => 
@@ -118,6 +130,15 @@ const RankingPage = () => {
     loadRankingData();
   }, [loadRankingData]);
 
+  useEffect(() => {
+    const handleResize = () => {
+      if (typeof window === 'undefined') return;
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const formatPoints = useCallback((points) => {
     const numeric = Number(points) || 0;
     return numeric.toLocaleString();
@@ -191,7 +212,10 @@ const RankingPage = () => {
       {selectedTab === 'leaderboard' && (
         <div style={styles.content}>
           <div style={styles.leaderboard}>
-            <h2 style={styles.sectionTitle}>상위 랭커 TOP 100</h2>
+            <h2 style={{
+              ...styles.sectionTitle,
+              ...(isMobile ? styles.sectionTitleMobile : {})
+            }}>상위 랭커 TOP 100</h2>
             {leaderboardMeta?.total && (
               <p style={styles.leaderboardMeta}>총 {leaderboardMeta.total.toLocaleString()}명의 플레이어가 경쟁 중이에요!</p>
             )}
@@ -232,6 +256,7 @@ const RankingPage = () => {
                   ? { label: 'EMBER', style: styles.top3Badge }
                   : null;
                 const tierId = (ranker.tier?.id || '').toLowerCase();
+                const tierEmblem = TIER_EMBLEMS[tierId] || '⭐';
                 const tierBadgeStyle =
                   tierId === 'iron' ? styles.tierBadgeIron :
                   tierId === 'bronze' ? styles.tierBadgeBronze :
@@ -249,13 +274,17 @@ const RankingPage = () => {
                     ...styles.rankingItem,
                     ...(ranker.id === user?.id ? styles.myRankingItem : {}),
                     ...(index < 3 ? styles.topRanker : {}),
-                    ...topCardStyle
+                    ...topCardStyle,
+                    ...(isMobile ? styles.rankingItemMobile : {})
                   }}
                 >
                   {topGlowStyle && (
                     <div style={{ ...styles.topRankAura, ...topGlowStyle }} aria-hidden />
                   )}
-                  <div style={styles.rankInfo}>
+                  <div style={{
+                    ...styles.rankInfo,
+                    ...(isMobile ? styles.rankInfoMobile : {})
+                  }}>
                     {getRankDisplay(ranker.rank)}
                     {topBadge && (
                       <span style={{ ...styles.topBadge, ...topBadge.style }}>{topBadge.label}</span>
@@ -278,8 +307,12 @@ const RankingPage = () => {
                     </div>
                   </div>
                   
-                  <div style={styles.tierInfo}>
+                  <div style={{
+                    ...styles.tierInfo,
+                    ...(isMobile ? styles.tierInfoMobile : {})
+                  }}>
                     <div style={{ ...styles.tierBadge, ...tierBadgeStyle }}>
+                      <span style={styles.tierEmblem}>{tierEmblem}</span>
                       <span style={{ color: ranker.tier.color }}>
                         {ranker.tier.icon}
                       </span>
@@ -287,7 +320,10 @@ const RankingPage = () => {
                         {ranker.tier.nameKr}
                       </span>
                     </div>
-                    <div style={styles.points}>
+                    <div style={{
+                      ...styles.points,
+                      ...(isMobile ? styles.pointsMobile : {})
+                    }}>
                       {lpText} LP
                     </div>
                   </div>
@@ -303,7 +339,10 @@ const RankingPage = () => {
       {selectedTab === 'myrank' && (
         <div style={styles.content}>
           <div style={styles.myRankSection}>
-            <h2 style={styles.sectionTitle}>내 순위 정보</h2>
+            <h2 style={{
+              ...styles.sectionTitle,
+              ...(isMobile ? styles.sectionTitleMobile : {})
+            }}>내 순위 정보</h2>
             
             {myRank?.myRank ? (
               <>
@@ -392,7 +431,10 @@ const RankingPage = () => {
       {selectedTab === 'tiers' && (
         <div style={styles.content}>
           <div style={styles.tierSection}>
-            <h2 style={styles.sectionTitle}>티어 분포</h2>
+            <h2 style={{
+              ...styles.sectionTitle,
+              ...(isMobile ? styles.sectionTitleMobile : {})
+            }}>티어 분포</h2>
             
             <div style={styles.tierDistribution}>
               {tierDistribution.length === 0 && (
@@ -522,6 +564,10 @@ const styles = {
     color: 'var(--tone-hero)',
     wordBreak: 'keep-all'
   },
+  sectionTitleMobile: {
+    fontSize: '18px',
+    whiteSpace: 'nowrap'
+  },
   leaderboard: {
     width: '100%'
   },
@@ -554,11 +600,17 @@ const styles = {
     color: 'var(--tone-strong)',
     position: 'relative',
     overflow: 'hidden',
-    isolation: 'isolate'
+    isolation: 'isolate',
+    flexWrap: 'wrap',
+    gap: '12px'
   },
   myRankingItem: {
     border: '2px solid var(--success)',
     boxShadow: '0 8px 25px var(--success-shadow)'
+  },
+  rankingItemMobile: {
+    flexDirection: 'column',
+    alignItems: 'flex-start'
   },
   topRanker: {
     background: 'linear-gradient(135deg, rgba(250, 204, 21, 0.2), rgba(245, 158, 11, 0.2))',
@@ -625,7 +677,10 @@ const styles = {
     alignItems: 'center',
     gap: '15px',
     position: 'relative',
-    zIndex: 1
+    zIndex: 1,
+    flex: '1 1 auto',
+    minWidth: 0,
+    flexWrap: 'wrap'
   },
   medal: {
     fontSize: '24px',
@@ -636,6 +691,12 @@ const styles = {
     fontWeight: 'bold',
     color: 'var(--tone-strong)',
     minWidth: '40px'
+  },
+  rankInfoMobile: {
+    width: '100%',
+    gap: '10px',
+    flexDirection: 'column',
+    alignItems: 'flex-start'
   },
   userInfo: {
     display: 'flex',
@@ -649,20 +710,22 @@ const styles = {
     fontSize: '16px',
     fontWeight: 'bold',
     color: 'var(--text-primary)',
-    display: 'inline-flex',
+    display: 'flex',
     alignItems: 'center',
-    gap: '8px',
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    flexWrap: 'nowrap'
+    gap: '6px',
+    flexWrap: 'wrap',
+    whiteSpace: 'normal',
+    overflow: 'visible',
+    textOverflow: 'clip',
+    maxWidth: '100%'
   },
   userId: {
     fontWeight: 600,
     color: 'var(--tone-strong)',
     fontSize: '13px',
-    whiteSpace: 'nowrap',
-    opacity: 0.85
+    whiteSpace: 'normal',
+    opacity: 0.85,
+    wordBreak: 'break-word'
   },
   top1Name: {
     background: 'linear-gradient(135deg, #F59E0B 0%, #FDE68A 100%)',
@@ -712,7 +775,13 @@ const styles = {
     alignItems: 'flex-end',
     gap: '4px',
     position: 'relative',
-    zIndex: 1
+    zIndex: 1,
+    marginLeft: 'auto'
+  },
+  tierInfoMobile: {
+    alignItems: 'flex-start',
+    width: '100%',
+    marginLeft: 0
   },
   tierBadge: {
     display: 'flex',
@@ -724,6 +793,10 @@ const styles = {
     color: 'var(--text-on-accent)',
     boxShadow: '0 8px 24px rgba(15, 23, 42, 0.25)',
     backdropFilter: 'blur(6px)'
+  },
+  tierEmblem: {
+    fontSize: '18px',
+    filter: 'drop-shadow(0 2px 4px rgba(15, 23, 42, 0.25))'
   },
   tierBadgeIron: {
     background: 'linear-gradient(135deg, rgba(156, 163, 175, 0.85) 0%, rgba(75, 85, 99, 0.9) 60%, rgba(55, 65, 81, 0.95) 100%)'
@@ -761,6 +834,9 @@ const styles = {
     fontSize: '14px',
     fontWeight: 'bold',
     color: 'var(--warning-strong)'
+  },
+  pointsMobile: {
+    alignSelf: 'flex-start'
   },
   myRankSection: {
     width: '100%'

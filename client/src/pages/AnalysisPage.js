@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api.service';
 import { analysisStyles } from '../styles/analysisStyles';
@@ -12,14 +12,52 @@ const GENERATION_WORDS = [
   { word: 'spark', meaning: '불꽃; 아이디어가 시작되는 불씨' },
   { word: 'nurture', meaning: '길러 주다; 애정을 쏟아 키우다' },
   { word: 'momentum', meaning: '관성, 추진력; 계속 나아가게 하는 힘' },
-  { word: 'focus', meaning: '집중; 마음을 한곳에 모으는 상태' }
+  { word: 'focus', meaning: '집중; 마음을 한곳에 모으는 상태' },
+  { word: 'anchor', meaning: '닻; 중심을 잡아 주는 버팀목' },
+  { word: 'refine', meaning: '정제하다; 조금씩 다듬어 완성도를 높이다' },
+  { word: 'sustain', meaning: '지속시키다; 버티게 하다' },
+  { word: 'clarity', meaning: '명확성; 또렷하게 이해되는 상태' },
+  { word: 'leap', meaning: '도약하다; 큰 폭으로 나아가다' },
+  { word: 'trailblaze', meaning: '길을 개척하다; 새로운 시도를 하다' }
 ];
 
 const GENERATION_QUOTES = [
-  { text: 'Education is the kindling of a flame, not the filling of a vessel.', author: 'William Butler Yeats' },
-  { text: 'The beautiful thing about learning is that nobody can take it away from you.', author: 'B. B. King' },
-  { text: 'Tell me and I forget. Teach me and I remember. Involve me and I learn.', author: 'Benjamin Franklin' },
-  { text: 'Learning never exhausts the mind.', author: 'Leonardo da Vinci' }
+  {
+    text: 'Education is the kindling of a flame, not the filling of a vessel.',
+    author: 'William Butler Yeats',
+    authorKr: '윌리엄 버틀러 예이츠',
+    translation: '교육은 그릇을 채우는 것이 아니라, 마음에 불을 붙이는 일이에요.'
+  },
+  {
+    text: 'The beautiful thing about learning is that nobody can take it away from you.',
+    author: 'B. B. King',
+    authorKr: '비비 킹',
+    translation: '배움의 아름다움은 누구도 그것을 빼앗을 수 없다는 데 있어요.'
+  },
+  {
+    text: 'Tell me and I forget. Teach me and I remember. Involve me and I learn.',
+    author: 'Benjamin Franklin',
+    authorKr: '벤저민 프랭클린',
+    translation: '들어서는 잊어버리지만, 직접 참여하면 배움이 내 것이 됩니다.'
+  },
+  {
+    text: 'Learning never exhausts the mind.',
+    author: 'Leonardo da Vinci',
+    authorKr: '레오나르도 다빈치',
+    translation: '배움은 마음을 지치게 하지 않고, 오히려 더 단단하게 해 줍니다.'
+  },
+  {
+    text: 'Success is the sum of small efforts, repeated day in and day out.',
+    author: 'Robert Collier',
+    authorKr: '로버트 콜리어',
+    translation: '성공은 매일 반복되는 작은 노력들의 합이에요.'
+  },
+  {
+    text: 'You are never too small to make a difference.',
+    author: 'Greta Thunberg',
+    authorKr: '그레타 툰베리',
+    translation: '당신은 결코 너무 작지 않아요. 노력은 분명 변화를 만듭니다.'
+  }
 ];
 
 const LOADING_MESSAGES = [
@@ -34,6 +72,20 @@ const getCircledDigit = (index) => CIRCLED_DIGITS[index] || `${index + 1}.`;
 
 const pickRandom = (items) => items[Math.floor(Math.random() * items.length)];
 
+const generateWordBatch = (count = 3, exclude = []) => {
+  const excludeSet = new Set((exclude || []).map((item) => item.word));
+  const available = GENERATION_WORDS.filter((item) => !excludeSet.has(item.word));
+  const pool = available.length >= count ? available : GENERATION_WORDS;
+  const shuffled = [...pool].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, Math.min(count, shuffled.length));
+};
+
+const pickQuoteEntry = (excludeText) => {
+  const filtered = excludeText ? GENERATION_QUOTES.filter((item) => item.text !== excludeText) : GENERATION_QUOTES;
+  const pool = filtered.length ? filtered : GENERATION_QUOTES;
+  return pickRandom(pool);
+};
+
 const STEPS = {
   DOCUMENT: 1,
   PASSAGE: 2,
@@ -41,7 +93,15 @@ const STEPS = {
 };
 
 const AnalysisPage = () => {
-  const { isAdmin } = useAuth();
+  const { user, isAdmin } = useAuth();
+  const isGuest = (user?.membership || '').toLowerCase() === 'guest';
+  const guestViewedPassagesRef = useRef(new Set());
+
+  useEffect(() => {
+    if (!isGuest) {
+      guestViewedPassagesRef.current.clear();
+    }
+  }, [isGuest]);
   const [documents, setDocuments] = useState([]);
   const [documentSearch, setDocumentSearch] = useState('');
   const [selectedDocument, setSelectedDocument] = useState(null);
@@ -86,13 +146,9 @@ const AnalysisPage = () => {
     active: false,
     passageNumber: null,
     count: 1,
-    word: null,
-    meaning: null,
-    quote: null,
-    quoteAuthor: null,
     message: null,
-    wordHistory: [],
-    quoteHistory: []
+    wordBatch: [],
+    quoteEntry: null
   });
   useEffect(() => {
     if (!generationLoading.active) return undefined;
@@ -100,17 +156,9 @@ const AnalysisPage = () => {
     const rotateWord = () => {
       setGenerationLoading((prev) => {
         if (!prev.active) return prev;
-        const history = Array.isArray(prev.wordHistory) ? prev.wordHistory : [];
-        const usedWords = new Set(history.map((item) => item.word));
-        const candidates = GENERATION_WORDS.filter((item) => !usedWords.has(item.word));
-        const next = candidates.length ? pickRandom(candidates) : pickRandom(GENERATION_WORDS);
-        const alreadyIncluded = history.some((item) => item.word === next.word);
-        const nextHistory = alreadyIncluded ? history : [...history, next];
         return {
           ...prev,
-          word: next.word,
-          meaning: next.meaning,
-          wordHistory: nextHistory
+          wordBatch: generateWordBatch(3, prev.wordBatch)
         };
       });
     };
@@ -118,17 +166,9 @@ const AnalysisPage = () => {
     const rotateQuote = () => {
       setGenerationLoading((prev) => {
         if (!prev.active) return prev;
-        const history = Array.isArray(prev.quoteHistory) ? prev.quoteHistory : [];
-        const usedQuotes = new Set(history.map((item) => item.text));
-        const candidates = GENERATION_QUOTES.filter((item) => !usedQuotes.has(item.text));
-        const next = candidates.length ? pickRandom(candidates) : pickRandom(GENERATION_QUOTES);
-        const alreadyIncluded = history.some((item) => item.text === next.text);
-        const nextHistory = alreadyIncluded ? history : [...history, { text: next.text, author: next.author }];
         return {
           ...prev,
-          quote: next.text,
-          quoteAuthor: next.author,
-          quoteHistory: nextHistory
+          quoteEntry: pickQuoteEntry(prev.quoteEntry?.text)
         };
       });
     };
@@ -244,16 +284,7 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
       setFeedbackMessage(null);
       setReportModal({ open: false, variantIndex: null, reason: '' });
       setGenerationPrompt({ open: false, passage: null });
-      setGenerationLoading({
-        active: false,
-        passageNumber: null,
-        count: 1,
-        word: null,
-        meaning: null,
-        quote: null,
-        quoteAuthor: null,
-        message: null
-      });
+      resetGenerationLoading();
 
       // 즉시 지문 선택 화면으로 전환해 기존 분석이 보이지 않도록 초기화
       navigateToStep(STEPS.PASSAGE);
@@ -296,16 +327,17 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
       setFeedbackMessage(null);
       setReportModal({ open: false, variantIndex: null, reason: '' });
       setGenerationPrompt({ open: false, passage: null });
-      setGenerationLoading({
-        active: false,
-        passageNumber: null,
-        count: 1,
-        word: null,
-        meaning: null,
-        quote: null,
-        quoteAuthor: null,
-        message: null
-      });
+      resetGenerationLoading();
+
+      if (isGuest) {
+        const viewed = guestViewedPassagesRef.current;
+        const key = passage.passageNumber;
+        if (!viewed.has(key) && viewed.size >= 3) {
+          setAnalysisLimitError('게스트 체험 계정은 분석 자료를 3개까지만 열람할 수 있어요. 프로 멤버로 업그레이드하면 제한 없이 볼 수 있습니다.');
+          setPassageLoading(false);
+          return;
+        }
+      }
 
       const response = await api.analysis.getPassage(selectedDocument.id, passage.passageNumber);
       if (response.success) {
@@ -316,6 +348,9 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
         navigateToStep(STEPS.ANALYSIS);
         setFeedbackMessage(null);
         setReportModal({ open: false, variantIndex: null, reason: '' });
+        if (isGuest) {
+          guestViewedPassagesRef.current.add(passage.passageNumber);
+        }
       } else {
         raiseError('해당 지문의 분석을 불러오지 못했습니다.', response.message || 'success: false');
       }
@@ -359,17 +394,11 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
     return success;
   };
 
-  const buildGenerationFlavor = () => {
-    const word = pickRandom(GENERATION_WORDS);
-    const quote = pickRandom(GENERATION_QUOTES);
-    return {
-      word: word.word,
-      meaning: word.meaning,
-      quote: quote.text,
-      quoteAuthor: quote.author,
-      message: pickRandom(LOADING_MESSAGES)
-    };
-  };
+  const buildGenerationFlavor = (prevWordBatch = [], prevQuoteEntry = null) => ({
+    wordBatch: generateWordBatch(3, prevWordBatch),
+    quoteEntry: pickQuoteEntry(prevQuoteEntry?.text),
+    message: pickRandom(LOADING_MESSAGES)
+  });
 
   const openGenerationPrompt = (passage) => {
     if (!passage || remainingSlots(passage) === 0) return;
@@ -385,32 +414,34 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
       active: false,
       passageNumber: null,
       count: 1,
-      word: null,
-      meaning: null,
-      quote: null,
-      quoteAuthor: null,
       message: null,
-      wordHistory: [],
-      quoteHistory: []
+      wordBatch: [],
+      quoteEntry: null
     });
   };
 
+  const handleWordBatchMore = useCallback(() => {
+    setGenerationLoading((prev) => {
+      if (!prev.active) return prev;
+      return {
+        ...prev,
+        wordBatch: generateWordBatch(3, prev.wordBatch)
+      };
+    });
+  }, []);
+
   const startGeneration = async (count) => {
     if (!generationPrompt.passage || !Number.isInteger(count)) return;
-    const flavor = buildGenerationFlavor();
+    const flavor = buildGenerationFlavor(generationLoading.wordBatch, generationLoading.quoteEntry);
     const passageNumber = generationPrompt.passage.passageNumber;
     closeGenerationPrompt();
     setGenerationLoading({
       active: true,
       passageNumber,
       count,
-      word: flavor.word,
-      meaning: flavor.meaning,
-      quote: flavor.quote,
-      quoteAuthor: flavor.quoteAuthor,
       message: flavor.message,
-      wordHistory: flavor.word ? [{ word: flavor.word, meaning: flavor.meaning }] : [],
-      quoteHistory: flavor.quote ? [{ text: flavor.quote, author: flavor.quoteAuthor }] : []
+      wordBatch: flavor.wordBatch,
+      quoteEntry: flavor.quoteEntry
     });
 
     const ok = await handleGenerateVariants(passageNumber, count);
@@ -841,7 +872,15 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
       ...(index === total - 1 ? analysisStyles.sentenceCardLast : {})
     };
 
-    const stripPrefixedLine = (value) => String(value || '').replace(/^(?:[📘🧠🎯✏️⭐*\s]+)?[^:：]+[:：]\s*/u, '').trim();
+    const stripPrefixedLine = (value) => {
+      const raw = String(value || '').trim();
+      if (!raw) return '';
+      const withoutEmoji = raw.replace(/^[📘🧠🎯⭐✏️\s]+/, '');
+      const cleaned = withoutEmoji
+        .replace(/^(한글\s*해석|문장\s*분석|어휘\s*노트|해석|분석)\s*(?:[:：-]\s*)?/u, '')
+        .replace(/^[-\s]+/, '');
+      return cleaned.trim();
+    };
 
     const sections = [
       { key: 'korean', label: '📘 한글 해석', value: koreanLine },
@@ -1121,24 +1160,34 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
           <div style={analysisStyles.loadingCard}>
             <div style={analysisStyles.loadingSpinner} />
             <p style={analysisStyles.loadingMessage}>{generationLoading.message || 'AI가 분석본을 정성껏 만드는 중이에요... ⏳'}</p>
-            {generationLoading.wordHistory?.length > 0 && (
-              <div style={analysisStyles.loadingWordStack}>
-                {generationLoading.wordHistory.map((item, index) => (
-                  <div key={`loading-word-${item.word}-${index}`} style={analysisStyles.loadingWordBox}>
-                    <span style={analysisStyles.loadingWord}>{item.word}</span>
-                    <span style={analysisStyles.loadingMeaning}>{item.meaning}</span>
-                  </div>
-                ))}
-              </div>
+            {generationLoading.wordBatch?.length > 0 && (
+              <>
+                <div style={analysisStyles.loadingWordStack}>
+                  {generationLoading.wordBatch.map((item, index) => (
+                    <div key={`loading-word-${item.word}-${index}`} style={analysisStyles.loadingWordBox}>
+                      <span style={analysisStyles.loadingWord}>{item.word}</span>
+                      <span style={analysisStyles.loadingMeaning}>{item.meaning}</span>
+                    </div>
+                  ))}
+                </div>
+                <div style={analysisStyles.loadingWordActions}>
+                  <button type="button" style={analysisStyles.loadingMoreButton} onClick={handleWordBatchMore}>
+                    새 단어 보기 ↻
+                  </button>
+                </div>
+              </>
             )}
-            {generationLoading.quoteHistory?.length > 0 && (
+            {generationLoading.quoteEntry && (
               <div style={analysisStyles.loadingQuoteStack}>
-                {generationLoading.quoteHistory.map((item, index) => (
-                  <div key={`loading-quote-${index}`} style={analysisStyles.loadingQuoteBox}>
-                    <blockquote style={analysisStyles.loadingQuote}>“{item.text}”</blockquote>
-                    <cite style={analysisStyles.loadingQuoteAuthor}>— {item.author}</cite>
-                  </div>
-                ))}
+                <div style={analysisStyles.loadingQuoteBox}>
+                  <blockquote style={analysisStyles.loadingQuote}>“{generationLoading.quoteEntry.text}”</blockquote>
+                  <cite style={analysisStyles.loadingQuoteAuthor}>
+                    — {generationLoading.quoteEntry.authorKr} ({generationLoading.quoteEntry.author})
+                  </cite>
+                  {generationLoading.quoteEntry.translation && (
+                    <p style={analysisStyles.loadingQuoteTranslation}>{generationLoading.quoteEntry.translation}</p>
+                  )}
+                </div>
               </div>
             )}
           </div>

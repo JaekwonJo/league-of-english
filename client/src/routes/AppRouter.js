@@ -24,8 +24,6 @@ const pageComponents = {
   LoginPage: lazy(() => import('../pages/LoginPage'))
 };
 
-const GUEST_ALLOWED_ROUTES = ['/vocabulary'];
-
 const AppRouter = () => {
   const { user, loading } = useAuth();
   const [currentPath, setCurrentPath] = React.useState(window.location.pathname);
@@ -96,9 +94,8 @@ const hasPermission = (user, route) => {
   const membership = String(user.membership || '').toLowerCase();
 
   if (membership === 'guest') {
-    if (!GUEST_ALLOWED_ROUTES.includes(route.path)) {
-      return false;
-    }
+    // 게스트는 모든 학생용 화면을 둘러볼 수 있도록 허용하고, 페이지 내부에서 업그레이드 안내를 표시한다.
+    return true;
   }
 
   if (route.memberships && route.memberships.length) {
@@ -131,10 +128,10 @@ const UnauthorizedScreen = () => {
   if (isGuest) {
     return (
       <div style={styles.centerContainer}>
-        <h2 style={styles.title}>회원가입이 필요해요 ✨</h2>
+        <h2 style={styles.title}>회원 전용 공간이에요 🔒</h2>
         <p style={styles.description}>
-          게스트 체험에서는 <strong>어휘 훈련</strong>만 이용할 수 있어요.<br />
-          전체 기능을 사용하려면 회원가입 후 로그인해 주세요.
+          이 화면은 게스트 모드에서는 체험만 가능합니다.<br />
+          가입하면 모든 기능을 바로 이용할 수 있어요!
         </p>
         <div style={styles.buttonRow}>
           <button

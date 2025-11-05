@@ -26,53 +26,6 @@ const styles = {
     padding: '20px',
     borderRadius: '16px'
   },
-  howtoBox: {
-    padding: '22px 24px',
-    borderRadius: '20px',
-    background: 'var(--surface-card)',
-    border: '1px solid rgba(148, 163, 184, 0.32)',
-    boxShadow: '0 16px 32px rgba(15, 23, 42, 0.12)',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '12px'
-  },
-  howtoBoxMobile: {
-    padding: '18px 20px',
-    borderRadius: '18px'
-  },
-  howtoHeading: {
-    margin: 0,
-    fontSize: '20px',
-    fontWeight: 800,
-    color: 'var(--text-primary)'
-  },
-  howtoList: {
-    margin: 0,
-    padding: 0,
-    listStyle: 'none',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '10px'
-  },
-  howtoItem: {
-    display: 'flex',
-    gap: '12px',
-    alignItems: 'flex-start',
-    background: 'var(--surface-soft)',
-    borderRadius: '14px',
-    padding: '12px 14px',
-    boxShadow: '0 10px 22px rgba(15, 23, 42, 0.08)'
-  },
-  howtoIcon: {
-    fontSize: '20px',
-    lineHeight: 1
-  },
-  howtoText: {
-    margin: 0,
-    fontSize: '14px',
-    color: 'var(--tone-strong)',
-    lineHeight: 1.6
-  },
   heroTitle: {
     fontSize: '28px',
     fontWeight: 800,
@@ -173,53 +126,133 @@ const styles = {
     flexDirection: 'column',
     gap: '16px'
   },
-  generatorWrapper: {
-    marginTop: '16px',
+  wizardContainer: {
+    marginTop: '12px',
     padding: '24px',
-    borderRadius: '18px',
+    borderRadius: '20px',
     border: '1px solid var(--surface-border)',
-    background: 'linear-gradient(135deg, rgba(59,130,246,0.08), rgba(16,185,129,0.08))',
-    display: 'grid',
-    gap: '20px',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))'
-  },
-  generatorWrapperMobile: {
-    padding: '16px',
-    gridTemplateColumns: '1fr'
-  },
-  generatorStepBox: {
+    background: 'linear-gradient(135deg, rgba(59,130,246,0.08), rgba(16,185,129,0.1))',
+    boxShadow: '0 24px 48px rgba(15,23,42,0.12)',
     display: 'flex',
     flexDirection: 'column',
-    gap: '14px',
+    gap: '20px'
+  },
+  wizardContainerMobile: {
     padding: '18px',
+    borderRadius: '18px'
+  },
+  wizardHeaderRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: '16px',
+    flexWrap: 'wrap'
+  },
+  wizardProgress: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
+    fontSize: '13px',
+    color: 'var(--indigo-strong)',
+    fontWeight: 700,
+    letterSpacing: '0.05em',
+    textTransform: 'uppercase'
+  },
+  wizardStageTitle: {
+    margin: '6px 0 0',
+    fontSize: '24px',
+    fontWeight: 800,
+    color: 'var(--text-primary)'
+  },
+  wizardStageTitleMobile: {
+    fontSize: '20px'
+  },
+  wizardCloseButton: {
+    padding: '10px 14px',
+    borderRadius: '12px',
+    border: '1px solid var(--border-subtle)',
+    background: 'var(--surface-card)',
+    color: 'var(--text-primary)',
+    fontWeight: 600,
+    cursor: 'pointer'
+  },
+  wizardCloseButtonMobile: {
+    width: '100%'
+  },
+  wizardStageDescription: {
+    margin: 0,
+    fontSize: '15px',
+    lineHeight: 1.6,
+    color: 'var(--tone-strong)'
+  },
+  wizardStageDescriptionMobile: {
+    fontSize: '14px'
+  },
+  wizardStageBody: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px'
+  },
+  wizardStageBodyMobile: {
+    gap: '14px'
+  },
+  wizardFooter: {
+    position: 'sticky',
+    bottom: 0,
+    padding: '16px',
     borderRadius: '16px',
     background: 'var(--surface-card)',
-    border: '1px solid var(--surface-border)'
-  },
-  generatorStepBoxMobile: {
-    padding: '16px'
-  },
-  generatorStepHeader: {
+    border: '1px solid rgba(148,163,184,0.24)',
+    boxShadow: '0 -18px 32px rgba(15,23,42,0.16)',
     display: 'flex',
-    flexDirection: 'column',
-    gap: '6px'
+    gap: '12px',
+    justifyContent: 'space-between',
+    alignItems: 'center'
   },
-  generatorBadge: {
+  wizardFooterMobile: {
+    flexDirection: 'column',
+    alignItems: 'stretch'
+  },
+  wizardPrimaryButton: {
+    padding: '14px 20px',
+    borderRadius: '14px',
+    border: 'none',
+    background: 'linear-gradient(135deg, var(--indigo) 0%, var(--indigo-strong) 100%)',
+    color: 'var(--text-on-accent)',
+    fontWeight: 700,
+    fontSize: '16px',
+    cursor: 'pointer',
+    flex: 1,
+    width: '100%'
+  },
+  wizardSecondaryButton: {
+    padding: '12px 18px',
+    borderRadius: '14px',
+    border: '1px solid var(--border-subtle)',
+    background: 'var(--surface-soft)',
+    color: 'var(--text-primary)',
+    fontWeight: 600,
+    cursor: 'pointer'
+  },
+  wizardStageBadge: {
     display: 'inline-flex',
     alignItems: 'center',
     gap: '6px',
-    padding: '4px 10px',
+    padding: '6px 12px',
     borderRadius: '999px',
-    background: 'rgba(37,99,235,0.12)',
-    color: 'var(--indigo-strong)',
+    background: 'rgba(16,185,129,0.16)',
+    color: 'var(--success-strong)',
     fontSize: '12px',
-    fontWeight: 700,
-    letterSpacing: '0.08em'
+    fontWeight: 700
   },
-  generatorDescription: {
-    fontSize: '13px',
-    color: 'var(--tone-strong)',
-    lineHeight: 1.5
+  wizardInfoCard: {
+    padding: '16px',
+    borderRadius: '14px',
+    border: '1px solid var(--surface-border)',
+    background: 'var(--surface-card)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px'
   },
   generatorSearchRow: {
     display: 'flex'
@@ -316,34 +349,6 @@ const styles = {
     fontSize: '12px',
     color: 'var(--tone-strong)',
     lineHeight: 1.4
-  },
-  generatorSummaryBox: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '10px'
-  },
-  generatorButtonRow: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '10px'
-  },
-  generatorInProgressBox: {
-    padding: '12px',
-    borderRadius: '12px',
-    border: '1px solid rgba(37,99,235,0.25)',
-    background: 'rgba(37,99,235,0.08)',
-    color: 'var(--tone-strong)',
-    fontSize: '13px',
-    lineHeight: 1.5
-  },
-  generatorSuccessBox: {
-    padding: '12px',
-    borderRadius: '12px',
-    border: '1px solid rgba(16,185,129,0.3)',
-    background: 'rgba(16,185,129,0.12)',
-    color: 'var(--success-strong)',
-    fontSize: '13px',
-    lineHeight: 1.5
   },
   overviewLayout: {
     display: 'grid',
@@ -520,20 +525,6 @@ const styles = {
   workbookListActionsMobile: {
     width: '100%',
     flexDirection: 'column'
-  },
-  bulkStatusBox: {
-    padding: '12px',
-    borderRadius: '12px',
-    border: '1px solid rgba(16,185,129,0.25)',
-    background: 'rgba(16,185,129,0.12)',
-    color: 'var(--success-strong)',
-    fontSize: '13px',
-    lineHeight: 1.5
-  },
-  bulkStatusBoxError: {
-    border: '1px solid rgba(248,113,113,0.3)',
-    background: 'rgba(248,113,113,0.12)',
-    color: 'rgb(220,38,38)'
   },
   docEmpty: {
     padding: '20px',
@@ -734,10 +725,6 @@ const styles = {
     flexDirection: 'column',
     gap: '16px',
     textAlign: 'left'
-  },
-  puzzleHint: {
-    fontSize: '14px',
-    color: 'var(--text-primary)'
   },
   puzzleTokenTray: {
     display: 'flex',
@@ -1229,7 +1216,6 @@ const WordOrderPuzzle = ({ card, reveal, compact = false }) => {
 
   return (
     <div style={styles.puzzleContainer}>
-      {card?.prompt && <div style={styles.puzzleHint}>💡 힌트: {card.prompt}</div>}
       <div style={styles.puzzleSelectedRow}>
         {picked.length === 0 && <span style={styles.puzzleStatus}>여기에 단어를 눌러 순서대로 담아 보세요.</span>}
         {picked.map((token, index) => (
@@ -1421,7 +1407,6 @@ const WordOrderInputPuzzle = ({ card, reveal, compact = false }) => {
 
   return (
     <div style={styles.puzzleContainer}>
-      {card?.prompt && <div style={styles.puzzleHint}>💡 힌트: {card.prompt}</div>}
       {Array.isArray(card?.tokens) && card.tokens.length > 0 && (
         <div style={styles.puzzleTokenTray}>
           {card.tokens.map((token, index) => (
@@ -1442,7 +1427,7 @@ const WordOrderInputPuzzle = ({ card, reveal, compact = false }) => {
         type="text"
         value={value}
         onChange={(event) => setValue(event.target.value)}
-        placeholder="힌트를 참고해 문장을 완성해 보세요."
+        placeholder="문장을 직접 완성해 보세요."
         style={compact
           ? { ...styles.puzzleInput, ...styles.puzzleInputMobile }
           : styles.puzzleInput}
@@ -1517,7 +1502,6 @@ const TestWordOrderQuestion = ({ question, value = [], onChange }) => {
 
   return (
     <div style={styles.puzzleContainer}>
-      {question?.hint && <div style={styles.puzzleHint}>💡 힌트: {question.hint}</div>}
       <div style={styles.puzzleSelectedRow}>
         {picked.length === 0 && <span style={styles.puzzleStatus}>단어를 눌러 순서대로 배치해 보세요.</span>}
         {picked.map((token, index) => (
@@ -1583,7 +1567,6 @@ const TestWordOrderInputQuestion = ({ question, value = '', onChange }) => {
 
   return (
     <div style={styles.puzzleContainer}>
-      {question?.hint && <div style={styles.puzzleHint}>💡 힌트: {question.hint}</div>}
       {Array.isArray(question?.tokens) && question.tokens.length > 0 && (
         <div style={styles.puzzleTokenTray}>
           {question.tokens.map((token, index) => (
@@ -1602,7 +1585,7 @@ const TestWordOrderInputQuestion = ({ question, value = '', onChange }) => {
         type="text"
         value={inputValue}
         onChange={handleChange}
-        placeholder="힌트를 참고해 문장을 완성해 보세요."
+        placeholder="문장을 직접 완성해 보세요."
         style={styles.puzzleInput}
       />
       <div style={styles.puzzleStatus}>현재 입력: {inputValue || '—'}</div>
@@ -1631,6 +1614,7 @@ const WorkbookPage = () => {
   const [completedSteps, setCompletedSteps] = useState(() => loadCompletedFromStorage());
 
   const [showGenerator, setShowGenerator] = useState(false);
+  const [generatorStage, setGeneratorStage] = useState(1);
   const [documents, setDocuments] = useState([]);
   const [documentSearch, setDocumentSearch] = useState('');
   const [overviewSearch, setOverviewSearch] = useState('');
@@ -1642,8 +1626,6 @@ const WorkbookPage = () => {
   const [generatorLoading, setGeneratorLoading] = useState(false);
   const [generatorError, setGeneratorError] = useState('');
   const [activeDocumentId, setActiveDocumentId] = useState('');
-  const [bulkGeneratingId, setBulkGeneratingId] = useState('');
-  const [bulkStatus, setBulkStatus] = useState(null);
   const [deletingIds, setDeletingIds] = useState(() => new Set());
 
   const [isTestMode, setIsTestMode] = useState(false);
@@ -1671,18 +1653,6 @@ const WorkbookPage = () => {
     isMobile ? { ...base, ...(mobileOverrides || {}) } : base
   ), [isMobile]);
 
-  const scrollToAnchor = useCallback((anchor) => {
-    if (typeof window === 'undefined' || !anchor) return;
-    const element = document.getElementById(anchor);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: isMobile ? 'start' : 'center' });
-    }
-  }, [isMobile]);
-
-  useEffect(() => {
-    if (!showGenerator || !canManageWorkbooks) return;
-    scrollToAnchor('workbook-step-documents');
-  }, [showGenerator, canManageWorkbooks, scrollToAnchor]);
   const documentsForWorkbook = useMemo(() => (
     Array.isArray(documents)
       ? documents.filter((doc) => String(doc.type || '').toLowerCase() !== 'vocabulary')
@@ -1703,11 +1673,6 @@ const WorkbookPage = () => {
     return documentsForWorkbook.find((doc) => String(doc.id) === String(selectedDocumentId)) || null;
   }, [documentsForWorkbook, selectedDocumentId]);
 
-  useEffect(() => {
-    if (!showGenerator || !selectedDocumentId || passagesLoading) return;
-    if (!Array.isArray(passages) || passages.length === 0) return;
-    scrollToAnchor('workbook-step-passages');
-  }, [showGenerator, selectedDocumentId, passagesLoading, passages, scrollToAnchor]);
 
   const documentsById = useMemo(() => {
     const map = {};
@@ -1820,17 +1785,17 @@ const WorkbookPage = () => {
     return Number.isFinite(numeric) && numeric > 0 ? numeric : 1;
   }, [selectedPassage]);
 
+  const selectedPassageInfo = useMemo(() => {
+    if (!Array.isArray(passages) || !passages.length) return null;
+    return passages.find((item) => Number(item.passageNumber) === selectedPassageNumber) || null;
+  }, [passages, selectedPassageNumber]);
+
   const isReadyToGenerate = useMemo(() => {
     if (!selectedDocument) return false;
     if (!passages.length) return false;
     return passages.some((item) => Number(item.passageNumber) === selectedPassageNumber);
   }, [selectedDocument, passages, selectedPassageNumber]);
 
-  useEffect(() => {
-    if (!showGenerator || !selectedDocumentId) return;
-    if (!isReadyToGenerate) return;
-    scrollToAnchor('workbook-step-actions');
-  }, [showGenerator, selectedDocumentId, isReadyToGenerate, selectedPassageNumber, scrollToAnchor]);
   const totalSteps = selectedWorkbook?.steps?.length || 0;
   const currentStep = useMemo(() => {
     if (!selectedWorkbook || totalSteps === 0) return null;
@@ -2197,8 +2162,6 @@ const WorkbookPage = () => {
             ))}
           </div>
         )}
-        {question.hint && <div style={styles.testHint}>힌트: {question.hint}</div>}
-
         {question.type === 'single-blank' && (
           <input
             type="text"
@@ -2371,6 +2334,7 @@ const WorkbookPage = () => {
       if (list.length > 0) {
         setSelectedPassage(String(list[0].passageNumber || 1));
       }
+      setGeneratorStage(2);
     } catch (error) {
       setPassagesError(error.message || '지문 목록을 불러오지 못했습니다.');
     } finally {
@@ -2384,6 +2348,7 @@ const WorkbookPage = () => {
     setDocumentSearch('');
     setPassages([]);
     setSelectedPassage('1');
+    setGeneratorStage(1);
 
     const normalizedId = initialDocumentId ? String(initialDocumentId) : '';
     setSelectedDocumentId(normalizedId);
@@ -2439,87 +2404,15 @@ const WorkbookPage = () => {
     }
   }, [fetchWorkbooks, handleOpenWorkbook, selectedDocumentId, selectedPassage]);
 
+  const handleCloseGenerator = useCallback(() => {
+    setShowGenerator(false);
+    setGeneratorStage(1);
+  }, []);
+
   const handleSelectOverviewDocument = useCallback((docId) => {
     const key = String(docId || '');
     setActiveDocumentId(key);
   }, []);
-
-  const handleGenerateAllForDocument = useCallback(async (documentId, options = {}) => {
-    if (!documentId) {
-      if (options.fromGenerator) {
-        setGeneratorError('문서를 선택해 주세요.');
-      }
-      return;
-    }
-
-    if (!options.skipConfirm && typeof window !== 'undefined') {
-      const ok = window.confirm('선택한 문서의 모든 지문으로 워크북을 생성할까요? 기존 워크북은 새로 덮어쓰여요.');
-      if (!ok) {
-        return;
-      }
-    }
-
-    const docKey = String(documentId);
-    setBulkGeneratingId(docKey);
-    setBulkStatus(null);
-    if (options.fromGenerator) {
-      setGeneratorError('');
-    }
-
-    try {
-      const payload = {
-        documentId: Number(documentId),
-        regenerate: Boolean(options.regenerate)
-      };
-      const response = await api.workbooks.generateAll(payload);
-      const data = response?.data || response || {};
-      const generated = Array.isArray(data.workbooks) ? data.workbooks : [];
-      const failures = Array.isArray(data.failures) ? data.failures : [];
-      const newCount = generated.filter((item) => !item.cached).length;
-      const cachedCount = generated.length - newCount;
-
-      if (generated.length) {
-        setWorkbookCache((prev) => {
-          const next = { ...prev };
-          generated.forEach((item) => {
-            next[item.id] = item;
-          });
-          return next;
-        });
-      }
-
-      await fetchWorkbooks();
-
-      setBulkStatus({
-        documentId: docKey,
-        successCount: newCount,
-        cachedCount,
-        totalCount: generated.length,
-        failureCount: failures.length,
-        failures
-      });
-
-      if (options.closeGenerator) {
-        setShowGenerator(false);
-      }
-
-      if (options.openFirst && generated[0]) {
-        handleOpenWorkbook(generated[0].id, 1);
-      }
-    } catch (error) {
-      const message = error?.message || '모든 지문 워크북을 생성하지 못했습니다.';
-      if (options.fromGenerator) {
-        setGeneratorError(message);
-      }
-      setBulkStatus({
-        documentId: docKey,
-        error: message,
-        failures: []
-      });
-    } finally {
-      setBulkGeneratingId('');
-    }
-  }, [fetchWorkbooks, handleOpenWorkbook]);
 
   const handleDeleteWorkbook = useCallback(async (id, title) => {
     if (!id) return;
@@ -2652,230 +2545,209 @@ const WorkbookPage = () => {
   }
 
   if (!selectedWorkbook) {
+    const stageLabels = ['자료 선택', '지문 선택', '생성 확인'];
+    const currentStageName = stageLabels[Math.min(Math.max(generatorStage, 1), stageLabels.length) - 1];
+
     return (
       <div style={responsiveStyle(styles.container, styles.containerMobile)}>
         <section style={responsiveStyle(styles.hero, styles.heroMobile)}>
           <div style={styles.pill}>Workbook Practice</div>
           <h1 style={responsiveStyle(styles.heroTitle, styles.heroTitleMobile)}>워크북 학습</h1>
           <p style={responsiveStyle(styles.heroDesc, styles.heroDescMobile)}>
-            문제 학습과 분석 자료를 기반으로, 지문 하나를 10단계로 쪼개서 카드 뒤집기 방식으로 연습할 수 있어요.
-            주제 잡기 → 어휘 익히기 → 구조 분석 → 실천 아이디어 정리까지 이어집니다.
+            지문 하나를 8단계로 나누어 읽기·어휘·구조·영작까지 고르게 복습해요.
           </p>
           {canManageWorkbooks && (
             <button
               type="button"
               data-testid="open-workbook-generator"
-              style={{
-                ...responsiveStyle(styles.primaryButton, styles.primaryButtonMobile),
-                marginTop: isMobile ? '12px' : '16px'
-              }}
-              onClick={handleOpenGenerator}
+              style={responsiveStyle(styles.primaryButton, styles.primaryButtonMobile)}
+              onClick={() => handleOpenGenerator()}
             >
               + 새 워크북 생성하기
             </button>
           )}
         </section>
 
-        <section style={responsiveStyle(styles.howtoBox, styles.howtoBoxMobile)}>
-          <h2 style={styles.howtoHeading}>세 단계로 워크북 완성해요 ✨</h2>
-          <ul style={styles.howtoList}>
-            <li style={styles.howtoItem}>
-              <span style={styles.howtoIcon}>📂</span>
-              <p style={styles.howtoText}>“새 워크북 생성하기”를 누르고 문서를 선택해요. 문서를 누르는 순간 다음 단계가 바로 아래에 열립니다.</p>
-            </li>
-            <li style={styles.howtoItem}>
-              <span style={styles.howtoIcon}>🧩</span>
-              <p style={styles.howtoText}>필요한 지문을 체크하면 화면이 자동으로 생성 버튼 영역까지 이동해서 다음 행동을 안내해 줘요.</p>
-            </li>
-            <li style={styles.howtoItem}>
-              <span style={styles.howtoIcon}>🎯</span>
-              <p style={styles.howtoText}>생성된 워크북은 문서별로 정리돼요. 학생은 문서 → 번호 순으로 눌러서 모바일에서도 카드 한 장씩 넘겨 볼 수 있어요.</p>
-            </li>
-          </ul>
-        </section>
-
         {showGenerator && canManageWorkbooks && (
-          <section style={responsiveStyle(styles.generatorWrapper, styles.generatorWrapperMobile)}>
-            <div
-              id="workbook-step-documents"
-              style={responsiveStyle(styles.generatorStepBox, styles.generatorStepBoxMobile)}
-            >
-              <div style={styles.generatorStepHeader}>
-                <span style={styles.generatorBadge}>1단계 · 자료 선택</span>
-                <p style={styles.generatorDescription}>
-                  문제 학습 화면처럼, 워크북으로 만들 자료를 먼저 골라 주세요.
+          <section style={responsiveStyle(styles.wizardContainer, styles.wizardContainerMobile)}>
+            <div style={styles.wizardHeaderRow}>
+              <div>
+                <span style={styles.wizardProgress}>STEP {generatorStage}/3 · {currentStageName}</span>
+                <h2 style={responsiveStyle(styles.wizardStageTitle, styles.wizardStageTitleMobile)}>새 워크북 만들기</h2>
+              </div>
+              <button
+                type="button"
+                style={responsiveStyle(styles.wizardCloseButton, styles.wizardCloseButtonMobile)}
+                onClick={handleCloseGenerator}
+              >
+                닫기
+              </button>
+            </div>
+
+            {generatorStage === 1 && (
+              <div style={responsiveStyle(styles.wizardStageBody, styles.wizardStageBodyMobile)}>
+                <p style={responsiveStyle(styles.wizardStageDescription, styles.wizardStageDescriptionMobile)}>
+                  분석이 완료된 문서를 골라 주세요. 선택하면 자동으로 지문 선택 단계로 이동해요.
                 </p>
-              </div>
-              <div style={styles.generatorSearchRow}>
-                <input
-                  type="search"
-                  value={documentSearch}
-                  onChange={(event) => setDocumentSearch(event.target.value)}
-                  placeholder="자료 제목이나 분류를 검색해 보세요"
-                  style={styles.generatorSearchInput}
-                />
-              </div>
-              <div style={responsiveStyle(styles.generatorDocGrid, styles.generatorDocGridMobile)}>
+                <div style={styles.generatorSearchRow}>
+                  <input
+                    type="search"
+                    value={documentSearch}
+                    onChange={(event) => setDocumentSearch(event.target.value)}
+                    placeholder="자료 제목·학교·분류를 검색해 보세요"
+                    style={styles.generatorSearchInput}
+                  />
+                </div>
                 {filteredDocuments.length === 0 ? (
-                  <div style={styles.generatorEmpty}>검색 결과가 없어요. 다른 키워드를 입력해 볼까요?</div>
+                  <div style={styles.generatorEmpty}>검색 결과가 없어요. 다른 키워드를 입력해 보세요.</div>
                 ) : (
-                  filteredDocuments.map((doc) => {
-                    const isActive = String(doc.id) === String(selectedDocumentId);
-                    const uploadedAt = doc.created_at ? new Date(doc.created_at).toLocaleDateString() : '-';
-                    return (
-                      <button
-                        key={doc.id}
-                        type="button"
-                        data-testid="workbook-document-card"
-                        style={{
-                          ...styles.generatorDocCard,
-                          ...(isActive ? styles.generatorDocCardActive : {})
-                        }}
-                        onClick={() => handleSelectDocument(doc)}
-                      >
-                        <h4 style={styles.generatorDocTitle}>{doc.title}</h4>
-                        <p style={styles.generatorDocMeta}>분류: {doc.category || '미지정'}</p>
-                        <p style={styles.generatorDocMeta}>업로드: {uploadedAt}</p>
-                      </button>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-
-            <div
-              id="workbook-step-passages"
-              style={responsiveStyle(styles.generatorStepBox, styles.generatorStepBoxMobile)}
-            >
-              <div style={styles.generatorStepHeader}>
-                <span style={styles.generatorBadge}>2단계 · 지문 선택</span>
-                <p style={styles.generatorDescription}>
-                  선택한 문서에서 워크북으로 만들 지문을 고르세요.
-                </p>
-              </div>
-              {passagesLoading ? (
-                <div style={styles.generatorEmpty}>지문 목록을 불러오는 중이에요... ⏳</div>
-              ) : passagesError ? (
-                <div style={styles.generatorErrorBox}>{passagesError}</div>
-              ) : !selectedDocument ? (
-                <div style={styles.generatorEmpty}>왼쪽에서 자료를 먼저 선택해 주세요.</div>
-              ) : passages.length === 0 ? (
-                <div style={styles.generatorEmpty}>등록된 지문이 아직 없어요. 분석을 먼저 생성해 주세요.</div>
-              ) : (
-                <div style={responsiveStyle(styles.generatorPassageList, styles.generatorPassageListMobile)}>
-                  {passages.map((item) => {
-                    const isActive = Number(item.passageNumber) === selectedPassageNumber;
-                    return (
-                      <button
-                        key={`passage-${item.passageNumber}`}
-                        type="button"
-                        data-testid="workbook-passage-card"
-                        style={{
-                          ...styles.generatorPassageCard,
-                          ...(isActive ? styles.generatorPassageCardActive : {})
-                        }}
-                        onClick={() => setSelectedPassage(String(item.passageNumber))}
-                      >
-                        <strong>지문 {item.passageNumber}</strong>
-                        <div style={styles.generatorPassageExcerpt}>
-                          {item.excerpt || '지문 미리보기를 준비했어요.'}
-                        </div>
-                        {typeof item.variantCount === 'number' && (
-                          <span style={styles.generatorDocMeta}>분석본 {item.variantCount}개</span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            <div
-              id="workbook-step-actions"
-              style={responsiveStyle(styles.generatorStepBox, styles.generatorStepBoxMobile)}
-            >
-              <div style={styles.generatorStepHeader}>
-                <span style={styles.generatorBadge}>3단계 · 워크북 만들기</span>
-                <p style={styles.generatorDescription}>
-                  지문을 확인한 뒤, 10단계 워크북 생성을 시작해 보세요.
-                </p>
-              </div>
-              {selectedDocument ? (
-                <div style={styles.generatorSummaryBox}>
-                  <h4 style={styles.generatorDocTitle}>{selectedDocument.title}</h4>
-                  <p style={styles.generatorDocMeta}>지문 {selectedPassageNumber} 선택됨</p>
-                  {generatorError && <div style={styles.generatorErrorBox}>{generatorError}</div>}
-                  {bulkGeneratingId === String(selectedDocumentId) && (
-                    <div style={styles.generatorInProgressBox}>
-                      전체 지문을 생성하는 중입니다. 최대 10분 정도 기다려 주세요.
-                    </div>
-                  )}
-                  {bulkStatus && String(bulkStatus.documentId) === String(selectedDocumentId) && (
-                    <div
-                      style={{
-                        ...styles.generatorSuccessBox,
-                        ...(bulkStatus.error ? styles.bulkStatusBoxError : {})
-                      }}
-                    >
-                      {bulkStatus.error
-                        ? bulkStatus.error
-                        : `새 워크북 ${bulkStatus.successCount || 0}개 · 기존 유지 ${bulkStatus.cachedCount || 0}개 · 실패 ${bulkStatus.failureCount || 0}개`}
-                      {bulkStatus.failures && bulkStatus.failures.length > 0 && (
-                        <ul style={{ margin: '8px 0 0 18px', padding: 0, listStyle: 'disc' }}>
-                          {bulkStatus.failures.map((item) => (
-                            <li key={`gen-bulk-failure-${item.passageNumber}`} style={{ fontSize: '12px', color: 'var(--tone-strong)' }}>
-                              지문 {item.passageNumber}번: {item.message}
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  )}
-                  <div style={styles.generatorButtonRow}>
-                    <button
-                      type="button"
-                      data-testid="generate-workbook"
-                      onClick={handleGenerateWorkbook}
-                      disabled={!isReadyToGenerate || generatorLoading}
-                      style={{
-                        ...responsiveStyle(styles.primaryButton, styles.primaryButtonMobile),
-                        width: '100%',
-                        opacity: generatorLoading || !isReadyToGenerate ? 0.7 : 1
-                      }}
-                    >
-                      {generatorLoading ? '생성 중...' : '워크북 생성하기'}
-                    </button>
-                    <button
-                      type="button"
-                      style={{
-                        ...responsiveStyle(styles.secondaryButton, styles.secondaryButtonMobile),
-                        width: '100%',
-                        opacity: !selectedDocumentId || bulkGeneratingId === String(selectedDocumentId) ? 0.7 : 1
-                      }}
-                      onClick={() => handleGenerateAllForDocument(selectedDocumentId, { fromGenerator: true })}
-                      disabled={!selectedDocumentId || bulkGeneratingId === String(selectedDocumentId)}
-                    >
-                      {bulkGeneratingId === String(selectedDocumentId) ? '전체 생성 중...' : '모든 지문 워크북 생성'}
-                    </button>
-                    <button
-                      type="button"
-                      style={{ ...styles.secondaryButton, width: '100%' }}
-                      onClick={() => setShowGenerator(false)}
-                    >
-                      닫기
-                    </button>
+                  <div style={responsiveStyle(styles.generatorDocGrid, styles.generatorDocGridMobile)}>
+                    {filteredDocuments.map((doc) => {
+                      const isActive = String(doc.id) === String(selectedDocumentId);
+                      const uploadedAt = doc.created_at ? new Date(doc.created_at).toLocaleDateString() : '-';
+                      return (
+                        <button
+                          key={doc.id}
+                          type="button"
+                          data-testid="workbook-document-card"
+                          style={{
+                            ...styles.generatorDocCard,
+                            ...(isActive ? styles.generatorDocCardActive : {})
+                          }}
+                          onClick={() => handleSelectDocument(doc)}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <h4 style={styles.generatorDocTitle}>{doc.title}</h4>
+                            {isActive && <span style={styles.wizardStageBadge}>선택됨</span>}
+                          </div>
+                          <p style={styles.generatorDocMeta}>분류: {doc.category || '미지정'}</p>
+                          <p style={styles.generatorDocMeta}>업로드: {uploadedAt}</p>
+                        </button>
+                      );
+                    })}
                   </div>
+                )}
+                {generatorError && <div style={styles.generatorErrorBox}>{generatorError}</div>}
+              </div>
+            )}
+
+            {generatorStage === 2 && (
+              <div style={responsiveStyle(styles.wizardStageBody, styles.wizardStageBodyMobile)}>
+                <div style={styles.wizardInfoCard}>
+                  <span style={styles.wizardStageBadge}>선택한 자료</span>
+                  <strong style={{ fontSize: '16px', color: 'var(--text-primary)' }}>{selectedDocument?.title || '자료를 다시 선택해 주세요.'}</strong>
+                  <span style={styles.generatorDocMeta}>
+                    {(selectedDocument?.category || '분류 미지정')} · {(selectedDocument?.school || '학교 미지정')}
+                  </span>
                 </div>
-              ) : (
-                <div style={styles.generatorEmpty}>자료를 선택하면 요약과 생성 버튼이 나타나요.</div>
-              )}
-            </div>
+                {passagesLoading ? (
+                  <div style={styles.generatorEmpty}>지문을 불러오는 중이에요... ⏳</div>
+                ) : passagesError ? (
+                  <div style={styles.generatorErrorBox}>{passagesError}</div>
+                ) : !passages.length ? (
+                  <div style={styles.generatorEmpty}>이 자료에는 아직 분석된 지문이 없어요. 분석을 먼저 생성해 주세요.</div>
+                ) : (
+                  <div style={responsiveStyle(styles.generatorPassageList, styles.generatorPassageListMobile)}>
+                    {passages.map((item) => {
+                      const isActive = Number(item.passageNumber) === selectedPassageNumber;
+                      return (
+                        <button
+                          key={`passage-${item.passageNumber}`}
+                          type="button"
+                          data-testid="workbook-passage-card"
+                          style={{
+                            ...styles.generatorPassageCard,
+                            ...(isActive ? styles.generatorPassageCardActive : {})
+                          }}
+                          onClick={() => setSelectedPassage(String(item.passageNumber))}
+                        >
+                          <strong>지문 {item.passageNumber}</strong>
+                          <div style={styles.generatorPassageExcerpt}>
+                            {item.excerpt || '지문 미리보기를 준비했어요.'}
+                          </div>
+                          {typeof item.variantCount === 'number' && (
+                            <span style={styles.generatorDocMeta}>분석본 {item.variantCount}개</span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+                <div style={responsiveStyle(styles.wizardFooter, styles.wizardFooterMobile)}>
+                  <button
+                    type="button"
+                    style={styles.wizardSecondaryButton}
+                    onClick={() => setGeneratorStage(1)}
+                  >
+                    ← 자료 다시 고르기
+                  </button>
+                  <button
+                    type="button"
+                    style={{
+                      ...styles.wizardPrimaryButton,
+                      opacity: isReadyToGenerate ? 1 : 0.6,
+                      cursor: isReadyToGenerate ? 'pointer' : 'not-allowed'
+                    }}
+                    onClick={() => setGeneratorStage(3)}
+                    disabled={!isReadyToGenerate}
+                  >
+                    다음 단계
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {generatorStage === 3 && (
+              <div style={responsiveStyle(styles.wizardStageBody, styles.wizardStageBodyMobile)}>
+                <div style={styles.wizardInfoCard}>
+                  <span style={styles.wizardStageBadge}>선택한 지문</span>
+                  <strong style={{ fontSize: '16px', color: 'var(--text-primary)' }}>
+                    {selectedDocument?.title || '자료 미선택'} · 지문 {selectedPassageNumber}
+                  </strong>
+                  <span style={styles.generatorDocMeta}>
+                    {selectedPassageInfo?.variantCount ? `분석본 ${selectedPassageInfo.variantCount}개` : '분석본 확보'}
+                  </span>
+                </div>
+                {selectedPassageInfo?.excerpt ? (
+                  <div style={styles.wizardInfoCard}>
+                    <span style={styles.wizardStageBadge}>미리보기</span>
+                    <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.6, color: 'var(--tone-strong)' }}>
+                      {selectedPassageInfo.excerpt}
+                    </p>
+                  </div>
+                ) : (
+                  <div style={styles.generatorEmpty}>지문 미리보기를 불러오지 못했어요. 그래도 워크북 생성은 진행할 수 있습니다.</div>
+                )}
+                {generatorError && <div style={styles.generatorErrorBox}>{generatorError}</div>}
+                <div style={responsiveStyle(styles.wizardFooter, styles.wizardFooterMobile)}>
+                  <button
+                    type="button"
+                    style={styles.wizardSecondaryButton}
+                    onClick={() => setGeneratorStage(2)}
+                  >
+                    ← 지문 다시 고르기
+                  </button>
+                  <button
+                    type="button"
+                    style={{
+                      ...styles.wizardPrimaryButton,
+                      opacity: generatorLoading ? 0.7 : 1,
+                      cursor: generatorLoading ? 'wait' : 'pointer'
+                    }}
+                    onClick={handleGenerateWorkbook}
+                    disabled={generatorLoading || !isReadyToGenerate}
+                  >
+                    {generatorLoading ? '생성 중...' : '워크북 생성하기'}
+                  </button>
+                </div>
+              </div>
+            )}
           </section>
         )}
 
         {workbooks.length === 0 ? (
           <div style={styles.emptyState}>
-            아직 생성된 워크북이 없어요. 교사/관리자 계정으로 문서를 선택하고 워크북을 만들어 볼까요? 😊
+            아직 생성된 워크북이 없어요. 교사/관리자 계정으로 새 워크북을 만들어 주세요. 😊
           </div>
         ) : (
           <section style={responsiveStyle(styles.overviewLayout, styles.overviewLayoutMobile)}>
@@ -2928,35 +2800,18 @@ const WorkbookPage = () => {
                         <div style={responsiveStyle(styles.docHeaderTop, styles.docHeaderTopMobile)}>
                           <div>
                             <div style={styles.pill}>Workbook Series</div>
-                            <h2 style={{ fontSize: '22px', fontWeight: 800, margin: '8px 0 0', color: 'var(--text-primary)' }}>
-                              {activeGroup.documentTitle}
-                            </h2>
+                            <h2 style={{ fontSize: '22px', fontWeight: 800, margin: '8px 0 0', color: 'var(--text-primary)' }}>{activeGroup.documentTitle}</h2>
                           </div>
                           {canManageWorkbooks && (
-                            <div style={responsiveStyle(styles.workbookListActions, styles.workbookListActionsMobile)}>
-                              <button
-                                type="button"
-                                style={responsiveStyle(styles.primaryButton, styles.primaryButtonMobile)}
-                                onClick={() => handleGenerateAllForDocument(activeGroup.documentId)}
-                                disabled={bulkGeneratingId === docKey}
-                              >
-                                {bulkGeneratingId === docKey ? '전체 생성 중...' : '모든 지문 워크북 생성'}
-                              </button>
-                              <button
-                                type="button"
-                                style={responsiveStyle(styles.secondaryButton, styles.secondaryButtonMobile)}
-                                onClick={() => handleOpenGenerator(activeGroup.documentId)}
-                              >
-                                지문 선택 후 생성
-                              </button>
-                            </div>
+                            <button
+                              type="button"
+                              style={responsiveStyle(styles.secondaryButton, styles.secondaryButtonMobile)}
+                              onClick={() => handleOpenGenerator(activeGroup.documentId)}
+                            >
+                              + 지문 선택해서 생성
+                            </button>
                           )}
                         </div>
-                        {bulkGeneratingId === docKey && (
-                          <div style={styles.generatorInProgressBox}>
-                            전체 지문을 생성하고 있습니다. 최대 10분 정도 소요될 수 있습니다.
-                          </div>
-                        )}
                         <div style={responsiveStyle(styles.docMetaInfo, styles.docMetaInfoMobile)}>
                           {activeGroup.category && <span>분류: {activeGroup.category}</span>}
                           {docMeta.grade ? <span>학년: {docMeta.grade}학년</span> : null}
@@ -2964,32 +2819,8 @@ const WorkbookPage = () => {
                         </div>
                       </div>
 
-                      {bulkStatus && String(bulkStatus.documentId) === docKey && (
-                        <div
-                          style={{
-                            ...styles.bulkStatusBox,
-                            ...(bulkStatus.error ? styles.bulkStatusBoxError : {})
-                          }}
-                        >
-                          {bulkStatus.error
-                            ? bulkStatus.error
-                            : `새 워크북 ${bulkStatus.successCount || 0}개 · 기존 유지 ${bulkStatus.cachedCount || 0}개 · 실패 ${bulkStatus.failureCount || 0}개`}
-                          {bulkStatus.failures && bulkStatus.failures.length > 0 && (
-                            <ul style={{ margin: '8px 0 0 18px', padding: 0, listStyle: 'disc' }}>
-                              {bulkStatus.failures.map((item) => (
-                                <li key={`bulk-failure-${item.passageNumber}`} style={{ fontSize: '12px', color: 'var(--tone-strong)' }}>
-                                  지문 {item.passageNumber}번: {item.message}
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                        </div>
-                      )}
-
                       {activeGroup.workbooks.length === 0 ? (
-                        <div style={styles.docEmpty}>
-                          이 문서로 만든 워크북이 아직 없어요. 상단 버튼으로 바로 생성해 볼까요? 😊
-                        </div>
+                        <div style={styles.docEmpty}>이 문서로 만든 워크북이 아직 없어요. 상단 버튼으로 바로 생성해 볼까요? 😊</div>
                       ) : (
                         <div style={styles.workbookList}>
                           {activeGroup.workbooks.map((workbook, index) => {
@@ -3004,9 +2835,7 @@ const WorkbookPage = () => {
                                     <span style={styles.workbookIndexBadge}>{index + 1}</span>
                                     <div>
                                       <p style={styles.workbookListTitle}>지문 {workbook.passageNumber}</p>
-                                      <p style={styles.workbookStats}>
-                                        Step {workbook.totalSteps} · 완료 {progress.completed}/{progress.total} ({percent}%)
-                                      </p>
+                                      <p style={styles.workbookStats}>Step {workbook.totalSteps} · 완료 {progress.completed}/{progress.total} ({percent}%)</p>
                                     </div>
                                   </div>
                                   <div style={responsiveStyle(styles.workbookListActions, styles.workbookListActionsMobile)}>
@@ -3033,7 +2862,7 @@ const WorkbookPage = () => {
                                   </div>
                                 </div>
                                 <p style={{ fontSize: '14px', color: 'var(--tone-strong)', margin: 0 }}>
-                                  {workbook.description || '10단계 학습 코스로 구성된 워크북입니다.'}
+                                  {workbook.description || '8단계 학습 코스로 구성된 워크북입니다.'}
                                 </p>
                                 <div style={responsiveStyle(styles.docMetaInfo, styles.docMetaInfoMobile)}>
                                   <span>최근 수정: {workbook.updatedAt ? new Date(workbook.updatedAt).toLocaleDateString() : '-'}</span>
@@ -3117,7 +2946,7 @@ const WorkbookPage = () => {
             { fontSize: '14px', lineHeight: 1.6 }
           )}
         >
-          {selectedWorkbook.description || '지문의 핵심을 10단계로 정리했어요.'}
+          {selectedWorkbook.description || '지문의 핵심을 8단계로 정리했어요.'}
         </p>
         <div style={styles.testSubmitRow}>
           <button type="button" style={responsiveStyle(styles.primaryButton, styles.primaryButtonMobile)} onClick={handleStartTest}>

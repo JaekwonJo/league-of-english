@@ -3,10 +3,14 @@ export const adminStyles = {
     padding: '20px',
     maxWidth: '1200px',
     margin: '0 auto',
-    fontFamily: "'Noto Sans KR', sans-serif"
+    fontFamily: "'Noto Sans KR', sans-serif",
+    wordBreak: 'keep-all'
   },
   containerMobile: {
-    padding: '16px 14px'
+    padding: '16px 14px',
+    width: '100%',
+    wordBreak: 'keep-all',
+    textAlign: 'left'
   },
   header: {
     display: 'flex',
@@ -25,7 +29,8 @@ export const adminStyles = {
     fontSize: '2rem'
   },
   titleMobile: {
-    fontSize: '1.7rem'
+    fontSize: '1.7rem',
+    lineHeight: 1.3
   },
   headerButtons: {
     display: 'flex',
@@ -74,7 +79,8 @@ export const adminStyles = {
     fontSize: '1.5rem'
   },
   cardTitleMobile: {
-    fontSize: '1.25rem'
+    fontSize: '1.25rem',
+    lineHeight: 1.35
   },
   loading: {
     textAlign: 'center',
@@ -132,7 +138,8 @@ export const adminStyles = {
   },
   documentTitleMobile: {
     marginRight: 0,
-    fontSize: '15px'
+    fontSize: '15px',
+    lineHeight: 1.4
   },
   documentActions: {
     display: 'flex',
@@ -415,7 +422,8 @@ export const adminStyles = {
     background: 'var(--surface-soft-solid)'
   },
   feedbackItemMobile: {
-    padding: '16px'
+    padding: '16px',
+    textAlign: 'left'
   },
   feedbackMeta: {
     display: 'flex',

@@ -104,6 +104,11 @@ const LoginPage = () => {
     }
   };
 
+  const handleForgotCredentials = useCallback(() => {
+    switchMode(MODE_RESET);
+    setInfoMessage('아이디는 가입 완료 안내 메일 또는 운영팀(jaekwonim@gmail.com)에게 문의하면 바로 안내해 드려요. 아래에서 새 비밀번호를 설정해 주세요.');
+  }, [switchMode]);
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     resetFeedback();
@@ -410,23 +415,33 @@ const LoginPage = () => {
           {isLogin && (
             <>
               <div style={styles.toggleRow}>
-                <span style={styles.toggleText}>처음 오셨나요?</span>
+                <div style={styles.toggleTextGroup}>
+                  <span style={styles.toggleLabel}>처음 오셨나요?</span>
+                  <span style={styles.toggleDescription}>30초 만에 무료 가입하고, 모든 학습 도구를 체험해 보세요.</span>
+                </div>
                 <button type="button" onClick={() => switchMode(MODE_REGISTER)} style={styles.toggleButton}>
                   회원가입
                 </button>
               </div>
               <div style={styles.toggleRow}>
-                <span style={styles.toggleText}>비밀번호를 잊으셨나요?</span>
-                <button type="button" onClick={() => switchMode(MODE_RESET)} style={styles.toggleButton}>
-                  비밀번호 재설정
+                <div style={styles.toggleTextGroup}>
+                  <span style={styles.toggleLabel}>아이디·비밀번호를 잊으셨나요?</span>
+                  <span style={styles.toggleDescription}>아이디 안내와 비밀번호 재설정을 한 화면에서 모두 도와드릴게요.</span>
+                </div>
+                <button type="button" onClick={handleForgotCredentials} style={styles.toggleButton}>
+                  아이디·비밀번호 찾기
                 </button>
               </div>
+              <p style={styles.toggleHint}>운영팀 이메일: jaekwonim@gmail.com</p>
             </>
           )}
 
           {isRegister && (
             <div style={styles.toggleRow}>
-              <span style={styles.toggleText}>이미 계정이 있으신가요?</span>
+              <div style={styles.toggleTextGroup}>
+                <span style={styles.toggleLabel}>이미 계정이 있으신가요?</span>
+                <span style={styles.toggleDescription}>로그인 화면으로 돌아가 다시 접속해 주세요.</span>
+              </div>
               <button type="button" onClick={() => switchMode(MODE_LOGIN)} style={styles.toggleButton}>
                 로그인
               </button>
@@ -435,7 +450,10 @@ const LoginPage = () => {
 
           {isReset && (
             <div style={styles.toggleRow}>
-              <span style={styles.toggleText}>비밀번호가 기억나셨나요?</span>
+              <div style={styles.toggleTextGroup}>
+                <span style={styles.toggleLabel}>비밀번호가 기억나셨나요?</span>
+                <span style={styles.toggleDescription}>로그인 화면으로 돌아가면 기존 정보로 바로 접속할 수 있어요.</span>
+              </div>
               <button type="button" onClick={() => switchMode(MODE_LOGIN)} style={styles.toggleButton}>
                 로그인으로 돌아가기
               </button>
@@ -558,20 +576,47 @@ const styles = {
   toggleRow: {
     display: 'flex',
     flexWrap: 'wrap',
-    gap: '10px',
-    justifyContent: 'center'
+    gap: '12px',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    background: 'rgba(148,163,184,0.12)',
+    borderRadius: '14px',
+    padding: '14px 16px'
   },
-  toggleText: {
-    color: 'var(--text-muted)',
-    fontSize: '13px'
+  toggleTextGroup: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px',
+    minWidth: 0,
+    flex: '1 1 auto'
+  },
+  toggleLabel: {
+    color: 'var(--text-on-accent)',
+    fontSize: '14px',
+    fontWeight: 600,
+    letterSpacing: '0.2px'
+  },
+  toggleDescription: {
+    color: '#cbd5f5',
+    fontSize: '12px',
+    lineHeight: 1.4
   },
   toggleButton: {
-    background: 'transparent',
-    color: '#c7d2fe',
-    border: 'none',
+    background: 'linear-gradient(135deg, rgba(99,102,241,0.24) 0%, rgba(129,140,248,0.24) 100%)',
+    color: '#e0e7ff',
+    border: '1px solid rgba(129,140,248,0.35)',
+    borderRadius: '12px',
+    padding: '10px 16px',
     cursor: 'pointer',
     fontWeight: 600,
-    textDecoration: 'underline'
+    whiteSpace: 'nowrap',
+    boxShadow: '0 12px 20px rgba(79, 70, 229, 0.18)'
+  },
+  toggleHint: {
+    marginTop: '6px',
+    fontSize: '12px',
+    textAlign: 'center',
+    color: '#a5b4fc'
   },
   helperBox: {
     marginTop: '16px',

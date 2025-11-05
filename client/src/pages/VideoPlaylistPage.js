@@ -1,8 +1,8 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { api } from '../services/api.service';
 
 const DEFAULT_PLAYLIST_URL = 'https://www.youtube.com/playlist?list=PLQu64YmMxERTi0K-K8QAihxfUkS4nYfHr';
-const PLAYLIST_COLLECTION_KEY = 'loe:video-playlists';
 const SELECTED_PLAYLIST_KEY = 'loe:video-selected-playlist';
 const DEFAULT_PLAYLISTS = [
   {
@@ -16,7 +16,6 @@ const extractPlaylistId = (value = '') => {
   const trimmed = String(value).trim();
   if (!trimmed) return '';
 
-  // Accept bare playlist ID
   if (/^[A-Za-z0-9_-]{10,}$/.test(trimmed) && !trimmed.includes('://')) {
     return trimmed;
   }
@@ -30,44 +29,21 @@ const extractPlaylistId = (value = '') => {
       return url.pathname.split('/').pop() || '';
     }
   } catch (error) {
-    // Not a full URL; ignore and fall through
+    // ignore parsing failures
   }
 
   return '';
 };
 
-const loadInitialPlaylists = () => {
-  if (typeof window === 'undefined') return DEFAULT_PLAYLISTS;
-  try {
-    const raw = window.localStorage.getItem(PLAYLIST_COLLECTION_KEY);
-    if (!raw) return DEFAULT_PLAYLISTS;
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.length) {
-      return parsed;
-    }
-    return DEFAULT_PLAYLISTS;
-  } catch (error) {
-    return DEFAULT_PLAYLISTS;
-  }
-};
-
-const loadInitialSelectedId = (playlists = DEFAULT_PLAYLISTS) => {
-  if (typeof window === 'undefined') {
-    return playlists[0]?.id || null;
-  }
-  const stored = window.localStorage.getItem(SELECTED_PLAYLIST_KEY);
-  if (stored && playlists.some((playlist) => playlist.id === stored)) {
-    return stored;
-  }
-  return playlists[0]?.id || null;
-};
-
 const VideoPlaylistPage = () => {
   const { user } = useAuth();
-  const initialPlaylistsRef = useRef(loadInitialPlaylists());
-  const [playlists, setPlaylists] = useState(initialPlaylistsRef.current);
-  const [selectedId, setSelectedId] = useState(() => loadInitialSelectedId(initialPlaylistsRef.current));
-  const [playerUnlocked, setPlayerUnlocked] = useState(() => Boolean(loadInitialSelectedId(initialPlaylistsRef.current)));
+  const initialSelectedId = typeof window !== 'undefined' ? window.localStorage.getItem(SELECTED_PLAYLIST_KEY) : null;
+  const storedSelectedRef = useRef(initialSelectedId ? String(initialSelectedId) : null);
+
+  const [playlists, setPlaylists] = useState([]);
+  const [selectedId, setSelectedId] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [showManager, setShowManager] = useState(false);
   const [editName, setEditName] = useState('');
@@ -80,108 +56,182 @@ const VideoPlaylistPage = () => {
   const isProMember = elevatedRole || ['pro', 'vip'].includes(membership);
   const canManage = user?.role === 'admin';
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(PLAYLIST_COLLECTION_KEY, JSON.stringify(playlists));
+  const refreshPlaylists = useCallback(async (preferredId) => {
+    if (!isProMember) return;
+
+    setLoading(true);
+    setLoadError('');
+    try {
+      const response = await api.video.listPlaylists();
+      const fetched = Array.isArray(response?.playlists) && response.playlists.length
+        ? response.playlists
+        : DEFAULT_PLAYLISTS;
+
+      setPlaylists(fetched);
+
+      const desiredId = preferredId !== undefined
+        ? (preferredId ? String(preferredId) : null)
+        : storedSelectedRef.current;
+
+      const matchedId = desiredId && fetched.some((item) => String(item.id) === String(desiredId))
+        ? String(desiredId)
+        : null;
+
+      if (matchedId) {
+        storedSelectedRef.current = matchedId;
+      }
+      setSelectedId(matchedId);
+    } catch (fetchError) {
+      console.error('[video] fetch playlists failed:', fetchError);
+      setLoadError(fetchError.message || '재생목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
+      setPlaylists(DEFAULT_PLAYLISTS);
+      setSelectedId(null);
+    } finally {
+      setLoading(false);
     }
-  }, [playlists]);
+  }, [isProMember]);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && selectedId) {
-      window.localStorage.setItem(SELECTED_PLAYLIST_KEY, selectedId);
+    if (!isProMember) {
+      setPlaylists([]);
+      setSelectedId(null);
+      setLoadError('');
+      return;
+    }
+    refreshPlaylists();
+  }, [isProMember, refreshPlaylists]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (selectedId) {
+      window.localStorage.setItem(SELECTED_PLAYLIST_KEY, String(selectedId));
+      storedSelectedRef.current = String(selectedId);
+    } else {
+      window.localStorage.removeItem(SELECTED_PLAYLIST_KEY);
+      storedSelectedRef.current = null;
     }
   }, [selectedId]);
 
-  const activePlaylist = useMemo(() => (
-    playlists.find((playlist) => playlist.id === selectedId) || playlists[0] || null
-  ), [playlists, selectedId]);
-
-  useEffect(() => {
-    if (activePlaylist) {
-      setEditName(activePlaylist.name);
-      setEditUrl(activePlaylist.url);
-    }
-  }, [activePlaylist]);
+  const activePlaylist = useMemo(() => {
+    if (!selectedId) return null;
+    return playlists.find((playlist) => String(playlist.id) === String(selectedId)) || null;
+  }, [playlists, selectedId]);
 
   const playlistId = useMemo(() => extractPlaylistId(activePlaylist?.url || ''), [activePlaylist]);
-  const embedUrl = playlistId ? `https://www.youtube.com/embed/videoseries?list=${playlistId}` : '';
+  const embedUrl = useMemo(() => (playlistId ? `https://www.youtube.com/embed/videoseries?list=${playlistId}` : ''), [playlistId]);
 
   const filteredPlaylists = useMemo(() => {
     const keyword = searchTerm.trim().toLowerCase();
     if (!keyword) return playlists;
-    return playlists.filter((playlist) => playlist.name.toLowerCase().includes(keyword));
+    return playlists.filter((playlist) => playlist.name?.toLowerCase().includes(keyword));
   }, [playlists, searchTerm]);
 
-  const handleSelectPlaylist = (id) => {
-    if (id === selectedId) return;
-    setSelectedId(id);
-    setPlayerUnlocked(true);
+  useEffect(() => {
+    if (activePlaylist) {
+      setEditName(activePlaylist.name || '');
+      setEditUrl(activePlaylist.url || '');
+    } else {
+      setEditName('');
+      setEditUrl('');
+    }
+  }, [activePlaylist]);
+
+  useEffect(() => {
+    if (!feedback) return undefined;
+    const timer = setTimeout(() => setFeedback(''), 3000);
+    return () => clearTimeout(timer);
+  }, [feedback]);
+
+  const handleSelectPlaylist = useCallback((id) => {
+    if (!id) return;
+    const idString = String(id);
+    if (!playlists.some((playlist) => String(playlist.id) === idString)) {
+      setError('재생목록 정보를 찾지 못했어요. 새로고침 후 다시 시도해 주세요.');
+      return;
+    }
+    setSelectedId(idString);
     setError('');
     setFeedback('선택한 재생목록으로 준비했어요!');
-  };
+  }, [playlists]);
 
-  const handleUpdatePlaylist = (event) => {
+  const handleUpdatePlaylist = useCallback(async (event) => {
     event.preventDefault();
-    if (!canManage || !activePlaylist) return;
+    if (!canManage) return;
+    if (!activePlaylist) {
+      setError('먼저 재생목록을 선택해 주세요.');
+      return;
+    }
+
     const trimmedName = editName.trim();
     const trimmedUrl = editUrl.trim();
-    const playlistKey = extractPlaylistId(trimmedUrl);
+
     if (!trimmedName) {
       setError('재생목록 이름을 입력해 주세요.');
       return;
     }
-    if (!playlistKey) {
+    if (!extractPlaylistId(trimmedUrl)) {
       setError('유효한 유튜브 재생목록 URL을 입력해 주세요.');
       return;
     }
-    setError('');
-    setPlaylists((prev) => prev.map((item) => (
-      item.id === activePlaylist.id ? { ...item, name: trimmedName, url: trimmedUrl } : item
-    )));
-    setFeedback('선택한 재생목록이 업데이트되었어요.');
-  };
 
-  const handleAddPlaylist = (event) => {
+    try {
+      setError('');
+      const response = await api.video.updatePlaylist(activePlaylist.id, { name: trimmedName, url: trimmedUrl });
+      const updated = response?.playlist;
+      if (!updated) {
+        throw new Error('재생목록 정보를 받지 못했습니다. 다시 시도해 주세요.');
+      }
+      setFeedback('선택한 재생목록이 업데이트되었어요.');
+      await refreshPlaylists(String(updated.id));
+    } catch (updateError) {
+      console.error('[video] update failed:', updateError);
+      setError(updateError.message || '재생목록을 수정하지 못했습니다.');
+    }
+  }, [activePlaylist, canManage, editName, editUrl, refreshPlaylists]);
+
+  const handleAddPlaylist = useCallback(async (event) => {
     event.preventDefault();
     if (!canManage) return;
+
     const trimmedName = editName.trim();
     const trimmedUrl = editUrl.trim();
-    const playlistKey = extractPlaylistId(trimmedUrl);
-    if (!trimmedName || !playlistKey) {
+
+    if (!trimmedName || !extractPlaylistId(trimmedUrl)) {
       setError('새 재생목록 이름과 URL을 모두 입력해 주세요.');
       return;
     }
-    const newId = `pl-${Date.now().toString(36)}`;
-    const nextPlaylist = { id: newId, name: trimmedName, url: trimmedUrl };
-    setPlaylists((prev) => [...prev, nextPlaylist]);
-    setSelectedId(newId);
-    setPlayerUnlocked(true);
-    setError('');
-    setFeedback('새 재생목록이 추가되었어요.');
-  };
 
-  const handleDeletePlaylist = () => {
+    try {
+      setError('');
+      const response = await api.video.createPlaylist({ name: trimmedName, url: trimmedUrl });
+      const created = response?.playlist;
+      if (!created) {
+        throw new Error('재생목록 정보를 받지 못했습니다.');
+      }
+      setFeedback('새 재생목록이 추가되었어요.');
+      await refreshPlaylists(String(created.id));
+      setShowManager(true);
+    } catch (createError) {
+      console.error('[video] create failed:', createError);
+      setError(createError.message || '재생목록을 추가하지 못했습니다.');
+    }
+  }, [canManage, editName, editUrl, refreshPlaylists]);
+
+  const handleDeletePlaylist = useCallback(async () => {
     if (!canManage || !activePlaylist) return;
-    if (playlists.length <= 1) {
-      setError('최소 한 개의 재생목록은 유지해야 해요.');
-      return;
+    try {
+      setError('');
+      await api.video.deletePlaylist(activePlaylist.id);
+      setFeedback('재생목록이 삭제되었어요.');
+      if (storedSelectedRef.current && String(storedSelectedRef.current) === String(activePlaylist.id)) {
+        storedSelectedRef.current = null;
+      }
+      await refreshPlaylists(null);
+    } catch (deleteError) {
+      console.error('[video] delete failed:', deleteError);
+      setError(deleteError.message || '재생목록을 삭제하지 못했습니다.');
     }
-    const filtered = playlists.filter((item) => item.id !== activePlaylist.id);
-    const next = filtered[0] || null;
-    setPlaylists(filtered);
-    setSelectedId(next?.id || null);
-    setPlayerUnlocked(Boolean(next));
-    setError('');
-    setFeedback('재생목록이 삭제되었어요.');
-  };
-
-  useEffect(() => {
-    if (feedback) {
-      const timer = setTimeout(() => setFeedback(''), 3000);
-      return () => clearTimeout(timer);
-    }
-    return undefined;
-  }, [feedback]);
+  }, [activePlaylist, canManage, refreshPlaylists]);
 
   if (!isProMember) {
     return (
@@ -235,13 +285,16 @@ const VideoPlaylistPage = () => {
           )}
         </div>
 
+        {loadError && <div style={styles.errorText}>{loadError}</div>}
         {error && <p style={styles.errorText}>{error}</p>}
         {feedback && <div style={styles.feedbackBanner}>{feedback}</div>}
 
-        {filteredPlaylists.length > 0 ? (
+        {loading ? (
+          <div style={styles.playlistEmpty}>재생목록을 불러오는 중이에요... ⏳</div>
+        ) : filteredPlaylists.length > 0 ? (
           <div style={styles.playlistGrid}>
             {filteredPlaylists.map((playlist) => {
-              const active = playlist.id === selectedId;
+              const active = selectedId && String(playlist.id) === String(selectedId);
               const playlistKey = extractPlaylistId(playlist.url);
               return (
                 <div
@@ -286,7 +339,7 @@ const VideoPlaylistPage = () => {
           <div style={styles.playlistEmpty}>검색 결과가 없어요. 다른 키워드를 시도해 보거나 관리자에게 새로운 재생목록을 요청해 주세요.</div>
         )}
 
-        {canManage && showManager && activePlaylist && (
+        {canManage && showManager && (
           <div style={styles.managerCard}>
             <h3 style={styles.managerTitle}>관리자 전용 · 재생목록 편집</h3>
             <form style={styles.managerForm} onSubmit={handleUpdatePlaylist}>
@@ -307,10 +360,13 @@ const VideoPlaylistPage = () => {
                 placeholder="https://www.youtube.com/playlist?list=..."
               />
               <div style={styles.managerButtonRow}>
-                <button type="submit" style={styles.managerPrimary}>선택한 재생목록 업데이트</button>
+                <button type="submit" style={styles.managerPrimary} disabled={!activePlaylist}>선택한 재생목록 업데이트</button>
                 <button type="button" style={styles.managerSecondary} onClick={handleAddPlaylist}>새 재생목록 추가</button>
-                <button type="button" style={styles.managerDanger} onClick={handleDeletePlaylist}>재생목록 삭제</button>
+                <button type="button" style={styles.managerDanger} onClick={handleDeletePlaylist} disabled={!activePlaylist}>재생목록 삭제</button>
               </div>
+              {!activePlaylist && (
+                <p style={styles.managerHelper}>재생목록을 먼저 선택하면 위 내용으로 수정하거나 삭제할 수 있어요.</p>
+              )}
             </form>
           </div>
         )}
@@ -319,7 +375,7 @@ const VideoPlaylistPage = () => {
       <section style={styles.section}>
         <h2 style={styles.sectionTitle}>2️⃣ 강의 시청</h2>
         <div style={styles.playerCard}>
-          {embedUrl ? (
+          {activePlaylist && embedUrl ? (
             <div style={styles.playerWrapper}>
               <iframe
                 key={embedUrl}
@@ -332,7 +388,7 @@ const VideoPlaylistPage = () => {
             </div>
           ) : (
             <div style={styles.playerPlaceholder}>
-              <p style={styles.placeholderText}>위에서 재생목록을 선택하면 이곳에서 바로 시청할 수 있어요.</p>
+              <p style={styles.placeholderText}>먼저 보고 싶은 재생목록을 선택해 주세요. 선택하면 이곳에서 바로 시청할 수 있어요.</p>
             </div>
           )}
           <div style={styles.playerActions}>
@@ -400,61 +456,32 @@ const styles = {
     marginBottom: '16px',
     color: 'var(--text-primary)'
   },
-  adminToggle: {
-    padding: '10px 16px',
-    borderRadius: '12px',
-    border: '1px solid rgba(59,130,246,0.45)',
-    background: 'rgba(59,130,246,0.12)',
-    color: 'var(--tone-hero)',
-    fontWeight: 700,
-    cursor: 'pointer'
-  },
-  adminToggleActive: {
-    background: 'linear-gradient(135deg, rgba(59,130,246,0.22), rgba(99,102,241,0.20))',
-    color: '#0B1220',
-    boxShadow: '0 0 20px rgba(59,130,246,0.25)'
-  },
   selectorIntro: {
+    margin: '0 0 16px',
     fontSize: '0.95rem',
-    color: 'var(--tone-strong)',
-    marginBottom: '16px'
+    color: 'var(--tone-strong)'
   },
   selectorSearchRow: {
     display: 'flex',
-    flexWrap: 'wrap',
-    gap: '10px',
-    marginBottom: '14px'
+    alignItems: 'center',
+    gap: '12px',
+    marginBottom: '18px'
   },
   selectorSearchInput: {
-    flex: '1 1 260px',
-    minWidth: '220px',
-    padding: '12px 14px',
+    flex: 1,
+    padding: '12px',
     borderRadius: '12px',
-    border: '1px solid var(--surface-border)',
+    border: '1px solid var(--border-subtle)',
     background: 'var(--surface-soft)',
     color: 'var(--text-primary)'
   },
   selectorClearButton: {
     padding: '10px 16px',
     borderRadius: '12px',
-    border: '1px solid var(--surface-border)',
+    border: '1px solid var(--border-subtle)',
     background: 'var(--surface-soft)',
-    color: 'var(--tone-strong)',
-    fontWeight: 600,
+    color: 'var(--text-primary)',
     cursor: 'pointer'
-  },
-  errorText: {
-    marginTop: '10px',
-    color: 'var(--danger)',
-    fontWeight: 600
-  },
-  feedbackBanner: {
-    marginBottom: '14px',
-    padding: '12px 16px',
-    borderRadius: '12px',
-    background: 'linear-gradient(135deg, rgba(34,197,94,0.18), rgba(16,185,129,0.12))',
-    color: 'var(--success-deep)',
-    fontWeight: 600
   },
   playlistGrid: {
     display: 'grid',
@@ -463,18 +490,17 @@ const styles = {
   },
   playlistCard: {
     borderRadius: '16px',
-    padding: '18px',
-    border: '1px solid var(--surface-border)',
+    border: '1px solid var(--border-subtle)',
     background: 'var(--surface-soft)',
+    padding: '18px',
     display: 'flex',
     flexDirection: 'column',
     gap: '12px',
-    boxShadow: '0 12px 28px rgba(15, 23, 42, 0.08)'
+    transition: 'border 0.2s ease, box-shadow 0.2s ease'
   },
   playlistCardActive: {
-    borderColor: 'rgba(59,130,246,0.55)',
-    boxShadow: '0 16px 38px rgba(59,130,246,0.22)',
-    background: 'linear-gradient(135deg, rgba(59,130,246,0.15), rgba(125,211,252,0.12))'
+    border: '1px solid var(--indigo)',
+    boxShadow: '0 14px 28px rgba(79,70,229,0.28)'
   },
   playlistCardHeader: {
     display: 'flex',
@@ -484,147 +510,132 @@ const styles = {
   },
   playlistNameRow: {
     display: 'flex',
-    alignItems: 'center',
-    gap: '8px'
+    gap: '8px',
+    alignItems: 'center'
   },
   playlistIcon: {
-    fontSize: '1.4rem'
+    fontSize: '1.2rem'
   },
   playlistName: {
     fontWeight: 700,
-    fontSize: '1rem',
-    color: 'var(--text-primary)',
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis'
-  },
-  selectedBadge: {
-    padding: '4px 10px',
-    borderRadius: '999px',
-    background: 'linear-gradient(135deg, rgba(34,197,94,0.32), rgba(16,185,129,0.24))',
-    color: 'var(--text-on-accent)',
-    fontSize: '12px',
-    fontWeight: 700
+    color: 'var(--text-primary)'
   },
   playlistActions: {
     display: 'flex',
-    flexDirection: 'column',
-    gap: '10px'
+    gap: '10px',
+    alignItems: 'center',
+    flexWrap: 'wrap'
   },
   selectButton: {
-    padding: '12px 0',
+    flex: '0 0 auto',
+    padding: '10px 16px',
     borderRadius: '12px',
-    border: '1px solid rgba(59,130,246,0.45)',
-    background: 'rgba(59,130,246,0.12)',
-    color: 'var(--tone-hero)',
-    fontWeight: 700,
-    cursor: 'pointer'
+    border: '1px solid var(--border-subtle)',
+    background: 'var(--surface-card)',
+    color: 'var(--text-primary)',
+    cursor: 'pointer',
+    fontWeight: 600
   },
   selectButtonActive: {
-    border: 'none',
-    background: 'linear-gradient(135deg, var(--accent) 0%, var(--indigo) 100%)',
-    color: 'var(--text-on-accent)',
-    boxShadow: '0 12px 24px rgba(59,130,246,0.28)'
+    border: '1px solid var(--indigo)',
+    background: 'rgba(99,102,241,0.15)',
+    color: 'var(--indigo-strong)'
   },
   watchOnYoutube: {
-    alignSelf: 'flex-start',
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '6px',
-    padding: '8px 14px',
-    borderRadius: '10px',
-    border: '1px solid var(--surface-border)',
-    background: 'var(--reset-bg)',
-    color: 'var(--tone-strong)',
+    flex: '0 0 auto',
+    padding: '10px 16px',
+    borderRadius: '999px',
+    border: 'none',
+    background: 'var(--surface-card)',
+    color: 'var(--tone-hero)',
     fontWeight: 600,
     textDecoration: 'none'
   },
   playlistEmpty: {
-    marginTop: '16px',
-    padding: '16px',
-    borderRadius: '12px',
-    border: '1px dashed var(--surface-border)',
-    background: 'var(--surface-soft)',
+    padding: '20px',
+    borderRadius: '14px',
+    border: '1px dashed var(--border-subtle)',
+    textAlign: 'center',
     color: 'var(--tone-strong)'
   },
   managerCard: {
-    marginTop: '20px',
+    marginTop: '24px',
     padding: '20px',
     borderRadius: '16px',
-    background: 'rgba(15,23,42,0.65)',
     border: '1px solid rgba(148,163,184,0.35)',
-    boxShadow: '0 16px 32px rgba(15, 23, 42, 0.18)',
-    color: '#E2E8F0'
+    background: 'var(--surface-soft)'
   },
   managerTitle: {
-    fontSize: '1.1rem',
-    fontWeight: 800,
-    marginBottom: '16px'
+    margin: '0 0 16px',
+    fontWeight: 700,
+    color: 'var(--text-primary)'
   },
   managerForm: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '10px'
+    gap: '12px'
   },
   managerLabel: {
-    fontSize: '0.9rem',
-    fontWeight: 600
+    fontSize: '0.85rem',
+    color: 'var(--tone-muted)'
   },
   managerInput: {
-    padding: '10px 12px',
-    borderRadius: '10px',
-    border: '1px solid rgba(148,163,184,0.5)',
-    background: 'rgba(15,23,42,0.85)',
-    color: '#F8FAFC'
+    padding: '12px',
+    borderRadius: '12px',
+    border: '1px solid var(--border-subtle)',
+    background: 'var(--surface-card)',
+    color: 'var(--text-primary)'
   },
   managerButtonRow: {
     display: 'flex',
     flexWrap: 'wrap',
     gap: '10px',
-    marginTop: '6px'
+    marginTop: '8px'
   },
   managerPrimary: {
-    flex: '1 1 180px',
-    padding: '10px 14px',
+    padding: '10px 18px',
     borderRadius: '12px',
     border: 'none',
-    background: 'linear-gradient(135deg, rgba(59,130,246,0.38), rgba(96,165,250,0.22))',
-    color: '#0B1220',
+    background: 'linear-gradient(135deg, var(--indigo) 0%, var(--indigo-strong) 100%)',
+    color: 'var(--text-on-accent)',
     fontWeight: 700,
     cursor: 'pointer'
   },
   managerSecondary: {
-    flex: '1 1 160px',
-    padding: '10px 14px',
+    padding: '10px 18px',
     borderRadius: '12px',
-    border: '1px solid rgba(148,163,184,0.45)',
-    background: 'rgba(148,163,184,0.12)',
-    color: '#E2E8F0',
+    border: '1px solid var(--border-subtle)',
+    background: 'var(--surface-card)',
+    color: 'var(--text-primary)',
     fontWeight: 600,
     cursor: 'pointer'
   },
   managerDanger: {
-    flex: '1 1 140px',
-    padding: '10px 14px',
+    padding: '10px 18px',
     borderRadius: '12px',
-    border: '1px solid rgba(248,113,113,0.6)',
-    background: 'rgba(248,113,113,0.18)',
-    color: '#FCA5A5',
+    border: '1px solid rgba(248,113,113,0.45)',
+    background: 'rgba(248,113,113,0.15)',
+    color: 'rgb(220,38,38)',
     fontWeight: 600,
     cursor: 'pointer'
   },
+  managerHelper: {
+    marginTop: '8px',
+    fontSize: '0.85rem',
+    color: 'var(--tone-muted)'
+  },
   playerCard: {
-    display: 'grid',
-    gap: '16px'
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '18px'
   },
   playerWrapper: {
     position: 'relative',
     paddingBottom: '56.25%',
     height: 0,
+    borderRadius: '18px',
     overflow: 'hidden',
-    borderRadius: '16px',
-    boxShadow: '0 20px 36px rgba(15, 23, 42, 0.18)',
-    background: '#000'
+    boxShadow: '0 20px 40px rgba(15, 23, 42, 0.18)'
   },
   iframe: {
     position: 'absolute',
@@ -632,15 +643,18 @@ const styles = {
     left: 0,
     width: '100%',
     height: '100%',
-    border: 'none'
+    border: 0
   },
   playerPlaceholder: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: '40px',
+    minHeight: '240px',
     borderRadius: '16px',
-    background: 'var(--surface-soft)'
+    border: '1px dashed var(--border-subtle)',
+    background: 'var(--surface-soft)',
+    textAlign: 'center',
+    padding: '24px'
   },
   placeholderText: {
     color: 'var(--tone-strong)',
@@ -649,30 +663,30 @@ const styles = {
   playerActions: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '10px'
+    gap: '12px'
   },
   openButton: {
-    alignSelf: 'flex-start',
     display: 'inline-flex',
     alignItems: 'center',
-    gap: '6px',
-    padding: '10px 16px',
-    borderRadius: '12px',
-    background: 'var(--surface-soft)',
-    border: '1px solid var(--surface-border)',
-    color: 'var(--tone-strong)',
+    justifyContent: 'center',
+    padding: '12px 20px',
+    borderRadius: '999px',
+    background: 'linear-gradient(135deg, #6366f1 0%, #0ea5e9 100%)',
+    color: 'var(--text-on-accent)',
     fontWeight: 600,
-    textDecoration: 'none'
+    textDecoration: 'none',
+    border: 'none'
   },
   tipText: {
-    fontSize: '0.9rem',
-    color: 'var(--tone-strong)'
+    color: 'var(--tone-muted)',
+    fontSize: '0.9rem'
   },
   tipList: {
-    margin: 0,
-    padding: 0,
     listStyle: 'none',
-    display: 'grid',
+    padding: 0,
+    margin: 0,
+    display: 'flex',
+    flexDirection: 'column',
     gap: '10px'
   },
   tipItem: {
@@ -680,23 +694,56 @@ const styles = {
     borderRadius: '12px',
     background: 'var(--surface-soft)',
     color: 'var(--tone-strong)',
-    lineHeight: 1.6,
-    border: '1px solid var(--surface-border)'
+    border: '1px solid var(--border-subtle)'
+  },
+  feedbackBanner: {
+    padding: '12px',
+    borderRadius: '12px',
+    background: 'rgba(34,197,94,0.15)',
+    color: 'var(--success-strong)',
+    fontWeight: 600
+  },
+  errorText: {
+    margin: '0 0 12px',
+    color: 'rgb(220,38,38)',
+    fontWeight: 600
+  },
+  adminToggle: {
+    padding: '10px 16px',
+    borderRadius: '12px',
+    border: '1px solid var(--border-subtle)',
+    background: 'var(--surface-card)',
+    color: 'var(--text-primary)',
+    fontWeight: 600,
+    cursor: 'pointer'
+  },
+  adminToggleActive: {
+    border: '1px solid var(--indigo)',
+    color: 'var(--indigo-strong)'
+  },
+  selectedBadge: {
+    padding: '4px 8px',
+    borderRadius: '999px',
+    background: 'rgba(59,130,246,0.16)',
+    color: 'var(--indigo-strong)',
+    fontSize: '0.75rem',
+    fontWeight: 700
   },
   gateContainer: {
-    maxWidth: '640px',
+    maxWidth: '560px',
     margin: '0 auto',
-    padding: '32px 24px'
+    padding: '48px 24px',
+    textAlign: 'center'
   },
   gateCard: {
-    marginTop: '18px',
+    marginTop: '24px',
     padding: '24px',
-    borderRadius: '18px',
-    background: 'var(--surface-card)',
-    boxShadow: '0 16px 32px rgba(15, 23, 42, 0.12)'
+    borderRadius: '16px',
+    border: '1px solid rgba(148,163,184,0.35)',
+    background: 'var(--surface-card)'
   },
   gateText: {
-    margin: '0 0 8px',
+    margin: '0 0 12px',
     color: 'var(--tone-strong)'
   }
 };

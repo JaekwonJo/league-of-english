@@ -349,6 +349,19 @@ class Database {
           FOREIGN KEY (document_id) REFERENCES documents(id)
         )`,
 
+        `CREATE TABLE IF NOT EXISTS video_playlists (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          url TEXT NOT NULL,
+          created_by INTEGER,
+          updated_by INTEGER,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          is_archived INTEGER DEFAULT 0,
+          FOREIGN KEY (created_by) REFERENCES users(id),
+          FOREIGN KEY (updated_by) REFERENCES users(id)
+        )`,
+
         `CREATE TABLE IF NOT EXISTS workbook_sets (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           document_id INTEGER NOT NULL,

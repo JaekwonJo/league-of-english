@@ -42,6 +42,7 @@ const membershipRoutes = require('./routes/membership.routes');
 const teacherRoutes = require('./routes/teacher.routes');
 const clientErrorRoutes = require('./routes/errors.routes');
 const workbookRoutes = require('./routes/workbook.routes');
+const videoRoutes = require('./routes/video.routes');
 
 // App init
 const app = express();
@@ -90,6 +91,7 @@ app.use('/api', vocabRoutes);
 app.use('/api/study', studyRoutes);
 app.use('/api/membership', membershipRoutes);
 app.use('/api', workbookRoutes);
+app.use('/api/video', videoRoutes);
 app.use('/api/teacher', teacherRoutes);
 app.use('/api/errors', clientErrorRoutes);
 

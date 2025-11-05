@@ -62,6 +62,8 @@ const formatSeconds = (value = 0) => {
 
 const VocabularyPage = () => {
   const { user, updateUser } = useAuth();
+  const [isMobile, setIsMobile] = useState(() => (typeof window !== 'undefined' ? window.innerWidth <= 768 : false));
+  const stepSummaryRef = useRef(null);
 
   const stepPathMap = useMemo(() => ({
     [STEPS.SELECT_SET]: '/vocabulary',
@@ -118,6 +120,13 @@ const VocabularyPage = () => {
       ...prev,
       [key]: !prev?.[key]
     }));
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return () => {};
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const [quizState, setQuizState] = useState({
@@ -893,6 +902,7 @@ const getTimeLimitSeconds = useCallback(() => {
           {selectedSet && step === STEPS.SELECT_DAY && (
             <section style={styles.section} id="vocab-step-2">
               <h2 style={styles.sectionTitle}>2️⃣ 범위 선택하기</h2>
+              <p style={styles.sectionHint}>원하는 Day를 탭하면 즉시 선택돼요. 여러 Day를 고르면 단어 개수만큼 시험이 만들어집니다.</p>
               {daysLoading ? (
                 <div style={styles.notice}>Day 정보를 불러오는 중이에요...</div>
               ) : (
@@ -939,7 +949,23 @@ const getTimeLimitSeconds = useCallback(() => {
                 </div>
               )}
 
-              <div style={styles.stepActions}>
+              {isMobile && (
+                <button
+                  type="button"
+                  style={styles.scrollHintButton}
+                  onClick={() => stepSummaryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+                >
+                  아래로 이동해서 시험 준비하기 ⬇️
+                </button>
+              )}
+
+              <div
+                ref={stepSummaryRef}
+                style={{
+                  ...styles.stepActions,
+                  ...(isMobile ? styles.stepActionsMobile : {})
+                }}
+              >
                 <button type="button" style={styles.stepLinkButton} onClick={handleBackToSetList}>
                   ← 단어장 다시 고르기
                 </button>
@@ -969,7 +995,7 @@ const getTimeLimitSeconds = useCallback(() => {
                     onClick={handleProceedToSetup}
                     disabled={!selectedDayLabels.length}
                   >
-                    다음 단계: 시험 준비로 이동 →
+                    다음 단계: 시험 준비 화면으로 이동 ⬇️
                   </button>
                 </div>
               </div>
@@ -1602,6 +1628,24 @@ const styles = {
     gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
     gap: '14px'
   },
+  scrollHintButton: {
+    marginTop: '16px',
+    width: '100%',
+    padding: '12px 18px',
+    borderRadius: '14px',
+    border: '1px solid rgba(99,102,241,0.35)',
+    background: 'linear-gradient(135deg, rgba(59,130,246,0.18), rgba(129,140,248,0.18))',
+    color: 'var(--color-blue-500)',
+    fontWeight: 700,
+    fontSize: '0.95rem',
+    cursor: 'pointer',
+    boxShadow: '0 12px 26px rgba(37, 99, 235, 0.18)'
+  },
+  sectionHint: {
+    margin: '6px 0 18px',
+    color: 'var(--tone-muted)',
+    fontSize: '0.95rem'
+  },
   dayCard: {
     background: 'var(--surface-card)',
     borderRadius: '16px',
@@ -1640,7 +1684,19 @@ const styles = {
     flexWrap: 'wrap',
     gap: '16px',
     alignItems: 'center',
-    justifyContent: 'space-between'
+    justifyContent: 'space-between',
+    position: 'sticky',
+    top: 'calc(100vh - 220px)',
+    boxShadow: '0 18px 36px rgba(15, 23, 42, 0.15)',
+    zIndex: 5
+  },
+  stepActionsMobile: {
+    position: 'static',
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    gap: '12px',
+    padding: '18px 16px',
+    boxShadow: '0 12px 24px rgba(15, 23, 42, 0.12)'
   },
   stepLinkButton: {
     background: 'transparent',
@@ -1944,14 +2000,16 @@ const styles = {
     gap: '12px'
   },
   primaryButton: {
-    background: 'var(--accent-gradient)',
+    background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 45%, #0ea5e9 100%)',
     color: 'var(--text-on-accent)',
     border: 'none',
-    borderRadius: '12px',
-    padding: '12px 20px',
+    borderRadius: '16px',
+    padding: '16px 28px',
     cursor: 'pointer',
-    fontSize: '1rem',
-    fontWeight: 600
+    fontSize: '1.05rem',
+    fontWeight: 700,
+    boxShadow: '0 18px 36px rgba(99, 102, 241, 0.35)',
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease'
   },
   secondaryButton: {
     background: 'var(--surface-muted)',

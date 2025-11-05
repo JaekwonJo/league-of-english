@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react';
 import PassagePreviewModal from '../../../components/shared/PassagePreviewModal';
 import styles from './configStyles';
 import useStudyConfig from './hooks/useStudyConfig';
-import { MAX_TOTAL_PROBLEMS } from './constants';
 import DocumentStep from './components/DocumentStep';
 import PassageStep from './components/PassageStep';
 import ProblemTypeStep from './components/ProblemTypeStep';
@@ -27,7 +26,6 @@ const StudyConfig = ({
     previewPassage,
     error,
     config,
-    totalProblems,
     goToStep,
     selectDocument,
     togglePassageSelection,
@@ -36,12 +34,10 @@ const StudyConfig = ({
     randomPassages,
     openPreview,
     closePreview,
-    handleTypeChange,
     selectedType,
     defaultProblemCount,
     selectSingleType,
     changeOrderMode,
-    prepareTypeStep,
     handleStart,
     renderPassageMeta,
   } = useStudyConfig({ onStart, initialFocusType });
@@ -51,9 +47,6 @@ const StudyConfig = ({
   const resumeAvailable = useMemo(() => (
     savedSession && Array.isArray(savedSession.problems) && savedSession.problems.length > 0
   ), [savedSession]);
-
-  // 간단하고 직관적인 흐름을 위해 안내 문구를 숨깁니다.
-  const quickGuideItems = useMemo(() => ([]), []);
 
   const formatDuration = (seconds = 0) => {
     const total = Math.max(0, Math.floor(Number(seconds) || 0));

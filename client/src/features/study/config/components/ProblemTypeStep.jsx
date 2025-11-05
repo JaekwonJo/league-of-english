@@ -1,6 +1,6 @@
 import React from 'react';
 import styles from '../configStyles';
-import { MAX_TOTAL_PROBLEMS, PROBLEM_TYPES } from '../constants';
+import { PROBLEM_TYPES } from '../constants';
 
 const ProblemTypeStep = ({
   selectedType,

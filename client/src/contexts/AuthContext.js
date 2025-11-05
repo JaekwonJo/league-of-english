@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import apiService, { api } from '../services/api.service';
 
 // Auth Context 생성
 const AuthContext = createContext();
@@ -44,7 +45,10 @@ export const AuthProvider = ({ children }) => {
 
   // 로그아웃 함수
   const logout = () => {
-    localStorage.removeItem('token');
+    void api.auth.logout().catch((error) => {
+      console.warn('[auth] logout request failed:', error?.message || error);
+    });
+    apiService.clearToken();
     localStorage.removeItem('user');
     setUser(null);
   };

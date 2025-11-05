@@ -426,8 +426,8 @@ class WorkbookService {
     });
 
     return {
-      title: `${document.title || '워크북'} 10단계 학습`,
-      description: koreanMainIdea || englishSummaryKo || '지문의 핵심을 10단계 워크북으로 재구성했습니다.',
+      title: `${document.title || '워크북'} 8단계 워크북`,
+      description: koreanMainIdea || englishSummaryKo || '지문의 핵심을 8단계 워크북으로 정리했어요.',
       coverEmoji: DEFAULT_EMOJI,
       steps,
       meta: {
@@ -439,6 +439,7 @@ class WorkbookService {
         authorsClaim,
         koreanMainIdea,
         modernApplications: modernApps,
+        englishTitles,
         vocabularyTerms: vocabularyPool.map((item) => item.term)
       }
     };
@@ -521,7 +522,7 @@ class WorkbookService {
         '앞뒤 문장과 흐름 비교하기',
         '정답 단어로 다시 한 번 읽어 보기'
       ]),
-      this._createStep(4, '영어 빈칸 (3)', '✏️', '세 개의 핵심 어휘를 영어로 떠올려 보며 문장을 완성해요.', '직접 떠올린 영어 단어를 넣고 자연스러운지 소리 내어 확인해 보세요.', tripleBlankCards, [
+      this._createStep(4, '빈칸 (3)', '✏️', '세 개의 핵심 어휘를 떠올리며 문장을 완성해요.', '각 빈칸에 필요한 품사를 먼저 생각하고 자연스러운 흐름인지 확인하세요.', tripleBlankCards, [
         '빈칸마다 필요한 품사를 먼저 떠올리기',
         '완성한 문장을 영어로 읽으며 리듬 익히기'
       ]),
@@ -537,8 +538,8 @@ class WorkbookService {
         '연결어와 지시어에 주목하기',
         '삽입 후 다시 읽으며 자연스러운지 점검하기'
       ]),
-      this._createStep(8, '영작하기', '🧠✍️', '힌트 단어를 활용해 문장을 직접 완성해 보세요.', '힌트로 뼈대를 만들고 나머지는 직접 타이핑해 보세요.', writingPuzzleCards, [
-        '힌트 단어로 문장 구조 세우기',
+      this._createStep(8, '영작하기', '🧠✍️', '배운 표현을 활용해 문장을 직접 완성해 보세요.', '떠오른 문장을 소리 내어 읽으며 자연스러운지 확인하세요.', writingPuzzleCards, [
+        '핵심 어휘와 표현을 다시 떠올리기',
         '완성된 문장을 크게 읽어 보기'
       ])
     ];
@@ -726,7 +727,7 @@ class WorkbookService {
       const tokenPool = scrambled.map((token, idx) => ({ id: `${idx}-${token}`, text: token }));
       cards.push({
         type: 'word-order',
-        prompt: korean || '힌트를 읽고 단어를 올바른 순서로 배열해 보세요.',
+        prompt: korean || '뜻을 읽고 단어를 올바른 순서로 배열해 보세요.',
         tokens: tokenPool,
         answer: chunks.join(' '),
         answerTokens: chunks,
@@ -866,17 +867,11 @@ class WorkbookService {
     const buildCard = (english, koreanHint) => {
       const cleanSentence = this._cleanEnglish(english);
       if (!cleanSentence) return null;
-      const hintTokens = this._pickHintTokens(cleanSentence, 5);
-      const promptLines = [];
-      if (koreanHint) promptLines.push(koreanHint);
-      if (hintTokens.length) {
-        promptLines.push(`단어 단서: ${hintTokens.join(' · ')}`);
-      }
-      const prompt = promptLines.length ? promptLines.join('\n') : '단서를 참고해 문장을 완성해 보세요.';
+      const prompt = koreanHint || '문장을 직접 영어로 완성해 보세요.';
       return {
         type: 'word-order-input',
         prompt,
-        tokens: hintTokens,
+        tokens: [],
         answer: cleanSentence,
         preview: `[영작 퍼즐] ${this._trim(cleanSentence, 80)}`,
         back: `정답 예시: ${cleanSentence}`

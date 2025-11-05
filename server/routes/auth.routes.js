@@ -2,12 +2,12 @@ const express = require('express');
 const { randomBytes } = require('crypto');
 const router = express.Router();
 const database = require('../models/database');
-const { generateToken, hashPassword, verifyPassword } = require('../middleware/auth');
+const { generateToken, hashPassword, verifyPassword, verifyToken } = require('../middleware/auth');
 const { logAuthEvent, EVENT_TYPES } = require('../services/auditLogService');
 const emailVerificationService = require('../services/emailVerificationService');
 
-const DEFAULT_GUEST_RETENTION_MINUTES = parseInt(process.env.LOE_GUEST_RETENTION_MINUTES || '45', 10);
-const DEFAULT_GUEST_KEEP_RECENT = parseInt(process.env.LOE_GUEST_KEEP_RECENT || '2', 10);
+const DEFAULT_GUEST_RETENTION_MINUTES = parseInt(process.env.LOE_GUEST_RETENTION_MINUTES || '0', 10);
+const DEFAULT_GUEST_KEEP_RECENT = parseInt(process.env.LOE_GUEST_KEEP_RECENT || '0', 10);
 
 const toNumberArray = (input = []) =>
   Array.isArray(input) ? input.map((value) => Number(value)).filter((value) => Number.isInteger(value)) : [];
@@ -413,7 +413,16 @@ router.post('/login', async (req, res) => {
 });
 
 // 로그아웃 (토큰 삭제만 하면 됨)
-router.post('/logout', (req, res) => {
+router.post('/logout', verifyToken, async (req, res) => {
+  try {
+    const user = await database.get('SELECT id, membership FROM users WHERE id = ?', [req.user.id]);
+    if (user && String(user.membership || '').toLowerCase() === 'guest') {
+      await deleteGuestArtifacts([user.id]);
+    }
+  } catch (error) {
+    console.warn('[auth] logout cleanup error:', error?.message || error);
+  }
+
   res.json({ message: '로그아웃 되었습니다.' });
 });
 

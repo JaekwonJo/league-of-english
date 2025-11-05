@@ -832,6 +832,22 @@ export const analysisStyles = {
   loadingMeaning: {
     color: 'var(--tone-strong)'
   },
+  loadingWordActions: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    width: '100%',
+    marginTop: 6
+  },
+  loadingMoreButton: {
+    padding: '8px 14px',
+    borderRadius: 12,
+    border: '1px solid var(--border-subtle)',
+    background: 'var(--surface-card)',
+    color: 'var(--text-primary)',
+    fontWeight: 600,
+    cursor: 'pointer',
+    boxShadow: '0 6px 14px rgba(15, 23, 42, 0.12)'
+  },
   loadingQuoteStack: {
     display: 'flex',
     flexDirection: 'column',
@@ -856,6 +872,11 @@ export const analysisStyles = {
     alignSelf: 'flex-end',
     color: 'var(--tone-muted)',
     fontSize: '0.9rem'
+  },
+  loadingQuoteTranslation: {
+    margin: 0,
+    color: 'var(--tone-strong)',
+    fontSize: '0.95rem'
   },
   word: {
     fontWeight: 'bold',

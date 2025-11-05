@@ -37,6 +37,15 @@ class ApiService {
     localStorage.setItem('token', token);
   }
 
+  clearToken() {
+    this.token = null;
+    try {
+      localStorage.removeItem('token');
+    } catch (error) {
+      console.warn('[api] clearToken error:', error?.message || error);
+    }
+  }
+
   /**
    * 토큰 가져오기
    */
@@ -420,6 +429,13 @@ export const api = {
     status: () => apiService.get('/membership/status'),
     redeem: (code) => apiService.post('/membership/redeem', { code }),
     request: (plan, message) => apiService.post('/membership/request', { plan, message })
+  },
+
+  video: {
+    listPlaylists: () => apiService.get('/video/playlists'),
+    createPlaylist: (payload) => apiService.post('/video/playlists', payload),
+    updatePlaylist: (id, payload) => apiService.put(`/video/playlists/${id}`, payload),
+    deletePlaylist: (id) => apiService.delete(`/video/playlists/${id}`)
   },
 
   // 문서 분석

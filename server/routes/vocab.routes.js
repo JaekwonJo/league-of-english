@@ -395,17 +395,19 @@ router.post('/vocabulary/sets/:documentId/quiz', verifyToken, checkDailyLimit, a
 
     const desiredCount = Math.max(1, Math.min(parseInt(count, 10) || 30, mergedEntries.length));
 
-    // Per-type(단어) 일일 제한: 무료 회원은 30개/일
-    // 관리자/프리미엄/프로는 무제한
+    // Per-type(단어) 일일 제한: 무료/게스트는 구간별 제한, 프리미엄 이상은 무제한
     const me = await database.get('SELECT membership, role FROM users WHERE id = ?', [req.user.id]);
-    const isUnlimited = me && (me.role === 'admin' || me.membership === 'premium' || me.membership === 'pro');
+    const membership = String(me?.membership || '').toLowerCase();
+    const isGuest = membership === 'guest';
+    const perDayLimit = isGuest ? 300 : 30;
+    const isUnlimited = me && (me.role === 'admin' || membership === 'premium' || membership === 'pro');
     if (!isUnlimited) {
       const usedVocabToday = await getUsageToday(req.user.id, 'vocab');
-      if ((usedVocabToday + desiredCount) > 30) {
-        const remaining = Math.max(0, 30 - usedVocabToday);
+      if ((usedVocabToday + desiredCount) > perDayLimit) {
+        const remaining = Math.max(0, perDayLimit - usedVocabToday);
         return res.status(429).json({
           success: false,
-          message: `오늘 단어시험 제한(30개)을 초과했어요. 남은 수: ${remaining}개. 내일 다시 시도하거나 업그레이드해 주세요.`
+          message: `오늘 단어시험 제한(${perDayLimit}개)을 초과했어요. 남은 수: ${remaining}개. 계속 이용하려면 회원가입 또는 업그레이드를 해주세요.`
         });
       }
     }
