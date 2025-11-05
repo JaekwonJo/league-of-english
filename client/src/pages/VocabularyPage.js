@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { api } from '../services/api.service';
 import { useAuth } from '../contexts/AuthContext';
 
-const QUIZ_SIZE = 30;
+const DEFAULT_QUIZ_SIZE = 30;
 const tierOrder = ['Iron', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond', 'Master', 'Challenger'];
 const STEPS = {
   SELECT_SET: 1,
@@ -577,8 +577,8 @@ const getTimeLimitSeconds = useCallback(() => {
 
     try {
       const payload = hasMulti
-        ? { dayKeys: selectedDayKeys, count: QUIZ_SIZE }
-        : { dayKey: selectedDayKey, count: QUIZ_SIZE };
+        ? { dayKeys: selectedDayKeys, count: plannedQuestionCount }
+        : { dayKey: selectedDayKey, count: plannedQuestionCount };
       // Always send mode (including 'mixed') for clarity
       payload.mode = quizMode;
       // Order policy: random (default) or sequential
@@ -636,7 +636,7 @@ const getTimeLimitSeconds = useCallback(() => {
       setQuizState((prev) => ({ ...prev, loading: false }));
       setError(err?.message || '퀴즈를 시작하지 못했어요. 다시 시도해 주세요.');
     }
-  }, [finalizeAndSubmit, getTimeLimitSeconds, navigateToStep, orderPolicy, quizMode, selectedDayKey, selectedDayKeys, selectedSet]);
+  }, [finalizeAndSubmit, getTimeLimitSeconds, navigateToStep, orderPolicy, plannedQuestionCount, quizMode, selectedDayKey, selectedDayKeys, selectedSet]);
 
   const handleSubmit = useCallback(() => {
     if (!quizState.data) return;
@@ -713,6 +713,11 @@ const getTimeLimitSeconds = useCallback(() => {
   const selectedWordsCount = useMemo(
     () => selectedDays.reduce((sum, day) => sum + Number(day.count || 0), 0),
     [selectedDays]
+  );
+
+  const plannedQuestionCount = useMemo(
+    () => Math.max(1, selectedWordsCount || DEFAULT_QUIZ_SIZE),
+    [selectedWordsCount]
   );
 
   const selectionLocked = practiceState.active || quizState.active;
@@ -995,7 +1000,7 @@ const getTimeLimitSeconds = useCallback(() => {
                       return `📝 선택한 Day ${selectedDayLabels.length}개 | 총 ${selectedWordsCount}개 단어`;
                     })()}
                   </h3>
-                  <p style={styles.actionHint}>기본 문제 수는 {QUIZ_SIZE}문이며, 정답 즉시 피드백이 제공돼요.</p>
+                  <p style={styles.actionHint}>선택한 단어 총 {plannedQuestionCount}개가 시험에 출제돼요. 정답 즉시 피드백이 제공됩니다.</p>
                 </div>
                 <div style={styles.configureChipList}>
                   {selectedDayLabels.map((label) => (

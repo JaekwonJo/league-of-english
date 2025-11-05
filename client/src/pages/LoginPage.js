@@ -166,6 +166,25 @@ const LoginPage = () => {
     }
   };
 
+  const handleGuestLogin = async () => {
+    resetFeedback();
+    setLoading(true);
+    try {
+      const data = await api.auth.guestLogin();
+      if (data?.user && data?.token) {
+        apiService.setToken(data.token);
+        login(data.user, data.token);
+        setInfoMessage('게스트 모드로 체험 중입니다.');
+      } else {
+        setError('게스트 로그인 응답이 올바르지 않습니다.');
+      }
+    } catch (err) {
+      setError(err?.message || '게스트 모드로 접속하지 못했어요.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const isLogin = mode === MODE_LOGIN;
   const isRegister = mode === MODE_REGISTER;
   const isReset = mode === MODE_RESET;
@@ -187,7 +206,7 @@ const LoginPage = () => {
         </div>
 
         <form onSubmit={handleSubmit} style={styles.form}>
-          {isLogin && (
+         {isLogin && (
             <>
               <input
                 type="text"
@@ -374,6 +393,16 @@ const LoginPage = () => {
           <button type="submit" style={styles.submitButton} disabled={loading}>
             {submitLabel}
           </button>
+          {isLogin && (
+            <button
+              type="button"
+              style={styles.guestButton}
+              onClick={handleGuestLogin}
+              disabled={loading}
+            >
+              게스트로 체험하기
+            </button>
+          )}
         </form>
 
         <div style={styles.toggleContainer}>
@@ -482,6 +511,15 @@ const styles = {
     border: '1px solid rgba(99, 102, 241, 0.6)',
     background: 'rgba(99, 102, 241, 0.12)',
     color: '#c7d2fe',
+    fontWeight: 600,
+    cursor: 'pointer'
+  },
+  guestButton: {
+    padding: '12px 16px',
+    borderRadius: '12px',
+    border: '1px solid rgba(148, 163, 184, 0.35)',
+    background: 'rgba(15, 23, 42, 0.7)',
+    color: 'var(--text-on-accent)',
     fontWeight: 600,
     cursor: 'pointer'
   },

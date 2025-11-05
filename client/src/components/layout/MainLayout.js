@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useTheme } from '../../contexts/ThemeContext';
 import * as LucideIcons from 'lucide-react';
 import routesConfig from '../../config/routes.config.json';
 import uiConfig from '../../config/ui.config.json';
@@ -8,7 +7,6 @@ import uiConfig from '../../config/ui.config.json';
 const MainLayout = ({ children, currentPath }) => {
   const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  useTheme();
   const breakpoint = uiConfig.layout.sidebar.breakpoint || 768;
   const [isMobile, setIsMobile] = useState(() => (typeof window !== 'undefined' ? window.innerWidth < breakpoint : false));
   const sidebarRef = useRef(null);

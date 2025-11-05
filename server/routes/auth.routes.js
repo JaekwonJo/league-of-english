@@ -1,4 +1,5 @@
 const express = require('express');
+const { randomBytes } = require('crypto');
 const router = express.Router();
 const database = require('../models/database');
 const { generateToken, hashPassword, verifyPassword } = require('../middleware/auth');
@@ -187,6 +188,68 @@ router.post('/reset-password', async (req, res) => {
 });
 
 // 로그인
+router.post('/guest-login', async (req, res) => {
+  try {
+    const suffix = `${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    const username = `guest_${suffix}`;
+    const email = `guest_${suffix}@trial.local`;
+    const hashedPassword = await hashPassword(randomBytes(12).toString('hex'));
+    const today = new Date().toISOString().split('T')[0];
+
+    const insertResult = await database.run(
+      `INSERT INTO users (username, password_hash, email, name, school, grade, role, membership, email_verified, is_active, daily_limit, used_today, last_reset_date)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)` ,
+      [
+        username,
+        hashedPassword,
+        email,
+        '게스트',
+        'Guest',
+        1,
+        'student',
+        'guest',
+        1,
+        1,
+        0,
+        0,
+        today
+      ]
+    );
+
+    const userId = insertResult?.lastID || insertResult?.id;
+    if (!userId) {
+      throw new Error('게스트 계정을 생성하지 못했습니다.');
+    }
+
+    const token = generateToken({ id: userId, username, role: 'student' });
+
+    const sanitizedUser = {
+      id: userId,
+      username,
+      email,
+      name: '체험 계정',
+      school: 'Guest',
+      grade: 1,
+      role: 'student',
+      membership: 'guest',
+      membership_expires_at: null,
+      daily_limit: 0,
+      used_today: 0,
+      tier: 'Iron',
+      points: 0,
+      last_login_at: null,
+      login_count: 0,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    res.json({ message: '게스트 모드로 입장했어요!', token, user: sanitizedUser });
+  } catch (error) {
+    console.error('[auth] guest-login error:', error);
+    res.status(500).json({ message: '게스트 로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.' });
+  }
+});
+
 router.post('/login', async (req, res) => {
   const { username, password } = req.body || {};
 
