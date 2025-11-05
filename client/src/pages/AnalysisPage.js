@@ -589,7 +589,7 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
       <div style={analysisStyles.modalOverlay}>
         <div style={analysisStyles.modalContentSmall}>
           <h3 style={analysisStyles.modalTitle}>🚨 신고하기</h3>
-          <p style={{ color: 'var(--tone-strong)', marginTop: 0 }}>
+          <p style={{ color: 'var(--text-primary)', marginTop: 0 }}>
             어떤 부분이 이상했는지 자세히 알려주시면, 관리자 선생님이 빠르게 확인할 수 있어요.
           </p>
           <textarea
@@ -1013,7 +1013,7 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
 
           {activeVariant ? (
             <>
-              <p style={{ color: 'var(--tone-strong)', marginBottom: '12px' }}>
+              <p style={{ color: 'var(--text-primary)', marginBottom: '12px' }}>
                 생성 시각: {new Date(activeVariant.generatedAt || Date.now()).toLocaleString()} · AI가 사랑을 담아 만든 분석본이에요 💡
               </p>
               {renderFeedbackBar(activeVariant)}
