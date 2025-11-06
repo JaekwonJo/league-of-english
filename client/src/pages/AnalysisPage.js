@@ -67,6 +67,9 @@ const LOADING_MESSAGES = [
   '실생활 예시와 어법 포인트를 챙기고 있어요... 📚'
 ];
 
+const VARIANT_HERO_TITLE = 'AI가 사랑을 가득 담아 완성한 분석 노트예요 💖';
+const VARIANT_HERO_SUBTITLE = '오늘도 열공 파이팅! 궁금한 문장을 톡톡 눌러 살펴보세요.';
+
 const CIRCLED_DIGITS = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩', '⑪', '⑫', '⑬', '⑭', '⑮', '⑯', '⑰', '⑱', '⑲', '⑳'];
 const getCircledDigit = (index) => CIRCLED_DIGITS[index] || `${index + 1}.`;
 
@@ -84,6 +87,21 @@ const pickQuoteEntry = (excludeText) => {
   const filtered = excludeText ? GENERATION_QUOTES.filter((item) => item.text !== excludeText) : GENERATION_QUOTES;
   const pool = filtered.length ? filtered : GENERATION_QUOTES;
   return pickRandom(pool);
+};
+
+const formatFriendlyDateTime = (input) => {
+  if (!input) return null;
+  try {
+    return new Date(input).toLocaleString('ko-KR', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  } catch (err) {
+    return null;
+  }
 };
 
 const STEPS = {
@@ -150,6 +168,8 @@ const AnalysisPage = () => {
     wordBatch: [],
     quoteEntry: null
   });
+  const [hoveredDocumentId, setHoveredDocumentId] = useState(null);
+  const searchInputRef = useRef(null);
   useEffect(() => {
     if (!generationLoading.active) return undefined;
 
@@ -476,68 +496,141 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
     return Math.max(0, MAX_VARIANTS_PER_PASSAGE - count);
   };
 
-  const renderDocumentList = () => (
-    <div style={analysisStyles.container}>
-      <div style={analysisStyles.header}>
-        <h1 style={analysisStyles.title}>📖 문서 분석 자료</h1>
-        <p style={analysisStyles.subtitle}>분석할 문서를 선택해 주세요</p>
-      </div>
+  const renderDocumentList = () => {
+    const totalDocuments = documents.length;
+    const totalPassages = documents.reduce((sum, item) => {
+      const counts = [
+        item?.passageCount,
+        item?.passagesCount,
+        item?.passage_count,
+        Array.isArray(item?.passages) ? item.passages.length : 0
+      ].map((value) => Number.isFinite(value) ? value : 0);
+      return sum + Math.max(...counts, 0);
+    }, 0);
+    const totalVariants = documents.reduce((sum, item) => {
+      const counts = [
+        item?.analysisCount,
+        item?.variantCount,
+        item?.variantsCount
+      ].map((value) => Number.isFinite(value) ? value : 0);
+      return sum + Math.max(...counts, 0);
+    }, 0);
+    const categoryCount = documents.reduce((set, item) => {
+      const label = String(item?.category || '').trim();
+      if (label) set.add(label);
+      return set;
+    }, new Set()).size;
 
-      {loading ? (
-        <div style={analysisStyles.loadingContainer}>
-          <div style={analysisStyles.spinner} />
-          <p>문서 목록을 불러오는 중이에요...</p>
-        </div>
-      ) : (
-        <>
-          <div style={analysisStyles.searchRow}>
-            <input
-              type="search"
-              value={documentSearch}
-              onChange={(event) => setDocumentSearch(event.target.value)}
-              placeholder="문서 제목이나 코드(예: 1-25-10)를 입력해 보세요"
-              style={analysisStyles.searchInput}
-            />
-            {documentSearch && (
-              <button type="button" style={analysisStyles.searchClear} onClick={() => setDocumentSearch('')}>
-                지우기
-              </button>
-            )}
-          </div>
+    const accentPalette = [
+      { from: 'rgba(129, 140, 248, 0.28)', to: 'rgba(56, 189, 248, 0.18)', shadow: 'rgba(59, 130, 246, 0.25)' },
+      { from: 'rgba(244, 114, 182, 0.28)', to: 'rgba(251, 191, 36, 0.22)', shadow: 'rgba(236, 72, 153, 0.22)' },
+      { from: 'rgba(45, 212, 191, 0.25)', to: 'rgba(56, 189, 248, 0.2)', shadow: 'rgba(20, 184, 166, 0.24)' },
+      { from: 'rgba(196, 181, 253, 0.3)', to: 'rgba(103, 232, 249, 0.2)', shadow: 'rgba(139, 92, 246, 0.24)' }
+    ];
 
-          {filteredDocuments.length === 0 ? (
-            <div style={analysisStyles.emptySearch}>
-              <h3>검색 결과가 없어요 😢</h3>
-              <p>다른 키워드(예: 문서 코드, 제목, 출제 분류)를 입력해 보거나 새 문서를 업로드해 보세요.</p>
-            </div>
-          ) : (
-            <div style={analysisStyles.grid}>
-              {filteredDocuments.map((doc) => (
-                <div
-                  key={doc.id}
-                  style={analysisStyles.card}
-                  onClick={() => handleDocumentClick(doc)}
+    const metricBlocks = [
+      { label: '등록된 문서', value: totalDocuments ? `${totalDocuments.toLocaleString()}개` : '준비 중' },
+      { label: '전체 지문', value: totalPassages ? `${totalPassages.toLocaleString()}개` : '데이터 수집 중' },
+      { label: 'AI 분석본', value: totalVariants ? `${totalVariants.toLocaleString()}개` : '곧 채워져요' },
+      { label: '분류', value: categoryCount ? `${categoryCount.toLocaleString()}종` : '정리 중' }
+    ];
+
+    return (
+      <div style={analysisStyles.container}>
+        <section style={analysisStyles.docHero}>
+          <div style={analysisStyles.docHeroGlow} />
+          <div style={analysisStyles.docHeroContent}>
+            <span style={analysisStyles.docHeroBadge}>AI Study Hub</span>
+            <h1 style={analysisStyles.docHeroHeadline}>📖 문서 분석 자료</h1>
+            <p style={analysisStyles.docHeroSub}>
+              모의고사와 자체 제작 교재를 한곳에서 관리하고, 필요한 지문만 골라 즉시 분석해 보세요. 토스 감성 디자인으로 학습이 더 즐거워집니다.
+            </p>
+            <div style={analysisStyles.docHeroSearchRow}>
+              <input
+                ref={searchInputRef}
+                type="search"
+                value={documentSearch}
+                onChange={(event) => setDocumentSearch(event.target.value)}
+                placeholder="문서 제목이나 코드(예: 1-25-10)를 입력해 보세요"
+                style={analysisStyles.docSearchInput}
+              />
+              {documentSearch ? (
+                <button type="button" style={analysisStyles.docSearchClear} onClick={() => setDocumentSearch('')}>
+                  검색 초기화
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  style={analysisStyles.docSearchButton}
+                  onClick={() => searchInputRef.current?.focus?.()}
                 >
-                  <div style={analysisStyles.cardHeader}>
-                    <h3 style={analysisStyles.cardTitle}>{doc.title}</h3>
-                    <span style={analysisStyles.badge}>{doc.category}</span>
-                  </div>
-                  {doc.description ? (
-                    <div style={analysisStyles.cardContentSingle}>{doc.description}</div>
-                  ) : (
-                    <div style={analysisStyles.cardContentSingle}>지문을 선택해 분석을 시작해 보세요.</div>
-                  )}
-                  <div style={analysisStyles.cardFooter}>
-                    <span style={analysisStyles.clickHint}>클릭하면 지문 목록을 볼 수 있어요 →</span>
-                  </div>
+                  인기 지문 살펴보기
+                </button>
+              )}
+            </div>
+            <p style={analysisStyles.docHeroNote}>Tip: 코드(예: 2-25-10)나 학교명을 입력하면 원하는 문서를 바로 찾을 수 있어요.</p>
+            <div style={analysisStyles.docHeroMetrics}>
+              {metricBlocks.map((metric) => (
+                <div key={metric.label} style={analysisStyles.docMetric}>
+                  <span style={analysisStyles.docMetricLabel}>{metric.label}</span>
+                  <span style={analysisStyles.docMetricValue}>{metric.value}</span>
                 </div>
               ))}
             </div>
-          )}
-        </>
-      )}
-    </div>
-  );
+          </div>
+        </section>
+
+        {loading ? (
+          <div style={analysisStyles.loadingContainer}>
+            <div style={analysisStyles.spinner} />
+            <p>문서 목록을 정리하는 중이에요...</p>
+          </div>
+        ) : filteredDocuments.length === 0 ? (
+          <div style={analysisStyles.emptySearch}>
+            <h3>검색 결과가 없어요 😢</h3>
+            <p>다른 키워드(예: 문서 코드, 제목, 출제 분류)를 입력해 보거나 새 문서를 업로드해 보세요.</p>
+          </div>
+        ) : (
+          <div style={analysisStyles.docGrid}>
+            {filteredDocuments.map((doc, index) => {
+              const palette = accentPalette[index % accentPalette.length];
+              const isHovered = hoveredDocumentId === doc.id;
+              const description = doc.description || '지문을 선택해 분석을 시작해 보세요.';
+              return (
+                <div
+                  key={doc.id}
+                  style={{
+                    ...analysisStyles.documentCard,
+                    background: `linear-gradient(160deg, ${palette.from}, ${palette.to})`,
+                    boxShadow: isHovered
+                      ? `0 34px 60px ${palette.shadow}`
+                      : `0 26px 42px ${palette.shadow}`,
+                    transform: isHovered ? 'translateY(-6px)' : 'translateY(0)'
+                  }}
+                  onMouseEnter={() => setHoveredDocumentId(doc.id)}
+                  onMouseLeave={() => setHoveredDocumentId(null)}
+                  onClick={() => handleDocumentClick(doc)}
+                >
+                  <div style={analysisStyles.documentCardHeader}>
+                    <h3 style={analysisStyles.documentCardTitle}>{doc.title}</h3>
+                    <span style={analysisStyles.documentCardCategory}>{doc.category || '분류 미지정'}</span>
+                  </div>
+                  <div style={analysisStyles.documentCardDescription}>{description}</div>
+                  <div style={analysisStyles.documentCardFooter}>
+                    <span style={analysisStyles.documentCardHint}>
+                      <span role="img" aria-label="spark">✨</span>
+                      클릭하면 지문 목록이 펼쳐져요
+                    </span>
+                    <span style={analysisStyles.documentCardPill}>바로 분석</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const handleHelpfulToggle = async (variant) => {
     if (!selectedDocument || !selectedPassage || !variant?.variantIndex) return;
@@ -670,14 +763,17 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
       const slots = remainingSlots(entry);
       const disabled = slots <= 0;
       return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-end' }}>
-          <span style={{ fontSize: '12px', color: 'var(--tone-muted)' }}>
-            {entry.variantCount || 0}/{MAX_VARIANTS_PER_PASSAGE} 분석본
+        <div style={analysisStyles.passageMetaWrap}>
+          <span style={analysisStyles.passageStatChip}>
+            분석본
+            <span style={analysisStyles.passageStatValue}>
+              {(entry.variantCount || 0)}/{MAX_VARIANTS_PER_PASSAGE}
+            </span>
           </span>
-          <div style={{ display: 'flex', gap: '6px' }}>
+          <div style={analysisStyles.passageMetaButtons}>
             <button
               type="button"
-              style={analysisStyles.metaButtonGhost}
+              style={analysisStyles.passageMetaGhost}
               onClick={() => handlePassageClick(entry)}
             >
               분석 보기
@@ -685,8 +781,8 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
             <button
               type="button"
               style={{
-                ...analysisStyles.metaButtonPrimary,
-                ...(disabled ? analysisStyles.metaButtonDisabled : {})
+                ...analysisStyles.passageMetaPrimary,
+                ...(disabled ? analysisStyles.passageMetaDisabled : {})
               }}
               onClick={() => openGenerationPrompt(entry)}
               disabled={disabled}
@@ -872,14 +968,55 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
       ...(index === total - 1 ? analysisStyles.sentenceCardLast : {})
     };
 
-    const stripPrefixedLine = (value) => {
-      const raw = String(value || '').trim();
+    const stripPrefixedLine = (value, labelText = '') => {
+      const raw = String(value ?? '').trim();
       if (!raw) return '';
-      const withoutEmoji = raw.replace(/^[📘🧠🎯⭐✏️\s]+/, '');
-      const cleaned = withoutEmoji
-        .replace(/^(한글\s*해석|문장\s*분석|어휘\s*노트|해석|분석)\s*(?:[:：-]\s*)?/u, '')
-        .replace(/^[-\s]+/, '');
-      return cleaned.trim();
+
+      const emojiPrefix = /^[📘🧠🎯⭐✏️\s]+/u;
+      const normalizeForCompare = (input) => String(input ?? '')
+        .replace(emojiPrefix, '')
+        .replace(/[:：\-–—]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      const labelCandidates = [
+        normalizeForCompare(labelText),
+        '한글 해석',
+        '문장 분석',
+        '어휘 노트',
+        '해석',
+        '분석'
+      ].filter(Boolean);
+
+      const base = raw.replace(emojiPrefix, '').trim();
+      if (!base) return '';
+
+      const lines = base
+        .split(/\r?\n+/)
+        .map((line) => line.trim())
+        .filter((line) => {
+          if (!line) return false;
+          const normalized = normalizeForCompare(line);
+          return normalized && !labelCandidates.includes(normalized);
+        });
+
+      if (!lines.length) return '';
+
+      const patterns = [
+        /^한글\s*해석\s*[:：\-–—]?\s*/iu,
+        /^문장\s*분석\s*[:：\-–—]?\s*/iu,
+        /^어휘\s*노트\s*[:：\-–—]?\s*/iu,
+        /^핵심\s*(?:포인트|정리)\s*[:：\-–—]?\s*/iu,
+        /^정답\s*체크\s*[:：\-–—]?\s*/iu
+      ];
+
+      let cleaned = lines.join(' ').trim();
+      patterns.forEach((pattern) => {
+        cleaned = cleaned.replace(pattern, '');
+      });
+
+      cleaned = cleaned.replace(emojiPrefix, '').trim();
+      return cleaned;
     };
 
     const sections = [
@@ -909,7 +1046,7 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
         </div>
         <div style={analysisStyles.sentenceBody}>
           {sections.map((section) => {
-            const text = stripPrefixedLine(section.value) || fallbackMessages[section.key] || '';
+            const text = stripPrefixedLine(section.value, section.label) || fallbackMessages[section.key] || '';
             return (
               <div key={`${section.key}-${index}`} style={analysisStyles.sentenceSection}>
                 <span style={analysisStyles.sentenceLabel}>{section.label}</span>
@@ -919,7 +1056,9 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
           })}
           <div style={analysisStyles.sentenceSection}>
             <span style={analysisStyles.sentenceLabel}>🎯 어휘 노트</span>
-            <p style={analysisStyles.sentenceText}>{stripPrefixedLine(vocabularyIntro)}</p>
+            <p style={analysisStyles.sentenceText}>
+              {stripPrefixedLine(vocabularyIntro, '🎯 어휘 노트') || '꼭 외워야 할 단어를 직접 정리해 보세요.'}
+            </p>
             {vocabWords.length ? (
               <ul style={analysisStyles.vocabList}>
                 {vocabWords.map((word, idx) => (
@@ -1042,9 +1181,23 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
 
           {activeVariant ? (
             <>
-              <p style={{ color: 'var(--text-primary)', marginBottom: '12px' }}>
-                생성 시각: {new Date(activeVariant.generatedAt || Date.now()).toLocaleString()} · AI가 사랑을 담아 만든 분석본이에요 💡
-              </p>
+              <div style={analysisStyles.variantHero}>
+                <div style={analysisStyles.variantHeroRow}>
+                  {(() => {
+                    const updatedLabel = formatFriendlyDateTime(activeVariant.generatedAt);
+                    return updatedLabel ? (
+                      <span style={analysisStyles.variantHeroPill}>
+                        최근 업데이트 · {updatedLabel}
+                      </span>
+                    ) : null;
+                  })()}
+                  <span style={analysisStyles.variantHeroBadge}>
+                    지문 {selectedPassage?.passageNumber}
+                  </span>
+                </div>
+                <h2 style={analysisStyles.variantHeroTitle}>{VARIANT_HERO_TITLE}</h2>
+                <p style={analysisStyles.variantHeroSubtitle}>{VARIANT_HERO_SUBTITLE}</p>
+              </div>
               {renderFeedbackBar(activeVariant)}
               {feedbackMessage && <div style={analysisStyles.feedbackMessage}>{feedbackMessage}</div>}
               {renderVariantMeta(activeVariant)}

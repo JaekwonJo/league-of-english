@@ -1343,7 +1343,12 @@ const MembershipCard = () => {
       if (response?.success) {
         setInfo(response.data || null);
         if (response.user) {
-          updateUser({ ...user, ...response.user });
+          const hasDiff = Object.entries(response.user).some(([key, value]) => {
+            return (user?.[key] ?? null) !== value;
+          });
+          if (hasDiff || !user) {
+            updateUser({ ...user, ...response.user });
+          }
         }
       } else if (response?.message) {
         setError(response.message);

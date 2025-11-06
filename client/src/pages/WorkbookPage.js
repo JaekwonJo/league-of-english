@@ -16,24 +16,29 @@ const styles = {
     padding: '0 16px 32px'
   },
   hero: {
-    padding: '32px',
-    borderRadius: '18px',
-    background: 'linear-gradient(135deg, rgba(124,58,237,0.12), rgba(165,180,252,0.32))',
-    border: '1px solid var(--surface-border)',
-    boxShadow: '0 12px 28px -24px rgba(30,41,59,0.4)'
+    padding: '36px',
+    borderRadius: '22px',
+    background: 'linear-gradient(140deg, rgba(79, 70, 229, 0.12), rgba(14, 165, 233, 0.12))',
+    border: '1px solid rgba(99, 102, 241, 0.18)',
+    boxShadow: '0 24px 48px rgba(15, 23, 42, 0.16)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '20px',
+    alignItems: 'center'
   },
   heroMobile: {
-    padding: '20px',
-    borderRadius: '16px'
+    padding: '24px',
+    borderRadius: '18px'
   },
   heroTitle: {
-    fontSize: '28px',
+    fontSize: '30px',
     fontWeight: 800,
-    marginBottom: '12px',
-    color: 'var(--text-primary)'
+    margin: 0,
+    color: 'var(--text-primary)',
+    letterSpacing: '-0.01em'
   },
   heroTitleMobile: {
-    fontSize: '22px'
+    fontSize: '24px'
   },
   heroDesc: {
     fontSize: '16px',
@@ -279,19 +284,21 @@ const styles = {
   },
   generatorDocCard: {
     textAlign: 'left',
-    padding: '14px',
-    borderRadius: '14px',
-    border: '1px solid var(--border-subtle)',
-    background: 'var(--surface-soft)',
+    padding: '18px',
+    borderRadius: '18px',
+    border: '1px solid rgba(148, 163, 184, 0.35)',
+    background: 'rgba(255, 255, 255, 0.92)',
     display: 'flex',
     flexDirection: 'column',
-    gap: '6px',
+    gap: '10px',
     cursor: 'pointer',
-    transition: 'border 0.2s ease, background 0.2s ease'
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease, border 0.2s ease',
+    boxShadow: '0 16px 30px rgba(15, 23, 42, 0.12)'
   },
   generatorDocCardActive: {
-    border: '1px solid var(--indigo)',
-    background: 'rgba(99,102,241,0.12)'
+    border: '1px solid rgba(99, 102, 241, 0.55)',
+    background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.18), rgba(14, 165, 233, 0.12))',
+    boxShadow: '0 22px 40px rgba(79, 70, 229, 0.24)'
   },
   generatorDocTitle: {
     fontWeight: 700,
@@ -332,23 +339,26 @@ const styles = {
   },
   generatorPassageCard: {
     textAlign: 'left',
-    padding: '14px',
-    borderRadius: '14px',
-    border: '1px solid var(--border-subtle)',
-    background: 'var(--surface-soft)',
+    padding: '18px',
+    borderRadius: '18px',
+    border: '1px solid rgba(148, 163, 184, 0.35)',
+    background: 'rgba(255, 255, 255, 0.92)',
     display: 'flex',
     flexDirection: 'column',
-    gap: '8px',
-    cursor: 'pointer'
+    gap: '10px',
+    cursor: 'pointer',
+    boxShadow: '0 16px 30px rgba(15, 23, 42, 0.12)',
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease'
   },
   generatorPassageCardActive: {
-    border: '1px solid var(--success-strong)',
-    background: 'rgba(34,197,94,0.15)'
+    border: '1px solid rgba(16, 185, 129, 0.55)',
+    background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.16), rgba(59, 130, 246, 0.12))',
+    boxShadow: '0 20px 36px rgba(16, 185, 129, 0.22)'
   },
   generatorPassageExcerpt: {
-    fontSize: '12px',
+    fontSize: '13px',
     color: 'var(--tone-strong)',
-    lineHeight: 1.4
+    lineHeight: 1.6
   },
   overviewLayout: {
     display: 'grid',
@@ -548,28 +558,33 @@ const styles = {
     color: 'var(--text-primary)'
   },
   primaryButton: {
-    padding: '12px 20px',
-    borderRadius: '12px',
+    padding: '14px 26px',
+    borderRadius: '16px',
     border: 'none',
-    background: 'linear-gradient(135deg, var(--indigo) 0%, var(--indigo-strong) 100%)',
+    background: 'linear-gradient(135deg, rgba(79,70,229,1) 0%, rgba(14,165,233,1) 100%)',
     color: 'var(--text-on-accent)',
-    fontWeight: 700,
+    fontWeight: 800,
+    fontSize: '16px',
     cursor: 'pointer',
-    minWidth: '160px'
+    minWidth: '180px',
+    boxShadow: '0 20px 40px rgba(79, 70, 229, 0.30)',
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease'
   },
   primaryButtonMobile: {
     width: '100%',
     minWidth: 'unset'
   },
   secondaryButton: {
-    padding: '12px 20px',
-    borderRadius: '12px',
-    border: '1px solid var(--border-subtle)',
-    background: 'var(--surface-soft)',
+    padding: '12px 22px',
+    borderRadius: '14px',
+    border: '1px solid rgba(148, 163, 184, 0.45)',
+    background: 'rgba(248, 250, 252, 0.85)',
     color: 'var(--text-primary)',
-    fontWeight: 600,
+    fontWeight: 700,
     cursor: 'pointer',
-    minWidth: '140px'
+    minWidth: '150px',
+    boxShadow: '0 12px 26px rgba(15, 23, 42, 0.12)',
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease'
   },
   secondaryButtonMobile: {
     width: '100%',
@@ -608,22 +623,25 @@ const styles = {
     paddingBottom: '4px'
   },
   stepButton: {
-    padding: '8px 14px',
-    borderRadius: '10px',
-    border: '1px solid var(--border-subtle)',
-    background: 'var(--surface-soft)',
+    padding: '12px 18px',
+    borderRadius: '16px',
+    border: '1px solid rgba(148, 163, 184, 0.35)',
+    background: 'rgba(248, 250, 252, 0.92)',
     cursor: 'pointer',
-    fontWeight: 600,
-    color: 'var(--tone-strong)'
+    fontWeight: 700,
+    color: 'var(--tone-strong)',
+    fontSize: '0.95rem',
+    boxShadow: '0 12px 28px rgba(15, 23, 42, 0.08)'
   },
   stepButtonMobile: {
     flex: '0 0 auto',
-    padding: '8px 12px'
+    padding: '10px 16px'
   },
   stepButtonActive: {
-    background: 'var(--indigo)',
+    background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.95) 0%, rgba(14, 165, 233, 0.85) 100%)',
     color: 'var(--text-on-accent)',
-    borderColor: 'transparent'
+    borderColor: 'transparent',
+    boxShadow: '0 18px 36px rgba(79, 70, 229, 0.26)'
   },
   mobileStepHeader: {
     display: 'flex',
@@ -641,13 +659,14 @@ const styles = {
     gap: '8px'
   },
   mobileNavButton: {
-    padding: '8px 12px',
-    borderRadius: '10px',
-    border: '1px solid var(--border-subtle)',
-    background: 'var(--surface-soft)',
-    fontWeight: 600,
+    padding: '10px 18px',
+    borderRadius: '999px',
+    border: '1px solid rgba(148, 163, 184, 0.35)',
+    background: 'rgba(255, 255, 255, 0.85)',
+    fontWeight: 700,
     color: 'var(--text-primary)',
-    cursor: 'pointer'
+    cursor: 'pointer',
+    boxShadow: '0 10px 22px rgba(15, 23, 42, 0.12)'
   },
   mobileNavButtonDisabled: {
     opacity: 0.4,
@@ -983,7 +1002,7 @@ const styles = {
   },
   cardControls: {
     display: 'flex',
-    gap: '12px',
+    gap: '18px',
     flexWrap: 'wrap',
     justifyContent: 'center'
   },
@@ -2551,11 +2570,7 @@ const WorkbookPage = () => {
     return (
       <div style={responsiveStyle(styles.container, styles.containerMobile)}>
         <section style={responsiveStyle(styles.hero, styles.heroMobile)}>
-          <div style={styles.pill}>Workbook Practice</div>
-          <h1 style={responsiveStyle(styles.heroTitle, styles.heroTitleMobile)}>워크북 학습</h1>
-          <p style={responsiveStyle(styles.heroDesc, styles.heroDescMobile)}>
-            지문 하나를 8단계로 나누어 읽기·어휘·구조·영작까지 고르게 복습해요.
-          </p>
+          <h1 style={responsiveStyle(styles.heroTitle, styles.heroTitleMobile)}>워크북 만들기</h1>
           {canManageWorkbooks && (
             <button
               type="button"
@@ -3008,11 +3023,6 @@ const WorkbookPage = () => {
         </button>
       </div>
 
-      <div style={responsiveStyle(styles.missionBox, styles.missionBoxMobile)} data-testid="workbook-mission">
-        <div style={{ fontWeight: 700, marginBottom: '6px' }}>🎯 오늘의 미션</div>
-        {currentStep.mission}
-      </div>
-
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
         <div
           style={{
@@ -3072,16 +3082,6 @@ const WorkbookPage = () => {
             다음 카드
           </button>
         </div>
-      </div>
-
-      <div style={styles.checklist}>
-        <strong>🔁 Takeaways</strong>
-        {currentStep.takeaways.map((item, idx) => (
-          <div key={idx} style={styles.checklistItem}>
-            <span>☑</span>
-            <span>{item}</span>
-          </div>
-        ))}
       </div>
     </div>
   );

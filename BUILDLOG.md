@@ -1,3 +1,11 @@
+## 2025-11-06 (mock exam 실전 모드 + 관리자 업로드)
+- Issue: 학생들이 실전 모의고사를 풀 수 있는 완성형 흐름이 없고, PDF 교체 시 코드를 수정해야 했어요.
+- Cause: 모의고사 문제/정답 파서가 없으며, 관리자 업로드 기능이 문서용 엔드포인트에 한정되어 있었습니다.
+- Fix: `mockExamService`로 PDF→문제/정답 파싱과 캐시 리셋을 구현하고, `/api/mock-exam/upload`(관리자 전용)으로 문제+정답 PDF 동시 업로드를 지원했습니다.
+- Note: 클라이언트에 “모의고사 풀이” 실전 모드(50분 타이머, 채점/복습, 프로 전용 해설)를 추가하고 관리자 UI를 감성 카드 스타일로 리뉴얼했습니다.
+- Files: server/services/mockExamService.js, server/routes/mockExam.routes.js, server/server.js, client/src/pages/MockExamPage.js, client/src/services/api.service.js, client/src/pages/AdminPage.js, client/src/styles/adminStyles.js, client/src/pages/AnalysisPage.js, client/src/components/shared/PassagePickerGrid.js, client/src/styles/analysisStyles.js.
+- Tests: `npm run lint`.
+
 ## 2025-11-01 (workbook bulk generation + grouped UI)
 - Issue: 문서 하나에 지문이 많을 때 워크북을 손수 여러 번 생성해야 했고, 학생/관리자 화면에서 워크북이 뒤섞여 찾아보기 어렵습니다.
 - Cause: 서버에 문서 단위 일괄 생성 API가 없고, 프런트가 단일 카드 목록 UI만 제공해 문서·지문 관계가 드러나지 않았습니다.

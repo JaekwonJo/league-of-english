@@ -1,10 +1,17 @@
 import React from 'react';
 
+const gradientPalette = [
+  { from: 'rgba(129, 140, 248, 0.26)', to: 'rgba(96, 165, 250, 0.18)', shadow: 'rgba(99, 102, 241, 0.18)' },
+  { from: 'rgba(244, 114, 182, 0.28)', to: 'rgba(251, 191, 36, 0.18)', shadow: 'rgba(244, 114, 182, 0.18)' },
+  { from: 'rgba(34, 211, 238, 0.26)', to: 'rgba(16, 185, 129, 0.2)', shadow: 'rgba(56, 189, 248, 0.18)' },
+  { from: 'rgba(196, 181, 253, 0.28)', to: 'rgba(244, 114, 182, 0.18)', shadow: 'rgba(167, 139, 250, 0.2)' }
+];
+
 const gridStyles = {
   wrapper: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '12px'
+    gap: '20px'
   },
   metaRow: {
     display: 'flex',
@@ -16,46 +23,47 @@ const gridStyles = {
   },
   grid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-    gap: '16px'
+    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+    gap: '22px'
   },
   card: {
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'space-between',
-    background: 'var(--surface-card)',
-    border: '1px solid var(--surface-border)',
-    borderRadius: '14px',
-    padding: '16px',
-    minHeight: '200px',
-    transition: 'all 0.2s ease',
-    boxShadow: '0 10px 18px var(--surface-shadow)'
+    padding: '22px',
+    borderRadius: '24px',
+    border: '1px solid rgba(255,255,255,0.4)',
+    background: 'rgba(255,255,255,0.85)',
+    minHeight: '220px',
+    transition: 'transform 0.25s ease, box-shadow 0.25s ease'
   },
   cardSelected: {
-    borderColor: 'var(--accent-primary)',
-    boxShadow: '0 12px 24px var(--accent-shadow)'
+    borderColor: 'rgba(79, 70, 229, 0.55)',
+    boxShadow: '0 30px 48px rgba(79, 70, 229, 0.26)',
+    transform: 'translateY(-6px)'
   },
   header: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: '12px',
+    marginBottom: '14px',
     gap: '10px'
   },
   badge: {
-    fontSize: '13px',
-    fontWeight: '600',
-    background: 'var(--accent-soft)',
-    padding: '6px 10px',
+    fontSize: '0.9rem',
+    fontWeight: '700',
+    background: 'rgba(79, 70, 229, 0.18)',
+    padding: '8px 14px',
     borderRadius: '999px',
-    color: 'var(--accent-strong)'
+    color: '#4338CA',
+    boxShadow: '0 12px 24px rgba(79, 70, 229, 0.2)'
   },
   // 체크박스 제거: 카드 클릭으로 선택/해제
   excerpt: {
     flex: 1,
-    fontSize: '14px',
-    lineHeight: 1.6,
-    color: 'var(--tone-strong)',
+    fontSize: '0.98rem',
+    lineHeight: 1.7,
+    color: 'rgba(15,23,42,0.72)',
     margin: 0,
     whiteSpace: 'pre-wrap'
   },
@@ -63,19 +71,20 @@ const gridStyles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: '14px',
-    gap: '10px'
+    marginTop: '18px',
+    gap: '12px'
   },
   previewButton: {
-    background: 'var(--accent-soft)',
+    background: 'rgba(79, 70, 229, 0.18)',
     border: 'none',
-    color: 'var(--accent-primary)',
-    borderRadius: '8px',
-    padding: '6px 12px',
+    color: '#4338CA',
+    borderRadius: '12px',
+    padding: '10px 16px',
     cursor: 'pointer',
-    fontSize: '13px',
-    fontWeight: 600,
-    transition: 'background 0.2s ease'
+    fontSize: '0.9rem',
+    fontWeight: 700,
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+    boxShadow: '0 12px 20px rgba(79, 70, 229, 0.18)'
   },
   previewButtonDisabled: {
     opacity: 0.4,
@@ -128,16 +137,21 @@ const PassagePickerGrid = ({
       )}
 
       <div style={gridStyles.grid}>
-        {passages.map((passage) => {
+        {passages.map((passage, index) => {
           const number = passage.passageNumber;
           const checked = isSelected(number);
           const disableSelection = isSelectionDisabled(number);
+          const palette = gradientPalette[index % gradientPalette.length];
           return (
             <div
               key={number}
               style={{
                 ...gridStyles.card,
-                ...(checked ? gridStyles.cardSelected : {}),
+                background: `linear-gradient(155deg, ${palette.from}, ${palette.to})`,
+                boxShadow: checked
+                  ? `0 34px 56px ${palette.shadow}`
+                  : `0 26px 42px ${palette.shadow}`,
+                transform: checked ? 'translateY(-6px)' : 'translateY(0)',
                 ...(disableSelection ? { opacity: 0.6 } : {})
               }}
               role="button"

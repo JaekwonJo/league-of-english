@@ -1,0 +1,140 @@
+const express = require('express');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+const router = express.Router();
+
+const { verifyToken, requireAdmin } = require('../middleware/auth');
+const database = require('../models/database');
+const mockExamService = require('../services/mockExamService');
+
+const EXAM_ID = '2025-10';
+const STORAGE_ROOT = path.resolve(__dirname, '..', '..', 'mock-exams');
+const uploadTempDir = path.resolve(__dirname, '..', '..', 'tmp', 'mock-exam');
+
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => {
+      fs.mkdirSync(uploadTempDir, { recursive: true });
+      cb(null, uploadTempDir);
+    },
+    filename: (req, file, cb) => {
+      const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
+      cb(null, `${unique}${path.extname(file.originalname || '.pdf')}`);
+    }
+  }),
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname || '').toLowerCase();
+    const mime = (file.mimetype || '').toLowerCase();
+    if (mime === 'application/pdf' || ext === '.pdf') {
+      cb(null, true);
+    } else {
+      const error = new multer.MulterError('LIMIT_UNEXPECTED_FILE');
+      error.message = 'PDF 파일만 업로드할 수 있어요.';
+      cb(error);
+    }
+  }
+});
+
+router.get(`/${EXAM_ID}`, verifyToken, async (req, res) => {
+  try {
+    const exam = await mockExamService.getExam();
+    return res.json({ success: true, data: exam });
+  } catch (error) {
+    console.error('[mockExam] GET exam failed:', error);
+    return res.status(500).json({ success: false, message: error.message || '시험 데이터를 불러오지 못했습니다.' });
+  }
+});
+
+router.post(`/${EXAM_ID}/submit`, verifyToken, async (req, res) => {
+  try {
+    const { answers } = req.body || {};
+    if (!answers || typeof answers !== 'object') {
+      return res.status(400).json({ success: false, message: 'answers 필드가 필요합니다.' });
+    }
+
+    const result = await mockExamService.gradeExam(answers);
+    return res.json({ success: true, data: result });
+  } catch (error) {
+    console.error('[mockExam] submit failed:', error);
+    return res.status(500).json({ success: false, message: error.message || '채점 중 오류가 발생했습니다.' });
+  }
+});
+
+router.post(`/${EXAM_ID}/explanations`, verifyToken, async (req, res) => {
+  try {
+    const { questionNumber } = req.body || {};
+    if (!questionNumber) {
+      return res.status(400).json({ success: false, message: 'questionNumber 필드가 필요합니다.' });
+    }
+
+    const user = await database.get('SELECT membership, role FROM users WHERE id = ?', [req.user.id]);
+    if (!user) {
+      return res.status(404).json({ success: false, message: '사용자를 찾을 수 없습니다.' });
+    }
+
+    const membership = String(user.membership || '').toLowerCase();
+    if (user.role !== 'admin' && membership !== 'pro') {
+      return res.status(403).json({ success: false, message: '이 기능은 프로 회원 전용입니다.' });
+    }
+
+    const explanation = await mockExamService.getExplanation(questionNumber);
+    return res.json({ success: true, data: explanation });
+  } catch (error) {
+    console.error('[mockExam] explanation failed:', error);
+    const status = error.message && error.message.includes('OpenAI') ? 503 : 500;
+    return res.status(status).json({ success: false, message: error.message || '해설 생성 중 오류가 발생했습니다.' });
+  }
+});
+
+router.post('/upload', verifyToken, requireAdmin, upload.fields([
+  { name: 'questionPdf', maxCount: 1 },
+  { name: 'answerPdf', maxCount: 1 }
+]), async (req, res) => {
+  const cleanupTemp = () => {
+    Object.values(req.files || {}).flat().forEach((file) => {
+      if (file?.path && fs.existsSync(file.path)) {
+        try { fs.unlinkSync(file.path); } catch (err) { console.warn('[mockExam] temp cleanup failed:', err?.message || err); }
+      }
+    });
+  };
+
+  try {
+    const examIdInput = String(req.body?.examId || EXAM_ID).trim() || EXAM_ID;
+    if (examIdInput !== EXAM_ID) {
+      cleanupTemp();
+      return res.status(400).json({ success: false, message: `현재 시험 ID는 ${EXAM_ID}로 고정되어 있어요. 다른 회차를 등록하려면 서버 환경 설정을 먼저 업데이트해 주세요.` });
+    }
+    const questionFile = req.files?.questionPdf?.[0];
+    const answerFile = req.files?.answerPdf?.[0];
+
+    if (!questionFile || !answerFile) {
+      cleanupTemp();
+      return res.status(400).json({ success: false, message: '문제지 PDF와 정답/해설 PDF를 모두 업로드해 주세요.' });
+    }
+
+    const targetDir = path.join(STORAGE_ROOT, EXAM_ID);
+    fs.mkdirSync(targetDir, { recursive: true });
+
+    const questionTarget = path.join(targetDir, 'questions.pdf');
+    fs.renameSync(questionFile.path, questionTarget);
+
+    const answerTarget = path.join(targetDir, 'answers.pdf');
+    fs.renameSync(answerFile.path, answerTarget);
+
+    cleanupTemp();
+
+    if (typeof mockExamService.resetCache === 'function') {
+      mockExamService.resetCache();
+    }
+
+    return res.status(201).json({ success: true, message: '모의고사 PDF가 업데이트되었습니다.' });
+  } catch (error) {
+    console.error('[mockExam] upload failed:', error);
+    cleanupTemp();
+    return res.status(500).json({ success: false, message: error.message || '모의고사 파일 업로드에 실패했습니다.' });
+  }
+});
+
+module.exports = router;

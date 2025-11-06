@@ -1,12 +1,13 @@
 export const analysisStyles = {
   container: {
-    padding: '20px',
-    maxWidth: '1200px',
+    padding: '28px 20px 72px',
+    maxWidth: '1080px',
     margin: '0 auto',
-    fontFamily: "'Noto Sans KR', sans-serif"
+    fontFamily: "'Noto Sans KR', sans-serif",
+    background: 'linear-gradient(180deg, rgba(99, 102, 241, 0.06) 0%, rgba(255, 255, 255, 0) 48%)'
   },
   header: {
-    marginBottom: '30px',
+    marginBottom: '28px',
     textAlign: 'center'
   },
   backButton: {
@@ -24,13 +25,263 @@ export const analysisStyles = {
   },
   title: {
     color: 'var(--text-primary)',
-    fontSize: '2rem',
-    margin: '0 0 10px 0'
+    fontSize: '2.1rem',
+    margin: '0 0 10px 0',
+    letterSpacing: '-0.01em'
   },
   subtitle: {
     color: 'var(--tone-strong)',
-    fontSize: '1.1rem',
+    fontSize: '1.05rem',
     margin: 0
+  },
+  docHero: {
+    position: 'relative',
+    padding: '44px 36px',
+    borderRadius: '34px',
+    background: 'linear-gradient(140deg, rgba(99,102,241,0.28) 0%, rgba(14,165,233,0.18) 38%, rgba(236,233,254,0.28) 100%)',
+    boxShadow: '0 40px 80px rgba(30, 41, 59, 0.28)',
+    overflow: 'hidden',
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '32px',
+    alignItems: 'center',
+    marginBottom: '36px'
+  },
+  docHeroGlow: {
+    position: 'absolute',
+    inset: 0,
+    background: 'radial-gradient(circle at 20% 20%, rgba(255,255,255,0.35), transparent 55%), radial-gradient(circle at 85% 25%, rgba(129,140,248,0.25), transparent 45%), radial-gradient(circle at 70% 80%, rgba(45,212,191,0.28), transparent 50%)',
+    pointerEvents: 'none'
+  },
+  docHeroContent: {
+    position: 'relative',
+    zIndex: 1,
+    flex: '1 1 380px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '18px'
+  },
+  docHeroBadge: {
+    alignSelf: 'flex-start',
+    padding: '8px 16px',
+    borderRadius: '999px',
+    background: 'rgba(255,255,255,0.22)',
+    color: '#1e1b4b',
+    fontWeight: 700,
+    fontSize: '0.86rem',
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase',
+    boxShadow: '0 12px 28px rgba(15,23,42,0.18)'
+  },
+  docHeroHeadline: {
+    margin: 0,
+    fontSize: '2.4rem',
+    fontWeight: 800,
+    letterSpacing: '-0.02em',
+    color: 'var(--text-primary)'
+  },
+  docHeroSub: {
+    margin: 0,
+    color: 'rgba(15, 23, 42, 0.72)',
+    fontSize: '1.05rem',
+    lineHeight: 1.7,
+    maxWidth: '520px'
+  },
+  docHeroMetrics: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '16px'
+  },
+  docMetric: {
+    padding: '14px 18px',
+    borderRadius: '18px',
+    background: 'rgba(255,255,255,0.42)',
+    display: 'flex',
+    flexDirection: 'column',
+    boxShadow: '0 16px 38px rgba(15,23,42,0.18)',
+    minWidth: '140px'
+  },
+  docMetricLabel: {
+    fontSize: '0.82rem',
+    color: 'rgba(15,23,42,0.62)',
+    marginBottom: '6px',
+    fontWeight: 600,
+    textTransform: 'uppercase',
+    letterSpacing: '0.06em'
+  },
+  docMetricValue: {
+    fontSize: '1.35rem',
+    fontWeight: 800,
+    color: 'var(--text-primary)'
+  },
+  docHeroSearchRow: {
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    width: '100%',
+    maxWidth: '480px'
+  },
+  docSearchInput: {
+    flex: '1 1 auto',
+    borderRadius: '18px',
+    border: '1px solid rgba(255,255,255,0.6)',
+    background: 'rgba(255, 255, 255, 0.92)',
+    padding: '15px 20px',
+    fontSize: '1rem',
+    boxShadow: '0 12px 30px rgba(79, 70, 229, 0.2)',
+    color: 'var(--text-primary)'
+  },
+  docSearchClear: {
+    borderRadius: '16px',
+    border: 'none',
+    padding: '12px 16px',
+    background: 'rgba(79, 70, 229, 0.12)',
+    color: '#4338CA',
+    fontWeight: 700,
+    cursor: 'pointer',
+    boxShadow: '0 12px 24px rgba(79, 70, 229, 0.18)'
+  },
+  docSearchButton: {
+    borderRadius: '16px',
+    border: 'none',
+    padding: '14px 18px',
+    background: 'linear-gradient(135deg, rgba(79,70,229,1) 0%, rgba(14,165,233,1) 100%)',
+    color: 'var(--text-on-accent)',
+    fontWeight: 700,
+    cursor: 'pointer',
+    boxShadow: '0 18px 36px rgba(79, 70, 229, 0.28)'
+  },
+  docHeroNote: {
+    margin: 0,
+    fontSize: '0.92rem',
+    color: 'rgba(15,23,42,0.65)'
+  },
+  docGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+    gap: '28px',
+    marginTop: '28px'
+  },
+  documentCard: {
+    position: 'relative',
+    padding: '26px',
+    borderRadius: '26px',
+    background: 'rgba(255,255,255,0.82)',
+    border: '1px solid rgba(148, 163, 184, 0.18)',
+    boxShadow: '0 26px 42px rgba(15,23,42,0.2)',
+    cursor: 'pointer',
+    transition: 'transform 0.25s ease, box-shadow 0.25s ease'
+  },
+  documentCardGradient: {
+    position: 'absolute',
+    inset: 0,
+    borderRadius: '26px',
+    zIndex: -1
+  },
+  documentCardHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: '14px',
+    marginBottom: '12px'
+  },
+  documentCardTitle: {
+    margin: 0,
+    fontSize: '1.2rem',
+    fontWeight: 800,
+    color: 'var(--text-primary)',
+    letterSpacing: '-0.01em'
+  },
+  documentCardCategory: {
+    padding: '6px 14px',
+    borderRadius: '999px',
+    fontSize: '0.82rem',
+    fontWeight: 700,
+    background: 'rgba(79, 70, 229, 0.16)',
+    color: '#4338CA',
+    boxShadow: '0 10px 18px rgba(79, 70, 229, 0.25)'
+  },
+  documentCardDescription: {
+    fontSize: '0.98rem',
+    lineHeight: 1.7,
+    color: 'rgba(15,23,42,0.7)',
+    minHeight: '70px'
+  },
+  documentCardFooter: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: '18px',
+    gap: '14px'
+  },
+  documentCardHint: {
+    fontSize: '0.9rem',
+    color: 'rgba(15,23,42,0.6)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px'
+  },
+  documentCardPill: {
+    padding: '6px 12px',
+    borderRadius: '999px',
+    background: 'rgba(14,165,233,0.18)',
+    color: '#0EA5E9',
+    fontWeight: 700,
+    fontSize: '0.82rem'
+  },
+  passageMetaWrap: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    gap: '8px'
+  },
+  passageStatChip: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '6px 12px',
+    borderRadius: '12px',
+    background: 'rgba(255,255,255,0.6)',
+    color: 'rgba(15,23,42,0.75)',
+    fontSize: '0.78rem',
+    fontWeight: 600,
+    letterSpacing: '0.04em',
+    textTransform: 'uppercase'
+  },
+  passageStatValue: {
+    fontSize: '0.98rem',
+    fontWeight: 800,
+    color: 'var(--text-primary)'
+  },
+  passageMetaButtons: {
+    display: 'flex',
+    gap: '8px'
+  },
+  passageMetaGhost: {
+    borderRadius: '12px',
+    border: '1px solid rgba(79, 70, 229, 0.28)',
+    background: 'rgba(79, 70, 229, 0.12)',
+    color: '#4338CA',
+    fontWeight: 700,
+    padding: '10px 16px',
+    cursor: 'pointer',
+    boxShadow: '0 14px 26px rgba(79, 70, 229, 0.18)' 
+  },
+  passageMetaPrimary: {
+    borderRadius: '12px',
+    border: 'none',
+    padding: '10px 18px',
+    background: 'linear-gradient(135deg, rgba(79,70,229,1) 0%, rgba(14,165,233,1) 100%)',
+    color: 'var(--text-on-accent)',
+    fontWeight: 700,
+    cursor: 'pointer',
+    boxShadow: '0 18px 32px rgba(79,70,229,0.24)'
+  },
+  passageMetaDisabled: {
+    opacity: 0.45,
+    cursor: 'not-allowed',
+    boxShadow: 'none'
   },
   loading: {
     display: 'flex',
@@ -201,14 +452,15 @@ export const analysisStyles = {
     padding: '24px'
   },
   section: {
-    marginBottom: '32px'
+    marginBottom: '36px'
   },
   sectionTitle: {
     color: 'var(--text-primary)',
-    fontSize: '1.2rem',
-    marginBottom: '16px',
-    paddingBottom: '8px',
-    borderBottom: '2px solid var(--border-muted)'
+    fontSize: '1.3rem',
+    marginBottom: '18px',
+    paddingBottom: '10px',
+    borderBottom: '3px solid rgba(99, 102, 241, 0.25)',
+    letterSpacing: '-0.01em'
   },
   sectionContent: {
     color: 'var(--text-primary)',
@@ -241,6 +493,51 @@ export const analysisStyles = {
   questionItem: {
     marginBottom: '16px',
     lineHeight: '1.6'
+  },
+
+  variantHero: {
+    background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.12), rgba(14, 165, 233, 0.08))',
+    borderRadius: '28px',
+    padding: '28px 30px',
+    marginBottom: '28px',
+    boxShadow: '0 26px 42px rgba(79, 70, 229, 0.16)'
+  },
+  variantHeroRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: '12px',
+    marginBottom: '12px',
+    flexWrap: 'wrap'
+  },
+  variantHeroPill: {
+    background: 'rgba(255, 255, 255, 0.75)',
+    padding: '6px 14px',
+    borderRadius: '999px',
+    color: 'var(--accent-primary)',
+    fontWeight: 600,
+    fontSize: '0.88rem',
+    border: '1px solid rgba(99, 102, 241, 0.2)'
+  },
+  variantHeroBadge: {
+    background: 'rgba(14, 165, 233, 0.18)',
+    color: '#0EA5E9',
+    padding: '6px 14px',
+    borderRadius: '999px',
+    fontWeight: 600,
+    fontSize: '0.88rem'
+  },
+  variantHeroTitle: {
+    margin: '0 0 10px',
+    color: 'var(--text-primary)',
+    fontSize: '1.6rem',
+    letterSpacing: '-0.01em'
+  },
+  variantHeroSubtitle: {
+    margin: 0,
+    color: 'var(--tone-strong)',
+    fontSize: '1rem',
+    lineHeight: 1.6
   },
 
   variantTabs: {
@@ -328,12 +625,12 @@ export const analysisStyles = {
     marginBottom: '28px'
   },
   metaCard: {
-    background: 'var(--surface-card)',
-    borderRadius: '16px',
-    padding: '20px',
-    boxShadow: '0 12px 28px var(--surface-shadow)',
+    background: 'rgba(255, 255, 255, 0.92)',
+    borderRadius: '18px',
+    padding: '22px',
+    boxShadow: '0 18px 38px rgba(15, 23, 42, 0.12)',
     color: 'var(--text-primary)',
-    border: '1px solid var(--surface-border)'
+    border: '1px solid rgba(99, 102, 241, 0.12)'
   },
   metaTitle: {
     fontSize: '1rem',
@@ -349,15 +646,17 @@ export const analysisStyles = {
   sentenceGrid: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '28px'
+    gap: '24px'
   },
   sentenceCard: {
-    padding: '0 0 28px',
-    borderBottom: '1px solid rgba(148, 163, 184, 0.35)'
+    padding: '24px 26px',
+    borderRadius: '20px',
+    background: 'rgba(244, 247, 255, 0.72)',
+    boxShadow: '0 16px 36px rgba(99, 102, 241, 0.12)',
+    border: '1px solid rgba(148, 163, 184, 0.18)'
   },
   sentenceCardLast: {
-    borderBottom: 'none',
-    paddingBottom: 0
+    boxShadow: '0 16px 36px rgba(79, 70, 229, 0.18)'
   },
   sentenceHeader: {
     display: 'flex',
@@ -689,19 +988,20 @@ export const analysisStyles = {
   },
 
   analysisContent: {
-    maxWidth: '800px',
+    maxWidth: '880px',
     margin: '0 auto'
   },
 
   originalText: {
-    background: 'var(--surface-soft-solid)',
-    border: '1px solid var(--border-subtle)',
-    borderRadius: '8px',
-    padding: '20px',
-    fontSize: '1rem',
-    lineHeight: '1.7',
+    background: 'linear-gradient(145deg, rgba(236, 233, 254, 0.72), rgba(255, 255, 255, 0.92))',
+    border: '1px solid rgba(99, 102, 241, 0.15)',
+    borderRadius: '24px',
+    padding: '26px',
+    fontSize: '1.02rem',
+    lineHeight: '1.74',
     color: 'var(--text-primary)',
-    marginBottom: '20px'
+    marginBottom: '28px',
+    boxShadow: '0 18px 40px rgba(99, 102, 241, 0.12)'
   },
 
   studyGuide: {

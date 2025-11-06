@@ -20,6 +20,7 @@ const pageComponents = {
   ProfilePage: lazy(() => import('../pages/ProfilePage')),
   AdminPage: lazy(() => import('../pages/AdminPage')),
   AnalysisPage: lazy(() => import('../pages/AnalysisPage')),
+  MockExamPage: lazy(() => import('../pages/MockExamPage')),
   VideoPlaylistPage: lazy(() => import('../pages/VideoPlaylistPage')),
   LoginPage: lazy(() => import('../pages/LoginPage'))
 };

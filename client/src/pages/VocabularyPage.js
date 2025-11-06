@@ -953,6 +953,7 @@ const getTimeLimitSeconds = useCallback(() => {
                 <button
                   type="button"
                   style={styles.scrollHintButton}
+                  aria-label="아래로 이동해서 시험 준비 구역 보기"
                   onClick={() => stepSummaryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
                 >
                   아래로 이동해서 시험 준비하기 ⬇️

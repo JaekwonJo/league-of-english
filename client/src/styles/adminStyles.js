@@ -73,6 +73,135 @@ export const adminStyles = {
   cardMobile: {
     padding: '22px'
   },
+  mockExamCard: {
+    position: 'relative',
+    borderRadius: '28px',
+    padding: '36px',
+    overflow: 'hidden',
+    background: 'linear-gradient(135deg, rgba(79,70,229,0.75) 0%, rgba(14,165,233,0.62) 38%, rgba(236,233,254,0.78) 100%)',
+    color: 'var(--text-on-accent)',
+    boxShadow: '0 44px 80px rgba(15, 23, 42, 0.28)'
+  },
+  mockExamCardMobile: {
+    padding: '26px'
+  },
+  mockExamGlow: {
+    position: 'absolute',
+    inset: 0,
+    background: 'radial-gradient(circle at 12% 22%, rgba(255,255,255,0.35), transparent 55%), radial-gradient(circle at 82% 10%, rgba(14,165,233,0.28), transparent 60%)',
+    pointerEvents: 'none'
+  },
+  mockExamContent: {
+    position: 'relative',
+    zIndex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '20px'
+  },
+  mockExamHeader: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px'
+  },
+  mockExamTitle: {
+    margin: 0,
+    fontSize: '1.8rem',
+    fontWeight: 800,
+    letterSpacing: '-0.01em'
+  },
+  mockExamDescription: {
+    margin: 0,
+    lineHeight: 1.6,
+    color: 'rgba(255,255,255,0.9)',
+    fontSize: '0.98rem'
+  },
+  mockExamForm: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, minmax(220px, 1fr))',
+    gap: '16px'
+  },
+  mockExamFormMobile: {
+    gridTemplateColumns: '1fr'
+  },
+  mockExamField: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+    background: 'rgba(255,255,255,0.18)',
+    borderRadius: '18px',
+    padding: '16px',
+    border: '1px solid rgba(255,255,255,0.22)'
+  },
+  mockExamLabel: {
+    fontSize: '0.92rem',
+    fontWeight: 700,
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px'
+  },
+  mockExamRequired: {
+    fontSize: '0.85rem',
+    color: 'rgba(248, 250, 252, 0.9)'
+  },
+  mockExamHint: {
+    fontSize: '0.85rem',
+    color: 'rgba(248, 250, 252, 0.78)'
+  },
+  mockExamInput: {
+    borderRadius: '12px',
+    border: '1px solid rgba(255,255,255,0.35)',
+    padding: '10px 14px',
+    fontSize: '0.95rem',
+    background: 'rgba(255,255,255,0.92)',
+    color: 'var(--text-primary)'
+  },
+  mockExamFileInput: {
+    borderRadius: '12px',
+    border: '1px dashed rgba(255,255,255,0.4)',
+    padding: '10px',
+    background: 'rgba(255,255,255,0.9)',
+    color: 'var(--text-primary)',
+    cursor: 'pointer'
+  },
+  mockExamFileName: {
+    fontSize: '0.88rem',
+    color: 'rgba(248, 250, 252, 0.85)'
+  },
+  mockExamActions: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '16px'
+  },
+  mockExamActionsMobile: {
+    flexDirection: 'column',
+    alignItems: 'stretch'
+  },
+  mockExamUploadButton: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '12px 22px',
+    borderRadius: '16px',
+    border: 'none',
+    fontWeight: 700,
+    fontSize: '0.98rem',
+    cursor: 'pointer',
+    background: 'linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.75) 100%)',
+    color: 'var(--indigo-strong)',
+    boxShadow: '0 28px 54px rgba(15,23,42,0.25)',
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+  },
+  mockExamUploadButtonDisabled: {
+    opacity: 0.6,
+    cursor: 'not-allowed',
+    boxShadow: 'none'
+  },
+  mockExamTip: {
+    flex: 1,
+    margin: 0,
+    fontSize: '0.9rem',
+    color: 'rgba(248, 250, 252, 0.85)'
+  },
   cardTitle: {
     color: 'var(--text-primary)',
     marginBottom: '25px',

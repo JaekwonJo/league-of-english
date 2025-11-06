@@ -306,6 +306,27 @@ class ApiService {
       await this.handleError(error, `UPLOAD ${endpoint}`);
     }
   }
+
+  async uploadFormData(endpoint, formData, timeoutMs = 60000) {
+    try {
+      const headers = this.getHeaders();
+      delete headers['Content-Type'];
+
+      const response = await this._fetchWithTimeout(`${this.baseURL}${endpoint}`, {
+        method: 'POST',
+        headers,
+        body: formData
+      }, timeoutMs, `UPLOAD_FORM ${endpoint}`);
+
+      if (!response.ok) {
+        throw response;
+      }
+
+      return await response.json();
+    } catch (error) {
+      await this.handleError(error, `UPLOAD_FORM ${endpoint}`);
+    }
+  }
 }
 
 // 싱글톤 인스턴스
@@ -429,6 +450,13 @@ export const api = {
     status: () => apiService.get('/membership/status'),
     redeem: (code) => apiService.post('/membership/redeem', { code }),
     request: (plan, message) => apiService.post('/membership/request', { plan, message })
+  },
+
+  mockExam: {
+    getExam: () => apiService.get('/mock-exam/2025-10'),
+    submit: (payload) => apiService.post('/mock-exam/2025-10/submit', payload),
+    explanation: (payload) => apiService.post('/mock-exam/2025-10/explanations', payload),
+    upload: (formData) => apiService.uploadFormData('/mock-exam/upload', formData, 60000)
   },
 
   video: {

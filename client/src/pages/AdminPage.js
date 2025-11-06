@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import * as LucideIcons from 'lucide-react';
 import { adminStyles } from '../styles/adminStyles';
 import DocumentList from '../components/admin/DocumentList';
 import UploadModal from '../components/admin/UploadModal';
@@ -28,6 +29,8 @@ const initialUploadForm = {
   type: 'worksheet',
   file: null
 };
+
+const DEFAULT_EXAM_ID = process.env.REACT_APP_MOCK_EXAM_ID || '2025-10';
 
 const toastStyles = {
   container: {
@@ -126,6 +129,12 @@ const AdminPage = () => {
   const [newCategory, setNewCategory] = useState('');
   const [uploadForm, setUploadForm] = useState(initialUploadForm);
   const [toasts, setToasts] = useState([]);
+  const [mockExamForm, setMockExamForm] = useState({
+    examId: DEFAULT_EXAM_ID,
+    questionFile: null,
+    answerFile: null
+  });
+  const [mockExamUploading, setMockExamUploading] = useState(false);
 
   const pushToast = useCallback((message, tone = 'info') => {
     const id = Date.now() + Math.random();
@@ -190,6 +199,46 @@ const AdminPage = () => {
       setLoading(false);
     }
   };
+
+  const handleMockExamFieldChange = (field, value) => {
+    setMockExamForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleMockExamFileChange = (field, fileList) => {
+    const file = Array.isArray(fileList) ? fileList[0] : fileList?.[0];
+    setMockExamForm((prev) => ({ ...prev, [field]: file || null }));
+  };
+
+  const handleMockExamUpload = async () => {
+    if (!mockExamForm.questionFile || !mockExamForm.answerFile) {
+      pushToast('문제지 PDF와 정답/해설 PDF를 모두 선택해 주세요.', 'warning');
+      return;
+    }
+
+    try {
+      setMockExamUploading(true);
+      const formData = new FormData();
+      const normalizedExamId = (mockExamForm.examId || DEFAULT_EXAM_ID).trim() || DEFAULT_EXAM_ID;
+      formData.append('examId', normalizedExamId);
+      formData.append('questionPdf', mockExamForm.questionFile);
+      formData.append('answerPdf', mockExamForm.answerFile);
+
+      const response = await api.mockExam.upload(formData);
+      pushToast(response?.message || '모의고사 PDF가 업데이트되었습니다.', 'success');
+      setMockExamForm({
+        examId: normalizedExamId,
+        questionFile: null,
+        answerFile: null
+      });
+    } catch (error) {
+      console.error('Mock exam upload failed:', error);
+      pushToast(error?.message || '모의고사 PDF를 업로드하지 못했습니다.', 'error');
+    } finally {
+      setMockExamUploading(false);
+    }
+  };
+
+  const renderFileName = (file) => (file ? file.name : '선택된 파일이 없습니다.');
 
   const handleEdit = async () => {
     try {
@@ -430,6 +479,73 @@ const AdminPage = () => {
           </button>
         </div>
       </div>
+
+      {isAdmin && (
+        <section style={responsive(adminStyles.mockExamCard, adminStyles.mockExamCardMobile)}>
+          <div style={adminStyles.mockExamGlow} />
+          <div style={adminStyles.mockExamContent}>
+            <div style={adminStyles.mockExamHeader}>
+              <h2 style={adminStyles.mockExamTitle}>🎯 모의고사 원문 업로드</h2>
+              <p style={adminStyles.mockExamDescription}>
+                문제지와 정답/해설 PDF를 한 번에 업로드해 주세요. 업로드가 끝나면 학생용 모의고사 메뉴에서 즉시 최신 회차로 반영됩니다.
+              </p>
+            </div>
+
+            <div style={responsive(adminStyles.mockExamForm, adminStyles.mockExamFormMobile)}>
+              <div style={adminStyles.mockExamField}>
+                <label style={adminStyles.mockExamLabel}>시험 ID</label>
+                <input
+                  type="text"
+                  value={mockExamForm.examId}
+                  onChange={(event) => handleMockExamFieldChange('examId', event.target.value)}
+                  style={adminStyles.mockExamInput}
+                  readOnly
+                />
+                <span style={adminStyles.mockExamHint}>현재는 2025-10 회차로 고정되어 있습니다.</span>
+              </div>
+
+              <div style={adminStyles.mockExamField}>
+                <label style={adminStyles.mockExamLabel}>문제지 PDF <span style={adminStyles.mockExamRequired}>*</span></label>
+                <input
+                  id="mockExamQuestionFile"
+                  type="file"
+                  accept="application/pdf"
+                  onChange={(event) => handleMockExamFileChange('questionFile', event.target.files)}
+                  style={adminStyles.mockExamFileInput}
+                />
+                <span style={adminStyles.mockExamFileName}>{renderFileName(mockExamForm.questionFile)}</span>
+              </div>
+
+              <div style={adminStyles.mockExamField}>
+                <label style={adminStyles.mockExamLabel}>정답/해설 PDF <span style={adminStyles.mockExamRequired}>*</span></label>
+                <input
+                  id="mockExamAnswerFile"
+                  type="file"
+                  accept="application/pdf"
+                  onChange={(event) => handleMockExamFileChange('answerFile', event.target.files)}
+                  style={adminStyles.mockExamFileInput}
+                />
+                <span style={adminStyles.mockExamFileName}>{renderFileName(mockExamForm.answerFile)}</span>
+              </div>
+            </div>
+
+            <div style={responsive(adminStyles.mockExamActions, adminStyles.mockExamActionsMobile)}>
+              <button
+                type="button"
+                style={{
+                  ...adminStyles.mockExamUploadButton,
+                  ...(mockExamUploading ? adminStyles.mockExamUploadButtonDisabled : {})
+                }}
+                onClick={handleMockExamUpload}
+                disabled={mockExamUploading}
+              >
+                <LucideIcons.UploadCloud size={18} /> {mockExamUploading ? '업로드 중...' : '모의고사 업데이트'}
+              </button>
+              <p style={adminStyles.mockExamTip}>※ PDF는 10MB 이하가 권장되며, 업로드 직후 학생 화면에서 새로운 시험이 제공됩니다.</p>
+            </div>
+          </div>
+        </section>
+      )}
 
       <AdminNotificationsPanel
         notifications={notifications}
