@@ -65,24 +65,24 @@ export const analysisStyles = {
     alignSelf: 'flex-start',
     padding: '8px 16px',
     borderRadius: '999px',
-    background: 'rgba(255,255,255,0.22)',
-    color: '#1e1b4b',
+    background: 'rgba(255,255,255,0.28)',
+    color: '#f8fafc',
     fontWeight: 700,
     fontSize: '0.86rem',
     letterSpacing: '0.08em',
     textTransform: 'uppercase',
-    boxShadow: '0 12px 28px rgba(15,23,42,0.18)'
+    boxShadow: '0 18px 32px rgba(15,23,42,0.28)'
   },
   docHeroHeadline: {
     margin: 0,
     fontSize: '2.4rem',
     fontWeight: 800,
     letterSpacing: '-0.02em',
-    color: 'var(--text-primary)'
+    color: 'rgba(248, 250, 252, 0.98)'
   },
   docHeroSub: {
     margin: 0,
-    color: 'rgba(15, 23, 42, 0.72)',
+    color: 'rgba(248, 250, 252, 0.9)',
     fontSize: '1.05rem',
     lineHeight: 1.7,
     maxWidth: '520px'
@@ -93,26 +93,26 @@ export const analysisStyles = {
     gap: '16px'
   },
   docMetric: {
-    padding: '14px 18px',
-    borderRadius: '18px',
-    background: 'rgba(255,255,255,0.42)',
+    padding: '16px 20px',
+    borderRadius: '20px',
+    background: 'rgba(255,255,255,0.24)',
     display: 'flex',
     flexDirection: 'column',
-    boxShadow: '0 16px 38px rgba(15,23,42,0.18)',
-    minWidth: '140px'
+    boxShadow: '0 24px 46px rgba(15,23,42,0.22)',
+    minWidth: '160px'
   },
   docMetricLabel: {
     fontSize: '0.82rem',
-    color: 'rgba(15,23,42,0.62)',
-    marginBottom: '6px',
+    color: 'rgba(248,250,252,0.78)',
+    marginBottom: '8px',
     fontWeight: 600,
     textTransform: 'uppercase',
-    letterSpacing: '0.06em'
+    letterSpacing: '0.08em'
   },
   docMetricValue: {
-    fontSize: '1.35rem',
+    fontSize: '1.4rem',
     fontWeight: 800,
-    color: 'var(--text-primary)'
+    color: 'rgba(255,255,255,0.95)'
   },
   docHeroSearchRow: {
     position: 'relative',
@@ -155,7 +155,7 @@ export const analysisStyles = {
   docHeroNote: {
     margin: 0,
     fontSize: '0.92rem',
-    color: 'rgba(15,23,42,0.65)'
+    color: 'rgba(248,250,252,0.78)'
   },
   docGrid: {
     display: 'grid',
@@ -167,9 +167,9 @@ export const analysisStyles = {
     position: 'relative',
     padding: '26px',
     borderRadius: '26px',
-    background: 'rgba(255,255,255,0.82)',
-    border: '1px solid rgba(148, 163, 184, 0.18)',
-    boxShadow: '0 26px 42px rgba(15,23,42,0.2)',
+    background: 'rgba(20, 27, 57, 0.38)',
+    border: '1px solid rgba(255,255,255,0.22)',
+    boxShadow: '0 30px 54px rgba(15,23,42,0.4)',
     cursor: 'pointer',
     transition: 'transform 0.25s ease, box-shadow 0.25s ease'
   },
@@ -190,7 +190,7 @@ export const analysisStyles = {
     margin: 0,
     fontSize: '1.2rem',
     fontWeight: 800,
-    color: 'var(--text-primary)',
+    color: 'rgba(248,250,252,0.96)',
     letterSpacing: '-0.01em'
   },
   documentCardCategory: {
@@ -198,14 +198,14 @@ export const analysisStyles = {
     borderRadius: '999px',
     fontSize: '0.82rem',
     fontWeight: 700,
-    background: 'rgba(79, 70, 229, 0.16)',
-    color: '#4338CA',
-    boxShadow: '0 10px 18px rgba(79, 70, 229, 0.25)'
+    background: 'rgba(255,255,255,0.24)',
+    color: '#f5f8ff',
+    boxShadow: '0 16px 28px rgba(15,23,42,0.28)'
   },
   documentCardDescription: {
     fontSize: '0.98rem',
     lineHeight: 1.7,
-    color: 'rgba(15,23,42,0.7)',
+    color: 'rgba(248,250,252,0.85)',
     minHeight: '70px'
   },
   documentCardFooter: {
@@ -217,7 +217,7 @@ export const analysisStyles = {
   },
   documentCardHint: {
     fontSize: '0.9rem',
-    color: 'rgba(15,23,42,0.6)',
+    color: 'rgba(248,250,252,0.78)',
     display: 'flex',
     alignItems: 'center',
     gap: '8px'
@@ -225,8 +225,8 @@ export const analysisStyles = {
   documentCardPill: {
     padding: '6px 12px',
     borderRadius: '999px',
-    background: 'rgba(14,165,233,0.18)',
-    color: '#0EA5E9',
+    background: 'rgba(255,255,255,0.24)',
+    color: '#f0f9ff',
     fontWeight: 700,
     fontSize: '0.82rem'
   },
@@ -242,8 +242,8 @@ export const analysisStyles = {
     gap: '8px',
     padding: '6px 12px',
     borderRadius: '12px',
-    background: 'rgba(255,255,255,0.6)',
-    color: 'rgba(15,23,42,0.75)',
+    background: 'rgba(24, 32, 68, 0.6)',
+    color: 'rgba(248,250,252,0.78)',
     fontSize: '0.78rem',
     fontWeight: 600,
     letterSpacing: '0.04em',
@@ -252,7 +252,7 @@ export const analysisStyles = {
   passageStatValue: {
     fontSize: '0.98rem',
     fontWeight: 800,
-    color: 'var(--text-primary)'
+    color: 'rgba(248,250,252,0.92)'
   },
   passageMetaButtons: {
     display: 'flex',

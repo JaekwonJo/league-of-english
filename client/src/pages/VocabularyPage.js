@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import * as LucideIcons from 'lucide-react';
 import { api } from '../services/api.service';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -64,6 +65,7 @@ const VocabularyPage = () => {
   const { user, updateUser } = useAuth();
   const [isMobile, setIsMobile] = useState(() => (typeof window !== 'undefined' ? window.innerWidth <= 768 : false));
   const stepSummaryRef = useRef(null);
+  const setsSectionRef = useRef(null);
 
   const stepPathMap = useMemo(() => ({
     [STEPS.SELECT_SET]: '/vocabulary',
@@ -222,6 +224,10 @@ const getTimeLimitSeconds = useCallback(() => {
     setPracticeState({ active: false, items: [], index: 0, showBack: false, againQueue: [], front: 'term' });
     navigateToStep(STEPS.SELECT_DAY);
   }, [resetQuizState, navigateToStep]);
+
+  const handleScrollToSets = useCallback(() => {
+    setsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
 
   const handleBackToSetList = useCallback(() => {
     resetQuizState();
@@ -719,6 +725,20 @@ const getTimeLimitSeconds = useCallback(() => {
     return base;
   }, [filteredSets]);
 
+  const heroStats = useMemo(() => {
+    const totalSets = sets.length;
+    const totalDays = sets.reduce((sum, set) => sum + (Array.isArray(set.days) ? set.days.length : 0), 0);
+    const totalWords = sets.reduce((sum, set) => {
+      if (!Array.isArray(set.days)) return sum;
+      return sum + set.days.reduce((inner, day) => inner + (day.count || 0), 0);
+    }, 0);
+    return [
+      { icon: 'BookOpen', label: '등록된 단어장', value: totalSets ? `${totalSets}개` : '준비 중' },
+      { icon: 'ListChecks', label: '총 Day', value: totalDays ? `${totalDays}개` : '집계 중' },
+      { icon: 'Sparkles', label: '누적 단어', value: totalWords ? `${totalWords.toLocaleString()}개` : '채우는 중' }
+    ];
+  }, [sets]);
+
   const hasGroupedSets = useMemo(
     () => CATEGORY_SECTIONS.some((section) => (groupedSets[section.key] || []).length > 0),
     [groupedSets]
@@ -766,9 +786,35 @@ const getTimeLimitSeconds = useCallback(() => {
 
   return (
     <div style={styles.container}>
-      <header style={styles.header}>
-        <h1 style={styles.title}>🐣 어휘 훈련</h1>
-      </header>
+      <section style={styles.heroSection}>
+        <div style={styles.heroBackground} />
+        <div style={styles.heroContent}>
+          <span style={styles.heroBadge}>Daily Vocab Studio</span>
+          <h1 style={styles.heroTitle}>🐣 어휘 훈련</h1>
+          <p style={styles.heroSubtitle}>지문에서 뽑은 핵심 단어들을 하루 분량으로 챙겨 보세요. 연습과 시험 모드를 자유롭게 오가며 감각을 끌어올릴 수 있어요.</p>
+          <div style={styles.heroMetaRow}>
+            {heroStats.map((stat) => (
+              <HeroMeta key={stat.label} icon={stat.icon} label={stat.label} value={stat.value} />
+            ))}
+          </div>
+          <div style={styles.heroButtons}>
+            <button type="button" style={styles.heroPrimaryButton} onClick={handleScrollToSets}>
+              <LucideIcons.Search size={18} /> 단어장 살펴보기
+            </button>
+            <button
+              type="button"
+              style={{
+                ...styles.heroSecondaryButton,
+                ...(selectedDayLabels.length ? {} : styles.heroButtonDisabled)
+              }}
+              onClick={() => navigateToStep(STEPS.CONFIGURE)}
+              disabled={!selectedDayLabels.length}
+            >
+              <LucideIcons.PlayCircle size={18} /> 시험 준비로 바로 가기
+            </button>
+          </div>
+        </div>
+      </section>
 
       <div style={styles.stepper}>
         {stepDescriptors.map((descriptor, index) => {
@@ -807,7 +853,7 @@ const getTimeLimitSeconds = useCallback(() => {
             ) : setsError ? (
               <div style={{ ...styles.notice, color: 'var(--danger)' }}>{setsError}</div>
             ) : (
-              <section style={styles.section}>
+              <section ref={setsSectionRef} style={styles.section}>
                 <h2 style={styles.sectionTitle}>1️⃣ 단어장 고르기</h2>
                 <div style={styles.searchRow}>
                   <input
@@ -1386,56 +1432,115 @@ const styles = {
     maxWidth: '1200px',
     margin: '0 auto'
   },
-  header: {
-    marginBottom: '24px'
+  heroSection: {
+    position: 'relative',
+    borderRadius: '32px',
+    padding: '44px 40px',
+    marginBottom: '28px',
+    overflow: 'hidden',
+    background: 'linear-gradient(140deg, rgba(79,70,229,0.7) 0%, rgba(14,165,233,0.55) 45%, rgba(236,233,254,0.7) 100%)',
+    color: 'var(--text-on-accent)',
+    boxShadow: '0 44px 88px rgba(15,23,42,0.28)'
   },
-  title: {
-    fontSize: '2.4rem',
-    marginBottom: '8px',
-    color: 'var(--tone-hero)'
+  heroBackground: {
+    position: 'absolute',
+    inset: 0,
+    background: 'radial-gradient(circle at 18% 20%, rgba(255,255,255,0.35), transparent 55%), radial-gradient(circle at 82% 12%, rgba(14,165,233,0.25), transparent 60%)',
+    pointerEvents: 'none'
   },
-  subtitle: { display: 'none' },
-  howtoBox: {
-    margin: '0 0 24px',
-    padding: '20px 24px',
-    borderRadius: '18px',
-    background: 'linear-gradient(135deg, rgba(59,130,246,0.12), rgba(244,114,182,0.12))',
-    border: '1px solid rgba(148, 163, 184, 0.32)',
-    boxShadow: '0 16px 30px rgba(15, 23, 42, 0.1)'
-  },
-  howtoHeading: {
-    margin: '0 0 14px',
-    fontSize: '1.3rem',
-    fontWeight: 800,
-    color: 'var(--text-primary)'
-  },
-  howtoList: {
-    margin: 0,
-    padding: 0,
-    listStyle: 'none',
+  heroContent: {
+    position: 'relative',
+    zIndex: 1,
     display: 'flex',
     flexDirection: 'column',
-    gap: '10px'
+    gap: '18px'
   },
-  howtoItem: {
-    display: 'flex',
-    gap: '10px',
-    alignItems: 'flex-start',
-    background: 'var(--surface-card)',
-    borderRadius: '14px',
-    padding: '12px 14px',
-    boxShadow: '0 12px 24px rgba(15, 23, 42, 0.08)'
+  heroBadge: {
+    alignSelf: 'flex-start',
+    padding: '8px 16px',
+    borderRadius: '999px',
+    background: 'rgba(255,255,255,0.26)',
+    color: '#f8fafc',
+    fontWeight: 700,
+    fontSize: '0.86rem',
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase',
+    boxShadow: '0 18px 32px rgba(15,23,42,0.28)'
   },
-  howtoIcon: {
-    fontSize: '1.1rem',
-    lineHeight: 1,
-    fontWeight: 700
-  },
-  howtoText: {
+  heroTitle: {
     margin: 0,
-    fontSize: '0.95rem',
-    color: 'var(--text-primary)',
-    lineHeight: 1.6
+    fontSize: '2.6rem',
+    fontWeight: 800,
+    letterSpacing: '-0.02em',
+    color: 'rgba(248,250,252,0.98)'
+  },
+  heroSubtitle: {
+    margin: 0,
+    fontSize: '1.05rem',
+    lineHeight: 1.7,
+    color: 'rgba(248,250,252,0.9)',
+    maxWidth: '660px'
+  },
+  heroMetaRow: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '12px'
+  },
+  heroMeta: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '10px',
+    padding: '12px 18px',
+    borderRadius: '16px',
+    background: 'rgba(255,255,255,0.22)',
+    boxShadow: '0 22px 36px rgba(15,23,42,0.24)'
+  },
+  heroMetaLabel: {
+    fontSize: '0.85rem',
+    textTransform: 'uppercase',
+    letterSpacing: '0.08em',
+    color: 'rgba(248,250,252,0.78)'
+  },
+  heroMetaValue: {
+    fontSize: '1.05rem',
+    fontWeight: 700,
+    color: 'rgba(255,255,255,0.95)'
+  },
+  heroButtons: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '12px'
+  },
+  heroPrimaryButton: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '14px 22px',
+    borderRadius: '16px',
+    border: 'none',
+    fontWeight: 700,
+    background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.75) 100%)',
+    color: 'var(--indigo-strong)',
+    cursor: 'pointer',
+    boxShadow: '0 28px 54px rgba(15,23,42,0.28)'
+  },
+  heroSecondaryButton: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '14px 22px',
+    borderRadius: '16px',
+    border: '1px solid rgba(255,255,255,0.6)',
+    background: 'rgba(255,255,255,0.18)',
+    color: 'rgba(248,250,252,0.9)',
+    fontWeight: 700,
+    cursor: 'pointer',
+    boxShadow: '0 20px 44px rgba(15,23,42,0.22)'
+  },
+  heroButtonDisabled: {
+    opacity: 0.45,
+    cursor: 'not-allowed',
+    boxShadow: 'none'
   },
   stepper: {
     display: 'flex',
@@ -1648,33 +1753,33 @@ const styles = {
     fontSize: '0.95rem'
   },
   dayCard: {
-    background: 'var(--surface-card)',
+    background: 'linear-gradient(135deg, rgba(255,255,255,0.95), rgba(236,233,254,0.9))',
     borderRadius: '16px',
     padding: '18px',
     cursor: 'pointer',
-    border: '2px solid transparent',
+    border: '1px solid rgba(255,255,255,0.6)',
     transition: 'all 0.2s ease',
-    boxShadow: '0 6px 18px rgba(15, 23, 42, 0.08)',
-    color: 'var(--text-primary)'
+    boxShadow: '0 18px 36px rgba(15, 23, 42, 0.15)',
+    color: '#1f2a5a'
   },
   dayHeader: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: '10px',
-    color: 'var(--text-primary)'
+    color: '#1f2a5a'
   },
   dayLabel: {
     fontWeight: 700,
-    color: 'var(--text-primary)'
+    color: '#162145'
   },
   dayCount: {
     fontWeight: 600,
-    color: 'var(--text-primary)'
+    color: '#1f2a5a'
   },
   daySummary: {
     fontSize: '0.9rem',
-    color: 'var(--text-primary)'
+    color: '#243368'
   },
   stepActions: {
     marginTop: '24px',
@@ -2041,6 +2146,19 @@ const styles = {
     fontSize: '0.75rem',
     color: 'var(--text-primary)'
   }
+};
+
+const HeroMeta = ({ icon, label, value }) => {
+  const IconComponent = LucideIcons[icon] || LucideIcons.Circle;
+  return (
+    <div style={styles.heroMeta}>
+      <IconComponent size={18} />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+        <span style={styles.heroMetaLabel}>{label}</span>
+        <strong style={styles.heroMetaValue}>{value}</strong>
+      </div>
+    </div>
+  );
 };
 
 export default VocabularyPage;

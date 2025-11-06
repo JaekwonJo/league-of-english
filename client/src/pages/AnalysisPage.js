@@ -531,7 +531,7 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
     const metricBlocks = [
       { label: '등록된 문서', value: totalDocuments ? `${totalDocuments.toLocaleString()}개` : '준비 중' },
       { label: '전체 지문', value: totalPassages ? `${totalPassages.toLocaleString()}개` : '데이터 수집 중' },
-      { label: 'AI 분석본', value: totalVariants ? `${totalVariants.toLocaleString()}개` : '곧 채워져요' },
+      { label: '전문 분석본', value: totalVariants ? `${totalVariants.toLocaleString()}개` : '준비 중' },
       { label: '분류', value: categoryCount ? `${categoryCount.toLocaleString()}종` : '정리 중' }
     ];
 
@@ -540,10 +540,10 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
         <section style={analysisStyles.docHero}>
           <div style={analysisStyles.docHeroGlow} />
           <div style={analysisStyles.docHeroContent}>
-            <span style={analysisStyles.docHeroBadge}>AI Study Hub</span>
+            <span style={analysisStyles.docHeroBadge}>Insight Study Lounge</span>
             <h1 style={analysisStyles.docHeroHeadline}>📖 문서 분석 자료</h1>
             <p style={analysisStyles.docHeroSub}>
-              모의고사와 자체 제작 교재를 한곳에서 관리하고, 필요한 지문만 골라 즉시 분석해 보세요. 토스 감성 디자인으로 학습이 더 즐거워집니다.
+              모의고사와 자체 제작 교재를 한곳에서 관리하고, 필요한 지문만 골라 즉시 분석해 보세요. 정돈된 학습 환경이 분석 여정을 끝까지 책임집니다.
             </p>
             <div style={analysisStyles.docHeroSearchRow}>
               <input
