@@ -1,3 +1,11 @@
+## 2025-11-06 (analysis/vocabulary hero contrast refresh)
+- Issue: 분석 자료·어휘 훈련 첫 화면이 낮은 대비와 '토스 감성' 문구 때문에 사용자에게 전문적인 인상을 주지 못했습니다.
+- Cause: 기존 히어로 섹션이 밝은 카드 위에 어두운 텍스트를 얹는 라이트 테마 전용 레이아웃이었고, 다크 배경에서는 가독성이 크게 떨어졌습니다.
+- Fix: AnalysisPage/VocabularyPage 히어로를 고대비 그라데이션 배경과 메트릭 배지 UI로 재구성하고, 안내 문구를 전문 학습 앱 톤으로 교체했습니다.
+- Note: 히어로 구조 변경에 맞춰 `analysisStyles` 색상 변수를 조정해 다크/라이트 테마 모두 동일한 색 대비를 유지합니다.
+- Files: client/src/pages/AnalysisPage.js, client/src/pages/VocabularyPage.js, client/src/styles/analysisStyles.js.
+- Tests: `npm run build --prefix client`.
+
 ## 2025-11-06 (mock exam 실전 모드 + 관리자 업로드)
 - Issue: 학생들이 실전 모의고사를 풀 수 있는 완성형 흐름이 없고, PDF 교체 시 코드를 수정해야 했어요.
 - Cause: 모의고사 문제/정답 파서가 없으며, 관리자 업로드 기능이 문서용 엔드포인트에 한정되어 있었습니다.
