@@ -10,6 +10,8 @@ const STORAGE_ROOT = path.resolve(__dirname, '..', '..', 'mock-exams');
 const LEGACY_DIR = path.resolve(__dirname, '..', '..', '모의고사 원문');
 const LEGACY_QUESTION_FILE = '25_10월_고2_영어_문제지.pdf';
 const LEGACY_ANSWER_FILE = '25_10월_고2_영어_정답 및 해설.pdf';
+const FALLBACK_EXAM_JSON = path.resolve(__dirname, '..', 'data', 'mockExam2025-10.json');
+const FALLBACK_ANSWER_JSON = path.resolve(__dirname, '..', 'data', 'mockExam2025-10-answers.json');
 
 const getQuestionPath = () => {
   const candidate = path.join(STORAGE_ROOT, EXAM_ID, 'questions.pdf');
@@ -214,7 +216,10 @@ class MockExamService {
   async _loadExam() {
     const questionPath = getQuestionPath();
     if (!fs.existsSync(questionPath)) {
-      throw new Error('모의고사 문제지 PDF 파일을 찾을 수 없습니다. 관리자에게 문의해 주세요.');
+      if (fs.existsSync(FALLBACK_EXAM_JSON)) {
+        return JSON.parse(fs.readFileSync(FALLBACK_EXAM_JSON, 'utf-8'));
+      }
+      throw new Error('모의고사 문제지 PDF 또는 기본 데이터 파일을 찾을 수 없습니다. 관리자에게 문의해 주세요.');
     }
     const buffer = fs.readFileSync(questionPath);
     const parsed = await pdfParse(buffer);
@@ -234,7 +239,10 @@ class MockExamService {
   async _loadAnswerKey() {
     const answerPath = getAnswerPath();
     if (!fs.existsSync(answerPath)) {
-      throw new Error('모의고사 정답/해설 PDF 파일을 찾을 수 없습니다. 관리자에게 문의해 주세요.');
+      if (fs.existsSync(FALLBACK_ANSWER_JSON)) {
+        return JSON.parse(fs.readFileSync(FALLBACK_ANSWER_JSON, 'utf-8'));
+      }
+      throw new Error('모의고사 정답/해설 PDF 또는 기본 데이터 파일을 찾을 수 없습니다. 관리자에게 문의해 주세요.');
     }
     const buffer = fs.readFileSync(answerPath);
     const parsed = await pdfParse(buffer);

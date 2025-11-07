@@ -474,6 +474,8 @@ export const api = {
     listPassageSummaries: (documentId) => apiService.get(`/analysis/${documentId}/passage-list`),
     generate: (documentId, passageNumber, count = 1) => apiService.post(`/analysis/${documentId}/analyze-passage`, { passageNumber, count }),
     generateBatch: (documentId, passageNumbers = []) => apiService.post(`/analysis/${documentId}/analyze-passages`, { passageNumbers }),
+    updatePassageLabel: (documentId, passageNumber, label) =>
+      apiService.put(`/analysis/${documentId}/passage/${passageNumber}/label`, { label }),
     deleteVariants: (documentId, passageNumber, variantIndexes = []) => apiService.post(
       `/analysis/${documentId}/passage/${passageNumber}/delete-variants`,
       { variantIndexes }

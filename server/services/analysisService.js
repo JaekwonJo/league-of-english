@@ -75,11 +75,21 @@ class AnalysisService {
         return { success: true, data: [], message: '아직 분석된 지문이 없습니다.' };
       }
 
+      const labelRows = await database.all(
+        'SELECT passage_number, label FROM document_passage_labels WHERE document_id = ?',
+        [documentId]
+      );
+      const labelMap = new Map(labelRows.map((row) => [row.passage_number, row.label]));
+
       const formatted = [];
       for (const row of rows) {
         const base = this.formatPassageAnalysis(row);
         const enriched = await this._attachFeedbackMetadata(documentId, base.passageNumber, base.variants, userId);
-        formatted.push({ ...base, variants: enriched });
+        formatted.push({
+          ...base,
+          variants: enriched,
+          displayLabel: labelMap.get(base.passageNumber) || null
+        });
       }
       return { success: true, data: formatted, total: formatted.length };
     } catch (error) {
@@ -98,6 +108,12 @@ class AnalysisService {
       'SELECT passage_number, variants, updated_at FROM passage_analyses WHERE document_id = ?',
       [documentId]
     );
+
+    const labelRows = await database.all(
+      'SELECT passage_number, label FROM document_passage_labels WHERE document_id = ?',
+      [documentId]
+    );
+    const labelMap = new Map(labelRows.map((row) => [row.passage_number, row.label]));
 
     const existingMap = new Map();
     existingRows.forEach((row) => {
@@ -133,7 +149,8 @@ class AnalysisService {
         analyzed: Boolean(existing),
         variantCount: existing?.variantCount || 0,
         updatedAt: existing?.updatedAt || null,
-        remainingSlots: Math.max(0, MAX_VARIANTS_PER_PASSAGE - (existing?.variantCount || 0))
+        remainingSlots: Math.max(0, MAX_VARIANTS_PER_PASSAGE - (existing?.variantCount || 0)),
+        displayLabel: labelMap.get(passageNumber) || null
       };
     });
 
@@ -181,13 +198,15 @@ class AnalysisService {
 
       const { allVariants } = await this.appendVariants(documentId, passageNumber, passage, [analysis]);
       const enrichedVariants = await this._attachFeedbackMetadata(documentId, passageNumber, allVariants, null);
+      const displayLabel = await this.getPassageLabel(documentId, passageNumber);
 
       return {
         success: true,
         data: {
           passageNumber,
           originalPassage: passage,
-          variants: enrichedVariants
+          variants: enrichedVariants,
+          displayLabel
         },
         message: `지문 ${passageNumber} 분석이 완료되었습니다.`,
         totalPassages: passages.length,
@@ -334,7 +353,8 @@ class AnalysisService {
       if (!row) return null;
       const base = this.formatPassageAnalysis(row);
       const variants = await this._attachFeedbackMetadata(documentId, passageNumber, base.variants, userId);
-      return { ...base, variants };
+      const displayLabel = await this.getPassageLabel(documentId, passageNumber);
+      return { ...base, variants, displayLabel };
     } catch (error) {
       throw new Error(`지문 분석 조회 실패: ${error.message}`);
     }
@@ -920,10 +940,12 @@ class AnalysisService {
         const analysis = await this.analyzer.analyzeIndividualPassage(passage, index + 1);
         const { allVariants } = await this.appendVariants(documentId, index + 1, passage, [analysis]);
         const enriched = await this._attachFeedbackMetadata(documentId, index + 1, allVariants, userId);
+        const displayLabel = await this.getPassageLabel(documentId, index + 1);
         saved.push({
           passageNumber: index + 1,
           originalPassage: passage,
-          variants: enriched
+          variants: enriched,
+          displayLabel
         });
       }
 
@@ -950,6 +972,50 @@ class AnalysisService {
       }
       throw new Error(`문서 분석 실패: ${message}`);
     }
+  }
+
+  async getPassageLabel(documentId, passageNumber) {
+    const row = await database.get(
+      'SELECT label FROM document_passage_labels WHERE document_id = ? AND passage_number = ?',
+      [documentId, passageNumber]
+    );
+    return row?.label || null;
+  }
+
+  async updatePassageLabel(documentId, passageNumber, label, userId) {
+    const numericPassage = Number(passageNumber);
+    if (!Number.isInteger(numericPassage) || numericPassage <= 0) {
+      throw new Error('올바른 지문 번호가 필요합니다.');
+    }
+
+    const doc = await database.get('SELECT id, content FROM documents WHERE id = ?', [documentId]);
+    if (!doc) {
+      throw new Error('문서를 찾을 수 없습니다.');
+    }
+
+    const passages = this.extractPassages(doc.content || '');
+    if (numericPassage > passages.length) {
+      throw new Error('지문 번호가 문서 범위를 벗어났습니다.');
+    }
+
+    const trimmed = String(label || '').trim();
+    if (!trimmed) {
+      await database.run(
+        'DELETE FROM document_passage_labels WHERE document_id = ? AND passage_number = ?',
+        [documentId, numericPassage]
+      );
+      return { success: true, label: null };
+    }
+
+    await database.run(
+      `INSERT INTO document_passage_labels (document_id, passage_number, label, updated_by, updated_at)
+       VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+       ON CONFLICT(document_id, passage_number)
+       DO UPDATE SET label = excluded.label, updated_by = excluded.updated_by, updated_at = CURRENT_TIMESTAMP`,
+      [documentId, numericPassage, trimmed, userId]
+    );
+
+    return { success: true, label: trimmed };
   }
 }
 

@@ -5,7 +5,7 @@
 const express = require('express');
 const router = express.Router({ mergeParams: true });
 const analysisService = require('../../services/analysisService');
-const { verifyToken, requireAdmin } = require('../../middleware/auth');
+const { verifyToken, requireAdmin, requireTeacherOrAdmin } = require('../../middleware/auth');
 
 /**
  * GET /api/analysis/:documentId/passages
@@ -80,6 +80,26 @@ router.get('/passage/:passageNumber', verifyToken, async (req, res) => {
       : 500;
 
     res.status(statusCode).json({ success: false, message });
+  }
+});
+
+/**
+ * PUT /api/analysis/:documentId/passage/:passageNumber/label
+ * Update custom display label for a passage (teacher/admin)
+ */
+router.put('/passage/:passageNumber/label', verifyToken, requireTeacherOrAdmin, async (req, res) => {
+  const { documentId, passageNumber } = req.params;
+  const { label } = req.body || {};
+
+  try {
+    const result = await analysisService.updatePassageLabel(documentId, Number(passageNumber), label, req.user.id);
+    res.json({ success: true, label: result.label });
+  } catch (error) {
+    const message = String(error?.message || '지문 이름을 저장하지 못했습니다.');
+    const status = message.includes('올바른') || message.includes('벗어났습니다') ? 400
+      : message.includes('문서를 찾을 수') ? 404
+      : 500;
+    res.status(status).json({ success: false, message });
   }
 });
 

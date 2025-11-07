@@ -87,33 +87,6 @@ export const analysisStyles = {
     lineHeight: 1.7,
     maxWidth: '520px'
   },
-  docHeroMetrics: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '16px'
-  },
-  docMetric: {
-    padding: '16px 20px',
-    borderRadius: '20px',
-    background: 'rgba(255,255,255,0.24)',
-    display: 'flex',
-    flexDirection: 'column',
-    boxShadow: '0 24px 46px rgba(15,23,42,0.22)',
-    minWidth: '160px'
-  },
-  docMetricLabel: {
-    fontSize: '0.82rem',
-    color: 'rgba(248,250,252,0.78)',
-    marginBottom: '8px',
-    fontWeight: 600,
-    textTransform: 'uppercase',
-    letterSpacing: '0.08em'
-  },
-  docMetricValue: {
-    fontSize: '1.4rem',
-    fontWeight: 800,
-    color: 'rgba(255,255,255,0.95)'
-  },
   docHeroSearchRow: {
     position: 'relative',
     display: 'flex',
@@ -157,27 +130,82 @@ export const analysisStyles = {
     fontSize: '0.92rem',
     color: 'rgba(248,250,252,0.78)'
   },
-  docGrid: {
+  docHeroStatPill: {
+    marginTop: '12px',
+    alignSelf: 'flex-start',
+    padding: '10px 18px',
+    borderRadius: '999px',
+    background: 'rgba(255,255,255,0.24)',
+    color: 'rgba(15,23,42,0.9)',
+    fontWeight: 700,
+    boxShadow: '0 22px 40px rgba(15,23,42,0.25)'
+  },
+  docCategoryStack: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '24px',
+    marginTop: '30px'
+  },
+  docCategorySection: {
+    background: 'rgba(15,23,42,0.55)',
+    borderRadius: '26px',
+    padding: '20px',
+    border: '1px solid rgba(148, 163, 184, 0.25)',
+    boxShadow: '0 25px 40px rgba(15, 23, 42, 0.35)'
+  },
+  docCategoryHeaderButton: {
+    width: '100%',
+    border: 'none',
+    background: 'rgba(255,255,255,0.06)',
+    borderRadius: '18px',
+    padding: '18px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    cursor: 'pointer',
+    color: '#e2e8f0',
+    boxShadow: '0 16px 32px rgba(15,23,42,0.35)'
+  },
+  docCategoryHeaderButtonCollapsed: {
+    background: 'rgba(15,23,42,0.35)'
+  },
+  docCategoryHeaderText: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px',
+    textAlign: 'left'
+  },
+  docCategoryTitle: {
+    fontSize: '1.2rem',
+    fontWeight: 800,
+    color: '#f8fafc'
+  },
+  docCategoryDescription: {
+    fontSize: '0.92rem',
+    color: 'rgba(226, 232, 240, 0.75)'
+  },
+  docCategoryToggle: {
+    fontWeight: 700,
+    color: '#cbd5f5'
+  },
+  docCategoryGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-    gap: '28px',
-    marginTop: '28px'
+    gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+    gap: '18px',
+    marginTop: '18px'
   },
   documentCard: {
     position: 'relative',
-    padding: '26px',
-    borderRadius: '26px',
-    background: 'rgba(20, 27, 57, 0.38)',
-    border: '1px solid rgba(255,255,255,0.22)',
-    boxShadow: '0 30px 54px rgba(15,23,42,0.4)',
+    padding: '20px',
+    borderRadius: '24px',
+    border: 'none',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px',
+    color: '#f8fafc',
     cursor: 'pointer',
-    transition: 'transform 0.25s ease, box-shadow 0.25s ease'
-  },
-  documentCardGradient: {
-    position: 'absolute',
-    inset: 0,
-    borderRadius: '26px',
-    zIndex: -1
+    textAlign: 'left',
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease'
   },
   documentCardHeader: {
     display: 'flex',
@@ -193,20 +221,35 @@ export const analysisStyles = {
     color: 'rgba(248,250,252,0.96)',
     letterSpacing: '-0.01em'
   },
-  documentCardCategory: {
-    padding: '6px 14px',
+  documentCardBadgeRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: '10px'
+  },
+  documentCardBadge: {
+    padding: '4px 12px',
     borderRadius: '999px',
-    fontSize: '0.82rem',
-    fontWeight: 700,
-    background: 'rgba(255,255,255,0.24)',
-    color: '#f5f8ff',
-    boxShadow: '0 16px 28px rgba(15,23,42,0.28)'
+    background: 'rgba(15,23,42,0.45)',
+    color: '#e0f2fe',
+    fontSize: '0.8rem',
+    fontWeight: 600,
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em'
   },
   documentCardDescription: {
     fontSize: '0.98rem',
     lineHeight: 1.7,
-    color: 'rgba(248,250,252,0.85)',
-    minHeight: '70px'
+    color: 'rgba(248,250,252,0.9)'
+  },
+  documentCardMetaRow: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '10px',
+    fontSize: '0.85rem'
+  },
+  documentCardMeta: {
+    color: 'rgba(226, 232, 240, 0.85)'
   },
   documentCardFooter: {
     display: 'flex',
@@ -217,7 +260,7 @@ export const analysisStyles = {
   },
   documentCardHint: {
     fontSize: '0.9rem',
-    color: 'rgba(248,250,252,0.78)',
+    color: 'rgba(248,250,252,0.88)',
     display: 'flex',
     alignItems: 'center',
     gap: '8px'
@@ -233,8 +276,30 @@ export const analysisStyles = {
   passageMetaWrap: {
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'flex-end',
-    gap: '8px'
+    gap: '10px',
+    width: '100%'
+  },
+  passageLabelRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: '8px',
+    width: '100%'
+  },
+  passageLabelText: {
+    fontWeight: 700,
+    fontSize: '1rem',
+    color: '#f8fafc'
+  },
+  passageLabelEdit: {
+    borderRadius: '999px',
+    border: '1px solid rgba(255,255,255,0.35)',
+    background: 'rgba(255,255,255,0.08)',
+    color: '#e0e7ff',
+    fontWeight: 600,
+    fontSize: '0.8rem',
+    padding: '6px 12px',
+    cursor: 'pointer'
   },
   passageStatChip: {
     display: 'inline-flex',
@@ -256,27 +321,30 @@ export const analysisStyles = {
   },
   passageMetaButtons: {
     display: 'flex',
-    gap: '8px'
+    flexDirection: 'column',
+    gap: '8px',
+    width: '100%'
   },
   passageMetaGhost: {
-    borderRadius: '12px',
-    border: '1px solid rgba(79, 70, 229, 0.28)',
-    background: 'rgba(79, 70, 229, 0.12)',
-    color: '#4338CA',
+    borderRadius: '999px',
+    border: '1px solid rgba(255,255,255,0.35)',
+    background: 'rgba(255,255,255,0.1)',
+    color: '#e0f2fe',
     fontWeight: 700,
-    padding: '10px 16px',
+    padding: '10px 18px',
     cursor: 'pointer',
-    boxShadow: '0 14px 26px rgba(79, 70, 229, 0.18)' 
+    width: '100%'
   },
   passageMetaPrimary: {
-    borderRadius: '12px',
+    borderRadius: '999px',
     border: 'none',
     padding: '10px 18px',
     background: 'linear-gradient(135deg, rgba(79,70,229,1) 0%, rgba(14,165,233,1) 100%)',
     color: 'var(--text-on-accent)',
     fontWeight: 700,
     cursor: 'pointer',
-    boxShadow: '0 18px 32px rgba(79,70,229,0.24)'
+    boxShadow: '0 18px 32px rgba(79,70,229,0.32)',
+    width: '100%'
   },
   passageMetaDisabled: {
     opacity: 0.45,
@@ -455,15 +523,15 @@ export const analysisStyles = {
     marginBottom: '36px'
   },
   sectionTitle: {
-    color: 'var(--text-primary)',
+    color: '#e2e8f0',
     fontSize: '1.3rem',
     marginBottom: '18px',
     paddingBottom: '10px',
-    borderBottom: '3px solid rgba(99, 102, 241, 0.25)',
+    borderBottom: '2px solid rgba(99, 102, 241, 0.35)',
     letterSpacing: '-0.01em'
   },
   sectionContent: {
-    color: 'var(--text-primary)',
+    color: '#e2e8f0',
     lineHeight: '1.7',
     fontSize: '15px'
   },
@@ -496,11 +564,11 @@ export const analysisStyles = {
   },
 
   variantHero: {
-    background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.12), rgba(14, 165, 233, 0.08))',
+    background: 'linear-gradient(145deg, rgba(24, 32, 68, 0.95), rgba(30, 64, 175, 0.65))',
     borderRadius: '28px',
     padding: '28px 30px',
     marginBottom: '28px',
-    boxShadow: '0 26px 42px rgba(79, 70, 229, 0.16)'
+    boxShadow: '0 34px 52px rgba(15, 23, 42, 0.55)'
   },
   variantHeroRow: {
     display: 'flex',
@@ -511,17 +579,17 @@ export const analysisStyles = {
     flexWrap: 'wrap'
   },
   variantHeroPill: {
-    background: 'rgba(255, 255, 255, 0.75)',
+    background: 'rgba(255, 255, 255, 0.12)',
     padding: '6px 14px',
     borderRadius: '999px',
-    color: 'var(--accent-primary)',
+    color: '#e0e7ff',
     fontWeight: 600,
     fontSize: '0.88rem',
-    border: '1px solid rgba(99, 102, 241, 0.2)'
+    border: '1px solid rgba(255, 255, 255, 0.25)'
   },
   variantHeroBadge: {
-    background: 'rgba(14, 165, 233, 0.18)',
-    color: '#0EA5E9',
+    background: 'rgba(14, 165, 233, 0.2)',
+    color: '#bae6fd',
     padding: '6px 14px',
     borderRadius: '999px',
     fontWeight: 600,
@@ -529,13 +597,13 @@ export const analysisStyles = {
   },
   variantHeroTitle: {
     margin: '0 0 10px',
-    color: 'var(--text-primary)',
+    color: '#f8fafc',
     fontSize: '1.6rem',
     letterSpacing: '-0.01em'
   },
   variantHeroSubtitle: {
     margin: 0,
-    color: 'var(--tone-strong)',
+    color: 'rgba(226, 232, 240, 0.85)',
     fontSize: '1rem',
     lineHeight: 1.6
   },
@@ -549,18 +617,18 @@ export const analysisStyles = {
   variantTab: {
     padding: '10px 18px',
     borderRadius: '999px',
-    border: '1px solid var(--border-muted)',
-    background: 'var(--surface-soft-solid)',
-    color: 'var(--tone-strong)',
+    border: '1px solid rgba(255,255,255,0.18)',
+    background: 'rgba(255,255,255,0.08)',
+    color: '#e2e8f0',
     cursor: 'pointer',
     fontWeight: 600,
     transition: 'all 0.2s ease'
   },
   variantTabActive: {
-    background: 'var(--accent-primary)',
-    color: 'var(--text-on-accent)',
+    background: 'linear-gradient(135deg, rgba(79,70,229,1), rgba(14,165,233,1))',
+    color: '#f8fafc',
     borderColor: 'transparent',
-    boxShadow: '0 10px 18px var(--submit-shadow)'
+    boxShadow: '0 12px 24px rgba(14,165,233,0.35)'
   },
   variantToolbar: {
     display: 'flex',
@@ -651,9 +719,9 @@ export const analysisStyles = {
   sentenceCard: {
     padding: '24px 26px',
     borderRadius: '20px',
-    background: 'rgba(244, 247, 255, 0.72)',
-    boxShadow: '0 16px 36px rgba(99, 102, 241, 0.12)',
-    border: '1px solid rgba(148, 163, 184, 0.18)'
+    background: 'linear-gradient(150deg, rgba(17, 24, 39, 0.92), rgba(30, 64, 175, 0.55))',
+    boxShadow: '0 20px 40px rgba(15, 23, 42, 0.45)',
+    border: '1px solid rgba(99, 102, 241, 0.25)'
   },
   sentenceCardLast: {
     boxShadow: '0 16px 36px rgba(79, 70, 229, 0.18)'
@@ -672,12 +740,12 @@ export const analysisStyles = {
   sentenceNumber: {
     fontSize: '1.15rem',
     fontWeight: 700,
-    color: 'var(--accent-primary)'
+    color: '#c7d2fe'
   },
   sentenceEnglish: {
     fontSize: '1.08rem',
     fontWeight: 600,
-    color: 'var(--text-primary)',
+    color: '#f8fafc',
     letterSpacing: '0.01em'
   },
   topicBadge: {
@@ -691,7 +759,7 @@ export const analysisStyles = {
   sentenceKorean: {
     fontSize: '1.02rem',
     fontWeight: 500,
-    color: 'var(--tone-strong)',
+    color: '#e2e8f0',
     marginBottom: '14px',
     lineHeight: 1.7
   },
@@ -706,26 +774,26 @@ export const analysisStyles = {
     gap: '6px'
   },
   sentenceSectionEmphasis: {
-    background: 'var(--surface-soft-solid)',
+    background: 'rgba(255,255,255,0.08)',
     borderRadius: '12px',
     padding: '12px 14px',
-    border: '1px solid var(--border-subtle)'
+    border: '1px solid rgba(255,255,255,0.2)'
   },
   sentenceLabel: {
     fontSize: '0.85rem',
     fontWeight: 700,
-    color: 'var(--accent-primary)'
+    color: '#c7d2fe'
   },
   sentenceText: {
     fontSize: '0.98rem',
     lineHeight: 1.75,
-    color: 'var(--text-primary)',
+    color: '#e2e8f0',
     whiteSpace: 'pre-wrap'
   },
   sentenceBlock: {
     fontSize: '0.98rem',
     lineHeight: 1.75,
-    color: 'var(--text-primary)',
+    color: '#e2e8f0',
     whiteSpace: 'pre-wrap'
   },
   vocabList: {
@@ -739,11 +807,11 @@ export const analysisStyles = {
   vocabListItem: {
     lineHeight: 1.7,
     fontSize: '0.96rem',
-    color: 'var(--tone-strong)'
+    color: '#f8fafc'
   },
   vocabMeta: {
     fontSize: '0.9rem',
-    color: 'var(--tone-muted)',
+    color: 'rgba(226, 232, 240, 0.75)',
     lineHeight: 1.5
   },
   emptyVariant: {
@@ -989,19 +1057,20 @@ export const analysisStyles = {
 
   analysisContent: {
     maxWidth: '880px',
-    margin: '0 auto'
+    margin: '0 auto',
+    color: '#e2e8f0'
   },
 
   originalText: {
-    background: 'linear-gradient(145deg, rgba(236, 233, 254, 0.72), rgba(255, 255, 255, 0.92))',
-    border: '1px solid rgba(99, 102, 241, 0.15)',
+    background: 'linear-gradient(160deg, rgba(15, 23, 42, 0.92), rgba(30, 64, 175, 0.65))',
+    border: '1px solid rgba(148, 163, 184, 0.3)',
     borderRadius: '24px',
     padding: '26px',
     fontSize: '1.02rem',
     lineHeight: '1.74',
-    color: 'var(--text-primary)',
+    color: '#e2e8f0',
     marginBottom: '28px',
-    boxShadow: '0 18px 40px rgba(99, 102, 241, 0.12)'
+    boxShadow: '0 24px 44px rgba(15, 23, 42, 0.45)'
   },
 
   studyGuide: {

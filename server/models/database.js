@@ -286,6 +286,18 @@ class Database {
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`,
 
+        // document_passage_labels (custom display names per passage)
+        `CREATE TABLE IF NOT EXISTS document_passage_labels (
+          document_id INTEGER NOT NULL,
+          passage_number INTEGER NOT NULL,
+          label TEXT NOT NULL,
+          updated_by INTEGER,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (document_id, passage_number),
+          FOREIGN KEY (document_id) REFERENCES documents(id),
+          FOREIGN KEY (updated_by) REFERENCES users(id)
+        )`,
+
         // passage_analyses
         `CREATE TABLE IF NOT EXISTS passage_analyses (
           id INTEGER PRIMARY KEY AUTOINCREMENT,

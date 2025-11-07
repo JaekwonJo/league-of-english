@@ -1,10 +1,10 @@
 import React from 'react';
 
 const gradientPalette = [
-  { from: 'rgba(129, 140, 248, 0.26)', to: 'rgba(96, 165, 250, 0.18)', shadow: 'rgba(99, 102, 241, 0.18)' },
-  { from: 'rgba(244, 114, 182, 0.28)', to: 'rgba(251, 191, 36, 0.18)', shadow: 'rgba(244, 114, 182, 0.18)' },
-  { from: 'rgba(34, 211, 238, 0.26)', to: 'rgba(16, 185, 129, 0.2)', shadow: 'rgba(56, 189, 248, 0.18)' },
-  { from: 'rgba(196, 181, 253, 0.28)', to: 'rgba(244, 114, 182, 0.18)', shadow: 'rgba(167, 139, 250, 0.2)' }
+  { from: 'rgba(15,23,42,0.95)', to: 'rgba(30,64,175,0.75)', shadow: 'rgba(14,165,233,0.28)' },
+  { from: 'rgba(49,46,129,0.95)', to: 'rgba(126,34,206,0.75)', shadow: 'rgba(129,140,248,0.3)' },
+  { from: 'rgba(13,44,84,0.95)', to: 'rgba(14,165,233,0.75)', shadow: 'rgba(14,165,233,0.28)' },
+  { from: 'rgba(45,55,72,0.95)', to: 'rgba(79,70,229,0.75)', shadow: 'rgba(99,102,241,0.3)' }
 ];
 
 const gridStyles = {
@@ -23,68 +23,52 @@ const gridStyles = {
   },
   grid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-    gap: '22px'
+    gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+    gap: '16px'
   },
   card: {
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'space-between',
-    padding: '22px',
-    borderRadius: '24px',
-    border: '1px solid rgba(255,255,255,0.4)',
-    background: 'rgba(255,255,255,0.85)',
-    minHeight: '220px',
-    transition: 'transform 0.25s ease, box-shadow 0.25s ease'
+    padding: '16px',
+    borderRadius: '22px',
+    border: '1px solid rgba(255,255,255,0.18)',
+    minHeight: '150px',
+    transition: 'transform 0.25s ease, box-shadow 0.25s ease',
+    color: '#f8fafc'
   },
   cardSelected: {
     borderColor: 'rgba(79, 70, 229, 0.55)',
-    boxShadow: '0 30px 48px rgba(79, 70, 229, 0.26)',
-    transform: 'translateY(-6px)'
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: '14px',
-    gap: '10px'
+    boxShadow: '0 20px 38px rgba(79, 70, 229, 0.32)',
+    transform: 'translateY(-4px)'
   },
   badge: {
-    fontSize: '0.9rem',
-    fontWeight: '700',
-    background: 'rgba(79, 70, 229, 0.18)',
-    padding: '8px 14px',
-    borderRadius: '999px',
-    color: '#4338CA',
-    boxShadow: '0 12px 24px rgba(79, 70, 229, 0.2)'
+    fontSize: '1.2rem',
+    fontWeight: 900,
+    letterSpacing: '0.04em'
   },
-  // 체크박스 제거: 카드 클릭으로 선택/해제
-  excerpt: {
-    flex: 1,
-    fontSize: '0.98rem',
-    lineHeight: 1.7,
-    color: 'rgba(15,23,42,0.72)',
-    margin: 0,
-    whiteSpace: 'pre-wrap'
+  helper: {
+    margin: '8px 0 0',
+    fontSize: '0.85rem',
+    color: 'rgba(248,250,252,0.82)'
   },
   footer: {
     display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: '18px',
-    gap: '12px'
+    flexDirection: 'column',
+    gap: '10px',
+    marginTop: '16px'
   },
   previewButton: {
-    background: 'rgba(79, 70, 229, 0.18)',
-    border: 'none',
-    color: '#4338CA',
-    borderRadius: '12px',
+    background: 'rgba(255,255,255,0.12)',
+    border: '1px solid rgba(255,255,255,0.35)',
+    color: '#e0e7ff',
+    borderRadius: '999px',
     padding: '10px 16px',
     cursor: 'pointer',
-    fontSize: '0.9rem',
+    fontSize: '0.85rem',
     fontWeight: 700,
     transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-    boxShadow: '0 12px 20px rgba(79, 70, 229, 0.18)'
+    boxShadow: '0 12px 20px rgba(15, 23, 42, 0.35)'
   },
   previewButtonDisabled: {
     opacity: 0.4,
@@ -142,6 +126,8 @@ const PassagePickerGrid = ({
           const checked = isSelected(number);
           const disableSelection = isSelectionDisabled(number);
           const palette = gradientPalette[index % gradientPalette.length];
+          const fallbackLabel = `#${number.toString().padStart(2, '0')}`;
+          const displayLabel = passage.displayLabel || fallbackLabel;
           return (
             <div
               key={number}
@@ -160,14 +146,10 @@ const PassagePickerGrid = ({
                 if (!disableSelection && onToggle) onToggle(number);
               }}
             >
-              <div style={gridStyles.header}>
-                <span style={gridStyles.badge}>#{number.toString().padStart(2, '0')}</span>
-                {/* 카드 클릭으로 선택/해제하도록 체크박스는 표시하지 않습니다. */}
+              <div>
+                <span style={gridStyles.badge}>{displayLabel}</span>
+                <p style={gridStyles.helper}>지문 전체보기를 눌러 전문을 확인해 보세요.</p>
               </div>
-
-              <p style={gridStyles.excerpt}>
-                {passage.excerpt || '지문 미리보기를 준비하는 중이에요.'}
-              </p>
 
               <div style={gridStyles.footer}>
                 <button
@@ -179,20 +161,20 @@ const PassagePickerGrid = ({
                   }}
                   disabled={!onPreview}
                 >
-                  전체 보기
+                  지문 전체보기
                 </button>
                 {renderMeta && (() => {
                   const metaNode = renderMeta(passage);
                   if (!metaNode) return null;
                   if (React.isValidElement(metaNode)) {
                     return (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-end' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%' }}>
                         {metaNode}
                       </div>
                     );
                   }
                   return (
-                    <div style={{ fontSize: '12px', color: 'var(--text-muted, rgba(255,255,255,0.6))' }}>
+                    <div style={{ fontSize: '12px', color: 'rgba(248,250,252,0.8)' }}>
                       {metaNode}
                     </div>
                   );

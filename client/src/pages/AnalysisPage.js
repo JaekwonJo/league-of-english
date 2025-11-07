@@ -73,6 +73,37 @@ const VARIANT_HERO_SUBTITLE = '오늘도 열공 파이팅! 궁금한 문장을 �
 const CIRCLED_DIGITS = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩', '⑪', '⑫', '⑬', '⑭', '⑮', '⑯', '⑰', '⑱', '⑲', '⑳'];
 const getCircledDigit = (index) => CIRCLED_DIGITS[index] || `${index + 1}.`;
 
+const DOCUMENT_CATEGORY_SECTIONS = [
+  {
+    key: 'mock',
+    label: '모의고사',
+    icon: '📝',
+    hint: '평가원 · 교육청 회차를 이곳에서 모아요',
+    matchers: ['모의', '모고', 'mock', '수능', '평가원', '교육청']
+  },
+  {
+    key: 'supplement',
+    label: '부교재',
+    icon: '📘',
+    hint: '워크북 · 프린트 · 특강 자료',
+    matchers: ['부교재', '워크북', '프린트', '특강', '자료집']
+  },
+  {
+    key: 'textbook',
+    label: '교과서',
+    icon: '📙',
+    hint: '학교별 교과서 및 자체 교재',
+    matchers: ['교과서', '교재', '학교', '본교']
+  },
+  {
+    key: 'others',
+    label: '기타 자료',
+    icon: '🌟',
+    hint: '직접 업로드한 다양한 텍스트',
+    matchers: []
+  }
+];
+
 const pickRandom = (items) => items[Math.floor(Math.random() * items.length)];
 
 const generateWordBatch = (count = 3, exclude = []) => {
@@ -133,6 +164,9 @@ const AnalysisPage = () => {
   const [feedbackMessage, setFeedbackMessage] = useState(null);
   const [reportModal, setReportModal] = useState({ open: false, variantIndex: null, reason: '' });
   const [reportSubmitting, setReportSubmitting] = useState(false);
+  const userRole = user?.role || 'student';
+  const canEditLabels = isAdmin || userRole === 'teacher';
+  const [collapsedDocSections, setCollapsedDocSections] = useState({});
   const stepPathMap = useMemo(() => ({
     [STEPS.DOCUMENT]: '/analysis',
     [STEPS.PASSAGE]: '/analysis/passages',
@@ -210,6 +244,7 @@ const AnalysisPage = () => {
 
   const normalizePassage = (entry = {}) => ({
     passageNumber: entry.passageNumber,
+    displayLabel: entry.displayLabel || null,
     originalPassage: entry.originalPassage || '',
     variants: Array.isArray(entry.variants) ? entry.variants : [],
     createdAt: entry.createdAt || null
@@ -293,6 +328,44 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
     });
   }, [documents, normalizedDocumentSearch]);
 
+  const categorizeDocument = useCallback((doc) => {
+    const normalizedCategory = String(doc?.category || '').toLowerCase();
+    const matched = DOCUMENT_CATEGORY_SECTIONS.find((section) =>
+      section.matchers.some((matcher) => normalizedCategory.includes(matcher))
+    );
+    if (matched) return matched.key;
+    if (/교과|교재/.test(normalizedCategory)) return 'textbook';
+    if (/모의|mock|수능/.test(normalizedCategory)) return 'mock';
+    if (/부교재|워크북|프린트/.test(normalizedCategory)) return 'supplement';
+    return 'others';
+  }, []);
+
+  const groupedDocuments = useMemo(() => {
+    const base = DOCUMENT_CATEGORY_SECTIONS.reduce((acc, section) => {
+      acc[section.key] = [];
+      return acc;
+    }, {});
+    filteredDocuments.forEach((doc) => {
+      const key = categorizeDocument(doc);
+      if (!base[key]) {
+        base[key] = [];
+      }
+      base[key].push(doc);
+    });
+    return base;
+  }, [filteredDocuments, categorizeDocument]);
+
+  const hasGroupedDocuments = useMemo(() => (
+    DOCUMENT_CATEGORY_SECTIONS.some((section) => (groupedDocuments[section.key] || []).length > 0)
+  ), [groupedDocuments]);
+
+  const toggleDocSection = useCallback((sectionKey) => {
+    setCollapsedDocSections((prev) => ({
+      ...prev,
+      [sectionKey]: !prev?.[sectionKey]
+    }));
+  }, []);
+
   const handleDocumentClick = async (document) => {
     try {
       setLoading(true);
@@ -335,6 +408,29 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
       navigateToStep(STEPS.DOCUMENT);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleEditPassageLabel = async (passage) => {
+    if (!selectedDocument || !canEditLabels) return;
+    const current = passage.displayLabel || '';
+    const next = window.prompt('새 지문 이름을 입력해 주세요. 비우면 번호가 표시됩니다.', current);
+    if (next === null) return;
+    const trimmed = next.trim();
+    try {
+      await api.analysis.updatePassageLabel(selectedDocument.id, passage.passageNumber, trimmed);
+      setPassageList((prev) => prev.map((item) => (
+        item.passageNumber === passage.passageNumber
+          ? { ...item, displayLabel: trimmed || null }
+          : item
+      )));
+      setSelectedPassage((prev) => (
+        prev && prev.passageNumber === passage.passageNumber
+          ? { ...prev, displayLabel: trimmed || null }
+          : prev
+      ));
+    } catch (error) {
+      raiseError('지문 이름을 저장하지 못했습니다.', error?.message || '');
     }
   };
 
@@ -498,41 +594,12 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
 
   const renderDocumentList = () => {
     const totalDocuments = documents.length;
-    const totalPassages = documents.reduce((sum, item) => {
-      const counts = [
-        item?.passageCount,
-        item?.passagesCount,
-        item?.passage_count,
-        Array.isArray(item?.passages) ? item.passages.length : 0
-      ].map((value) => Number.isFinite(value) ? value : 0);
-      return sum + Math.max(...counts, 0);
-    }, 0);
-    const totalVariants = documents.reduce((sum, item) => {
-      const counts = [
-        item?.analysisCount,
-        item?.variantCount,
-        item?.variantsCount
-      ].map((value) => Number.isFinite(value) ? value : 0);
-      return sum + Math.max(...counts, 0);
-    }, 0);
-    const categoryCount = documents.reduce((set, item) => {
-      const label = String(item?.category || '').trim();
-      if (label) set.add(label);
-      return set;
-    }, new Set()).size;
 
     const accentPalette = [
       { from: 'rgba(129, 140, 248, 0.28)', to: 'rgba(56, 189, 248, 0.18)', shadow: 'rgba(59, 130, 246, 0.25)' },
       { from: 'rgba(244, 114, 182, 0.28)', to: 'rgba(251, 191, 36, 0.22)', shadow: 'rgba(236, 72, 153, 0.22)' },
       { from: 'rgba(45, 212, 191, 0.25)', to: 'rgba(56, 189, 248, 0.2)', shadow: 'rgba(20, 184, 166, 0.24)' },
       { from: 'rgba(196, 181, 253, 0.3)', to: 'rgba(103, 232, 249, 0.2)', shadow: 'rgba(139, 92, 246, 0.24)' }
-    ];
-
-    const metricBlocks = [
-      { label: '등록된 문서', value: totalDocuments ? `${totalDocuments.toLocaleString()}개` : '준비 중' },
-      { label: '전체 지문', value: totalPassages ? `${totalPassages.toLocaleString()}개` : '데이터 수집 중' },
-      { label: '전문 분석본', value: totalVariants ? `${totalVariants.toLocaleString()}개` : '준비 중' },
-      { label: '분류', value: categoryCount ? `${categoryCount.toLocaleString()}종` : '정리 중' }
     ];
 
     return (
@@ -568,14 +635,9 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
                 </button>
               )}
             </div>
-            <p style={analysisStyles.docHeroNote}>Tip: 코드(예: 2-25-10)나 학교명을 입력하면 원하는 문서를 바로 찾을 수 있어요.</p>
-            <div style={analysisStyles.docHeroMetrics}>
-              {metricBlocks.map((metric) => (
-                <div key={metric.label} style={analysisStyles.docMetric}>
-                  <span style={analysisStyles.docMetricLabel}>{metric.label}</span>
-                  <span style={analysisStyles.docMetricValue}>{metric.value}</span>
-                </div>
-              ))}
+            <p style={analysisStyles.docHeroNote}>Tip: 코드(예: 2-25-10)나 교재명을 입력하면 원하는 문서를 바로 찾을 수 있어요.</p>
+            <div style={analysisStyles.docHeroStatPill}>
+              📚 등록된 문서 <strong>{totalDocuments ? `${totalDocuments.toLocaleString()}개` : '준비 중'}</strong>
             </div>
           </div>
         </section>
@@ -585,45 +647,87 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
             <div style={analysisStyles.spinner} />
             <p>문서 목록을 정리하는 중이에요...</p>
           </div>
-        ) : filteredDocuments.length === 0 ? (
+        ) : !hasGroupedDocuments ? (
           <div style={analysisStyles.emptySearch}>
             <h3>검색 결과가 없어요 😢</h3>
             <p>다른 키워드(예: 문서 코드, 제목, 출제 분류)를 입력해 보거나 새 문서를 업로드해 보세요.</p>
           </div>
         ) : (
-          <div style={analysisStyles.docGrid}>
-            {filteredDocuments.map((doc, index) => {
-              const palette = accentPalette[index % accentPalette.length];
-              const isHovered = hoveredDocumentId === doc.id;
-              const description = doc.description || '지문을 선택해 분석을 시작해 보세요.';
+          <div style={analysisStyles.docCategoryStack}>
+            {DOCUMENT_CATEGORY_SECTIONS.map((section) => {
+              const docs = groupedDocuments[section.key] || [];
+              if (!docs.length) return null;
+              const isCollapsed = collapsedDocSections[section.key] ?? false;
               return (
-                <div
-                  key={doc.id}
-                  style={{
-                    ...analysisStyles.documentCard,
-                    background: `linear-gradient(160deg, ${palette.from}, ${palette.to})`,
-                    boxShadow: isHovered
-                      ? `0 34px 60px ${palette.shadow}`
-                      : `0 26px 42px ${palette.shadow}`,
-                    transform: isHovered ? 'translateY(-6px)' : 'translateY(0)'
-                  }}
-                  onMouseEnter={() => setHoveredDocumentId(doc.id)}
-                  onMouseLeave={() => setHoveredDocumentId(null)}
-                  onClick={() => handleDocumentClick(doc)}
-                >
-                  <div style={analysisStyles.documentCardHeader}>
-                    <h3 style={analysisStyles.documentCardTitle}>{doc.title}</h3>
-                    <span style={analysisStyles.documentCardCategory}>{doc.category || '분류 미지정'}</span>
-                  </div>
-                  <div style={analysisStyles.documentCardDescription}>{description}</div>
-                  <div style={analysisStyles.documentCardFooter}>
-                    <span style={analysisStyles.documentCardHint}>
-                      <span role="img" aria-label="spark">✨</span>
-                      클릭하면 지문 목록이 펼쳐져요
-                    </span>
-                    <span style={analysisStyles.documentCardPill}>바로 분석</span>
-                  </div>
-                </div>
+                <section key={section.key} style={analysisStyles.docCategorySection}>
+                  <button
+                    type="button"
+                    style={{
+                      ...analysisStyles.docCategoryHeaderButton,
+                      ...(isCollapsed ? analysisStyles.docCategoryHeaderButtonCollapsed : {})
+                    }}
+                    onClick={() => toggleDocSection(section.key)}
+                    aria-expanded={!isCollapsed}
+                  >
+                    <div style={analysisStyles.docCategoryHeaderText}>
+                      <span style={analysisStyles.docCategoryTitle}>{section.icon} {section.label}</span>
+                      <span style={analysisStyles.docCategoryDescription}>{section.hint}</span>
+                    </div>
+                    <span style={analysisStyles.docCategoryToggle}>{isCollapsed ? '펼치기' : '접기'}</span>
+                  </button>
+                  {!isCollapsed && (
+                    <div style={analysisStyles.docCategoryGrid}>
+                      {docs.map((doc, index) => {
+                        const palette = accentPalette[index % accentPalette.length];
+                        const isHovered = hoveredDocumentId === doc.id;
+                        const description = doc.description || '지문을 선택해 전문 분석을 살펴보세요.';
+                        const docMetaItems = [
+                          doc.school || null,
+                          doc.grade ? `고${doc.grade}` : null
+                        ].filter(Boolean);
+                        return (
+                          <button
+                            key={doc.id}
+                            type="button"
+                            style={{
+                              ...analysisStyles.documentCard,
+                              background: `linear-gradient(150deg, ${palette.from}, ${palette.to})`,
+                              boxShadow: isHovered
+                                ? `0 32px 60px ${palette.shadow}`
+                                : `0 22px 38px ${palette.shadow}`,
+                              transform: isHovered ? 'translateY(-4px)' : 'translateY(0)'
+                            }}
+                            onFocus={() => setHoveredDocumentId(doc.id)}
+                            onMouseEnter={() => setHoveredDocumentId(doc.id)}
+                            onMouseLeave={() => setHoveredDocumentId(null)}
+                            onBlur={() => setHoveredDocumentId(null)}
+                            onClick={() => handleDocumentClick(doc)}
+                          >
+                            <div style={analysisStyles.documentCardBadgeRow}>
+                              <span style={analysisStyles.documentCardBadge}>{doc.category || '분류 미지정'}</span>
+                              {doc.school && <span style={analysisStyles.documentCardMeta}>{doc.school}</span>}
+                            </div>
+                            <div style={analysisStyles.documentCardHeader}>
+                              <h3 style={analysisStyles.documentCardTitle}>{section.icon} {doc.title}</h3>
+                            </div>
+                            <p style={analysisStyles.documentCardDescription}>{description}</p>
+                            {docMetaItems.length > 0 && (
+                              <div style={analysisStyles.documentCardMetaRow}>
+                                {docMetaItems.map((item) => (
+                                  <span key={item} style={analysisStyles.documentCardMeta}>{item}</span>
+                                ))}
+                              </div>
+                            )}
+                            <div style={analysisStyles.documentCardFooter}>
+                              <span style={analysisStyles.documentCardHint}>✨ 탭하면 지문 목록이 펼쳐져요</span>
+                              <span style={analysisStyles.documentCardPill}>전문 분석</span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </section>
               );
             })}
           </div>
@@ -762,13 +866,26 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
     const renderMeta = (entry) => {
       const slots = remainingSlots(entry);
       const disabled = slots <= 0;
+      const labelText = entry.displayLabel || `지문 ${String(entry.passageNumber).padStart(2, '0')}`;
       return (
         <div style={analysisStyles.passageMetaWrap}>
+          <div style={analysisStyles.passageLabelRow}>
+            <span style={analysisStyles.passageLabelText}>{labelText}</span>
+            {canEditLabels && (
+              <button
+                type="button"
+                style={analysisStyles.passageLabelEdit}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  handleEditPassageLabel(entry);
+                }}
+              >
+                이름 수정
+              </button>
+            )}
+          </div>
           <span style={analysisStyles.passageStatChip}>
-            분석본
-            <span style={analysisStyles.passageStatValue}>
-              {(entry.variantCount || 0)}/{MAX_VARIANTS_PER_PASSAGE}
-            </span>
+            분석본 <span style={analysisStyles.passageStatValue}>{(entry.variantCount || 0)}/{MAX_VARIANTS_PER_PASSAGE}</span>
           </span>
           <div style={analysisStyles.passageMetaButtons}>
             <button
@@ -797,9 +914,9 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
     return (
       <div style={analysisStyles.container}>
         <div style={analysisStyles.header}>
-          <button onClick={handleBackToDocuments} style={analysisStyles.backButton}>← 문서 목록으로</button>
+          <button onClick={handleBackToDocuments} style={analysisStyles.backButton}>← 목록으로 돌아가기</button>
           <h1 style={analysisStyles.title}>📄 {selectedDocument?.title}</h1>
-          <p style={analysisStyles.subtitle}>지문을 하나씩 선택해 분석본을 확인하고, 필요하면 AI 분석을 바로 생성해 보세요.</p>
+          <p style={analysisStyles.subtitle}>지문을 하나씩 선택해 전문 분석본을 확인하고, 필요하면 전문 분석을 바로 생성해 보세요.</p>
         </div>
 
         {analysisLimitError && (
@@ -1082,12 +1199,13 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
     const variants = Array.isArray(selectedPassage?.variants) ? selectedPassage.variants : [];
     const totalVariants = variants.length;
     const allSelected = totalVariants > 0 && selectedVariantIndexes.length === totalVariants;
+    const passageTitle = selectedPassage?.displayLabel || `지문 ${selectedPassage?.passageNumber || ''}`;
 
     return (
     <div style={analysisStyles.container}>
       <div style={analysisStyles.header}>
         <button onClick={handleBackToPassages} style={analysisStyles.backButton}>← 지문 목록으로</button>
-        <h1 style={analysisStyles.title}>📖 {selectedDocument?.title} — 지문 {selectedPassage?.passageNumber}</h1>
+        <h1 style={analysisStyles.title}>📖 {selectedDocument?.title} — {passageTitle}</h1>
       </div>
 
       {analysisLimitError && (
@@ -1106,9 +1224,9 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
       {!passageLoading && selectedPassage && (
         <div style={analysisStyles.analysisContent}>
           <div style={analysisStyles.section}>
-            <h2 style={analysisStyles.sectionTitle}>📄 원문</h2>
-            <div style={analysisStyles.originalText}>{selectedPassage.originalPassage}</div>
-          </div>
+                <h2 style={analysisStyles.sectionTitle}>📄 원문</h2>
+                <div style={analysisStyles.originalText}>{selectedPassage.originalPassage}</div>
+              </div>
 
           <div style={analysisStyles.variantTabs}>
             {(selectedPassage.variants || []).map((variant, index) => (
@@ -1192,7 +1310,7 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
                     ) : null;
                   })()}
                   <span style={analysisStyles.variantHeroBadge}>
-                    지문 {selectedPassage?.passageNumber}
+                    {passageTitle}
                   </span>
                 </div>
                 <h2 style={analysisStyles.variantHeroTitle}>{VARIANT_HERO_TITLE}</h2>
