@@ -38,8 +38,8 @@ export const analysisStyles = {
     position: 'relative',
     padding: '44px 36px',
     borderRadius: '34px',
-    background: 'linear-gradient(140deg, rgba(99,102,241,0.28) 0%, rgba(14,165,233,0.18) 38%, rgba(236,233,254,0.28) 100%)',
-    boxShadow: '0 40px 80px rgba(30, 41, 59, 0.28)',
+    background: 'linear-gradient(135deg, rgba(15,23,42,0.95) 0%, rgba(30,64,175,0.65) 45%, rgba(14,165,233,0.45) 100%)',
+    boxShadow: '0 40px 80px rgba(15, 23, 42, 0.45)',
     overflow: 'hidden',
     display: 'flex',
     flexWrap: 'wrap',
@@ -65,8 +65,8 @@ export const analysisStyles = {
     alignSelf: 'flex-start',
     padding: '8px 16px',
     borderRadius: '999px',
-    background: 'rgba(255,255,255,0.28)',
-    color: '#f8fafc',
+    background: 'rgba(15,23,42,0.4)',
+    color: '#fef9f0',
     fontWeight: 700,
     fontSize: '0.86rem',
     letterSpacing: '0.08em',
@@ -128,17 +128,21 @@ export const analysisStyles = {
   docHeroNote: {
     margin: 0,
     fontSize: '0.92rem',
-    color: 'rgba(248,250,252,0.78)'
+    color: 'rgba(248,250,252,0.85)'
   },
   docHeroStatPill: {
     marginTop: '12px',
     alignSelf: 'flex-start',
-    padding: '10px 18px',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '10px',
+    padding: '10px 20px',
     borderRadius: '999px',
-    background: 'rgba(255,255,255,0.24)',
-    color: 'rgba(15,23,42,0.9)',
-    fontWeight: 700,
-    boxShadow: '0 22px 40px rgba(15,23,42,0.25)'
+    border: '1px solid rgba(255,255,255,0.35)',
+    background: 'rgba(15,23,42,0.3)',
+    color: '#f8fafc',
+    fontWeight: 600,
+    boxShadow: '0 22px 40px rgba(15,23,42,0.35)'
   },
   docCategoryStack: {
     display: 'flex',
@@ -147,11 +151,11 @@ export const analysisStyles = {
     marginTop: '30px'
   },
   docCategorySection: {
-    background: 'rgba(15,23,42,0.55)',
+    background: 'linear-gradient(145deg, rgba(15,23,42,0.92), rgba(30,64,175,0.6))',
     borderRadius: '26px',
     padding: '20px',
-    border: '1px solid rgba(148, 163, 184, 0.25)',
-    boxShadow: '0 25px 40px rgba(15, 23, 42, 0.35)'
+    border: '1px solid rgba(148, 163, 184, 0.35)',
+    boxShadow: '0 32px 60px rgba(15, 23, 42, 0.45)'
   },
   docCategoryHeaderButton: {
     width: '100%',
@@ -693,23 +697,24 @@ export const analysisStyles = {
     marginBottom: '28px'
   },
   metaCard: {
-    background: 'rgba(255, 255, 255, 0.92)',
-    borderRadius: '18px',
+    background: 'linear-gradient(150deg, rgba(17,24,39,0.92), rgba(37,99,235,0.45))',
+    borderRadius: '20px',
     padding: '22px',
-    boxShadow: '0 18px 38px rgba(15, 23, 42, 0.12)',
-    color: 'var(--text-primary)',
-    border: '1px solid rgba(99, 102, 241, 0.12)'
+    boxShadow: '0 24px 44px rgba(15, 23, 42, 0.45)',
+    color: '#f8fafc',
+    border: '1px solid rgba(148, 163, 184, 0.3)'
   },
   metaTitle: {
     fontSize: '1rem',
     fontWeight: 700,
     marginBottom: '12px',
-    color: 'var(--text-primary)'
+    color: '#f8fafc'
   },
   metaList: {
     margin: 0,
     paddingLeft: '20px',
-    lineHeight: 1.6
+    lineHeight: 1.6,
+    color: 'rgba(226, 232, 240, 0.9)'
   },
   sentenceGrid: {
     display: 'flex',
@@ -853,18 +858,18 @@ export const analysisStyles = {
     color: 'var(--tone-muted)'
   },
   metaButtonGhost: {
-    background: 'rgba(148, 163, 184, 0.18)',
-    border: 'none',
-    color: 'var(--tone-strong)',
+    background: 'rgba(255, 255, 255, 0.12)',
+    border: '1px solid rgba(255,255,255,0.2)',
+    color: '#e2e8f0',
     padding: '6px 12px',
     borderRadius: '8px',
     fontSize: '12px',
     cursor: 'pointer'
   },
   metaButtonPrimary: {
-    background: 'linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%)',
+    background: 'linear-gradient(135deg, rgba(99,102,241,1) 0%, rgba(14,165,233,1) 100%)',
     border: 'none',
-    color: 'var(--text-on-accent)',
+    color: '#f8fafc',
     padding: '6px 12px',
     borderRadius: '8px',
     fontSize: '12px',
@@ -1249,18 +1254,18 @@ export const analysisStyles = {
   },
   word: {
     fontWeight: 'bold',
-    color: 'var(--text-primary)',
+    color: '#fef9f0',
     marginBottom: '4px'
   },
 
   meaning: {
-    color: 'var(--tone-strong)',
+    color: 'rgba(226, 232, 240, 0.85)',
     fontSize: '0.9rem'
   },
 
   vocabularyItem: {
-    background: 'var(--surface-soft-strong)',
-    border: '1px solid var(--border-subtle)',
+    background: 'rgba(15,23,42,0.7)',
+    border: '1px solid rgba(148,163,184,0.3)',
     borderRadius: '8px',
     padding: '12px',
     display: 'flex',

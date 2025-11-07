@@ -248,13 +248,6 @@ const RankingPage = () => {
                   : index === 2
                   ? styles.top3Glow
                   : null;
-                const topBadge = index === 0
-                  ? { label: 'CELESTIA', style: styles.top1Badge }
-                  : index === 1
-                  ? { label: 'LUMINA', style: styles.top2Badge }
-                  : index === 2
-                  ? { label: 'EMBER', style: styles.top3Badge }
-                  : null;
                 const tierId = (ranker.tier?.id || '').toLowerCase();
                 const tierEmblem = TIER_EMBLEMS[tierId] || '⭐';
                 const tierBadgeStyle =
@@ -286,9 +279,6 @@ const RankingPage = () => {
                     ...(isMobile ? styles.rankInfoMobile : {})
                   }}>
                     {getRankDisplay(ranker.rank)}
-                    {topBadge && (
-                      <span style={{ ...styles.topBadge, ...topBadge.style }}>{topBadge.label}</span>
-                    )}
                     <div style={styles.userInfo}>
                       <div style={{
                         ...styles.userName,
@@ -592,12 +582,13 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: '16px 20px',
-    background: 'var(--surface-soft)',
-    borderRadius: '12px',
-    border: '1px solid var(--surface-border)',
+    padding: '18px 22px',
+    background: 'linear-gradient(135deg, rgba(15,23,42,0.92) 0%, rgba(30,64,175,0.65) 100%)',
+    borderRadius: '14px',
+    border: '1px solid rgba(148, 163, 184, 0.35)',
     transition: 'all 0.3s ease',
-    color: 'var(--tone-strong)',
+    color: '#f8fafc',
+    textShadow: '0 3px 8px rgba(2, 6, 23, 0.45)',
     position: 'relative',
     overflow: 'hidden',
     isolation: 'isolate',
@@ -613,8 +604,10 @@ const styles = {
     alignItems: 'flex-start'
   },
   topRanker: {
-    background: 'linear-gradient(135deg, rgba(250, 204, 21, 0.2), rgba(245, 158, 11, 0.2))',
-    border: '1px solid rgba(250, 204, 21, 0.35)'
+    background: 'linear-gradient(135deg, rgba(255, 247, 210, 0.85), rgba(252, 211, 77, 0.45))',
+    border: '1px solid rgba(250, 204, 21, 0.45)',
+    color: '#1f2937',
+    textShadow: 'none'
   },
   top1Card: {
     background: 'linear-gradient(135deg, rgba(255, 247, 210, 0.25) 0%, rgba(255, 209, 102, 0.22) 45%, rgba(255, 170, 73, 0.18) 100%)',
@@ -650,28 +643,6 @@ const styles = {
   top3Glow: {
     background: 'radial-gradient(circle at 50% -10%, rgba(255, 242, 213, 0.55), rgba(234, 179, 8, 0.28) 40%, rgba(146, 64, 14, 0.08) 75%)'
   },
-  topBadge: {
-    fontSize: '12px',
-    fontWeight: 800,
-    letterSpacing: '0.25em',
-    padding: '4px 10px',
-    borderRadius: '999px',
-    textTransform: 'uppercase',
-    transform: 'translateY(-2px)',
-    boxShadow: '0 6px 18px rgba(15, 23, 42, 0.25)',
-    border: '1px solid rgba(255, 255, 255, 0.65)',
-    color: 'var(--text-on-accent)',
-    textShadow: '0 0 8px rgba(255, 255, 255, 0.45)'
-  },
-  top1Badge: {
-    background: 'linear-gradient(135deg, #FDE68A 0%, #F59E0B 60%, #EA580C 100%)'
-  },
-  top2Badge: {
-    background: 'linear-gradient(135deg, #E2E8F0 0%, #CBD5F5 50%, #94A3B8 100%)'
-  },
-  top3Badge: {
-    background: 'linear-gradient(135deg, #FCD34D 0%, #FB923C 60%, #B45309 100%)'
-  },
   rankInfo: {
     display: 'flex',
     alignItems: 'center',
@@ -689,7 +660,7 @@ const styles = {
   rank: {
     fontSize: '18px',
     fontWeight: 'bold',
-    color: 'var(--tone-strong)',
+    color: '#fdfbf5',
     minWidth: '40px'
   },
   rankInfoMobile: {
@@ -709,7 +680,7 @@ const styles = {
   userName: {
     fontSize: '16px',
     fontWeight: 'bold',
-    color: 'var(--text-primary)',
+    color: 'inherit',
     display: 'flex',
     alignItems: 'center',
     gap: '6px',
@@ -717,40 +688,35 @@ const styles = {
     whiteSpace: 'normal',
     overflow: 'visible',
     textOverflow: 'clip',
-    maxWidth: '100%'
+    maxWidth: '100%',
+    textShadow: '0 2px 8px rgba(2, 6, 23, 0.55)'
   },
   userId: {
     fontWeight: 600,
-    color: 'var(--tone-strong)',
+    color: 'rgba(226, 232, 240, 0.9)',
     fontSize: '13px',
     whiteSpace: 'normal',
-    opacity: 0.85,
+    opacity: 0.9,
     wordBreak: 'break-word'
   },
   top1Name: {
-    background: 'linear-gradient(135deg, #F59E0B 0%, #FDE68A 100%)',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-    textShadow: '0 1px 12px rgba(245, 158, 11, 0.35)'
+    color: '#FFE29F',
+    textShadow: '0 0 14px rgba(255, 226, 159, 0.65)'
   },
   top2Name: {
-    background: 'linear-gradient(135deg, #9CA3AF 0%, #E5E7EB 100%)',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-    textShadow: '0 1px 12px rgba(156, 163, 175, 0.35)'
+    color: '#E5E7EB',
+    textShadow: '0 0 12px rgba(229, 231, 235, 0.55)'
   },
   top3Name: {
-    background: 'linear-gradient(135deg, #D97706 0%, #FCD34D 100%)',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-    textShadow: '0 1px 12px rgba(217, 119, 6, 0.35)'
+    color: '#FCD34D',
+    textShadow: '0 0 12px rgba(252, 211, 77, 0.5)'
   },
   userDetails: {
     display: 'flex',
     alignItems: 'center',
     gap: '6px',
     fontSize: '12px',
-    color: 'var(--tone-muted)',
+    color: 'rgba(226, 232, 240, 0.65)',
     flexWrap: 'wrap'
   },
   activeBadge: {
@@ -833,7 +799,7 @@ const styles = {
   points: {
     fontSize: '14px',
     fontWeight: 'bold',
-    color: 'var(--warning-strong)'
+    color: '#fcd34d'
   },
   pointsMobile: {
     alignSelf: 'flex-start'

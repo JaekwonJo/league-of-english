@@ -725,19 +725,12 @@ const getTimeLimitSeconds = useCallback(() => {
     return base;
   }, [filteredSets]);
 
-  const heroStats = useMemo(() => {
-    const totalSets = sets.length;
-    const totalDays = sets.reduce((sum, set) => sum + (Array.isArray(set.days) ? set.days.length : 0), 0);
-    const totalWords = sets.reduce((sum, set) => {
-      if (!Array.isArray(set.days)) return sum;
-      return sum + set.days.reduce((inner, day) => inner + (day.count || 0), 0);
-    }, 0);
-    return [
-      { icon: 'BookOpen', label: '등록된 단어장', value: totalSets ? `${totalSets}개` : '준비 중' },
-      { icon: 'ListChecks', label: '총 Day', value: totalDays ? `${totalDays}개` : '집계 중' },
-      { icon: 'Sparkles', label: '누적 단어', value: totalWords ? `${totalWords.toLocaleString()}개` : '채우는 중' }
-    ];
-  }, [sets]);
+  const heroInfoText = useMemo(() => {
+    if (sets.length > 0) {
+      return `등록된 단어장 ${sets.length.toLocaleString()}개`;
+    }
+    return setsLoading ? '등록된 단어장을 불러오는 중이에요...' : '아직 업로드된 단어장이 없어요';
+  }, [sets.length, setsLoading]);
 
   const hasGroupedSets = useMemo(
     () => CATEGORY_SECTIONS.some((section) => (groupedSets[section.key] || []).length > 0),
@@ -792,25 +785,10 @@ const getTimeLimitSeconds = useCallback(() => {
           <span style={styles.heroBadge}>Daily Vocab Studio</span>
           <h1 style={styles.heroTitle}>🐣 어휘 훈련</h1>
           <p style={styles.heroSubtitle}>지문에서 뽑은 핵심 단어들을 하루 분량으로 챙겨 보세요. 연습과 시험 모드를 자유롭게 오가며 감각을 끌어올릴 수 있어요.</p>
-          <div style={styles.heroMetaRow}>
-            {heroStats.map((stat) => (
-              <HeroMeta key={stat.label} icon={stat.icon} label={stat.label} value={stat.value} />
-            ))}
-          </div>
+          <div style={styles.heroInfoPill}>📚 {heroInfoText}</div>
           <div style={styles.heroButtons}>
             <button type="button" style={styles.heroPrimaryButton} onClick={handleScrollToSets}>
               <LucideIcons.Search size={18} /> 단어장 살펴보기
-            </button>
-            <button
-              type="button"
-              style={{
-                ...styles.heroSecondaryButton,
-                ...(selectedDayLabels.length ? {} : styles.heroButtonDisabled)
-              }}
-              onClick={() => navigateToStep(STEPS.CONFIGURE)}
-              disabled={!selectedDayLabels.length}
-            >
-              <LucideIcons.PlayCircle size={18} /> 시험 준비로 바로 가기
             </button>
           </div>
         </div>
@@ -1481,30 +1459,18 @@ const styles = {
     color: 'rgba(248,250,252,0.9)',
     maxWidth: '660px'
   },
-  heroMetaRow: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '12px'
-  },
-  heroMeta: {
+  heroInfoPill: {
     display: 'inline-flex',
     alignItems: 'center',
     gap: '10px',
-    padding: '12px 18px',
-    borderRadius: '16px',
-    background: 'rgba(255,255,255,0.22)',
-    boxShadow: '0 22px 36px rgba(15,23,42,0.24)'
-  },
-  heroMetaLabel: {
-    fontSize: '0.85rem',
-    textTransform: 'uppercase',
-    letterSpacing: '0.08em',
-    color: 'rgba(248,250,252,0.78)'
-  },
-  heroMetaValue: {
-    fontSize: '1.05rem',
-    fontWeight: 700,
-    color: 'rgba(255,255,255,0.95)'
+    marginTop: '4px',
+    padding: '10px 18px',
+    borderRadius: '999px',
+    border: '1px solid rgba(255,255,255,0.35)',
+    background: 'rgba(15,23,42,0.35)',
+    color: '#f8fafc',
+    fontWeight: 600,
+    fontSize: '0.95rem'
   },
   heroButtons: {
     display: 'flex',
@@ -2146,19 +2112,6 @@ const styles = {
     fontSize: '0.75rem',
     color: 'var(--text-primary)'
   }
-};
-
-const HeroMeta = ({ icon, label, value }) => {
-  const IconComponent = LucideIcons[icon] || LucideIcons.Circle;
-  return (
-    <div style={styles.heroMeta}>
-      <IconComponent size={18} />
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-        <span style={styles.heroMetaLabel}>{label}</span>
-        <strong style={styles.heroMetaValue}>{value}</strong>
-      </div>
-    </div>
-  );
 };
 
 export default VocabularyPage;

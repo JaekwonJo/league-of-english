@@ -7,22 +7,38 @@ const CHOICE_TO_INDEX = CHOICES.reduce((acc, mark, idx) => ({ ...acc, [mark]: id
 
 const EXAM_ID = process.env.MOCK_EXAM_ID || '2025-10';
 const STORAGE_ROOT = path.resolve(__dirname, '..', '..', 'mock-exams');
-const LEGACY_DIR = path.resolve(__dirname, '..', '..', '모의고사 원문');
+const LEGACY_DIR_CANDIDATES = [
+  path.resolve(__dirname, '..', '..', '모의고사원문'),
+  path.resolve(__dirname, '..', '..', '모의고사 원문')
+];
 const LEGACY_QUESTION_FILE = '25_10월_고2_영어_문제지.pdf';
 const LEGACY_ANSWER_FILE = '25_10월_고2_영어_정답 및 해설.pdf';
 const FALLBACK_EXAM_JSON = path.resolve(__dirname, '..', 'data', 'mockExam2025-10.json');
 const FALLBACK_ANSWER_JSON = path.resolve(__dirname, '..', 'data', 'mockExam2025-10-answers.json');
 
+const resolveLegacyPath = (file) => LEGACY_DIR_CANDIDATES
+  .map((dir) => path.join(dir, file))
+  .find((candidate) => fs.existsSync(candidate));
+
 const getQuestionPath = () => {
-  const candidate = path.join(STORAGE_ROOT, EXAM_ID, 'questions.pdf');
-  if (fs.existsSync(candidate)) return candidate;
-  return path.join(LEGACY_DIR, LEGACY_QUESTION_FILE);
+  const preferred = path.join(STORAGE_ROOT, EXAM_ID, 'questions.pdf');
+  if (fs.existsSync(preferred)) return preferred;
+  return resolveLegacyPath(LEGACY_QUESTION_FILE) || preferred;
 };
 
 const getAnswerPath = () => {
-  const candidate = path.join(STORAGE_ROOT, EXAM_ID, 'answers.pdf');
-  if (fs.existsSync(candidate)) return candidate;
-  return path.join(LEGACY_DIR, LEGACY_ANSWER_FILE);
+  const preferred = path.join(STORAGE_ROOT, EXAM_ID, 'answers.pdf');
+  if (fs.existsSync(preferred)) return preferred;
+  return resolveLegacyPath(LEGACY_ANSWER_FILE) || preferred;
+};
+
+const readJson = (filePath) => JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+
+const ensureFallback = (filePath, friendlyName) => {
+  if (fs.existsSync(filePath)) {
+    return readJson(filePath);
+  }
+  throw new Error(`${friendlyName} 기본 데이터 파일을 찾을 수 없습니다. 관리자에게 문의해 주세요.`);
 };
 
 class MockExamService {
@@ -216,37 +232,44 @@ class MockExamService {
   async _loadExam() {
     const questionPath = getQuestionPath();
     if (!fs.existsSync(questionPath)) {
-      if (fs.existsSync(FALLBACK_EXAM_JSON)) {
-        return JSON.parse(fs.readFileSync(FALLBACK_EXAM_JSON, 'utf-8'));
-      }
-      throw new Error('모의고사 문제지 PDF 또는 기본 데이터 파일을 찾을 수 없습니다. 관리자에게 문의해 주세요.');
+      return ensureFallback(FALLBACK_EXAM_JSON, '모의고사 문제지');
     }
-    const buffer = fs.readFileSync(questionPath);
-    const parsed = await pdfParse(buffer);
-    const text = parsed.text.replace(/\r/g, '');
 
-    const questions = this._extractQuestions(text);
+    try {
+      const buffer = fs.readFileSync(questionPath);
+      const parsed = await pdfParse(buffer);
+      const text = parsed.text.replace(/\r/g, '');
 
-    return {
-      examId: '2025-10-highschool-2',
-      title: '2025년 10월 고2 모의고사',
-      timeLimitSeconds: 50 * 60,
-      questionCount: questions.length,
-      questions
-    };
+      const questions = this._extractQuestions(text);
+
+      return {
+        examId: '2025-10-highschool-2',
+        title: '2025년 10월 고2 모의고사',
+        timeLimitSeconds: 50 * 60,
+        questionCount: questions.length,
+        questions
+      };
+    } catch (error) {
+      console.warn('[mockExam] 문제지 PDF 파싱에 실패하여 기본 JSON으로 대체합니다:', error.message);
+      return ensureFallback(FALLBACK_EXAM_JSON, '모의고사 문제지');
+    }
   }
 
   async _loadAnswerKey() {
     const answerPath = getAnswerPath();
     if (!fs.existsSync(answerPath)) {
-      if (fs.existsSync(FALLBACK_ANSWER_JSON)) {
-        return JSON.parse(fs.readFileSync(FALLBACK_ANSWER_JSON, 'utf-8'));
-      }
-      throw new Error('모의고사 정답/해설 PDF 또는 기본 데이터 파일을 찾을 수 없습니다. 관리자에게 문의해 주세요.');
+      return ensureFallback(FALLBACK_ANSWER_JSON, '모의고사 정답/해설');
     }
-    const buffer = fs.readFileSync(answerPath);
-    const parsed = await pdfParse(buffer);
-    const text = parsed.text.replace(/\r/g, '');
+
+    let text;
+    try {
+      const buffer = fs.readFileSync(answerPath);
+      const parsed = await pdfParse(buffer);
+      text = parsed.text.replace(/\r/g, '');
+    } catch (error) {
+      console.warn('[mockExam] 정답 PDF 파싱에 실패하여 기본 JSON으로 대체합니다:', error.message);
+      return ensureFallback(FALLBACK_ANSWER_JSON, '모의고사 정답/해설');
+    }
 
     const matches = [...text.matchAll(/(\d{1,2})([①-⑤])/g)];
 
@@ -266,7 +289,8 @@ class MockExamService {
     // Ensure all questions 18-45 exist
     for (let q = 18; q <= 45; q += 1) {
       if (answerMap[q] === undefined) {
-        throw new Error(`정답을 찾을 수 없습니다: ${q}번`);
+        console.warn('[mockExam] 정답 누락 감지, 기본 JSON으로 대체합니다:', q);
+        return ensureFallback(FALLBACK_ANSWER_JSON, '모의고사 정답/해설');
       }
     }
 

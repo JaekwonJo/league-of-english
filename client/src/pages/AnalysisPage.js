@@ -67,7 +67,7 @@ const LOADING_MESSAGES = [
   '실생활 예시와 어법 포인트를 챙기고 있어요... 📚'
 ];
 
-const VARIANT_HERO_TITLE = 'AI가 사랑을 가득 담아 완성한 분석 노트예요 💖';
+const VARIANT_HERO_TITLE = '전문 튜터가 정성껏 완성한 분석 노트예요 💖';
 const VARIANT_HERO_SUBTITLE = '오늘도 열공 파이팅! 궁금한 문장을 톡톡 눌러 살펴보세요.';
 
 const CIRCLED_DIGITS = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩', '⑪', '⑫', '⑬', '⑭', '⑮', '⑯', '⑰', '⑱', '⑲', '⑳'];
@@ -607,10 +607,10 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
         <section style={analysisStyles.docHero}>
           <div style={analysisStyles.docHeroGlow} />
           <div style={analysisStyles.docHeroContent}>
-            <span style={analysisStyles.docHeroBadge}>Insight Study Lounge</span>
+            <span style={analysisStyles.docHeroBadge}>전문 분석 라운지</span>
             <h1 style={analysisStyles.docHeroHeadline}>📖 문서 분석 자료</h1>
             <p style={analysisStyles.docHeroSub}>
-              모의고사와 자체 제작 교재를 한곳에서 관리하고, 필요한 지문만 골라 즉시 분석해 보세요. 정돈된 학습 환경이 분석 여정을 끝까지 책임집니다.
+              모의고사와 자체 제작 교재를 한곳에서 정리하고, 필요한 지문만 골라 전문 분석을 바로 받아 보세요. 정돈된 학습 환경이 분석 여정을 끝까지 책임집니다.
             </p>
             <div style={analysisStyles.docHeroSearchRow}>
               <input
@@ -637,7 +637,8 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
             </div>
             <p style={analysisStyles.docHeroNote}>Tip: 코드(예: 2-25-10)나 교재명을 입력하면 원하는 문서를 바로 찾을 수 있어요.</p>
             <div style={analysisStyles.docHeroStatPill}>
-              📚 등록된 문서 <strong>{totalDocuments ? `${totalDocuments.toLocaleString()}개` : '준비 중'}</strong>
+              <span>📚 등록된 문서</span>
+              <strong>{totalDocuments ? `${totalDocuments.toLocaleString()}개` : '준비 중'}</strong>
             </div>
           </div>
         </section>
@@ -916,7 +917,7 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
         <div style={analysisStyles.header}>
           <button onClick={handleBackToDocuments} style={analysisStyles.backButton}>← 목록으로 돌아가기</button>
           <h1 style={analysisStyles.title}>📄 {selectedDocument?.title}</h1>
-          <p style={analysisStyles.subtitle}>지문을 하나씩 선택해 전문 분석본을 확인하고, 필요하면 전문 분석을 바로 생성해 보세요.</p>
+          <p style={analysisStyles.subtitle}>지문을 하나씩 살펴보고, 필요하면 전문 분석을 곧바로 생성해 보세요.</p>
         </div>
 
         {analysisLimitError && (

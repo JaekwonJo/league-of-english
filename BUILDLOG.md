@@ -1,3 +1,13 @@
+## 2025-11-07 (analysis/vocab UI polish + mock exam fallback)
+- Issue: 분석 자료/어휘/랭킹 화면이 어두운 배경에 어두운 글씨로 보이거나 의미 없는 "총 Day" 카운터 때문에 학습자가 혼란을 겪었습니다.
+- Cause: 히어로/메타 카드가 라이트 테마 기준으로 작성돼 다크 모드 대비가 깨지고, 지문 라벨은 별도 테이블이 없어 즉시 수정할 수 없었습니다.
+- Fix: `analysisStyles`와 `AnalysisPage`를 전면 다크 카드로 재구성하고 `document_passage_labels`에 매핑되는 커스텀 라벨 UI/버튼을 추가했습니다.
+- Fix: VocabularyPage 히어로는 안내 + CTA만 남기고, 랭킹 페이지는 상위 카드 대비와 실버 티어 아이콘(🥈)을 교체해 이름이 또렷하게 보이도록 했습니다.
+- Fix: `mockExamService`가 PDF 경로를 찾지 못하거나 파싱에 실패하면 JSON 기본 데이터를 자동으로 사용하고, `모의고사원문/모의고사 원문` 경로를 모두 검사하도록 보강했습니다.
+- Note: Dark 테마 카드에서도 어휘/어법 메타 블록 색상이 맞도록 `analysisStyles.word/meaning/vocabularyItem` 색상을 재정의했습니다.
+- Files: client/src/pages/AnalysisPage.js, client/src/styles/analysisStyles.js, client/src/pages/VocabularyPage.js, client/src/pages/RankingPage.js, server/services/mockExamService.js.
+- Tests: `npm run build --prefix client`.
+
 ## 2025-11-06 (analysis/vocabulary hero contrast refresh)
 - Issue: 분석 자료·어휘 훈련 첫 화면이 낮은 대비와 '토스 감성' 문구 때문에 사용자에게 전문적인 인상을 주지 못했습니다.
 - Cause: 기존 히어로 섹션이 밝은 카드 위에 어두운 텍스트를 얹는 라이트 테마 전용 레이아웃이었고, 다크 배경에서는 가독성이 크게 떨어졌습니다.
