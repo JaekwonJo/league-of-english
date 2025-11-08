@@ -1,3 +1,12 @@
+## 2025-11-09 (CI Playwright + label audit + mock-exam stats)
+- Issue: CI에서 E2E를 돌릴 수 없어 릴리스 전 회귀가 수동으로만 확인됐고, 지문 이름 편집이 prompt라 히스토리가 남지 않았으며 모의고사 결과가 학습 통계/랭킹에 반영되지 않았습니다.
+- Cause: GitHub Actions가 dev 서버를 띄우지 않아 Playwright 명령이 바로 실패했고, passage label 변경 테이블에는 audit 로그가 없었으며 모의고사 문제는 `problems` 테이블과 study 기록에 연결되어 있지 않았습니다.
+- Fix: `scripts/e2e-server.js`로 백/프런트 동시 부팅 → Playwright webServer 설정 + CI에서 브라우저 설치/`npm run test:e2e` 수행. Vocabulary/MockExam 페이지에 test-id를 추가하고 워크북 시나리오까지 통합했습니다.
+- Fix: label 편집을 모달 + 길이검증으로 바꾸고 `document_passage_label_logs` 테이블에 이전/신규 값·수정자를 남기도록 했습니다.
+- Fix: 모의고사 문항을 `mock_exam_questions`로 problems 테이블에 매핑하고 제출 시 studyService를 호출해 학습 통계·랭킹·유형별 정확도에 `mock_exam` 데이터를 쌓도록 했습니다.
+- Files: scripts/e2e-server.js, playwright.config.js, tests/e2e/*.spec.js, .github/workflows/ci.yml, client/src/pages/{VocabularyPage,MockExamPage,HomePage,StatsPage}.js, server/{models/database.js,routes/mockExam.routes.js,services/mockExamService.js,services/analysisService.js}.
+- Verification: `npm test` (기존 fallback 분석 케이스 1건 제외), `PLAYWRIGHT_SKIP_WEBSERVER=1 npm run test:e2e` (로컬 캡처 확인).
+
 ## 2025-11-08 (home hero eagle palette + mascot loop)
 - Issue: 홈 히어로/CTA가 듀오링고와 유사한 초록 팔레트라 브랜드 정체성이 흐려지고, 마스코트가 가만히 서 있어 “멈춘 캐릭터”처럼 보였습니다.
 - Cause: 초기 리뉴얼 때 디폴트 라이트 톤을 사용했고, 애니메이션 상태는 onClick 시에만 mood가 바뀌도록 구성돼 있었습니다.
