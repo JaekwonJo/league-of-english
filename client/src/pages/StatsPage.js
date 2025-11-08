@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { api } from '../services/api.service';
+import OwlGuideChip from '../components/common/OwlGuideChip';
 import {
   ResponsiveContainer,
   PieChart, Pie, Cell,
@@ -13,10 +14,23 @@ const formatPercent = (value) => {
 
 const formatNumber = (value) => new Intl.NumberFormat('ko-KR').format(Number(value || 0));
 
+const typeLabelMap = {
+  blank: '빈칸',
+  order: '순서 배열',
+  insertion: '문장 삽입',
+  grammar: '어법',
+  vocabulary: '어휘',
+  title: '제목',
+  theme: '주제',
+  summary: '요약',
+  implicit: '함축 의미'
+};
+
 const StatsPage = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isMobile, setIsMobile] = useState(() => (typeof window !== 'undefined' ? window.innerWidth <= 768 : false));
 
   useEffect(() => {
     let mounted = true;
@@ -41,6 +55,13 @@ const StatsPage = () => {
     };
   }, []);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const vocabularyStats = useMemo(() => {
     if (!stats?.perType) return null;
     const vocabEntry = stats.perType.find((item) =>
@@ -62,6 +83,10 @@ const StatsPage = () => {
       .map((d) => ({ name: d.type, total: Number(d.total) || 0, accuracy: Number(d.accuracy) || 0 }));
   }, [stats]);
 
+  const typeAccuracyList = useMemo(() => (
+    Array.isArray(stats?.perType) ? stats.perType : []
+  ), [stats]);
+
   const vocabPieData = useMemo(() => {
     if (!vocabularyStats) return [];
     return [
@@ -72,6 +97,12 @@ const StatsPage = () => {
 
   const COLORS = ['#2563EB', '#A855F7', '#14B8A6', '#7C3AED'];
   const PIE_COLORS = ['#2563EB', '#DC2626'];
+
+  const statCards = [
+    { label: '총 학습 문제', value: `${formatNumber(stats?.totalProblems ?? 0)}문제`, helper: '문제 학습 + 단어 훈련 전체' },
+    { label: '정답률', value: formatPercent(stats?.accuracy), helper: '최근까지 누적 정확도' },
+    { label: '진행한 세션', value: `${formatNumber(stats?.totalSessions ?? 0)}회`, helper: `지난 7일 ${formatNumber(stats?.weeklySessions ?? 0)}회` }
+  ];
 
   const comingSoonItems = useMemo(() => ([
     {
@@ -84,12 +115,90 @@ const StatsPage = () => {
     }
   ]), []);
 
+  const renderSummaryCards = () => {
+    if (isMobile) {
+      return (
+        <div style={styles.sliderRow}>
+          {statCards.map((card) => (
+            <div key={card.label} style={styles.sliderItem}>
+              <StatCard {...card} />
+            </div>
+          ))}
+        </div>
+      );
+    }
+    return (
+      <div style={styles.grid3}>
+        {statCards.map((card) => (
+          <StatCard key={card.label} {...card} />
+        ))}
+      </div>
+    );
+  };
+
+  const renderVocabularyCards = () => {
+    if (!vocabularyStats) return null;
+    const accuracyCard = (
+      <div style={styles.statCard} key="vocab-accuracy">
+        <span style={styles.statLabel}>단어 정확도</span>
+        <div style={{ width: '100%', height: 220 }}>
+          <ResponsiveContainer>
+            <PieChart>
+              <Pie data={vocabPieData} innerRadius={60} outerRadius={90} paddingAngle={2} dataKey="value">
+                {vocabPieData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip formatter={(v) => `${formatNumber(v)}개`} />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+        <strong style={{ ...styles.statValue, marginTop: 8 }}>{formatPercent(vocabularyStats.accuracy)}</strong>
+        <span style={styles.statHelper}>총 {formatNumber(vocabularyStats.total)}문 · 정답 {formatNumber(vocabularyStats.correct)}개 · 오답 {formatNumber(vocabularyStats.incorrect)}개</span>
+      </div>
+    );
+
+    const typeCard = (
+      <div style={styles.statCard} key="vocab-types">
+        <span style={styles.statLabel}>유형별 학습량</span>
+        <div style={{ width: '100%', height: 220 }}>
+          <ResponsiveContainer>
+            <BarChart data={perTypeData} margin={{ top: 8, right: 8, left: -12, bottom: 8 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.45)" />
+              <XAxis dataKey="name" tick={{ fill: 'var(--text-primary)', fontSize: 12 }} />
+              <YAxis tick={{ fill: 'var(--text-primary)', fontSize: 12 }} />
+              <Tooltip formatter={(v, n) => (n === 'total' ? `${formatNumber(v)}문` : `${formatPercent(v)}`)} />
+              <Bar dataKey="total" name="문항수" fill={COLORS[0]} radius={[6, 6, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        <span style={styles.statHelper}>최근 풀이 유형 TOP {perTypeData.length}</span>
+      </div>
+    );
+
+    if (isMobile) {
+      return (
+        <div style={styles.sliderRow}>
+          <div style={styles.sliderItem}>{accuracyCard}</div>
+          <div style={styles.sliderItem}>{typeCard}</div>
+        </div>
+      );
+    }
+    return (
+      <div style={styles.grid2}>
+        {accuracyCard}
+        {typeCard}
+      </div>
+    );
+  };
+
   return (
     <div style={styles.container}>
       <header style={styles.header}>
         <div>
           <h1 style={styles.title}>📊 학습 통계</h1>
           <p style={styles.subtitle}>최근 문제 풀이와 단어 훈련 데이터를 기반으로 자동 집계돼요.</p>
+          <OwlGuideChip text="부엉이가 하루 학습량을 깔끔하게 정리했어요" variant="accent" />
         </div>
       </header>
 
@@ -108,58 +217,45 @@ const StatsPage = () => {
       {!loading && !error && stats && (
         <>
           <section style={styles.section}>
-            <h2 style={styles.sectionTitle}>전체 학습 요약</h2>
-            <div style={styles.grid3}>
-              <StatCard label="총 학습 문제" value={`${formatNumber(stats.totalProblems)}문제`} helper="문제 학습 + 단어 훈련 전체" />
-              <StatCard label="정답률" value={formatPercent(stats.accuracy)} helper="최근까지 누적 정확도" />
-              <StatCard label="진행한 세션" value={`${formatNumber(stats.totalSessions)}회`} helper={`지난 7일 ${formatNumber(stats.weeklySessions)}회`} />
+            <div style={styles.sectionHeaderRow}>
+              <h2 style={styles.sectionTitle}>전체 학습 요약</h2>
+              <OwlGuideChip text="숫자로 학습 페이스를 확인해요" />
             </div>
+            {renderSummaryCards()}
           </section>
 
           <section style={styles.section}>
             <div style={styles.sectionHeaderRow}>
               <h2 style={styles.sectionTitle}>🐣 단어 훈련</h2>
               <span style={styles.sectionHint}>시험 결과를 자동으로 집계해요.</span>
+              <OwlGuideChip text="정답/오답 비율을 빠르게 살펴봐요" />
             </div>
             {vocabularyStats ? (
-              <div style={styles.grid2}>
-                <div style={styles.statCard}>
-                  <span style={styles.statLabel}>단어 정확도</span>
-                  <div style={{ width: '100%', height: 220 }}>
-                    <ResponsiveContainer>
-                      <PieChart>
-                        <Pie data={vocabPieData} innerRadius={60} outerRadius={90} paddingAngle={2} dataKey="value">
-                          {vocabPieData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip formatter={(v) => `${formatNumber(v)}개`} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <strong style={{ ...styles.statValue, marginTop: 8 }}>{formatPercent(vocabularyStats.accuracy)}</strong>
-                  <span style={styles.statHelper}>총 {formatNumber(vocabularyStats.total)}문 · 정답 {formatNumber(vocabularyStats.correct)}개 · 오답 {formatNumber(vocabularyStats.incorrect)}개</span>
-                </div>
-                <div style={styles.statCard}>
-                  <span style={styles.statLabel}>유형별 학습량</span>
-                  <div style={{ width: '100%', height: 220 }}>
-                    <ResponsiveContainer>
-                      <BarChart data={perTypeData} margin={{ top: 8, right: 8, left: -12, bottom: 8 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.45)" />
-                        <XAxis dataKey="name" tick={{ fill: 'var(--text-primary)', fontSize: 12 }} />
-                        <YAxis tick={{ fill: 'var(--text-primary)', fontSize: 12 }} />
-                        <Tooltip formatter={(v, n) => n === 'total' ? `${formatNumber(v)}문` : `${formatPercent(v)}`} />
-                        <Bar dataKey="total" name="문항수" fill={COLORS[0]} radius={[6,6,0,0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <span style={styles.statHelper}>최근 풀이 유형 TOP {perTypeData.length}</span>
-                </div>
-              </div>
+              renderVocabularyCards()
             ) : (
               <div style={styles.emptyCard}>
                 <p style={styles.emptyTitle}>아직 단어 훈련 기록이 없어요.</p>
                 <p style={styles.emptyBody}>어휘 훈련에서 Day를 선택해 시험을 보면 정확도와 횟수가 여기에서 자동으로 쌓입니다.</p>
+              </div>
+            )}
+          </section>
+
+          <section style={styles.section}>
+            <div style={styles.sectionHeaderRow}>
+              <h2 style={styles.sectionTitle}>🎯 유형별 정답률</h2>
+              <span style={styles.sectionHint}>문제 학습 + 단어 시험 누적</span>
+              <OwlGuideChip text="약한 유형을 찾아 복습 루틴을 만들어요" />
+            </div>
+            {typeAccuracyList.length ? (
+              <div style={styles.typeList}>
+                {typeAccuracyList.map((entry) => (
+                  <TypeAccuracyRow key={entry.type} entry={entry} />
+                ))}
+              </div>
+            ) : (
+              <div style={styles.emptyCard}>
+                <p style={styles.emptyTitle}>아직 유형별 통계가 없어요.</p>
+                <p style={styles.emptyBody}>문제 학습과 단어 시험을 꾸준히 진행하면 정확도가 여기에 정리됩니다.</p>
               </div>
             )}
           </section>
@@ -192,6 +288,29 @@ const StatCard = ({ label, value, helper }) => (
     {helper && <span style={styles.statHelper}>{helper}</span>}
   </div>
 );
+
+const TypeAccuracyRow = ({ entry }) => {
+  const accuracy = Number(entry.accuracy || 0);
+  const correct = Number(entry.correct || 0);
+  const incorrect = Number(entry.incorrect || 0);
+  const total = Number(entry.total || 0);
+  return (
+    <div style={styles.typeRow}>
+      <div style={styles.typeHeaderRow}>
+        <span>{typeLabelMap[entry.type] || entry.type}</span>
+        <span>{formatPercent(accuracy)}</span>
+      </div>
+      <div style={styles.typeBar}>
+        <div style={{ ...styles.typeBarFill, width: `${Math.min(100, Math.max(0, accuracy))}%` }} />
+      </div>
+      <div style={styles.typeMeta}>
+        <span>정답 {formatNumber(correct)}문</span>
+        <span>오답 {formatNumber(incorrect)}문</span>
+        <span>총 {formatNumber(total)}문</span>
+      </div>
+    </div>
+  );
+};
 
 const styles = {
   container: {
@@ -241,6 +360,18 @@ const styles = {
     gap: '18px',
     gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))'
   },
+  sliderRow: {
+    display: 'flex',
+    gap: '14px',
+    overflowX: 'auto',
+    paddingBottom: '6px',
+    scrollSnapType: 'x mandatory'
+  },
+  sliderItem: {
+    minWidth: '240px',
+    flex: '0 0 auto',
+    scrollSnapAlign: 'start'
+  },
   statCard: {
     background: 'var(--surface-card)',
     borderRadius: '18px',
@@ -263,6 +394,48 @@ const styles = {
   statHelper: {
     fontSize: '0.85rem',
     color: 'var(--tone-muted)'
+  },
+  typeList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px'
+  },
+  typeRow: {
+    background: 'var(--surface-card)',
+    borderRadius: '16px',
+    padding: '14px 18px',
+    border: '1px solid var(--surface-border)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px'
+  },
+  typeHeaderRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    fontWeight: 700,
+    color: 'var(--tone-hero)'
+  },
+  typeBar: {
+    position: 'relative',
+    height: 10,
+    borderRadius: 999,
+    background: 'rgba(148, 163, 184, 0.35)',
+    overflow: 'hidden'
+  },
+  typeBarFill: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    borderRadius: 999,
+    background: 'linear-gradient(90deg, var(--color-indigo-400), var(--color-sky-400))'
+  },
+  typeMeta: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '12px',
+    fontSize: '0.85rem',
+    color: 'var(--tone-strong)'
   },
   pendingCard: {
     background: 'var(--surface-card)',

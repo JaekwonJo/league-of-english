@@ -26,7 +26,7 @@
       "minLP": 1000,
       "maxLP": 1999,
       "color": "var(--color-bronze-500)",
-      "icon": "🛡️",
+      "icon": "💩",
       "badge": "/badges/bronze.svg",
       "features": {
         "profileBadge": true,
@@ -45,7 +45,7 @@
       "minLP": 2000,
       "maxLP": 2999,
       "color": "var(--color-slate-400)",
-      "icon": "🥈",
+      "icon": "🛡️",
       "badge": "/badges/silver.svg",
       "features": {
         "profileBadge": true,
@@ -65,7 +65,7 @@
       "minLP": 3000,
       "maxLP": 4999,
       "color": "var(--color-gold-500)",
-      "icon": "👑",
+      "icon": "✨",
       "badge": "/badges/gold.svg",
       "features": {
         "profileBadge": true,

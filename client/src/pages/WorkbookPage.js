@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api.service';
 import FriendlyError from '../components/common/FriendlyError';
+import OwlGuideChip from '../components/common/OwlGuideChip';
 
 const STORAGE_KEY = 'loe.workbook.completedSteps.v2';
 
@@ -286,29 +287,30 @@ const styles = {
     textAlign: 'left',
     padding: '18px',
     borderRadius: '18px',
-    border: '1px solid rgba(148, 163, 184, 0.35)',
-    background: 'rgba(255, 255, 255, 0.92)',
+    border: '1px solid rgba(148, 163, 184, 0.25)',
+    background: 'linear-gradient(150deg, rgba(15,23,42,0.9), rgba(30,64,175,0.7))',
     display: 'flex',
     flexDirection: 'column',
     gap: '10px',
     cursor: 'pointer',
     transition: 'transform 0.2s ease, box-shadow 0.2s ease, border 0.2s ease',
-    boxShadow: '0 16px 30px rgba(15, 23, 42, 0.12)'
+    boxShadow: '0 18px 34px rgba(15, 23, 42, 0.3)',
+    color: '#e2e8f0'
   },
   generatorDocCardActive: {
-    border: '1px solid rgba(99, 102, 241, 0.55)',
-    background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.18), rgba(14, 165, 233, 0.12))',
-    boxShadow: '0 22px 40px rgba(79, 70, 229, 0.24)'
+    border: '1px solid rgba(99, 102, 241, 0.65)',
+    background: 'linear-gradient(135deg, rgba(129,140,248,0.32), rgba(14,165,233,0.25))',
+    boxShadow: '0 26px 44px rgba(79, 70, 229, 0.35)'
   },
   generatorDocTitle: {
     fontWeight: 700,
     fontSize: '15px',
-    color: 'var(--text-primary)',
+    color: '#f8fafc',
     margin: 0
   },
   generatorDocMeta: {
     fontSize: '12px',
-    color: 'var(--tone-muted)',
+    color: 'rgba(226,232,240,0.85)',
     margin: 0
   },
   generatorEmpty: {
@@ -2581,6 +2583,7 @@ const WorkbookPage = () => {
               + 새 워크북 생성하기
             </button>
           )}
+          <OwlGuideChip text="분석이 끝난 지문을 골라 워크북을 만들면 돼요" variant="accent" />
         </section>
 
         {showGenerator && canManageWorkbooks && (
@@ -2601,6 +2604,7 @@ const WorkbookPage = () => {
 
             {generatorStage === 1 && (
               <div style={responsiveStyle(styles.wizardStageBody, styles.wizardStageBodyMobile)}>
+                <OwlGuideChip text="분석이 완료된 문서를 골라야 다음 단계로 이동할 수 있어요" />
                 <p style={responsiveStyle(styles.wizardStageDescription, styles.wizardStageDescriptionMobile)}>
                   분석이 완료된 문서를 골라 주세요. 선택하면 자동으로 지문 선택 단계로 이동해요.
                 </p>
@@ -2648,6 +2652,7 @@ const WorkbookPage = () => {
 
             {generatorStage === 2 && (
               <div style={responsiveStyle(styles.wizardStageBody, styles.wizardStageBodyMobile)}>
+                <OwlGuideChip text="지문을 탭하면 부엉이가 바로 미리보기를 보여줘요" />
                 <div style={styles.wizardInfoCard}>
                   <span style={styles.wizardStageBadge}>선택한 자료</span>
                   <strong style={{ fontSize: '16px', color: 'var(--text-primary)' }}>{selectedDocument?.title || '자료를 다시 선택해 주세요.'}</strong>
@@ -2714,6 +2719,7 @@ const WorkbookPage = () => {
 
             {generatorStage === 3 && (
               <div style={responsiveStyle(styles.wizardStageBody, styles.wizardStageBodyMobile)}>
+                <OwlGuideChip text="출제 범위와 문제 수를 확인한 뒤 생성 버튼을 눌러요" />
                 <div style={styles.wizardInfoCard}>
                   <span style={styles.wizardStageBadge}>선택한 지문</span>
                   <strong style={{ fontSize: '16px', color: 'var(--text-primary)' }}>

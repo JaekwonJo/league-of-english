@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api.service';
 import tierConfig from '../config/tierConfig.json';
+import OwlGuideChip from '../components/common/OwlGuideChip';
 
 const typeLabelMap = {
   blank: '빈칸',
@@ -256,6 +257,7 @@ const ProfilePage = () => {
               <div style={styles.reviewQueueBadge}>복습 대기열</div>
               <h3 style={styles.reviewQueueTitle}>틀린 문제 {reviewQueue.total}문이 당신을 기다리고 있어요</h3>
               <p style={styles.reviewQueueHint}>복습을 누적하면 티어도 빠르게 올라가요. 지금 바로 도전해 볼까요?</p>
+              <OwlGuideChip text="복습 버튼을 누르면 부엉이가 문제를 다시 꺼내줘요" />
             </div>
             <button
               style={{
@@ -290,16 +292,20 @@ const ProfilePage = () => {
           </div>
         </div>
 
-        {!statsLoading && !statsError && stats?.perType?.length > 0 && (
-          <div style={styles.typeSection}>
-            <h3 style={styles.statsHeading}>🎯 유형별 정답률</h3>
-            <div style={styles.typeList}>
-              {stats.perType.map((entry) => (
-                <TypeAccuracyRow key={entry.type} entry={entry} tierInfo={tierInfo} />
-              ))}
-            </div>
+        <div style={styles.statsRedirectCard}>
+          <div>
+            <h3 style={styles.statsRedirectTitle}>🎯 유형별 정답률은 학습 통계에서 확인해요</h3>
+            <p style={styles.statsRedirectBody}>정답률, 정오답 수, 누적 문항은 "학습 통계" 메뉴에서 더 자세히 볼 수 있도록 옮겨 두었습니다.</p>
+            <OwlGuideChip text="학습 통계에서 약한 유형을 집중 공략하세요" />
           </div>
-        )}
+          <button
+            type="button"
+            style={styles.statsRedirectButton}
+            onClick={() => (window.location.href = '/stats')}
+          >
+            학습 통계 바로가기
+          </button>
+        </div>
 
         <MembershipCard />
         <TeacherSection />
@@ -352,35 +358,6 @@ const ProfileStatCard = ({ label, value, suffix, tierAccent, isPercent }) => {
       <div style={styles.profileStatValue}>
         {isPercent ? numeric.toFixed(1) : numeric.toLocaleString()}
         {suffix && <span style={styles.profileStatSuffix}>{suffix}</span>}
-      </div>
-    </div>
-  );
-};
-
-const TypeAccuracyRow = ({ entry, tierInfo }) => {
-  const accuracy = Number(entry.accuracy || 0);
-  const correct = Number(entry.correct || 0);
-  const incorrect = Number(entry.incorrect || 0);
-  const total = Number(entry.total || 0);
-  return (
-    <div style={styles.typeRow}>
-      <div style={styles.typeHeaderRow}>
-        <span>{typeLabelMap[entry.type] || entry.type}</span>
-        <span>{accuracy.toFixed(1)}%</span>
-      </div>
-      <div style={styles.typeBar}>
-        <div
-          style={{
-            ...styles.typeBarFill,
-            width: `${accuracy}%`,
-            background: `linear-gradient(90deg, ${tierInfo.color}, ${tierInfo.color}AA)`
-          }}
-        />
-      </div>
-      <div style={styles.typeMeta}>
-        <span>정답 {correct.toLocaleString()}문</span>
-        <span>오답 {incorrect.toLocaleString()}문</span>
-        <span>총 {total.toLocaleString()}문</span>
       </div>
     </div>
   );
@@ -666,44 +643,37 @@ const styles = {
     marginLeft: '4px',
     color: 'var(--tone-strong)'
   },
-  typeSection: {
-    marginTop: '40px'
-  },
-  typeList: {
+  statsRedirectCard: {
+    marginTop: '32px',
+    padding: '20px',
+    borderRadius: '18px',
+    border: '1px solid var(--surface-border)',
+    background: 'var(--surface-card)',
     display: 'flex',
     flexDirection: 'column',
-    gap: '16px'
+    gap: '12px'
   },
-  typeRow: {
-    background: 'var(--surface-card)',
-    borderRadius: '16px',
-    padding: '18px',
-    border: '1px solid var(--surface-border)'
-  },
-  typeHeaderRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
+  statsRedirectTitle: {
+    margin: 0,
+    fontSize: '1.1rem',
     fontWeight: 700,
+    color: 'var(--tone-hero)'
+  },
+  statsRedirectBody: {
+    margin: 0,
     color: 'var(--tone-strong)',
-    marginBottom: '10px'
+    lineHeight: 1.6
   },
-  typeBar: {
-    width: '100%',
-    height: '12px',
-    background: 'var(--surface-soft)',
+  statsRedirectButton: {
+    alignSelf: 'flex-start',
+    padding: '10px 18px',
     borderRadius: '999px',
-    overflow: 'hidden'
-  },
-  typeBarFill: {
-    height: '100%',
-    borderRadius: '999px'
-  },
-  typeMeta: {
-    display: 'flex',
-    gap: '12px',
-    marginTop: '10px',
-    fontSize: '13px',
-    color: 'var(--tone-strong)'
+    border: 'none',
+    background: 'var(--indigo-gradient)',
+    color: 'var(--text-on-accent)',
+    fontWeight: 700,
+    cursor: 'pointer',
+    boxShadow: '0 10px 24px rgba(99, 102, 241, 0.3)'
   },
   infoCard: {
     background: 'rgba(51, 65, 85, 0.8)',
@@ -1509,7 +1479,7 @@ const MembershipCard = () => {
             <li>프리미엄 혜택 모두 포함</li>
             <li>분석 자료 무제한 열람</li>
             <li>동영상 강의 · 유튜브 재생목록 무제한 제공</li>
-            <li>AI 코칭 & VIP 응대</li>
+            <li>모의고사 실전 풀이 무제한</li>
             <li>프로 전용 뱃지 제공</li>
           </ul>
           <div style={{ ...styles.planPrice, ...styles.planPricePro }}>월 19,900원</div>

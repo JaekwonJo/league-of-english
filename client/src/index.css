@@ -782,3 +782,56 @@ body {
     transform: translateY(-6px);
   }
 }
+
+@keyframes owlFloat {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-8px) rotate(-1deg); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes owlBlink {
+  0%, 90% { transform: scaleY(1); }
+  92%, 94% { transform: scaleY(0.15); }
+  100% { transform: scaleY(1); }
+}
+
+@keyframes owlBlinkQuick {
+  from { transform: scaleY(1); }
+  to { transform: scaleY(0.2); }
+}
+
+@keyframes owlBlinkCheer {
+  0% { transform: scaleY(1); }
+  30% { transform: scaleY(0.3); }
+  60% { transform: scaleY(1.05); }
+  100% { transform: scaleY(1); }
+}
+
+@keyframes owlWing {
+  0% { transform: rotate(0deg); }
+  50% { transform: rotate(6deg); }
+  100% { transform: rotate(0deg); }
+}
+
+@keyframes owlPulse {
+  0% { transform: scale(0.7); opacity: 0.9; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
+@keyframes owlSparkle {
+  0% { opacity: 0; transform: scale(0.8) translateY(0); }
+  40% { opacity: 1; transform: scale(1) translateY(-4px); }
+  100% { opacity: 0; transform: scale(0.4) translateY(-18px); }
+}
+
+@keyframes streakFlame {
+  0% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.15) rotate(-4deg); }
+  100% { transform: scale(1) rotate(2deg); }
+}
+
+@keyframes streakGlow {
+  0% { opacity: 0.4; transform: scale(0.9); }
+  50% { opacity: 0.85; transform: scale(1.1); }
+  100% { opacity: 0.4; transform: scale(0.9); }
+}

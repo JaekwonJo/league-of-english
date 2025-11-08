@@ -8,12 +8,13 @@ import { useAuth } from '../contexts/AuthContext';
 import tierConfig from '../config/tierConfig.json';
 import { api } from '../services/api.service';
 import logger from '../utils/logger';
+import OwlGuideChip from '../components/common/OwlGuideChip';
 
 const TIER_EMBLEMS = {
   iron: '🪨',
-  bronze: '🥉',
-  silver: '🥈',
-  gold: '🏆',
+  bronze: '💩',
+  silver: '🛡️',
+  gold: '✨',
   platinum: '💠',
   diamond: '💎',
   master: '👑',
@@ -167,6 +168,7 @@ const RankingPage = () => {
   return (
     <div style={styles.container}>
       <h1 style={styles.title}>🏆 랭킹</h1>
+      <OwlGuideChip text="부엉이가 실시간 LP 순위를 모으고 있어요" variant="accent" />
 
       {error && (
         <div style={styles.errorBanner}>
@@ -211,6 +213,7 @@ const RankingPage = () => {
       {/* 리더보드 탭 */}
       {selectedTab === 'leaderboard' && (
         <div style={styles.content}>
+          <OwlGuideChip text="상위권 플레이어를 눌러 자세한 정보를 볼 수 있어요" />
           <div style={styles.leaderboard}>
             <h2 style={{
               ...styles.sectionTitle,
@@ -220,7 +223,7 @@ const RankingPage = () => {
               <p style={styles.leaderboardMeta}>총 {leaderboardMeta.total.toLocaleString()}명의 플레이어가 경쟁 중이에요!</p>
             )}
             
-            <div style={styles.rankingList}>
+            <div style={isMobile ? styles.rankingListSlider : styles.rankingList}>
               {rankings.length === 0 && (
                 <div style={styles.emptyState}>아직 랭킹에 올라온 플레이어가 없어요. 첫 주인공이 되어 볼까요? ✨</div>
               )}
@@ -571,6 +574,13 @@ const styles = {
     flexDirection: 'column',
     gap: '12px'
   },
+  rankingListSlider: {
+    display: 'flex',
+    gap: '12px',
+    overflowX: 'auto',
+    paddingBottom: '12px',
+    scrollSnapType: 'x mandatory'
+  },
   emptyState: {
     padding: '24px',
     borderRadius: '16px',
@@ -601,7 +611,9 @@ const styles = {
   },
   rankingItemMobile: {
     flexDirection: 'column',
-    alignItems: 'flex-start'
+    alignItems: 'flex-start',
+    minWidth: '280px',
+    scrollSnapAlign: 'start'
   },
   topRanker: {
     background: 'linear-gradient(135deg, rgba(255, 247, 210, 0.85), rgba(252, 211, 77, 0.45))',

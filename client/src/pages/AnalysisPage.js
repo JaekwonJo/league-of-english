@@ -5,6 +5,7 @@ import { analysisStyles } from '../styles/analysisStyles';
 import PassagePickerGrid from '../components/shared/PassagePickerGrid';
 import PassagePreviewModal from '../components/shared/PassagePreviewModal';
 import FriendlyError from '../components/common/FriendlyError';
+import OwlGuideChip from '../components/common/OwlGuideChip';
 
 const MAX_VARIANTS_PER_PASSAGE = 2;
 
@@ -612,6 +613,7 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
             <p style={analysisStyles.docHeroSub}>
               모의고사와 자체 제작 교재를 한곳에서 정리하고, 필요한 지문만 골라 전문 분석을 바로 받아 보세요. 정돈된 학습 환경이 분석 여정을 끝까지 책임집니다.
             </p>
+            <OwlGuideChip text="지문을 탭하면 부엉이가 분석본을 펼쳐 줍니다" variant="accent" />
             <div style={analysisStyles.docHeroSearchRow}>
               <input
                 ref={searchInputRef}
@@ -917,7 +919,10 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
         <div style={analysisStyles.header}>
           <button onClick={handleBackToDocuments} style={analysisStyles.backButton}>← 목록으로 돌아가기</button>
           <h1 style={analysisStyles.title}>📄 {selectedDocument?.title}</h1>
-          <p style={analysisStyles.subtitle}>지문을 하나씩 살펴보고, 필요하면 전문 분석을 곧바로 생성해 보세요.</p>
+          <div style={analysisStyles.sectionGuideRow}>
+            <p style={analysisStyles.subtitle}>지문을 하나씩 살펴보고, 필요하면 전문 분석을 곧바로 생성해 보세요.</p>
+            <OwlGuideChip text="분석본이 가득 차면 새 변형을 삭제해도 돼요" />
+          </div>
         </div>
 
         {analysisLimitError && (

@@ -34,6 +34,13 @@ export const analysisStyles = {
     fontSize: '1.05rem',
     margin: 0
   },
+  sectionGuideRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: '12px',
+    flexWrap: 'wrap'
+  },
   docHero: {
     position: 'relative',
     padding: '44px 36px',
