@@ -937,6 +937,24 @@ export const analysisStyles = {
     resize: 'vertical',
     fontFamily: 'inherit'
   },
+  modalInput: {
+    width: '100%',
+    borderRadius: '10px',
+    border: '1px solid var(--border-muted)',
+    padding: '10px 12px',
+    fontSize: '0.95rem',
+    fontFamily: 'inherit'
+  },
+  modalHint: {
+    margin: '0 0 8px 0',
+    fontSize: '0.9rem',
+    color: 'var(--tone-muted)'
+  },
+  modalError: {
+    margin: '6px 0 0 0',
+    fontSize: '0.85rem',
+    color: 'var(--danger)'
+  },
   modalActions: {
     display: 'flex',
     justifyContent: 'flex-end',

@@ -249,7 +249,7 @@ const MockExamPage = () => {
           </div>
           <EagleGuideChip text="타이머와 문항 이동을 깔끔하게 돕는 모드예요" variant="accent" />
           <div style={styles.heroButtons}>
-            <button type="button" style={styles.primaryButton} onClick={handleStart}>
+            <button type="button" style={styles.primaryButton} onClick={handleStart} data-testid="mock-start-button">
               <LucideIcons.PlayCircle size={20} /> 지금 바로 응시하기
             </button>
             <button
@@ -312,7 +312,7 @@ const MockExamPage = () => {
           <div style={{ ...styles.progressBarFill, width: `${progress}%` }} />
         </div>
 
-        <div style={styles.questionCard}>
+        <div style={styles.questionCard} data-testid="mock-question" data-question-number={question.number}>
           <div style={styles.questionPrompt}>
             {question.promptLines.map((line, idx) => (
               <p key={idx} style={styles.promptLine}>{line}</p>
@@ -325,6 +325,8 @@ const MockExamPage = () => {
               return (
                 <button
                   key={choice.mark || idx}
+                  data-testid="mock-choice"
+                  data-choice-index={idx}
                   type="button"
                   style={{
                     ...styles.choiceButton,
@@ -375,6 +377,7 @@ const MockExamPage = () => {
             }}
             onClick={() => handleSubmit(false)}
             disabled={state.submitting}
+            data-testid="mock-submit"
           >
             {state.submitting ? '제출 중...' : '모의고사 제출하기'}
           </button>
@@ -412,7 +415,7 @@ const MockExamPage = () => {
       : total - correctCount - incorrectCount;
 
     return (
-      <div style={styles.resultLayout}>
+      <div style={styles.resultLayout} data-testid="mock-result">
         <section style={styles.resultHero}>
           <div style={styles.resultSummaryCard}>
             <span style={styles.heroBadge}>결과 요약</span>

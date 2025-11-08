@@ -873,6 +873,8 @@ const getTimeLimitSeconds = useCallback(() => {
                       <div key={section.key} style={styles.categorySection}>
                         <button
                           type="button"
+                          data-testid="vocab-category-toggle"
+                          data-category-key={section.key}
                           style={{
                             ...styles.categoryHeaderButton,
                             ...(isCollapsed ? styles.categoryHeaderButtonCollapsed : {})
@@ -903,6 +905,8 @@ const getTimeLimitSeconds = useCallback(() => {
                                 <button
                                   key={set.id}
                                   type="button"
+                                  data-testid="vocab-set-card"
+                                  data-set-id={set.id}
                                   style={{
                                     ...styles.setCard,
                                     borderColor: isActive ? 'var(--color-blue-500)' : 'transparent',
@@ -943,6 +947,8 @@ const getTimeLimitSeconds = useCallback(() => {
                     return (
                       <article
                         key={day.key}
+                        data-testid="vocab-day-card"
+                        data-day-key={day.key}
                         style={{
                           ...styles.dayCard,
                           borderColor: selected ? 'var(--color-green-500)' : 'transparent',
@@ -1020,6 +1026,7 @@ const getTimeLimitSeconds = useCallback(() => {
                   </p>
                   <button
                     type="button"
+                    data-testid="vocab-go-to-setup"
                     style={{
                       ...styles.primaryButton,
                       ...(selectedDayLabels.length ? {} : styles.primaryButtonDisabled)
@@ -1117,6 +1124,7 @@ const getTimeLimitSeconds = useCallback(() => {
                 </button>
                 <button
                   type="button"
+                  data-testid="vocab-start-quiz"
                   style={styles.primaryButton}
                   onClick={handleStartQuiz}
                   disabled={quizState.loading}
@@ -1238,6 +1246,8 @@ const QuizBox = ({
       <button
         key={`${problem.problemId}-${choiceNumber}`}
         type="button"
+        data-testid="vocab-option"
+        data-choice-index={choiceNumber - 1}
         style={{
           ...styles.optionButton,
           ...(isSelected ? styles.optionButtonSelected : {})
@@ -1251,7 +1261,7 @@ const QuizBox = ({
   });
 
   return (
-    <div style={styles.quizCard}>
+    <div style={styles.quizCard} data-testid="vocab-question">
       <div style={styles.quizHeader}>
         <span style={styles.quizProgress}>문제 {index + 1} / {total}</span>
         <div style={styles.timerBox}>
@@ -1275,15 +1285,16 @@ const QuizBox = ({
           type="button"
           style={styles.linkButton}
           onClick={onExit}
+          data-testid="vocab-exit"
         >
           시험 종료
         </button>
         {index === total - 1 ? (
-          <button type="button" style={styles.primaryButton} onClick={onSubmit}>
+          <button type="button" style={styles.primaryButton} onClick={onSubmit} data-testid="vocab-submit">
             제출하기
           </button>
         ) : (
-          <button type="button" style={styles.primaryButton} onClick={onNext}>
+          <button type="button" style={styles.primaryButton} onClick={onNext} data-testid="vocab-next">
             다음 문제 ▶
           </button>
         )}
@@ -1305,7 +1316,7 @@ const QuizSummary = ({ summary, detail, stats, rank, submitting, onRetry, onBack
 
   if (submitting) {
     return (
-      <div style={styles.quizCard}>
+      <div style={styles.quizCard} data-testid="vocab-summary">
         <h3 style={styles.quizPrompt}>채점 중입니다... ⏳</h3>
         <p style={styles.actionHint}>정답과 해설을 정리하고 있어요. 잠시만 기다려 주세요!</p>
       </div>
@@ -1313,7 +1324,7 @@ const QuizSummary = ({ summary, detail, stats, rank, submitting, onRetry, onBack
   }
 
   return (
-    <div style={styles.quizCard}>
+    <div style={styles.quizCard} data-testid="vocab-summary">
       <div style={styles.resultBanner}>
         <h3 style={styles.quizPrompt}>🎉 수고했어요! 결과를 확인해 볼까요?</h3>
         <p style={styles.resultSubtitle}>이번 시도에서 쌓은 경험이 다음 점수를 올려 줄 거예요!</p>

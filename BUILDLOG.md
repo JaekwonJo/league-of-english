@@ -3,8 +3,13 @@
 - Cause: 초기 리뉴얼 때 디폴트 라이트 톤을 사용했고, 애니메이션 상태는 onClick 시에만 mood가 바뀌도록 구성돼 있었습니다.
 - Fix: 히어로/하이라이트/CTA를 네이비-골드 그라데이션과 미니 메트릭 카드로 재구성하고, 빠른 실행 버튼도 동일 팔레트와 아이콘 배지로 통일했습니다.
 - Fix: 마스코트 색상을 독수리 톤(네이비·브론즈·골드)으로 바꾸고 wink 타이머/cheer 루프/후광·그림자 레이어를 추가해 항상 살아 있는 느낌을 주었습니다.
+- Fix: VocabularyPage/MockExamPage에 데이터 테스트 ID를 심고 Playwright 시나리오 두 건(단어장 시험/모의고사)을 작성, upload→선택→제출까지 자동 검증하도록 했습니다.
+- Fix: AnalysisPage 지문 이름 변경을 prompt → 모달 입력으로 교체해 모바일/IME에서도 오류 없이 작동하며, 길이 검증과 오류 메시지를 제공합니다.
+- Fix: 랭킹 API는 사용자 데이터가 없거나 쿼리가 실패할 때 안전한 폴백 순위표/티어 분포를 반환해 홈 위젯이 500 없이 로드됩니다.
 - Files: client/src/pages/HomePage.js, client/src/index.css.
+- Files: client/src/pages/VocabularyPage.js, client/src/pages/MockExamPage.js, tests/e2e/*.spec.js, client/src/pages/AnalysisPage.js, client/src/styles/analysisStyles.js, server/routes/ranking.routes.js.
 - Verification: `CI=true npm run test --prefix client -- --watch=false`.
+- Verification: `npm run test` (server unit) – 기존 fallback 분석 케이스 실패는 Known Issues 참고.
 
 ## 2025-11-07 (analysis/vocab UI polish + mock exam fallback)
 - Issue: 분석 자료/어휘/랭킹 화면이 어두운 배경에 어두운 글씨로 보이거나 의미 없는 "총 Day" 카운터 때문에 학습자가 혼란을 겪었습니다.

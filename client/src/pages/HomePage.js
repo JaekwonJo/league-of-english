@@ -192,6 +192,9 @@ const HomePage = () => {
   ], [stats?.dailyGoal, reviewQueue.total, streakDays]);
 
   const currentEagleHint = eagleHints[eagleHintIndex];
+  const highlightRowStyle = isMobile
+    ? { ...styles.heroHighlightRow, ...styles.heroHighlightRowMobile }
+    : styles.heroHighlightRow;
 
   return (
     <div style={isMobile ? { ...styles.container, ...styles.containerMobile } : styles.container}>
@@ -221,7 +224,7 @@ const HomePage = () => {
             </div>
           )}
           <p style={styles.heroNote}>Tip · 마스코트를 눌러서 오늘의 미션을 확인해 보세요!</p>
-          <div style={styles.heroHighlightRow}>
+          <div style={highlightRowStyle}>
             {heroHighlightCards.map((badge) => (
               <div key={badge.label} style={styles.heroHighlightCard}>
                 <span style={styles.heroHighlightIcon}>{badge.icon}</span>
@@ -463,8 +466,9 @@ const styles = {
   },
   heroSectionMobile: {
     flexDirection: 'column',
-    padding: '24px',
-    borderRadius: '24px'
+    padding: '28px 20px',
+    borderRadius: '24px',
+    textAlign: 'center'
   },
   heroTextBlock: {
     flex: '1 1 360px',
@@ -476,7 +480,9 @@ const styles = {
   },
   heroTextBlockMobile: {
     order: 2,
-    gap: '10px'
+    gap: '10px',
+    textAlign: 'center',
+    alignItems: 'center'
   },
   heroTag: {
     display: 'inline-flex',
@@ -597,6 +603,10 @@ const styles = {
     gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
     gap: '12px',
     marginTop: '18px'
+  },
+  heroHighlightRowMobile: {
+    gridTemplateColumns: '1fr',
+    width: '100%'
   },
   heroHighlightCard: {
     display: 'flex',

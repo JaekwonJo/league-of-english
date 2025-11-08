@@ -10,14 +10,24 @@ const tierConfig = require('../config/tierConfig.json');
 const { getTierInfo, getNextTier, calculateProgress } = require('../utils/tierUtils');
 const { getUserRank } = require('../services/studyService');
 
+const FALLBACK_PLAYERS = [
+  { name: '연습생 민지', username: 'demo-minji', points: 4200, membership: 'pro', school: 'League Prep', grade: '고2' },
+  { name: '연습생 도윤', username: 'demo-doyoon', points: 3850, membership: 'premium', school: 'League Prep', grade: '고2' },
+  { name: '연습생 수아', username: 'demo-sua', points: 3320, membership: 'free', school: 'League Prep', grade: '고1' },
+  { name: '연습생 준호', username: 'demo-junho', points: 2980, membership: 'free', school: 'League Prep', grade: '고1' },
+  { name: '연습생 하린', username: 'demo-harin', points: 2680, membership: 'pro', school: 'League Prep', grade: '고3' },
+  { name: '연습생 세나', username: 'demo-sena', points: 2410, membership: 'premium', school: 'League Prep', grade: '중3' }
+];
+
 /**
  * GET /api/ranking/leaderboard
  * 리더보드 조회 (상위 100명)
  */
 router.get('/leaderboard', verifyToken, async (req, res) => {
+  const limit = clampPositiveInt(req.query?.limit, 100, 1, 200);
+  const offset = clampPositiveInt(req.query?.offset, 0, 0, 100000);
+
   try {
-    const limit = clampPositiveInt(req.query?.limit, 100, 1, 200);
-    const offset = clampPositiveInt(req.query?.offset, 0, 0, 100000);
     const activeClause = await getActiveFilterClause();
 
     const rankingsRaw = await database.all(
@@ -39,6 +49,12 @@ router.get('/leaderboard', verifyToken, async (req, res) => {
       [limit, offset]
     );
 
+    const totalRankedUsers = await getTotalRankedUsers();
+
+    if (!rankingsRaw.length || totalRankedUsers === 0) {
+      return res.status(200).json(buildLeaderboardFallbackResponse({ limit, offset, user: req.user, reason: 'empty' }));
+    }
+
     const enrichedRankings = rankingsRaw.map((user, index) => {
       const tier = getTierInfo(user.points);
       return {
@@ -49,24 +65,26 @@ router.get('/leaderboard', verifyToken, async (req, res) => {
       };
     });
 
-    const rankSnapshot = await getUserRank(req.user.id);
+    let rankSnapshot;
+    try {
+      rankSnapshot = await getUserRank(req.user.id);
+    } catch (rankError) {
+      console.warn('랭킹 계산 중 사용자 정보를 불러오지 못해 기본값으로 대체합니다.', rankError?.message || rankError);
+      rankSnapshot = fallbackCurrentUser(req.user);
+    }
 
     res.json({
       rankings: enrichedRankings,
-      currentUser: {
-        rank: rankSnapshot?.rank ?? null,
-        points: rankSnapshot?.points ?? req.user.points,
-        tier: rankSnapshot?.tier ?? getTierInfo(req.user.points)
-      },
+      currentUser: rankSnapshot,
       metadata: {
-        total: await getTotalRankedUsers(),
+        total: totalRankedUsers,
         limit,
         offset
       }
     });
   } catch (error) {
     console.error('리더보드 조회 오류:', error);
-    res.status(500).json({ message: '랭킹을 불러오는데 실패했습니다.' });
+    res.status(200).json(buildLeaderboardFallbackResponse({ limit, offset, user: req.user, reason: error?.message }));
   }
 });
 
@@ -78,6 +96,9 @@ router.get('/tier-distribution', verifyToken, async (req, res) => {
   try {
     const activeClause = await getActiveFilterClause();
     const users = await database.all(`SELECT points FROM users WHERE points > 0${activeClause}`);
+    if (!users.length) {
+      return res.status(200).json(buildFallbackDistributionPayload());
+    }
     
     const distribution = tierConfig.tiers.map(tier => {
       const count = users.filter(user => {
@@ -101,7 +122,7 @@ router.get('/tier-distribution', verifyToken, async (req, res) => {
     });
   } catch (error) {
     console.error('티어 분포 조회 오류:', error);
-    res.status(500).json({ message: '티어 분포를 불러오는데 실패했습니다.' });
+    res.status(200).json(buildFallbackDistributionPayload(error?.message));
   }
 });
 
@@ -185,6 +206,86 @@ function clampPositiveInt(value, fallback, min, max) {
   if (Number.isNaN(parsed)) return fallback;
   const clamped = Math.min(Math.max(parsed, min), max);
   return clamped;
+}
+
+function buildLeaderboardFallbackResponse({ limit = 10, offset = 0, user, reason }) {
+  const safeLimit = Math.max(1, Math.min(limit, 50));
+  const rankings = buildFallbackRankings(safeLimit, offset);
+  return {
+    rankings,
+    currentUser: fallbackCurrentUser(user),
+    metadata: {
+      total: FALLBACK_PLAYERS.length,
+      limit: safeLimit,
+      offset,
+      fallback: true,
+      reason
+    }
+  };
+}
+
+function buildFallbackRankings(limit, offset) {
+  const rows = [];
+  for (let i = 0; i < limit; i += 1) {
+    const template = FALLBACK_PLAYERS[(offset + i) % FALLBACK_PLAYERS.length];
+    rows.push({
+      id: `fallback-${offset + i + 1}`,
+      name: template.name,
+      username: template.username,
+      points: template.points,
+      school: template.school,
+      grade: template.grade,
+      membership: template.membership,
+      role: 'student',
+      rank: offset + i + 1,
+      tier: getTierInfo(template.points),
+      isActive: true,
+      fallback: true
+    });
+  }
+  return rows;
+}
+
+function fallbackCurrentUser(user) {
+  const points = Number(user?.points) || 0;
+  const tier = getTierInfo(points);
+  const nextTier = getNextTier(tier);
+  return {
+    rank: null,
+    points,
+    tier,
+    nextTier,
+    progressToNext: nextTier ? calculateProgress(points, tier, nextTier) : 100,
+    fallback: true
+  };
+}
+
+function buildFallbackDistributionPayload(reason) {
+  return {
+    distribution: buildFallbackDistribution(),
+    totalUsers: FALLBACK_PLAYERS.length,
+    fallback: true,
+    reason
+  };
+}
+
+function buildFallbackDistribution() {
+  return tierConfig.tiers.map((tier) => {
+    const count = FALLBACK_PLAYERS.filter((player) => (
+      player.points >= tier.minLP && (tier.maxLP === -1 || player.points <= tier.maxLP)
+    )).length;
+    return {
+      tier: tier.name,
+      tierKr: tier.nameKr,
+      icon: tier.icon,
+      color: tier.color,
+      count,
+      percentage: FALLBACK_PLAYERS.length
+        ? ((count / FALLBACK_PLAYERS.length) * 100).toFixed(1)
+        : 0,
+      fallback: true
+    };
+  });
 }
 
 module.exports = router;

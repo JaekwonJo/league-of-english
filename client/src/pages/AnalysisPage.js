@@ -8,6 +8,7 @@ import FriendlyError from '../components/common/FriendlyError';
 import EagleGuideChip from '../components/common/EagleGuideChip';
 
 const MAX_VARIANTS_PER_PASSAGE = 2;
+const MAX_PASSAGE_LABEL_LENGTH = 40;
 
 const GENERATION_WORDS = [
   { word: 'spark', meaning: '불꽃; 아이디어가 시작되는 불씨' },
@@ -164,6 +165,13 @@ const AnalysisPage = () => {
   const [analysisLimitError, setAnalysisLimitError] = useState(null);
   const [feedbackMessage, setFeedbackMessage] = useState(null);
   const [reportModal, setReportModal] = useState({ open: false, variantIndex: null, reason: '' });
+  const [labelEditor, setLabelEditor] = useState({
+    open: false,
+    passage: null,
+    value: '',
+    error: '',
+    submitting: false
+  });
   const [reportSubmitting, setReportSubmitting] = useState(false);
   const userRole = user?.role || 'student';
   const canEditLabels = isAdmin || userRole === 'teacher';
@@ -412,26 +420,63 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
     }
   };
 
-  const handleEditPassageLabel = async (passage) => {
+  const handleEditPassageLabel = (passage) => {
     if (!selectedDocument || !canEditLabels) return;
-    const current = passage.displayLabel || '';
-    const next = window.prompt('새 지문 이름을 입력해 주세요. 비우면 번호가 표시됩니다.', current);
-    if (next === null) return;
-    const trimmed = next.trim();
+    setLabelEditor({
+      open: true,
+      passage,
+      value: passage.displayLabel || '',
+      error: '',
+      submitting: false
+    });
+  };
+
+  const closeLabelModal = () => {
+    setLabelEditor({ open: false, passage: null, value: '', error: '', submitting: false });
+  };
+
+  const handleLabelInputChange = (value) => {
+    setLabelEditor((prev) => ({
+      ...prev,
+      value,
+      error: value.trim().length > MAX_PASSAGE_LABEL_LENGTH
+        ? `지문 이름은 최대 ${MAX_PASSAGE_LABEL_LENGTH}자로 입력해 주세요.`
+        : ''
+    }));
+  };
+
+  const handleLabelModalSave = async () => {
+    if (!selectedDocument || !labelEditor.passage || labelEditor.submitting) return;
+    const trimmed = labelEditor.value.trim();
+    if (trimmed.length > MAX_PASSAGE_LABEL_LENGTH) {
+      setLabelEditor((prev) => ({
+        ...prev,
+        error: `지문 이름은 최대 ${MAX_PASSAGE_LABEL_LENGTH}자로 입력해 주세요.`
+      }));
+      return;
+    }
+
+    setLabelEditor((prev) => ({ ...prev, submitting: true, error: '' }));
+
     try {
-      await api.analysis.updatePassageLabel(selectedDocument.id, passage.passageNumber, trimmed);
+      await api.analysis.updatePassageLabel(selectedDocument.id, labelEditor.passage.passageNumber, trimmed);
       setPassageList((prev) => prev.map((item) => (
-        item.passageNumber === passage.passageNumber
+        item.passageNumber === labelEditor.passage.passageNumber
           ? { ...item, displayLabel: trimmed || null }
           : item
       )));
       setSelectedPassage((prev) => (
-        prev && prev.passageNumber === passage.passageNumber
+        prev && prev.passageNumber === labelEditor.passage.passageNumber
           ? { ...prev, displayLabel: trimmed || null }
           : prev
       ));
+      closeLabelModal();
     } catch (error) {
-      raiseError('지문 이름을 저장하지 못했습니다.', error?.message || '');
+      setLabelEditor((prev) => ({
+        ...prev,
+        submitting: false,
+        error: error?.message || '지문 이름을 저장하지 못했습니다.'
+      }));
     }
   };
 
@@ -835,6 +880,46 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
             </button>
             <button type="button" style={analysisStyles.modalPrimaryButton} onClick={handleReportSubmit} disabled={reportSubmitting}>
               {reportSubmitting ? '전송 중...' : '신고 전송'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderLabelEditorModal = () => {
+    if (!labelEditor.open || !labelEditor.passage) return null;
+    const helperText = `최대 ${MAX_PASSAGE_LABEL_LENGTH}자 · 비워두면 기본 번호가 표시됩니다.`;
+    return (
+      <div style={analysisStyles.modalOverlay}>
+        <div style={analysisStyles.modalContentSmall}>
+          <h3 style={analysisStyles.modalTitle}>지문 이름 바꾸기</h3>
+          <p style={analysisStyles.modalHint}>{helperText}</p>
+          <input
+            type="text"
+            style={analysisStyles.modalInput}
+            value={labelEditor.value}
+            onChange={(event) => handleLabelInputChange(event.target.value)}
+            maxLength={MAX_PASSAGE_LABEL_LENGTH + 20}
+            placeholder="예: 01 지구 과학 실험"
+          />
+          {labelEditor.error && <p style={analysisStyles.modalError}>{labelEditor.error}</p>}
+          <div style={analysisStyles.modalActions}>
+            <button
+              type="button"
+              style={analysisStyles.modalSecondaryButton}
+              onClick={closeLabelModal}
+              disabled={labelEditor.submitting}
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              style={analysisStyles.modalPrimaryButton}
+              onClick={handleLabelModalSave}
+              disabled={labelEditor.submitting}
+            >
+              {labelEditor.submitting ? '저장 중...' : '저장하기'}
             </button>
           </div>
         </div>
@@ -1470,6 +1555,8 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
           </div>
         </div>
       )}
+
+      {renderLabelEditorModal()}
 
       <PassagePreviewModal
         open={Boolean(previewPassage)}
