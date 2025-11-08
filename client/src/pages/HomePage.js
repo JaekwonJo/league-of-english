@@ -155,23 +155,6 @@ const HomePage = () => {
     };
   }, [currentTier]);
 
-  if (loading) {
-    return (
-      <div style={styles.loadingWrapper}>
-        <div style={styles.spinner} />
-        <p>대시보드를 준비하고 있어요…</p>
-      </div>
-    );
-  }
-
-  const statCards = [
-    { label: '총 학습 세션', value: stats?.totalSessions ?? 0, suffix: '회' },
-    { label: '정답률', value: stats?.accuracy ?? 0, suffix: '%', isPercent: true },
-    { label: '누적 문제 수', value: stats?.totalProblems ?? 0, suffix: '문' },
-    { label: '누적 정답 수', value: stats?.totalCorrect ?? 0, suffix: '문' },
-    { label: '지난 7일 학습', value: stats?.weeklySessions ?? 0, suffix: '회' }
-  ];
-
   const heroHighlightCards = useMemo(() => [
     {
       icon: '⚡️',
@@ -192,6 +175,23 @@ const HomePage = () => {
       detail: streakDays ? '기록 유지 중' : '지금 시작'
     }
   ], [stats?.dailyGoal, reviewQueue.total, streakDays]);
+
+  if (loading) {
+    return (
+      <div style={styles.loadingWrapper}>
+        <div style={styles.spinner} />
+        <p>대시보드를 준비하고 있어요…</p>
+      </div>
+    );
+  }
+
+  const statCards = [
+    { label: '총 학습 세션', value: stats?.totalSessions ?? 0, suffix: '회' },
+    { label: '정답률', value: stats?.accuracy ?? 0, suffix: '%', isPercent: true },
+    { label: '누적 문제 수', value: stats?.totalProblems ?? 0, suffix: '문' },
+    { label: '누적 정답 수', value: stats?.totalCorrect ?? 0, suffix: '문' },
+    { label: '지난 7일 학습', value: stats?.weeklySessions ?? 0, suffix: '회' }
+  ];
 
   const currentEagleHint = eagleHints[eagleHintIndex];
   const highlightRowStyle = isMobile
