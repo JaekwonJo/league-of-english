@@ -23,7 +23,8 @@ const typeLabelMap = {
   title: '제목',
   theme: '주제',
   summary: '요약',
-  implicit: '함축 의미'
+  implicit: '함축 의미',
+  mock_exam: '모의고사'
 };
 
 const StatsPage = () => {
@@ -76,11 +77,52 @@ const StatsPage = () => {
     };
   }, [stats]);
 
+  const mockExamStats = useMemo(() => {
+    if (stats?.mockExam) {
+      const total = Number(stats.mockExam.total) || 0;
+      const correct = Number(stats.mockExam.correct) || 0;
+      return {
+        total,
+        correct,
+        incorrect: Math.max(0, total - correct),
+        accuracy: Number(stats.mockExam.accuracy) || (total ? (correct / total) * 100 : 0)
+      };
+    }
+
+    if (Array.isArray(stats?.perType)) {
+      const entry = stats.perType.find((item) => item.type === 'mock_exam');
+      if (entry) {
+        const total = Number(entry.total) || 0;
+        const correct = Number(entry.correct) || 0;
+        return {
+          total,
+          correct,
+          incorrect: Math.max(0, total - correct),
+          accuracy: Number(entry.accuracy) || (total ? (correct / total) * 100 : 0)
+        };
+      }
+    }
+    return null;
+  }, [stats]);
+
   const perTypeData = useMemo(() => {
     if (!Array.isArray(stats?.perType)) return [];
-    return stats.perType
-      .slice(0, 6)
-      .map((d) => ({ name: d.type, total: Number(d.total) || 0, accuracy: Number(d.accuracy) || 0 }));
+    const sorted = [...stats.perType].sort((a, b) => (Number(b.total) || 0) - (Number(a.total) || 0));
+    const top = sorted.slice(0, 6);
+    const mockEntry = sorted.find((item) => item.type === 'mock_exam');
+    if (mockEntry && !top.some((item) => item.type === 'mock_exam')) {
+      if (top.length >= 6) {
+        top[top.length - 1] = mockEntry;
+      } else {
+        top.push(mockEntry);
+      }
+    }
+    return top.map((d) => ({
+      type: d.type,
+      name: typeLabelMap[d.type] || d.type,
+      total: Number(d.total) || 0,
+      accuracy: Number(d.accuracy) || 0
+    }));
   }, [stats]);
 
   const typeAccuracyList = useMemo(() => (
@@ -103,6 +145,10 @@ const StatsPage = () => {
     { label: '정답률', value: formatPercent(stats?.accuracy), helper: '최근까지 누적 정확도' },
     { label: '진행한 세션', value: `${formatNumber(stats?.totalSessions ?? 0)}회`, helper: `지난 7일 ${formatNumber(stats?.weeklySessions ?? 0)}회` }
   ];
+
+  const mockExamAccuracy = mockExamStats
+    ? Math.min(100, Math.max(0, Number(mockExamStats.accuracy) || 0))
+    : 0;
 
   const comingSoonItems = useMemo(() => ([
     {
@@ -222,6 +268,62 @@ const StatsPage = () => {
               <EagleGuideChip text="숫자로 학습 페이스를 확인해요" />
             </div>
             {renderSummaryCards()}
+          </section>
+
+          <section style={styles.section}>
+            <div style={styles.sectionHeaderRow}>
+              <h2 style={styles.sectionTitle}>🦅 모의고사 성과</h2>
+              <span style={styles.sectionHint}>실전 응시 결과를 자동으로 누적해요</span>
+              <EagleGuideChip text="모의고사 점수도 통계에 기록했어요" variant="accent" />
+            </div>
+            {mockExamStats ? (
+              <div style={isMobile ? styles.sliderRow : styles.mockExamGrid}>
+                <div style={isMobile ? styles.sliderItem : undefined}>
+                  <div style={styles.mockExamCard}>
+                    <p style={styles.statLabel}>정답률</p>
+                    <div style={styles.mockExamGauge}>
+                      <div
+                        style={{
+                          ...styles.mockExamGaugeRing,
+                          background: `conic-gradient(#f3c969 ${mockExamAccuracy}%, rgba(148,163,184,0.25) ${mockExamAccuracy}% 100%)`
+                        }}
+                      >
+                        <div style={styles.mockExamGaugeCenter}>
+                          <strong style={styles.mockExamGaugeValue}>{formatPercent(mockExamStats.accuracy)}</strong>
+                          <span style={styles.mockExamGaugeLabel}>누적</span>
+                        </div>
+                      </div>
+                    </div>
+                    <span style={styles.statHelper}>실전 응시 결과 기준</span>
+                  </div>
+                </div>
+                <div style={isMobile ? styles.sliderItem : undefined}>
+                  <div style={styles.mockExamCard}>
+                    <p style={styles.statLabel}>풀이 현황</p>
+                    <ul style={styles.mockExamList}>
+                      <li style={styles.mockExamListItem}>
+                        <span>총 풀이</span>
+                        <strong>{formatNumber(mockExamStats.total)}문</strong>
+                      </li>
+                      <li style={styles.mockExamListItem}>
+                        <span>정답</span>
+                        <strong>{formatNumber(mockExamStats.correct)}문</strong>
+                      </li>
+                      <li style={styles.mockExamListItem}>
+                        <span>오답</span>
+                        <strong>{formatNumber(mockExamStats.incorrect)}문</strong>
+                      </li>
+                    </ul>
+                    <p style={styles.mockExamNote}>제출 즉시 랭킹 · 학습 통계에 반영됩니다.</p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div style={styles.emptyCard}>
+                <p style={styles.emptyTitle}>아직 모의고사 기록이 없어요.</p>
+                <p style={styles.emptyBody}>모의고사 풀이에서 제출하면 점수와 정확도가 여기에 바로 표시됩니다.</p>
+              </div>
+            )}
           </section>
 
           <section style={styles.section}>
@@ -360,6 +462,11 @@ const styles = {
     gap: '18px',
     gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))'
   },
+  mockExamGrid: {
+    display: 'grid',
+    gap: '18px',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))'
+  },
   sliderRow: {
     display: 'flex',
     gap: '14px',
@@ -392,6 +499,68 @@ const styles = {
     color: 'var(--text-primary)'
   },
   statHelper: {
+    fontSize: '0.85rem',
+    color: 'var(--tone-muted)'
+  },
+  mockExamCard: {
+    background: 'var(--surface-card)',
+    borderRadius: '18px',
+    padding: '20px 22px',
+    border: '1px solid var(--surface-border)',
+    boxShadow: '0 18px 40px rgba(15,23,42,0.12)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+    minHeight: '220px'
+  },
+  mockExamGauge: {
+    display: 'flex',
+    justifyContent: 'center'
+  },
+  mockExamGaugeRing: {
+    width: '160px',
+    height: '160px',
+    borderRadius: '50%',
+    background: 'conic-gradient(#f3c969 0%, rgba(148,163,184,0.25) 0)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  mockExamGaugeCenter: {
+    width: '120px',
+    height: '120px',
+    borderRadius: '50%',
+    background: 'var(--surface-card)',
+    border: '4px solid rgba(148,163,184,0.25)',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  mockExamGaugeValue: {
+    fontSize: '1.8rem',
+    fontWeight: 800,
+    color: 'var(--tone-hero)'
+  },
+  mockExamGaugeLabel: {
+    fontSize: '0.85rem',
+    color: 'var(--tone-muted)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.08em'
+  },
+  mockExamList: {
+    listStyle: 'none',
+    padding: 0,
+    margin: 0,
+    display: 'grid',
+    gap: '10px'
+  },
+  mockExamListItem: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    fontWeight: 600
+  },
+  mockExamNote: {
     fontSize: '0.85rem',
     color: 'var(--tone-muted)'
   },

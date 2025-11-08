@@ -219,13 +219,16 @@ async function getUserStats(userId) {
     };
   });
 
+  const mockExamEntry = perType.find((entry) => entry.type === 'mock_exam') || null;
+
   return {
     totalProblems,
     totalCorrect,
     accuracy,
     totalSessions,
     weeklySessions,
-    perType
+    perType,
+    mockExam: mockExamEntry
   };
 }
 

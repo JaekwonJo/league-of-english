@@ -14,6 +14,7 @@ const typeLabelMap = {
   theme: '주제',
   summary: '요약',
   implicit: '함축 의미',
+  mock_exam: '모의고사'
 };
 
 const quickButtonIconMap = {
@@ -26,6 +27,7 @@ const quickButtonIconMap = {
 const eagleHints = [
   '어휘 훈련에서 Day를 하나 골라 볼까요?',
   '분석 자료에서 새 지문을 열어 보세요!',
+  '모의고사 응시 전 방해금지 모드를 켜두면 집중력이 올라가요!',
   '모의고사 50분 타이머도 준비되어 있어요!',
   '복습 대기열은 매일 조금씩 비우면 좋아요!'
 ];
@@ -404,19 +406,22 @@ const EagleMascot = ({ mood, onInteract, hint, pulseKey, isMobile }) => (
           ...(isMobile ? styles.eagleBodyMobile : {})
         }}
       >
-        <div style={styles.eagleEarLeft} />
-        <div style={styles.eagleEarRight} />
-        <div style={styles.eagleFace}>
-          <div style={{ ...styles.eagleEye, ...(mood === 'wink' ? styles.eagleEyeWink : {}) }}>
-            <div style={styles.eaglePupil} />
-          </div>
-          <div style={{ ...styles.eagleEye, ...(mood === 'cheer' ? styles.eagleEyeCheer : {}) }}>
-            <div style={styles.eaglePupil} />
-          </div>
-          <div style={styles.eagleBeak} />
-        </div>
+        <div style={styles.eagleTail} />
         <div style={styles.eagleWingLeft} />
         <div style={styles.eagleWingRight} />
+        <div style={styles.eagleHead}>
+          <div style={styles.eagleCrest} />
+          <div style={styles.eagleFace}>
+            <div style={{ ...styles.eagleEye, ...(mood === 'wink' ? styles.eagleEyeWink : {}) }}>
+              <div style={styles.eaglePupil} />
+            </div>
+            <div style={{ ...styles.eagleEye, ...(mood === 'cheer' ? styles.eagleEyeCheer : {}) }}>
+              <div style={styles.eaglePupil} />
+            </div>
+            <div style={styles.eagleBeak} />
+          </div>
+        </div>
+        <div style={styles.eagleChestBand} />
         <div style={styles.eagleBelly}>
           <span style={styles.eagleBadge}>League of English</span>
         </div>
@@ -837,61 +842,68 @@ const styles = {
     zIndex: 0
   },
   eagleBody: {
-    width: '220px',
-    height: '230px',
-    borderRadius: '110px',
-    background: 'linear-gradient(180deg, #0F172A 0%, #1E3A5F 45%, #C58E4C 100%)',
-    border: '4px solid rgba(255,255,255,0.3)',
+    width: '240px',
+    height: '260px',
+    borderRadius: '140px 140px 110px 110px',
+    background: 'linear-gradient(180deg, #1b253c 0%, #3c2a1b 38%, #d79d45 100%)',
+    border: '4px solid rgba(255,255,255,0.25)',
     position: 'relative',
-    boxShadow: '0 25px 45px rgba(3,7,18,0.55)',
+    boxShadow: '0 35px 70px rgba(3,7,18,0.55)',
+    overflow: 'visible',
+    transition: 'box-shadow 0.3s ease',
     zIndex: 1
   },
   eagleBodyCheer: {
-    boxShadow: '0 30px 60px rgba(244, 201, 93, 0.45)'
+    boxShadow: '0 42px 80px rgba(255, 215, 128, 0.45)'
   },
   eagleBodyMobile: {
-    width: '180px',
-    height: '190px'
+    width: '200px',
+    height: '220px'
   },
-  eagleEarLeft: {
+  eagleHead: {
     position: 'absolute',
-    top: '-18px',
-    left: '40px',
-    width: '40px',
-    height: '40px',
-    background: '#1F2937',
-    transform: 'rotate(-20deg)',
-    borderRadius: '12px 12px 2px 2px'
+    top: '-70px',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    width: '160px',
+    height: '160px',
+    borderRadius: '90px 90px 70px 70px',
+    background: 'linear-gradient(180deg, #ffffff 0%, #fdf5e3 60%, #f6d7a3 100%)',
+    border: '4px solid rgba(15,23,42,0.12)',
+    boxShadow: '0 20px 40px rgba(15,23,42,0.35)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
   },
-  eagleEarRight: {
+  eagleCrest: {
     position: 'absolute',
-    top: '-18px',
-    right: '40px',
-    width: '40px',
-    height: '40px',
-    background: '#1F2937',
-    transform: 'rotate(20deg)',
-    borderRadius: '12px 12px 2px 2px'
+    top: '-24px',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    width: '90px',
+    height: '38px',
+    borderRadius: '90px 90px 0 0',
+    background: 'linear-gradient(90deg, #f6c343 0%, #f4d06f 100%)',
+    boxShadow: '0 8px 18px rgba(0,0,0,0.18)'
   },
   eagleFace: {
-    position: 'absolute',
-    top: '36px',
-    left: '20px',
-    right: '20px',
+    width: '86%',
     display: 'flex',
     justifyContent: 'space-between',
-    alignItems: 'center'
+    alignItems: 'center',
+    position: 'relative'
   },
   eagleEye: {
-    width: '68px',
-    height: '68px',
-    borderRadius: '50%',
+    width: '64px',
+    height: '64px',
+    borderRadius: '55px',
     background: '#F8FAFC',
     border: '4px solid #0F172A',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    animation: 'eagleBlink 6s infinite'
+    animation: 'eagleBlink 6s infinite',
+    boxShadow: 'inset 0 -4px 0 rgba(15,23,42,0.12)'
   },
   eagleEyeWink: {
     animation: 'eagleBlinkQuick 0.2s 4 alternate'
@@ -903,76 +915,104 @@ const styles = {
     width: '26px',
     height: '26px',
     borderRadius: '50%',
-    background: '#0F172A'
+    background: '#0F172A',
+    boxShadow: '0 0 0 6px rgba(15,23,42,0.08)'
   },
   eagleBeak: {
     position: 'absolute',
+    top: '72px',
     left: '50%',
     transform: 'translateX(-50%)',
-    top: '52px',
-    width: '34px',
-    height: '28px',
-    borderRadius: '50% 50% 40% 40%',
-    background: '#FDBA74'
+    width: '58px',
+    height: '48px',
+    background: 'linear-gradient(180deg, #ffd88c 0%, #f9a826 100%)',
+    clipPath: 'polygon(50% 0%, 100% 60%, 50% 100%, 0% 60%)',
+    boxShadow: '0 6px 12px rgba(0,0,0,0.25)'
   },
   eagleWingLeft: {
     position: 'absolute',
-    width: '70px',
-    height: '120px',
-    left: '-20px',
-    top: '60px',
-    borderRadius: '60% 30% 60% 30%',
-    background: 'linear-gradient(180deg, #1E293B, #A66A3D)',
-    animation: 'eagleWing 4s ease-in-out infinite'
+    width: '120px',
+    height: '180px',
+    left: '-40px',
+    top: '40px',
+    borderRadius: '70% 30% 60% 40%',
+    background: 'linear-gradient(160deg, #2c1c17 0%, #9c5c2f 70%)',
+    animation: 'eagleWing 4s ease-in-out infinite',
+    filter: 'drop-shadow(0 12px 20px rgba(0,0,0,0.25))'
   },
   eagleWingRight: {
     position: 'absolute',
-    width: '70px',
-    height: '120px',
-    right: '-20px',
-    top: '60px',
-    borderRadius: '30% 60% 30% 60%',
-    background: 'linear-gradient(180deg, #1E293B, #A66A3D)',
+    width: '120px',
+    height: '180px',
+    right: '-40px',
+    top: '40px',
+    borderRadius: '30% 70% 40% 60%',
+    background: 'linear-gradient(200deg, #2c1c17 0%, #9c5c2f 70%)',
     animation: 'eagleWing 4s ease-in-out infinite',
-    animationDelay: '0.4s'
+    animationDelay: '0.4s',
+    filter: 'drop-shadow(0 12px 20px rgba(0,0,0,0.25))'
+  },
+  eagleTail: {
+    position: 'absolute',
+    bottom: '-24px',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    width: '90px',
+    height: '70px',
+    background: 'linear-gradient(180deg, #fef2d7 0%, #f5d7a5 100%)',
+    clipPath: 'polygon(50% 100%, 0 0, 100% 0)',
+    filter: 'drop-shadow(0 8px 12px rgba(0,0,0,0.25))'
+  },
+  eagleChestBand: {
+    position: 'absolute',
+    top: '120px',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    width: '170px',
+    height: '32px',
+    borderRadius: '999px',
+    background: 'linear-gradient(90deg, rgba(255,255,255,0.3), rgba(255,255,255,0.05))',
+    border: '1px solid rgba(255,255,255,0.35)'
   },
   eagleBelly: {
     position: 'absolute',
     bottom: '42px',
     left: '50%',
     transform: 'translateX(-50%)',
-    width: '140px',
-    height: '90px',
-    borderRadius: '70px',
-    background: 'linear-gradient(180deg, #F4C95D, #B9732F)',
+    width: '150px',
+    height: '110px',
+    borderRadius: '75px',
+    background: 'linear-gradient(180deg, #f5d38c 0%, #cc8a3b 100%)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center'
   },
   eagleBadge: {
-    fontSize: '0.8rem',
+    fontSize: '0.82rem',
     fontWeight: 700,
-    color: '#0F172A',
+    color: '#1f2937',
     textTransform: 'uppercase',
     letterSpacing: '0.08em'
   },
   eagleFootLeft: {
     position: 'absolute',
-    bottom: '-8px',
+    bottom: '-18px',
     left: '70px',
-    width: '28px',
-    height: '26px',
-    borderRadius: '14px',
-    background: '#B45309'
+    width: '34px',
+    height: '32px',
+    borderRadius: '16px',
+    background: '#b45309',
+    boxShadow: '0 6px 8px rgba(0,0,0,0.2)'
   },
   eagleFootRight: {
     position: 'absolute',
-    bottom: '-8px',
+    bottom: '-18px',
     right: '70px',
-    width: '28px',
-    height: '26px',
-    borderRadius: '14px',
-    background: '#B45309'
+    width: '34px',
+    height: '32px',
+    borderRadius: '16px',
+    background: '#b45309',
+    boxShadow: '0 6px 8px rgba(0,0,0,0.2)'
   },
   eagleRipple: {
     position: 'absolute',

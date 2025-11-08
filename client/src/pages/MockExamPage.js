@@ -17,7 +17,7 @@ const INITIAL_STATE = {
 };
 
 const MockExamPage = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const [state, setState] = useState(INITIAL_STATE);
   const [explanations, setExplanations] = useState({});
   const [explanationErrors, setExplanationErrors] = useState({});
@@ -143,6 +143,13 @@ const MockExamPage = () => {
         timeLeft: prev.status === 'in-progress' ? prev.timeLeft : prev.timeLeft,
         currentIndex: 0
       }));
+      if (response.data?.updatedUser && typeof updateUser === 'function') {
+        try {
+          updateUser({ ...(user || {}), ...response.data.updatedUser });
+        } catch (updateError) {
+          console.warn('[mockExam] failed to update auth state:', updateError?.message || updateError);
+        }
+      }
       setActiveTab('review');
     } catch (error) {
       setState((prev) => ({
@@ -262,6 +269,23 @@ const MockExamPage = () => {
             </button>
           </div>
         </div>
+      </section>
+
+      <section style={styles.focusTipCard}>
+        <div style={styles.focusTipIcon}>🦅</div>
+        <div style={styles.focusTipBody}>
+          <p style={styles.focusTipLabel}>집중 모드 TIP</p>
+          <h3 style={styles.focusTipTitle}>시험 시작 전, 방해금지 모드부터 켜볼까요?</h3>
+          <p style={styles.focusTipText}>
+            휴대폰과 PC 알림을 잠시 꺼두면 실전과 똑같은 몰입감을 만들 수 있어요.
+            시험이 끝나면 버튼 하나로 다시 해제하면 됩니다.
+          </p>
+          <ul style={styles.focusTipList}>
+            <li>모바일: 설정 → 집중 모드(방해 금지) → 50분 타이머만 남겨두기</li>
+            <li>PC: 알림 센터에서 “방해 금지”를 켜고, 시험이 끝나면 해제</li>
+          </ul>
+        </div>
+        <span style={styles.focusTipGlow} aria-hidden="true" />
       </section>
 
       <section style={styles.tipCard}>
@@ -428,6 +452,7 @@ const MockExamPage = () => {
               <ResultMetric icon="CircleDashed" label="미응시" value={`${unanswered}문항`} accent="muted" />
               <ResultMetric icon="Percent" label="정답률" value={`${accuracy}%`} accent="primary" />
             </div>
+            <EagleGuideChip text="방금 점수가 학습 통계 · 랭킹에 바로 반영됐어요" variant="accent" />
             <div style={styles.resultActions}>
               <button type="button" style={styles.secondaryButton} onClick={resetExam}>
                 <LucideIcons.RotateCcw size={18} /> 다시 풀기
@@ -721,6 +746,63 @@ const styles = {
     background: 'rgba(15, 23, 42, 0.08)',
     border: '1px solid rgba(148, 163, 184, 0.18)',
     boxShadow: '0 20px 40px rgba(15,23,42,0.12)'
+  },
+  focusTipCard: {
+    position: 'relative',
+    display: 'flex',
+    gap: '18px',
+    padding: '26px 28px',
+    borderRadius: '28px',
+    background: 'linear-gradient(135deg, #0f172a 0%, #1d3557 45%, #f4c95d 110%)',
+    color: '#f8fafc',
+    overflow: 'hidden',
+    boxShadow: '0 35px 65px rgba(3,7,18,0.45)'
+  },
+  focusTipIcon: {
+    fontSize: '2rem',
+    flexShrink: 0,
+    background: 'rgba(248,250,252,0.15)',
+    width: '56px',
+    height: '56px',
+    borderRadius: '16px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  focusTipBody: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px'
+  },
+  focusTipLabel: {
+    margin: 0,
+    fontSize: '0.9rem',
+    letterSpacing: '0.1em',
+    textTransform: 'uppercase',
+    color: 'rgba(248,250,252,0.85)'
+  },
+  focusTipTitle: {
+    margin: 0,
+    fontSize: '1.4rem',
+    fontWeight: 800
+  },
+  focusTipText: {
+    margin: 0,
+    lineHeight: 1.6,
+    color: 'rgba(248,250,252,0.9)'
+  },
+  focusTipList: {
+    margin: 0,
+    paddingLeft: '20px',
+    lineHeight: 1.5,
+    color: 'rgba(248,250,252,0.95)'
+  },
+  focusTipGlow: {
+    position: 'absolute',
+    inset: 0,
+    borderRadius: 'inherit',
+    border: '1px solid rgba(248, 250, 252, 0.25)',
+    pointerEvents: 'none'
   },
   tipIcon: {
     color: 'var(--indigo-strong)'
