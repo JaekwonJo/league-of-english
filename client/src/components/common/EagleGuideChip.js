@@ -21,7 +21,7 @@ const variantTokens = {
   }
 };
 
-const OwlGuideChip = ({ text, variant = 'info', onClick, style, icon = '🦉', ariaLive }) => {
+const EagleGuideChip = ({ text, variant = 'info', onClick, style, icon = '🦅', ariaLive }) => {
   const token = variantTokens[variant] || variantTokens.info;
   const Component = onClick ? 'button' : 'div';
 
@@ -61,4 +61,4 @@ const OwlGuideChip = ({ text, variant = 'info', onClick, style, icon = '🦉', a
   );
 };
 
-export default OwlGuideChip;
+export default EagleGuideChip;

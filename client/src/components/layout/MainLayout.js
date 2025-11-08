@@ -171,7 +171,7 @@ const MainLayout = ({ children, currentPath }) => {
             aria-label={isMobile ? '메뉴 닫기' : undefined}
             title={isMobile ? '메뉴 닫기' : undefined}
           >
-            <span style={styles.logoIcon}>🦉</span>
+            <span style={styles.logoIcon}>🦅</span>
             {sidebarOpen && <span style={styles.logoText}>League of English</span>}
           </div>
         )}
@@ -282,7 +282,7 @@ const MainLayout = ({ children, currentPath }) => {
         {isMobile && !sidebarOpen && (
           <div style={styles.mobileTopBar}>
             <div style={styles.mobileBranding}>
-              <span style={styles.mobileBrandIcon}>🦉</span>
+              <span style={styles.mobileBrandIcon}>🦅</span>
               <span style={styles.mobileTitle}>League of English</span>
             </div>
           </div>

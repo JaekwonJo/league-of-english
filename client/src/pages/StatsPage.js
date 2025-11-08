@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { api } from '../services/api.service';
-import OwlGuideChip from '../components/common/OwlGuideChip';
+import EagleGuideChip from '../components/common/EagleGuideChip';
 import {
   ResponsiveContainer,
   PieChart, Pie, Cell,
@@ -198,7 +198,7 @@ const StatsPage = () => {
         <div>
           <h1 style={styles.title}>📊 학습 통계</h1>
           <p style={styles.subtitle}>최근 문제 풀이와 단어 훈련 데이터를 기반으로 자동 집계돼요.</p>
-          <OwlGuideChip text="부엉이가 하루 학습량을 깔끔하게 정리했어요" variant="accent" />
+          <EagleGuideChip text="오늘 학습량을 한눈에 볼 수 있게 정리했어요" variant="accent" />
         </div>
       </header>
 
@@ -219,7 +219,7 @@ const StatsPage = () => {
           <section style={styles.section}>
             <div style={styles.sectionHeaderRow}>
               <h2 style={styles.sectionTitle}>전체 학습 요약</h2>
-              <OwlGuideChip text="숫자로 학습 페이스를 확인해요" />
+              <EagleGuideChip text="숫자로 학습 페이스를 확인해요" />
             </div>
             {renderSummaryCards()}
           </section>
@@ -228,7 +228,7 @@ const StatsPage = () => {
             <div style={styles.sectionHeaderRow}>
               <h2 style={styles.sectionTitle}>🐣 단어 훈련</h2>
               <span style={styles.sectionHint}>시험 결과를 자동으로 집계해요.</span>
-              <OwlGuideChip text="정답/오답 비율을 빠르게 살펴봐요" />
+              <EagleGuideChip text="정답/오답 비율을 빠르게 살펴봐요" />
             </div>
             {vocabularyStats ? (
               renderVocabularyCards()
@@ -244,7 +244,7 @@ const StatsPage = () => {
             <div style={styles.sectionHeaderRow}>
               <h2 style={styles.sectionTitle}>🎯 유형별 정답률</h2>
               <span style={styles.sectionHint}>문제 학습 + 단어 시험 누적</span>
-              <OwlGuideChip text="약한 유형을 찾아 복습 루틴을 만들어요" />
+              <EagleGuideChip text="약한 유형을 찾아 복습 루틴을 만들어요" />
             </div>
             {typeAccuracyList.length ? (
               <div style={styles.typeList}>

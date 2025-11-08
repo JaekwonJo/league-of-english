@@ -3,7 +3,7 @@ import * as LucideIcons from 'lucide-react';
 import FriendlyError from '../components/common/FriendlyError';
 import { api } from '../services/api.service';
 import { useAuth } from '../contexts/AuthContext';
-import OwlGuideChip from '../components/common/OwlGuideChip';
+import EagleGuideChip from '../components/common/EagleGuideChip';
 
 const INITIAL_STATE = {
   exam: null,
@@ -247,7 +247,7 @@ const MockExamPage = () => {
             <HeroMeta icon="Hash" label="문항 수" value={`${state.exam?.questionCount || 28}문항`} />
             <HeroMeta icon="Sparkles" label="AI 해설" value={isProMember ? '프로 전용(사용 가능)' : '프로 전용'} highlight={isProMember} />
           </div>
-          <OwlGuideChip text="부엉이가 타이머와 문항 이동을 도와줄게요!" variant="accent" />
+          <EagleGuideChip text="타이머와 문항 이동을 깔끔하게 돕는 모드예요" variant="accent" />
           <div style={styles.heroButtons}>
             <button type="button" style={styles.primaryButton} onClick={handleStart}>
               <LucideIcons.PlayCircle size={20} /> 지금 바로 응시하기
@@ -418,7 +418,7 @@ const MockExamPage = () => {
             <span style={styles.heroBadge}>결과 요약</span>
             <h2 style={styles.resultTitle}>수고했어요! 점수를 확인해 볼까요?</h2>
             <p style={styles.resultSubtitle}>총 {total}문항 중 {correctCount}문항을 맞혔어요. 다시 도전하거나 해설을 확인해 보세요.</p>
-            <OwlGuideChip text="결과를 저장하고 싶다면 화면을 캡처해 두세요!" />
+            <EagleGuideChip text="결과를 저장하고 싶다면 화면을 캡처해 두세요!" />
             <div style={styles.resultMetricsRow}>
               <ResultMetric icon="CheckCircle" label="정답" value={`${correctCount}문항`} accent="success" />
               <ResultMetric icon="XCircle" label="오답" value={`${incorrectCount}문항`} accent="danger" />
@@ -447,7 +447,7 @@ const MockExamPage = () => {
           <div style={styles.reviewHeader}>
             <h3 style={styles.reviewTitle}>문항별 복습</h3>
             <p style={styles.reviewSubtitle}>선택지 색상으로 맞힌 문제를 한눈에 확인할 수 있어요.</p>
-            <OwlGuideChip text="선택지를 눌러 해설과 해답을 바로 확인하세요" variant="accent" />
+            <EagleGuideChip text="선택지를 눌러 해설과 해답을 바로 확인하세요" variant="accent" />
           </div>
 
           <div style={styles.reviewList}>

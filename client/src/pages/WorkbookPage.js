@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api.service';
 import FriendlyError from '../components/common/FriendlyError';
-import OwlGuideChip from '../components/common/OwlGuideChip';
+import EagleGuideChip from '../components/common/EagleGuideChip';
 
 const STORAGE_KEY = 'loe.workbook.completedSteps.v2';
 
@@ -2583,7 +2583,7 @@ const WorkbookPage = () => {
               + 새 워크북 생성하기
             </button>
           )}
-          <OwlGuideChip text="분석이 끝난 지문을 골라 워크북을 만들면 돼요" variant="accent" />
+          <EagleGuideChip text="분석이 끝난 지문을 골라 워크북을 만들면 돼요" variant="accent" />
         </section>
 
         {showGenerator && canManageWorkbooks && (
@@ -2604,7 +2604,7 @@ const WorkbookPage = () => {
 
             {generatorStage === 1 && (
               <div style={responsiveStyle(styles.wizardStageBody, styles.wizardStageBodyMobile)}>
-                <OwlGuideChip text="분석이 완료된 문서를 골라야 다음 단계로 이동할 수 있어요" />
+                <EagleGuideChip text="분석이 완료된 문서를 골라야 다음 단계로 이동할 수 있어요" />
                 <p style={responsiveStyle(styles.wizardStageDescription, styles.wizardStageDescriptionMobile)}>
                   분석이 완료된 문서를 골라 주세요. 선택하면 자동으로 지문 선택 단계로 이동해요.
                 </p>
@@ -2652,7 +2652,7 @@ const WorkbookPage = () => {
 
             {generatorStage === 2 && (
               <div style={responsiveStyle(styles.wizardStageBody, styles.wizardStageBodyMobile)}>
-                <OwlGuideChip text="지문을 탭하면 부엉이가 바로 미리보기를 보여줘요" />
+                <EagleGuideChip text="지문을 탭하면 바로 미리보기를 열어 드려요" />
                 <div style={styles.wizardInfoCard}>
                   <span style={styles.wizardStageBadge}>선택한 자료</span>
                   <strong style={{ fontSize: '16px', color: 'var(--text-primary)' }}>{selectedDocument?.title || '자료를 다시 선택해 주세요.'}</strong>
@@ -2719,7 +2719,7 @@ const WorkbookPage = () => {
 
             {generatorStage === 3 && (
               <div style={responsiveStyle(styles.wizardStageBody, styles.wizardStageBodyMobile)}>
-                <OwlGuideChip text="출제 범위와 문제 수를 확인한 뒤 생성 버튼을 눌러요" />
+                <EagleGuideChip text="출제 범위와 문제 수를 확인한 뒤 생성 버튼을 눌러요" />
                 <div style={styles.wizardInfoCard}>
                   <span style={styles.wizardStageBadge}>선택한 지문</span>
                   <strong style={{ fontSize: '16px', color: 'var(--text-primary)' }}>

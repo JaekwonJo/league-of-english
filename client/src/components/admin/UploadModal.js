@@ -9,7 +9,8 @@ const UploadModal = ({
   onClose,
   onSubmit,
   onFormChange,
-  onFileChange
+  onFileChange,
+  onOpenCategoryManager = () => {}
 }) => {
   if (!show) return null;
 
@@ -74,15 +75,24 @@ const UploadModal = ({
 
           <div style={adminStyles.formGroup}>
             <label style={adminStyles.label}>카테고리</label>
-            <select
-              value={uploadForm.category}
-              onChange={(e) => onFormChange('category', e.target.value)}
-              style={adminStyles.input}
-            >
-              {categories.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
+            <div style={adminStyles.inlineInputRow}>
+              <select
+                value={uploadForm.category}
+                onChange={(e) => onFormChange('category', e.target.value)}
+                style={{ ...adminStyles.input, flex: 1 }}
+              >
+                {categories.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+              <button
+                type="button"
+                style={adminStyles.inlineGhostButton}
+                onClick={onOpenCategoryManager}
+              >
+                + 추가
+              </button>
+            </div>
           </div>
 
           <div style={adminStyles.formRow}>

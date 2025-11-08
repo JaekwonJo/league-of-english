@@ -432,6 +432,21 @@ export const adminStyles = {
     fontSize: '14px',
     transition: 'all 0.3s'
   },
+  inlineInputRow: {
+    display: 'flex',
+    gap: '8px',
+    alignItems: 'stretch'
+  },
+  inlineGhostButton: {
+    border: '1px dashed var(--indigo)',
+    borderRadius: '10px',
+    background: 'rgba(99, 102, 241, 0.08)',
+    color: 'var(--indigo-strong)',
+    fontWeight: 600,
+    padding: '0 14px',
+    minWidth: '90px',
+    cursor: 'pointer'
+  },
   fileInput: {
     padding: '10px',
     border: '2px dashed var(--border-light)',

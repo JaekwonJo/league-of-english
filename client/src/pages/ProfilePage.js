@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api.service';
 import tierConfig from '../config/tierConfig.json';
-import OwlGuideChip from '../components/common/OwlGuideChip';
+import EagleGuideChip from '../components/common/EagleGuideChip';
 
 const typeLabelMap = {
   blank: '빈칸',
@@ -257,7 +257,7 @@ const ProfilePage = () => {
               <div style={styles.reviewQueueBadge}>복습 대기열</div>
               <h3 style={styles.reviewQueueTitle}>틀린 문제 {reviewQueue.total}문이 당신을 기다리고 있어요</h3>
               <p style={styles.reviewQueueHint}>복습을 누적하면 티어도 빠르게 올라가요. 지금 바로 도전해 볼까요?</p>
-              <OwlGuideChip text="복습 버튼을 누르면 부엉이가 문제를 다시 꺼내줘요" />
+              <EagleGuideChip text="복습 버튼을 누르면 문제를 다시 불러올 수 있어요" />
             </div>
             <button
               style={{
@@ -296,7 +296,7 @@ const ProfilePage = () => {
           <div>
             <h3 style={styles.statsRedirectTitle}>🎯 유형별 정답률은 학습 통계에서 확인해요</h3>
             <p style={styles.statsRedirectBody}>정답률, 정오답 수, 누적 문항은 "학습 통계" 메뉴에서 더 자세히 볼 수 있도록 옮겨 두었습니다.</p>
-            <OwlGuideChip text="학습 통계에서 약한 유형을 집중 공략하세요" />
+            <EagleGuideChip text="학습 통계에서 약한 유형을 집중 공략하세요" />
           </div>
           <button
             type="button"

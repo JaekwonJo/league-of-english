@@ -8,7 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 import tierConfig from '../config/tierConfig.json';
 import { api } from '../services/api.service';
 import logger from '../utils/logger';
-import OwlGuideChip from '../components/common/OwlGuideChip';
+import EagleGuideChip from '../components/common/EagleGuideChip';
 
 const TIER_EMBLEMS = {
   iron: '🪨',
@@ -168,7 +168,7 @@ const RankingPage = () => {
   return (
     <div style={styles.container}>
       <h1 style={styles.title}>🏆 랭킹</h1>
-      <OwlGuideChip text="부엉이가 실시간 LP 순위를 모으고 있어요" variant="accent" />
+      <EagleGuideChip text="실시간 LP 순위를 자동으로 모으고 있어요" variant="accent" />
 
       {error && (
         <div style={styles.errorBanner}>
@@ -213,7 +213,7 @@ const RankingPage = () => {
       {/* 리더보드 탭 */}
       {selectedTab === 'leaderboard' && (
         <div style={styles.content}>
-          <OwlGuideChip text="상위권 플레이어를 눌러 자세한 정보를 볼 수 있어요" />
+          <EagleGuideChip text="상위권 플레이어를 눌러 자세한 정보를 볼 수 있어요" />
           <div style={styles.leaderboard}>
             <h2 style={{
               ...styles.sectionTitle,

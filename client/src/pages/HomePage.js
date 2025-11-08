@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api.service';
 import tierConfig from '../config/tierConfig.json';
-import OwlGuideChip from '../components/common/OwlGuideChip';
+import EagleGuideChip from '../components/common/EagleGuideChip';
 
 const typeLabelMap = {
   blank: '빈칸',
@@ -16,7 +16,14 @@ const typeLabelMap = {
   implicit: '함축 의미',
 };
 
-const owlHints = [
+const quickButtonIconMap = {
+  '학습 세트 생성': '🚀',
+  '순서 배열 훈련': '🔀',
+  '문장 삽입 훈련': '🧩',
+  '문서 업로드': '📤'
+};
+
+const eagleHints = [
   '어휘 훈련에서 Day를 하나 골라 볼까요?',
   '분석 자료에서 새 지문을 열어 보세요!',
   '모의고사 50분 타이머도 준비되어 있어요!',
@@ -29,9 +36,10 @@ const HomePage = () => {
   const [loading, setLoading] = useState(true);
   const [reviewQueue, setReviewQueue] = useState({ total: 0, problems: [] });
   const [reviewLoading, setReviewLoading] = useState(true);
-  const [owlMood, setOwlMood] = useState('idle');
-  const [owlHintIndex, setOwlHintIndex] = useState(0);
-  const [owlPulseKey, setOwlPulseKey] = useState(0);
+  const [eagleMood, setEagleMood] = useState('idle');
+  const [eagleHintIndex, setEagleHintIndex] = useState(0);
+  const [eaglePulseKey, setEaglePulseKey] = useState(0);
+  const eagleMoodRef = useRef('idle');
   const [isMobile, setIsMobile] = useState(() => (typeof window !== 'undefined' ? window.innerWidth <= 640 : false));
   const streakDays = Number(user?.streakDays ?? 0);
   const showStreakBadge = streakDays > 0 || !user;
@@ -44,7 +52,7 @@ const HomePage = () => {
 
   useEffect(() => {
     const hintTimer = window.setInterval(() => {
-      setOwlHintIndex((prev) => (prev + 1) % owlHints.length);
+      setEagleHintIndex((prev) => (prev + 1) % eagleHints.length);
     }, 5000);
     return () => window.clearInterval(hintTimer);
   }, []);
@@ -58,11 +66,28 @@ const HomePage = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const handleOwlInteract = () => {
-    setOwlMood('cheer');
-    setOwlPulseKey((prev) => prev + 1);
-    window.setTimeout(() => setOwlMood('idle'), 1400);
+  useEffect(() => {
+    eagleMoodRef.current = eagleMood;
+  }, [eagleMood]);
+
+  const handleEagleInteract = () => {
+    setEagleMood('cheer');
+    setEaglePulseKey((prev) => prev + 1);
+    window.setTimeout(() => setEagleMood('idle'), 1400);
   };
+
+  useEffect(() => {
+    const winkTimer = window.setInterval(() => {
+      if (eagleMoodRef.current === 'cheer') return;
+      setEagleMood('wink');
+      window.setTimeout(() => {
+        if (eagleMoodRef.current !== 'cheer') {
+          setEagleMood('idle');
+        }
+      }, 650);
+    }, 8000);
+    return () => window.clearInterval(winkTimer);
+  }, []);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -145,16 +170,40 @@ const HomePage = () => {
     { label: '지난 7일 학습', value: stats?.weeklySessions ?? 0, suffix: '회' }
   ];
 
-  const currentOwlHint = owlHints[owlHintIndex];
+  const heroHighlightCards = useMemo(() => [
+    {
+      icon: '⚡️',
+      label: '오늘의 목표',
+      value: stats?.dailyGoal ? `${stats.dailyGoal}분` : '30분',
+      detail: '권장 학습'
+    },
+    {
+      icon: '🔁',
+      label: '복습 대기',
+      value: `${reviewQueue.total || 0}문`,
+      detail: '준비 완료'
+    },
+    {
+      icon: '🔥',
+      label: '연속 학습',
+      value: `${streakDays || 0}일`,
+      detail: streakDays ? '기록 유지 중' : '지금 시작'
+    }
+  ], [stats?.dailyGoal, reviewQueue.total, streakDays]);
+
+  const currentEagleHint = eagleHints[eagleHintIndex];
 
   return (
     <div style={isMobile ? { ...styles.container, ...styles.containerMobile } : styles.container}>
       <section style={isMobile ? { ...styles.heroSection, ...styles.heroSectionMobile } : styles.heroSection}>
+        <div style={styles.heroAura} aria-hidden="true" />
+        <div style={styles.heroBubble} aria-hidden="true" />
+        <div style={styles.heroBubbleSecondary} aria-hidden="true" />
         <div style={isMobile ? { ...styles.heroTextBlock, ...styles.heroTextBlockMobile } : styles.heroTextBlock}>
           <span style={styles.heroTag}>League of English</span>
           <h1 style={styles.heroTitle}>안녕하세요, {user?.name || '학습자'}님! 👋</h1>
           <p style={styles.heroSubtitle}>
-            하루 30분만 투자해도 단어·분석·모의고사를 한 번에 챙길 수 있어요. 부엉이 튜터가 오늘 해야 할 일을 부드럽게 안내해 드릴게요.
+            하루 30분만 투자해도 단어·분석·모의고사를 한 번에 챙길 수 있어요. 마스코트 튜터가 오늘 할 일을 부드럽게 안내해 드릴게요.
           </p>
           <div style={isMobile ? { ...styles.heroCTAGroup, ...styles.heroCTAGroupMobile } : styles.heroCTAGroup}>
             <button type="button" style={styles.heroPrimaryButton} onClick={() => (window.location.href = '/vocabulary')}>
@@ -171,13 +220,25 @@ const HomePage = () => {
               <span style={styles.streakGlow} aria-hidden="true" />
             </div>
           )}
-          <p style={styles.heroNote}>Tip · 부엉이를 눌러서 오늘의 미션을 확인해 보세요!</p>
+          <p style={styles.heroNote}>Tip · 마스코트를 눌러서 오늘의 미션을 확인해 보세요!</p>
+          <div style={styles.heroHighlightRow}>
+            {heroHighlightCards.map((badge) => (
+              <div key={badge.label} style={styles.heroHighlightCard}>
+                <span style={styles.heroHighlightIcon}>{badge.icon}</span>
+                <div>
+                  <p style={styles.heroHighlightLabel}>{badge.label}</p>
+                  <strong style={styles.heroHighlightValue}>{badge.value}</strong>
+                  <span style={styles.heroHighlightDetail}>{badge.detail}</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-        <OwlMascot
-          mood={owlMood}
-          hint={currentOwlHint}
-          onInteract={handleOwlInteract}
-          pulseKey={owlPulseKey}
+        <EagleMascot
+          mood={eagleMood}
+          hint={currentEagleHint}
+          onInteract={handleEagleInteract}
+          pulseKey={eaglePulseKey}
           isMobile={isMobile}
         />
       </section>
@@ -209,7 +270,7 @@ const HomePage = () => {
       <section style={styles.section}>
         <div style={styles.sectionTitleRow}>
           <h2 style={styles.sectionTitle}>오늘의 요약</h2>
-          <OwlGuideChip text="숫자로 오늘의 페이스 체크" variant="accent" />
+          <EagleGuideChip text="숫자로 오늘의 페이스 체크" variant="accent" />
         </div>
         <div style={isMobile ? { ...styles.statGrid, ...styles.statGridMobile } : styles.statGrid}>
           {statCards.map((card) => (
@@ -228,7 +289,7 @@ const HomePage = () => {
       <section style={styles.section}>
         <div style={styles.sectionTitleRow}>
           <h2 style={styles.sectionTitle}>바로 시작하기</h2>
-          <OwlGuideChip text="자주 쓰는 기능을 한 곳에!" />
+          <EagleGuideChip text="자주 쓰는 기능을 한 곳에!" />
         </div>
         <div style={isMobile ? { ...styles.quickGrid, ...styles.quickGridMobile } : styles.quickGrid}>
           <QuickButton label="학습 세트 생성" description="5문항 세트를 바로 만들기" onClick={() => (window.location.href = '/study')} />
@@ -243,7 +304,7 @@ const HomePage = () => {
       <section style={styles.section}>
         <div style={styles.sectionTitleRow}>
           <h2 style={styles.sectionTitle}>복습 대기열</h2>
-          <OwlGuideChip text="틀렸던 문제를 부엉이가 기억하고 있어요" variant="warning" />
+          <EagleGuideChip text="틀렸던 문제를 자동으로 기억해 둘게요" variant="warning" />
         </div>
         <div style={isMobile ? { ...styles.reviewCard, ...styles.reviewCardMobile } : styles.reviewCard}>
           <div style={styles.reviewCardHeader}>
@@ -267,7 +328,7 @@ const HomePage = () => {
             {reviewLoading ? (
               <div style={styles.reviewEmpty}>복습 카드들을 예쁘게 정렬하는 중이에요... ✨</div>
             ) : reviewQueue.total === 0 ? (
-              <div style={styles.reviewEmpty}>최근에 틀렸던 문제가 없어요! 정말 멋져요 🦉</div>
+              <div style={styles.reviewEmpty}>최근에 틀렸던 문제가 없어요! 정말 멋져요 🦅</div>
             ) : (
               reviewQueue.problems.map((problem) => (
                 <div key={problem.id} style={styles.reviewItem}>
@@ -305,65 +366,73 @@ const StatCard = ({ label, value, suffix, tierAccent, isPercent }) => {
   );
 };
 
-const QuickButton = ({ label, description, onClick }) => (
-  <button style={styles.quickButton} onClick={onClick}>
-    <strong>{label}</strong>
-    <span style={styles.quickDescription}>{description}</span>
-  </button>
-);
+const QuickButton = ({ label, description, onClick }) => {
+  const icon = quickButtonIconMap[label] || '✨';
+  return (
+    <button style={styles.quickButton} onClick={onClick}>
+      <span style={styles.quickButtonIcon}>{icon}</span>
+      <div>
+        <strong style={styles.quickButtonLabel}>{label}</strong>
+        <span style={styles.quickDescription}>{description}</span>
+      </div>
+    </button>
+  );
+};
 
-const OwlMascot = ({ mood, onInteract, hint, pulseKey, isMobile }) => (
-  <div style={isMobile ? { ...styles.owlWrapper, ...styles.owlWrapperMobile } : styles.owlWrapper}>
+const EagleMascot = ({ mood, onInteract, hint, pulseKey, isMobile }) => (
+  <div style={isMobile ? { ...styles.eagleWrapper, ...styles.eagleWrapperMobile } : styles.eagleWrapper}>
     <button
       type="button"
       onClick={onInteract}
       onTouchStart={onInteract}
       style={{
-        ...styles.owlButton,
-        ...(mood === 'cheer' ? styles.owlButtonCheer : {}),
-        ...(isMobile ? styles.owlButtonMobile : {})
+        ...styles.eagleButton,
+        ...(mood === 'cheer' ? styles.eagleButtonCheer : {}),
+        ...(isMobile ? styles.eagleButtonMobile : {})
       }}
-      aria-label="부엉이 튜터와 상호작용"
+      aria-label="마스코트 튜터와 상호작용"
     >
+      <div style={styles.eagleHalo} aria-hidden="true" />
+      <div style={styles.eagleShadow} aria-hidden="true" />
       <div
         style={{
-          ...styles.owlBody,
-          ...(mood === 'cheer' ? styles.owlBodyCheer : {}),
-          ...(isMobile ? styles.owlBodyMobile : {})
+          ...styles.eagleBody,
+          ...(mood === 'cheer' ? styles.eagleBodyCheer : {}),
+          ...(isMobile ? styles.eagleBodyMobile : {})
         }}
       >
-        <div style={styles.owlEarLeft} />
-        <div style={styles.owlEarRight} />
-        <div style={styles.owlFace}>
-          <div style={{ ...styles.owlEye, ...(mood === 'wink' ? styles.owlEyeWink : {}) }}>
-            <div style={styles.owlPupil} />
+        <div style={styles.eagleEarLeft} />
+        <div style={styles.eagleEarRight} />
+        <div style={styles.eagleFace}>
+          <div style={{ ...styles.eagleEye, ...(mood === 'wink' ? styles.eagleEyeWink : {}) }}>
+            <div style={styles.eaglePupil} />
           </div>
-          <div style={{ ...styles.owlEye, ...(mood === 'cheer' ? styles.owlEyeCheer : {}) }}>
-            <div style={styles.owlPupil} />
+          <div style={{ ...styles.eagleEye, ...(mood === 'cheer' ? styles.eagleEyeCheer : {}) }}>
+            <div style={styles.eaglePupil} />
           </div>
-          <div style={styles.owlBeak} />
+          <div style={styles.eagleBeak} />
         </div>
-        <div style={styles.owlWingLeft} />
-        <div style={styles.owlWingRight} />
-        <div style={styles.owlBelly}>
-          <span style={styles.owlBadge}>League of English</span>
+        <div style={styles.eagleWingLeft} />
+        <div style={styles.eagleWingRight} />
+        <div style={styles.eagleBelly}>
+          <span style={styles.eagleBadge}>League of English</span>
         </div>
-        <div style={styles.owlFootLeft} />
-        <div style={styles.owlFootRight} />
+        <div style={styles.eagleFootLeft} />
+        <div style={styles.eagleFootRight} />
       </div>
       <span
         key={pulseKey}
-        style={styles.owlRipple}
+        style={styles.eagleRipple}
         aria-hidden="true"
       />
       <span
         key={`spark-${pulseKey}`}
-        style={{ ...styles.owlSparkle, animationDelay: `${pulseKey % 3 * 0.4}s` }}
+        style={{ ...styles.eagleSparkle, animationDelay: `${pulseKey % 3 * 0.4}s` }}
         aria-hidden="true"
       />
     </button>
-    <div style={isMobile ? { ...styles.owlHintBubble, ...styles.owlHintBubbleMobile } : styles.owlHintBubble}>
-      <span style={styles.owlHintIcon}>🦉</span>
+    <div style={isMobile ? { ...styles.eagleHintBubble, ...styles.eagleHintBubbleMobile } : styles.eagleHintBubble}>
+      <span style={styles.eagleHintIcon}>🦅</span>
       <span aria-live="polite">{hint}</span>
     </div>
   </div>
@@ -385,10 +454,12 @@ const styles = {
     gap: '32px',
     padding: '32px',
     borderRadius: '32px',
-    background: 'linear-gradient(135deg, rgba(15,23,42,0.95), rgba(30,64,175,0.65))',
-    color: '#f8fafc',
-    boxShadow: '0 30px 70px rgba(15, 23, 42, 0.4)',
-    marginBottom: '32px'
+    background: 'linear-gradient(130deg, #0F172A 0%, #1D3A6D 55%, #F4C95D 120%)',
+    color: '#F8FAFC',
+    boxShadow: '0 35px 70px rgba(3, 7, 18, 0.55)',
+    marginBottom: '32px',
+    position: 'relative',
+    overflow: 'hidden'
   },
   heroSectionMobile: {
     flexDirection: 'column',
@@ -399,7 +470,9 @@ const styles = {
     flex: '1 1 360px',
     display: 'flex',
     flexDirection: 'column',
-    gap: '14px'
+    gap: '14px',
+    position: 'relative',
+    zIndex: 1
   },
   heroTextBlockMobile: {
     order: 2,
@@ -411,7 +484,8 @@ const styles = {
     gap: '6px',
     padding: '6px 12px',
     borderRadius: '999px',
-    border: '1px solid rgba(255,255,255,0.4)',
+    border: '1px solid rgba(244, 201, 93, 0.6)',
+    background: 'rgba(15,23,42,0.45)',
     fontSize: '0.85rem',
     letterSpacing: '0.08em',
     textTransform: 'uppercase'
@@ -446,9 +520,9 @@ const styles = {
     gap: '10px',
     padding: '10px 18px',
     borderRadius: '16px',
-    background: 'rgba(250, 204, 21, 0.18)',
-    border: '1px solid rgba(250, 204, 21, 0.45)',
-    color: '#FEF3C7',
+    background: 'rgba(244, 201, 93, 0.35)',
+    border: '1px solid rgba(244, 201, 93, 0.65)',
+    color: '#1C1917',
     fontWeight: 700,
     boxShadow: '0 16px 32px rgba(251, 191, 36, 0.35)'
   },
@@ -469,25 +543,93 @@ const styles = {
     padding: '14px 24px',
     borderRadius: '16px',
     border: 'none',
-    background: 'linear-gradient(135deg, #FDE047, #F97316)',
-    color: '#1E1B4B',
+    background: 'linear-gradient(135deg, #F7C948, #D97706)',
+    color: '#1F1300',
     fontWeight: 700,
     fontSize: '1rem',
     cursor: 'pointer',
-    boxShadow: '0 20px 40px rgba(234, 179, 8, 0.35)'
+    boxShadow: '0 20px 45px rgba(247, 201, 72, 0.45)'
   },
   heroSecondaryButton: {
     padding: '14px 22px',
     borderRadius: '16px',
-    border: '1px solid rgba(255,255,255,0.5)',
-    background: 'transparent',
-    color: '#f8fafc',
+    border: '1px solid rgba(248,250,252,0.4)',
+    background: 'rgba(15,23,42,0.35)',
+    color: '#E2E8F0',
     fontWeight: 700,
     cursor: 'pointer'
   },
   heroNote: {
     fontSize: '0.95rem',
-    color: 'rgba(248,250,252,0.85)'
+    color: 'rgba(248,250,252,0.75)'
+  },
+  heroAura: {
+    position: 'absolute',
+    inset: 0,
+    background: 'radial-gradient(circle at 20% 20%, rgba(15,23,42,0.6), transparent 55%), radial-gradient(circle at 80% 10%, rgba(244,201,93,0.35), transparent 50%)',
+    pointerEvents: 'none',
+    zIndex: 0
+  },
+  heroBubble: {
+    position: 'absolute',
+    width: '220px',
+    height: '220px',
+    borderRadius: '50%',
+    background: 'rgba(244,201,93,0.28)',
+    top: '-60px',
+    right: '-40px',
+    filter: 'blur(10px)',
+    zIndex: 0
+  },
+  heroBubbleSecondary: {
+    position: 'absolute',
+    width: '160px',
+    height: '160px',
+    borderRadius: '50%',
+    background: 'rgba(15,23,42,0.35)',
+    bottom: '-40px',
+    left: '-30px',
+    filter: 'blur(12px)',
+    zIndex: 0
+  },
+  heroHighlightRow: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+    gap: '12px',
+    marginTop: '18px'
+  },
+  heroHighlightCard: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    padding: '12px 14px',
+    borderRadius: '18px',
+    background: 'linear-gradient(135deg, rgba(15,23,42,0.75), rgba(244,201,93,0.4))',
+    border: '1px solid rgba(244,201,93,0.35)',
+    boxShadow: '0 18px 36px rgba(3,7,18,0.35)'
+  },
+  heroHighlightIcon: {
+    fontSize: '1.25rem',
+    background: 'rgba(244,201,93,0.35)',
+    color: '#1C1917',
+    borderRadius: '50%',
+    width: '34px',
+    height: '34px',
+    display: 'grid',
+    placeItems: 'center'
+  },
+  heroHighlightLabel: {
+    fontSize: '0.78rem',
+    color: 'rgba(248,250,252,0.75)',
+    marginBottom: '2px'
+  },
+  heroHighlightValue: {
+    fontSize: '1.1rem',
+    color: '#FDE68A'
+  },
+  heroHighlightDetail: {
+    fontSize: '0.8rem',
+    color: 'rgba(248,250,252,0.6)'
   },
   sectionTitleRow: {
     display: 'flex',
@@ -605,85 +747,123 @@ const styles = {
   },
   quickButton: {
     display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-    gap: '6px',
+    alignItems: 'center',
+    gap: '14px',
     padding: '20px',
-    borderRadius: '18px',
-    border: 'none',
-    background: 'var(--submit-gradient)',
-    color: 'var(--text-inverse)',
+    borderRadius: '22px',
+    border: '1px solid rgba(244,201,93,0.35)',
+    background: 'linear-gradient(135deg, #1B2540 0%, #274472 55%, #F4C95D 120%)',
+    color: '#F8FAFC',
     cursor: 'pointer',
-    boxShadow: '0 10px 28px var(--submit-shadow)',
+    boxShadow: '0 22px 38px rgba(3,7,18,0.28)',
     transition: 'transform 0.2s ease'
+  },
+  quickButtonIcon: {
+    width: '44px',
+    height: '44px',
+    borderRadius: '16px',
+    background: 'rgba(244,201,93,0.35)',
+    color: '#1F1300',
+    display: 'grid',
+    placeItems: 'center',
+    fontSize: '1.3rem',
+    flexShrink: 0
+  },
+  quickButtonLabel: {
+    display: 'block',
+    fontSize: '1.05rem',
+    marginBottom: '4px'
   },
   quickDescription: {
     fontSize: '14px',
-    color: 'var(--text-inverse)',
-    opacity: 0.9
+    color: 'rgba(248,250,252,0.8)'
   },
-  owlWrapper: {
+  eagleWrapper: {
     flex: '1 1 260px',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: '12px'
+    gap: '12px',
+    position: 'relative',
+    zIndex: 1
   },
-  owlWrapperMobile: {
+  eagleWrapperMobile: {
     order: 1,
     width: '100%'
   },
-  owlButton: {
+  eagleButton: {
     position: 'relative',
     border: 'none',
     background: 'transparent',
     padding: 0,
     cursor: 'pointer',
-    animation: 'owlFloat 5s ease-in-out infinite'
+    animation: 'eagleFloat 5s ease-in-out infinite',
+    overflow: 'visible'
   },
-  owlButtonCheer: {
+  eagleButtonCheer: {
     transform: 'scale(1.04)'
   },
-  owlButtonMobile: {
+  eagleButtonMobile: {
     width: '100%'
   },
-  owlBody: {
+  eagleHalo: {
+    position: 'absolute',
+    inset: '-20px',
+    borderRadius: '50%',
+    background: 'radial-gradient(circle, rgba(244,201,93,0.55), transparent 65%)',
+    filter: 'blur(12px)',
+    zIndex: 0
+  },
+  eagleShadow: {
+    position: 'absolute',
+    bottom: '-18px',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    width: '180px',
+    height: '28px',
+    borderRadius: '50%',
+    background: 'rgba(15,23,42,0.15)',
+    filter: 'blur(8px)',
+    zIndex: 0
+  },
+  eagleBody: {
     width: '220px',
     height: '230px',
     borderRadius: '110px',
-    background: 'linear-gradient(180deg, #0F172A 0%, #1E293B 55%, #334155 100%)',
-    border: '4px solid rgba(255,255,255,0.15)',
+    background: 'linear-gradient(180deg, #0F172A 0%, #1E3A5F 45%, #C58E4C 100%)',
+    border: '4px solid rgba(255,255,255,0.3)',
     position: 'relative',
-    boxShadow: '0 25px 50px rgba(2,6,23,0.55)'
+    boxShadow: '0 25px 45px rgba(3,7,18,0.55)',
+    zIndex: 1
   },
-  owlBodyCheer: {
-    boxShadow: '0 30px 60px rgba(250, 204, 21, 0.45)'
+  eagleBodyCheer: {
+    boxShadow: '0 30px 60px rgba(244, 201, 93, 0.45)'
   },
-  owlBodyMobile: {
+  eagleBodyMobile: {
     width: '180px',
     height: '190px'
   },
-  owlEarLeft: {
+  eagleEarLeft: {
     position: 'absolute',
     top: '-18px',
     left: '40px',
     width: '40px',
     height: '40px',
-    background: '#0F172A',
+    background: '#1F2937',
     transform: 'rotate(-20deg)',
     borderRadius: '12px 12px 2px 2px'
   },
-  owlEarRight: {
+  eagleEarRight: {
     position: 'absolute',
     top: '-18px',
     right: '40px',
     width: '40px',
     height: '40px',
-    background: '#0F172A',
+    background: '#1F2937',
     transform: 'rotate(20deg)',
     borderRadius: '12px 12px 2px 2px'
   },
-  owlFace: {
+  eagleFace: {
     position: 'absolute',
     top: '36px',
     left: '20px',
@@ -692,7 +872,7 @@ const styles = {
     justifyContent: 'space-between',
     alignItems: 'center'
   },
-  owlEye: {
+  eagleEye: {
     width: '68px',
     height: '68px',
     borderRadius: '50%',
@@ -701,21 +881,21 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    animation: 'owlBlink 6s infinite'
+    animation: 'eagleBlink 6s infinite'
   },
-  owlEyeWink: {
-    animation: 'owlBlinkQuick 0.2s 4 alternate'
+  eagleEyeWink: {
+    animation: 'eagleBlinkQuick 0.2s 4 alternate'
   },
-  owlEyeCheer: {
-    animation: 'owlBlinkCheer 1.4s'
+  eagleEyeCheer: {
+    animation: 'eagleBlinkCheer 1.4s'
   },
-  owlPupil: {
+  eaglePupil: {
     width: '26px',
     height: '26px',
     borderRadius: '50%',
-    background: '#1D4ED8'
+    background: '#0F172A'
   },
-  owlBeak: {
+  eagleBeak: {
     position: 'absolute',
     left: '50%',
     transform: 'translateX(-50%)',
@@ -725,28 +905,28 @@ const styles = {
     borderRadius: '50% 50% 40% 40%',
     background: '#FDBA74'
   },
-  owlWingLeft: {
+  eagleWingLeft: {
     position: 'absolute',
     width: '70px',
     height: '120px',
     left: '-20px',
     top: '60px',
     borderRadius: '60% 30% 60% 30%',
-    background: '#1E293B',
-    animation: 'owlWing 4s ease-in-out infinite'
+    background: 'linear-gradient(180deg, #1E293B, #A66A3D)',
+    animation: 'eagleWing 4s ease-in-out infinite'
   },
-  owlWingRight: {
+  eagleWingRight: {
     position: 'absolute',
     width: '70px',
     height: '120px',
     right: '-20px',
     top: '60px',
     borderRadius: '30% 60% 30% 60%',
-    background: '#1E293B',
-    animation: 'owlWing 4s ease-in-out infinite',
+    background: 'linear-gradient(180deg, #1E293B, #A66A3D)',
+    animation: 'eagleWing 4s ease-in-out infinite',
     animationDelay: '0.4s'
   },
-  owlBelly: {
+  eagleBelly: {
     position: 'absolute',
     bottom: '42px',
     left: '50%',
@@ -754,44 +934,44 @@ const styles = {
     width: '140px',
     height: '90px',
     borderRadius: '70px',
-    background: 'linear-gradient(180deg, #FDE68A, #F59E0B)',
+    background: 'linear-gradient(180deg, #F4C95D, #B9732F)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center'
   },
-  owlBadge: {
+  eagleBadge: {
     fontSize: '0.8rem',
     fontWeight: 700,
     color: '#0F172A',
     textTransform: 'uppercase',
     letterSpacing: '0.08em'
   },
-  owlFootLeft: {
+  eagleFootLeft: {
     position: 'absolute',
     bottom: '-8px',
     left: '70px',
     width: '28px',
     height: '26px',
     borderRadius: '14px',
-    background: '#F59E0B'
+    background: '#B45309'
   },
-  owlFootRight: {
+  eagleFootRight: {
     position: 'absolute',
     bottom: '-8px',
     right: '70px',
     width: '28px',
     height: '26px',
     borderRadius: '14px',
-    background: '#F59E0B'
+    background: '#B45309'
   },
-  owlRipple: {
+  eagleRipple: {
     position: 'absolute',
     inset: '-10px',
     borderRadius: '50%',
     border: '2px solid rgba(255,255,255,0.35)',
-    animation: 'owlPulse 2s ease-out'
+    animation: 'eaglePulse 2s ease-out'
   },
-  owlSparkle: {
+  eagleSparkle: {
     position: 'absolute',
     top: '-20px',
     right: '10px',
@@ -799,9 +979,9 @@ const styles = {
     height: '28px',
     borderRadius: '50%',
     background: 'rgba(255,255,255,0.25)',
-    animation: 'owlSparkle 2s infinite'
+    animation: 'eagleSparkle 2s infinite'
   },
-  owlHintBubble: {
+  eagleHintBubble: {
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
@@ -815,11 +995,11 @@ const styles = {
     fontWeight: 600,
     boxShadow: '0 12px 24px rgba(2,6,23,0.4)'
   },
-  owlHintBubbleMobile: {
+  eagleHintBubbleMobile: {
     textAlign: 'center',
     width: '100%'
   },
-  owlHintIcon: {
+  eagleHintIcon: {
     fontSize: '1.4rem'
   },
   loadingWrapper: {

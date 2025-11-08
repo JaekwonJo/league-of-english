@@ -9,14 +9,6 @@
       "roles": ["student", "teacher", "admin"]
     },
     {
-      "path": "/study",
-      "name": "문제 학습",
-      "icon": "BookOpen",
-      "component": "StudyPage",
-      "requiresAuth": true,
-      "roles": ["student", "teacher", "admin"]
-    },
-    {
       "path": "/vocabulary",
       "name": "어휘 훈련",
       "icon": "Languages",
@@ -33,14 +25,6 @@
       "roles": ["student", "teacher", "admin"]
     },
     {
-      "path": "/mock-exam",
-      "name": "모의고사 풀이",
-      "icon": "ClipboardList",
-      "component": "MockExamPage",
-      "requiresAuth": true,
-      "roles": ["student", "teacher", "admin"]
-    },
-    {
       "path": "/workbook",
       "name": "워크북 학습",
       "icon": "NotebookPen",
@@ -49,10 +33,18 @@
       "roles": ["student", "teacher", "admin"]
     },
     {
-      "path": "/stats",
-      "name": "학습 통계",
-      "icon": "TrendingUp",
-      "component": "StatsPage",
+      "path": "/study",
+      "name": "문제 학습",
+      "icon": "BookOpen",
+      "component": "StudyPage",
+      "requiresAuth": true,
+      "roles": ["student", "teacher", "admin"]
+    },
+    {
+      "path": "/mock-exam",
+      "name": "모의고사 풀이",
+      "icon": "ClipboardList",
+      "component": "MockExamPage",
       "requiresAuth": true,
       "roles": ["student", "teacher", "admin"]
     },
@@ -70,6 +62,14 @@
       "name": "랭킹",
       "icon": "Trophy",
       "component": "RankingPage",
+      "requiresAuth": true,
+      "roles": ["student", "teacher", "admin"]
+    },
+    {
+      "path": "/stats",
+      "name": "학습 통계",
+      "icon": "TrendingUp",
+      "component": "StatsPage",
       "requiresAuth": true,
       "roles": ["student", "teacher", "admin"]
     },

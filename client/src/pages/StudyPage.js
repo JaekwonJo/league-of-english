@@ -14,7 +14,7 @@ import ReviewCallout from "../features/study/components/ReviewCallout";
 import StudyModeView from "../features/study/components/StudyModeView";
 import ReviewModeView from "../features/study/components/ReviewModeView";
 import { pickFlashcards } from "../features/study/utils/flashcards";
-import OwlGuideChip from "../components/common/OwlGuideChip";
+import EagleGuideChip from "../components/common/EagleGuideChip";
 
 
 
@@ -310,7 +310,7 @@ const StudyPage = () => {
           onDiscardSavedSession={() => clearSavedSession('discarded')}
           headerSlot={(
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <OwlGuideChip text="AI 튜터가 맞춤 세트를 만들 준비가 되었어요" />
+              <EagleGuideChip text="AI 튜터가 맞춤 세트를 만들 준비가 되었어요" />
               <ReviewCallout
                 total={reviewPreview.total}
                 problems={reviewPreview.problems}

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import * as LucideIcons from 'lucide-react';
 import { api } from '../services/api.service';
 import { useAuth } from '../contexts/AuthContext';
-import OwlGuideChip from '../components/common/OwlGuideChip';
+import EagleGuideChip from '../components/common/EagleGuideChip';
 
 const DEFAULT_QUIZ_SIZE = 30;
 const tierOrder = ['Iron', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond', 'Master', 'Challenger'];
@@ -835,7 +835,7 @@ const getTimeLimitSeconds = useCallback(() => {
               <section ref={setsSectionRef} style={styles.section}>
                 <div style={styles.sectionHeadingRow}>
                   <h2 style={styles.sectionTitle}>1️⃣ 단어장 고르기</h2>
-                  <OwlGuideChip text="카테고리를 펼쳐서 원하는 Day를 찾아보세요" />
+                  <EagleGuideChip text="카테고리를 펼쳐서 원하는 Day를 찾아보세요" />
                 </div>
                 <div style={styles.searchRow}>
                   <input
@@ -931,7 +931,7 @@ const getTimeLimitSeconds = useCallback(() => {
             <section style={styles.section} id="vocab-step-2">
               <div style={styles.sectionHeadingRow}>
                 <h2 style={styles.sectionTitle}>2️⃣ 범위 선택하기</h2>
-                <OwlGuideChip text="여러 Day를 고르면 다양한 단어가 섞여요" />
+                <EagleGuideChip text="여러 Day를 고르면 다양한 단어가 섞여요" />
               </div>
               <p style={styles.sectionHint}>원하는 Day를 탭하면 즉시 선택돼요. 여러 Day를 고르면 단어 개수만큼 시험이 만들어집니다.</p>
               {daysLoading ? (
@@ -1040,7 +1040,7 @@ const getTimeLimitSeconds = useCallback(() => {
                 <div>
                   <div style={styles.sectionHeadingRow}>
                     <h2 style={styles.sectionTitle}>3️⃣ 시험 준비하기</h2>
-                    <OwlGuideChip text="시간 제한과 순서를 자유롭게 조절하세요" variant="accent" />
+                    <EagleGuideChip text="시간 제한과 순서를 자유롭게 조절하세요" variant="accent" />
                   </div>
                   <p style={styles.configureSubtitle}>유형과 출제 순서를 고르고, 연습 또는 시험을 바로 시작해 보세요!</p>
                 </div>

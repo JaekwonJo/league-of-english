@@ -13,7 +13,7 @@ import ProblemFeedbackBoard from '../components/admin/ProblemFeedbackBoard';
 import AdminNotificationsPanel from '../components/admin/AdminNotificationsPanel';
 import AdminUsersPanel from '../components/admin/AdminUsersPanel';
 import MembershipRequestsPanel from '../components/admin/MembershipRequestsPanel';
-import OwlGuideChip from '../components/common/OwlGuideChip';
+import EagleGuideChip from '../components/common/EagleGuideChip';
 import { useAdminDocuments } from '../hooks/useAdminDocuments';
 import { useDocumentShare } from '../hooks/useDocumentShare';
 import { useFeedbackReports } from '../hooks/useFeedbackReports';
@@ -461,7 +461,7 @@ const AdminPage = () => {
               자기 반 학생들의 학습 기록을 편하게 확인할 수 있도록 통계 보드도 준비 중이에요. 😊
             </p>
           )}
-          <OwlGuideChip text="업로드/분석/신고까지 부엉이가 도와드려요" variant="accent" />
+          <EagleGuideChip text="업로드부터 분석·신고까지 한 화면에서 처리할 수 있어요" variant="accent" />
         </div>
         <div style={{
           ...responsive(adminStyles.headerButtons, adminStyles.headerButtonsMobile),
@@ -491,7 +491,7 @@ const AdminPage = () => {
               <p style={adminStyles.mockExamDescription}>
                 문제지와 정답/해설 PDF를 한 번에 업로드해 주세요. 업로드가 끝나면 학생용 모의고사 메뉴에서 즉시 최신 회차로 반영됩니다.
               </p>
-              <OwlGuideChip text="문제지와 해설을 반드시 동시에 올려 주세요" variant="warning" />
+              <EagleGuideChip text="문제지와 해설을 반드시 동시에 올려 주세요" variant="warning" />
             </div>
 
             <div style={responsive(adminStyles.mockExamForm, adminStyles.mockExamFormMobile)}>

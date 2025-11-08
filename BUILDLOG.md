@@ -1,3 +1,11 @@
+## 2025-11-08 (home hero eagle palette + mascot loop)
+- Issue: 홈 히어로/CTA가 듀오링고와 유사한 초록 팔레트라 브랜드 정체성이 흐려지고, 마스코트가 가만히 서 있어 “멈춘 캐릭터”처럼 보였습니다.
+- Cause: 초기 리뉴얼 때 디폴트 라이트 톤을 사용했고, 애니메이션 상태는 onClick 시에만 mood가 바뀌도록 구성돼 있었습니다.
+- Fix: 히어로/하이라이트/CTA를 네이비-골드 그라데이션과 미니 메트릭 카드로 재구성하고, 빠른 실행 버튼도 동일 팔레트와 아이콘 배지로 통일했습니다.
+- Fix: 마스코트 색상을 독수리 톤(네이비·브론즈·골드)으로 바꾸고 wink 타이머/cheer 루프/후광·그림자 레이어를 추가해 항상 살아 있는 느낌을 주었습니다.
+- Files: client/src/pages/HomePage.js, client/src/index.css.
+- Verification: `CI=true npm run test --prefix client -- --watch=false`.
+
 ## 2025-11-07 (analysis/vocab UI polish + mock exam fallback)
 - Issue: 분석 자료/어휘/랭킹 화면이 어두운 배경에 어두운 글씨로 보이거나 의미 없는 "총 Day" 카운터 때문에 학습자가 혼란을 겪었습니다.
 - Cause: 히어로/메타 카드가 라이트 테마 기준으로 작성돼 다크 모드 대비가 깨지고, 지문 라벨은 별도 테이블이 없어 즉시 수정할 수 없었습니다.
@@ -80,16 +88,16 @@
 - Note: E2E 실행 전 `npm run dev:all`로 로컬 서버를 띄우고, 필요 시 `PLAYWRIGHT_BASE_URL`/`PLAYWRIGHT_API_URL`을 설정하세요.
 
 ## 2025-10-29 (multi-step routes + rename sync + gen limits)
-- Issue: 단일 페이지에서 단계가 바뀌어도 주소가 그대로라 뒤로가기/북마크가 불편했고, 모바일 헤더가 🦉·햄버거 아이콘 겹침으로 헷갈렸어요. 관리자 문서 이름을 바꿔도 어휘/학습 목록에 반영되지 않았습니다.
+- Issue: 단일 페이지에서 단계가 바뀌어도 주소가 그대로라 뒤로가기/북마크가 불편했고, 모바일 헤더가 🦅·햄버거 아이콘 겹침으로 헷갈렸어요. 관리자 문서 이름을 바꿔도 어휘/학습 목록에 반영되지 않았습니다.
 - Cause: Vocabulary/Study/Analysis 페이지가 내부 state만 바꾸고 URL 변경 없이 동작했으며, 문서 수정 API 자체가 없었습니다. 문제 생성은 유형별 제한이 없어 긴 요청에서 타임아웃이 잦았어요.
-- Fix: 단계별 URL(`/vocabulary/days`, `/study/solve`, `/analysis/detail` 등)로 나누고 브라우저 이동과 연동했어요. 모바일 헤더는 단일 토글(☰/✕)과 중앙 🦉 제목으로 정리했습니다. `/documents/:id` PUT API로 제목/카테고리/학교/학년을 수정하면 학습·어휘 메뉴에 즉시 반영돼요. AI 유형 합산 5문항, 비AI 유형 10문항 상한을 추가해 요청을 안정화했습니다.
+- Fix: 단계별 URL(`/vocabulary/days`, `/study/solve`, `/analysis/detail` 등)로 나누고 브라우저 이동과 연동했어요. 모바일 헤더는 단일 토글(☰/✕)과 중앙 🦅 제목으로 정리했습니다. `/documents/:id` PUT API로 제목/카테고리/학교/학년을 수정하면 학습·어휘 메뉴에 즉시 반영돼요. AI 유형 합산 5문항, 비AI 유형 10문항 상한을 추가해 요청을 안정화했습니다.
 - Files: client/src/pages/VocabularyPage.js, client/src/pages/StudyPage.js, client/src/pages/AnalysisPage.js, client/src/components/layout/MainLayout.js, client/src/services/api.service.js, server/routes/document.routes.js, server/services/problemSetService.js 등.
 - Tests: `npm run lint`, `npm test` (기존 `analysisFallbackVariant.test.js` 한 건은 fallback 해석 prefix 보정 필요로 여전히 실패 – 후속 예정).
 
 ## 2025-10-27 (vocab stepper + analysis bulk delete + theme toggle)
 - Issue: 모바일에서 어휘 메뉴와 분석 홈이 혼란스러워 사용자들이 어느 버튼을 눌러야 할지 갈팡질팡했고, 관리자들은 분석본을 하나씩만 삭제할 수 있어 반복 작업에서 404가 났습니다.
 - Cause: VocabularyPage가 단일 화면에 모든 옵션을 노출했고, AnalysisPage가 문서 로딩 시 자동으로 분석 API를 호출했습니다. 삭제 API도 단일 variant만 처리했습니다.
-- Fix: 어휘 흐름을 3단계(세트→Day→시험)로 쪼개고 안내 문구를 정비했으며, 모바일 헤더를 🦉 아이콘+토글 방식으로 단순화했습니다. 분석 홈은 검색/목록만 담당하도록 분리하고, 일괄 삭제 엔드포인트(`removeVariants`)를 추가했습니다.
+- Fix: 어휘 흐름을 3단계(세트→Day→시험)로 쪼개고 안내 문구를 정비했으며, 모바일 헤더를 🦅 아이콘+토글 방식으로 단순화했습니다. 분석 홈은 검색/목록만 담당하도록 분리하고, 일괄 삭제 엔드포인트(`removeVariants`)를 추가했습니다.
 - Fix: Sidebar·모바일 상단에 테마 토글을 복구하고, 분석/어휘 스타일 토큰을 통일해 라이트/다크 대비를 올렸습니다.
 - Files: client/src/pages/VocabularyPage.js, client/src/pages/AnalysisPage.js, client/src/components/layout/MainLayout.js, client/src/styles/analysisStyles.js, client/src/services/api.service.js, server/services/analysisService.js, server/routes/analysis/passageRoutes.js 등.
 - Tests: `npm run lint`, `npm test` (analysisFallbackVariant.test.js는 라벨 prefix 보정 필요로 실패 – 후속 작업 예정).
