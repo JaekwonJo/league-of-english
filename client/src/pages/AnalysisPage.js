@@ -69,7 +69,7 @@ const LOADING_MESSAGES = [
   '실생활 예시와 어법 포인트를 챙기고 있어요... 📚'
 ];
 
-const VARIANT_HERO_TITLE = '전문 튜터가 정성껏 완성한 분석 노트예요 💖';
+const VARIANT_HERO_TITLE = '정확성과 맥락을 살린 분석 노트';
 const VARIANT_HERO_SUBTITLE = '오늘도 열공 파이팅! 궁금한 문장을 톡톡 눌러 살펴보세요.';
 
 const CIRCLED_DIGITS = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩', '⑪', '⑫', '⑬', '⑭', '⑮', '⑯', '⑰', '⑱', '⑲', '⑳'];
@@ -120,6 +120,21 @@ const pickQuoteEntry = (excludeText) => {
   const filtered = excludeText ? GENERATION_QUOTES.filter((item) => item.text !== excludeText) : GENERATION_QUOTES;
   const pool = filtered.length ? filtered : GENERATION_QUOTES;
   return pickRandom(pool);
+};
+
+const normalizeAnalysisLine = (line) => {
+  if (typeof line !== 'string') return line;
+  // Replace question tones with a clear explanatory tone
+  let cleaned = String(line)
+    .replace(/\?+/g, '.')
+    .replace(/\.{2,}/g, '.')
+    .replace(/\s+/g, ' ')
+    .trim();
+  // Ensure it reads like a brief lecture-style summary, not a question
+  if (/\?$/.test(line) || /(?:어떻게|왜)\s*[^.]*\?$/.test(line)) {
+    cleaned = `🧠 핵심 정리: ${cleaned}`;
+  }
+  return cleaned;
 };
 
 const formatFriendlyDateTime = (input) => {
@@ -1167,7 +1182,8 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
     const circledDigit = getCircledDigit(index);
 
     const koreanLine = sentence.korean || '📘 한글 해석: 문장을 우리말로 직접 정리해 보세요.';
-    const analysisLine = sentence.breakdown || sentence.analysis || '🧠 문장 분석: 문장의 핵심을 정리해 보세요.';
+    const analysisRaw = sentence.breakdown || sentence.analysis || '🧠 문장 분석: 문장의 핵심을 정리해 보세요.';
+    const analysisLine = normalizeAnalysisLine(analysisRaw);
     const vocabularyIntro = sentence.vocabulary?.intro || '🎯 어휘 노트: 꼭 외워야 할 단어를 직접 정리해 보세요.';
     const vocabWords = Array.isArray(sentence.vocabulary?.words) ? sentence.vocabulary.words : [];
 

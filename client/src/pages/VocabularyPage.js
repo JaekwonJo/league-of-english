@@ -809,8 +809,8 @@ const getTimeLimitSeconds = useCallback(() => {
         <div style={styles.heroRow}>
           <div style={styles.heroContent}>
             <span style={styles.heroBadge}>Daily Vocab Studio</span>
-            <h1 style={styles.heroTitle}>독수리 튜터와 단어 루틴을 채워요</h1>
-            <p style={styles.heroSubtitle}>지문에서 뽑은 핵심 단어를 Day별로 골라 시험이나 연습 모드로 바로 훈련할 수 있어요.</p>
+            <h1 style={styles.heroTitle}>Day별 핵심 어휘를 정확하게 훈련합니다</h1>
+            <p style={styles.heroSubtitle}>지문에서 선별한 핵심 단어를 Day 단위로 구성해, 시험 또는 연습 모드로 곧바로 학습할 수 있습니다.</p>
             <div style={styles.heroInfoPill}>📚 {heroInfoText}</div>
             <div style={styles.heroButtons}>
               <AppButton variant="primary" size="lg" onClick={handleScrollToSets}>
@@ -834,7 +834,7 @@ const getTimeLimitSeconds = useCallback(() => {
                 }, 180);
               }
             }}
-            aria-label="독수리와 상호작용"
+            aria-label="마스코트와 상호작용"
           >
             <div style={styles.vocabEagleHalo} aria-hidden="true" />
             <div style={styles.vocabEagleBody} data-eagle-body>

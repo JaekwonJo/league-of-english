@@ -310,7 +310,7 @@ const StudyPage = () => {
           onDiscardSavedSession={() => clearSavedSession('discarded')}
           headerSlot={(
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <EagleGuideChip text="AI 튜터가 맞춤 세트를 만들 준비가 되었어요" />
+              <EagleGuideChip text="맞춤 학습 세트를 생성할 준비가 되었습니다" />
               <ReviewCallout
                 total={reviewPreview.total}
                 problems={reviewPreview.problems}

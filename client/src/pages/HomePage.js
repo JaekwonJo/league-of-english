@@ -209,7 +209,7 @@ const HomePage = () => {
           <span style={styles.heroTag}>League of English</span>
           <h1 style={styles.heroTitle}>안녕하세요, {user?.name || '학습자'}님! 👋</h1>
           <p style={styles.heroSubtitle}>
-            하루 30분만 투자해도 단어·분석·모의고사를 한 번에 챙길 수 있어요. 마스코트 튜터가 오늘 할 일을 부드럽게 안내해 드릴게요.
+            하루 30분만 투자해도 단어·분석·모의고사를 한 번에 관리할 수 있습니다. 대시보드가 오늘의 학습 흐름을 명확하게 안내합니다.
           </p>
           <div style={isMobile ? { ...styles.heroCTAGroup, ...styles.heroCTAGroupMobile } : styles.heroCTAGroup}>
             <AppButton variant="primary" size="lg" onClick={() => (window.location.href = '/vocabulary')}>
@@ -226,7 +226,7 @@ const HomePage = () => {
               <span style={styles.streakGlow} aria-hidden="true" />
             </div>
           )}
-          <p style={styles.heroNote}>Tip · 마스코트를 눌러서 오늘의 미션을 확인해 보세요!</p>
+          <p style={styles.heroNote}>Tip · 메인 아이콘을 눌러 오늘의 학습 안내를 확인해 보세요.</p>
           <div style={highlightRowStyle}>
                 {heroHighlightCards.map((badge) => (
                   <div
@@ -422,7 +422,7 @@ const EagleMascot = ({ mood, onInteract, hint, pulseKey, isMobile }) => (
         ...(mood === 'cheer' ? styles.eagleButtonCheer : {}),
         ...(isMobile ? styles.eagleButtonMobile : {})
       }}
-      aria-label="마스코트 튜터와 상호작용"
+      aria-label="마스코트와 상호작용"
     >
       <div style={styles.eagleHalo} aria-hidden="true" />
       <div style={styles.eagleShadow} aria-hidden="true" />
@@ -467,7 +467,6 @@ const EagleMascot = ({ mood, onInteract, hint, pulseKey, isMobile }) => (
       />
     </button>
     <div style={isMobile ? { ...styles.eagleHintBubble, ...styles.eagleHintBubbleMobile } : styles.eagleHintBubble}>
-      <span style={styles.eagleHintIcon}>🦅</span>
       <span aria-live="polite">{hint}</span>
     </div>
   </div>
