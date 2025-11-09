@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api.service';
+import AppButton from '../components/common/AppButton';
 import tierConfig from '../config/tierConfig.json';
 import EagleGuideChip from '../components/common/EagleGuideChip';
 
@@ -211,12 +212,12 @@ const HomePage = () => {
             하루 30분만 투자해도 단어·분석·모의고사를 한 번에 챙길 수 있어요. 마스코트 튜터가 오늘 할 일을 부드럽게 안내해 드릴게요.
           </p>
           <div style={isMobile ? { ...styles.heroCTAGroup, ...styles.heroCTAGroupMobile } : styles.heroCTAGroup}>
-            <button type="button" className="ui-focus-ring ui-pressable" style={styles.heroPrimaryButton} onClick={() => (window.location.href = '/vocabulary')}>
+            <AppButton variant="primary" size="lg" onClick={() => (window.location.href = '/vocabulary')}>
               어휘 시험 보러가기
-            </button>
-            <button type="button" className="ui-focus-ring ui-pressable" style={styles.heroSecondaryButton} onClick={() => (window.location.href = '/analysis')}>
+            </AppButton>
+            <AppButton variant="secondary" size="lg" onClick={() => (window.location.href = '/analysis')}>
               분석 자료 열어보기
-            </button>
+            </AppButton>
           </div>
           {showStreakBadge && (
             <div style={styles.streakBadge}>

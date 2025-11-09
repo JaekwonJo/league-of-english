@@ -273,6 +273,7 @@ const RankingPage = () => {
                     ...topCardStyle,
                     ...(isMobile ? styles.rankingItemMobile : {})
                   }}
+                  className="ui-pressable ui-elevate"
                 >
                   {topGlowStyle && (
                     <div style={{ ...styles.topRankAura, ...topGlowStyle }} aria-hidden />

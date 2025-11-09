@@ -384,7 +384,7 @@ const StatsPage = () => {
 };
 
 const StatCard = ({ label, value, helper }) => (
-  <div style={styles.statCard}>
+  <div style={styles.statCard} className="ui-pressable ui-elevate">
     <span style={styles.statLabel}>{label}</span>
     <strong style={styles.statValue}>{value}</strong>
     {helper && <span style={styles.statHelper}>{helper}</span>}

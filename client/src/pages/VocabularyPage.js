@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as LucideIcons from 'lucide-react';
+import AppButton from '../components/common/AppButton';
 import { api } from '../services/api.service';
 import { useAuth } from '../contexts/AuthContext';
 import EagleGuideChip from '../components/common/EagleGuideChip';
@@ -812,9 +813,9 @@ const getTimeLimitSeconds = useCallback(() => {
             <p style={styles.heroSubtitle}>지문에서 뽑은 핵심 단어를 Day별로 골라 시험이나 연습 모드로 바로 훈련할 수 있어요.</p>
             <div style={styles.heroInfoPill}>📚 {heroInfoText}</div>
             <div style={styles.heroButtons}>
-              <button type="button" className="ui-focus-ring ui-pressable" style={styles.heroPrimaryButton} onClick={handleScrollToSets}>
+              <AppButton variant="primary" size="lg" onClick={handleScrollToSets}>
                 <LucideIcons.Search size={18} /> 단어장 살펴보기
-              </button>
+              </AppButton>
             </div>
           </div>
           <div
@@ -865,9 +866,9 @@ const getTimeLimitSeconds = useCallback(() => {
             {/* pulse ring */}
             <span style={styles.vocabEaglePulse} aria-hidden="true" />
             {/* sparkles */}
-            <span style={{ ...styles.vocabEagleSparkle, left: '12%', top: '18%', animationDelay: '0.2s' }} />
-            <span style={{ ...styles.vocabEagleSparkle, right: '10%', top: '28%', animationDelay: '0.6s' }} />
-            <span style={{ ...styles.vocabEagleSparkle, left: '18%', bottom: '14%', animationDelay: '1.0s' }} />
+            <span className="ui-sparkle" style={{ ...styles.vocabEagleSparkle, left: '12%', top: '18%', animationDelay: '0.2s' }} />
+            <span className="ui-sparkle" style={{ ...styles.vocabEagleSparkle, right: '10%', top: '28%', animationDelay: '0.6s' }} />
+            <span className="ui-sparkle" style={{ ...styles.vocabEagleSparkle, left: '18%', bottom: '14%', animationDelay: '1.0s' }} />
           </div>
         </div>
       </section>
@@ -1202,30 +1203,21 @@ const getTimeLimitSeconds = useCallback(() => {
               </div>
 
               <div style={styles.configureActions}>
-                <button
-                  type="button"
-                  style={styles.secondaryButton}
-                  onClick={() => navigateToStep(STEPS.SELECT_DAY)}
-                >
+                <AppButton variant="secondary" onClick={() => navigateToStep(STEPS.SELECT_DAY)}>
                   ← 범위 다시 선택
-                </button>
-                <button
-                  type="button"
-                  style={styles.secondaryButton}
-                  onClick={handleStartPractice}
-                >
+                </AppButton>
+                <AppButton variant="secondary" onClick={handleStartPractice}>
                   연습하기
-                </button>
-                <button
-                  type="button"
+                </AppButton>
+                <AppButton
+                  variant="primary"
+                  size="lg"
                   data-testid="vocab-start-quiz"
-                  className="ui-focus-ring ui-pressable"
-                  style={styles.primaryButton}
                   onClick={handleStartQuiz}
                   disabled={quizState.loading}
                 >
                   {quizState.loading ? '문제를 준비 중...' : '시험 시작하기'}
-                </button>
+                </AppButton>
               </div>
             </section>
           )}

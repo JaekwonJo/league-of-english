@@ -4,6 +4,7 @@ import FriendlyError from '../components/common/FriendlyError';
 import { api } from '../services/api.service';
 import { useAuth } from '../contexts/AuthContext';
 import EagleGuideChip from '../components/common/EagleGuideChip';
+import AppButton from '../components/common/AppButton';
 
 const INITIAL_STATE = {
   exam: null,
@@ -494,46 +495,31 @@ const MockExamPage = () => {
 
         <footer style={styles.examFooter}>
           <div style={styles.navigationButtons}>
-          <button
-            type="button"
-            className="ui-focus-ring ui-pressable"
-            style={{
-              ...styles.navButton,
-              ...(state.currentIndex === 0 ? styles.navButtonDisabled : {})
-            }}
-              onClick={() => handleNavigate(state.currentIndex - 1)}
-              disabled={state.currentIndex === 0}
-            >
-              <LucideIcons.ArrowLeft size={18} /> 이전
-            </button>
-          <button
-            type="button"
-            className="ui-focus-ring ui-pressable"
-            style={{
-              ...styles.navButton,
-              ...(state.currentIndex === total - 1 ? styles.navButtonDisabled : {})
-            }}
-              onClick={() => handleNavigate(state.currentIndex + 1)}
-              disabled={state.currentIndex === total - 1}
-            >
-              다음 <LucideIcons.ArrowRight size={18} />
-            </button>
+          <AppButton
+            variant="secondary"
+            onClick={() => handleNavigate(state.currentIndex - 1)}
+            disabled={state.currentIndex === 0}
+          >
+            <LucideIcons.ArrowLeft size={18} /> 이전
+          </AppButton>
+          <AppButton
+            variant="secondary"
+            onClick={() => handleNavigate(state.currentIndex + 1)}
+            disabled={state.currentIndex === total - 1}
+          >
+            다음 <LucideIcons.ArrowRight size={18} />
+          </AppButton>
           </div>
 
-          <button
-            type="button"
-            className="ui-focus-ring ui-pressable"
-            style={{
-              ...styles.primaryButton,
-              ...styles.submitButton,
-              ...(state.submitting ? styles.primaryButtonDisabled : {})
-            }}
+          <AppButton
+            variant="primary"
+            size="lg"
             onClick={() => handleSubmit(false)}
             disabled={state.submitting}
             data-testid="mock-submit"
           >
             {state.submitting ? '제출 중...' : '모의고사 제출하기'}
-          </button>
+          </AppButton>
         </footer>
 
         {isMobile && (
@@ -541,19 +527,14 @@ const MockExamPage = () => {
             <div style={styles.bottomTimer}>
               <LucideIcons.AlarmClock size={18} /> {formatTime(state.timeLeft)}
             </div>
-            <button
-              type="button"
-              className="ui-focus-ring ui-pressable"
-              style={{
-                ...styles.primaryButton,
-                ...styles.bottomSubmitButton,
-                ...(state.submitting ? styles.primaryButtonDisabled : {})
-              }}
+            <AppButton
+              variant="primary"
               onClick={() => handleSubmit(false)}
               disabled={state.submitting}
+              style={styles.bottomSubmitButton}
             >
               {state.submitting ? '제출 중...' : '제출하기'}
-            </button>
+            </AppButton>
           </div>
         )}
 
