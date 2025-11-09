@@ -110,6 +110,8 @@ const VocabularyPage = () => {
   const [selectedDayKeys, setSelectedDayKeys] = useState([]);
   // recently-clicked items to show a brief selection flash
   const [flashKeys, setFlashKeys] = useState(() => new Set());
+  const [blink, setBlink] = useState(false);
+  const [wingUp, setWingUp] = useState(false);
   const [quizMode, setQuizMode] = useState('mixed'); // 'mixed' | 'term_to_meaning' | 'meaning_to_term'
   const [orderPolicy, setOrderPolicy] = useState('random'); // 'random' | 'sequential'
   const [collapsedSections, setCollapsedSections] = useState(() => (
@@ -132,6 +134,25 @@ const VocabularyPage = () => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Eagle animations: eye blink (~5-7s) & gentle wing flap
+  useEffect(() => {
+    let blinkTimer;
+    const scheduleBlink = () => {
+      blinkTimer = setTimeout(() => {
+        setBlink(true);
+        setTimeout(() => setBlink(false), 140);
+        scheduleBlink();
+      }, 5000 + Math.round(Math.random() * 2000));
+    };
+    scheduleBlink();
+    return () => clearTimeout(blinkTimer);
+  }, []);
+
+  useEffect(() => {
+    const wingTimer = setInterval(() => setWingUp((v) => !v), 900);
+    return () => clearInterval(wingTimer);
   }, []);
 
   const [quizState, setQuizState] = useState({
@@ -817,9 +838,23 @@ const getTimeLimitSeconds = useCallback(() => {
             <div style={styles.vocabEagleHalo} aria-hidden="true" />
             <div style={styles.vocabEagleBody} data-eagle-body>
               <div style={styles.vocabEagleEyes}>
-                <span style={styles.vocabEagleEye} />
-                <span style={styles.vocabEagleEye} />
+                <span style={{
+                  ...styles.vocabEagleEye,
+                  ...(blink ? styles.vocabEagleEyeBlink : {})
+                }} />
+                <span style={{
+                  ...styles.vocabEagleEye,
+                  ...(blink ? styles.vocabEagleEyeBlink : {})
+                }} />
               </div>
+              <div style={{
+                ...styles.vocabEagleWingLeft,
+                ...(wingUp ? styles.vocabEagleWingUp : {})
+              }} />
+              <div style={{
+                ...styles.vocabEagleWingRight,
+                ...(wingUp ? styles.vocabEagleWingUp : {})
+              }} />
               <div style={styles.vocabEagleBeak} />
               <div style={styles.vocabEagleBelly}>🦅</div>
               <div style={styles.vocabEagleFootRow}>
@@ -1030,6 +1065,9 @@ const getTimeLimitSeconds = useCallback(() => {
                         <div style={styles.daySummary}>
                           총 {day.count}개의 단어가 숨어 있어요. 시험에서 뜻을 맞혀볼까요?
                         </div>
+                        {selected && (
+                          <span style={styles.dayCheckOverlay} aria-hidden="true">✓</span>
+                        )}
                       </article>
                     );
                   })}
@@ -1601,6 +1639,10 @@ const styles = {
     borderRadius: '50%',
     background: '#f8fafc'
   },
+  vocabEagleEyeBlink: {
+    height: '4px',
+    background: '#0f172a'
+  },
   vocabEagleBeak: {
     width: '28px',
     height: '18px',
@@ -1624,6 +1666,33 @@ const styles = {
     height: '10px',
     borderRadius: '10px',
     background: '#fbbf24'
+  },
+  vocabEagleWingLeft: {
+    position: 'absolute',
+    left: '-10px',
+    top: '50%',
+    width: '36px',
+    height: '16px',
+    borderRadius: '16px',
+    background: 'rgba(255,255,255,0.2)',
+    border: '1px solid rgba(255,255,255,0.25)',
+    transform: 'rotate(-12deg)',
+    transformOrigin: 'right center'
+  },
+  vocabEagleWingRight: {
+    position: 'absolute',
+    right: '-10px',
+    top: '50%',
+    width: '36px',
+    height: '16px',
+    borderRadius: '16px',
+    background: 'rgba(255,255,255,0.2)',
+    border: '1px solid rgba(255,255,255,0.25)',
+    transform: 'rotate(12deg)',
+    transformOrigin: 'left center'
+  },
+  vocabEagleWingUp: {
+    transform: 'translateY(-6px) scale(1.04)'
   },
   heroPrimaryButton: {
     display: 'inline-flex',
@@ -1881,12 +1950,27 @@ const styles = {
     border: '1px solid rgba(255,255,255,0.6)',
     transition: 'all 0.2s ease',
     boxShadow: '0 18px 36px rgba(15, 23, 42, 0.15)',
+    position: 'relative',
     color: '#1f2a5a'
   },
   dayCardSelected: {
     borderColor: 'rgba(34,197,94,0.6)',
     boxShadow: '0 24px 48px rgba(34,197,94,0.28)',
     transform: 'translateY(-4px)'
+  },
+  dayCheckOverlay: {
+    position: 'absolute',
+    right: '10px',
+    top: '10px',
+    width: '28px',
+    height: '28px',
+    borderRadius: '50%',
+    background: 'rgba(34,197,94,0.9)',
+    color: '#f8fafc',
+    fontWeight: 800,
+    display: 'grid',
+    placeItems: 'center',
+    boxShadow: '0 6px 16px rgba(34,197,94,0.35)'
   },
   dayCardFlash: {
     boxShadow: '0 0 0 4px rgba(34,197,94,0.35), 0 24px 48px rgba(34,197,94,0.28)',

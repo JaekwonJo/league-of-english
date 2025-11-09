@@ -19,6 +19,7 @@ const INITIAL_STATE = {
 const MockExamPage = () => {
   const { user, updateUser } = useAuth();
   const [state, setState] = useState(INITIAL_STATE);
+  const [isMobile, setIsMobile] = useState(() => (typeof window !== 'undefined' ? window.innerWidth <= 768 : false));
   const [explanations, setExplanations] = useState({});
   const [explanationErrors, setExplanationErrors] = useState({});
   const [activeTab, setActiveTab] = useState('exam'); // exam | review
@@ -61,6 +62,13 @@ const MockExamPage = () => {
     };
 
     loadExamList();
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return () => {};
+    const onResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
   }, []);
 
   const fetchExam = useCallback(async (examId) => {
@@ -523,6 +531,26 @@ const MockExamPage = () => {
             {state.submitting ? '제출 중...' : '모의고사 제출하기'}
           </button>
         </footer>
+
+        {isMobile && (
+          <div style={styles.bottomActionBar}>
+            <div style={styles.bottomTimer}>
+              <LucideIcons.AlarmClock size={18} /> {formatTime(state.timeLeft)}
+            </div>
+            <button
+              type="button"
+              style={{
+                ...styles.primaryButton,
+                ...styles.bottomSubmitButton,
+                ...(state.submitting ? styles.primaryButtonDisabled : {})
+              }}
+              onClick={() => handleSubmit(false)}
+              disabled={state.submitting}
+            >
+              {state.submitting ? '제출 중...' : '제출하기'}
+            </button>
+          </div>
+        )}
 
         <div style={styles.questionNavRail}>
           {state.exam.questions.map((item, idx) => {
@@ -1260,7 +1288,7 @@ const styles = {
     position: 'fixed',
     left: '50%',
     transform: 'translateX(-50%)',
-    bottom: '16px',
+    bottom: '68px',
     zIndex: 50,
     display: 'flex',
     gap: '8px',
@@ -1272,6 +1300,37 @@ const styles = {
     boxShadow: '0 16px 36px rgba(15,23,42,0.18)',
     maxWidth: '92vw',
     overflowX: 'auto'
+  },
+  bottomActionBar: {
+    position: 'fixed',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    bottom: '12px',
+    zIndex: 60,
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    padding: '8px 10px',
+    borderRadius: '999px',
+    background: 'rgba(15,23,42,0.9)',
+    color: '#f8fafc',
+    border: '1px solid rgba(148,163,184,0.28)',
+    backdropFilter: 'blur(8px)',
+    boxShadow: '0 18px 40px rgba(15,23,42,0.28)'
+  },
+  bottomTimer: {
+    padding: '6px 10px',
+    borderRadius: '999px',
+    background: 'rgba(248,250,252,0.08)',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    fontWeight: 700
+  },
+  bottomSubmitButton: {
+    padding: '10px 14px',
+    borderRadius: '999px',
+    boxShadow: '0 12px 24px rgba(79,70,229,0.35)'
   },
   questionDot: {
     borderRadius: '999px',
