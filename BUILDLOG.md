@@ -7,6 +7,14 @@
 - Files: scripts/e2e-server.js, playwright.config.js, tests/e2e/*.spec.js, .github/workflows/ci.yml, client/src/pages/{VocabularyPage,MockExamPage,HomePage,StatsPage}.js, server/{models/database.js,routes/mockExam.routes.js,services/mockExamService.js,services/analysisService.js}.
 - Verification: `npm test` (기존 fallback 분석 케이스 1건 제외), `PLAYWRIGHT_SKIP_WEBSERVER=1 npm run test:e2e` (로컬 캡처 확인).
 
+## 2025-11-09 (UI mobile polish: vocab range, mascot, mock-exam)
+- Issue: 어휘 Day 선택 효과가 약해 선택됨 상태가 모호했고, 스크롤 하단 CTA는 시야 밖으로 밀려 UX가 떨어졌습니다. 모의고사 문제 화면은 모바일에서 하단 주작동 버튼이 없어 조작성이 낮았습니다.
+- Cause: Day 카드 스타일이 테두리 중심이어서 대비가 낮고, CTA가 레이아웃 하단에 고정되어 있지 않았습니다. 모의고사 플레이어는 데스크톱 위주 버튼 배치였습니다.
+- Fix: Day 카드에 초록 체크(✓) 원형 배지 + 반짝 플래시 효과 추가, 우하단 고정 플로팅 CTA 버튼 배치. 독수리 마스코트 눈 깜빡임/날개 플랩/탭 점프 상호작용 추가.
+- Fix: 모의고사 플레이어에 모바일 하단 고정 바(타이머 + 제출 버튼) 추가, 문항 네비는 그 위로 떠 있도록 위치 조정.
+- Files: client/src/pages/VocabularyPage.js, client/src/pages/MockExamPage.js, client/src/pages/AnalysisPage.js(문장 분석 설명 톤 보정).
+- Verification: `npm run build --prefix client` 성공, 로컬 모바일 뷰에서 고정 바/플래시/체크 배지 동작 확인.
+
 ## 2025-11-08 (home hero eagle palette + mascot loop)
 - Issue: 홈 히어로/CTA가 듀오링고와 유사한 초록 팔레트라 브랜드 정체성이 흐려지고, 마스코트가 가만히 서 있어 “멈춘 캐릭터”처럼 보였습니다.
 - Cause: 초기 리뉴얼 때 디폴트 라이트 톤을 사용했고, 애니메이션 상태는 onClick 시에만 mood가 바뀌도록 구성돼 있었습니다.
