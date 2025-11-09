@@ -532,6 +532,8 @@ const MockExamPage = () => {
               variant="primary"
               onClick={() => handleSubmit(false)}
               disabled={state.submitting}
+              loading={state.submitting}
+              hideTextWhileLoading
               style={styles.bottomSubmitButton}
             >
               {state.submitting ? '제출 중...' : '제출하기'}

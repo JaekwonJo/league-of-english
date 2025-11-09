@@ -1126,7 +1126,7 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
 
     return (
       <div style={analysisStyles.variantMetaGrid}>
-        <div style={analysisStyles.metaCard}>
+        <div style={analysisStyles.metaCard} className="anim-fadeInUp delay-0">
           <div style={analysisStyles.metaTitle}>📝 영어 제목</div>
           <ul style={analysisStyles.metaList}>
             {englishTitles.length ? englishTitles.map((title, index) => (
@@ -1138,7 +1138,7 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
             )) : <li>영어 제목을 직접 정리해 보세요.</li>}
           </ul>
         </div>
-        <div style={analysisStyles.metaCard}>
+        <div style={analysisStyles.metaCard} className="anim-fadeInUp delay-1">
           <div style={analysisStyles.metaTitle}>💡 작가의 주장</div>
           <ul style={analysisStyles.metaList}>
             {authorClaims.length ? authorClaims.map((claim, index) => (
@@ -1146,13 +1146,13 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
             )) : <li>작가의 주장을 직접 정리해 보세요.</li>}
           </ul>
         </div>
-        <div style={analysisStyles.metaCard}>
+        <div style={analysisStyles.metaCard} className="anim-fadeInUp delay-2">
           <div style={analysisStyles.metaTitle}>🎯 한 줄 요약</div>
           <p><strong>영어:</strong> {englishSummary}</p>
           <p><strong>한국어:</strong> {englishSummaryKorean}</p>
         </div>
         {relatedExamples.length ? (
-          <div style={analysisStyles.metaCard}>
+          <div style={analysisStyles.metaCard} className="anim-fadeInUp delay-3">
             <div style={analysisStyles.metaTitle}>📚 관련 예시</div>
             <ul style={analysisStyles.metaList}>
               {relatedExamples.map((item, index) => (
@@ -1162,7 +1162,7 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
           </div>
         ) : null}
         {modernApplications.length ? (
-          <div style={analysisStyles.metaCard}>
+          <div style={analysisStyles.metaCard} className="anim-fadeInUp delay-3">
             <div style={analysisStyles.metaTitle}>🌟 체크 포인트</div>
             <ul style={analysisStyles.metaList}>
               {modernApplications.map((item, index) => (
@@ -1254,7 +1254,7 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
     };
 
     return (
-      <div key={`sentence-${index}`} style={cardStyle}>
+      <div key={`sentence-${index}`} style={cardStyle} className={`anim-fadeInUp delay-${Math.min(index, 3)}`}>
         <div style={analysisStyles.sentenceHeader}>
           <div style={analysisStyles.sentenceTitleRow}>
             <span style={analysisStyles.sentenceNumber}>{circledDigit}</span>

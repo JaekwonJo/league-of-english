@@ -32,7 +32,19 @@ const styles = {
   disabled: { opacity: 0.5, cursor: 'not-allowed' }
 };
 
-export default function AppButton({ variant = 'primary', size = 'md', style, className = '', disabled, loading = false, leftIcon = null, rightIcon = null, children, ...rest }) {
+export default function AppButton({
+  variant = 'primary',
+  size = 'md',
+  style,
+  className = '',
+  disabled,
+  loading = false,
+  hideTextWhileLoading = false,
+  leftIcon = null,
+  rightIcon = null,
+  children,
+  ...rest
+}) {
   const styleObj = {
     ...styles.base,
     ...(variant === 'primary' ? styles.primary : styles.secondary),
@@ -41,20 +53,26 @@ export default function AppButton({ variant = 'primary', size = 'md', style, cla
     ...(style || {})
   };
   const cls = `ui-focus-ring ui-pressable ${className}`.trim();
+  const textWrapperStyle = loading && hideTextWhileLoading ? { opacity: 0 } : undefined;
   return (
     <button className={cls} style={styleObj} disabled={disabled || loading} {...rest}>
       {leftIcon}
       {loading && (
-        <span style={{
-          width: 16,
-          height: 16,
-          border: '2px solid rgba(255,255,255,0.5)',
-          borderTop: '2px solid rgba(255,255,255,0.95)',
-          borderRadius: '50%',
-          animation: 'spin 1s linear infinite'
-        }} aria-hidden="true" />
+        <span
+          style={{
+            width: 16,
+            height: 16,
+            border: '2px solid rgba(255,255,255,0.5)',
+            borderTop: '2px solid rgba(255,255,255,0.95)',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite'
+          }}
+          aria-hidden="true"
+        />
       )}
-      {children}
+      <span style={textWrapperStyle} aria-hidden={loading && hideTextWhileLoading ? true : undefined}>
+        {children}
+      </span>
       {rightIcon}
     </button>
   );

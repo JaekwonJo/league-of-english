@@ -281,6 +281,18 @@ const RankingPage = () => {
                   {topGlowStyle && (
                     <div style={{ ...styles.topRankAura, ...topGlowStyle }} aria-hidden />
                   )}
+                  {index === 1 && (
+                    <span style={{
+                      position: 'absolute', left: '12px', top: '12px', width: '6px', height: '6px', borderRadius: '50%',
+                      background: 'rgba(255,255,255,0.9)'
+                    }} className="ui-sparkle" aria-hidden />
+                  )}
+                  {index === 2 && (
+                    <span style={{
+                      position: 'absolute', right: '12px', bottom: '10px', width: '6px', height: '6px', borderRadius: '50%',
+                      background: 'rgba(255,255,255,0.9)'
+                    }} className="ui-sparkle" aria-hidden />
+                  )}
                   <div style={{
                     ...styles.rankInfo,
                     ...(isMobile ? styles.rankInfoMobile : {})
