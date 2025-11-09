@@ -494,23 +494,25 @@ const MockExamPage = () => {
 
         <footer style={styles.examFooter}>
           <div style={styles.navigationButtons}>
-            <button
-              type="button"
-              style={{
-                ...styles.navButton,
-                ...(state.currentIndex === 0 ? styles.navButtonDisabled : {})
-              }}
+          <button
+            type="button"
+            className="ui-focus-ring ui-pressable"
+            style={{
+              ...styles.navButton,
+              ...(state.currentIndex === 0 ? styles.navButtonDisabled : {})
+            }}
               onClick={() => handleNavigate(state.currentIndex - 1)}
               disabled={state.currentIndex === 0}
             >
               <LucideIcons.ArrowLeft size={18} /> 이전
             </button>
-            <button
-              type="button"
-              style={{
-                ...styles.navButton,
-                ...(state.currentIndex === total - 1 ? styles.navButtonDisabled : {})
-              }}
+          <button
+            type="button"
+            className="ui-focus-ring ui-pressable"
+            style={{
+              ...styles.navButton,
+              ...(state.currentIndex === total - 1 ? styles.navButtonDisabled : {})
+            }}
               onClick={() => handleNavigate(state.currentIndex + 1)}
               disabled={state.currentIndex === total - 1}
             >
@@ -520,6 +522,7 @@ const MockExamPage = () => {
 
           <button
             type="button"
+            className="ui-focus-ring ui-pressable"
             style={{
               ...styles.primaryButton,
               ...styles.submitButton,
@@ -540,6 +543,7 @@ const MockExamPage = () => {
             </div>
             <button
               type="button"
+              className="ui-focus-ring ui-pressable"
               style={{
                 ...styles.primaryButton,
                 ...styles.bottomSubmitButton,
@@ -591,35 +595,50 @@ const MockExamPage = () => {
 
         <div style={styles.resultLayout}>
           <section style={styles.resultHero}>
-            <div style={styles.resultSummaryCard}>
+            <div style={styles.resultSummaryCard} className="anim-fadeInUp delay-0">
               <span style={styles.heroBadge}>결과 요약</span>
               <h2 style={styles.resultTitle}>수고했어요! 점수를 확인해 볼까요?</h2>
               <p style={styles.resultSubtitle}>총 {total}문항 중 {correctCount}문항을 맞혔어요. 다시 도전하거나 해설을 확인해 보세요.</p>
-            <EagleGuideChip text="결과를 저장하고 싶다면 화면을 캡처해 두세요!" />
-            <div style={styles.resultMetricsRow}>
-              <ResultMetric icon="CheckCircle" label="정답" value={`${correctCount}문항`} accent="success" />
-              <ResultMetric icon="XCircle" label="오답" value={`${incorrectCount}문항`} accent="danger" />
-              <ResultMetric icon="CircleDashed" label="미응시" value={`${unanswered}문항`} accent="muted" />
-              <ResultMetric icon="Percent" label="정답률" value={`${accuracy}%`} accent="primary" />
+              <EagleGuideChip text="결과를 저장하고 싶다면 화면을 캡처해 두세요!" />
+              <div style={styles.resultMetricsRow}>
+                <ResultMetric icon="CheckCircle" label="정답" value={`${correctCount}문항`} accent="success" className="anim-fadeInUp delay-0" />
+                <ResultMetric icon="XCircle" label="오답" value={`${incorrectCount}문항`} accent="danger" className="anim-fadeInUp delay-1" />
+                <ResultMetric icon="CircleDashed" label="미응시" value={`${unanswered}문항`} accent="muted" className="anim-fadeInUp delay-2" />
+                <ResultMetric icon="Percent" label="정답률" value={`${accuracy}%`} accent="primary" className="anim-fadeInUp delay-3" />
+              </div>
+              <EagleGuideChip text="방금 점수가 학습 통계 · 랭킹에 바로 반영됐어요" variant="accent" />
+              <div style={styles.resultActions}>
+                <button type="button" style={styles.secondaryButton} onClick={resetExam}>
+                  <LucideIcons.RotateCcw size={18} /> 다시 풀기
+                </button>
+                <button
+                  type="button"
+                  style={{
+                    ...styles.primaryButton,
+                    ...(activeTab === 'review' ? styles.primaryButtonActive : {})
+                  }}
+                  onClick={() => setActiveTab('review')}
+                >
+                  <LucideIcons.BookOpenCheck size={18} /> 해설 / 복습 보기
+                </button>
+              </div>
             </div>
-            <EagleGuideChip text="방금 점수가 학습 통계 · 랭킹에 바로 반영됐어요" variant="accent" />
-            <div style={styles.resultActions}>
-              <button type="button" style={styles.secondaryButton} onClick={resetExam}>
-                <LucideIcons.RotateCcw size={18} /> 다시 풀기
-              </button>
-              <button
-                type="button"
-                style={{
-                  ...styles.primaryButton,
-                  ...(activeTab === 'review' ? styles.primaryButtonActive : {})
-                }}
-                onClick={() => setActiveTab('review')}
-              >
-                <LucideIcons.BookOpenCheck size={18} /> 해설 / 복습 보기
-              </button>
+            <div className="confetti-container" aria-hidden="true">
+              {Array.from({ length: 14 }).map((_, idx) => {
+                const colors = ['confetti-red','confetti-blue','confetti-yellow','confetti-green','confetti-purple'];
+                const color = colors[idx % colors.length];
+                const left = 6 + (idx * 6) % 88;
+                const delay = (idx % 5) * 120;
+                return (
+                  <span
+                    key={`conf-${idx}`}
+                    className={`confetti-piece ${color}`}
+                    style={{ left: `${left}%`, animationDelay: `${delay}ms` }}
+                  />
+                );
+              })}
             </div>
-          </div>
-        </section>
+          </section>
 
         <section style={styles.reviewSection}>
           <div style={styles.reviewHeader}>
@@ -739,10 +758,10 @@ const HeroMeta = ({ icon, label, value, highlight }) => {
   );
 };
 
-const ResultMetric = ({ icon, label, value, accent }) => {
+const ResultMetric = ({ icon, label, value, accent, className }) => {
   const IconComponent = LucideIcons[icon] || LucideIcons.Circle;
   return (
-    <div style={{
+    <div className={className} style={{
       ...styles.resultMetric,
       ...(accent === 'success' ? styles.resultMetricSuccess : {}),
       ...(accent === 'danger' ? styles.resultMetricDanger : {}),

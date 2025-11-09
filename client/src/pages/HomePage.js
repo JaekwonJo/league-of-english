@@ -211,10 +211,10 @@ const HomePage = () => {
             하루 30분만 투자해도 단어·분석·모의고사를 한 번에 챙길 수 있어요. 마스코트 튜터가 오늘 할 일을 부드럽게 안내해 드릴게요.
           </p>
           <div style={isMobile ? { ...styles.heroCTAGroup, ...styles.heroCTAGroupMobile } : styles.heroCTAGroup}>
-            <button type="button" style={styles.heroPrimaryButton} onClick={() => (window.location.href = '/vocabulary')}>
+            <button type="button" className="ui-focus-ring ui-pressable" style={styles.heroPrimaryButton} onClick={() => (window.location.href = '/vocabulary')}>
               어휘 시험 보러가기
             </button>
-            <button type="button" style={styles.heroSecondaryButton} onClick={() => (window.location.href = '/analysis')}>
+            <button type="button" className="ui-focus-ring ui-pressable" style={styles.heroSecondaryButton} onClick={() => (window.location.href = '/analysis')}>
               분석 자료 열어보기
             </button>
           </div>
@@ -497,7 +497,7 @@ const styles = {
   },
   heroSectionMobile: {
     flexDirection: 'column',
-    padding: '28px 20px',
+    padding: '24px 18px',
     borderRadius: '24px',
     textAlign: 'center'
   },
@@ -511,7 +511,7 @@ const styles = {
   },
   heroTextBlockMobile: {
     order: 2,
-    gap: '10px',
+    gap: '8px',
     textAlign: 'center',
     alignItems: 'center'
   },
@@ -528,14 +528,14 @@ const styles = {
     textTransform: 'uppercase'
   },
   heroTitle: {
-    fontSize: '2.4rem',
+    fontSize: '2.2rem',
     fontWeight: 800,
     letterSpacing: '-0.02em',
     margin: 0
   },
   heroSubtitle: {
-    fontSize: '1.05rem',
-    lineHeight: 1.8,
+    fontSize: '0.98rem',
+    lineHeight: 1.7,
     color: 'rgba(248,250,252,0.9)'
   },
   heroCTAGroup: {

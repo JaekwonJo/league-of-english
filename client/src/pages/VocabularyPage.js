@@ -812,7 +812,7 @@ const getTimeLimitSeconds = useCallback(() => {
             <p style={styles.heroSubtitle}>지문에서 뽑은 핵심 단어를 Day별로 골라 시험이나 연습 모드로 바로 훈련할 수 있어요.</p>
             <div style={styles.heroInfoPill}>📚 {heroInfoText}</div>
             <div style={styles.heroButtons}>
-              <button type="button" style={styles.heroPrimaryButton} onClick={handleScrollToSets}>
+              <button type="button" className="ui-focus-ring ui-pressable" style={styles.heroPrimaryButton} onClick={handleScrollToSets}>
                 <LucideIcons.Search size={18} /> 단어장 살펴보기
               </button>
             </div>
@@ -1219,6 +1219,7 @@ const getTimeLimitSeconds = useCallback(() => {
                 <button
                   type="button"
                   data-testid="vocab-start-quiz"
+                  className="ui-focus-ring ui-pressable"
                   style={styles.primaryButton}
                   onClick={handleStartQuiz}
                   disabled={quizState.loading}
