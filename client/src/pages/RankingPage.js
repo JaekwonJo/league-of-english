@@ -223,7 +223,7 @@ const RankingPage = () => {
               <p style={styles.leaderboardMeta}>총 {leaderboardMeta.total.toLocaleString()}명의 플레이어가 경쟁 중이에요!</p>
             )}
             
-            <div style={isMobile ? styles.rankingListSlider : styles.rankingList}>
+            <div style={styles.rankingList}>
               {rankings.length === 0 && (
                 <div style={styles.emptyState}>아직 랭킹에 올라온 플레이어가 없어요. 첫 주인공이 되어 볼까요? ✨</div>
               )}
@@ -613,8 +613,7 @@ const styles = {
   rankingItemMobile: {
     flexDirection: 'column',
     alignItems: 'flex-start',
-    minWidth: '280px',
-    scrollSnapAlign: 'start'
+    width: '100%'
   },
   topRanker: {
     background: 'linear-gradient(135deg, rgba(255, 247, 210, 0.85), rgba(252, 211, 77, 0.45))',
