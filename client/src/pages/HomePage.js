@@ -201,10 +201,12 @@ const HomePage = () => {
 
   return (
     <div style={isMobile ? { ...styles.container, ...styles.containerMobile } : styles.container}>
-      <section style={isMobile ? { ...styles.heroSection, ...styles.heroSectionMobile } : styles.heroSection}>
+      <section className="hero-animated" style={isMobile ? { ...styles.heroSection, ...styles.heroSectionMobile } : styles.heroSection}>
         <div style={styles.heroAura} aria-hidden="true" />
         <div style={styles.heroBubble} aria-hidden="true" />
         <div style={styles.heroBubbleSecondary} aria-hidden="true" />
+        <span className="shimmer" style={{ animationDelay: '0s' }} aria-hidden />
+        <span className="shimmer" style={{ animationDelay: '1.6s' }} aria-hidden />
         <div style={isMobile ? { ...styles.heroTextBlock, ...styles.heroTextBlockMobile } : styles.heroTextBlock}>
           <span style={styles.heroTag}>League of English</span>
           <h1 style={styles.heroTitle}>안녕하세요, {user?.name || '학습자'}님! 👋</h1>
@@ -229,18 +231,19 @@ const HomePage = () => {
           <p style={styles.heroNote}>Tip · 메인 아이콘을 눌러 오늘의 학습 안내를 확인해 보세요.</p>
           <div style={highlightRowStyle}>
                 {heroHighlightCards.map((badge) => (
-                  <div
-                    key={badge.label}
-                    style={styles.heroHighlightCard}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-2px)';
-                      e.currentTarget.style.boxShadow = '0 22px 44px rgba(3,7,18,0.4)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'none';
-                      e.currentTarget.style.boxShadow = '0 18px 36px rgba(3,7,18,0.35)';
-                    }}
-                  >
+              <div
+                key={badge.label}
+                style={styles.heroHighlightCard}
+                className="tilt-hover"
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 22px 44px rgba(3,7,18,0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'none';
+                  e.currentTarget.style.boxShadow = '0 18px 36px rgba(3,7,18,0.35)';
+                }}
+              >
                     <span style={styles.heroHighlightIcon}>{badge.icon}</span>
                     <div>
                       <p style={styles.heroHighlightLabel}>{badge.label}</p>
@@ -389,6 +392,7 @@ const QuickButton = ({ label, description, onClick }) => {
   const [pressed, setPressed] = React.useState(false);
   return (
     <button
+      className="tilt-hover"
       style={{
         ...styles.quickButton,
         ...(hovered ? styles.quickButtonHover : {}),

@@ -459,14 +459,14 @@ const MockExamPage = () => {
         </header>
 
         <div style={styles.progressBarWrapper}>
-          <div style={{ ...styles.progressBarFill, width: `${progress}%` }} />
+          <div className="progress-animated" style={{ ...styles.progressBarFill, width: `${progress}%` }} />
         </div>
 
-        <div style={styles.questionCard} data-testid="mock-question" data-question-number={question.number}>
+        <div style={styles.questionCard} className="anim-fadeInUp delay-0" data-testid="mock-question" data-question-number={question.number}>
           <div style={styles.questionGuideLine} aria-hidden="true" />
           <div style={styles.questionPrompt}>
             {question.promptLines.map((line, idx) => (
-              <p key={idx} style={styles.promptLine}>{line}</p>
+              <p key={idx} style={styles.promptLine} className={`anim-fadeInUp delay-${Math.min(idx, 3)}`}>{line}</p>
             ))}
           </div>
 
@@ -479,6 +479,7 @@ const MockExamPage = () => {
                   data-testid="mock-choice"
                   data-choice-index={idx}
                   type="button"
+                  className={`anim-fadeInUp delay-${Math.min(idx, 3)}`}
                   style={{
                     ...styles.choiceButton,
                     ...(isSelected ? styles.choiceButtonSelected : {})

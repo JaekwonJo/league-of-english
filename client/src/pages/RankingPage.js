@@ -273,7 +273,7 @@ const RankingPage = () => {
                     ...topCardStyle,
                     ...(isMobile ? styles.rankingItemMobile : {})
                   }}
-                  className="ui-pressable ui-elevate"
+                  className="ui-pressable ui-elevate tilt-hover"
                 >
                   {index === 0 && (
                     <span style={styles.topCrown} aria-hidden>👑</span>

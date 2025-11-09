@@ -1021,14 +1021,14 @@ const getTimeLimitSeconds = useCallback(() => {
                 <div style={styles.notice}>Day 정보를 불러오는 중이에요...</div>
               ) : (
                 <div style={styles.dayGrid}>
-                  {selectedSet.days?.map((day) => {
+                  {selectedSet.days?.map((day, idx) => {
                     const selected = selectedDayKeys.includes(day.key) || day.key === selectedDayKey;
                     return (
                       <article
                         key={day.key}
                         data-testid="vocab-day-card"
                         data-day-key={day.key}
-                        className="ui-pressable ui-elevate"
+                        className={`ui-pressable ui-elevate anim-fadeInUp delay-${Math.min(idx, 3)}`}
                         style={{
                           ...styles.dayCard,
                           ...(selected ? styles.dayCardSelected : {}),

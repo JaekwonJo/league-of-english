@@ -894,6 +894,46 @@ body {
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
+
+/* Hero animated gradient */
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.hero-animated {
+  background: linear-gradient(130deg, #0F172A, #1D3A6D, #F4C95D);
+  background-size: 200% 200%;
+  animation: gradientShift 12s ease-in-out infinite;
+}
+
+/* Shimmer overlay */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); opacity: 0.0; }
+  50% { opacity: 0.4; }
+  100% { transform: translateX(150%); opacity: 0.0; }
+}
+.shimmer {
+  position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(110deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.25) 40%, rgba(255,255,255,0) 80%);
+  mix-blend-mode: screen; filter: blur(1px);
+  animation: shimmer 3.2s ease-in-out infinite;
+}
+
+/* Tilt on hover */
+.tilt-hover { transition: transform var(--motion-fast) ease, box-shadow var(--motion-fast) ease; transform-style: preserve-3d; }
+.tilt-hover:hover { transform: perspective(800px) rotateX(2deg) rotateY(-2deg) translateY(-2px); }
+
+/* Animated progress bar */
+@keyframes barberpole {
+  from { background-position: 0 0; }
+  to { background-position: 40px 0; }
+}
+.progress-animated {
+  background-image: repeating-linear-gradient(45deg, rgba(79,70,229,0.9) 0 10px, rgba(14,165,233,0.9) 10px 20px);
+  background-size: 40px 40px;
+  animation: barberpole 1s linear infinite;
+}
 .confetti-red { background: #F87171; }
 .confetti-blue { background: #60A5FA; }
 .confetti-yellow { background: #FACC15; }
