@@ -862,6 +862,12 @@ const getTimeLimitSeconds = useCallback(() => {
                 <span style={styles.vocabEagleFoot} />
               </div>
             </div>
+            {/* pulse ring */}
+            <span style={styles.vocabEaglePulse} aria-hidden="true" />
+            {/* sparkles */}
+            <span style={{ ...styles.vocabEagleSparkle, left: '12%', top: '18%', animationDelay: '0.2s' }} />
+            <span style={{ ...styles.vocabEagleSparkle, right: '10%', top: '28%', animationDelay: '0.6s' }} />
+            <span style={{ ...styles.vocabEagleSparkle, left: '18%', bottom: '14%', animationDelay: '1.0s' }} />
           </div>
         </div>
       </section>
@@ -1616,6 +1622,15 @@ const styles = {
     borderRadius: '50%',
     background: 'radial-gradient(circle, rgba(255,255,255,0.25), transparent 70%)'
   },
+  vocabEaglePulse: {
+    position: 'absolute',
+    width: '220px',
+    height: '220px',
+    borderRadius: '50%',
+    border: '2px solid rgba(255,255,255,0.35)',
+    animation: 'eaglePulse 1.8s ease-out infinite',
+    pointerEvents: 'none'
+  },
   vocabEagleBody: {
     position: 'relative',
     width: '100%',
@@ -1666,6 +1681,16 @@ const styles = {
     height: '10px',
     borderRadius: '10px',
     background: '#fbbf24'
+  },
+  vocabEagleSparkle: {
+    position: 'absolute',
+    width: '8px',
+    height: '8px',
+    borderRadius: '50%',
+    background: 'rgba(255,255,255,0.9)',
+    boxShadow: '0 0 12px rgba(255,255,255,0.85), 0 0 24px rgba(251,191,36,0.55)',
+    animation: 'eagleSparkle 1.6s ease-in-out infinite',
+    pointerEvents: 'none'
   },
   vocabEagleWingLeft: {
     position: 'absolute',
