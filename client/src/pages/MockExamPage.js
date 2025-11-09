@@ -516,6 +516,7 @@ const MockExamPage = () => {
             size="lg"
             onClick={() => handleSubmit(false)}
             disabled={state.submitting}
+            loading={state.submitting}
             data-testid="mock-submit"
           >
             {state.submitting ? '제출 중...' : '모의고사 제출하기'}

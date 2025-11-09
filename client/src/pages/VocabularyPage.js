@@ -1217,6 +1217,7 @@ const getTimeLimitSeconds = useCallback(() => {
                   data-testid="vocab-start-quiz"
                   onClick={handleStartQuiz}
                   disabled={quizState.loading}
+                  loading={quizState.loading}
                 >
                   {quizState.loading ? '문제를 준비 중...' : '시험 시작하기'}
                 </AppButton>

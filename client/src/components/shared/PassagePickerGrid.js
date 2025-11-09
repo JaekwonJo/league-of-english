@@ -131,6 +131,7 @@ const PassagePickerGrid = ({
           return (
             <div
               key={number}
+              className="ui-pressable ui-elevate"
               style={{
                 ...gridStyles.card,
                 background: `linear-gradient(155deg, ${palette.from}, ${palette.to})`,
@@ -155,6 +156,7 @@ const PassagePickerGrid = ({
                 <button
                   type="button"
                   onClick={() => onPreview && onPreview(passage)}
+                  className="ui-pressable ui-elevate"
                   style={{
                     ...gridStyles.previewButton,
                     ...(onPreview ? {} : gridStyles.previewButtonDisabled)

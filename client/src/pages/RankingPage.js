@@ -275,6 +275,9 @@ const RankingPage = () => {
                   }}
                   className="ui-pressable ui-elevate"
                 >
+                  {index === 0 && (
+                    <span style={styles.topCrown} aria-hidden>👑</span>
+                  )}
                   {topGlowStyle && (
                     <div style={{ ...styles.topRankAura, ...topGlowStyle }} aria-hidden />
                   )}
@@ -654,6 +657,15 @@ const styles = {
   },
   top3Glow: {
     background: 'radial-gradient(circle at 50% -10%, rgba(255, 242, 213, 0.55), rgba(234, 179, 8, 0.28) 40%, rgba(146, 64, 14, 0.08) 75%)'
+  },
+  topCrown: {
+    position: 'absolute',
+    right: '10px',
+    top: '8px',
+    fontSize: '20px',
+    filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))',
+    animation: 'rankPulse 6s ease-in-out infinite',
+    zIndex: 2
   },
   rankInfo: {
     display: 'flex',

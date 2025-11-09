@@ -32,7 +32,7 @@ const styles = {
   disabled: { opacity: 0.5, cursor: 'not-allowed' }
 };
 
-export default function AppButton({ variant = 'primary', size = 'md', style, className = '', disabled, children, ...rest }) {
+export default function AppButton({ variant = 'primary', size = 'md', style, className = '', disabled, loading = false, leftIcon = null, rightIcon = null, children, ...rest }) {
   const styleObj = {
     ...styles.base,
     ...(variant === 'primary' ? styles.primary : styles.secondary),
@@ -42,9 +42,20 @@ export default function AppButton({ variant = 'primary', size = 'md', style, cla
   };
   const cls = `ui-focus-ring ui-pressable ${className}`.trim();
   return (
-    <button className={cls} style={styleObj} disabled={disabled} {...rest}>
+    <button className={cls} style={styleObj} disabled={disabled || loading} {...rest}>
+      {leftIcon}
+      {loading && (
+        <span style={{
+          width: 16,
+          height: 16,
+          border: '2px solid rgba(255,255,255,0.5)',
+          borderTop: '2px solid rgba(255,255,255,0.95)',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite'
+        }} aria-hidden="true" />
+      )}
       {children}
+      {rightIcon}
     </button>
   );
 }
-
