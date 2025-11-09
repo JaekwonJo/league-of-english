@@ -108,6 +108,8 @@ const VocabularyPage = () => {
   const [daysLoading, setDaysLoading] = useState(false);
   const [selectedDayKey, setSelectedDayKey] = useState('');
   const [selectedDayKeys, setSelectedDayKeys] = useState([]);
+  // recently-clicked items to show a brief selection flash
+  const [flashKeys, setFlashKeys] = useState(() => new Set());
   const [quizMode, setQuizMode] = useState('mixed'); // 'mixed' | 'term_to_meaning' | 'meaning_to_term'
   const [orderPolicy, setOrderPolicy] = useState('random'); // 'random' | 'sequential'
   const [collapsedSections, setCollapsedSections] = useState(() => (
@@ -782,15 +784,49 @@ const getTimeLimitSeconds = useCallback(() => {
     <div style={styles.container}>
       <section style={styles.heroSection}>
         <div style={styles.heroBackground} />
-        <div style={styles.heroContent}>
-          <span style={styles.heroBadge}>Daily Vocab Studio</span>
-          <h1 style={styles.heroTitle}>🐣 어휘 훈련</h1>
-          <p style={styles.heroSubtitle}>지문에서 뽑은 핵심 단어들을 하루 분량으로 챙겨 보세요. 연습과 시험 모드를 자유롭게 오가며 감각을 끌어올릴 수 있어요.</p>
-          <div style={styles.heroInfoPill}>📚 {heroInfoText}</div>
-          <div style={styles.heroButtons}>
-            <button type="button" style={styles.heroPrimaryButton} onClick={handleScrollToSets}>
-              <LucideIcons.Search size={18} /> 단어장 살펴보기
-            </button>
+        <div style={styles.heroRow}>
+          <div style={styles.heroContent}>
+            <span style={styles.heroBadge}>Daily Vocab Studio</span>
+            <h1 style={styles.heroTitle}>독수리 튜터와 단어 루틴을 채워요</h1>
+            <p style={styles.heroSubtitle}>지문에서 뽑은 핵심 단어를 Day별로 골라 시험이나 연습 모드로 바로 훈련할 수 있어요.</p>
+            <div style={styles.heroInfoPill}>📚 {heroInfoText}</div>
+            <div style={styles.heroButtons}>
+              <button type="button" style={styles.heroPrimaryButton} onClick={handleScrollToSets}>
+                <LucideIcons.Search size={18} /> 단어장 살펴보기
+              </button>
+            </div>
+          </div>
+          <div
+            style={{
+              ...styles.vocabEagleWrapper,
+              ...(isMobile ? styles.vocabEagleWrapperInteractive : {})
+            }}
+            onClick={() => {
+              // mobile tap/click animation
+              const el = document.querySelector('[data-eagle-body]');
+              if (el) {
+                el.style.transform = 'translateY(-6px) rotate(-2deg)';
+                el.style.transition = 'transform 180ms ease';
+                setTimeout(() => {
+                  el.style.transform = 'translateY(0) rotate(0)';
+                }, 180);
+              }
+            }}
+            aria-label="독수리와 상호작용"
+          >
+            <div style={styles.vocabEagleHalo} aria-hidden="true" />
+            <div style={styles.vocabEagleBody} data-eagle-body>
+              <div style={styles.vocabEagleEyes}>
+                <span style={styles.vocabEagleEye} />
+                <span style={styles.vocabEagleEye} />
+              </div>
+              <div style={styles.vocabEagleBeak} />
+              <div style={styles.vocabEagleBelly}>🦅</div>
+              <div style={styles.vocabEagleFootRow}>
+                <span style={styles.vocabEagleFoot} />
+                <span style={styles.vocabEagleFoot} />
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -951,12 +987,25 @@ const getTimeLimitSeconds = useCallback(() => {
                         data-day-key={day.key}
                         style={{
                           ...styles.dayCard,
-                          borderColor: selected ? 'var(--color-green-500)' : 'transparent',
-                          boxShadow: selected ? '0 10px 26px rgba(59, 201, 105, 0.25)' : styles.dayCard.boxShadow
+                          ...(selected ? styles.dayCardSelected : {}),
+                          ...(flashKeys.has(day.key) ? styles.dayCardFlash : {})
                         }}
                         onClick={() => {
                           resetQuizState();
                           setMessage('단어장을 훑어본 뒤, 아래에서 바로 테스트를 시작해 보세요!');
+                          // flash visual feedback
+                          setFlashKeys((prev) => {
+                            const next = new Set(prev);
+                            next.add(day.key);
+                            setTimeout(() => {
+                              setFlashKeys((p2) => {
+                                const n2 = new Set(p2);
+                                n2.delete(day.key);
+                                return n2;
+                              });
+                            }, 420);
+                            return next;
+                          });
                           setSelectedDayKeys((prev) => {
                             // toggle behavior; also keep selectedDayKey in sync for single selection
                             const exists = prev.includes(day.key);
@@ -977,6 +1026,7 @@ const getTimeLimitSeconds = useCallback(() => {
                           <strong style={styles.dayLabel}>{day.label}</strong>
                           <span style={styles.dayCount}>{day.count} 단어</span>
                         </div>
+                        {selected && <span style={styles.daySelectedBadge}>선택됨</span>}
                         <div style={styles.daySummary}>
                           총 {day.count}개의 단어가 숨어 있어요. 시험에서 뜻을 맞혀볼까요?
                         </div>
@@ -1041,12 +1091,12 @@ const getTimeLimitSeconds = useCallback(() => {
             </section>
           )}
 
-          {selectedSet && step === STEPS.CONFIGURE && selectedDayLabels.length > 0 && (
-            <section style={styles.section} id="vocab-step-3">
-              <div style={styles.configureHeader}>
-                <div>
-                  <div style={styles.sectionHeadingRow}>
-                    <h2 style={styles.sectionTitle}>3️⃣ 시험 준비하기</h2>
+      {selectedSet && step === STEPS.CONFIGURE && selectedDayLabels.length > 0 && (
+        <section style={styles.section} id="vocab-step-3">
+          <div style={styles.configureHeader}>
+            <div>
+              <div style={styles.sectionHeadingRow}>
+                <h2 style={styles.sectionTitle}>3️⃣ 시험 준비하기</h2>
                     <EagleGuideChip text="시간 제한과 순서를 자유롭게 조절하세요" variant="accent" />
                   </div>
                   <p style={styles.configureSubtitle}>유형과 출제 순서를 고르고, 연습 또는 시험을 바로 시작해 보세요!</p>
@@ -1076,10 +1126,10 @@ const getTimeLimitSeconds = useCallback(() => {
                     <span key={label} style={styles.configureChip}>{label}</span>
                   ))}
                 </div>
-              </div>
+          </div>
 
-              <div style={styles.modeGrid}>
-                <div style={styles.modeGroup}>
+          <div style={styles.modeGrid}>
+            <div style={styles.modeGroup}>
                   <p style={styles.modeGroupTitle}>시험 유형</p>
                   <label style={styles.modeOption}>
                     <input type="radio" name="mode" checked={quizMode === 'mixed'} onChange={() => setQuizMode('mixed')} />
@@ -1182,6 +1232,12 @@ const getTimeLimitSeconds = useCallback(() => {
             />
           )}
         </section>
+      )}
+
+      {step === STEPS.SELECT_DAY && selectedDayLabels.length > 0 && !selectionLocked && (
+        <button type="button" style={styles.floatingCTAButton} onClick={handleProceedToSetup}>
+          시험 준비 구역으로 이동 ↘️
+        </button>
       )}
     </div>
   );
@@ -1447,6 +1503,14 @@ const styles = {
     background: 'radial-gradient(circle at 18% 20%, rgba(255,255,255,0.35), transparent 55%), radial-gradient(circle at 82% 12%, rgba(14,165,233,0.25), transparent 60%)',
     pointerEvents: 'none'
   },
+  heroRow: {
+    position: 'relative',
+    zIndex: 1,
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '32px',
+    alignItems: 'center'
+  },
   heroContent: {
     position: 'relative',
     zIndex: 1,
@@ -1497,6 +1561,69 @@ const styles = {
     display: 'flex',
     flexWrap: 'wrap',
     gap: '12px'
+  },
+  vocabEagleWrapper: {
+    position: 'relative',
+    width: '200px',
+    height: '200px',
+    animation: 'eagleFloat 6s ease-in-out infinite'
+  },
+  vocabEagleWrapperInteractive: {
+    cursor: 'pointer',
+    userSelect: 'none'
+  },
+  vocabEagleHalo: {
+    position: 'absolute',
+    inset: '-12px',
+    borderRadius: '50%',
+    background: 'radial-gradient(circle, rgba(255,255,255,0.25), transparent 70%)'
+  },
+  vocabEagleBody: {
+    position: 'relative',
+    width: '100%',
+    height: '100%',
+    borderRadius: '50%',
+    background: 'linear-gradient(180deg, #0f172a 0%, #1b263b 85%)',
+    border: '4px solid rgba(255,255,255,0.2)',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '10px'
+  },
+  vocabEagleEyes: {
+    display: 'flex',
+    gap: '12px'
+  },
+  vocabEagleEye: {
+    width: '30px',
+    height: '14px',
+    borderRadius: '50%',
+    background: '#f8fafc'
+  },
+  vocabEagleBeak: {
+    width: '28px',
+    height: '18px',
+    borderRadius: '50%',
+    background: '#fbbf24'
+  },
+  vocabEagleBelly: {
+    padding: '6px 20px',
+    borderRadius: '999px',
+    background: 'rgba(251,191,36,0.2)',
+    border: '1px solid rgba(251,191,36,0.35)',
+    color: '#fef3c7',
+    fontWeight: 700
+  },
+  vocabEagleFootRow: {
+    display: 'flex',
+    gap: '12px'
+  },
+  vocabEagleFoot: {
+    width: '18px',
+    height: '10px',
+    borderRadius: '10px',
+    background: '#fbbf24'
   },
   heroPrimaryButton: {
     display: 'inline-flex',
@@ -1756,12 +1883,31 @@ const styles = {
     boxShadow: '0 18px 36px rgba(15, 23, 42, 0.15)',
     color: '#1f2a5a'
   },
+  dayCardSelected: {
+    borderColor: 'rgba(34,197,94,0.6)',
+    boxShadow: '0 24px 48px rgba(34,197,94,0.28)',
+    transform: 'translateY(-4px)'
+  },
+  dayCardFlash: {
+    boxShadow: '0 0 0 4px rgba(34,197,94,0.35), 0 24px 48px rgba(34,197,94,0.28)',
+    transition: 'box-shadow 0.2s ease, transform 0.2s ease'
+  },
   dayHeader: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: '10px',
     color: '#1f2a5a'
+  },
+  daySelectedBadge: {
+    display: 'inline-flex',
+    marginBottom: '8px',
+    padding: '4px 10px',
+    borderRadius: '999px',
+    background: 'rgba(34,197,94,0.15)',
+    color: '#15803d',
+    fontWeight: 600,
+    fontSize: '0.78rem'
   },
   dayLabel: {
     fontWeight: 700,
@@ -1797,6 +1943,22 @@ const styles = {
     gap: '12px',
     padding: '18px 16px',
     boxShadow: '0 12px 24px rgba(15, 23, 42, 0.12)'
+  },
+  floatingCTAButton: {
+    position: 'fixed',
+    right: '24px',
+    bottom: '32px',
+    border: 'none',
+    borderRadius: '999px',
+    background: 'var(--accent-gradient)',
+    color: 'var(--text-on-accent)',
+    padding: '14px 24px',
+    fontWeight: 700,
+    fontSize: '1rem',
+    boxShadow: '0 24px 48px rgba(15,23,42,0.3)',
+    cursor: 'pointer',
+    zIndex: 30,
+    maxWidth: 'calc(100% - 48px)'
   },
   stepLinkButton: {
     background: 'transparent',

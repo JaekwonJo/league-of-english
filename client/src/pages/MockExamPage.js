@@ -22,6 +22,10 @@ const MockExamPage = () => {
   const [explanations, setExplanations] = useState({});
   const [explanationErrors, setExplanationErrors] = useState({});
   const [activeTab, setActiveTab] = useState('exam'); // exam | review
+  const [examList, setExamList] = useState([]);
+  const [examListError, setExamListError] = useState('');
+  const [examListLoading, setExamListLoading] = useState(false);
+  const [selectedExamId, setSelectedExamId] = useState('');
 
   const isProMember = useMemo(() => {
     if (!user) return false;
@@ -30,14 +34,44 @@ const MockExamPage = () => {
     return membership === 'pro';
   }, [user]);
 
-  const fetchExam = useCallback(async () => {
+  const selectedExamMeta = useMemo(() => {
+    const activeId = state.exam?.examId || selectedExamId;
+    return examList.find((exam) => exam.id === activeId) || null;
+  }, [examList, selectedExamId, state.exam]);
+
+  useEffect(() => {
+    const loadExamList = async () => {
+      try {
+        setExamListLoading(true);
+        setExamListError('');
+        const response = await api.mockExam.list();
+        if (!response?.success) {
+          throw new Error(response?.message || '모의고사 목록을 불러오지 못했습니다.');
+        }
+        const normalized = Array.isArray(response.data) ? response.data : [];
+        setExamList(normalized);
+        if (normalized.length) {
+          setSelectedExamId((prev) => prev || normalized[0].id);
+        }
+      } catch (error) {
+        setExamListError(error.message || '모의고사 목록을 불러오지 못했습니다.');
+      } finally {
+        setExamListLoading(false);
+      }
+    };
+
+    loadExamList();
+  }, []);
+
+  const fetchExam = useCallback(async (examId) => {
+    if (!examId) return;
     setState((prev) => ({
       ...INITIAL_STATE,
       status: 'loading'
     }));
 
     try {
-      const response = await api.mockExam.getExam();
+      const response = await api.mockExam.getExam(examId);
       if (response?.success) {
         setExplanations({});
         setExplanationErrors({});
@@ -47,6 +81,9 @@ const MockExamPage = () => {
           exam: response.data,
           status: 'ready'
         }));
+        if (response.data?.examId) {
+          setSelectedExamId(response.data.examId);
+        }
       } else {
         throw new Error(response?.message || '시험 정보를 불러오지 못했습니다.');
       }
@@ -60,8 +97,10 @@ const MockExamPage = () => {
   }, []);
 
   useEffect(() => {
-    fetchExam();
-  }, [fetchExam]);
+    if (selectedExamId) {
+      fetchExam(selectedExamId);
+    }
+  }, [selectedExamId, fetchExam]);
 
   useEffect(() => {
     if (state.status !== 'in-progress') return;
@@ -99,6 +138,15 @@ const MockExamPage = () => {
     setActiveTab('exam');
   };
 
+  const handleSelectExam = (examId) => {
+    if (!examId || examId === selectedExamId) return;
+    if (state.status === 'in-progress') {
+      alert('진행 중인 시험을 먼저 제출하거나 종료해 주세요.');
+      return;
+    }
+    setSelectedExamId(examId);
+  };
+
   const handleSelectOption = (questionNumber, choiceIndex) => {
     if (state.status !== 'in-progress') return;
     setState((prev) => ({
@@ -131,7 +179,7 @@ const MockExamPage = () => {
       const payload = {
         answers: state.answers
       };
-      const response = await api.mockExam.submit(payload);
+      const response = await api.mockExam.submit(state.exam?.examId || selectedExamId, payload);
       if (!response?.success) {
         throw new Error(response?.message || '채점에 실패했습니다.');
       }
@@ -181,7 +229,7 @@ const MockExamPage = () => {
     setExplanationErrors((prev) => ({ ...prev, [questionNumber]: '' }));
 
     try {
-      const response = await api.mockExam.explanation({ questionNumber });
+      const response = await api.mockExam.explanation(state.exam?.examId || selectedExamId, { questionNumber });
       if (!response?.success) {
         throw new Error(response?.message || '해설을 가져오지 못했습니다.');
       }
@@ -238,51 +286,120 @@ const MockExamPage = () => {
     />
   );
 
+  const heroPrimaryLabel = state.status === 'in-progress'
+    ? '시험 진행 중'
+    : state.status === 'finished'
+      ? '다시 응시하기'
+      : '시험 시작하기';
+  const heroPrimaryDisabled = !state.exam || (state.status === 'in-progress' && !state.result);
+
+  const renderHero = () => (
+    <section style={styles.heroSection}>
+      <div style={styles.heroContent}>
+        <span style={styles.heroBadge}>Mock Test Studio</span>
+        <h1 style={styles.heroTitle}>실전 감각을 그대로, 50분 안에!</h1>
+        <p style={styles.heroSubtitle}>
+          회차를 고르고 시험지를 펼치면 타이머와 문항 이동을 자동으로 챙겨 드려요.
+          채점 후에는 오답만 골라 해설을 확인할 수 있어요.
+        </p>
+        <div style={styles.heroMetaRow}>
+          <HeroMeta icon="Clock" label="타이머" value={`${Math.round((state.exam?.timeLimitSeconds || 3000) / 60)}분`} />
+          <HeroMeta icon="AlignRight" label="문항 수" value={`${state.exam?.questions?.length || selectedExamMeta?.questionCount || 0}문`} />
+          <HeroMeta icon="BookOpen" label="선택 회차" value={selectedExamMeta?.title || '선택 대기 중'} />
+        </div>
+        <div style={styles.heroButtons}>
+          <button
+            type="button"
+            style={{
+              ...styles.primaryButton,
+              ...(heroPrimaryDisabled ? styles.primaryButtonDisabled : {})
+            }}
+            onClick={handleStart}
+            disabled={heroPrimaryDisabled}
+          >
+            <LucideIcons.Play size={18} /> {heroPrimaryLabel}
+          </button>
+          <button type="button" style={styles.secondaryButton} onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}>
+            <LucideIcons.ChevronDown size={18} /> 절차 살펴보기
+          </button>
+        </div>
+      </div>
+      <div style={styles.heroIllustration}>
+        <div style={styles.heroAura} aria-hidden="true" />
+        <div style={styles.heroOwlBody}>
+          <div style={styles.heroOwlFace}>
+            <span style={styles.heroOwlEyeLeft} />
+            <span style={styles.heroOwlEyeRight} />
+            <span style={styles.heroOwlBeak} />
+          </div>
+          <div style={styles.heroOwlWingLeft} />
+          <div style={styles.heroOwlWingRight} />
+          <div style={styles.heroOwlBadge}>🦅</div>
+          <div style={styles.heroOwlFeet} />
+        </div>
+        <span style={styles.heroSparkles} aria-hidden="true">✨</span>
+      </div>
+    </section>
+  );
+
+  const renderExamPicker = () => (
+    <section style={styles.section}>
+      <div style={styles.sectionHeadingRow}>
+        <h2 style={styles.sectionTitle}>응시할 모의고사 선택</h2>
+        <span style={styles.sectionHint}>필요한 회차를 고르면 시험지와 타이머가 바로 준비돼요.</span>
+      </div>
+      {examListLoading ? (
+        <div style={styles.notice}>회차 목록을 불러오는 중입니다...</div>
+      ) : examListError ? (
+        <div style={{ ...styles.notice, color: 'var(--danger-strong)' }}>{examListError}</div>
+      ) : (
+        <div style={styles.examPickerGrid}>
+          {examList.map((exam) => {
+            const isActive = (state.exam?.examId || selectedExamId) === exam.id;
+            const disabled = state.status === 'in-progress' && !isActive;
+            return (
+              <button
+                key={exam.id}
+                type="button"
+                style={{
+                  ...styles.examCard,
+                  ...(isActive ? styles.examCardActive : {}),
+                  ...(disabled ? styles.examCardDisabled : {})
+                }}
+                onClick={() => handleSelectExam(exam.id)}
+                disabled={disabled}
+              >
+                <div style={styles.examCardHeader}>
+                  <span style={styles.examCardBadge}>{isActive ? '선택됨' : '선택 가능'}</span>
+                  <strong style={styles.examCardTitle}>{exam.title}</strong>
+                </div>
+                <p style={styles.examCardMeta}>총 {exam.questionCount || 0}문항</p>
+                {!isActive && disabled && <p style={styles.examCardMeta}>다른 회차는 시험 종료 후 선택할 수 있어요.</p>}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+
   const renderIntro = () => (
     <div style={styles.pageContainer}>
-      <section style={styles.heroSection}>
-        <div style={styles.heroBackground} />
-        <div style={styles.heroContent}>
-          <span style={styles.heroBadge}>Premium Mock Test</span>
-          <h1 style={styles.heroTitle}>2025년 10월 고2 모의고사</h1>
-          <p style={styles.heroSubtitle}>
-            실전과 동일한 난이도와 시간을 그대로 옮겨온 실감 나는 모의고사 모드입니다. <br />
-            50분 안에 18번부터 45번까지 풀어보고, 제출 후 즉시 채점 결과와 해설을 확인해 보세요.
-          </p>
-          <div style={styles.heroMetaRow}>
-            <HeroMeta icon="AlarmClock" label="제한 시간" value="50분" />
-            <HeroMeta icon="Hash" label="문항 수" value={`${state.exam?.questionCount || 28}문항`} />
-            <HeroMeta icon="Sparkles" label="AI 해설" value={isProMember ? '프로 전용(사용 가능)' : '프로 전용'} highlight={isProMember} />
-          </div>
-          <EagleGuideChip text="타이머와 문항 이동을 깔끔하게 돕는 모드예요" variant="accent" />
-          <div style={styles.heroButtons}>
-            <button type="button" style={styles.primaryButton} onClick={handleStart} data-testid="mock-start-button">
-              <LucideIcons.PlayCircle size={20} /> 지금 바로 응시하기
-            </button>
-            <button
-              type="button"
-              style={styles.secondaryButton}
-              onClick={() => setActiveTab('review')}
-              disabled={!state.result}
-            >
-              <LucideIcons.BarChart3 size={18} /> 이전 결과 보기
-            </button>
-          </div>
-        </div>
-      </section>
+      {renderHero()}
+      {renderExamPicker()}
 
       <section style={styles.focusTipCard}>
         <div style={styles.focusTipIcon}>🦅</div>
         <div style={styles.focusTipBody}>
           <p style={styles.focusTipLabel}>집중 모드 TIP</p>
-          <h3 style={styles.focusTipTitle}>시험 시작 전, 방해금지 모드부터 켜볼까요?</h3>
+          <h3 style={styles.focusTipTitle}>방해금지 모드를 켜두면 더 몰입돼요</h3>
           <p style={styles.focusTipText}>
-            휴대폰과 PC 알림을 잠시 꺼두면 실전과 똑같은 몰입감을 만들 수 있어요.
-            시험이 끝나면 버튼 하나로 다시 해제하면 됩니다.
+            휴대폰과 PC 알림을 잠시 끄고, 시험이 끝나면 버튼 하나로 해제하세요.
+            실전 같은 집중력을 만드는 가장 빠른 방법이에요.
           </p>
           <ul style={styles.focusTipList}>
             <li>모바일: 설정 → 집중 모드(방해 금지) → 50분 타이머만 남겨두기</li>
-            <li>PC: 알림 센터에서 “방해 금지”를 켜고, 시험이 끝나면 해제</li>
+            <li>PC: 알림 센터에서 “방해 금지”를 켜고, 시험 종료 후 해제</li>
           </ul>
         </div>
         <span style={styles.focusTipGlow} aria-hidden="true" />
@@ -291,11 +408,11 @@ const MockExamPage = () => {
       <section style={styles.tipCard}>
         <LucideIcons.ClipboardList size={22} style={styles.tipIcon} />
         <div>
-          <h3 style={styles.tipTitle}>응시 팁</h3>
+          <h3 style={styles.tipTitle}>응시 절차</h3>
           <ul style={styles.tipList}>
-            <li>모바일에서도 자동 저장이 지원되어 중간에 나가도 다시 이어서 풀 수 있어요.</li>
-            <li>제출 후에는 각 문항별로 나의 선택과 정답, 그리고 해설(프로)을 확인할 수 있습니다.</li>
-            <li>시간이 종료되면 자동으로 제출되니, 여유 있게 마지막 문제를 마무리해 주세요.</li>
+            <li>회차를 선택하고 `시험 시작하기`를 누르면 타이머가 곧바로 흐릅니다.</li>
+            <li>문항 카드를 눌러 이동하고, 답을 고르면 자동 저장돼요.</li>
+            <li>제출 후에는 틀린 문제만 골라 해설을 불러올 수 있습니다.</li>
           </ul>
         </div>
       </section>
@@ -439,12 +556,16 @@ const MockExamPage = () => {
       : total - correctCount - incorrectCount;
 
     return (
-      <div style={styles.resultLayout} data-testid="mock-result">
-        <section style={styles.resultHero}>
-          <div style={styles.resultSummaryCard}>
-            <span style={styles.heroBadge}>결과 요약</span>
-            <h2 style={styles.resultTitle}>수고했어요! 점수를 확인해 볼까요?</h2>
-            <p style={styles.resultSubtitle}>총 {total}문항 중 {correctCount}문항을 맞혔어요. 다시 도전하거나 해설을 확인해 보세요.</p>
+      <div style={styles.pageContainer} data-testid="mock-result">
+        {renderHero()}
+        {renderExamPicker()}
+
+        <div style={styles.resultLayout}>
+          <section style={styles.resultHero}>
+            <div style={styles.resultSummaryCard}>
+              <span style={styles.heroBadge}>결과 요약</span>
+              <h2 style={styles.resultTitle}>수고했어요! 점수를 확인해 볼까요?</h2>
+              <p style={styles.resultSubtitle}>총 {total}문항 중 {correctCount}문항을 맞혔어요. 다시 도전하거나 해설을 확인해 보세요.</p>
             <EagleGuideChip text="결과를 저장하고 싶다면 화면을 캡처해 두세요!" />
             <div style={styles.resultMetricsRow}>
               <ResultMetric icon="CheckCircle" label="정답" value={`${correctCount}문항`} accent="success" />
@@ -482,6 +603,7 @@ const MockExamPage = () => {
             {state.result.detail.map((item) => {
               const explanation = explanations[item.number];
               const explanationError = explanationErrors[item.number];
+              const canShowExplanation = !item.isCorrect;
               return (
                 <article
                   key={item.number}
@@ -524,18 +646,22 @@ const MockExamPage = () => {
 
                   <div style={styles.reviewFooter}>
                     <div style={styles.reviewActions}>
-                      <button
-                        type="button"
-                        style={{
-                          ...styles.secondaryButton,
-                          ...(explanation?.status === 'loading' ? styles.primaryButtonDisabled : {}),
-                          ...(explanation?.text ? styles.secondaryButtonActive : {})
-                        }}
-                        onClick={() => loadExplanation(item.number)}
-                        disabled={explanation?.status === 'loading'}
-                      >
-                        <LucideIcons.Wand2 size={18} /> 해설 보기 {explanation?.cached ? '(캐시)' : ''}
-                      </button>
+                      {canShowExplanation ? (
+                        <button
+                          type="button"
+                          style={{
+                            ...styles.secondaryButton,
+                            ...(explanation?.status === 'loading' ? styles.primaryButtonDisabled : {}),
+                            ...(explanation?.text ? styles.secondaryButtonActive : {})
+                          }}
+                          onClick={() => loadExplanation(item.number)}
+                          disabled={explanation?.status === 'loading'}
+                        >
+                          <LucideIcons.Wand2 size={18} /> 해설 보기 {explanation?.cached ? '(캐시)' : ''}
+                        </button>
+                      ) : (
+                        <span style={styles.reviewSolvedCopy}>정답 처리된 문항이에요 👏</span>
+                      )}
                     </div>
                     {explanation?.status === 'loading' && (
                       <div style={styles.explanationLoading}>해설을 불러오는 중이에요...</div>
@@ -556,6 +682,7 @@ const MockExamPage = () => {
             })}
           </div>
         </section>
+        </div>
       </div>
     );
   };
@@ -618,17 +745,14 @@ const styles = {
   heroSection: {
     position: 'relative',
     borderRadius: '32px',
-    padding: '46px',
+    padding: '40px',
+    display: 'flex',
+    gap: '32px',
+    alignItems: 'center',
     overflow: 'hidden',
     boxShadow: '0 48px 96px rgba(15, 23, 42, 0.25)',
-    background: 'linear-gradient(140deg, rgba(79, 70, 229, 0.6) 0%, rgba(14, 165, 233, 0.45) 42%, rgba(236, 233, 254, 0.6) 100%)',
+    background: 'linear-gradient(125deg, #101828 0%, #1d3557 45%, #2f4858 100%)',
     color: 'var(--text-on-accent)'
-  },
-  heroBackground: {
-    position: 'absolute',
-    inset: 0,
-    background: 'radial-gradient(circle at 20% 20%, rgba(255,255,255,0.25), transparent 55%), radial-gradient(circle at 80% 10%, rgba(14,165,233,0.2), transparent 60%)',
-    pointerEvents: 'none'
   },
   heroContent: {
     position: 'relative',
@@ -694,6 +818,141 @@ const styles = {
     flexWrap: 'wrap',
     gap: '12px',
     marginTop: '18px'
+  },
+  examPickerGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+    gap: '16px'
+  },
+  examCard: {
+    borderRadius: '18px',
+    padding: '18px 20px',
+    background: 'var(--surface-card)',
+    border: '1px solid var(--surface-border)',
+    textAlign: 'left',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px',
+    cursor: 'pointer',
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+  },
+  examCardActive: {
+    borderColor: 'var(--color-blue-500)',
+    boxShadow: '0 20px 40px rgba(59,130,246,0.25)',
+    transform: 'translateY(-2px)'
+  },
+  examCardDisabled: {
+    opacity: 0.6,
+    cursor: 'not-allowed'
+  },
+  examCardHeader: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px'
+  },
+  examCardBadge: {
+    fontSize: '0.8rem',
+    fontWeight: 600,
+    color: 'var(--tone-muted)'
+  },
+  examCardTitle: {
+    fontSize: '1.05rem',
+    fontWeight: 700,
+    color: 'var(--text-primary)'
+  },
+  examCardMeta: {
+    fontSize: '0.9rem',
+    color: 'var(--tone-strong)'
+  },
+  heroIllustration: {
+    position: 'relative',
+    width: '260px',
+    height: '260px'
+  },
+  heroAura: {
+    position: 'absolute',
+    inset: '0',
+    borderRadius: '50%',
+    background: 'radial-gradient(circle, rgba(244,201,93,0.5), transparent 65%)',
+    filter: 'blur(4px)'
+  },
+  heroOwlBody: {
+    position: 'relative',
+    width: '100%',
+    height: '100%',
+    borderRadius: '50%',
+    background: 'linear-gradient(180deg, #182337 0%, #0b1321 70%)',
+    border: '4px solid rgba(255,255,255,0.15)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  heroOwlFace: {
+    position: 'absolute',
+    top: '28%',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '14px'
+  },
+  heroOwlEyeLeft: {
+    width: '44px',
+    height: '24px',
+    borderRadius: '50%',
+    background: '#f1f5f9'
+  },
+  heroOwlEyeRight: {
+    width: '44px',
+    height: '24px',
+    borderRadius: '50%',
+    background: '#f1f5f9'
+  },
+  heroOwlBeak: {
+    width: '24px',
+    height: '18px',
+    background: '#f4c95d',
+    borderRadius: '50%',
+    position: 'absolute',
+    top: '44%'
+  },
+  heroOwlWingLeft: {
+    position: 'absolute',
+    left: '-10px',
+    width: '80px',
+    height: '120px',
+    borderRadius: '60%',
+    background: 'linear-gradient(180deg, rgba(255,255,255,0.08), transparent)'
+  },
+  heroOwlWingRight: {
+    position: 'absolute',
+    right: '-10px',
+    width: '80px',
+    height: '120px',
+    borderRadius: '60%',
+    background: 'linear-gradient(180deg, rgba(255,255,255,0.08), transparent)'
+  },
+  heroOwlBadge: {
+    position: 'absolute',
+    bottom: '28%',
+    background: '#f4c95d',
+    color: '#0b1321',
+    padding: '6px 14px',
+    borderRadius: '999px',
+    fontWeight: 700
+  },
+  heroOwlFeet: {
+    position: 'absolute',
+    bottom: '18%',
+    width: '120px',
+    height: '28px',
+    borderRadius: '14px',
+    background: 'rgba(255,255,255,0.08)'
+  },
+  heroSparkles: {
+    position: 'absolute',
+    top: '12%',
+    right: '14%',
+    fontSize: '1.4rem',
+    animation: 'pulse 2s infinite'
   },
   primaryButton: {
     display: 'inline-flex',
@@ -907,10 +1166,10 @@ const styles = {
   },
   questionCard: {
     padding: '32px',
-    borderRadius: '28px',
-    background: 'rgba(255,255,255,0.92)',
-    border: '1px solid rgba(148,163,184,0.16)',
-    boxShadow: '0 32px 64px rgba(15,23,42,0.12)',
+    borderRadius: '32px',
+    background: '#fefaf3',
+    border: '1px solid #f1e4d0',
+    boxShadow: '0 32px 64px rgba(78,54,32,0.18)',
     display: 'flex',
     flexDirection: 'column',
     gap: '24px'
@@ -922,7 +1181,7 @@ const styles = {
   },
   promptLine: {
     margin: 0,
-    color: 'var(--text-primary)',
+    color: '#1f2937',
     lineHeight: 1.7,
     fontSize: '1.02rem'
   },
@@ -937,25 +1196,25 @@ const styles = {
     gap: '14px',
     padding: '18px 20px',
     borderRadius: '18px',
-    border: '1px solid rgba(148,163,184,0.24)',
-    background: 'rgba(248, 250, 252, 0.8)',
-    boxShadow: '0 14px 32px rgba(15,23,42,0.1)',
+    border: '1px solid rgba(218, 180, 116, 0.35)',
+    background: '#fffdf7',
+    boxShadow: '0 14px 32px rgba(78,54,32,0.15)',
     cursor: 'pointer',
     textAlign: 'left',
     transition: 'transform 0.2s ease, box-shadow 0.2s ease, border 0.2s ease'
   },
   choiceButtonSelected: {
-    border: '1px solid rgba(79,70,229,0.65)',
-    background: 'linear-gradient(135deg, rgba(79,70,229,0.1) 0%, rgba(14,165,233,0.14) 100%)',
-    boxShadow: '0 18px 40px rgba(79, 70, 229, 0.22)',
+    border: '1px solid rgba(244, 170, 80, 0.85)',
+    background: 'linear-gradient(135deg, rgba(244, 213, 141, 0.25) 0%, rgba(244, 186, 93, 0.2) 100%)',
+    boxShadow: '0 18px 40px rgba(244, 186, 93, 0.32)',
     transform: 'translateY(-2px)'
   },
   choiceMark: {
     width: '40px',
     height: '40px',
     borderRadius: '50%',
-    background: 'rgba(79, 70, 229, 0.12)',
-    color: 'var(--indigo-strong)',
+    background: 'rgba(244, 186, 93, 0.18)',
+    color: '#92400e',
     fontWeight: 800,
     display: 'flex',
     alignItems: 'center',
@@ -964,7 +1223,7 @@ const styles = {
   },
   choiceText: {
     fontSize: '1rem',
-    color: 'var(--text-primary)',
+    color: '#1f2937',
     lineHeight: 1.6
   },
   examFooter: {
@@ -998,9 +1257,21 @@ const styles = {
     minWidth: '220px'
   },
   questionNavRail: {
+    position: 'fixed',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    bottom: '16px',
+    zIndex: 50,
     display: 'flex',
-    flexWrap: 'wrap',
-    gap: '8px'
+    gap: '8px',
+    padding: '8px 10px',
+    borderRadius: '999px',
+    background: 'rgba(255,255,255,0.88)',
+    border: '1px solid rgba(148,163,184,0.24)',
+    backdropFilter: 'blur(8px)',
+    boxShadow: '0 16px 36px rgba(15,23,42,0.18)',
+    maxWidth: '92vw',
+    overflowX: 'auto'
   },
   questionDot: {
     borderRadius: '999px',
@@ -1215,6 +1486,10 @@ const styles = {
   reviewActions: {
     display: 'flex',
     gap: '10px'
+  },
+  reviewSolvedCopy: {
+    fontSize: '0.92rem',
+    color: 'var(--tone-muted)'
   },
   explanationBox: {
     borderRadius: '16px',
