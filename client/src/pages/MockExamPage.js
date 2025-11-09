@@ -462,6 +462,7 @@ const MockExamPage = () => {
         </div>
 
         <div style={styles.questionCard} data-testid="mock-question" data-question-number={question.number}>
+          <div style={styles.questionGuideLine} aria-hidden="true" />
           <div style={styles.questionPrompt}>
             {question.promptLines.map((line, idx) => (
               <p key={idx} style={styles.promptLine}>{line}</p>
@@ -1200,7 +1201,17 @@ const styles = {
     boxShadow: '0 32px 64px rgba(78,54,32,0.18)',
     display: 'flex',
     flexDirection: 'column',
-    gap: '24px'
+    gap: '24px',
+    position: 'relative',
+    backgroundImage: 'repeating-linear-gradient(to bottom, rgba(0,0,0,0.035) 0, rgba(0,0,0,0.035) 1px, transparent 28px)'
+  },
+  questionGuideLine: {
+    position: 'absolute',
+    left: '28px',
+    top: 0,
+    bottom: 0,
+    width: '1px',
+    background: 'rgba(0,0,0,0.08)'
   },
   questionPrompt: {
     display: 'flex',

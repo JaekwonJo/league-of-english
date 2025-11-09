@@ -227,16 +227,27 @@ const HomePage = () => {
           )}
           <p style={styles.heroNote}>Tip · 마스코트를 눌러서 오늘의 미션을 확인해 보세요!</p>
           <div style={highlightRowStyle}>
-            {heroHighlightCards.map((badge) => (
-              <div key={badge.label} style={styles.heroHighlightCard}>
-                <span style={styles.heroHighlightIcon}>{badge.icon}</span>
-                <div>
-                  <p style={styles.heroHighlightLabel}>{badge.label}</p>
-                  <strong style={styles.heroHighlightValue}>{badge.value}</strong>
-                  <span style={styles.heroHighlightDetail}>{badge.detail}</span>
-                </div>
-              </div>
-            ))}
+                {heroHighlightCards.map((badge) => (
+                  <div
+                    key={badge.label}
+                    style={styles.heroHighlightCard}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 22px 44px rgba(3,7,18,0.4)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'none';
+                      e.currentTarget.style.boxShadow = '0 18px 36px rgba(3,7,18,0.35)';
+                    }}
+                  >
+                    <span style={styles.heroHighlightIcon}>{badge.icon}</span>
+                    <div>
+                      <p style={styles.heroHighlightLabel}>{badge.label}</p>
+                      <strong style={styles.heroHighlightValue}>{badge.value}</strong>
+                      <span style={styles.heroHighlightDetail}>{badge.detail}</span>
+                    </div>
+                  </div>
+                ))}
           </div>
         </div>
         <EagleMascot
@@ -373,8 +384,23 @@ const StatCard = ({ label, value, suffix, tierAccent, isPercent }) => {
 
 const QuickButton = ({ label, description, onClick }) => {
   const icon = quickButtonIconMap[label] || '✨';
+  const [hovered, setHovered] = React.useState(false);
+  const [pressed, setPressed] = React.useState(false);
   return (
-    <button style={styles.quickButton} onClick={onClick}>
+    <button
+      style={{
+        ...styles.quickButton,
+        ...(hovered ? styles.quickButtonHover : {}),
+        ...(pressed ? styles.quickButtonActive : {})
+      }}
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => { setHovered(false); setPressed(false); }}
+      onMouseDown={() => setPressed(true)}
+      onMouseUp={() => setPressed(false)}
+      onTouchStart={() => setPressed(true)}
+      onTouchEnd={() => setPressed(false)}
+    >
       <span style={styles.quickButtonIcon}>{icon}</span>
       <div>
         <strong style={styles.quickButtonLabel}>{label}</strong>
@@ -621,7 +647,8 @@ const styles = {
     borderRadius: '18px',
     background: 'linear-gradient(135deg, rgba(15,23,42,0.75), rgba(244,201,93,0.4))',
     border: '1px solid rgba(244,201,93,0.35)',
-    boxShadow: '0 18px 36px rgba(3,7,18,0.35)'
+    boxShadow: '0 18px 36px rgba(3,7,18,0.35)',
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease'
   },
   heroHighlightIcon: {
     fontSize: '1.25rem',
@@ -771,7 +798,14 @@ const styles = {
     color: '#F8FAFC',
     cursor: 'pointer',
     boxShadow: '0 22px 38px rgba(3,7,18,0.28)',
-    transition: 'transform 0.2s ease'
+    transition: 'transform 0.15s ease, box-shadow 0.15s ease'
+  },
+  quickButtonHover: {
+    transform: 'translateY(-2px)',
+    boxShadow: '0 28px 48px rgba(3,7,18,0.35)'
+  },
+  quickButtonActive: {
+    transform: 'scale(0.98)'
   },
   quickButtonIcon: {
     width: '44px',
