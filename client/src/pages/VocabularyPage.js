@@ -985,6 +985,7 @@ const getTimeLimitSeconds = useCallback(() => {
                                   type="button"
                                   data-testid="vocab-set-card"
                                   data-set-id={set.id}
+                                  className="ui-pressable ui-elevate"
                                   style={{
                                     ...styles.setCard,
                                     borderColor: isActive ? 'var(--color-blue-500)' : 'transparent',
@@ -1027,6 +1028,7 @@ const getTimeLimitSeconds = useCallback(() => {
                         key={day.key}
                         data-testid="vocab-day-card"
                         data-day-key={day.key}
+                        className="ui-pressable ui-elevate"
                         style={{
                           ...styles.dayCard,
                           ...(selected ? styles.dayCardSelected : {}),

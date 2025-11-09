@@ -889,6 +889,11 @@ body {
 [data-theme='dark'] .confetti-piece { filter: brightness(0.9) saturate(0.9); }
 .ui-sparkle { box-shadow: 0 0 12px rgba(255,255,255,0.85), 0 0 24px rgba(251,191,36,0.55); }
 [data-theme='dark'] .ui-sparkle { box-shadow: 0 0 10px rgba(255,255,255,0.6), 0 0 20px rgba(251,191,36,0.38); }
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
 .confetti-red { background: #F87171; }
 .confetti-blue { background: #60A5FA; }
 .confetti-yellow { background: #FACC15; }
