@@ -2830,7 +2830,7 @@ const WorkbookPage = () => {
                             <div style={styles.pill}>Workbook Series</div>
                             <h2 style={{ fontSize: '22px', fontWeight: 800, margin: '8px 0 0', color: 'var(--text-primary)' }}>{activeGroup.documentTitle}</h2>
                           </div>
-                          {canManageWorkbooks && (
+                          {canCreateWorkbooks && (
                             <button
                               type="button"
                               style={responsiveStyle(styles.secondaryButton, styles.secondaryButtonMobile)}

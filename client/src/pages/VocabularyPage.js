@@ -1605,8 +1605,8 @@ const styles = {
   },
   vocabEagleWrapper: {
     position: 'relative',
-    width: '168px',
-    height: '168px',
+    width: '143px',
+    height: '143px',
     animation: 'eagleFloat 6s ease-in-out infinite'
   },
   vocabEagleWrapperInteractive: {
@@ -1621,8 +1621,8 @@ const styles = {
   },
   vocabEaglePulse: {
     position: 'absolute',
-    width: '188px',
-    height: '188px',
+    width: '160px',
+    height: '160px',
     borderRadius: '50%',
     border: '2px solid rgba(255,255,255,0.35)',
     animation: 'eaglePulse 1.8s ease-out infinite',
@@ -1646,8 +1646,8 @@ const styles = {
     gap: '12px'
   },
   vocabEagleEye: {
-    width: '26px',
-    height: '12px',
+    width: '22px',
+    height: '10px',
     borderRadius: '50%',
     background: '#f8fafc'
   },
@@ -1656,8 +1656,8 @@ const styles = {
     background: '#0f172a'
   },
   vocabEagleBeak: {
-    width: '22px',
-    height: '14px',
+    width: '19px',
+    height: '12px',
     borderRadius: '50%',
     background: '#fbbf24'
   },

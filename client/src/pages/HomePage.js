@@ -832,7 +832,7 @@ const styles = {
     color: 'rgba(248,250,252,0.8)'
   },
   eagleWrapper: {
-    flex: '0 0 220px',
+    flex: '0 0 187px',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
@@ -873,16 +873,16 @@ const styles = {
     bottom: '-18px',
     left: '50%',
     transform: 'translateX(-50%)',
-    width: '140px',
-    height: '22px',
+    width: '119px',
+    height: '19px',
     borderRadius: '50%',
     background: 'rgba(15,23,42,0.15)',
     filter: 'blur(8px)',
     zIndex: 0
   },
   eagleBody: {
-    width: '200px',
-    height: '220px',
+    width: '170px',
+    height: '187px',
     borderRadius: '140px 140px 110px 110px',
     background: 'linear-gradient(180deg, #1b253c 0%, #3c2a1b 38%, #d79d45 100%)',
     border: '4px solid rgba(255,255,255,0.25)',
@@ -896,16 +896,16 @@ const styles = {
     boxShadow: '0 42px 80px rgba(255, 215, 128, 0.45)'
   },
   eagleBodyMobile: {
-    width: '170px',
-    height: '188px'
+    width: '145px',
+    height: '160px'
   },
   eagleHead: {
     position: 'absolute',
     top: '-70px',
     left: '50%',
     transform: 'translateX(-50%)',
-    width: '132px',
-    height: '132px',
+    width: '112px',
+    height: '112px',
     borderRadius: '90px 90px 70px 70px',
     background: 'linear-gradient(180deg, #ffffff 0%, #fdf5e3 60%, #f6d7a3 100%)',
     border: '4px solid rgba(15,23,42,0.12)',
