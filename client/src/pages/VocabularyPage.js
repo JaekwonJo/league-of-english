@@ -809,8 +809,8 @@ const getTimeLimitSeconds = useCallback(() => {
         <div style={styles.heroRow}>
           <div style={styles.heroContent}>
             <span style={styles.heroBadge}>Daily Vocab Studio</span>
-            <h1 style={styles.heroTitle}>Day별 핵심 어휘를 정확하게 훈련합니다</h1>
-            <p style={styles.heroSubtitle}>지문에서 선별한 핵심 단어를 Day 단위로 구성해, 시험 또는 연습 모드로 곧바로 학습할 수 있습니다.</p>
+            <h1 style={styles.heroTitle}>핵심 어휘를 정확하게 훈련합니다</h1>
+            <p style={styles.heroSubtitle}>핵심 단어를 시험 또는 연습 모드로 곧바로 학습 할 수 있습니다</p>
             <div style={styles.heroInfoPill}>📚 {heroInfoText}</div>
             <div style={styles.heroButtons}>
               <AppButton variant="primary" size="lg" onClick={handleScrollToSets}>
@@ -857,7 +857,7 @@ const getTimeLimitSeconds = useCallback(() => {
                 ...(wingUp ? styles.vocabEagleWingUp : {})
               }} />
               <div style={styles.vocabEagleBeak} />
-              <div style={styles.vocabEagleBelly}>🦅</div>
+              <div style={styles.vocabEagleBelly} />
               <div style={styles.vocabEagleFootRow}>
                 <span style={styles.vocabEagleFoot} />
                 <span style={styles.vocabEagleFoot} />
@@ -1605,8 +1605,8 @@ const styles = {
   },
   vocabEagleWrapper: {
     position: 'relative',
-    width: '200px',
-    height: '200px',
+    width: '168px',
+    height: '168px',
     animation: 'eagleFloat 6s ease-in-out infinite'
   },
   vocabEagleWrapperInteractive: {
@@ -1621,8 +1621,8 @@ const styles = {
   },
   vocabEaglePulse: {
     position: 'absolute',
-    width: '220px',
-    height: '220px',
+    width: '188px',
+    height: '188px',
     borderRadius: '50%',
     border: '2px solid rgba(255,255,255,0.35)',
     animation: 'eaglePulse 1.8s ease-out infinite',
@@ -1646,8 +1646,8 @@ const styles = {
     gap: '12px'
   },
   vocabEagleEye: {
-    width: '30px',
-    height: '14px',
+    width: '26px',
+    height: '12px',
     borderRadius: '50%',
     background: '#f8fafc'
   },
@@ -1656,8 +1656,8 @@ const styles = {
     background: '#0f172a'
   },
   vocabEagleBeak: {
-    width: '28px',
-    height: '18px',
+    width: '22px',
+    height: '14px',
     borderRadius: '50%',
     background: '#fbbf24'
   },
@@ -2070,10 +2070,11 @@ const styles = {
     background: 'transparent',
     border: '1px solid transparent',
     color: 'var(--color-blue-500)',
-    fontWeight: 600,
+    fontWeight: 800,
+    fontSize: '1rem',
     cursor: 'pointer',
-    padding: '10px 12px',
-    borderRadius: '10px'
+    padding: '12px 14px',
+    borderRadius: '12px'
   },
   stepSummaryBox: {
     flex: '1 1 320px',

@@ -868,10 +868,12 @@ class WorkbookService {
       const cleanSentence = this._cleanEnglish(english);
       if (!cleanSentence) return null;
       const prompt = koreanHint || '문장을 직접 영어로 완성해 보세요.';
+      // Provide a few word hints to guide composition
+      const hintTokens = this._pickHintTokens(cleanSentence, 5);
       return {
         type: 'word-order-input',
         prompt,
-        tokens: [],
+        tokens: hintTokens,
         answer: cleanSentence,
         preview: `[영작 퍼즐] ${this._trim(cleanSentence, 80)}`,
         back: `정답 예시: ${cleanSentence}`

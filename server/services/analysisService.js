@@ -998,12 +998,19 @@ class AnalysisService {
       throw new Error('지문 번호가 문서 범위를 벗어났습니다.');
     }
 
+    const previousLabel = await this.getPassageLabel(documentId, numericPassage);
     const trimmed = String(label || '').trim();
+
+    if (trimmed === previousLabel) {
+      return { success: true, label: previousLabel };
+    }
+
     if (!trimmed) {
       await database.run(
         'DELETE FROM document_passage_labels WHERE document_id = ? AND passage_number = ?',
         [documentId, numericPassage]
       );
+      await this._logPassageLabelChange(documentId, numericPassage, previousLabel, null, userId);
       return { success: true, label: null };
     }
 
@@ -1014,8 +1021,21 @@ class AnalysisService {
        DO UPDATE SET label = excluded.label, updated_by = excluded.updated_by, updated_at = CURRENT_TIMESTAMP`,
       [documentId, numericPassage, trimmed, userId]
     );
+    await this._logPassageLabelChange(documentId, numericPassage, previousLabel, trimmed, userId);
 
     return { success: true, label: trimmed };
+  }
+
+  async _logPassageLabelChange(documentId, passageNumber, oldLabel, newLabel, userId) {
+    try {
+      await database.run(
+        `INSERT INTO document_passage_label_logs (document_id, passage_number, old_label, new_label, updated_by)
+         VALUES (?, ?, ?, ?, ?)`,
+        [documentId, passageNumber, oldLabel || null, newLabel || null, userId || null]
+      );
+    } catch (error) {
+      console.warn('[analysis] failed to log passage label change:', error?.message || error);
+    }
   }
 }
 

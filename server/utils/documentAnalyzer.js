@@ -236,7 +236,7 @@ const guidance = [
   'sentenceAnalysis 배열의 각 항목에는 english, isTopicSentence, korean, breakdown, vocabulary.words 필드를 반드시 포함합니다.',
   'english 필드에는 원문 문장을 그대로 적고, 주제문(isTopicSentence=true)은 **굵게** 표시하세요.',
   'korean은 "📘 한글 해석:"으로 시작하고 2~3문장으로 자연스럽게 번역하며, 학생에게 말하듯 따뜻한 표현과 이모지를 곁들이세요.',
-  'breakdown은 "🧠 문장 분석:"으로 시작하고, 문장의 역할·수능 포인트·주의 어법을 2~3문장으로 설명하세요. 학생이 이해했는지 확인하는 질문을 짧게 끼워 넣어도 좋습니다.',
+  'breakdown은 "🧠 문장 분석:"으로 시작하고, 문장의 역할·수능 포인트·주의 어법을 2~3문장으로 강의식으로 설명하세요. 질문을 던지지 말고, 핵심 메시지·예시·주의점을 차분하게 정리해 주세요.',
   'vocabulary.words 배열에는 term·meaning·synonyms·antonyms를 모두 채워 넣고, meaning은 쉬운 한국어로 1문장 이상 설명하세요.',
   '각 vocabulary 항목의 synonyms와 antonyms는 각각 정확히 3개씩 제공하세요. 부족하다면 의미가 가까운 표현을 창의적으로 제시하세요.',
   'meta.englishTitles에는 영어 제목 2개를 넣되, 둘 중 하나는 의문문이어야 합니다. title과 isQuestion 필드를 제공하세요.',

@@ -172,7 +172,7 @@ module.exports = router;
 // --- User moderation ---
 router.get('/users', verifyToken, requireAdmin, async (req, res) => {
   try {
-    const { q = '', status = 'all', limit = 50, includeGuests = '0' } = req.query || {};
+    const { q = '', status = 'all', limit = 50, page = 1, includeGuests = '0' } = req.query || {};
     const like = `%${String(q).trim()}%`;
     const where = [];
     const params = [];
@@ -186,14 +186,17 @@ router.get('/users', verifyToken, requireAdmin, async (req, res) => {
       where.push("membership <> 'guest'");
     }
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+    const numericLimit = Math.min(parseInt(limit, 10) || 50, 200);
+    const numericPage = Math.max(1, parseInt(page, 10) || 1);
+    const offset = (numericPage - 1) * numericLimit;
     const rows = await database.all(
       `SELECT id, username, name, email, role, membership, points, tier, is_active, status, created_at, last_login_at
          FROM users ${whereSql}
         ORDER BY created_at DESC
-        LIMIT ?`,
-      [...params, Math.min(parseInt(limit, 10) || 50, 200)]
+        LIMIT ? OFFSET ?`,
+      [...params, numericLimit, offset]
     );
-    res.json({ users: rows });
+    res.json({ users: rows, page: numericPage, limit: numericLimit });
   } catch (error) {
     console.error('[admin] list users error:', error);
     res.status(500).json({ message: '사용자 목록을 불러오지 못했습니다.' });

@@ -579,10 +579,10 @@ const styles = {
   secondaryButton: {
     padding: '12px 22px',
     borderRadius: '14px',
-    border: '1px solid rgba(148, 163, 184, 0.45)',
-    background: 'rgba(248, 250, 252, 0.85)',
-    color: 'var(--text-primary)',
-    fontWeight: 700,
+    border: '1px solid var(--surface-border)',
+    background: 'var(--surface-card)',
+    color: 'var(--tone-hero)',
+    fontWeight: 800,
     cursor: 'pointer',
     minWidth: '150px',
     boxShadow: '0 12px 26px rgba(15, 23, 42, 0.12)',
@@ -1184,6 +1184,12 @@ const saveCompletedToStorage = (value) => {
 };
 
 const isTeacherOrAdmin = (role) => ['teacher', 'admin'].includes(String(role || '').toLowerCase());
+const isPremiumOrHigher = (role, membership) => {
+  const r = String(role || '').toLowerCase();
+  const m = String(membership || '').toLowerCase();
+  if (r === 'admin' || r === 'teacher') return true;
+  return ['premium', 'pro', 'vip'].includes(m);
+};
 
 const WordOrderPuzzle = ({ card, reveal, compact = false }) => {
   const [available, setAvailable] = useState([]);
@@ -1617,6 +1623,7 @@ const TestWordOrderInputQuestion = ({ question, value = '', onChange }) => {
 const WorkbookPage = () => {
   const { user, updateUser } = useAuth();
   const canManageWorkbooks = isTeacherOrAdmin(user?.role);
+  const canCreateWorkbooks = isPremiumOrHigher(user?.role, user?.membership);
 
   const [isMobile, setIsMobile] = useState(false);
   const [workbooks, setWorkbooks] = useState([]);
@@ -2573,7 +2580,7 @@ const WorkbookPage = () => {
       <div style={responsiveStyle(styles.container, styles.containerMobile)}>
         <section style={responsiveStyle(styles.hero, styles.heroMobile)}>
           <h1 style={responsiveStyle(styles.heroTitle, styles.heroTitleMobile)}>워크북 만들기</h1>
-          {canManageWorkbooks && (
+          {canCreateWorkbooks && (
             <button
               type="button"
               data-testid="open-workbook-generator"
@@ -2586,7 +2593,7 @@ const WorkbookPage = () => {
           <EagleGuideChip text="분석이 끝난 지문을 골라 워크북을 만들면 돼요" variant="accent" />
         </section>
 
-        {showGenerator && canManageWorkbooks && (
+        {showGenerator && canCreateWorkbooks && (
           <section style={responsiveStyle(styles.wizardContainer, styles.wizardContainerMobile)}>
             <div style={styles.wizardHeaderRow}>
               <div>

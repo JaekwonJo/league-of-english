@@ -57,6 +57,10 @@ const MockExamPage = () => {
         }
       } catch (error) {
         setExamListError(error.message || '모의고사 목록을 불러오지 못했습니다.');
+        // Fallback: try default exam id so UI does not hang indefinitely
+        const fallbackId = '2025-10';
+        setSelectedExamId((prev) => prev || fallbackId);
+        setState((prev) => ({ ...prev, status: 'error', error: error.message || '목록을 불러오지 못했습니다.' }));
       } finally {
         setExamListLoading(false);
       }

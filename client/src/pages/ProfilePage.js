@@ -1468,6 +1468,8 @@ const MembershipCard = () => {
           <ul style={{ ...styles.planList, ...styles.planListPremium }}>
             <li>단어시험 무제한</li>
             <li>문제풀이 무제한</li>
+            <li>워크북 학습 가능</li>
+            <li>모의고사 풀이 가능</li>
             <li>학습 통계 제공</li>
             <li>프리미엄 뱃지 제공</li>
           </ul>

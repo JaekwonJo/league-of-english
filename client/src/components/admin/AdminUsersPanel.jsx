@@ -80,6 +80,8 @@ const AdminUsersPanel = () => {
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState('all');
   const [users, setUsers] = useState([]);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(50);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -87,7 +89,7 @@ const AdminUsersPanel = () => {
     try {
       setLoading(true);
       setError('');
-      const res = await api.admin.users.list({ q: query, status, limit: 100, includeGuests: 0 });
+      const res = await api.admin.users.list({ q: query, status, limit, page, includeGuests: 0 });
       const list = Array.isArray(res?.users) ? res.users : [];
       setUsers(list.filter((user) => String(user?.membership || '').toLowerCase() !== 'guest'));
     } catch (e) {
@@ -95,7 +97,7 @@ const AdminUsersPanel = () => {
     } finally {
       setLoading(false);
     }
-  }, [query, status]);
+  }, [query, status, page, limit]);
 
   useEffect(() => {
     fetchUsers();
@@ -113,7 +115,7 @@ const AdminUsersPanel = () => {
     <div style={{ ...adminStyles.feedbackSection, marginTop: 30 }}>
       <div style={adminStyles.feedbackHeader}>
         <h2 style={adminStyles.cardTitle}>👥 사용자 관리</h2>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <input
             placeholder="이름/아이디/이메일 검색"
             value={query}
@@ -125,7 +127,13 @@ const AdminUsersPanel = () => {
             <option value="active">활성</option>
             <option value="inactive">비활성</option>
           </select>
-          <button style={adminStyles.primaryButton} onClick={fetchUsers}>검색</button>
+          <select value={limit} onChange={(e) => { setLimit(parseInt(e.target.value, 10) || 50); setPage(1); }} style={adminStyles.input}>
+            <option value={25}>25개</option>
+            <option value={50}>50개</option>
+            <option value={100}>100개</option>
+            <option value={150}>150개</option>
+          </select>
+          <button style={adminStyles.primaryButton} onClick={() => { setPage(1); fetchUsers(); }}>검색</button>
         </div>
       </div>
       {error && <div style={errorBox}>{error}</div>}
@@ -137,6 +145,11 @@ const AdminUsersPanel = () => {
         onRemove={onRemove}
         onGrant={onGrant}
       />
+      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12 }}>
+        <button style={btn} onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>이전</button>
+        <span style={{ alignSelf: 'center', color: 'var(--text-secondary)' }}>페이지 {page}</span>
+        <button style={btn} onClick={() => setPage((p) => p + 1)}>다음</button>
+      </div>
     </div>
   );
 };

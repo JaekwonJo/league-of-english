@@ -15,6 +15,15 @@
 - Files: client/src/pages/VocabularyPage.js, client/src/pages/MockExamPage.js, client/src/pages/AnalysisPage.js(문장 분석 설명 톤 보정).
 - Verification: `npm run build --prefix client` 성공, 로컬 모바일 뷰에서 고정 바/플래시/체크 배지 동작 확인.
 
+## 2025-11-11 (UI polish + access + loading fallback)
+- Home: 독수리 히어로 크기 축소(데스크톱/모바일)로 첫 화면 과도한 시각 부담 해소 (HomePage.js).
+- Vocabulary: 히어로 문구 교체(간결화) + 캐릭터 크기 축소/이모지 제거, "단어장 다시 고르기/Day 다시 선택" 버튼 가독성 확대 (VocabularyPage.js).
+- Analysis: 문서 카드 색상 단일 톤 그라데이션으로 통일, 학생 계정에선 이름 수정/삭제 UI 비노출, 해석/분석 중복 라벨 제거 (AnalysisPage.js, analysisStyles.js).
+- Workbook: 보조 버튼 대비 상향(흰 배경↔흰 글씨 이슈 해결), 영작(8단계)에 단어 힌트 토큰 추가 (WorkbookPage.js, server/services/workbookService.js).
+- MockExam: 목록 로딩 실패 시 기본 회차 폴백 + 오류 상태로 전환해 무한 로딩 방지 (MockExamPage.js).
+- Profile: 프리미엄 혜택에 "워크북 학습/모의고사 풀이" 명시 (ProfilePage.js).
+- Admin: 사용자 관리 목록에 페이지/개수 선택 추가(서버 OFFSET 지원)로 대규모 사용자 스크롤 부담 완화 (server/routes/admin.routes.js, AdminUsersPanel.jsx).
+
 ## 2025-11-08 (home hero eagle palette + mascot loop)
 - Issue: 홈 히어로/CTA가 듀오링고와 유사한 초록 팔레트라 브랜드 정체성이 흐려지고, 마스코트가 가만히 서 있어 “멈춘 캐릭터”처럼 보였습니다.
 - Cause: 초기 리뉴얼 때 디폴트 라이트 톤을 사용했고, 애니메이션 상태는 onClick 시에만 mood가 바뀌도록 구성돼 있었습니다.

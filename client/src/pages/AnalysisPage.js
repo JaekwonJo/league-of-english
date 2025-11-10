@@ -137,6 +137,17 @@ const normalizeAnalysisLine = (line) => {
   return cleaned;
 };
 
+// Remove duplicated label prefixes like "📘 한글 해석:" or "🧠 문장 분석:" from value strings
+const stripKnownPrefixes = (text) => {
+  if (typeof text !== 'string') return text;
+  let t = text.trim();
+  t = t.replace(/^📘\s*한글\s*해석\s*[:：]\s*/g, '');
+  t = t.replace(/^한글\s*해석\s*[:：]\s*/g, '');
+  t = t.replace(/^🧠\s*문장\s*분석\s*[:：]\s*/g, '');
+  t = t.replace(/^문장\s*분석\s*[:：]\s*/g, '');
+  return t.trim();
+};
+
 const formatFriendlyDateTime = (input) => {
   if (!input) return null;
   try {
@@ -655,13 +666,8 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
 
   const renderDocumentList = () => {
     const totalDocuments = documents.length;
-
-    const accentPalette = [
-      { from: 'rgba(129, 140, 248, 0.28)', to: 'rgba(56, 189, 248, 0.18)', shadow: 'rgba(59, 130, 246, 0.25)' },
-      { from: 'rgba(244, 114, 182, 0.28)', to: 'rgba(251, 191, 36, 0.22)', shadow: 'rgba(236, 72, 153, 0.22)' },
-      { from: 'rgba(45, 212, 191, 0.25)', to: 'rgba(56, 189, 248, 0.2)', shadow: 'rgba(20, 184, 166, 0.24)' },
-      { from: 'rgba(196, 181, 253, 0.3)', to: 'rgba(103, 232, 249, 0.2)', shadow: 'rgba(139, 92, 246, 0.24)' }
-    ];
+    // Single calm palette for all cards (less visual noise)
+    const calmPalette = { from: 'rgba(30, 58, 138, 0.75)', to: 'rgba(14, 165, 233, 0.45)', shadow: 'rgba(30, 64, 175, 0.35)' };
 
     return (
       <div style={analysisStyles.container}>
@@ -740,8 +746,8 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
                   </button>
                   {!isCollapsed && (
                     <div style={analysisStyles.docCategoryGrid}>
-                      {docs.map((doc, index) => {
-                        const palette = accentPalette[index % accentPalette.length];
+                      {docs.map((doc) => {
+                        const palette = calmPalette;
                         const isHovered = hoveredDocumentId === doc.id;
                         const description = doc.description || '지문을 선택해 전문 분석을 살펴보세요.';
                         const docMetaItems = [
@@ -1019,10 +1025,10 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
         <div style={analysisStyles.header}>
           <button onClick={handleBackToDocuments} style={analysisStyles.backButton}>← 목록으로 돌아가기</button>
           <h1 style={analysisStyles.title}>📄 {selectedDocument?.title}</h1>
-          <div style={analysisStyles.sectionGuideRow}>
-            <p style={analysisStyles.subtitle}>지문을 하나씩 살펴보고, 필요하면 전문 분석을 곧바로 생성해 보세요.</p>
-            <EagleGuideChip text="분석본이 가득 차면 새 변형을 삭제해도 돼요" />
-          </div>
+            <div style={analysisStyles.sectionGuideRow}>
+              <p style={analysisStyles.subtitle}>지문을 하나씩 살펴보고, 필요하면 전문 분석을 곧바로 생성해 보세요.</p>
+              {isAdmin && <EagleGuideChip text="관리자 안내: 분석본이 가득 차면 불필요한 변형을 정리할 수 있어요" />}
+            </div>
         </div>
 
         {analysisLimitError && (
@@ -1181,9 +1187,9 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
     const cleanEnglish = topicMatch ? topicMatch[1].trim() : englishRaw;
     const circledDigit = getCircledDigit(index);
 
-    const koreanLine = sentence.korean || '📘 한글 해석: 문장을 우리말로 직접 정리해 보세요.';
-    const analysisRaw = sentence.breakdown || sentence.analysis || '🧠 문장 분석: 문장의 핵심을 정리해 보세요.';
-    const analysisLine = normalizeAnalysisLine(analysisRaw);
+    const koreanLine = stripKnownPrefixes(sentence.korean || '') || '문장을 우리말로 직접 정리해 보세요.';
+    const analysisRaw = stripKnownPrefixes(sentence.breakdown || sentence.analysis || '') || '문장의 핵심을 정리해 보세요.';
+    const analysisLine = stripKnownPrefixes(normalizeAnalysisLine(analysisRaw));
     const vocabularyIntro = sentence.vocabulary?.intro || '🎯 어휘 노트: 꼭 외워야 할 단어를 직접 정리해 보세요.';
     const vocabWords = Array.isArray(sentence.vocabulary?.words) ? sentence.vocabulary.words : [];
 

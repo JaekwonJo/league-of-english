@@ -453,9 +453,10 @@ export const api = {
   },
 
   mockExam: {
-    getExam: () => apiService.get('/mock-exam/2025-10'),
-    submit: (payload) => apiService.post('/mock-exam/2025-10/submit', payload),
-    explanation: (payload) => apiService.post('/mock-exam/2025-10/explanations', payload),
+    list: () => apiService.get('/mock-exam'),
+    getExam: (examId) => apiService.get(`/mock-exam/${examId}`),
+    submit: (examId, payload) => apiService.post(`/mock-exam/${examId}/submit`, payload),
+    explanation: (examId, payload) => apiService.post(`/mock-exam/${examId}/explanations`, payload),
     upload: (formData) => apiService.uploadFormData('/mock-exam/upload', formData, 60000)
   },
 

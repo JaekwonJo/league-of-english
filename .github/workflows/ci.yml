@@ -23,6 +23,12 @@ jobs:
         env:
           LOE_ASCII_LOG: '1'
         run: npm test
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+      - name: Run Playwright E2E
+        env:
+          PLAYWRIGHT_SKIP_WEBSERVER: '0'
+        run: npm run test:e2e
 
   deploy:
     needs: test

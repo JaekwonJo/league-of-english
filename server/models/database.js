@@ -298,6 +298,28 @@ class Database {
           FOREIGN KEY (updated_by) REFERENCES users(id)
         )`,
 
+        // document_passage_label_logs (audit trail)
+        `CREATE TABLE IF NOT EXISTS document_passage_label_logs (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          document_id INTEGER NOT NULL,
+          passage_number INTEGER NOT NULL,
+          old_label TEXT,
+          new_label TEXT,
+          updated_by INTEGER,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (document_id) REFERENCES documents(id),
+          FOREIGN KEY (updated_by) REFERENCES users(id)
+        )`,
+
+        // mock exam problems mapped to the generic problems table
+        `CREATE TABLE IF NOT EXISTS mock_exam_questions (
+          exam_id TEXT NOT NULL,
+          question_number INTEGER NOT NULL,
+          problem_id INTEGER NOT NULL,
+          PRIMARY KEY (exam_id, question_number),
+          FOREIGN KEY (problem_id) REFERENCES problems(id)
+        )`,
+
         // passage_analyses
         `CREATE TABLE IF NOT EXISTS passage_analyses (
           id INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -1,11 +1,13 @@
 const fs = require('fs');
 const path = require('path');
 const pdfParse = require('pdf-parse');
+const database = require('../models/database');
+const studyService = require('./studyService');
 
 const CHOICES = ['①', '②', '③', '④', '⑤'];
 const CHOICE_TO_INDEX = CHOICES.reduce((acc, mark, idx) => ({ ...acc, [mark]: idx }), {});
 
-const EXAM_ID = process.env.MOCK_EXAM_ID || '2025-10';
+const DEFAULT_EXAM_ID = process.env.MOCK_EXAM_ID || '2025-10';
 const STORAGE_ROOT = path.resolve(__dirname, '..', '..', 'mock-exams');
 const LEGACY_DIR_CANDIDATES = [
   path.resolve(__dirname, '..', '..', '모의고사원문'),
@@ -13,21 +15,21 @@ const LEGACY_DIR_CANDIDATES = [
 ];
 const LEGACY_QUESTION_FILE = '25_10월_고2_영어_문제지.pdf';
 const LEGACY_ANSWER_FILE = '25_10월_고2_영어_정답 및 해설.pdf';
-const FALLBACK_EXAM_JSON = path.resolve(__dirname, '..', 'data', 'mockExam2025-10.json');
-const FALLBACK_ANSWER_JSON = path.resolve(__dirname, '..', 'data', 'mockExam2025-10-answers.json');
+const getFallbackExamJson = (examId = DEFAULT_EXAM_ID) => path.resolve(__dirname, '..', 'data', `mockExam${examId}.json`);
+const getFallbackAnswerJson = (examId = DEFAULT_EXAM_ID) => path.resolve(__dirname, '..', 'data', `mockExam${examId}-answers.json`);
 
 const resolveLegacyPath = (file) => LEGACY_DIR_CANDIDATES
   .map((dir) => path.join(dir, file))
   .find((candidate) => fs.existsSync(candidate));
 
-const getQuestionPath = () => {
-  const preferred = path.join(STORAGE_ROOT, EXAM_ID, 'questions.pdf');
+const getQuestionPath = (examId = DEFAULT_EXAM_ID) => {
+  const preferred = path.join(STORAGE_ROOT, examId, 'questions.pdf');
   if (fs.existsSync(preferred)) return preferred;
   return resolveLegacyPath(LEGACY_QUESTION_FILE) || preferred;
 };
 
-const getAnswerPath = () => {
-  const preferred = path.join(STORAGE_ROOT, EXAM_ID, 'answers.pdf');
+const getAnswerPath = (examId = DEFAULT_EXAM_ID) => {
+  const preferred = path.join(STORAGE_ROOT, examId, 'answers.pdf');
   if (fs.existsSync(preferred)) return preferred;
   return resolveLegacyPath(LEGACY_ANSWER_FILE) || preferred;
 };
@@ -43,29 +45,75 @@ const ensureFallback = (filePath, friendlyName) => {
 
 class MockExamService {
   constructor() {
-    this.examCache = null;
-    this.answerCache = null;
+    this.examCache = new Map();
+    this.answerCache = new Map();
     this.explanationCache = new Map();
     this.openai = null;
+    this.problemMapCache = new Map();
   }
 
-  async getExam() {
-    if (!this.examCache) {
-      this.examCache = await this._loadExam();
+  async listAvailableExams() {
+    const ids = new Set([DEFAULT_EXAM_ID]);
+
+    try {
+      if (fs.existsSync(STORAGE_ROOT)) {
+        fs.readdirSync(STORAGE_ROOT, { withFileTypes: true })
+          .filter((entry) => entry.isDirectory())
+          .forEach((entry) => ids.add(entry.name));
+      }
+    } catch (error) {
+      console.warn('[mockExam] cannot scan STORAGE_ROOT:', error?.message || error);
     }
-    return this.examCache;
-  }
 
-  async getAnswerKey() {
-    if (!this.answerCache) {
-      this.answerCache = await this._loadAnswerKey();
+    try {
+      const dataDir = path.resolve(__dirname, '..', 'data');
+      if (fs.existsSync(dataDir)) {
+        fs.readdirSync(dataDir)
+          .filter((file) => /^mockExam[\d-]+\.json$/i.test(file))
+          .forEach((file) => ids.add(file.replace(/^mockExam/i, '').replace(/\.json$/i, '')));
+      }
+    } catch (error) {
+      console.warn('[mockExam] cannot scan fallback JSON:', error?.message || error);
     }
-    return this.answerCache;
+
+    const list = [];
+    for (const examId of ids) {
+      try {
+        const exam = await this.getExam(examId);
+        list.push({
+          id: exam.examId,
+          title: exam.title,
+          questionCount: exam.questionCount || (exam.questions ? exam.questions.length : 0)
+        });
+      } catch (error) {
+        console.warn('[mockExam] skip exam listing', examId, error?.message || error);
+      }
+    }
+
+    if (!list.length) {
+      throw new Error('등록된 모의고사 세트를 찾을 수 없어요. 관리자에게 문의하세요.');
+    }
+
+    return list;
   }
 
-  async gradeExam(answerPayload = {}) {
-    const exam = await this.getExam();
-    const answerKey = await this.getAnswerKey();
+  async getExam(examId = DEFAULT_EXAM_ID) {
+    if (!this.examCache.has(examId)) {
+      this.examCache.set(examId, await this._loadExam(examId));
+    }
+    return this.examCache.get(examId);
+  }
+
+  async getAnswerKey(examId = DEFAULT_EXAM_ID) {
+    if (!this.answerCache.has(examId)) {
+      this.answerCache.set(examId, await this._loadAnswerKey(examId));
+    }
+    return this.answerCache.get(examId);
+  }
+
+  async gradeExam(answerPayload = {}, userId = null, examId = DEFAULT_EXAM_ID) {
+    const exam = await this.getExam(examId);
+    const answerKey = await this.getAnswerKey(examId);
 
     const normalizedAnswers = {};
     Object.entries(answerPayload || {}).forEach(([key, value]) => {
@@ -115,6 +163,16 @@ class MockExamService {
     const unansweredCount = detail.filter((item) => !item.isAnswered).length;
     const total = detail.length;
 
+    let studyOutcome = null;
+    if (userId) {
+      try {
+        const problemMap = await this.ensureMockProblems(exam, answerKey, examId);
+        studyOutcome = await this._recordStudyResults(userId, detail, problemMap);
+      } catch (error) {
+        console.warn('[mockExam] failed to record study session:', error?.message || error);
+      }
+    }
+
     return {
       examId: exam.examId,
       title: exam.title,
@@ -123,13 +181,17 @@ class MockExamService {
       incorrectCount,
       unansweredCount,
       accuracy: total > 0 ? Math.round((correctCount / total) * 100) : 0,
-      detail
+      detail,
+      stats: studyOutcome?.stats || null,
+      rank: studyOutcome?.rank || null,
+      updatedUser: studyOutcome?.updatedUser || null,
+      studySummary: studyOutcome?.summary || null
     };
   }
 
-  async getExplanation(questionNumber) {
-    const exam = await this.getExam();
-    const answerKey = await this.getAnswerKey();
+  async getExplanation(questionNumber, examId = DEFAULT_EXAM_ID) {
+    const exam = await this.getExam(examId);
+    const answerKey = await this.getAnswerKey(examId);
     const number = Number(questionNumber);
 
     if (!Number.isInteger(number)) {
@@ -145,10 +207,11 @@ class MockExamService {
       throw new Error('정답 정보를 찾을 수 없습니다.');
     }
 
-    if (this.explanationCache.has(number)) {
+    const cacheKey = `${examId}-${number}`;
+    if (this.explanationCache.has(cacheKey)) {
       return {
         questionNumber: number,
-        explanation: this.explanationCache.get(number),
+        explanation: this.explanationCache.get(cacheKey),
         cached: true
       };
     }
@@ -206,7 +269,7 @@ class MockExamService {
       throw new Error('해설 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.');
     }
 
-    this.explanationCache.set(number, explanation);
+    this.explanationCache.set(cacheKey, explanation);
 
     return {
       questionNumber: number,
@@ -229,72 +292,68 @@ class MockExamService {
     return this.openai;
   }
 
-  async _loadExam() {
-    const questionPath = getQuestionPath();
-    if (!fs.existsSync(questionPath)) {
-      return ensureFallback(FALLBACK_EXAM_JSON, '모의고사 문제지');
+  async _loadExam(examId = DEFAULT_EXAM_ID) {
+    const questionPath = getQuestionPath(examId);
+    if (fs.existsSync(questionPath)) {
+      try {
+        const buffer = fs.readFileSync(questionPath);
+        const parsed = await pdfParse(buffer);
+        const text = parsed.text.replace(/\r/g, '');
+        const questions = this._extractQuestions(text);
+        return {
+          examId,
+          title: this._buildExamTitle(examId),
+          timeLimitSeconds: 50 * 60,
+          questionCount: questions.length,
+          questions
+        };
+      } catch (error) {
+        console.warn(`[mockExam] 문제지 PDF 파싱 실패(${examId}), JSON으로 대체합니다:`, error.message);
+      }
     }
 
-    try {
-      const buffer = fs.readFileSync(questionPath);
-      const parsed = await pdfParse(buffer);
-      const text = parsed.text.replace(/\r/g, '');
-
-      const questions = this._extractQuestions(text);
-
-      return {
-        examId: '2025-10-highschool-2',
-        title: '2025년 10월 고2 모의고사',
-        timeLimitSeconds: 50 * 60,
-        questionCount: questions.length,
-        questions
-      };
-    } catch (error) {
-      console.warn('[mockExam] 문제지 PDF 파싱에 실패하여 기본 JSON으로 대체합니다:', error.message);
-      return ensureFallback(FALLBACK_EXAM_JSON, '모의고사 문제지');
-    }
+    const fallback = ensureFallback(getFallbackExamJson(examId), `모의고사 문제지(${examId})`);
+    fallback.examId = fallback.examId || examId;
+    fallback.questionCount = fallback.questionCount || (fallback.questions ? fallback.questions.length : 0);
+    return fallback;
   }
 
-  async _loadAnswerKey() {
-    const answerPath = getAnswerPath();
-    if (!fs.existsSync(answerPath)) {
-      return ensureFallback(FALLBACK_ANSWER_JSON, '모의고사 정답/해설');
-    }
+  async _loadAnswerKey(examId = DEFAULT_EXAM_ID) {
+    const answerPath = getAnswerPath(examId);
+    if (fs.existsSync(answerPath)) {
+      try {
+        const buffer = fs.readFileSync(answerPath);
+        const parsed = await pdfParse(buffer);
+        const text = parsed.text.replace(/\r/g, '');
 
-    let text;
-    try {
-      const buffer = fs.readFileSync(answerPath);
-      const parsed = await pdfParse(buffer);
-      text = parsed.text.replace(/\r/g, '');
-    } catch (error) {
-      console.warn('[mockExam] 정답 PDF 파싱에 실패하여 기본 JSON으로 대체합니다:', error.message);
-      return ensureFallback(FALLBACK_ANSWER_JSON, '모의고사 정답/해설');
-    }
+        const matches = [...text.matchAll(/(\d{1,2})([①-⑤])/g)];
+        const answerMap = {};
+        matches.forEach((match) => {
+          const number = Number(match[1]);
+          const mark = match[2];
+          if (!Number.isInteger(number)) return;
+          if (number < 1 || number > 45) return;
+          if (answerMap[number] !== undefined) return;
+          const index = CHOICE_TO_INDEX[mark];
+          if (typeof index === 'number') {
+            answerMap[number] = index;
+          }
+        });
 
-    const matches = [...text.matchAll(/(\d{1,2})([①-⑤])/g)];
+        for (let q = 18; q <= 45; q += 1) {
+          if (answerMap[q] === undefined) {
+            console.warn(`[mockExam] 정답 누락 감지(${examId}), JSON으로 대체합니다:`, q);
+            return ensureFallback(getFallbackAnswerJson(examId), `모의고사 정답(${examId})`);
+          }
+        }
 
-    const answerMap = {};
-    matches.forEach((match) => {
-      const number = Number(match[1]);
-      const mark = match[2];
-      if (!Number.isInteger(number)) return;
-      if (number < 1 || number > 45) return;
-      if (answerMap[number] !== undefined) return;
-      const index = CHOICE_TO_INDEX[mark];
-      if (typeof index === 'number') {
-        answerMap[number] = index;
-      }
-    });
-
-    // Ensure all questions 18-45 exist
-    for (let q = 18; q <= 45; q += 1) {
-      if (answerMap[q] === undefined) {
-        console.warn('[mockExam] 정답 누락 감지, 기본 JSON으로 대체합니다:', q);
-        return ensureFallback(FALLBACK_ANSWER_JSON, '모의고사 정답/해설');
+        return answerMap;
+      } catch (error) {
+        console.warn(`[mockExam] 정답 PDF 파싱 실패(${examId}), JSON으로 대체합니다:`, error.message);
       }
     }
 
-    return answerMap;
+    return ensureFallback(getFallbackAnswerJson(examId), `모의고사 정답(${examId})`);
   }
 
   _extractQuestions(text) {
@@ -316,6 +375,16 @@ class MockExamService {
     }
 
     return blocks;
+  }
+
+  _buildExamTitle(examId = DEFAULT_EXAM_ID) {
+    if (!examId) return '모의고사';
+    const parts = examId.split('-');
+    if (parts.length >= 2) {
+      const [year, month] = parts;
+      return `${year}년 ${month}월 모의고사`;
+    }
+    return `${examId} 모의고사`;
   }
 
   _parseQuestionBlock(number, block) {
@@ -374,10 +443,72 @@ class MockExamService {
     };
   }
 
-  resetCache() {
-    this.examCache = null;
-    this.answerCache = null;
+  resetCache(examId) {
+    if (examId) {
+      this.examCache.delete(examId);
+      this.answerCache.delete(examId);
+      this.problemMapCache.delete(examId);
+      [...this.explanationCache.keys()].forEach((key) => {
+        if (key.startsWith(`${examId}-`)) this.explanationCache.delete(key);
+      });
+      return;
+    }
+    this.examCache.clear();
+    this.answerCache.clear();
+    this.problemMapCache.clear();
     this.explanationCache.clear();
+  }
+
+  async ensureMockProblems(exam, answerKey, examId = DEFAULT_EXAM_ID) {
+    const normalizedExamId = exam?.examId || examId;
+    if (!exam?.questions?.length) return new Map();
+    if (!this.problemMapCache.has(normalizedExamId)) {
+      const rows = await database.all('SELECT question_number, problem_id FROM mock_exam_questions WHERE exam_id = ?', [normalizedExamId]);
+      const map = new Map(rows.map((row) => [Number(row.question_number), row.problem_id]));
+
+      for (const question of exam.questions) {
+        if (map.has(question.number)) continue;
+        const correctIndex = answerKey[question.number];
+        const answerValue = Number.isInteger(correctIndex) ? String(correctIndex + 1) : '';
+        const optionsPayload = JSON.stringify((question.choices || []).map((choice) => `${choice.mark || ''} ${choice.text}`.trim()));
+        const metadata = JSON.stringify({ examId: normalizedExamId, questionNumber: question.number });
+        const insert = await database.run(
+          `INSERT INTO problems (document_id, type, question, options, answer, explanation, metadata, is_ai_generated)
+           VALUES (?, ?, ?, ?, ?, ?, ?, 0)`,
+          [null, 'mock_exam', question.prompt, optionsPayload, answerValue, '', metadata]
+        );
+        map.set(question.number, insert.id);
+        await database.run(
+          `INSERT INTO mock_exam_questions (exam_id, question_number, problem_id)
+           VALUES (?, ?, ?)
+           ON CONFLICT(exam_id, question_number) DO UPDATE SET problem_id = excluded.problem_id`,
+          [normalizedExamId, question.number, insert.id]
+        );
+      }
+
+      this.problemMapCache.set(normalizedExamId, map);
+    }
+    return this.problemMapCache.get(normalizedExamId);
+  }
+
+  async _recordStudyResults(userId, detail, problemMap) {
+    if (!problemMap || typeof problemMap.get !== 'function') return null;
+    const payload = detail
+      .map((item) => {
+        const problemId = problemMap.get(item.number);
+        if (!problemId) return null;
+        return {
+          problemId,
+          isCorrect: !!item.isCorrect,
+          userAnswer: typeof item.userIndex === 'number' ? String(item.userIndex + 1) : '',
+          timeSpent: 0,
+          problemType: 'mock_exam'
+        };
+      })
+      .filter(Boolean);
+
+    if (!payload.length) return null;
+    return studyService.recordStudySession(userId, payload);
   }
 }
 

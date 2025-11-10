@@ -9,7 +9,7 @@ const { verifyToken, requireAdmin } = require('../middleware/auth');
 const database = require('../models/database');
 const mockExamService = require('../services/mockExamService');
 
-const EXAM_ID = '2025-10';
+const DEFAULT_EXAM_ID = process.env.MOCK_EXAM_ID || '2025-10';
 const STORAGE_ROOT = path.resolve(__dirname, '..', '..', 'mock-exams');
 const uploadTempDir = path.resolve(__dirname, '..', '..', 'tmp', 'mock-exam');
 
@@ -37,9 +37,20 @@ const upload = multer({
   }
 });
 
-router.get(`/${EXAM_ID}`, verifyToken, async (req, res) => {
+router.get('/', verifyToken, async (req, res) => {
   try {
-    const exam = await mockExamService.getExam();
+    const list = await mockExamService.listAvailableExams();
+    return res.json({ success: true, data: list });
+  } catch (error) {
+    console.error('[mockExam] list failed:', error);
+    return res.status(500).json({ success: false, message: error.message || '모의고사 목록을 불러오지 못했습니다.' });
+  }
+});
+
+router.get('/:examId', verifyToken, async (req, res) => {
+  try {
+    const examId = (req.params.examId || DEFAULT_EXAM_ID).trim();
+    const exam = await mockExamService.getExam(examId);
     return res.json({ success: true, data: exam });
   } catch (error) {
     console.error('[mockExam] GET exam failed:', error);
@@ -47,14 +58,14 @@ router.get(`/${EXAM_ID}`, verifyToken, async (req, res) => {
   }
 });
 
-router.post(`/${EXAM_ID}/submit`, verifyToken, async (req, res) => {
+router.post('/:examId/submit', verifyToken, async (req, res) => {
   try {
     const { answers } = req.body || {};
     if (!answers || typeof answers !== 'object') {
       return res.status(400).json({ success: false, message: 'answers 필드가 필요합니다.' });
     }
-
-    const result = await mockExamService.gradeExam(answers);
+    const examId = (req.params.examId || DEFAULT_EXAM_ID).trim();
+    const result = await mockExamService.gradeExam(answers, req.user.id, examId);
     return res.json({ success: true, data: result });
   } catch (error) {
     console.error('[mockExam] submit failed:', error);
@@ -62,7 +73,7 @@ router.post(`/${EXAM_ID}/submit`, verifyToken, async (req, res) => {
   }
 });
 
-router.post(`/${EXAM_ID}/explanations`, verifyToken, async (req, res) => {
+router.post('/:examId/explanations', verifyToken, async (req, res) => {
   try {
     const { questionNumber } = req.body || {};
     if (!questionNumber) {
@@ -79,7 +90,8 @@ router.post(`/${EXAM_ID}/explanations`, verifyToken, async (req, res) => {
       return res.status(403).json({ success: false, message: '이 기능은 프로 회원 전용입니다.' });
     }
 
-    const explanation = await mockExamService.getExplanation(questionNumber);
+    const examId = (req.params.examId || DEFAULT_EXAM_ID).trim();
+    const explanation = await mockExamService.getExplanation(questionNumber, examId);
     return res.json({ success: true, data: explanation });
   } catch (error) {
     console.error('[mockExam] explanation failed:', error);
@@ -101,11 +113,7 @@ router.post('/upload', verifyToken, requireAdmin, upload.fields([
   };
 
   try {
-    const examIdInput = String(req.body?.examId || EXAM_ID).trim() || EXAM_ID;
-    if (examIdInput !== EXAM_ID) {
-      cleanupTemp();
-      return res.status(400).json({ success: false, message: `현재 시험 ID는 ${EXAM_ID}로 고정되어 있어요. 다른 회차를 등록하려면 서버 환경 설정을 먼저 업데이트해 주세요.` });
-    }
+    const examIdInput = String(req.body?.examId || DEFAULT_EXAM_ID).trim() || DEFAULT_EXAM_ID;
     const questionFile = req.files?.questionPdf?.[0];
     const answerFile = req.files?.answerPdf?.[0];
 
@@ -114,7 +122,7 @@ router.post('/upload', verifyToken, requireAdmin, upload.fields([
       return res.status(400).json({ success: false, message: '문제지 PDF와 정답/해설 PDF를 모두 업로드해 주세요.' });
     }
 
-    const targetDir = path.join(STORAGE_ROOT, EXAM_ID);
+    const targetDir = path.join(STORAGE_ROOT, examIdInput);
     fs.mkdirSync(targetDir, { recursive: true });
 
     const questionTarget = path.join(targetDir, 'questions.pdf');
@@ -126,10 +134,10 @@ router.post('/upload', verifyToken, requireAdmin, upload.fields([
     cleanupTemp();
 
     if (typeof mockExamService.resetCache === 'function') {
-      mockExamService.resetCache();
+      mockExamService.resetCache(examIdInput);
     }
 
-    return res.status(201).json({ success: true, message: '모의고사 PDF가 업데이트되었습니다.' });
+    return res.status(201).json({ success: true, message: `${examIdInput} 모의고사 PDF가 업데이트되었습니다.` });
   } catch (error) {
     console.error('[mockExam] upload failed:', error);
     cleanupTemp();
