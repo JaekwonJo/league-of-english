@@ -52,14 +52,10 @@ const MockExamPage = () => {
         }
         const normalized = Array.isArray(response.data) ? response.data : [];
         setExamList(normalized);
-        if (normalized.length) {
-          setSelectedExamId((prev) => prev || normalized[0].id);
-        }
+        // Don't auto-select; user picks the uploaded exam explicitly
+        setState((prev) => (prev.status === 'loading' ? { ...prev, status: 'ready' } : prev));
       } catch (error) {
         setExamListError(error.message || '모의고사 목록을 불러오지 못했습니다.');
-        // Fallback: try default exam id so UI does not hang indefinitely
-        const fallbackId = '2025-10';
-        setSelectedExamId((prev) => prev || fallbackId);
         setState((prev) => ({ ...prev, status: 'error', error: error.message || '목록을 불러오지 못했습니다.' }));
       } finally {
         setExamListLoading(false);
@@ -365,6 +361,8 @@ const MockExamPage = () => {
         <div style={styles.notice}>회차 목록을 불러오는 중입니다...</div>
       ) : examListError ? (
         <div style={{ ...styles.notice, color: 'var(--danger-strong)' }}>{examListError}</div>
+      ) : examList.length === 0 ? (
+        <div style={styles.notice}>업로드된 모의고사가 없어요. 관리자 페이지에서 문제지/정답 PDF를 올려 주세요.</div>
       ) : (
         <div style={styles.examPickerGrid}>
           {examList.map((exam) => {

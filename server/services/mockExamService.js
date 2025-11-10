@@ -53,47 +53,29 @@ class MockExamService {
   }
 
   async listAvailableExams() {
-    const ids = new Set([DEFAULT_EXAM_ID]);
-
+    // Only list exams that have both PDFs uploaded by admin (no fallback JSON listing)
+    const list = [];
     try {
-      if (fs.existsSync(STORAGE_ROOT)) {
-        fs.readdirSync(STORAGE_ROOT, { withFileTypes: true })
-          .filter((entry) => entry.isDirectory())
-          .forEach((entry) => ids.add(entry.name));
+      if (!fs.existsSync(STORAGE_ROOT)) {
+        return list;
+      }
+      const dirs = fs.readdirSync(STORAGE_ROOT, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => entry.name);
+      for (const examId of dirs) {
+        const hasQuestions = fs.existsSync(path.join(STORAGE_ROOT, examId, 'questions.pdf'));
+        const hasAnswers = fs.existsSync(path.join(STORAGE_ROOT, examId, 'answers.pdf'));
+        if (!hasQuestions || !hasAnswers) continue;
+        try {
+          const exam = await this._loadExam(examId);
+          list.push({ id: exam.examId, title: exam.title, questionCount: exam.questionCount || 0 });
+        } catch (error) {
+          console.warn('[mockExam] skip exam listing', examId, error?.message || error);
+        }
       }
     } catch (error) {
       console.warn('[mockExam] cannot scan STORAGE_ROOT:', error?.message || error);
     }
-
-    try {
-      const dataDir = path.resolve(__dirname, '..', 'data');
-      if (fs.existsSync(dataDir)) {
-        fs.readdirSync(dataDir)
-          .filter((file) => /^mockExam[\d-]+\.json$/i.test(file))
-          .forEach((file) => ids.add(file.replace(/^mockExam/i, '').replace(/\.json$/i, '')));
-      }
-    } catch (error) {
-      console.warn('[mockExam] cannot scan fallback JSON:', error?.message || error);
-    }
-
-    const list = [];
-    for (const examId of ids) {
-      try {
-        const exam = await this.getExam(examId);
-        list.push({
-          id: exam.examId,
-          title: exam.title,
-          questionCount: exam.questionCount || (exam.questions ? exam.questions.length : 0)
-        });
-      } catch (error) {
-        console.warn('[mockExam] skip exam listing', examId, error?.message || error);
-      }
-    }
-
-    if (!list.length) {
-      throw new Error('등록된 모의고사 세트를 찾을 수 없어요. 관리자에게 문의하세요.');
-    }
-
     return list;
   }
 
