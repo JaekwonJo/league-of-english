@@ -22,6 +22,7 @@
 - Workbook: 보조 버튼 대비 상향(흰 배경↔흰 글씨 이슈 해결), 영작(8단계)에 단어 힌트 토큰 추가 (WorkbookPage.js, server/services/workbookService.js).
 - MockExam: 목록 로딩 실패 시 기본 회차 폴백 + 오류 상태로 전환해 무한 로딩 방지 (MockExamPage.js).
 - MockExam: 기본 회차 자동 선택 제거, 업로드된 PDF만 목록 노출 → 사용자가 명시적으로 회차를 선택해 응시 (mockExamService.js, MockExamPage.js).
+- MockExam: PDF 파싱 내구성 향상(하이픈 줄바꿈 복원, 페이지 번호 제거, 18~45 번호 패턴 다양화, 1)/1.→① 표준화) (mockExamService.js).
 - Profile: 프리미엄 혜택에 "워크북 학습/모의고사 풀이" 명시 (ProfilePage.js).
 - Admin: 사용자 관리 목록에 페이지/개수 선택 추가(서버 OFFSET 지원)로 대규모 사용자 스크롤 부담 완화 (server/routes/admin.routes.js, AdminUsersPanel.jsx).
 - Grammar: 밑줄 길이(1–4단어) 검증 추가, 정답·status 세트 불일치 시 재생성 트리거 (aiProblemService.js).

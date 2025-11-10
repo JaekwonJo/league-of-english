@@ -52,6 +52,34 @@ class MockExamService {
     this.problemMapCache = new Map();
   }
 
+  // Normalize raw PDF text for robust parsing across different exports
+  _normalizePdfText(raw = '') {
+    if (!raw) return '';
+    let text = String(raw)
+      .replace(/\u200b|\ufeff|\u00ad/g, '') // zero-width, BOM, soft hyphen
+      .replace(/-\n/g, '') // hyphenated line-breaks
+      .replace(/\r/g, '')
+      .replace(/\u00a0/g, ' ') // non-breaking space
+      .replace(/\s+\n/g, '\n')
+      .replace(/\n{2,}/g, '\n')
+      .normalize('NFC');
+    // Standardize option markers: convert "1)", "1.", "(1)" to circled digits when safe
+    const markers = ['①','②','③','④','⑤'];
+    for (let i = 1; i <= 5; i += 1) {
+      const circ = markers[i - 1];
+      const patterns = [
+        new RegExp(`\\(${i}\\)`, 'g'),
+        new RegExp(`(?<=\n|\s)${i}[\u0029\u002E]`, 'g'), // 1) or 1.
+      ];
+      patterns.forEach((re) => {
+        text = text.replace(re, circ);
+      });
+    }
+    // Remove page headers/footers heuristically (lines with only page numbers)
+    text = text.replace(/^\s*\d+\s*$/gm, '');
+    return text;
+  }
+
   async listAvailableExams() {
     // Only list exams that have both PDFs uploaded by admin (no fallback JSON listing)
     const list = [];
@@ -280,7 +308,7 @@ class MockExamService {
       try {
         const buffer = fs.readFileSync(questionPath);
         const parsed = await pdfParse(buffer);
-        const text = parsed.text.replace(/\r/g, '');
+        const text = this._normalizePdfText(parsed.text);
         const questions = this._extractQuestions(text);
         return {
           examId,
@@ -339,13 +367,15 @@ class MockExamService {
   }
 
   _extractQuestions(text) {
-    const startIndex = text.indexOf('18.');
-    if (startIndex === -1) {
+    // Locate first question (18~45). Support "18.", "18)", "18 번" patterns.
+    const startMatch = text.match(/\b(1[8-9]|[2-3]\d|4[0-5])[\.\)]?\s*(?:번)?\s/);
+    if (!startMatch) {
       throw new Error('문항 18을 찾을 수 없습니다. PDF 구조가 변경된 것 같습니다.');
     }
+    const startIndex = startMatch.index ?? 0;
     const truncated = text.slice(startIndex);
     const blocks = [];
-    const regex = /(?:^|\n)(1[8-9]|[2-3]\d|4[0-5])\.\s*[\s\S]*?(?=\n(?:1[8-9]|[2-3]\d|4[0-5])\.|$)/g;
+    const regex = /(?:^|\n)\s*(1[8-9]|[2-3]\d|4[0-5])[\.\)]?\s*(?:번)?\s*[\s\S]*?(?=\n\s*(1[8-9]|[2-3]\d|4[0-5])[\.\)]?\s*(?:번)?\s|$)/g;
     let match;
     while ((match = regex.exec(truncated)) !== null) {
       const number = Number(match[1]);
