@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const workbookService = require('../services/workbookService');
-const { verifyToken, requireTeacherOrAdmin } = require('../middleware/auth');
+const { verifyToken, requireTeacherOrAdmin, requirePaidMembership } = require('../middleware/auth');
 
 router.get('/workbooks', verifyToken, async (req, res) => {
   try {
@@ -26,7 +26,7 @@ router.get('/workbooks/:id', verifyToken, async (req, res) => {
   }
 });
 
-router.post('/workbooks/generate', verifyToken, requireTeacherOrAdmin, async (req, res) => {
+router.post('/workbooks/generate', verifyToken, requireTeacherOrAdmin, requirePaidMembership, async (req, res) => {
   try {
     const { documentId, passageNumber, regenerate } = req.body || {};
     const workbook = await workbookService.generateWorkbook({
@@ -43,7 +43,7 @@ router.post('/workbooks/generate', verifyToken, requireTeacherOrAdmin, async (re
   }
 });
 
-router.post('/workbooks/generate-all', verifyToken, requireTeacherOrAdmin, async (req, res) => {
+router.post('/workbooks/generate-all', verifyToken, requireTeacherOrAdmin, requirePaidMembership, async (req, res) => {
   try {
     const { documentId, regenerate } = req.body || {};
     const result = await workbookService.generateAllWorkbooks({

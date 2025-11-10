@@ -28,6 +28,9 @@
 - Grammar: 밑줄 길이(1–4단어) 검증 추가, 정답·status 세트 불일치 시 재생성 트리거 (aiProblemService.js).
 - Analysis: 카드 배경에 slowGradient 애니메이션 적용(선호도 감소 설정 시 비활성) (AnalysisPage.js, client/src/index.css).
 - Branding cleanup: 관리자 공유 모달 플레이스홀더에서 특정 학원명 제거 (DocumentShareModal.js).
+- Workbook TEST: 채점 결과를 study_records에 'workbook_test'로 기록 → 교사 통계/랭킹/LP에 반영 (workbookService.js, studyService.js).
+- Workbook Steps: '빈칸(4)', '제목 쓰기' 단계 추가(총 단계 동적 표기), 제목 카드는 예시/힌트 제공 (workbookService.js).
+- Teacher/Parent 과금 보호: 워크북 생성 라우트에 유료 멤버십(프리미엄/프로) 요구 미들웨어 추가 (auth.js, workbook.routes.js).
 
 ## 2025-11-08 (home hero eagle palette + mascot loop)
 - Issue: 홈 히어로/CTA가 듀오링고와 유사한 초록 팔레트라 브랜드 정체성이 흐려지고, 마스코트가 가만히 서 있어 “멈춘 캐릭터”처럼 보였습니다.

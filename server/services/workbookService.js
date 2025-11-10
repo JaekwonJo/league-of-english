@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const database = require('../models/database');
 const analysisService = require('./analysisService');
 const { getUserStats, getUserRank } = require('./studyService');
+const studyService = require('./studyService');
 const { getTierInfo, getNextTier, calculateProgress } = require('../utils/tierUtils');
 
 const DEFAULT_EMOJI = '📘';
@@ -426,8 +427,8 @@ class WorkbookService {
     });
 
     return {
-      title: `${document.title || '워크북'} 8단계 워크북`,
-      description: koreanMainIdea || englishSummaryKo || '지문의 핵심을 8단계 워크북으로 정리했어요.',
+      title: `${document.title || '워크북'} ${steps.length}단계 워크북`,
+      description: koreanMainIdea || englishSummaryKo || '지문의 핵심을 단계별 워크북으로 정리했어요.',
       coverEmoji: DEFAULT_EMOJI,
       steps,
       meta: {
@@ -468,6 +469,8 @@ class WorkbookService {
     const paragraphCardsRaw = this._buildParagraphCards(sentences, koreanMainIdea || englishSummaryKo, authorsClaim);
     const insertionCardsRaw = this._buildInsertionCards(sentences, englishSummaryKo || englishSummary);
     const writingPuzzleCardsRaw = this._buildWritingPuzzleCards(sentences, englishSummary, englishSummaryKo, modernApps);
+    const quadBlankCardsRaw = this._buildMultiBlankCards(sentences, vocabularyPool, { blanks: 4, maxCards: 3 });
+    const titleWritingCardsRaw = this._buildTitleWritingCards(englishTitles, englishSummaryKo || koreanMainIdea || englishSummary);
 
     const readingCards = this._ensureCards(
       readingCardsRaw,
@@ -508,6 +511,14 @@ class WorkbookService {
       writingPuzzleCardsRaw,
       '영작 퍼즐을 만들 수 있는 문장이 부족합니다.'
     );
+    const quadBlankCards = this._ensureCards(
+      quadBlankCardsRaw,
+      '네 개의 빈칸을 만들 수 있는 문장이 부족합니다.'
+    );
+    const titleWritingCards = this._ensureCards(
+      titleWritingCardsRaw,
+      '제목 후보 정보가 부족합니다. 요약을 스스로 작성해 본 뒤 제목을 지어 보세요.'
+    );
 
     return [
       this._createStep(1, '해석 연습', '📖', '원문을 한 문장씩 읽고 우리말로 자연스럽게 정리해 보세요.', '각 문장을 소리 내어 읽고, 모르는 표현은 표시해 두세요.', readingCards, [
@@ -541,8 +552,37 @@ class WorkbookService {
       this._createStep(8, '영작하기', '🧠✍️', '배운 표현을 활용해 문장을 직접 완성해 보세요.', '떠오른 문장을 소리 내어 읽으며 자연스러운지 확인하세요.', writingPuzzleCards, [
         '핵심 어휘와 표현을 다시 떠올리기',
         '완성된 문장을 크게 읽어 보기'
+      ]),
+      this._createStep(9, '빈칸 (4)', '🧠🧩', '네 개의 핵심 어휘를 떠올리며 문장을 완성해요.', '문맥에 따라 필요한 품사와 의미를 정확히 판단해 보세요.', quadBlankCards, [
+        '빈칸별 힌트(품사/의미)를 먼저 적기',
+        '완성 후 큰 소리로 읽으며 자연스러움 확인'
+      ]),
+      this._createStep(10, '제목 쓰기', '📝', '지문에 어울리는 제목을 직접 지어 보세요.', '한글·영문 제목을 각각 1개 이상 작성해 보세요.', titleWritingCards, [
+        '핵심 메시지를 8~12단어 이내로 축약',
+        '중복 표현 없이 간결하게'
       ])
     ];
+  }
+
+  _buildTitleWritingCards(englishTitles = [], summaryKo = '') {
+    const cards = [];
+    const candidates = Array.isArray(englishTitles) ? englishTitles.slice(0, 3) : [];
+    if (candidates.length) {
+      candidates.forEach((item, idx) => {
+        const titleEn = this._clean(item.title) || '';
+        const titleKo = this._clean(item.korean) || '';
+        cards.push({
+          front: `[제목 쓰기 ${idx + 1}]\n지문에 어울리는 제목을 한글/영문으로 각각 작성해 보세요.`,
+          back: `예시(영): ${this._trim(titleEn, 80)}\n예시(한): ${this._trim(titleKo || summaryKo || '핵심을 한 줄로 요약해 보세요.', 80)}`
+        });
+      });
+    } else {
+      cards.push({
+        front: '[제목 쓰기]\n지문에 어울리는 제목을 한글/영문으로 각각 작성해 보세요.',
+        back: `힌트: ${this._trim(summaryKo || '핵심 메시지를 8~12단어로 간결하게.', 100)}`
+      });
+    }
+    return cards;
   }
 
   _createStep(stepNumber, title, mood, intro, mission, cards, takeaways) {
@@ -1259,17 +1299,37 @@ class WorkbookService {
     const incorrect = total - correct;
     const accuracy = total ? Math.round((correct / total) * 1000) / 10 : 0;
 
-    const basePoints = Number(userRow.points) || 0;
-    const pointsDelta = correct * TEST_POINTS_CORRECT + incorrect * TEST_POINTS_INCORRECT;
-    const totalPoints = Math.max(0, basePoints + pointsDelta);
-    const tierInfo = getTierInfo(totalPoints);
+    // Persist each evaluated card as a 'workbook_test' problem and record a study session
+    const problemIds = [];
+    for (const ev of evaluations) {
+      try {
+        const qText = (ev?.question?.front || ev?.question?.prompt || ev.questionId || '').toString().slice(0, 1000);
+        const meta = JSON.stringify({ workbookId: context.workbookRow.id, questionId: ev.questionId, step: ev.step, stepLabel: ev.stepLabel });
+        const insert = await database.run(
+          `INSERT INTO problems (document_id, type, question, options, answer, explanation, metadata, is_ai_generated)
+           VALUES (?, ?, ?, ?, ?, ?, ?, 0)`,
+          [null, 'workbook_test', qText, null, String(ev.correctAnswer || ''), null, meta]
+        );
+        problemIds.push({ id: insert.id, ev });
+      } catch (e) {
+        console.warn('[workbook] failed to persist workbook test problem:', e?.message || e);
+      }
+    }
+
+    const sessionPayload = problemIds.map(({ id, ev }) => ({
+      problemId: id,
+      isCorrect: !!ev.correct,
+      userAnswer: ev.userAnswer || '',
+      timeSpent: 0,
+      problemType: 'workbook_test'
+    }));
+
+    const outcome = await studyService.recordStudySession(numericUserId, sessionPayload);
+    const pointsDelta = outcome?.summary?.pointsDelta || 0;
+    const totalPoints = outcome?.summary?.totalPoints || (Number(userRow.points) || 0);
+    const tierInfo = outcome?.updatedUser?.tierInfo || getTierInfo(totalPoints);
     const nextTier = getNextTier(tierInfo);
     const progressToNext = nextTier ? calculateProgress(totalPoints, tierInfo, nextTier) : 100;
-
-    await database.run(
-      'UPDATE users SET points = ?, tier = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-      [totalPoints, tierInfo.name, numericUserId]
-    );
 
     try {
       await database.run(
@@ -1289,8 +1349,8 @@ class WorkbookService {
       console.warn('[workbook] failed to log workbook test:', logError?.message || logError);
     }
 
-    const stats = await getUserStats(numericUserId);
-    const rank = await getUserRank(numericUserId);
+    const stats = outcome?.stats || (await getUserStats(numericUserId));
+    const rank = outcome?.rank || (await getUserRank(numericUserId));
 
     return {
       summary: {
@@ -1304,7 +1364,7 @@ class WorkbookService {
       details: evaluations,
       stats,
       rank,
-      updatedUser: {
+      updatedUser: outcome?.updatedUser || {
         id: numericUserId,
         name: userRow.name,
         username: userRow.username,

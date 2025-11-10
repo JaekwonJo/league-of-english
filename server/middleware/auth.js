@@ -65,6 +65,22 @@ const verifyPassword = async (password, hash) => {
 
 const FREE_DAILY_LIMIT = parseInt(process.env.LOE_FREE_DAILY_LIMIT || '60', 10);
 
+// 유료 멤버십 확인(프리미엄/프로) 또는 관리자 허용
+const requirePaidMembership = async (req, res, next) => {
+  try {
+    const database = require('../models/database');
+    const row = await database.get('SELECT role, membership FROM users WHERE id = ?', [req.user.id]);
+    const role = String(row?.role || '').toLowerCase();
+    const membership = String(row?.membership || '').toLowerCase();
+    const isPaid = membership === 'premium' || membership === 'pro';
+    if (role === 'admin' || isPaid) return next();
+    return res.status(403).json({ message: '유료 멤버십이 필요합니다.' });
+  } catch (error) {
+    console.error('[auth] requirePaidMembership error:', error?.message || error);
+    return res.status(500).json({ message: '서버 오류' });
+  }
+};
+
 // 일일 제한 확인 미들웨어
 const checkDailyLimit = async (req, res, next) => {
   const database = require('../models/database');
@@ -151,6 +167,7 @@ module.exports = {
   verifyToken,
   requireAdmin,
   requireTeacherOrAdmin,
+  requirePaidMembership,
   hashPassword,
   verifyPassword,
   checkDailyLimit,
