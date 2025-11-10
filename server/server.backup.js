@@ -76,7 +76,7 @@ db.serialize(() => {
       password TEXT NOT NULL,
       email TEXT UNIQUE NOT NULL,
       name TEXT NOT NULL,
-      school TEXT DEFAULT '수호학원',
+      school TEXT DEFAULT '샘플학교',
       grade INTEGER DEFAULT 1,
       role TEXT DEFAULT 'student',
       membership TEXT DEFAULT 'free',
@@ -98,7 +98,7 @@ db.serialize(() => {
       source TEXT,
       type TEXT DEFAULT 'worksheet',
       category TEXT,
-      school TEXT DEFAULT '수호학원',
+      school TEXT DEFAULT '샘플학교',
       grade INTEGER DEFAULT 1,
       created_by INTEGER,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -145,7 +145,7 @@ db.serialize(() => {
   db.run(`
     INSERT OR IGNORE INTO users (username, password, email, name, role, school)
     VALUES (?, ?, ?, ?, ?, ?)
-  `, ['admin', adminPassword, 'admin@loe.com', '관리자', 'admin', '수호학원']);
+  `, ['admin', adminPassword, 'admin@loe.com', '관리자', 'admin', '샘플학교']);
 
   console.log('✅ 데이터베이스 초기화 완료');
 });
@@ -162,7 +162,7 @@ app.post('/api/register', async (req, res) => {
     db.run(
       `INSERT INTO users (username, password, email, name, school, grade) 
        VALUES (?, ?, ?, ?, ?, ?)`,
-      [username, hashedPassword, email, name, school || '수호학원', grade || 1],
+      [username, hashedPassword, email, name, school || '샘플학교', grade || 1],
       function(err) {
         if (err) {
           if (err.message.includes('UNIQUE')) {
@@ -373,7 +373,7 @@ app.post('/api/upload-document', authenticateToken, upload.single('file'), async
       db.run(
         `INSERT INTO documents (title, content, source, category, school, created_by) 
          VALUES (?, ?, ?, ?, ?, ?)`,
-        [title, content, source, category, user ? user.school : '수호학원', req.user.id],
+        [title, content, source, category, user ? user.school : '샘플학교', req.user.id],
         function(err) {
           if (err) {
             if (fs.existsSync(file.path)) {
@@ -416,7 +416,7 @@ app.get('/api/documents', authenticateToken, (req, res) => {
       ? 'SELECT * FROM documents ORDER BY created_at DESC'
       : 'SELECT * FROM documents WHERE school = ? ORDER BY created_at DESC';
     
-    const params = req.user.role === 'admin' ? [] : [user ? user.school : '수호학원'];
+    const params = req.user.role === 'admin' ? [] : [user ? user.school : '샘플학교'];
     
     db.all(query, params, (err, documents) => {
       if (err) {

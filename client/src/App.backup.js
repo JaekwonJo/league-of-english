@@ -92,7 +92,7 @@ function AuthScreen() {
     password: '',
     email: '',
     name: '',
-    school: '수호학원',
+    school: '샘플학교',
     grade: 1
   });
   const [error, setError] = useState('');
