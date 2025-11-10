@@ -808,6 +808,14 @@ if (![baseKey, multiKey, multiIncorrectKey].includes(questionKey)) {
     if (passageSegments.length !== CIRCLED_DIGITS.length) {
       throw new Error('grammar passage segment mismatch');
     }
+    // Enforce concise underlined spans to avoid full-sentence underlines (official CSAT style)
+    // Require 1–4 words per underlined segment
+    for (let i = 0; i < passageSegmentPlain.length; i += 1) {
+      const wc = countWords(passageSegmentPlain[i] || '');
+      if (wc < 1 || wc > 4) {
+        throw new Error('grammar underline segment length invalid (1-4 word)');
+      }
+    }
     const enforceAlignment = context.enforceOriginalComparison !== false;
     if (enforceAlignment) {
       optionsInfo.rawTexts.forEach((optionText, idx) => {

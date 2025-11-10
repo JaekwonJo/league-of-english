@@ -895,6 +895,13 @@ body {
   * { animation: none !important; transition: none !important; }
 }
 
+/* Subtle gradient animation for analysis cards */
+@keyframes slowGradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
 /* Hero animated gradient */
 @keyframes gradientShift {
   0% { background-position: 0% 50%; }

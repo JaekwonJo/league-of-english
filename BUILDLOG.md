@@ -23,6 +23,9 @@
 - MockExam: 목록 로딩 실패 시 기본 회차 폴백 + 오류 상태로 전환해 무한 로딩 방지 (MockExamPage.js).
 - Profile: 프리미엄 혜택에 "워크북 학습/모의고사 풀이" 명시 (ProfilePage.js).
 - Admin: 사용자 관리 목록에 페이지/개수 선택 추가(서버 OFFSET 지원)로 대규모 사용자 스크롤 부담 완화 (server/routes/admin.routes.js, AdminUsersPanel.jsx).
+- Grammar: 밑줄 길이(1–4단어) 검증 추가, 정답·status 세트 불일치 시 재생성 트리거 (aiProblemService.js).
+- Analysis: 카드 배경에 slowGradient 애니메이션 적용(선호도 감소 설정 시 비활성) (AnalysisPage.js, client/src/index.css).
+- Branding cleanup: 관리자 공유 모달 플레이스홀더에서 특정 학원명 제거 (DocumentShareModal.js).
 
 ## 2025-11-08 (home hero eagle palette + mascot loop)
 - Issue: 홈 히어로/CTA가 듀오링고와 유사한 초록 팔레트라 브랜드 정체성이 흐려지고, 마스코트가 가만히 서 있어 “멈춘 캐릭터”처럼 보였습니다.

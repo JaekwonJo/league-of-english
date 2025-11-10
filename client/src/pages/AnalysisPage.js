@@ -761,6 +761,8 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
                             style={{
                               ...analysisStyles.documentCard,
                               background: `linear-gradient(150deg, ${palette.from}, ${palette.to})`,
+                              backgroundSize: '200% 200%',
+                              animation: 'slowGradient 24s ease-in-out infinite',
                               boxShadow: isHovered
                                 ? `0 32px 60px ${palette.shadow}`
                                 : `0 22px 38px ${palette.shadow}`,

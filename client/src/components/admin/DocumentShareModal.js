@@ -105,7 +105,7 @@ const DocumentShareModal = ({ show, loading, documentTitle, shareForm, onChange,
           <label style={labelStyle}>학교별 공개</label>
           <textarea
             style={{ ...inputStyle, minHeight: '60px' }}
-            placeholder="예: 수호학원, 진진중학교"
+            placeholder="예: ○○고등학교, ○○중학교"
             value={localForm.schools}
             onChange={(event) => handleInputChange('schools', event.target.value)}
           />
