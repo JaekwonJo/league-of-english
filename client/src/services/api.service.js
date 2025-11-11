@@ -342,6 +342,7 @@ export const api = {
     login: (credentials) => apiService.post('/auth/login', credentials),
     register: (userData) => apiService.post('/auth/register', userData),
     guestLogin: () => apiService.post('/auth/guest-login'),
+    me: () => apiService.get('/auth/me'),
     findId: (email) => apiService.post('/auth/find-id', { email }),
     sendCode: (email) => apiService.post('/auth/send-code', { email }),
     forgotPassword: (email) => apiService.post('/auth/forgot-password', { email }),

@@ -33,13 +33,34 @@ const LoginPage = () => {
   const [isCompact, setIsCompact] = useState(() => (typeof window === 'undefined' ? false : window.innerWidth <= 480));
 
   useEffect(() => {
+    // Handle OAuth callback via token in query string
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const oauth = params.get('oauth');
+      const token = params.get('token');
+      if (oauth && token) {
+        apiService.setToken(token);
+        (async () => {
+          try {
+            const me = await api.auth.me();
+            if (me?.user) {
+              login(me.user, token);
+              window.history.replaceState({}, '', window.location.pathname);
+            }
+          } catch (e) {
+            console.warn('[oauth] failed to fetch me:', e?.message || e);
+          }
+        })();
+      }
+    } catch (e) { /* noop */ }
+
     const handleResize = () => {
       if (typeof window === 'undefined') return;
       setIsCompact(window.innerWidth <= 480);
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [login]);
 
   useEffect(() => {
     if (!codeSent || codeCountdown <= 0) return;
@@ -450,14 +471,24 @@ const LoginPage = () => {
             {submitLabel}
           </button>
           {isLogin && (
-            <button
-              type="button"
-              style={styles.guestButton}
-              onClick={handleGuestLogin}
-              disabled={loading}
-            >
-              게스트로 체험하기
-            </button>
+            <div style={{ display: 'flex', flexDirection: isCompact ? 'column' : 'row', gap: '10px' }}>
+              <button
+                type="button"
+                style={styles.guestButton}
+                onClick={handleGuestLogin}
+                disabled={loading}
+              >
+                게스트로 체험하기
+              </button>
+              <button
+                type="button"
+                style={{ ...styles.guestButton, background: '#FEE500', color: '#1f1f1f', borderColor: 'rgba(0,0,0,0.1)' }}
+                onClick={() => { window.location.href = '/api/auth/kakao/start'; }}
+                disabled={loading}
+              >
+                카카오로 계속하기
+              </button>
+            </div>
           )}
         </form>
 

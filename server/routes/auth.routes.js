@@ -6,6 +6,7 @@ const { generateToken, hashPassword, verifyPassword, verifyToken } = require('..
 const { logAuthEvent, EVENT_TYPES } = require('../services/auditLogService');
 const emailVerificationService = require('../services/emailVerificationService');
 const { sendMail } = require('../services/emailService');
+const kakao = require('../services/kakaoAuthService');
 
 const DEFAULT_GUEST_RETENTION_MINUTES = parseInt(process.env.LOE_GUEST_RETENTION_MINUTES || '0', 10);
 const DEFAULT_GUEST_KEEP_RECENT = parseInt(process.env.LOE_GUEST_KEEP_RECENT || '0', 10);
@@ -425,6 +426,56 @@ router.post('/logout', verifyToken, async (req, res) => {
   }
 
   res.json({ message: '로그아웃 되었습니다.' });
+});
+
+// 내 정보 조회 (OAuth 콜백 이후 토큰으로 사용자 정보 가져가기)
+router.get('/me', verifyToken, async (req, res) => {
+  try {
+    const user = await database.get('SELECT * FROM users WHERE id = ?', [req.user.id]);
+    if (!user) return res.status(404).json({ message: '사용자를 찾을 수 없습니다.' });
+    const sanitized = { ...user };
+    delete sanitized.password;
+    delete sanitized.password_hash;
+    res.json({ user: sanitized });
+  } catch (error) {
+    console.error('[auth] me error:', error);
+    res.status(500).json({ message: '내 정보를 불러오지 못했습니다.' });
+  }
+});
+
+// Kakao OAuth: 시작
+router.get('/kakao/start', async (req, res) => {
+  try {
+    if (!kakao.isConfigured()) {
+      return res.status(503).json({ message: '카카오 로그인 설정이 완료되지 않았습니다. 관리자에게 문의해 주세요.' });
+    }
+    const state = String(Date.now());
+    const url = kakao.buildAuthorizeUrl(state);
+    res.redirect(url);
+  } catch (error) {
+    console.error('[auth] kakao/start error:', error);
+    res.status(500).json({ message: '카카오 로그인 시작 중 오류가 발생했습니다.' });
+  }
+});
+
+// Kakao OAuth: 콜백
+router.get('/kakao/callback', async (req, res) => {
+  try {
+    if (!kakao.isConfigured()) {
+      return res.status(503).send('카카오 로그인 설정이 완료되지 않았습니다.');
+    }
+    const code = String(req.query.code || '').trim();
+    if (!code) return res.status(400).send('code가 비어 있습니다.');
+
+    const tokenPayload = await kakao.exchangeCodeForToken(code);
+    const profile = await kakao.fetchKakaoUser(tokenPayload.access_token);
+    const user = await kakao.findOrCreateUserFromKakao(profile);
+    const redirectUrl = await kakao.buildCallbackRedirect(user);
+    res.redirect(redirectUrl);
+  } catch (error) {
+    console.error('[auth] kakao/callback error:', error);
+    res.status(500).send('카카오 로그인 처리 중 오류가 발생했습니다.');
+  }
 });
 
 // 아이디 찾기: 이메일로 가입된 계정의 아이디 안내
