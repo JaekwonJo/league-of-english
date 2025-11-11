@@ -136,10 +136,13 @@ export const problemDisplayStyles = {
   },
   previewPassage: {
     whiteSpace: 'pre-wrap',
+    wordBreak: 'keep-all',
+    overflowWrap: 'break-word',
     fontSize: '16px',
     color: 'var(--text-primary)',
     marginBottom: '20px',
-    letterSpacing: '0.01em'
+    letterSpacing: '0.01em',
+    lineHeight: 1.72
   },
   previewOptions: {
     display: 'flex',

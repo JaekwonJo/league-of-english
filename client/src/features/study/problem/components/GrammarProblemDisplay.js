@@ -232,7 +232,7 @@ const GrammarProblemDisplay = ({ problem, onAnswer, userAnswer, showResult }) =>
       <div style={orderStyles.orderInstruction}>{questionText}</div>
 
       {hasDisplayText && (
-        <div style={{ ...orderStyles.orderGivenText, marginBottom: "20px", whiteSpace: "pre-wrap" }}>
+        <div style={{ ...orderStyles.orderGivenText, marginBottom: "20px", whiteSpace: "pre-wrap", wordBreak: 'keep-all', overflowWrap: 'break-word', lineHeight: 1.72 }}>
           {renderTextWithUnderline(problem.text || problem.mainText)}
         </div>
       )}

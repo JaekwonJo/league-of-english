@@ -258,6 +258,14 @@
 - Files: client/src/features/study/problem/components/GrammarProblemDisplay.js, PROJECT_STATE.md, README.md.
 - Verification: `npm run lint`.
 
+## 2025-11-11 (아이디 찾기 + 분석 중복 라벨 제거)
+- Issue: 가입 완료 메일을 못 받은 사용자들이 아이디를 확인할 수 없고, 분석·워크북 화면에 ‘📘 한글 해석:’/‘🧠 문장 분석:’ 라벨이 중복 출력됨.
+- Cause: 인증/메일 기능에 “아이디 찾기” 라우트가 없었고, 서버/클라이언트가 모두 라벨을 붙여 이중 표기.
+- Fix: 서버에 `POST /api/auth/find-id` 추가(nodemailer 사용, 메일 미설정 시 화면 안내로 대체). LoginPage에 “아이디 찾기” 버튼/안내 메시지 추가.
+- Fix: workbookService `_cleanLine`이 이모지 라벨(📘/🧠)도 제거하도록 보강. 학습 본문 `word-break/overflow-wrap` 설정으로 줄바꿈 개선.
+- Files: server/routes/auth.routes.fixed.js, server/services/emailService.js, client/src/pages/LoginPage.js, client/src/services/api.service.js, server/services/workbookService.js, client/src/features/study/problem/{problemDisplayStyles.js,components/GrammarProblemDisplay.js}, client/src/components/layout/MainLayout.js.
+- Verified: 로컬에서 reset 화면 → 이메일 입력 → 아이디 찾기(메일 미설정 시 화면 안내) 동작. 분석/워크북 카드에서 라벨 중복 미출력.
+
 ## 2025-10-20 (problem deactivate + feedback hint)
 - Issue: 문제 생성 중 이상한 문항이 나오면 학생/선생님이 즉시 제거할 방법이 없어, 신고만 쌓이고 실제 수업에는 계속 노출되는 상황이 반복됐어요. 학습 화면에도 “왜 신고를 눌러야 하는지” 안내가 부족해 학생이 주저하는 문제가 있었습니다.
 - Fix: `problems` 테이블에 `is_active`·`deactivated_at`·`deactivated_by`를 추가하고, 캐시/생성/내보내기 쿼리 모두 숨긴 문항을 제외하도록 수정했습니다. `/admin/problems/:id/deactivate|restore` 라우트를 도입해 신고 보드에서 바로 숨기고, 학습 UI·생성 요약에 "문제가 이상하면 신고" 안내를 추가했습니다.

@@ -108,3 +108,7 @@ npm i -g gh  # 또는 OS 패키지로 설치
 gh auth login   # 안내에 따라 로그인(HTTPS, GitHub.com, 브라우저/토큰)
 git push origin main
 ```
+
+### 아이디가 기억나지 않을 때
+- 로그인 화면의 “아이디·비밀번호 찾기” → 이메일 입력 → “아이디 찾기” 버튼을 누르면, 서버가 아이디를 메일로 보내거나(메일 미설정 시) 화면에 마스킹된 아이디를 보여줍니다.
+- API: `POST /api/auth/find-id` (body: `{ email }`) → `{ username, masked, sent }`

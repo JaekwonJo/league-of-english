@@ -29,6 +29,7 @@ const LoginPage = () => {
   const [sendingCode, setSendingCode] = useState(false);
   const [codeSent, setCodeSent] = useState(false);
   const [codeCountdown, setCodeCountdown] = useState(0);
+  const [foundId, setFoundId] = useState(null);
   const [isCompact, setIsCompact] = useState(() => (typeof window === 'undefined' ? false : window.innerWidth <= 480));
 
   useEffect(() => {
@@ -80,6 +81,7 @@ const LoginPage = () => {
 
   const handleSendCode = async () => {
     resetFeedback();
+    setFoundId(null);
     if (!formData.email) {
       setError('이메일을 먼저 입력해 주세요.');
       return;
@@ -106,8 +108,36 @@ const LoginPage = () => {
 
   const handleForgotCredentials = useCallback(() => {
     switchMode(MODE_RESET);
-    setInfoMessage('아이디는 가입 완료 안내 메일 또는 운영팀(jaekwonim@gmail.com)에게 문의하면 바로 안내해 드려요. 아래에서 새 비밀번호를 설정해 주세요.');
+    setInfoMessage('아이디 안내와 비밀번호 재설정을 한 화면에서 도와드릴게요. 이메일을 입력하고 아이디 찾기 또는 인증 코드를 선택하세요.');
   }, [switchMode]);
+
+  const handleFindId = async () => {
+    resetFeedback();
+    setFoundId(null);
+    const email = String(formData.email || '').trim();
+    if (!email) {
+      setError('이메일을 먼저 입력해 주세요.');
+      return;
+    }
+    try {
+      setLoading(true);
+      const result = await api.auth.findId(email);
+      if (result?.username) {
+        setFoundId({ username: result.username, masked: result.masked, sent: !!result.sent });
+        if (result.sent) {
+          setInfoMessage('아이디 안내 메일을 전송했어요. 메일함을 확인해 주세요.');
+        } else {
+          setInfoMessage(`아이디: ${result.masked} (메일 발송 설정이 없어 화면에 안내만 드렸어요)`);
+        }
+      } else {
+        setError('해당 이메일로 가입된 계정을 찾지 못했습니다.');
+      }
+    } catch (err) {
+      setError(err?.message || '아이디 찾기에 실패했어요. 다시 시도해 주세요.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -362,7 +392,19 @@ const LoginPage = () => {
                 >
                   {sendingCode ? '전송 중…' : codeCountdown > 0 ? `${codeCountdown}초` : '코드 전송'}
                 </button>
+                <button
+                  type="button"
+                  onClick={handleFindId}
+                  style={{ ...styles.codeButton, background: 'rgba(99,102,241,0.15)', borderColor: 'rgba(99,102,241,0.45)' }}
+                >
+                  아이디 찾기
+                </button>
               </div>
+              {foundId && (
+                <div style={styles.info}>
+                  아이디: <strong>{foundId.masked}</strong>{foundId.sent ? ' · 이메일로도 안내했어요.' : ''}
+                </div>
+              )}
               <input
                 type="password"
                 name="newPassword"

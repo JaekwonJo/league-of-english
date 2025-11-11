@@ -1723,6 +1723,8 @@ class WorkbookService {
   _cleanLine(text) {
     const cleaned = this._clean(text)
       .replace(/^\*{3}\s*[^:]+:\s*/i, '')
+      .replace(/^📘\s*한글\s*해석[:：]?\s*/i, '')
+      .replace(/^🧠\s*문장\s*분석[:：]?\s*/i, '')
       .replace(/^✏️\s*[^:]+:\s*/i, '')
       .replace(/^어법 포인트[:：]?\s*/i, '')
       .replace(/^한글 해석[:：]?\s*/i, '')

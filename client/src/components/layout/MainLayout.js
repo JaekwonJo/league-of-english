@@ -166,6 +166,7 @@ const MainLayout = ({ children, currentPath }) => {
             style={styles.logo}
             onClick={() => {
               if (isMobile && sidebarOpen) toggleSidebar(false);
+              navigate('/');
             }}
             role={isMobile ? 'button' : undefined}
             aria-label={isMobile ? '메뉴 닫기' : undefined}
@@ -281,10 +282,16 @@ const MainLayout = ({ children, currentPath }) => {
         )}
         {isMobile && !sidebarOpen && (
           <div style={styles.mobileTopBar}>
-            <div style={styles.mobileBranding}>
+            <button
+              type="button"
+              onClick={() => navigate('/')}
+              style={{ ...styles.mobileBranding, cursor: 'pointer', background: 'transparent', border: 'none' }}
+              aria-label="홈으로"
+              title="홈으로"
+            >
               <span style={styles.mobileBrandIcon}>🦅</span>
               <span style={styles.mobileTitle}>League of English</span>
-            </div>
+            </button>
           </div>
         )}
         {children}
