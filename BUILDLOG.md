@@ -266,6 +266,13 @@
 - Files: server/routes/auth.routes.fixed.js, server/services/emailService.js, client/src/pages/LoginPage.js, client/src/services/api.service.js, server/services/workbookService.js, client/src/features/study/problem/{problemDisplayStyles.js,components/GrammarProblemDisplay.js}, client/src/components/layout/MainLayout.js.
 - Verified: 로컬에서 reset 화면 → 이메일 입력 → 아이디 찾기(메일 미설정 시 화면 안내) 동작. 분석/워크북 카드에서 라벨 중복 미출력.
 
+## 2025-11-11 (MockExam 오류/대기 개선)
+- Issue: "모의고사 정보를 불러오는 중"이 계속 유지되거나, 오류 시 재시도 버튼이 동작하지 않음.
+- Cause: FriendlyError onRetry가 examId 없이 호출되어 재요청 불가, API 타임아웃이 15초로 짧아 지연 시 사용자 대기 증가.
+- Fix: onRetry={() => fetchExam(selectedExamId)}로 수정, /mock-exam GET 30s / submit·explanations 60s로 타임아웃 확장.
+- Files: client/src/pages/MockExamPage.js, client/src/services/api.service.js.
+- Verified: 목록/시험 로딩 실패 시 현재 선택 회차로 재시도 가능, 긴 응답에서도 UX 유지.
+
 ## 2025-10-20 (problem deactivate + feedback hint)
 - Issue: 문제 생성 중 이상한 문항이 나오면 학생/선생님이 즉시 제거할 방법이 없어, 신고만 쌓이고 실제 수업에는 계속 노출되는 상황이 반복됐어요. 학습 화면에도 “왜 신고를 눌러야 하는지” 안내가 부족해 학생이 주저하는 문제가 있었습니다.
 - Fix: `problems` 테이블에 `is_active`·`deactivated_at`·`deactivated_by`를 추가하고, 캐시/생성/내보내기 쿼리 모두 숨긴 문항을 제외하도록 수정했습니다. `/admin/problems/:id/deactivate|restore` 라우트를 도입해 신고 보드에서 바로 숨기고, 학습 UI·생성 요약에 "문제가 이상하면 신고" 안내를 추가했습니다.
