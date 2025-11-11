@@ -115,6 +115,8 @@ class ApiService {
       let timeoutMs = 15000;
       if (/^\/analysis\//.test(endpoint) || endpoint === '/analysis/list' || /^\/analysis\/status\//.test(endpoint)) {
         timeoutMs = 600000;
+      } else if (/^\/mock-exam(\b|\/)/.test(endpoint)) {
+        timeoutMs = Math.max(timeoutMs, 30000);
       }
       
       console.log('🔍 API GET Request:', {
@@ -174,6 +176,7 @@ class ApiService {
       if (endpoint === '/workbooks/generate-all') timeoutMs = Math.max(timeoutMs, 600000);
       if (/\/vocabulary\/sets\/.+\/quiz$/.test(endpoint)) timeoutMs = Math.max(timeoutMs, 30000);
       if (/\/problems\/export\/pdf$/.test(endpoint)) timeoutMs = Math.max(timeoutMs, 60000);
+      if (/^\/mock-exam\/.+\/(submit|explanations)$/.test(endpoint)) timeoutMs = Math.max(timeoutMs, 60000);
 
       const response = await this._fetchWithTimeout(`${this.baseURL}${endpoint}`, {
         method: 'POST',
