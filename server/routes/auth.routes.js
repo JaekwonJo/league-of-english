@@ -5,6 +5,7 @@ const database = require('../models/database');
 const { generateToken, hashPassword, verifyPassword, verifyToken } = require('../middleware/auth');
 const { logAuthEvent, EVENT_TYPES } = require('../services/auditLogService');
 const emailVerificationService = require('../services/emailVerificationService');
+const { sendMail } = require('../services/emailService');
 
 const DEFAULT_GUEST_RETENTION_MINUTES = parseInt(process.env.LOE_GUEST_RETENTION_MINUTES || '0', 10);
 const DEFAULT_GUEST_KEEP_RECENT = parseInt(process.env.LOE_GUEST_KEEP_RECENT || '0', 10);
@@ -424,6 +425,46 @@ router.post('/logout', verifyToken, async (req, res) => {
   }
 
   res.json({ message: '로그아웃 되었습니다.' });
+});
+
+// 아이디 찾기: 이메일로 가입된 계정의 아이디 안내
+router.post('/find-id', async (req, res) => {
+  try {
+    const rawEmail = String(req.body?.email || '').trim().toLowerCase();
+    if (!rawEmail || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(rawEmail)) {
+      return res.status(400).json({ message: '유효한 이메일 주소를 입력해 주세요.' });
+    }
+
+    const user = await database.get('SELECT username, email, name FROM users WHERE LOWER(email) = ?', [rawEmail]);
+    if (!user) {
+      return res.status(404).json({ message: '해당 이메일로 가입된 계정을 찾지 못했습니다.' });
+    }
+
+    const username = String(user.username || '').trim();
+    const masked = username.length <= 2
+      ? username.replace(/./g, '*')
+      : username[0] + '*'.repeat(Math.max(1, username.length - 2)) + username[username.length - 1];
+
+    let sent = false;
+    try {
+      const html = `
+        <div style="font-family: Pretendard, 'Apple SD Gothic Neo', sans-serif; padding: 24px; line-height: 1.7;">
+          <h2 style="margin: 0 0 12px 0;">League of English 아이디 안내</h2>
+          <p>요청하신 계정의 로그인 아이디를 안내드립니다.</p>
+          <p style=\"font-size: 18px; margin: 12px 0 18px 0;\"><strong>아이디:</strong> ${username}</p>
+          <p style=\"color:#64748b; font-size: 12px; margin-top: 18px;\">본 메일은 발신 전용입니다. 문제가 있으면 운영팀(jaekwonim@gmail.com)으로 연락해 주세요.</p>
+        </div>`;
+      await sendMail({ to: user.email, subject: '[League of English] 아이디 안내', html });
+      sent = true;
+    } catch (mailError) {
+      sent = false; // 메일 환경이 없으면 화면 안내만 제공
+    }
+
+    res.json({ username, masked, sent });
+  } catch (error) {
+    console.error('[auth] find-id error:', error);
+    res.status(500).json({ message: '아이디 찾기 처리 중 오류가 발생했습니다.' });
+  }
 });
 
 module.exports = router;
