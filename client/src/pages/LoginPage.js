@@ -114,7 +114,15 @@ const LoginPage = () => {
   const handleFindId = async () => {
     resetFeedback();
     setFoundId(null);
-    const email = String(formData.email || '').trim();
+    const toAsciiEmail = (v) => {
+      const nfkc = String(v || '').normalize('NFKC');
+      return nfkc
+        .replace(/[\uFF20]/g, '@')
+        .replace(/[\uFF0E\u2024\u2027\u2219\u3002]/g, '.')
+        .replace(/[\s]+/g, '')
+        .trim();
+    };
+    const email = toAsciiEmail(formData.email || '');
     if (!email) {
       setError('이메일을 먼저 입력해 주세요.');
       return;

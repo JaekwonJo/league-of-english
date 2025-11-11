@@ -430,12 +430,23 @@ router.post('/logout', verifyToken, async (req, res) => {
 // 아이디 찾기: 이메일로 가입된 계정의 아이디 안내
 router.post('/find-id', async (req, res) => {
   try {
-    const rawEmail = String(req.body?.email || '').trim().toLowerCase();
-    if (!rawEmail || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(rawEmail)) {
-      return res.status(400).json({ message: '유효한 이메일 주소를 입력해 주세요.' });
+    const normalizeEmail = (value) => {
+      const mapFullWidth = (s) => s
+        .replace(/[\uFF20]/g, '@') // fullwidth @
+        .replace(/[\uFF0E\u2024\u2027\u2219]/g, '.') // fullwidth/variant dots
+        .replace(/[\u3002]/g, '.') // ideographic full stop
+        .replace(/[\s]+/g, ''); // remove all spaces
+      const nfkc = String(value || '').normalize('NFKC');
+      return mapFullWidth(nfkc).trim().toLowerCase();
+    };
+
+    const rawEmail = normalizeEmail(req.body?.email);
+    const relaxed = /@/.test(rawEmail) && /\.[A-Za-z]{1,}$/i.test(rawEmail.split('@')[1] || '');
+    if (!rawEmail || !relaxed) {
+      return res.status(400).json({ message: '유효한 이메일 주소를 입력해 주세요. 예) user@example.com' });
     }
 
-    const user = await database.get('SELECT username, email, name FROM users WHERE LOWER(email) = ?', [rawEmail]);
+    const user = await database.get('SELECT username, email, name FROM users WHERE LOWER(REPLACE(email, " ", "")) = ?', [rawEmail]);
     if (!user) {
       return res.status(404).json({ message: '해당 이메일로 가입된 계정을 찾지 못했습니다.' });
     }
