@@ -483,7 +483,14 @@ const LoginPage = () => {
               <button
                 type="button"
                 style={{ ...styles.guestButton, background: '#FEE500', color: '#1f1f1f', borderColor: 'rgba(0,0,0,0.1)' }}
-                onClick={() => { window.location.href = '/api/auth/kakao/start'; }}
+                onClick={() => {
+                  try {
+                    const base = (apiService.baseURL || '/api').replace(/\/$/, '');
+                    window.location.href = `${base}/auth/kakao/start`;
+                  } catch (e) {
+                    window.location.href = '/api/auth/kakao/start';
+                  }
+                }}
                 disabled={loading}
               >
                 카카오로 계속하기
