@@ -425,9 +425,9 @@ const EagleMascot = ({ onInteract, hint, isMobile }) => (
       aria-label="마스코트"
     >
       <img
-        src="/assets/brand/eagle-duo.svg"
+        src="/assets/brand/eagle-crest.svg"
         alt="League of English mascot"
-        style={{ width: isMobile ? 88 : 108, height: 'auto', display: 'block' }}
+        style={{ width: isMobile ? 84 : 100, height: 'auto', display: 'block' }}
       />
     </button>
     <div style={isMobile ? { ...styles.eagleHintBubble, ...styles.eagleHintBubbleMobile } : styles.eagleHintBubble}>
