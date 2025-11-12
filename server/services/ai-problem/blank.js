@@ -213,7 +213,7 @@ function buildBlankPrompt({ passage, manualExcerpt, extraDirectives = [] }) {
     '- Select a family C-1, C-2, C-3, or C-4. Use the definition-style Korean prompt only for C-2.',
     '- Provide five English answer choices labelled ①-⑤. Each option must be a natural noun phrase of 3-18 words (e.g., "a swift round of tax cuts"), without numerals or Korean text. Do not start with gerunds or infinitives.',
     '- Include the original removed wording in "targetExpression" and specify the strategy used (paraphrasing, compression, generalization, minimal-change).',
-    '- Explain in Korean with at least three sentences: (1) 핵심 메시지 요약, (2) 정답 근거, (3) 두 개 이상 오답 결함.',
+    '- Explain in friendly, plain Korean with at least three sentences: (1) 핵심 메시지 요약, (2) 정답 근거, (3) 두 개 이상 오답 결함. 쉬운 단어로 단계별로 써 주세요(불릿 허용), 마무리에 격려 이모지 1개 정도 허용(예: 😊).',
     '- Provide `distractorReasons` covering every incorrect option with one-sentence Korean rationales.'
   ];
 

@@ -51,7 +51,7 @@ function createVocabPipeline({
           buildAnswerInstruction(variant),
           '- Provide correction.replacement + reason for every 오류 표현을 교정할 수 있도록 기록합니다.',
           '- Supply optionReasons in Korean (정답 포함).',
-          '- Keep the explanation 최소 두 문장 이상 한국어.',
+          '- Write the explanation in friendly, plain Korean with at least two sentences. 단계별 불릿 가능, 쉬운 단어 사용, 마지막에 격려 이모지 1개까지 허용(예: 🙂).',
           '- Respond with raw JSON only (no Markdown fences).'
         ];
         if (lastFailure && typeof deriveDirectives === 'function') {

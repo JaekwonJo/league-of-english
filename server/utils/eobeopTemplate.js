@@ -129,7 +129,7 @@ function buildGrammarPrompt({
     '- Fill the "status" field with "correct" or "incorrect" so that 각 보기의 상태가 정답 요구와 정확히 일치하도록 하세요.',
     '- 각 reason 문장은 보기의 상태에 맞는 필수 키워드를 포함해야 합니다. 오류 보기에는 반드시 "오류", "틀림", "잘못" 등 부정 표현을 넣고, 정상 보기에는 "정상", "맞다", "문법적" 등 긍정 표현을 포함하며, 관련 문법 규칙명을 명시하세요.',
     '- Supply a Korean "reason" sentence for every option (정답 포함) explaining 왜 문법적으로 맞거나 틀렸는지, 반드시 관련 문법 규칙 이름(예: 가정법, 수일치)을 언급하세요.',
-    '- Explanation must be written in Korean with at least three sentences detailing the 글의 핵심, 정답 근거, 그리고 두 개 이상 오답의 결함.',
+    '- Write the explanation in friendly, plain Korean with at least three sentences (글의 핵심 → 정답 근거 → 두 개 이상 오답 결함). 쉬운 단어로 단계별 불릿 허용, 마지막에 격려 이모지 1개까지 허용(예: 👍).',
     '- Source label must start with "출처│" and avoid placeholder text.',
     '- Respond with raw JSON only (no Markdown fences).',
     answerInstruction
