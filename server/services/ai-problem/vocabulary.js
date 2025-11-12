@@ -170,11 +170,12 @@ function normalizeVocabularyPayload(payload, context = {}) {
   if (segments.length !== CIRCLED_DIGITS.length) {
     raise('vocabulary passage must include exactly five underlined expressions');
   }
-  // Enforce concise underlined spans (1–8 words) to avoid full-sentence underlines (strict mode)
+  // Enforce concise underlined spans to avoid full-sentence underlines (strict mode)
   if (STRICT_VOCAB) {
+    const MAX_WORDS = 3; // KSAT 스타일: 핵심 단어/구 중심
     segments.forEach((seg, idx) => {
       const wc = countWords(seg.text || '');
-      if (wc < 1 || wc > 8) {
+      if (wc < 1 || wc > MAX_WORDS) {
         raise(`vocabulary underlined segment ${idx + 1} has invalid length (${wc} words)`);
       }
     });
