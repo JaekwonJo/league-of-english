@@ -7,6 +7,7 @@ import uiConfig from '../../config/ui.config.json';
 const MainLayout = ({ children, currentPath }) => {
   const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [brandActive, setBrandActive] = useState(false);
   const breakpoint = uiConfig.layout.sidebar.breakpoint || 768;
   const [isMobile, setIsMobile] = useState(() => (typeof window !== 'undefined' ? window.innerWidth < breakpoint : false));
   const sidebarRef = useRef(null);
@@ -60,6 +61,11 @@ const MainLayout = ({ children, currentPath }) => {
     window.history.pushState({}, '', path);
     window.dispatchEvent(new PopStateEvent('popstate'));
     if (isMobile) toggleSidebar(false);
+  };
+
+  const triggerBrandAnimation = () => {
+    setBrandActive(true);
+    window.setTimeout(() => setBrandActive(false), 280);
   };
 
   const userRole = user?.role || 'student';
@@ -166,6 +172,7 @@ const MainLayout = ({ children, currentPath }) => {
             style={styles.logo}
             onClick={() => {
               if (isMobile && sidebarOpen) toggleSidebar(false);
+              triggerBrandAnimation();
               navigate('/');
             }}
             role={isMobile ? 'button' : undefined}
@@ -173,7 +180,11 @@ const MainLayout = ({ children, currentPath }) => {
             title={isMobile ? '메뉴 닫기' : undefined}
           >
             <img src="/assets/brand/eagle-crest.svg" alt="LoE" style={{ width: 22, height: 22 }} />
-            {sidebarOpen && <span style={styles.logoText}>League of English</span>}
+            {sidebarOpen && (
+              <span style={{ ...styles.logoText, ...(brandActive ? styles.logoTextActive : {}) }}>
+                League of English
+              </span>
+            )}
           </div>
         )}
 
@@ -284,13 +295,13 @@ const MainLayout = ({ children, currentPath }) => {
           <div style={styles.mobileTopBar}>
             <button
               type="button"
-              onClick={() => navigate('/')}
+              onClick={() => { triggerBrandAnimation(); navigate('/'); }}
               style={{ ...styles.mobileBranding, cursor: 'pointer', background: 'transparent', border: 'none' }}
               aria-label="홈으로"
               title="홈으로"
             >
               <span style={styles.mobileBrandIcon}>🦅</span>
-              <span style={styles.mobileTitle}>League of English</span>
+              <span style={{ ...styles.mobileTitle, ...(brandActive ? styles.logoTextActive : {}) }}>League of English</span>
             </button>
           </div>
         )}
@@ -359,7 +370,16 @@ const styles = {
   logoText: {
     fontSize: '18px',
     fontWeight: 'bold',
-    color: 'var(--tone-hero)'
+    color: 'var(--tone-hero)',
+    transition: 'transform 180ms ease, letter-spacing 180ms ease, opacity 180ms ease'
+  },
+  logoTextActive: {
+    transform: 'scale(1.04)',
+    letterSpacing: '0.6px',
+    background: 'linear-gradient(135deg, var(--accent-primary) 0%, var(--violet) 100%)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    opacity: 0.95
   },
   nav: {
     flex: 1,
