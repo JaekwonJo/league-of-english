@@ -1132,8 +1132,7 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
     const englishSummary = meta.englishSummary || '영어 한 줄 요약이 준비되는 중이에요.';
     const englishSummaryKorean = meta.englishSummaryKorean || '한 줄 요약을 우리말로 직접 정리해 보세요.';
 
-    // Only show one ❓ across the title list if any item is a question
-    const anyQuestion = englishTitles.some((t) => t && t.isQuestion);
+    // Only show one ❓ across the title list regardless of source flags
     let questionRendered = false;
 
     return (
@@ -1142,9 +1141,10 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
           <div style={analysisStyles.metaTitle}>📝 영어 제목</div>
           <ul style={analysisStyles.metaList}>
             {englishTitles.length ? englishTitles.map((title, index) => {
-              const showQuestion = anyQuestion && !questionRendered && title.isQuestion;
+              // show ❓ only once (first item), even if multiple titles are questions
+              const showQuestion = !questionRendered && (title.isQuestion || /\?$/.test(String(title.title || '')));
               if (showQuestion) questionRendered = true;
-              const koreanSide = title.korean || meta.englishSummaryKorean || '';
+              const koreanSide = String(title.korean || meta.englishSummaryKorean || '').trim();
               return (
                 <li key={`title-${index}`}>
                   <strong>{index + 1}.</strong> {title.title}

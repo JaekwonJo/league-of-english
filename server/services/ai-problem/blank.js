@@ -210,6 +210,7 @@ function buildBlankPrompt({ passage, manualExcerpt, extraDirectives = [] }) {
   const requirements = [
     '- Preserve the original passage sentences and replace exactly one expression with "____".',
     '- Return the full passage verbatim (no sentence deletion or summarising) except for the blanked expression.',
+    '- Output the indices of the blanked expression as `targetSpan: { start, end }` (0-based, end exclusive). Do not modify the passage; the server will replace that slice with "____".',
     '- Select a family C-1, C-2, C-3, or C-4. Use the definition-style Korean prompt only for C-2.',
     '- Provide five English answer choices labelled ①-⑤. Each option must be a natural noun phrase of 3-18 words (e.g., "a swift round of tax cuts"), without numerals or Korean text. Do not start with gerunds or infinitives.',
     '- Include the original removed wording in "targetExpression" and specify the strategy used (paraphrasing, compression, generalization, minimal-change).',
