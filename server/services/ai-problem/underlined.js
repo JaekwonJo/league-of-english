@@ -365,7 +365,7 @@ function fallbackLocateByWords({ plain, rawSegment, used }) {
   return null;
 }
 
-function rebuildUnderlinesFromOptions(mainText, options = [], failureReasons = null) {
+function rebuildUnderlinesFromOptions(mainText, options = [], failureReasons = null, statuses = []) {
   if (!mainText) return null;
   const segments = extractOptionUnderlines(options, failureReasons);
   if (segments.length !== 5) return null;
@@ -411,8 +411,12 @@ function rebuildUnderlinesFromOptions(mainText, options = [], failureReasons = n
 
     // Choose marker: prefer existing if present, otherwise insert the expected one
     const markerToUse = hasExistingMarker ? lastChar : (GRAMMAR_DIGITS[item.index] || '');
+    // Decide snippet: if status is 'incorrect' and an option segment exists, use the option segment (mutated); else keep original
+    const optionSegment = segments[item.index];
+    const status = Array.isArray(statuses) ? (statuses[item.index] || null) : null;
+    const snippet = status === 'incorrect' && optionSegment ? optionSegment : plain.slice(item.start, item.end);
     // Insert marker immediately before each underlined span
-    rebuiltParts.push(`${markerToUse}<u>${plain.slice(item.start, item.end)}</u>`);
+    rebuiltParts.push(`${markerToUse}<u>${snippet}</u>`);
     cursor = item.end;
   }
   rebuiltParts.push(plain.slice(cursor));
@@ -425,7 +429,8 @@ function rebuildUnderlinesFromOptions(mainText, options = [], failureReasons = n
   }
 
   const updatedOptions = ranges.map((range, index) => {
-    const snippet = plain.slice(range.start, range.end);
+    const status = Array.isArray(statuses) ? (statuses[index] || null) : null;
+    const snippet = status === 'incorrect' && segments[index] ? segments[index] : plain.slice(range.start, range.end);
     return `${GRAMMAR_DIGITS[index]} <u>${snippet}</u>`;
   });
 

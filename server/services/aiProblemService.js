@@ -850,7 +850,7 @@ if (![baseKey, multiKey, multiIncorrectKey].includes(questionKey)) {
 
     let underlineCount = (mainText.match(UNDERLINE_PATTERN) || []).length;
     if (underlineCount !== 5) {
-      const rebuilt = rebuildUnderlinesFromOptions(mainText, optionsInfo.formatted, failureReasons);
+      const rebuilt = rebuildUnderlinesFromOptions(mainText, optionsInfo.formatted, failureReasons, optionsInfo.statuses);
       if (!rebuilt) {
         throw new Error(`passage underline count mismatch (${underlineCount})${reasonSuffix()}`);
       }
@@ -888,7 +888,11 @@ if (![baseKey, multiKey, multiIncorrectKey].includes(questionKey)) {
         const optionPlain = normalizeWhitespace(optionMatch && optionMatch[1] ? optionMatch[1] : String(optionText || ''));
         const targetPlain = normalizeWhitespace(passageSegmentPlain[idx] || '');
         if (optionPlain.toLowerCase() !== targetPlain.toLowerCase()) {
-          throw new Error('grammar option underline mismatch');
+          // Allow mismatch if status is 'incorrect' (mutated segment in passage). Otherwise fail.
+          const status = Array.isArray(optionsInfo.statuses) ? (optionsInfo.statuses[idx] || null) : null;
+          if (status !== 'incorrect') {
+            throw new Error('grammar option underline mismatch');
+          }
         }
       });
     }

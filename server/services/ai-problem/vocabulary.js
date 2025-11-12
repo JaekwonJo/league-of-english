@@ -230,7 +230,11 @@ function normalizeVocabularyPayload(payload, context = {}) {
     }
     const expected = segments[index] ? (segments[index].text || segments[index]) : null;
     if (expected && snippet.replace(/^[①-⑤]\s*/, '').trim().toLowerCase() !== expected.toLowerCase()) {
-      raise(`vocabulary option ${index + 1} does not match passage segment`);
+      // 허용: 정답 모드가 'incorrect'이고 해당 옵션이 오답(incorrect)인 경우에는 스니펫 차이를 허용(변형된 표현)
+      const status = normalizeUnderlinedOptions([option]).statuses[0];
+      if (answerMode !== 'incorrect' || status !== 'incorrect') {
+        raise(`vocabulary option ${index + 1} does not match passage segment`);
+      }
     }
     return `${CIRCLED_DIGITS[index]} <u>${expected}</u>`;
   });
@@ -334,7 +338,8 @@ function normalizeVocabularyPayload(payload, context = {}) {
       }
     }
     if (!markersOk) {
-      const rebuilt = rebuildUnderlinesFromOptions(passage, normalizedOptions, []);
+      const optInfo = normalizeUnderlinedOptions(optionsInput || []);
+      const rebuilt = rebuildUnderlinesFromOptions(passage, optInfo.formatted.length ? optInfo.formatted : normalizedOptions, [], optInfo.statuses);
       if (rebuilt && rebuilt.mainText) {
         passage = rebuilt.mainText;
       }
