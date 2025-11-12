@@ -317,6 +317,52 @@ function normalizeBlankPayload(payload, context = {}) {
     strategy = 'paraphrasing';
   }
 
+  // If targetSpan is provided, derive targetExpression and text from the original passage deterministically
+  if (context.passage && payload && payload.targetSpan && Number.isInteger(payload.targetSpan.start) && Number.isInteger(payload.targetSpan.end)) {
+    const original = String(context.passage);
+    const s = Math.max(0, payload.targetSpan.start);
+    const e = Math.min(original.length, payload.targetSpan.end);
+    if (e <= s) throw new Error('blank targetSpan invalid');
+    targetExpression = original.slice(s, e);
+    const left = original.slice(0, s);
+    const right = original.slice(e);
+    const derived = `${left}____${right}`;
+    const derivedNormalized = normalizeWhitespace(derived);
+    const originalNormalized = normalizeWhitespace(original);
+    if (derivedNormalized.replace(/____/g, targetExpression) !== originalNormalized) {
+      throw new Error('blank derived text deviates from original except blank');
+    }
+    const resolvedQuestion = resolveBlankQuestionText(String(payload.question || '')) || { canonical: BLANK_GENERAL_QUESTION, type: 'general' };
+    return {
+      id: payload.id || `blank_ai_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+      type: 'blank',
+      question: resolvedQuestion.canonical,
+      questionFamily: BLANK_FAMILY_TO_QUESTION[resolvedQuestion.type] === 'definition' ? 'C-2' : 'C-1',
+      strategy: 'minimal-change',
+      targetExpression: normalizeWhitespace(targetExpression),
+      text: derivedNormalized,
+      mainText: derivedNormalized,
+      passage: derivedNormalized,
+      originalPassage: originalNormalized,
+      options: normalizeBlankOptions(payload.options || []).formatted,
+      answer: Number(payload.correctAnswer || payload.answer || 0) || 1,
+      correctAnswer: Number(payload.correctAnswer || payload.answer || 0) || 1,
+      explanation: String(payload.explanation || '').trim(),
+      sourceLabel: ensureSourceLabel(payload.sourceLabel || payload.source, {
+        docTitle: context.docTitle,
+        documentCode: context.documentCode
+      }),
+      distractorReasons: {},
+      metadata: {
+        family: BLANK_FAMILY_TO_QUESTION[resolvedQuestion.type] === 'definition' ? 'C-2' : 'C-1',
+        blankFamily: BLANK_FAMILY_TO_QUESTION[resolvedQuestion.type] === 'definition' ? 'C-2' : 'C-1',
+        strategy: 'minimal-change',
+        targetExpression: normalizeWhitespace(targetExpression),
+        normalizedOriginalPassage: originalNormalized
+      }
+    };
+  }
+
   let text = String(payload.text || payload.passage || '')
     .replace(/[’]/g, "'")
     .replace(/[“”]/g, '"')

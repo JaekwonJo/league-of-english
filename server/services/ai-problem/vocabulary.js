@@ -166,9 +166,42 @@ function normalizeVocabularyPayload(payload, context = {}) {
     raise('vocabulary passage missing');
   }
 
-  const segments = collectUnderlinedSegments(passage);
-  if (segments.length !== CIRCLED_DIGITS.length) {
-    raise('vocabulary passage must include exactly five underlined expressions');
+  // If spans are provided (start/end indices), rebuild underlines deterministically from original passage
+  let segments = [];
+  if (Array.isArray(payload.spans) && payload.spans.length === CIRCLED_DIGITS.length && context.passage) {
+    const original = String(context.passage);
+    const norm = normalizeWhitespace(original);
+    // Build in ascending order to collect, but insert markup later using descending order
+    segments = payload.spans.map((span, idx) => {
+      const s = Math.max(0, parseInt(span.start, 10));
+      const e = Math.min(original.length, parseInt(span.end, 10));
+      if (!Number.isInteger(s) || !Number.isInteger(e) || e <= s) {
+        raise(`vocabulary span ${idx + 1} invalid`);
+      }
+      const text = normalizeWhitespace(original.slice(s, e));
+      return { start: s, end: e, text };
+    });
+    // Rebuild passage with <u>…</u> and ①–⑤ without altering other content
+    const inserts = [];
+    segments.forEach((seg, i) => {
+      inserts.push({ pos: seg.end, str: '</u>' });
+      inserts.push({ pos: seg.start, str: `<u>` });
+      inserts.push({ pos: seg.start, str: `${CIRCLED_DIGITS[i]}` });
+    });
+    inserts.sort((a, b) => b.pos - a.pos); // insert from right to left
+    let rebuilt = original;
+    inserts.forEach((ins) => {
+      rebuilt = rebuilt.slice(0, ins.pos) + ins.str + rebuilt.slice(ins.pos);
+    });
+    passage = rebuilt;
+  }
+
+  if (!segments.length) {
+    const collected = collectUnderlinedSegments(passage);
+    if (collected.length !== CIRCLED_DIGITS.length) {
+      raise('vocabulary passage must include exactly five underlined expressions');
+    }
+    segments = collected;
   }
   // Enforce concise underlined spans to avoid full-sentence underlines (strict mode)
   if (STRICT_VOCAB) {
@@ -195,7 +228,7 @@ function normalizeVocabularyPayload(payload, context = {}) {
     if (!snippet) {
       raise(`vocabulary option ${index + 1} missing snippet`);
     }
-    const expected = segments[index] ? segments[index].text : null;
+    const expected = segments[index] ? (segments[index].text || segments[index]) : null;
     if (expected && snippet.replace(/^[①-⑤]\s*/, '').trim().toLowerCase() !== expected.toLowerCase()) {
       raise(`vocabulary option ${index + 1} does not match passage segment`);
     }
