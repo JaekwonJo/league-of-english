@@ -415,63 +415,23 @@ const QuickButton = ({ label, description, onClick }) => {
   );
 };
 
-const EagleMascot = ({ mood, onInteract, hint, pulseKey, isMobile }) => (
+const EagleMascot = ({ onInteract, hint, isMobile }) => (
   <div style={isMobile ? { ...styles.eagleWrapper, ...styles.eagleWrapperMobile } : styles.eagleWrapper}>
     <button
       type="button"
       onClick={onInteract}
       onTouchStart={onInteract}
-      style={{
-        ...styles.eagleButton,
-        ...(mood === 'cheer' ? styles.eagleButtonCheer : {}),
-        ...(isMobile ? styles.eagleButtonMobile : {})
-      }}
-      aria-label="마스코트와 상호작용"
+      style={{ ...styles.eagleButton, ...(isMobile ? styles.eagleButtonMobile : {}) }}
+      aria-label="마스코트"
     >
-      <div style={styles.eagleHalo} aria-hidden="true" />
-      <div style={styles.eagleShadow} aria-hidden="true" />
-      <div
-        style={{
-          ...styles.eagleBody,
-          ...(mood === 'cheer' ? styles.eagleBodyCheer : {}),
-          ...(isMobile ? styles.eagleBodyMobile : {})
-        }}
-      >
-        <div style={styles.eagleTail} />
-        <div style={styles.eagleWingLeft} />
-        <div style={styles.eagleWingRight} />
-        <div style={styles.eagleHead}>
-          <div style={styles.eagleCrest} />
-          <div style={styles.eagleFace}>
-            <div style={{ ...styles.eagleEye, ...(mood === 'wink' ? styles.eagleEyeWink : {}) }}>
-              <div style={styles.eaglePupil} />
-            </div>
-            <div style={{ ...styles.eagleEye, ...(mood === 'cheer' ? styles.eagleEyeCheer : {}) }}>
-              <div style={styles.eaglePupil} />
-            </div>
-            <div style={styles.eagleBeak} />
-          </div>
-        </div>
-        <div style={styles.eagleChestBand} />
-        <div style={styles.eagleBelly}>
-          <span style={styles.eagleBadge}>League of English</span>
-        </div>
-        <div style={styles.eagleFootLeft} />
-        <div style={styles.eagleFootRight} />
-      </div>
-      <span
-        key={pulseKey}
-        style={styles.eagleRipple}
-        aria-hidden="true"
-      />
-      <span
-        key={`spark-${pulseKey}`}
-        style={{ ...styles.eagleSparkle, animationDelay: `${pulseKey % 3 * 0.4}s` }}
-        aria-hidden="true"
+      <img
+        src="/assets/brand/eagle-duo.svg"
+        alt="League of English mascot"
+        style={{ width: isMobile ? 88 : 108, height: 'auto', display: 'block' }}
       />
     </button>
     <div style={isMobile ? { ...styles.eagleHintBubble, ...styles.eagleHintBubbleMobile } : styles.eagleHintBubble}>
-      <span aria-live="polite">{hint}</span>
+      <span aria-live="polite">{hint || '오늘의 학습을 시작해 볼까요?'}</span>
     </div>
   </div>
 );

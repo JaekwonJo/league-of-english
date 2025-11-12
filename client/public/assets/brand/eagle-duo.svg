@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1B2550"/>
+      <stop offset="1" stop-color="#3B82F6"/>
+    </linearGradient>
+  </defs>
+  <!-- Friendly, simple eagle mascot (flat/semiflat) -->
+  <circle cx="80" cy="86" r="58" fill="url(#bg)"/>
+  <!-- Belly oval -->
+  <ellipse cx="80" cy="104" rx="34" ry="28" fill="#F4C95D" opacity="0.9"/>
+  <!-- Head -->
+  <circle cx="80" cy="54" r="28" fill="#FFFFFF"/>
+  <!-- Eyes -->
+  <circle cx="70" cy="52" r="5.5" fill="#0F172A"/>
+  <circle cx="90" cy="52" r="5.5" fill="#0F172A"/>
+  <circle cx="68.8" cy="50.8" r="1.6" fill="#FFFFFF"/>
+  <circle cx="88.8" cy="50.8" r="1.6" fill="#FFFFFF"/>
+  <!-- Beak -->
+  <path d="M80 58 L96 68 L80 74 L64 68 Z" fill="#F59E0B"/>
+  <!-- Wings -->
+  <path d="M22 88 C40 78, 52 78, 60 92 C50 96, 38 106, 26 104 C20 102, 18 94, 22 88Z" fill="#243056"/>
+  <path d="M138 88 C120 78, 108 78, 100 92 C110 96, 122 106, 134 104 C140 102, 142 94, 138 88Z" fill="#243056"/>
+  <!-- Tiny feet -->
+  <rect x="66" y="128" width="12" height="6" rx="3" fill="#B45309"/>
+  <rect x="82" y="128" width="12" height="6" rx="3" fill="#B45309"/>
+</svg>

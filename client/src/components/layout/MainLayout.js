@@ -172,7 +172,7 @@ const MainLayout = ({ children, currentPath }) => {
             aria-label={isMobile ? '메뉴 닫기' : undefined}
             title={isMobile ? '메뉴 닫기' : undefined}
           >
-            <span style={styles.logoIcon}>🦅</span>
+            <img src="/assets/brand/eagle-mark.svg" alt="LoE" style={{ width: 22, height: 22 }} />
             {sidebarOpen && <span style={styles.logoText}>League of English</span>}
           </div>
         )}
