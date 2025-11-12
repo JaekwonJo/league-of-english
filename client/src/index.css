@@ -824,6 +824,14 @@ body {
   100% { opacity: 0; transform: scale(0.4) translateY(-18px); }
 }
 
+/* Vocabulary bottom eagle pointer */
+@keyframes eaglePoint {
+  0% { transform: translateY(0) rotate(0deg); }
+  40% { transform: translateY(-4px) rotate(-2deg); }
+  60% { transform: translateY(-4px) rotate(2deg); }
+  100% { transform: translateY(0) rotate(0deg); }
+}
+
 @keyframes streakFlame {
   0% { transform: scale(1) rotate(0deg); }
   50% { transform: scale(1.15) rotate(-4deg); }

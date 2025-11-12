@@ -750,12 +750,7 @@ const getTimeLimitSeconds = useCallback(() => {
     return base;
   }, [filteredSets]);
 
-  const heroInfoText = useMemo(() => {
-    if (sets.length > 0) {
-      return `등록된 단어장 ${sets.length.toLocaleString()}개`;
-    }
-    return setsLoading ? '등록된 단어장을 불러오는 중이에요...' : '아직 업로드된 단어장이 없어요';
-  }, [sets.length, setsLoading]);
+  const heroInfoText = useMemo(() => '', []);
 
   const hasGroupedSets = useMemo(
     () => CATEGORY_SECTIONS.some((section) => (groupedSets[section.key] || []).length > 0),
@@ -811,7 +806,7 @@ const getTimeLimitSeconds = useCallback(() => {
             <span style={styles.heroBadge}>Daily Vocab Studio</span>
             <h1 style={styles.heroTitle}>핵심 어휘를 정확하게 훈련합니다</h1>
             <p style={styles.heroSubtitle}>핵심 단어를 시험 또는 연습 모드로 곧바로 학습 할 수 있습니다</p>
-            <div style={styles.heroInfoPill}>📚 {heroInfoText}</div>
+            {/* 단어장 개수/통계 표시는 제거 */}
             <div style={styles.heroButtons}>
               <AppButton variant="primary" size="lg" onClick={handleScrollToSets}>
                 <LucideIcons.Search size={18} /> 단어장 살펴보기
