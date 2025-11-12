@@ -37,6 +37,23 @@ npm run lint
 - 환경 변수 템플릿: `.env.example`, `client/.env.example`
 - 핵심 변수: `OPENAI_API_KEY`, `JWT_SECRET`, `REACT_APP_API_URL`
 
+#### 옵션 환경 변수
+- `LOE_STRICT_BLANK=1` → 빈칸 생성 시 `targetSpan {start,end}`가 누락되면 거절 후 재시도합니다. 서버는 해당 인덱스만 `____`로 바꿔 원문을 그대로 보존합니다.
+- Golden Set(사전 제작 문제) → `server/utils/data/golden/index.json`에 문서 코드/제목을 JSON 파일로 매핑하면, 캐시/AI보다 먼저 해당 문제를 제공합니다.
+
+예시 인덱스 파일:
+```
+server/utils/data/golden/index.json
+{
+  "maps": {
+    "blank": {
+      "2-25-10": "blank/2-25-10.json",
+      "고2 2024년 10월 모의고사": "blank/g12-2024-10.json"
+    }
+  }
+}
+```
+
 ### 베타 용 샘플 데이터 한 번에 넣기
 1. 로컬 SQLite를 따로 두고 싶다면 `DB_FILE=server/tmp/beta-seed.db node scripts/seed-beta-data.js`
 2. Render 같은 실서버에서는 `DB_FILE=/var/data/loe.db node scripts/seed-beta-data.js`

@@ -318,6 +318,16 @@ function normalizeBlankPayload(payload, context = {}) {
     strategy = 'paraphrasing';
   }
 
+  const STRICT_REQUIRE_TARGETSPAN = String(process.env.LOE_STRICT_BLANK || '').trim().toLowerCase() === '1'
+    || String(process.env.LOE_STRICT_BLANK || '').trim().toLowerCase() === 'true';
+
+  // If strict mode is on, targetSpan must be present to guarantee exact blanking on original passage
+  if (STRICT_REQUIRE_TARGETSPAN && (!payload.targetSpan
+    || !Number.isInteger(payload.targetSpan.start)
+    || !Number.isInteger(payload.targetSpan.end))) {
+    throw new Error('blank targetSpan required');
+  }
+
   // If targetSpan is provided, derive targetExpression and text from the original passage deterministically
   if (context.passage && payload && payload.targetSpan && Number.isInteger(payload.targetSpan.start) && Number.isInteger(payload.targetSpan.end)) {
     const original = String(context.passage);

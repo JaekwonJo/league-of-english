@@ -759,3 +759,8 @@ NODE` 로 5문항 생성 결과 (가족/전략 태그·한글 해설·단일 빈
 - Fix: 단어장 상단 "등록된 단어장 N개" 배지 제거, 하단 독수리 포인터(👉) 추가. 헤더 브랜드 클릭 시 홈 이동 + 텍스트 애니메이션.
 - Files: client/src/pages/AnalysisPage.js, server/services/ai-problem/{blank.js,vocabulary.js,underlined.js}, client/src/pages/VocabularyPage.js, client/src/index.css, client/src/components/layout/MainLayout.js.
 - Verify: 빈칸 본문이 원문과 동일(빈칸만 "____"), 어휘 보기/본문 스니펫 불일치 해소(incorrect만 예외), 분석 제목 EN+KR 한 줄/❓ 1회. 네비 브랜드 클릭 이동 확인.
+
+## 2025-11-12 (strict blank + golden set)
+- Blank: 엄격 모드 플래그 LOE_STRICT_BLANK 도입. targetSpan 누락 시 거절→재시도, 복원 비교로 원문 보존 강제 (server/services/ai-problem/blank.js).
+- Golden Set: 사전 제작 문제 로더 추가. index.json 매핑으로 문서 코드/제목→JSON 연결, 캐시/AI보다 우선 제공 (server/services/goldenSetService.js, server/services/problemSetService.js).
+- Docs: PROJECT_STATE/README에 Golden Set 사용법과 엄격 모드 설명 보강.

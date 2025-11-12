@@ -47,6 +47,8 @@
 - 어휘/어법: 인덱스 기반 밑줄 재구성 + incorrect 위치만 변형 주입(underlined.js) → 보기·본문 스니펫 정합성 확보.
 - 단어장: 상단 “등록된 단어장 N개” 배지를 제거하고, 하단에 작은 독수리 포인터(👉) 추가로 선택 유도(VocabularyPage.js, index.css).
 - 헤더: 브랜드(크레스트+🦅) 클릭 시 홈 이동 + 텍스트 미세 애니메이션 적용(MainLayout.js).
+- Blank 엄격 모드: `LOE_STRICT_BLANK=1`일 때 `targetSpan` 누락 시 즉시 거절→재시도, 복원 비교로 "빈칸 제외 원문 보존" 강제.
+- Golden Set: `server/utils/data/golden/`에 사전 검수 JSON을 배치하면 캐시/AI보다 우선 제공(문서 코드·제목 매핑 지원).
 
 ## Next 3
 1) P0 어법/어휘 검증 강화: 밑줄 길이·다중 정답 불일치·출처 불일치 시 자동 재생성(정확도 향상 최우선).

@@ -284,6 +284,26 @@ async function handleAiBackedType({
     requested: amount
   });
 
+  // Try golden-set (pre-authored) problems if available
+  try {
+    if (delivered < amount) {
+      const { getGoldenProblems } = require('./goldenSetService');
+      const golden = getGoldenProblems(context?.document, type, amount - delivered);
+      if (Array.isArray(golden) && golden.length) {
+        const added = appendProblems(golden.map((p, idx) => ({
+          ...p,
+          id: p.id || `${type}_golden_${Date.now()}_${idx}`,
+          metadata: { ...(p.metadata || {}), generator: p.metadata?.generator || 'golden' }
+        })));
+        delivered += added;
+        pushProgress('golden_loaded', type, { delivered: added, requested: amount });
+      }
+    }
+  } catch (e) {
+    // non-fatal
+    pushProgress('golden_error', type, { message: String(e?.message || e) });
+  }
+
   let remaining = amount - delivered;
   if (remaining <= 0) {
     return delivered;

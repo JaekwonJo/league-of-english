@@ -1,0 +1,24 @@
+{
+  "problems": [
+    {
+      "id": "blank_golden_example_1",
+      "type": "blank",
+      "question": "다음 빈칸에 들어갈 말로 가장 적절한 것은?",
+      "text": "This is an example passage with ____ to illustrate golden-set plumbing.",
+      "targetExpression": "a placeholder",
+      "options": [
+        "① an irrelevant phrase",
+        "② a placeholder",
+        "③ an off-topic idea",
+        "④ a vague suggestion",
+        "⑤ an unsupported claim"
+      ],
+      "answer": "2",
+      "explanation": "골든셋 예시입니다. 실제 시험 본문으로 교체되며, 빈칸 위치는 targetSpan을 사용할 수도 있습니다.",
+      "sourceLabel": "출처│예시",
+      "metadata": {
+        "generator": "golden"
+      }
+    }
+  ]
+}

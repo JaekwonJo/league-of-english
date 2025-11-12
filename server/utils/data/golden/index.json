@@ -1,0 +1,8 @@
+{
+  "maps": {
+    "blank": {
+      "example-doc-code": "blank/example-doc-code.json",
+      "example-title": "blank/example-title.json"
+    }
+  }
+}
