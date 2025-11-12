@@ -339,14 +339,14 @@ const ProblemDisplay = ({
           isAnswerCorrect={isAnswerCorrect}
           explanationText={explanationText}
           reviewMeta={reviewMeta}
-          showOnlyMarkers={effectiveProblem.type === "vocabulary"}
+          showOnlyMarkers={false}
         />
       ) : (
         <ChoiceButtons
           optionRecords={optionRecords}
           selectedAnswer={selectedAnswer}
           onSelect={handleSelect}
-          showOnlyMarkers={effectiveProblem.type === "vocabulary"}
+          showOnlyMarkers={false}
           disabled={isPreviewMode}
         />
       )}
