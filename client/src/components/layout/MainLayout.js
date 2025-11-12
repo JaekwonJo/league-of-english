@@ -349,7 +349,9 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '10px',
-    borderBottom: '1px solid var(--sidebar-divider)'
+    borderBottom: '1px solid var(--sidebar-divider)',
+    cursor: 'pointer',
+    transition: 'transform 120ms ease'
   },
   logoIcon: {
     fontSize: '32px'

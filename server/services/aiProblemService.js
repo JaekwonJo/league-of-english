@@ -290,6 +290,8 @@ class AIProblemService {
       let attempt = 0;
       let lastFailure = '';
       let normalized = null;
+      let rawContent = '';
+      let repairBudget = 2;
 
       while (attempt < 6 && !normalized) {
         attempt += 1;
@@ -301,27 +303,46 @@ class AIProblemService {
         });
 
         try {
+          const highTier = attempt >= 3;
           const response = await this.callChatCompletion({
-            model: "gpt-4o-mini",
-            temperature: 0.35,
-            max_tokens: 820,
-            messages: [{ role: "user", content: prompt }]
-          }, { label: 'blank' });
+            model: highTier ? 'gpt-4o' : 'gpt-4o-mini',
+            temperature: highTier ? 0.22 : 0.32,
+            max_tokens: highTier ? 1100 : 900,
+            messages: [{ role: 'user', content: prompt }]
+          }, { label: 'blank', tier: highTier ? 'primary' : 'standard' });
 
-          const content = response.choices?.[0]?.message?.content || '';
-          const payload = JSON.parse(stripJsonFences(content));
+          rawContent = response.choices?.[0]?.message?.content || '';
+          const payload = JSON.parse(stripJsonFences(rawContent));
           normalized = normalizeBlankPayload(payload, {
             docTitle,
             documentCode,
             passage,
-            rawContent: content
+            rawContent
           });
         } catch (error) {
           lastFailure = String(error?.message || '');
           console.warn('[ai-blank] generation failed:', lastFailure);
-          if (attempt >= 4) {
-            throw new Error(`[ai-blank] generation failed after retries: ${lastFailure}`);
+          // Try a repair pass with the original content if available
+          if (!normalized && rawContent && repairBudget > 0 && typeof this._repairBlankOutput === 'function') {
+            try {
+              repairBudget -= 1;
+              const repaired = await this._repairBlankOutput({
+                rawContent,
+                failureMessage: lastFailure,
+                passage,
+                docTitle,
+                manualExcerpt
+              });
+              normalized = normalizeBlankPayload(repaired, {
+                docTitle,
+                documentCode,
+                passage
+              });
+            } catch (repairError) {
+              lastFailure = `${lastFailure} :: repair_failed(${String(repairError?.message || repairError)})`;
+            }
           }
+          if (!normalized && attempt >= 6) throw new Error(`[ai-blank] generation failed after retries: ${lastFailure}`);
         }
       }
 
@@ -334,6 +355,50 @@ class AIProblemService {
     }
 
     return results;
+  }
+
+  async _repairBlankOutput({ rawContent, failureMessage = '', passage, docTitle, manualExcerpt } = {}) {
+    const invalidJson = String(rawContent || '').trim();
+    if (!invalidJson) throw new Error('repair requires original JSON content');
+    if (!this.getOpenAI()) throw new Error('AI repair unavailable');
+
+    const manualNote = manualExcerpt ? clipText(manualExcerpt, 900) : '';
+    const requirementList = [
+      '- Keep the original passage verbatim and replace exactly one expression with "____" (no other edits).',
+      '- Provide five English answer choices labelled ①-⑤. Each option must be a natural noun phrase of 3–18 words. Do not start with to- or -ing and avoid numerals.',
+      '- Include targetExpression as the exact removed wording from the passage.',
+      '- The explanation must be in Korean with at least three sentences: 핵심 요지, 정답 근거, 두 개 이상의 오답 결함.',
+      '- Provide distractorReasons for every incorrect option (한 문장씩).',
+      '- Ensure sourceLabel starts with "출처│" and references the provided document title.',
+      '- Respond with valid JSON only. No Markdown fences.'
+    ];
+
+    const prompt = [
+      'You are a KSAT blank cloze problem editor. Fix the malformed JSON so it passes all validators.',
+      failureMessage ? `Failure summary: ${failureMessage}` : '',
+      docTitle ? `Document title: ${docTitle}` : '',
+      passage ? `Original passage (unchanged except the single blank):\n${clipText(passage, 1800)}` : '',
+      manualNote ? `Reference manual excerpt (truncated):\n${manualNote}` : '',
+      'Invalid JSON between <bad_json> and </bad_json>:',
+      '<bad_json>',
+      clipText(invalidJson, 3600),
+      '</bad_json>',
+      'Rebuild the JSON that meets all of these requirements:',
+      ...requirementList
+    ].filter(Boolean).join('\n\n');
+
+    const response = await this.callChatCompletion({
+      model: 'gpt-4o',
+      temperature: 0.18,
+      max_tokens: 1200,
+      messages: [
+        { role: 'system', content: 'You fix malformed JSON for KSAT-style blank cloze questions. Always return JSON only.' },
+        { role: 'user', content: prompt }
+      ]
+    }, { label: 'blank_repair', tier: 'primary' });
+
+    const content = response.choices?.[0]?.message?.content || '';
+    return this._safeParseJson(content, { label: 'blank_repair' });
   }
 
   _deriveEobeopDirectives(lastFailure = '', mode = 'grammar') {
