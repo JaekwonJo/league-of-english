@@ -9,6 +9,7 @@ const { ensureSourceLabel } = require('./ai-problem/shared');
 
 // Time budget (ms) for AI-backed generation before falling back
 const AI_TIME_BUDGET_MS = Number(process.env.LOE_AIGEN_BUDGET_MS || 12000);
+const ENFORCE_AI_ONLY = /^(1|true|yes)$/i.test(String(process.env.LOE_ENFORCE_AI_ONLY || ''));
 
 function withTimeout(promise, timeoutMs, onTimeout) {
   if (!timeoutMs || timeoutMs <= 0) return promise;
@@ -284,24 +285,26 @@ async function handleAiBackedType({
     requested: amount
   });
 
-  // Try golden-set (pre-authored) problems if available
-  try {
-    if (delivered < amount) {
-      const { getGoldenProblems } = require('./goldenSetService');
-      const golden = getGoldenProblems(context?.document, type, amount - delivered);
-      if (Array.isArray(golden) && golden.length) {
-        const added = appendProblems(golden.map((p, idx) => ({
-          ...p,
-          id: p.id || `${type}_golden_${Date.now()}_${idx}`,
-          metadata: { ...(p.metadata || {}), generator: p.metadata?.generator || 'golden' }
-        })));
-        delivered += added;
-        pushProgress('golden_loaded', type, { delivered: added, requested: amount });
+  // Try golden-set (pre-authored) problems if available (skip when AI-only enforced)
+  if (!ENFORCE_AI_ONLY) {
+    try {
+      if (delivered < amount) {
+        const { getGoldenProblems } = require('./goldenSetService');
+        const golden = getGoldenProblems(context?.document, type, amount - delivered);
+        if (Array.isArray(golden) && golden.length) {
+          const added = appendProblems(golden.map((p, idx) => ({
+            ...p,
+            id: p.id || `${type}_golden_${Date.now()}_${idx}`,
+            metadata: { ...(p.metadata || {}), generator: p.metadata?.generator || 'golden' }
+          })));
+          delivered += added;
+          pushProgress('golden_loaded', type, { delivered: added, requested: amount });
+        }
       }
+    } catch (e) {
+      // non-fatal
+      pushProgress('golden_error', type, { message: String(e?.message || e) });
     }
-  } catch (e) {
-    // non-fatal
-    pushProgress('golden_error', type, { message: String(e?.message || e) });
   }
 
   let remaining = amount - delivered;
@@ -321,6 +324,9 @@ async function handleAiBackedType({
   };
 
   if (!openaiAvailable) {
+    if (ENFORCE_AI_ONLY) {
+      throw createProblemError('AI-only mode: OpenAI unavailable', 503);
+    }
     return delivered + await deliverFallbackProblems({
       ...fallbackArgs,
       count: remaining,
@@ -330,6 +336,9 @@ async function handleAiBackedType({
 
   const generatorName = AI_GENERATOR_MAP[type];
   if (!generatorName || typeof aiService[generatorName] !== 'function') {
+    if (ENFORCE_AI_ONLY) {
+      throw createProblemError(`AI-only mode: generator missing for ${type}`, 500);
+    }
     return delivered + await deliverFallbackProblems({
       ...fallbackArgs,
       count: remaining,
@@ -356,6 +365,9 @@ async function handleAiBackedType({
 
     remaining = amount - delivered;
     if (remaining > 0) {
+      if (ENFORCE_AI_ONLY) {
+        throw createProblemError('AI-only mode: partial generation (insufficient AI output)', 502);
+      }
       delivered += await deliverFallbackProblems({
         ...fallbackArgs,
         count: remaining,

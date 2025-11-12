@@ -764,3 +764,4 @@ NODE` 로 5문항 생성 결과 (가족/전략 태그·한글 해설·단일 빈
 - Blank: 엄격 모드 플래그 LOE_STRICT_BLANK 도입. targetSpan 누락 시 거절→재시도, 복원 비교로 원문 보존 강제 (server/services/ai-problem/blank.js).
 - Golden Set: 사전 제작 문제 로더 추가. index.json 매핑으로 문서 코드/제목→JSON 연결, 캐시/AI보다 우선 제공 (server/services/goldenSetService.js, server/services/problemSetService.js).
 - Docs: PROJECT_STATE/README에 Golden Set 사용법과 엄격 모드 설명 보강.
+ - AI-only: `LOE_ENFORCE_AI_ONLY`로 Golden/폴백 비활성화, `LOE_AIGEN_MAX_RETRIES`/`LOE_AIGEN_BUDGET_MS`로 재시도/시간 조정 (problemSetService.js, aiProblemService.js, README.md).

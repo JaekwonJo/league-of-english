@@ -40,6 +40,9 @@ npm run lint
 #### 옵션 환경 변수
 - `LOE_STRICT_BLANK=1` → 빈칸 생성 시 `targetSpan {start,end}`가 누락되면 거절 후 재시도합니다. 서버는 해당 인덱스만 `____`로 바꿔 원문을 그대로 보존합니다.
 - Golden Set(사전 제작 문제) → `server/utils/data/golden/index.json`에 문서 코드/제목을 JSON 파일로 매핑하면, 캐시/AI보다 먼저 해당 문제를 제공합니다.
+ - `LOE_ENFORCE_AI_ONLY=1` → 캐시 다음 단계에서 Golden Set/폴백을 모두 비활성화하고, 반드시 OpenAI로만 생성합니다. OpenAI 미가용·부분생성 시 5xx 에러로 알려줍니다.
+ - `LOE_AIGEN_BUDGET_MS=30000` → AI 생성 시간 예산(기본 12000ms)을 조정합니다.
+ - `LOE_AIGEN_MAX_RETRIES=8` → 각 문항 생성의 재시도 횟수(기본 6)를 조정합니다.
 
 예시 인덱스 파일:
 ```

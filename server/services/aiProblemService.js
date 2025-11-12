@@ -285,6 +285,7 @@ class AIProblemService {
     const results = [];
     const passageQueue = buildPassageQueue(passages, count);
 
+    const MAX_RETRIES = Number.parseInt(process.env.LOE_AIGEN_MAX_RETRIES, 10) || 6;
     for (let i = 0; i < count; i += 1) {
       const passage = passageQueue[i] || passages[i % (passages.length || 1)] || '';
       let attempt = 0;
@@ -293,7 +294,7 @@ class AIProblemService {
       let rawContent = '';
       let repairBudget = 2;
 
-      while (attempt < 6 && !normalized) {
+      while (attempt < MAX_RETRIES && !normalized) {
         attempt += 1;
         const extraDirectives = deriveBlankDirectives(lastFailure);
         const prompt = buildBlankPrompt({
@@ -303,11 +304,11 @@ class AIProblemService {
         });
 
         try {
-          const highTier = attempt >= 3;
+          const highTier = attempt >= Math.max(2, Math.floor(MAX_RETRIES / 2));
           const response = await this.callChatCompletion({
             model: highTier ? 'gpt-4o' : 'gpt-4o-mini',
-            temperature: highTier ? 0.22 : 0.32,
-            max_tokens: highTier ? 1100 : 900,
+            temperature: highTier ? 0.18 : 0.28,
+            max_tokens: highTier ? 1300 : 900,
             messages: [{ role: 'user', content: prompt }]
           }, { label: 'blank', tier: highTier ? 'primary' : 'standard' });
 
@@ -342,7 +343,7 @@ class AIProblemService {
               lastFailure = `${lastFailure} :: repair_failed(${String(repairError?.message || repairError)})`;
             }
           }
-          if (!normalized && attempt >= 6) throw new Error(`[ai-blank] generation failed after retries: ${lastFailure}`);
+          if (!normalized && attempt >= MAX_RETRIES) throw new Error(`[ai-blank] generation failed after retries: ${lastFailure}`);
         }
       }
 
