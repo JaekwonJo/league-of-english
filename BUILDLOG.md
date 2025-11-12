@@ -752,3 +752,10 @@ NODE` 로 5문항 생성 결과 (가족/전략 태그·한글 해설·단일 빈
 - Issue: 입금 확인 요청을 승인/반려했을 때 학생에게 결과 알림이 가지 않음.
 - Fix: 요청 승인/반려 시 학생 이메일로 결과 통지(승인: 등급/만료일 안내, 반려: 재요청/문의 안내). 알림 큐 항목도 resolved/dismissed로 갱신.
 - Files: server/routes/membership.routes.js
+## 2025-11-12 (analysis title + index-based blank/vocab + nav/UX)
+- Issue: 분석 제목 EN+KR 표기가 중복/불일치하고, 빈칸/어휘가 원문 일부를 변형해 가독성과 정합성이 떨어졌습니다. 단어장 히어로의 세트 개수 배지도 혼선을 줬습니다.
+- Cause: 프론트가 `isQuestion` 플래그를 그대로 노출했고, 생성기가 본문 자체를 편집해 반환하는 경우가 있어 서버단 원문 보존이 보장되지 않았습니다.
+- Fix: AnalysisPage 제목 렌더를 "KR 동시 표기 + ❓ 1회"로 고정. 빈칸은 `targetSpan {start,end}`만 허용해 서버가 빈칸을 재구성, 어휘는 `spans`+`status`로 incorrect 위치만 변형 주입.
+- Fix: 단어장 상단 "등록된 단어장 N개" 배지 제거, 하단 독수리 포인터(👉) 추가. 헤더 브랜드 클릭 시 홈 이동 + 텍스트 애니메이션.
+- Files: client/src/pages/AnalysisPage.js, server/services/ai-problem/{blank.js,vocabulary.js,underlined.js}, client/src/pages/VocabularyPage.js, client/src/index.css, client/src/components/layout/MainLayout.js.
+- Verify: 빈칸 본문이 원문과 동일(빈칸만 "____"), 어휘 보기/본문 스니펫 불일치 해소(incorrect만 예외), 분석 제목 EN+KR 한 줄/❓ 1회. 네비 브랜드 클릭 이동 확인.
