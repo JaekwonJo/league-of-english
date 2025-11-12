@@ -12,7 +12,18 @@ export const renderWithUnderline = (input) => {
     .replace(/<\/\s*(\d+)\s*>>/g, '</u>')
     .split(/(<\/?u>)/i);
   if (tokens.length === 1) {
-    return <>{str}</>;
+    // Preserve line breaks explicitly
+    const lines = str.split(/\r?\n/);
+    return (
+      <span style={{ lineHeight: 1.6 }}>
+        {lines.map((line, i) => (
+          <React.Fragment key={`line-${i}`}>
+            {line}
+            {i < lines.length - 1 ? <br /> : null}
+          </React.Fragment>
+        ))}
+      </span>
+    );
   }
 
   const elements = [];
@@ -28,15 +39,21 @@ export const renderWithUnderline = (input) => {
       return;
     }
     if (!token) return;
-    if (underline) {
-      elements.push(
-        <span key={`u-${idx}`} style={problemDisplayStyles.underlineSpan}>
-          {token}
-        </span>
-      );
-    } else {
-      elements.push(<React.Fragment key={`t-${idx}`}>{token}</React.Fragment>);
-    }
+    const chunks = String(token).split(/\r?\n/);
+    chunks.forEach((chunk, cIdx) => {
+      if (underline) {
+        elements.push(
+          <span key={`u-${idx}-${cIdx}`} style={problemDisplayStyles.underlineSpan}>
+            {chunk}
+          </span>
+        );
+      } else {
+        elements.push(<React.Fragment key={`t-${idx}-${cIdx}`}>{chunk}</React.Fragment>);
+      }
+      if (cIdx < chunks.length - 1) {
+        elements.push(<br key={`br-${idx}-${cIdx}`} />);
+      }
+    });
   });
   return <span style={{ lineHeight: 1.6 }}>{elements}</span>;
 };

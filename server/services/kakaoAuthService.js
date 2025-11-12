@@ -15,7 +15,7 @@ function getKakaoConfig() {
     clientId: process.env.KAKAO_REST_API_KEY || '',
     clientSecret: process.env.KAKAO_CLIENT_SECRET || '',
     redirectUri: process.env.KAKAO_REDIRECT_URI || '',
-    scope: 'profile_nickname account_email'
+    scope: process.env.KAKAO_SCOPE || 'profile_nickname'
   };
   return cfg;
 }
@@ -30,10 +30,10 @@ function buildAuthorizeUrl(state = '') {
   const q = new URLSearchParams({
     response_type: 'code',
     client_id: clientId,
-    redirect_uri: redirectUri,
-    scope
+    redirect_uri: redirectUri
   });
   if (state) q.set('state', state);
+  if (scope) q.set('scope', scope);
   return `https://kauth.kakao.com/oauth/authorize?${q.toString()}`;
 }
 
@@ -83,13 +83,14 @@ function sanitizeUserRow(user) {
 async function findOrCreateUserFromKakao(profile) {
   const kakaoId = profile?.id;
   if (!kakaoId) throw new Error('kakao profile missing id');
-  const email = String(profile?.kakao_account?.email || '').trim().toLowerCase() || null;
+  const emailRaw = String(profile?.kakao_account?.email || '').trim().toLowerCase() || null;
+  const email = emailRaw || `kakao_${kakaoId}@no-email.local`;
   const nickname = profile?.kakao_account?.profile?.nickname || `카카오_${kakaoId}`;
 
   // Prefer linking by email if present
   let user = null;
-  if (email) {
-    user = await database.get('SELECT * FROM users WHERE LOWER(email) = ?', [email]);
+  if (emailRaw) {
+    user = await database.get('SELECT * FROM users WHERE LOWER(email) = ?', [emailRaw]);
   }
   if (!user) {
     user = await database.get('SELECT * FROM users WHERE username = ?', [`kakao_${kakaoId}`]);
@@ -109,7 +110,7 @@ async function findOrCreateUserFromKakao(profile) {
         1,
         'student',
         'free',
-        email ? 1 : 0
+        emailRaw ? 1 : 0
       ]
     );
     user = await database.get('SELECT * FROM users WHERE id = ?', [insert.id]);
@@ -134,4 +135,3 @@ module.exports = {
   buildCallbackRedirect,
   getClientBaseUrl
 };
-

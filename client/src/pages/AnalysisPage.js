@@ -1132,18 +1132,27 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
     const englishSummary = meta.englishSummary || '영어 한 줄 요약이 준비되는 중이에요.';
     const englishSummaryKorean = meta.englishSummaryKorean || '한 줄 요약을 우리말로 직접 정리해 보세요.';
 
+    // Only show one ❓ across the title list if any item is a question
+    const anyQuestion = englishTitles.some((t) => t && t.isQuestion);
+    let questionRendered = false;
+
     return (
       <div style={analysisStyles.variantMetaGrid}>
         <div style={analysisStyles.metaCard} className="anim-fadeInUp delay-0">
           <div style={analysisStyles.metaTitle}>📝 영어 제목</div>
           <ul style={analysisStyles.metaList}>
-            {englishTitles.length ? englishTitles.map((title, index) => (
-              <li key={`title-${index}`}>
-                <strong>{index + 1}.</strong> {title.title}
-                {title.isQuestion ? ' ❓' : ''}
-                {title.korean ? ` — ${title.korean}` : ''}
-              </li>
-            )) : <li>영어 제목을 직접 정리해 보세요.</li>}
+            {englishTitles.length ? englishTitles.map((title, index) => {
+              const showQuestion = anyQuestion && !questionRendered && title.isQuestion;
+              if (showQuestion) questionRendered = true;
+              const koreanSide = title.korean || meta.englishSummaryKorean || '';
+              return (
+                <li key={`title-${index}`}>
+                  <strong>{index + 1}.</strong> {title.title}
+                  {showQuestion ? ' ❓' : ''}
+                  {koreanSide ? ` — ${koreanSide}` : ''}
+                </li>
+              );
+            }) : <li>영어 제목을 직접 정리해 보세요.</li>}
           </ul>
         </div>
         <div style={analysisStyles.metaCard} className="anim-fadeInUp delay-1">

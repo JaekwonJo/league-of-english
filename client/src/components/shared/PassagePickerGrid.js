@@ -37,6 +37,18 @@ const gridStyles = {
     transition: 'transform 0.25s ease, box-shadow 0.25s ease',
     color: '#f8fafc'
   },
+  checkBadge: {
+    position: 'absolute',
+    top: '10px',
+    right: '10px',
+    background: 'rgba(16,185,129,0.95)',
+    color: '#0b1324',
+    borderRadius: '999px',
+    padding: '6px 8px',
+    fontWeight: 900,
+    fontSize: '12px',
+    boxShadow: '0 8px 18px rgba(16,185,129,0.35)'
+  },
   cardSelected: {
     borderColor: 'rgba(79, 70, 229, 0.55)',
     boxShadow: '0 20px 38px rgba(79, 70, 229, 0.32)',
@@ -134,6 +146,7 @@ const PassagePickerGrid = ({
               className="ui-pressable ui-elevate"
               style={{
                 ...gridStyles.card,
+                position: 'relative',
                 background: `linear-gradient(155deg, ${palette.from}, ${palette.to})`,
                 boxShadow: checked
                   ? `0 34px 56px ${palette.shadow}`
@@ -147,6 +160,9 @@ const PassagePickerGrid = ({
                 if (!disableSelection && onToggle) onToggle(number);
               }}
             >
+              {checked && (
+                <span style={gridStyles.checkBadge} aria-label="선택됨">✓ 선택됨</span>
+              )}
               <div>
                 <span style={gridStyles.badge}>{displayLabel}</span>
                 <p style={gridStyles.helper}>지문 전체보기를 눌러 전문을 확인해 보세요.</p>
