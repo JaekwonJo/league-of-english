@@ -764,10 +764,11 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
                               ...analysisStyles.documentCard,
                               background: `linear-gradient(150deg, ${palette.from}, ${palette.to})`,
                               backgroundSize: '200% 200%',
-                              animation: 'slowGradient 24s ease-in-out infinite',
+                              // 더 은은하게: 느린 주기 + 덜 강한 그림자
+                              animation: 'slowGradient 36s ease-in-out infinite',
                               boxShadow: isHovered
-                                ? `0 32px 60px ${palette.shadow}`
-                                : `0 22px 38px ${palette.shadow}`,
+                                ? `0 22px 36px ${palette.shadow}`
+                                : `0 14px 26px ${palette.shadow}`,
                               transform: isHovered ? 'translateY(-4px)' : 'translateY(0)'
                             }}
                             onFocus={() => setHoveredDocumentId(doc.id)}

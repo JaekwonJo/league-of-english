@@ -39,7 +39,7 @@ const gridStyles = {
     transition: 'transform 0.25s ease, box-shadow 0.25s ease',
     color: '#f8fafc',
     backgroundSize: '200% 200%',
-    animation: 'slowGradient 24s ease-in-out infinite'
+    animation: 'slowGradient 36s ease-in-out infinite'
   },
   checkBadge: {
     position: 'absolute',
@@ -153,8 +153,8 @@ const PassagePickerGrid = ({
                 position: 'relative',
                 background: `linear-gradient(155deg, ${palette.from}, ${palette.to})`,
                 boxShadow: checked
-                  ? `0 34px 56px ${palette.shadow}`
-                  : `0 26px 42px ${palette.shadow}`,
+                  ? `0 22px 34px ${palette.shadow}`
+                  : `0 14px 24px ${palette.shadow}`,
                 transform: checked ? 'translateY(-6px)' : 'translateY(0)',
                 ...(disableSelection ? { opacity: 0.6 } : {})
               }}

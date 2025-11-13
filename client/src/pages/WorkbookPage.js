@@ -3041,6 +3041,39 @@ const WorkbookPage = () => {
         </div>
       )}
 
+      {!isMobile && (
+        <div>
+          <button
+            type="button"
+            style={{
+              ...styles.mobileNavButton,
+              position: 'fixed',
+              bottom: 16,
+              left: 16,
+              right: 'auto'
+            }}
+            onClick={() => hasPrevStep && handleStepChange(currentStepNumberValue - 1)}
+            disabled={!hasPrevStep}
+          >
+            ← 이전
+          </button>
+          <button
+            type="button"
+            style={{
+              ...styles.mobileNavButton,
+              position: 'fixed',
+              bottom: 16,
+              right: 16,
+              left: 'auto'
+            }}
+            onClick={() => hasNextStep && handleStepChange(currentStepNumberValue + 1)}
+            disabled={!hasNextStep}
+          >
+            다음 →
+          </button>
+        </div>
+      )}
+
       <div style={responsiveStyle({ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }, { gap: '10px' })}>
         <span style={styles.tag} data-testid="workbook-card-counter">
           카드 {cardIndex + 1}/{currentStep.cards.length}
