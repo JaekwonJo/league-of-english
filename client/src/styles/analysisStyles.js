@@ -567,19 +567,36 @@ export const analysisStyles = {
     overflow: 'hidden'
   },
   documentInfo: {
-    background: 'var(--surface-soft-solid)',
-    padding: '24px',
-    borderBottom: '1px solid var(--border-muted)'
+    position: 'relative',
+    overflow: 'hidden',
+    background: 'linear-gradient(145deg, rgba(15,23,42,0.92), rgba(30,64,175,0.65))',
+    padding: '28px',
+    borderBottom: '1px solid rgba(148,163,184,0.28)'
   },
   documentTitle: {
-    color: 'var(--text-primary)',
-    fontSize: '1.4rem',
-    margin: '0 0 8px 0'
+    color: '#f8fafc',
+    fontSize: '1.6rem',
+    margin: '0 0 10px 0',
+    letterSpacing: '-0.01em'
   },
   documentMeta: {
-    color: 'var(--tone-strong)',
-    fontSize: '14px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    color: '#e0e7ff',
+    fontSize: '0.92rem',
     margin: 0
+  },
+  documentMetaPill: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    padding: '6px 12px',
+    borderRadius: '999px',
+    background: 'rgba(255,255,255,0.08)',
+    border: '1px solid rgba(255,255,255,0.18)',
+    color: '#e0e7ff',
+    fontWeight: 700,
+    fontSize: '0.85rem'
   },
   content: {
     padding: '24px'

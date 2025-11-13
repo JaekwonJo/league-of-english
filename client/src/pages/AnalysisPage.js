@@ -1033,11 +1033,24 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
       <div style={analysisStyles.container}>
         <div style={analysisStyles.header}>
           <button onClick={handleBackToDocuments} style={analysisStyles.backButton}>← 목록으로 돌아가기</button>
-          <h1 style={analysisStyles.title}>📄 {selectedDocument?.title}</h1>
-            <div style={analysisStyles.sectionGuideRow}>
-              <p style={analysisStyles.subtitle}>지문을 하나씩 살펴보고, 필요하면 전문 분석을 곧바로 생성해 보세요.</p>
-              {isAdmin && <EagleGuideChip text="관리자 안내: 분석본이 가득 차면 불필요한 변형을 정리할 수 있어요" />}
+        </div>
+        <div style={analysisStyles.detailContainer}>
+          <div style={analysisStyles.documentInfo}>
+            <div className="shimmer" aria-hidden />
+            <h2 style={analysisStyles.documentTitle}>{selectedDocument?.title || '선택한 문서'}</h2>
+            <div style={analysisStyles.documentMeta}>
+              {selectedDocument?.category && (
+                <span style={analysisStyles.documentMetaPill}>{selectedDocument.category}</span>
+              )}
+              {selectedDocument?.code && (
+                <span style={analysisStyles.documentMetaPill}>📝 {selectedDocument.code}</span>
+              )}
+              {selectedDocument?.grade && (
+                <span style={analysisStyles.documentMetaPill}>고{selectedDocument.grade}</span>
+              )}
+              <span style={analysisStyles.documentMetaPill}>전문 분석</span>
             </div>
+          </div>
         </div>
 
         {analysisLimitError && (
