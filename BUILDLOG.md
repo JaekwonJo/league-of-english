@@ -795,3 +795,9 @@ NODE` 로 5문항 생성 결과 (가족/전략 태그·한글 해설·단일 빈
 - Fix: Ranking/Stats에 CommonHero 적용, 안내칩 보강으로 톤 통일. `aiProblemService.generateBlank`에서 `highTier`를 tier 기반 불리언으로 정의해 참조 오류 제거. `.env.example`에 `LOE_AIGEN_MAX_RETRIES/LOE_AIGEN_BUDGET_MS/LOE_OPENAI_*`를 추가해 운영 가이드 명확화.
 - Files: server/services/aiProblemService.js, client/src/pages/RankingPage.js, client/src/pages/StatsPage.js, .env.example, PROJECT_STATE.md.
 - Verification: 로컬 빌드 후(프런트) CommonHero 헤더가 랭킹/통계에 표시되는지 확인, 빈칸 생성 경로에서 예외 로그에 `highTier` 미등장 확인. 환경 템플릿에 신규 키 존재 확인.
+## 2025-11-14 (UI final pass: admin/mobile + polish)
+- Issue: 관리자 사용자 목록이 많아질수록 가독성이 떨어지고, 모바일에서 표가 세로로 길게 찢겨 보기 어려웠습니다. 일부 페이지(프로필/랭킹/통계/동영상/워크북/분석) 카드 톤이 홈과 미세하게 달라 일관성이 약했습니다.
+- Cause: 데스크톱 중심의 테이블 레이아웃과 기본 카드 배경/보더가 페이지마다 달랐고, 모바일 최적화 레이아웃이 없었습니다.
+- Fix: 관리자 사용자 목록에 모바일 카드뷰 추가(데스크톱은 기존 표 유지). 카드/섹션에 glass+gradient+shimmer+tilt 통일 적용: 어휘/분석/워크북/동영상/프로필/랭킹/통계/관리자 개요.
+- Files: client/src/components/admin/AdminUsersPanel.jsx, client/src/styles/adminStyles.js, client/src/components/admin/DocumentList.js, client/src/pages/{VideoPlaylistPage,WorkbookPage,AnalysisPage,ProfilePage,RankingPage,StatsPage}.js.
+- Verification: 모바일/데스크톱에서 사용자 목록 카드/표 전환 확인, 카드 대비/텍스트 가독성 확인(다크 글래스에서 텍스트 색 보정), hover/tilt/shimmer 모션 정상 동작.
