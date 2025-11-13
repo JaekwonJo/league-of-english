@@ -777,3 +777,9 @@ NODE` 로 5문항 생성 결과 (가족/전략 태그·한글 해설·단일 빈
 - Fix: 프로필에 학교명 분리(이름+접미사 고/여고) UI 추가+학년(1/2/3) 셀렉트. 어휘 히어로의 개수 문구 제거, 마스코트를 하단 포인터 배너로 이동. 문제 템플릿(빈칸/어법/어휘/제목/주제) 해설 규정에 쉬운 표현+이모지 포함. 폴백 blank를 2문장 이상 본문+구/절 정답으로 교체.
 - Files: client/src/pages/ProfilePage.js, client/src/pages/VocabularyPage.js, server/config/problem-templates.json, server/utils/fallbackProblemFactory.js.
 - Verification: 로컬 빌드/렌더 확인(프로필 저장 후 값 반영, 어휘 페이지 포인터 배너와 목록 이동), 지문 선택 카드에 ✓ ‘선택됨’ 표시 확인. 빈칸 폴백 생성 시 본문 2문장+구/절 답안 및 쉬운 해설 확인.
+## 2025-11-14 (모의고사 다회차 + 지문선택/해설/형식 점검)
+- Issue: 모의고사 회차가 고정처럼 보이고, 시험지 텍스트가 뒤섞이거나(이상한 문자열), 문제 학습에서 선택 지문이 아닌 본문이 섞여 나오며, 해설 톤이 딱딱하고 본문 줄바꿈이 어수선함.
+- Cause: 업로드/선택 UI가 단일 회차 전제로 보였고, PDF 파싱 노이즈, 학습 요청에 passageNumbers 누락/확인 필요, 프롬프트/리뷰 타이틀 톤 미흡, 본문 렌더 스타일 부족.
+- Fix: 서버 mockExam 라우트/서비스 점검(회차 목록/선택/응시, 18~45번만 추출, JSON 폴백), 클라이언트 MockExamPage에 회차 목록 UI/선택 흐름 고정. StudyConfig/useStudySession에서 passageNumbers 전달/사용 확인. ProblemDisplay 본문을 문단 분리+line-height 1.8+양쪽 정렬. 리뷰 타이틀 ‘💡 쉬운 해설’로 교체. 빈칸 생성기는 원문 보존(빈칸만 ____), 2문장+구/절 정답 엄격 검증 유지.
+- Files: server/routes/mockExam.routes.js, server/services/mockExamService.js, client/src/pages/MockExamPage.js, client/src/features/study/config/*, client/src/hooks/useStudySession.js, client/src/features/study/problem/{ProblemDisplay.jsx,components/ReviewOptions.jsx}, server/services/ai-problem/blank.js, README.md, PROJECT_STATE.md.
+- Verification: 관리자에서 회차 업로드→목록 노출→선택 응시, 18~45번만 로드·선택지 ①~⑤ 정상. 학습 3단계에서 ✓ 배지 표시+선택 지문만 문제 생성. 리뷰 타이틀/톤 반영 확인. 본문 줄간격/정렬 고정 확인.
