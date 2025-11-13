@@ -987,13 +987,10 @@ const getTimeLimitSeconds = useCallback(() => {
                           });
                         }}
                       >
+                        <div className="shimmer" aria-hidden />
                         <div style={styles.dayHeader}>
                           <strong style={styles.dayLabel}>{day.label}</strong>
                           <span style={styles.dayCount}>{day.count} 단어</span>
-                        </div>
-                        {selected && <span style={styles.daySelectedBadge}>선택됨</span>}
-                        <div style={styles.daySummary}>
-                          총 {day.count}개의 단어가 숨어 있어요. 시험에서 뜻을 맞혀볼까요?
                         </div>
                         {selected && (
                           <span style={styles.dayCheckOverlay} aria-hidden="true">✓</span>
@@ -1899,15 +1896,18 @@ const styles = {
     fontSize: '0.95rem'
   },
   dayCard: {
-    background: 'linear-gradient(135deg, rgba(238,242,255,0.92), rgba(219,234,254,0.9))',
-    borderRadius: '16px',
+    position: 'relative',
+    overflow: 'hidden',
+    background: 'linear-gradient(135deg, rgba(15,23,42,0.92), rgba(30,64,175,0.65))',
+    borderRadius: '18px',
     padding: '18px',
     cursor: 'pointer',
-    border: '1px solid rgba(255,255,255,0.6)',
+    border: '1px solid rgba(148,163,184,0.28)',
     transition: 'all 0.2s ease',
-    boxShadow: '0 18px 36px rgba(15, 23, 42, 0.12)',
-    position: 'relative',
-    color: '#1f2a5a'
+    boxShadow: '0 22px 42px rgba(15, 23, 42, 0.28)',
+    color: '#e2e8f0',
+    backgroundSize: '200% 200%',
+    animation: 'slowGradient 24s ease-in-out infinite'
   },
   dayCardSelected: {
     borderColor: 'rgba(34,197,94,0.6)',
@@ -1937,29 +1937,21 @@ const styles = {
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: '10px',
-    color: '#1f2a5a'
+    color: '#f8fafc'
   },
   daySelectedBadge: {
-    display: 'inline-flex',
-    marginBottom: '8px',
-    padding: '4px 10px',
-    borderRadius: '999px',
-    background: 'rgba(34,197,94,0.15)',
-    color: '#15803d',
-    fontWeight: 600,
-    fontSize: '0.78rem'
+    display: 'none'
   },
   dayLabel: {
     fontWeight: 700,
-    color: '#162145'
+    color: '#f8fafc'
   },
   dayCount: {
     fontWeight: 600,
-    color: '#1f2a5a'
+    color: '#e0e7ff'
   },
   daySummary: {
-    fontSize: '0.9rem',
-    color: '#243368'
+    display: 'none'
   },
   stepActions: {
     marginTop: '24px',
