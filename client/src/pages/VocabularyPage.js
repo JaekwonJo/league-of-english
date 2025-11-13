@@ -813,60 +813,15 @@ const getTimeLimitSeconds = useCallback(() => {
               </AppButton>
             </div>
           </div>
-          <div
-            style={{
-              ...styles.vocabEagleWrapper,
-              ...(isMobile ? styles.vocabEagleWrapperInteractive : {})
-            }}
-            onClick={() => {
-              // mobile tap/click animation
-              const el = document.querySelector('[data-eagle-body]');
-              if (el) {
-                el.style.transform = 'translateY(-6px) rotate(-2deg)';
-                el.style.transition = 'transform 180ms ease';
-                setTimeout(() => {
-                  el.style.transform = 'translateY(0) rotate(0)';
-                }, 180);
-              }
-            }}
-            aria-label="마스코트와 상호작용"
-          >
-            <div style={styles.vocabEagleHalo} aria-hidden="true" />
-            <div style={styles.vocabEagleBody} data-eagle-body>
-              <div style={styles.vocabEagleEyes}>
-                <span style={{
-                  ...styles.vocabEagleEye,
-                  ...(blink ? styles.vocabEagleEyeBlink : {})
-                }} />
-                <span style={{
-                  ...styles.vocabEagleEye,
-                  ...(blink ? styles.vocabEagleEyeBlink : {})
-                }} />
-              </div>
-              <div style={{
-                ...styles.vocabEagleWingLeft,
-                ...(wingUp ? styles.vocabEagleWingUp : {})
-              }} />
-              <div style={{
-                ...styles.vocabEagleWingRight,
-                ...(wingUp ? styles.vocabEagleWingUp : {})
-              }} />
-              <div style={styles.vocabEagleBeak} />
-              <div style={styles.vocabEagleBelly} />
-              <div style={styles.vocabEagleFootRow}>
-                <span style={styles.vocabEagleFoot} />
-                <span style={styles.vocabEagleFoot} />
-              </div>
-            </div>
-            {/* pulse ring */}
-            <span style={styles.vocabEaglePulse} aria-hidden="true" />
-            {/* sparkles */}
-            <span className="ui-sparkle" style={{ ...styles.vocabEagleSparkle, left: '12%', top: '18%', animationDelay: '0.2s' }} />
-            <span className="ui-sparkle" style={{ ...styles.vocabEagleSparkle, right: '10%', top: '28%', animationDelay: '0.6s' }} />
-            <span className="ui-sparkle" style={{ ...styles.vocabEagleSparkle, left: '18%', bottom: '14%', animationDelay: '1.0s' }} />
-          </div>
         </div>
       </section>
+
+      {/* 아래로 이동한 포인터 배너: 마스코트 대신 하단에서 목록을 가리킵니다 */}
+      <div style={styles.pointerBanner}>
+        <span role="img" aria-label="eagle">🦅</span>
+        <span style={{ margin: '0 8px' }}>아래에서 단어장을 골라요!</span>
+        <span className="pointer-bounce" aria-hidden="true">👇</span>
+      </div>
 
       <div style={styles.stepper}>
         {stepDescriptors.map((descriptor, index) => {
@@ -906,6 +861,9 @@ const getTimeLimitSeconds = useCallback(() => {
               <div style={{ ...styles.notice, color: 'var(--danger)' }}>{setsError}</div>
             ) : (
               <section ref={setsSectionRef} style={styles.section}>
+                <div style={{ textAlign: 'center', marginTop: '-6px', marginBottom: '8px', color: 'var(--tone-hero)', fontWeight: 700 }}>
+                  🦅 이쪽이예요! 아래 카드에서 단어장을 선택해요 👇
+                </div>
                 <div style={styles.sectionHeadingRow}>
                   <h2 style={styles.sectionTitle}>1️⃣ 단어장 고르기</h2>
                   <EagleGuideChip text="카테고리를 펼쳐서 원하는 Day를 찾아보세요" />
@@ -1747,6 +1705,15 @@ const styles = {
     flexWrap: 'wrap',
     gap: '12px',
     margin: '0 0 24px'
+  },
+  pointerBanner: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '6px',
+    margin: '6px auto 4px',
+    color: 'var(--accent-primary)',
+    fontWeight: 800
   },
   stepperItem: {
     flex: '1 1 160px',

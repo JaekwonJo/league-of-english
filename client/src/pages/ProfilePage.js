@@ -350,7 +350,16 @@ const ProfilePage = () => {
 
 const ProfileEditCard = () => {
   const { user, setUser } = useAuth();
-  const [school, setSchool] = useState(user?.school || '');
+  // 학교명은 "이름" + 접미사(고/여고)로 분리 입력하도록 구성
+  const detectSuffix = (full = '') => {
+    const trimmed = String(full || '').trim();
+    if (trimmed.endsWith('여고')) return { base: trimmed.slice(0, -2), suffix: '여고' };
+    if (trimmed.endsWith('고')) return { base: trimmed.slice(0, -1), suffix: '고' };
+    return { base: trimmed, suffix: '고' };
+  };
+  const detected = detectSuffix(user?.school || '');
+  const [schoolBase, setSchoolBase] = useState(detected.base || '');
+  const [schoolSuffix, setSchoolSuffix] = useState(detected.suffix || '고');
   const [grade, setGrade] = useState(user?.grade ? String(user.grade) : '1');
   const [name, setName] = useState(user?.name || '');
   const [saving, setSaving] = useState(false);
@@ -360,11 +369,14 @@ const ProfileEditCard = () => {
     try {
       setSaving(true);
       setMsg('');
-      const payload = { school: school.trim(), grade: parseInt(grade, 10), name: name.trim() };
+      const base = String(schoolBase || '').trim();
+      const suffix = String(schoolSuffix || '고').trim();
+      const composedSchool = base ? `${base}${suffix}` : '';
+      const payload = { school: composedSchool, grade: parseInt(grade, 10), name: String(name || '').trim() };
       const res = await api.users.updateProfile(payload);
       if (res?.user) {
         setUser(res.user);
-        setMsg('프로필을 저장했어요. 🎉');
+        setMsg('프로필을 저장했어요. 🎉 (학교/학년 반영 완료)');
       } else if (res?.message) {
         setMsg(res.message);
       }
@@ -380,7 +392,18 @@ const ProfileEditCard = () => {
       <h3 style={styles.editTitle}>프로필 수정</h3>
       <div style={styles.editRow}>
         <input style={styles.editInput} value={name} onChange={(e) => setName(e.target.value)} placeholder="이름" />
-        <input style={styles.editInput} value={school} onChange={(e) => setSchool(e.target.value)} placeholder="학교명" />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px', gap: '8px' }}>
+          <input
+            style={styles.editInput}
+            value={schoolBase}
+            onChange={(e) => setSchoolBase(e.target.value)}
+            placeholder="학교 이름 (예: OO)"
+          />
+          <select style={styles.editInput} value={schoolSuffix} onChange={(e) => setSchoolSuffix(e.target.value)}>
+            <option value="고">고</option>
+            <option value="여고">여고</option>
+          </select>
+        </div>
         <select style={styles.editInput} value={grade} onChange={(e) => setGrade(e.target.value)}>
           <option value="1">고1</option>
           <option value="2">고2</option>

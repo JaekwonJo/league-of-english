@@ -12,28 +12,50 @@ const blankBank = [
   {
     docTitle: 'LoE 핵심 빈칸',
     question: '다음 빈칸에 들어갈 말로 가장 적절한 것은?',
-    mainText: 'Students who keep a reading journal notice steady (____) in their confidence and comprehension over time.',
-    options: ['① growth', '② shortage', '③ confusion', '④ distance'],
+    // 두 문장 이상, 실제 시험지처럼 문단 구성 + 구/절 단위 정답
+    mainText:
+      'Many teachers noticed that students progressed faster when they reflected at the end of each week. By writing a few lines about what confused them and what finally clicked, they built a habit of ____ that guided their next steps.',
+    options: [
+      '① setting clear study intentions',
+      '② skipping review every weekend',
+      '③ copying answers without thinking',
+      '④ relying only on last-minute cramming'
+    ],
     answer: '①',
-    explanation: "본문은 독서 일지를 꾸준히 쓰는 학생들이 자신감과 이해력에서 긍정적인 변화를 체감한다고 설명합니다. steady 뒤에는 긍정적 의미의 명사가 와야 하므로 성장과 향상을 뜻하는 growth가 어울립니다. shortage, confusion, distance는 각각 부족·혼란·거리감을 의미하여 문장 흐름을 갑작스럽게 부정적으로 바꾸기 때문에 적절하지 않습니다.",
+    explanation:
+      '글의 핵심은 “매주 되돌아보기”가 다음 학습을 이끄는 습관을 만든다는 점이에요. 따라서 (①) setting clear study intentions(공부 의도를 분명히 세우기)가 문맥에 맞아요. ② 주말 복습 건너뛰기, ③ 생각 없이 베끼기, ④ 벼락치기 의존은 “성찰 습관”과 반대되는 행동이에요. 😊',
     difficulty: 'basic'
   },
   {
     docTitle: 'LoE 핵심 빈칸',
     question: '다음 빈칸에 들어갈 말로 가장 적절한 것은?',
-    mainText: 'The club designed weekly challenges so that everyone could celebrate small (____) together.',
-    options: ['① victories', '② arguments', '③ delays', '④ expenses'],
+    mainText:
+      'The club designed simple weekly challenges and encouraged everyone to share one small win. Over time, this practice helped the group focus on effort rather than perfection and created a culture of ____.',
+    options: [
+      '① celebrating consistent progress',
+      '② arguing about who is best',
+      '③ delaying tasks without reasons',
+      '④ spending money on trophies only'
+    ],
     answer: '①',
-    explanation: '모임이 주간 도전을 기획한 이유가 학생들이 작은 성취를 서로 축하하기 위함이라는 점에서 빈칸에는 긍정적인 단어가 필요합니다. victories는 함께 이룬 성과를 뜻해 문맥과 자연스럽게 이어집니다. arguments와 delays, expenses는 각각 다툼·지연·비용을 나타내어 축하의 대상이 될 수 없으므로 배경 설명과 어긋납니다.',
+    explanation:
+      '문단은 “완벽”보다 “노력의 꾸준함”을 강조해요. 그래서 (①) celebrating consistent progress(꾸준한 진전을 기뻐하기)가 가장 자연스러워요. 나머지는 경쟁만 부추기거나(②), 이유 없는 지연(③), 트로피에만 집중(④)처럼 본문 흐름과 어긋나요. ✨',
     difficulty: 'basic'
   },
   {
     docTitle: 'LoE 핵심 빈칸',
     question: '다음 빈칸에 들어갈 말로 가장 적절한 것은?',
-    mainText: 'Sharing feedback kindly helps classmates feel (____) to ask more questions in the next discussion.',
-    options: ['① safe', '② silent', '③ distant', '④ doubtful'],
+    mainText:
+      'When feedback is kind and specific, students feel brave enough to ask follow-up questions. In the next discussion, this often leads to deeper dialogue and a healthy habit of ____ among classmates.',
+    options: [
+      '① exploring ideas together',
+      '② staying silent out of fear',
+      '③ keeping distant from the group',
+      '④ doubting every peer’s comment'
+    ],
     answer: '①',
-    explanation: '친절한 피드백은 동료에게 심리적 안전감을 주어 다음 토론에서 더 많은 질문을 하도록 돕는다는 흐름입니다. 따라서 빈칸에는 안전하고 편안하다는 의미의 safe가 들어가야 문장이 자연스럽습니다. silent, distant, doubtful은 각각 침묵·거리감·의심을 유발하는 부정적 정서를 표현해 본문이 강조한 효과와 상반됩니다.',
+    explanation:
+      '친절하고 구체적인 피드백은 “같이 생각을 탐구하는 분위기”를 만들어요. 따라서 (①) exploring ideas together(함께 아이디어 탐구하기)가 알맞습니다. ② 두려워 침묵/③ 거리두기/④ 과도한 의심은 본문 효과와 반대예요. 💡',
     difficulty: 'basic'
   }
 ];

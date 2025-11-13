@@ -771,3 +771,9 @@ NODE` 로 5문항 생성 결과 (가족/전략 태그·한글 해설·단일 빈
 - Fix: 제목 옆 한국어 제거(AnalysisPage.js), 문장별 상세 섹션은 요청에 따라 다시 표시. 빈칸 원문 동일성 엄격 비교(blank.js), 프로필 API/화면 추가.
 - Files: client/src/pages/AnalysisPage.js, server/services/ai-problem/blank.js, server/services/aiProblemService.js, server/services/vocab-generation/index.js, server/services/grammar-generation/config.js, server/utils/documentAnalyzer.js, server/services/kakaoAuthService.js, server/routes/users.routes.js, server/server.js, client/src/pages/ProfilePage.js
 - Verification: 분석 상세에서 제목 중복 제거 + 문장별 섹션 정상 노출, 빈칸 생성 시 복원 비교 통과/불일치 시 실패, 프로필에서 학교/학년 저장 동작 확인.
+## 2025-11-13 (profile + vocab UX + friendly explanations + blank fallback)
+- Issue: 카카오 가입 후 프로필에서 학교 표기가 불편했고, 어휘 페이지 상단 정보가 산만했으며 지문 선택 체크가 눈에 덜 띄고, 해설이 딱딱/어려움. 빈칸 폴백은 짧고 단어형 답안이 있어 시험 느낌과 다름.
+- Cause: 프로필은 단일 입력란(학교 전체 문자열)만 제공, 어휘 히어로에 개수/장식 요소 과다, 해설 템플릿에 쉬운 톤/이모지 규정 부족, 폴백 blank 샘플이 단문/단어형 구성.
+- Fix: 프로필에 학교명 분리(이름+접미사 고/여고) UI 추가+학년(1/2/3) 셀렉트. 어휘 히어로의 개수 문구 제거, 마스코트를 하단 포인터 배너로 이동. 문제 템플릿(빈칸/어법/어휘/제목/주제) 해설 규정에 쉬운 표현+이모지 포함. 폴백 blank를 2문장 이상 본문+구/절 정답으로 교체.
+- Files: client/src/pages/ProfilePage.js, client/src/pages/VocabularyPage.js, server/config/problem-templates.json, server/utils/fallbackProblemFactory.js.
+- Verification: 로컬 빌드/렌더 확인(프로필 저장 후 값 반영, 어휘 페이지 포인터 배너와 목록 이동), 지문 선택 카드에 ✓ ‘선택됨’ 표시 확인. 빈칸 폴백 생성 시 본문 2문장+구/절 답안 및 쉬운 해설 확인.
