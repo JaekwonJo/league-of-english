@@ -186,7 +186,8 @@ const StatsPage = () => {
   const renderVocabularyCards = () => {
     if (!vocabularyStats) return null;
     const accuracyCard = (
-      <div style={styles.statCard} key="vocab-accuracy">
+      <div className="tilt-hover" style={styles.statCard} key="vocab-accuracy">
+        <div className="shimmer" aria-hidden />
         <span style={styles.statLabel}>단어 정확도</span>
         <div style={{ width: '100%', height: 220 }}>
           <ResponsiveContainer>
@@ -206,7 +207,8 @@ const StatsPage = () => {
     );
 
     const typeCard = (
-      <div style={styles.statCard} key="vocab-types">
+      <div className="tilt-hover" style={styles.statCard} key="vocab-types">
+        <div className="shimmer" aria-hidden />
         <span style={styles.statLabel}>유형별 학습량</span>
         <div style={{ width: '100%', height: 220 }}>
           <ResponsiveContainer>
@@ -481,14 +483,19 @@ const styles = {
     scrollSnapAlign: 'start'
   },
   statCard: {
-    background: 'var(--surface-card)',
-    borderRadius: '18px',
+    position: 'relative',
+    overflow: 'hidden',
+    background: 'linear-gradient(145deg, rgba(15,23,42,0.92), rgba(30,64,175,0.65))',
+    borderRadius: '22px',
     padding: '20px 22px',
-    boxShadow: '0 12px 28px rgba(15, 23, 42, 0.12)',
-    border: '1px solid var(--surface-border)',
+    boxShadow: '0 22px 42px rgba(15, 23, 42, 0.28)',
+    border: '1px solid rgba(148,163,184,0.28)',
+    color: '#e2e8f0',
     display: 'flex',
     flexDirection: 'column',
-    gap: '6px'
+    gap: '6px',
+    backgroundSize: '200% 200%',
+    animation: 'slowGradient 24s ease-in-out infinite'
   },
   statLabel: {
     fontSize: '0.9rem',
@@ -504,15 +511,20 @@ const styles = {
     color: 'var(--tone-muted)'
   },
   mockExamCard: {
-    background: 'var(--surface-card)',
-    borderRadius: '18px',
+    position: 'relative',
+    overflow: 'hidden',
+    background: 'linear-gradient(145deg, rgba(15,23,42,0.92), rgba(30,64,175,0.65))',
+    borderRadius: '22px',
     padding: '20px 22px',
-    border: '1px solid var(--surface-border)',
-    boxShadow: '0 18px 40px rgba(15,23,42,0.12)',
+    border: '1px solid rgba(148,163,184,0.28)',
+    boxShadow: '0 22px 42px rgba(15,23,42,0.28)',
+    color: '#e2e8f0',
     display: 'flex',
     flexDirection: 'column',
     gap: '12px',
-    minHeight: '220px'
+    minHeight: '220px',
+    backgroundSize: '200% 200%',
+    animation: 'slowGradient 24s ease-in-out infinite'
   },
   mockExamGauge: {
     display: 'flex',

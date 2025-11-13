@@ -282,6 +282,7 @@ const RankingPage = () => {
                   }}
                   className="ui-pressable ui-elevate tilt-hover"
                 >
+                  <div className="shimmer" aria-hidden />
                   {index === 0 && (
                     <span style={styles.topCrown} aria-hidden>👑</span>
                   )}
@@ -617,6 +618,8 @@ const styles = {
     alignItems: 'center',
     padding: '18px 22px',
     background: 'linear-gradient(135deg, rgba(15,23,42,0.92) 0%, rgba(30,64,175,0.65) 100%)',
+    backgroundSize: '200% 200%',
+    animation: 'slowGradient 24s ease-in-out infinite',
     borderRadius: '14px',
     border: '1px solid rgba(148, 163, 184, 0.35)',
     transition: 'all 0.3s ease',

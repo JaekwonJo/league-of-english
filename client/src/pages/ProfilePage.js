@@ -280,7 +280,8 @@ const ProfilePage = () => {
               <div style={styles.reviewQueueEmpty}>최근에 틀린 문제가 없어요! 꾸준한 학습이 빛나고 있네요 ✨</div>
             ) : (
               reviewQueue.problems.map((problem) => (
-                <div key={problem.id} style={styles.reviewQueueItem}>
+                <div key={problem.id} className="tilt-hover" style={styles.reviewQueueItem}>
+                  <div className="shimmer" aria-hidden />
                   <div style={styles.reviewQueueItemMeta}>
                     <span style={styles.reviewQueueType}>{typeLabelMap[problem.type] || problem.type}</span>
                     {problem.sourceLabel && <span style={styles.reviewQueueSource}>{problem.sourceLabel}</span>}
@@ -422,11 +423,13 @@ const ProfileStatCard = ({ label, value, suffix, tierAccent, isPercent }) => {
   const numeric = Number(value || 0);
   return (
     <div
+      className="tilt-hover"
       style={{
         ...styles.profileStatCard,
         ...(tierAccent || {})
       }}
     >
+      <div className="shimmer" aria-hidden />
       <div style={styles.profileStatLabel}>{label}</div>
       <div style={styles.profileStatValue}>
         {isPercent ? numeric.toFixed(1) : numeric.toLocaleString()}
@@ -686,11 +689,16 @@ const styles = {
     gap: '14px'
   },
   reviewQueueItem: {
+    position: 'relative',
+    overflow: 'hidden',
     padding: '18px',
-    borderRadius: '16px',
-    background: 'var(--surface-card)',
-    border: '1px solid var(--surface-border)',
-    boxShadow: '0 12px 30px rgba(15, 23, 42, 0.1)'
+    borderRadius: '18px',
+    background: 'linear-gradient(145deg, rgba(15,23,42,0.92), rgba(30,64,175,0.65))',
+    border: '1px solid rgba(148,163,184,0.28)',
+    boxShadow: '0 16px 34px rgba(15, 23, 42, 0.22)',
+    color: '#e2e8f0',
+    backgroundSize: '200% 200%',
+    animation: 'slowGradient 24s ease-in-out infinite'
   },
   reviewQueueItemMeta: {
     display: 'flex',
@@ -730,13 +738,18 @@ const styles = {
     fontWeight: 600
   },
   profileStatCard: {
-    background: 'var(--surface-card)',
-    borderRadius: '18px',
+    position: 'relative',
+    overflow: 'hidden',
+    background: 'linear-gradient(145deg, rgba(15,23,42,0.92), rgba(30,64,175,0.65))',
+    borderRadius: '22px',
     padding: '22px',
     textAlign: 'center',
     transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-    color: 'var(--tone-strong)',
-    border: '1px solid var(--surface-border)'
+    color: '#e2e8f0',
+    border: '1px solid rgba(148,163,184,0.28)',
+    boxShadow: '0 22px 42px rgba(15, 23, 42, 0.28)',
+    backgroundSize: '200% 200%',
+    animation: 'slowGradient 24s ease-in-out infinite'
   },
   profileStatLabel: {
     fontSize: '14px',
@@ -818,14 +831,19 @@ const styles = {
     fontWeight: '700'
   },
   membershipCard: {
-    background: 'rgba(15, 23, 42, 0.65)',
+    position: 'relative',
+    overflow: 'hidden',
+    background: 'linear-gradient(145deg, rgba(15,23,42,0.92), rgba(30,64,175,0.65))',
     borderRadius: '24px',
     padding: '24px',
-    boxShadow: '0 20px 40px rgba(15, 23, 42, 0.35)',
+    boxShadow: '0 24px 48px rgba(15, 23, 42, 0.35)',
+    border: '1px solid rgba(148,163,184,0.28)',
     marginTop: '32px',
     display: 'flex',
     flexDirection: 'column',
-    gap: '16px'
+    gap: '16px',
+    backgroundSize: '200% 200%',
+    animation: 'slowGradient 24s ease-in-out infinite'
   },
   membershipTitle: {
     fontSize: '20px',
