@@ -136,10 +136,12 @@ const styles = {
   wizardContainer: {
     marginTop: '12px',
     padding: '24px',
-    borderRadius: '20px',
-    border: '1px solid var(--surface-border)',
-    background: 'linear-gradient(135deg, rgba(59,130,246,0.08), rgba(16,185,129,0.1))',
-    boxShadow: '0 24px 48px rgba(15,23,42,0.12)',
+    borderRadius: '24px',
+    border: '1px solid rgba(148,163,184,0.28)',
+    background: 'linear-gradient(145deg, rgba(15,23,42,0.92), rgba(30,64,175,0.65))',
+    boxShadow: '0 28px 56px rgba(15,23,42,0.28)',
+    backgroundSize: '200% 200%',
+    animation: 'slowGradient 24s ease-in-out infinite',
     display: 'flex',
     flexDirection: 'column',
     gap: '20px'
@@ -287,16 +289,18 @@ const styles = {
   generatorDocCard: {
     textAlign: 'left',
     padding: '18px',
-    borderRadius: '18px',
+    borderRadius: '22px',
     border: '1px solid rgba(148, 163, 184, 0.25)',
-    background: 'linear-gradient(150deg, rgba(15,23,42,0.9), rgba(30,64,175,0.7))',
+    background: 'linear-gradient(150deg, rgba(15,23,42,0.92), rgba(30,64,175,0.65))',
     display: 'flex',
     flexDirection: 'column',
     gap: '10px',
     cursor: 'pointer',
     transition: 'transform 0.2s ease, box-shadow 0.2s ease, border 0.2s ease',
-    boxShadow: '0 18px 34px rgba(15, 23, 42, 0.3)',
-    color: '#e2e8f0'
+    boxShadow: '0 20px 38px rgba(15, 23, 42, 0.32)',
+    color: '#e2e8f0',
+    backgroundSize: '200% 200%',
+    animation: 'slowGradient 24s ease-in-out infinite'
   },
   generatorDocCardActive: {
     border: '1px solid rgba(99, 102, 241, 0.65)',
@@ -341,17 +345,22 @@ const styles = {
     maxHeight: '260px'
   },
   generatorPassageCard: {
+    position: 'relative',
+    overflow: 'hidden',
     textAlign: 'left',
     padding: '18px',
-    borderRadius: '18px',
+    borderRadius: '22px',
     border: '1px solid rgba(148, 163, 184, 0.35)',
-    background: 'rgba(255, 255, 255, 0.92)',
+    background: 'linear-gradient(145deg, rgba(15,23,42,0.92), rgba(30,64,175,0.65))',
     display: 'flex',
     flexDirection: 'column',
     gap: '10px',
     cursor: 'pointer',
-    boxShadow: '0 16px 30px rgba(15, 23, 42, 0.12)',
-    transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+    boxShadow: '0 20px 40px rgba(15, 23, 42, 0.28)',
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+    color: '#e2e8f0',
+    backgroundSize: '200% 200%',
+    animation: 'slowGradient 24s ease-in-out infinite'
   },
   generatorPassageCardActive: {
     border: '1px solid rgba(16, 185, 129, 0.55)',
@@ -360,7 +369,7 @@ const styles = {
   },
   generatorPassageExcerpt: {
     fontSize: '13px',
-    color: 'var(--tone-strong)',
+    color: 'rgba(240,245,255,0.9)',
     lineHeight: 1.6
   },
   overviewLayout: {
@@ -2649,6 +2658,7 @@ const WorkbookPage = () => {
                           }}
                           onClick={() => handleSelectDocument(doc)}
                         >
+                          <div className="shimmer" aria-hidden />
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <h4 style={styles.generatorDocTitle}>{doc.title}</h4>
                             {isActive && <span style={styles.wizardStageBadge}>선택됨</span>}
@@ -2696,6 +2706,7 @@ const WorkbookPage = () => {
                           }}
                           onClick={() => setSelectedPassage(String(item.passageNumber))}
                         >
+                          <div className="shimmer" aria-hidden />
                           <strong>지문 {item.passageNumber}</strong>
                           <div style={styles.generatorPassageExcerpt}>
                             {item.excerpt || '지문 미리보기를 준비했어요.'}
