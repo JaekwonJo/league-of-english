@@ -505,7 +505,7 @@ const styles = {
     boxShadow: '0 22px 42px rgba(15, 23, 42, 0.28)',
     color: '#e2e8f0',
     backgroundSize: '200% 200%',
-    animation: 'slowGradient 24s ease-in-out infinite'
+    animation: 'slowGradient 36s ease-in-out infinite'
   },
   playlistCardActive: {
     border: '1px solid var(--indigo)',

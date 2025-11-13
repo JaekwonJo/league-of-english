@@ -50,6 +50,16 @@ const ReviewOptions = ({
     <div style={reviewStyles.explanation}>
       <div style={reviewStyles.explanationTitle}>💡 쉬운 해설</div>
       {renderWithUnderline(explanationText)}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
+        <button
+          type="button"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          style={{ padding: '8px 12px', borderRadius: 999, border: '1px solid var(--surface-border)', background: 'var(--surface-card)', cursor: 'pointer', fontWeight: 700 }}
+          title="맨 위로 가기"
+        >
+          ↑ 맨 위로
+        </button>
+      </div>
     </div>
   ) : null;
 

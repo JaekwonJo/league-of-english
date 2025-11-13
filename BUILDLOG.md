@@ -801,3 +801,9 @@ NODE` 로 5문항 생성 결과 (가족/전략 태그·한글 해설·단일 빈
 - Fix: 관리자 사용자 목록에 모바일 카드뷰 추가(데스크톱은 기존 표 유지). 카드/섹션에 glass+gradient+shimmer+tilt 통일 적용: 어휘/분석/워크북/동영상/프로필/랭킹/통계/관리자 개요.
 - Files: client/src/components/admin/AdminUsersPanel.jsx, client/src/styles/adminStyles.js, client/src/components/admin/DocumentList.js, client/src/pages/{VideoPlaylistPage,WorkbookPage,AnalysisPage,ProfilePage,RankingPage,StatsPage}.js.
 - Verification: 모바일/데스크톱에서 사용자 목록 카드/표 전환 확인, 카드 대비/텍스트 가독성 확인(다크 글래스에서 텍스트 색 보정), hover/tilt/shimmer 모션 정상 동작.
+## 2025-11-14 (UI polish + menu order + stats)
+- Issue: 문제보관함 메뉴가 상단에 있어 흐름이 어색했고, 모바일 어휘 세트 제목이 줄바꿈/정렬이 깨져 보였으며, 분석의 그라데이션이 화면 전체를 지나가 산만해 보였습니다. 워크북 ‘이전/다음’은 흰 배경에 흰 글씨로 가독성이 낮았고, 해설 영역에서 맨 위로 돌아가기 불편했습니다. 통계 섹션도 요청 순서와 달랐습니다.
+- Cause: 사이드바는 routes 배열 순서 그대로 렌더링, 모바일 타이포그래피에서 `word-break: keep-all`, 분석 배경 애니메이션이 상위 컨테이너에 적용, 워크북 버튼 색 대비 미흡, 해설 UI에 빠른 이동 버튼 부재, Stats 섹션 하위 구성 미정.
+- Fix: routes.config.json에서 "문제 보관함"을 마지막으로 이동. Vocabulary 세트 제목은 모바일에서 `break-word`로 강제 개행. slowGradient를 36s로 통일하고 분석은 카드 내부로만 제한. 워크북 하단 고정 네비 버튼 대비/음영 강화. ReviewOptions/MockExam 해설에 ‘↑ 맨 위로’ 버튼 추가. StatsPage 섹션 순서를 ‘단어→유형별→워크북→모의고사’로 재배치하고 워크북 카드 신설.
+- Files: client/src/config/routes.config.json, client/src/pages/{VocabularyPage,WorkbookPage,AnalysisPage,StatsPage,VideoPlaylistPage,RankingPage,ProfilePage}.js, client/src/styles/analysisStyles.js, client/src/features/study/problem/components/ReviewOptions.jsx.
+- Verification: 로컬 빌드 후 모바일 폭(375px)에서 어휘 제목 줄바꿈 정상, 분석 목록 카드만 은은한 애니메이션, 워크북 하단 ‘이전/다음’ 대비/위치 확인, 해설 하단 ‘↑ 맨 위로’ 동작 확인, 통계 섹션 순서/워크북 카드 노출 확인.

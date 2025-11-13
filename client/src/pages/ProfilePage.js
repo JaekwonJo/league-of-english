@@ -698,7 +698,7 @@ const styles = {
     boxShadow: '0 16px 34px rgba(15, 23, 42, 0.22)',
     color: '#e2e8f0',
     backgroundSize: '200% 200%',
-    animation: 'slowGradient 24s ease-in-out infinite'
+    animation: 'slowGradient 36s ease-in-out infinite'
   },
   reviewQueueItemMeta: {
     display: 'flex',
@@ -749,7 +749,7 @@ const styles = {
     border: '1px solid rgba(148,163,184,0.28)',
     boxShadow: '0 22px 42px rgba(15, 23, 42, 0.28)',
     backgroundSize: '200% 200%',
-    animation: 'slowGradient 24s ease-in-out infinite'
+    animation: 'slowGradient 36s ease-in-out infinite'
   },
   profileStatLabel: {
     fontSize: '14px',
@@ -843,7 +843,7 @@ const styles = {
     flexDirection: 'column',
     gap: '16px',
     backgroundSize: '200% 200%',
-    animation: 'slowGradient 24s ease-in-out infinite'
+    animation: 'slowGradient 36s ease-in-out infinite'
   },
   membershipTitle: {
     fontSize: '20px',

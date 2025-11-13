@@ -141,7 +141,7 @@ const styles = {
     background: 'linear-gradient(145deg, rgba(15,23,42,0.92), rgba(30,64,175,0.65))',
     boxShadow: '0 28px 56px rgba(15,23,42,0.28)',
     backgroundSize: '200% 200%',
-    animation: 'slowGradient 24s ease-in-out infinite',
+    animation: 'slowGradient 36s ease-in-out infinite',
     display: 'flex',
     flexDirection: 'column',
     gap: '20px'
@@ -674,11 +674,11 @@ const styles = {
     padding: '10px 18px',
     borderRadius: '999px',
     border: '1px solid rgba(148, 163, 184, 0.35)',
-    background: 'rgba(255, 255, 255, 0.85)',
-    fontWeight: 700,
-    color: 'var(--text-primary)',
+    background: 'rgba(255, 255, 255, 0.96)',
+    fontWeight: 800,
+    color: '#0f172a',
     cursor: 'pointer',
-    boxShadow: '0 10px 22px rgba(15, 23, 42, 0.12)'
+    boxShadow: '0 12px 26px rgba(15, 23, 42, 0.16)'
   },
   mobileNavButtonDisabled: {
     opacity: 0.4,

@@ -275,6 +275,46 @@ const StatsPage = () => {
 
           <section style={styles.section}>
             <div style={styles.sectionHeaderRow}>
+              <h2 style={styles.sectionTitle}>🐣 단어 훈련</h2>
+              <span style={styles.sectionHint}>시험 결과를 자동으로 집계해요.</span>
+              <EagleGuideChip text="정답/오답 비율을 빠르게 살펴봐요" />
+            </div>
+            {vocabularyStats ? (
+              renderVocabularyCards()
+            ) : (
+              <div style={styles.emptyCard}>
+                <p style={styles.emptyTitle}>아직 단어 훈련 기록이 없어요.</p>
+                <p style={styles.emptyBody}>어휘 훈련에서 Day를 선택해 시험을 보면 정확도와 횟수가 여기에서 자동으로 쌓입니다.</p>
+              </div>
+            )}
+          </section>
+
+          <section style={styles.section}>
+            <div style={styles.sectionHeaderRow}>
+              <h2 style={styles.sectionTitle}>🎯 유형별 정답률</h2>
+              <span style={styles.sectionHint}>문제 학습 + 단어 시험 누적</span>
+              <EagleGuideChip text="약한 유형을 찾아 복습 루틴을 만들어요" />
+            </div>
+            {typeAccuracyList.length ? (
+              <div style={styles.typeList}>
+                {typeAccuracyList.map((entry) => (
+                  <TypeAccuracyRow key={entry.type} entry={entry} />
+                ))}
+              </div>
+            ) : (
+              <div style={styles.emptyCard}>
+                <p style={styles.emptyTitle}>아직 유형별 통계가 없어요.</p>
+                <p style={styles.emptyBody}>문제 학습과 단어 시험을 꾸준히 진행하면 정확도가 여기에 정리됩니다.</p>
+              </div>
+            )}
+          </section>
+
+          {/* 워크북 통계 섹션 (요청: 모의고사 전에 배치) */}
+          <WorkbookStats stats={stats} isMobile={isMobile} />
+
+          {/* 모의고사 통계: 페이지 하단 */}
+          <section style={styles.section}>
+            <div style={styles.sectionHeaderRow}>
               <h2 style={styles.sectionTitle}>🦅 모의고사 성과</h2>
               <span style={styles.sectionHint}>실전 응시 결과를 자동으로 누적해요</span>
               <EagleGuideChip text="모의고사 점수도 통계에 기록했어요" variant="accent" />
@@ -331,42 +371,6 @@ const StatsPage = () => {
 
           <section style={styles.section}>
             <div style={styles.sectionHeaderRow}>
-              <h2 style={styles.sectionTitle}>🐣 단어 훈련</h2>
-              <span style={styles.sectionHint}>시험 결과를 자동으로 집계해요.</span>
-              <EagleGuideChip text="정답/오답 비율을 빠르게 살펴봐요" />
-            </div>
-            {vocabularyStats ? (
-              renderVocabularyCards()
-            ) : (
-              <div style={styles.emptyCard}>
-                <p style={styles.emptyTitle}>아직 단어 훈련 기록이 없어요.</p>
-                <p style={styles.emptyBody}>어휘 훈련에서 Day를 선택해 시험을 보면 정확도와 횟수가 여기에서 자동으로 쌓입니다.</p>
-              </div>
-            )}
-          </section>
-
-          <section style={styles.section}>
-            <div style={styles.sectionHeaderRow}>
-              <h2 style={styles.sectionTitle}>🎯 유형별 정답률</h2>
-              <span style={styles.sectionHint}>문제 학습 + 단어 시험 누적</span>
-              <EagleGuideChip text="약한 유형을 찾아 복습 루틴을 만들어요" />
-            </div>
-            {typeAccuracyList.length ? (
-              <div style={styles.typeList}>
-                {typeAccuracyList.map((entry) => (
-                  <TypeAccuracyRow key={entry.type} entry={entry} />
-                ))}
-              </div>
-            ) : (
-              <div style={styles.emptyCard}>
-                <p style={styles.emptyTitle}>아직 유형별 통계가 없어요.</p>
-                <p style={styles.emptyBody}>문제 학습과 단어 시험을 꾸준히 진행하면 정확도가 여기에 정리됩니다.</p>
-              </div>
-            )}
-          </section>
-
-          <section style={styles.section}>
-            <div style={styles.sectionHeaderRow}>
               <h2 style={styles.sectionTitle}>🚧 곧 만나볼 통계</h2>
               <span style={styles.sectionHint}>베타 업데이트로 순차 공개 예정</span>
             </div>
@@ -383,6 +387,84 @@ const StatsPage = () => {
         </>
       )}
     </div>
+  );
+};
+
+// 워크북 통계 카드 구성
+const WorkbookStats = ({ stats, isMobile }) => {
+  const workbookEntry = useMemo(() => {
+    if (!Array.isArray(stats?.perType)) return null;
+    return stats.perType.find((item) => String(item.type || '').toLowerCase().includes('workbook')) || null;
+  }, [stats]);
+
+  if (!workbookEntry) {
+    return (
+      <section style={styles.section}>
+        <div style={styles.sectionHeaderRow}>
+          <h2 style={styles.sectionTitle}>📘 워크북 통계</h2>
+          <span style={styles.sectionHint}>단계별 카드 학습 누적</span>
+        </div>
+        <div style={styles.emptyCard}>
+          <p style={styles.emptyTitle}>아직 워크북 기록이 없어요.</p>
+          <p style={styles.emptyBody}>워크북 학습에서 단계를 진행하면 완료 현황이 여기에 표시됩니다.</p>
+        </div>
+      </section>
+    );
+  }
+
+  const total = Number(workbookEntry.total) || 0;
+  const correct = Number(workbookEntry.correct) || 0;
+  const incorrect = Math.max(0, total - correct);
+  const accuracy = Number(workbookEntry.accuracy) || (total ? (correct / total) * 100 : 0);
+
+  return (
+    <section style={styles.section}>
+      <div style={styles.sectionHeaderRow}>
+        <h2 style={styles.sectionTitle}>📘 워크북 통계</h2>
+        <span style={styles.sectionHint}>단계별 카드 학습 누적</span>
+      </div>
+      <div style={isMobile ? styles.sliderRow : styles.grid2}>
+        <div style={isMobile ? styles.sliderItem : undefined}>
+          <div style={styles.mockExamCard}>
+            <p style={styles.statLabel}>정답률</p>
+            <div style={styles.mockExamGauge}>
+              <div
+                style={{
+                  ...styles.mockExamGaugeRing,
+                  background: `conic-gradient(#86efac ${Math.min(100, Math.max(0, accuracy))}%, rgba(148,163,184,0.25) ${Math.min(100, Math.max(0, accuracy))}% 100%)`
+                }}
+              >
+                <div style={styles.mockExamGaugeCenter}>
+                  <strong style={styles.mockExamGaugeValue}>{formatPercent(accuracy)}</strong>
+                  <span style={styles.mockExamGaugeLabel}>누적</span>
+                </div>
+              </div>
+            </div>
+            <span style={styles.statHelper}>워크북 문제 풀이 기준</span>
+          </div>
+        </div>
+        <div style={isMobile ? styles.sliderItem : undefined}>
+          <div style={styles.mockExamCard}>
+            <p style={styles.statLabel}>풀이 현황</p>
+            <ul style={styles.mockExamList}>
+              <li style={styles.mockExamListItem}>
+                <span>총 풀이</span>
+                <strong>{formatNumber(total)}문</strong>
+              </li>
+              <li style={styles.mockExamListItem}>
+                <span>정답</span>
+                <strong>{formatNumber(correct)}문</strong>
+              </li>
+              <li style={styles.mockExamListItem}>
+                <span>오답</span>
+                <strong>{formatNumber(incorrect)}문</strong>
+              </li>
+            </ul>
+            <p style={styles.mockExamNote}>학습 진행에 따라 자동 누적됩니다.</p>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 };
 

@@ -916,7 +916,10 @@ const getTimeLimitSeconds = useCallback(() => {
                                   onClick={() => handleSelectSet(set)}
                                 >
                                   <div className="shimmer" aria-hidden />
-                                  <span style={styles.setTitle}>{set.title}</span>
+                                  <span style={{
+                                    ...styles.setTitle,
+                                    ...(isMobile ? { wordBreak: 'break-word', lineHeight: 1.35 } : {})
+                                  }}>{set.title}</span>
                                   <span style={styles.setMeta}>분류: {categoryDisplayText}</span>
                                   <span style={styles.setMeta}>총 {set.totalDays} Day / {set.totalWords} 단어</span>
                                 </button>
@@ -1771,7 +1774,7 @@ const styles = {
     boxShadow: '0 18px 36px rgba(15, 23, 42, 0.28)',
     color: '#e2e8f0',
     backgroundSize: '200% 200%',
-    animation: 'slowGradient 24s ease-in-out infinite'
+    animation: 'slowGradient 36s ease-in-out infinite'
   },
   categoryHeaderButtonCollapsed: {
     background: 'linear-gradient(135deg, rgba(30,41,59,0.8), rgba(15,23,42,0.85))',
@@ -1844,7 +1847,7 @@ const styles = {
     boxShadow: '0 24px 42px rgba(15, 23, 42, 0.28)',
     color: '#e2e8f0',
     backgroundSize: '200% 200%',
-    animation: 'slowGradient 24s ease-in-out infinite'
+    animation: 'slowGradient 36s ease-in-out infinite'
   },
   setTitle: {
     display: 'block',
@@ -1910,7 +1913,7 @@ const styles = {
     boxShadow: '0 22px 42px rgba(15, 23, 42, 0.28)',
     color: '#e2e8f0',
     backgroundSize: '200% 200%',
-    animation: 'slowGradient 24s ease-in-out infinite'
+    animation: 'slowGradient 36s ease-in-out infinite'
   },
   dayCardSelected: {
     borderColor: 'rgba(34,197,94,0.6)',

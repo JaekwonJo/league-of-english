@@ -74,7 +74,7 @@ export const adminStyles = {
     border: '1px solid rgba(148,163,184,0.28)',
     color: '#e2e8f0',
     backgroundSize: '200% 200%',
-    animation: 'slowGradient 24s ease-in-out infinite'
+    animation: 'slowGradient 36s ease-in-out infinite'
   },
   cardMobile: {
     padding: '22px'
@@ -252,7 +252,7 @@ export const adminStyles = {
     transition: 'all 0.3s',
     color: '#e2e8f0',
     backgroundSize: '200% 200%',
-    animation: 'slowGradient 24s ease-in-out infinite'
+    animation: 'slowGradient 36s ease-in-out infinite'
   },
   documentCardMobile: {
     padding: '18px'
