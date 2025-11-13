@@ -89,6 +89,10 @@ try {
   console.warn("[aiProblemService] OpenAI SDK unavailable:", error?.message || error);
 }
 
+// Configurable OpenAI models (fallbacks preserved)
+const PRIMARY_MODEL = process.env.LOE_OPENAI_PRIMARY_MODEL || 'gpt-4o';
+const SECONDARY_MODEL = process.env.LOE_OPENAI_SECONDARY_MODEL || 'gpt-4o-mini';
+
 const TOPIC_QUESTION = "\ub2e4\uc74c \uae00\uc758 \uc8fc\uc81c\ub85c \uac00\uc7a5 \uc801\uc808\ud55c \uac83\uc744 \uace0\ub974\uc2dc\uc624.";
 const IMPLICIT_QUESTION = "\ub2e4\uc74c \uae00\uc5d0\uc11c \ubc11\uc904 \uce5c \ubd80\ubd84\uc774 \uc758\ubbf8\ud558\ub294 \ubc14\ub85c \uac00\uc7a5 \uc801\uc808\ud55c \uac83\uc740?";
 const IRRELEVANT_QUESTION = "\ub2e4\uc74c \uae00\uc5d0\uc11c \uc804\uccb4 \ud750\ub984\uacfc \uad00\uacc4 \uc5c6\ub294 \ubb38\uc7a5\uc740?";
@@ -306,7 +310,7 @@ class AIProblemService {
         try {
           const highTier = attempt >= Math.max(2, Math.floor(MAX_RETRIES / 2));
           const response = await this.callChatCompletion({
-            model: highTier ? 'gpt-4o' : 'gpt-4o-mini',
+            model: highTier ? PRIMARY_MODEL : SECONDARY_MODEL,
             temperature: highTier ? 0.18 : 0.28,
             max_tokens: highTier ? 1300 : 900,
             messages: [{ role: 'user', content: prompt }]
@@ -389,7 +393,7 @@ class AIProblemService {
     ].filter(Boolean).join('\n\n');
 
     const response = await this.callChatCompletion({
-      model: 'gpt-4o',
+      model: PRIMARY_MODEL,
       temperature: 0.18,
       max_tokens: 1200,
       messages: [
@@ -696,7 +700,7 @@ class AIProblemService {
     const prompt = promptParts.filter(Boolean).join('\n\n');
 
     const response = await this.callChatCompletion({
-      model: 'gpt-4o',
+      model: PRIMARY_MODEL,
       temperature: 0.18,
       max_tokens: 1200,
       messages: [
@@ -1280,7 +1284,7 @@ ${clipText(passage, 1600)}`,
 
           const useHighTierModel = attempt >= 3;
           const response = await this.callChatCompletion({
-            model: useHighTierModel ? 'gpt-4o' : 'gpt-4o-mini',
+            model: useHighTierModel ? PRIMARY_MODEL : SECONDARY_MODEL,
             temperature: useHighTierModel ? 0.24 : 0.3,
             max_tokens: useHighTierModel ? 1050 : 900,
             messages: [{ role: 'user', content: prompt }]

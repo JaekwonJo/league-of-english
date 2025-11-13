@@ -517,28 +517,17 @@ function normalizeBlankPayload(payload, context = {}) {
   }
 
   if (normalizedOriginalPassage) {
-    const originalLength = normalizedOriginalPassage.length;
-    const allowedDelta = Math.max(120, Math.floor(originalLength * 0.1));
-    if (normalizedText.length < originalLength - allowedDelta) {
-      throw new Error('blank text missing original sentences');
-    }
-    const originalSentenceCount = countSentences(normalizedOriginalPassage);
-    if (originalSentenceCount >= 2) {
-      const normalizedSentenceCount = countSentences(normalizedText);
-      if (normalizedSentenceCount + 1 < originalSentenceCount) {
-        throw new Error('blank text missing sentence count');
-      }
-    }
-
-    // Strict check: original passage must be identical except for the single blank
+    // First, strict check: must match original exactly after restoring the blank
     if (targetExpression) {
       const restored = String(normalizedText).replace(BLANK_PLACEHOLDER_REGEX, String(targetExpression));
       const restoredNormalized = normalizeWhitespace(restored);
       const originalNormalized = normalizeWhitespace(normalizedOriginalPassage);
       if (restoredNormalized !== originalNormalized) {
+        // If not exact, reject immediately (no length/sentence leniency)
         throw new Error('blank passage deviates from original except blank');
       }
     }
+    // When strict equivalence holds, additional length/sentence checks are unnecessary.
   }
 
   const explanation = String(payload.explanation || '').trim();

@@ -232,6 +232,9 @@ const ProfilePage = () => {
           </div>
         </div>
 
+        {/* 프로필 간단 수정(학교/학년) */}
+        <ProfileEditCard />
+
         <div style={styles.statsSection}>
           <h3 style={styles.statsHeading}>📈 나의 학습 요약</h3>
           {statsLoading ? (
@@ -341,6 +344,53 @@ const ProfilePage = () => {
           </div>
         </div>
       </div>
+    </div>
+  );
+};
+
+const ProfileEditCard = () => {
+  const { user, setUser } = useAuth();
+  const [school, setSchool] = useState(user?.school || '');
+  const [grade, setGrade] = useState(user?.grade ? String(user.grade) : '1');
+  const [name, setName] = useState(user?.name || '');
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState('');
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      setMsg('');
+      const payload = { school: school.trim(), grade: parseInt(grade, 10), name: name.trim() };
+      const res = await api.users.updateProfile(payload);
+      if (res?.user) {
+        setUser(res.user);
+        setMsg('프로필을 저장했어요. 🎉');
+      } else if (res?.message) {
+        setMsg(res.message);
+      }
+    } catch (err) {
+      setMsg(err?.message || '프로필을 저장하지 못했어요.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div style={styles.editCard}>
+      <h3 style={styles.editTitle}>프로필 수정</h3>
+      <div style={styles.editRow}>
+        <input style={styles.editInput} value={name} onChange={(e) => setName(e.target.value)} placeholder="이름" />
+        <input style={styles.editInput} value={school} onChange={(e) => setSchool(e.target.value)} placeholder="학교명" />
+        <select style={styles.editInput} value={grade} onChange={(e) => setGrade(e.target.value)}>
+          <option value="1">고1</option>
+          <option value="2">고2</option>
+          <option value="3">고3</option>
+        </select>
+      </div>
+      {msg && <p style={styles.editMsg}>{msg}</p>}
+      <button type="button" style={styles.editSave} onClick={handleSave} disabled={saving}>
+        {saving ? '저장 중…' : '저장하기'}
+      </button>
     </div>
   );
 };
@@ -524,6 +574,43 @@ const styles = {
     background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.18), rgba(147, 197, 253, 0.14))',
     border: '1px solid rgba(148, 163, 184, 0.25)',
     boxShadow: '0 20px 38px rgba(30, 64, 175, 0.18)'
+  },
+  editCard: {
+    marginTop: '18px',
+    background: 'rgba(15,23,42,0.6)',
+    borderRadius: '16px',
+    padding: '16px',
+    border: '1px solid var(--border-subtle)'
+  },
+  editTitle: {
+    margin: 0,
+    marginBottom: '12px',
+    fontSize: '18px',
+    fontWeight: 800
+  },
+  editRow: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr 100px',
+    gap: '10px'
+  },
+  editInput: {
+    padding: '10px 12px',
+    borderRadius: '10px',
+    border: '1px solid var(--border-subtle)',
+    background: 'rgba(2,6,23,0.4)',
+    color: 'var(--text-inverse)'
+  },
+  editSave: {
+    marginTop: '10px',
+    padding: '10px 14px',
+    borderRadius: '10px',
+    background: 'var(--accent-soft)',
+    color: 'var(--text-primary)',
+    border: '1px solid var(--accent-primary)'
+  },
+  editMsg: {
+    margin: '8px 0 0 0',
+    color: 'var(--tone-muted)'
   },
   reviewQueueHeader: {
     display: 'flex',

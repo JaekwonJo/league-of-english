@@ -44,6 +44,7 @@ const clientErrorRoutes = require('./routes/errors.routes');
 const workbookRoutes = require('./routes/workbook.routes');
 const videoRoutes = require('./routes/video.routes');
 const mockExamRoutes = require('./routes/mockExam.routes');
+const usersRoutes = require('./routes/users.routes');
 
 // App init
 const app = express();
@@ -96,6 +97,7 @@ app.use('/api/video', videoRoutes);
 app.use('/api/teacher', teacherRoutes);
 app.use('/api/errors', clientErrorRoutes);
 app.use('/api/mock-exam', mockExamRoutes);
+app.use('/api', usersRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

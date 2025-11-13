@@ -765,3 +765,9 @@ NODE` 로 5문항 생성 결과 (가족/전략 태그·한글 해설·단일 빈
 - Golden Set: 사전 제작 문제 로더 추가. index.json 매핑으로 문서 코드/제목→JSON 연결, 캐시/AI보다 우선 제공 (server/services/goldenSetService.js, server/services/problemSetService.js).
 - Docs: PROJECT_STATE/README에 Golden Set 사용법과 엄격 모드 설명 보강.
  - AI-only: `LOE_ENFORCE_AI_ONLY`로 Golden/폴백 비활성화, `LOE_AIGEN_MAX_RETRIES`/`LOE_AIGEN_BUDGET_MS`로 재시도/시간 조정 (problemSetService.js, aiProblemService.js, README.md).
+## 2025-11-13
+- Issue: 분석 결과에 한국어 요약이 3번 반복 노출됨, 빈칸 문제에서 원문이 일부 누락됨, 카카오 가입시 학교 고정.
+- Cause: 제목 리스트에서 `englishSummaryKorean`을 재사용해 중복 표기, 빈칸 검증에 길이 관용치 허용, 프로필 편집 API 부재.
+- Fix: 제목 옆 한국어 제거(AnalysisPage.js), 문장별 상세 섹션은 요청에 따라 다시 표시. 빈칸 원문 동일성 엄격 비교(blank.js), 프로필 API/화면 추가.
+- Files: client/src/pages/AnalysisPage.js, server/services/ai-problem/blank.js, server/services/aiProblemService.js, server/services/vocab-generation/index.js, server/services/grammar-generation/config.js, server/utils/documentAnalyzer.js, server/services/kakaoAuthService.js, server/routes/users.routes.js, server/server.js, client/src/pages/ProfilePage.js
+- Verification: 분석 상세에서 제목 중복 제거 + 문장별 섹션 정상 노출, 빈칸 생성 시 복원 비교 통과/불일치 시 실패, 프로필에서 학교/학년 저장 동작 확인.

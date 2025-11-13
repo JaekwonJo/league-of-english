@@ -353,7 +353,7 @@ class DocumentAnalyzer {
 
       try {
         const resp = await this.openai.chat.completions.create({
-          model: 'gpt-4o-mini',
+          model: process.env.LOE_OPENAI_ANALYSIS_MODEL || process.env.LOE_OPENAI_SECONDARY_MODEL || 'gpt-4o-mini',
           temperature: attempt === 1 ? 0.4 : 0.35,
           max_tokens: 3200,
           response_format: { type: 'json_object' },

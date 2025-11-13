@@ -106,7 +106,7 @@ async function findOrCreateUserFromKakao(profile) {
         hashed,
         email,
         nickname,
-        'League of English',
+        '', // 학교는 가입 후 프로필에서 입력하도록 비워 둡니다
         1,
         'student',
         'free',

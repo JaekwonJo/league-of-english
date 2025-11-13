@@ -1127,8 +1127,9 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
     const { meta = {} } = variant || {};
     const englishTitles = Array.isArray(meta.englishTitles) ? meta.englishTitles.slice(0, 2) : [];
     const authorClaims = Array.isArray(meta.authorClaims) ? meta.authorClaims : (meta.authorsClaim ? [meta.authorsClaim] : []);
-    const relatedExamples = Array.isArray(meta.relatedExamples) ? meta.relatedExamples : [];
-    const modernApplications = Array.isArray(meta.modernApplications) ? meta.modernApplications.slice(0, 3) : [];
+    // UX: 요청에 따라 관련 예시/체크포인트는 숨깁니다.
+    const relatedExamples = [];
+    const modernApplications = [];
     const englishSummary = meta.englishSummary || '영어 한 줄 요약이 준비되는 중이에요.';
     const englishSummaryKorean = meta.englishSummaryKorean || '한 줄 요약을 우리말로 직접 정리해 보세요.';
 
@@ -1144,12 +1145,10 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
               // show ❓ only once (first item), even if multiple titles are questions
               const showQuestion = !questionRendered && (title.isQuestion || /\?$/.test(String(title.title || '')));
               if (showQuestion) questionRendered = true;
-              const koreanSide = String(title.korean || meta.englishSummaryKorean || '').trim();
               return (
                 <li key={`title-${index}`}>
                   <strong>{index + 1}.</strong> {title.title}
                   {showQuestion ? ' ❓' : ''}
-                  {koreanSide ? ` — ${koreanSide}` : ''}
                 </li>
               );
             }) : <li>영어 제목을 직접 정리해 보세요.</li>}

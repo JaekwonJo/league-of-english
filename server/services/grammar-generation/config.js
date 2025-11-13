@@ -5,8 +5,8 @@ const CONFIG_PATH = path.join(__dirname, 'config.json');
 
 const DEFAULT_CONFIG = {
   models: [
-    { name: 'gpt-4o-mini', retries: 3, temperature: 0.25, maxTokens: 900 },
-    { name: 'gpt-4o', retries: 3, temperature: 0.2, maxTokens: 1100 }
+    { name: process.env.LOE_OPENAI_SECONDARY_MODEL || 'gpt-4o-mini', retries: 3, temperature: 0.25, maxTokens: 900 },
+    { name: process.env.LOE_OPENAI_PRIMARY_MODEL || 'gpt-4o', retries: 3, temperature: 0.2, maxTokens: 1100 }
   ],
   minExplanationChars: 120,
   minExplanationSentences: 3,

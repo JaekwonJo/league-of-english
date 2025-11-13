@@ -64,7 +64,7 @@ function createVocabPipeline({
 
         const highTier = attempts >= 3;
         const response = await callChatCompletion({
-          model: highTier ? 'gpt-4o' : 'gpt-4o-mini',
+          model: highTier ? (process.env.LOE_OPENAI_PRIMARY_MODEL || 'gpt-4o') : (process.env.LOE_OPENAI_SECONDARY_MODEL || 'gpt-4o-mini'),
           temperature: highTier ? 0.24 : 0.3,
           max_tokens: highTier ? 1050 : 900,
           messages: [{ role: 'user', content: prompt }]
@@ -83,7 +83,7 @@ function createVocabPipeline({
           targetIncorrectCount: variant.targetIncorrectCount,
           targetCorrectCount: variant.targetCorrectCount
         });
-        selectedModel = highTier ? 'gpt-4o' : 'gpt-4o-mini';
+        selectedModel = highTier ? (process.env.LOE_OPENAI_PRIMARY_MODEL || 'gpt-4o') : (process.env.LOE_OPENAI_SECONDARY_MODEL || 'gpt-4o-mini');
       } catch (error) {
         lastFailure = String(error?.message || error || 'vocabulary failure');
         if (logger && logger.warn) logger.warn('[vocab-pipeline] gen failed:', lastFailure);
