@@ -333,21 +333,7 @@ const MockExamPage = () => {
           </button>
         </div>
       </div>
-      <div style={styles.heroIllustration}>
-        <div style={styles.heroAura} aria-hidden="true" />
-        <div style={styles.heroOwlBody}>
-          <div style={styles.heroOwlFace}>
-            <span style={styles.heroOwlEyeLeft} />
-            <span style={styles.heroOwlEyeRight} />
-            <span style={styles.heroOwlBeak} />
-          </div>
-          <div style={styles.heroOwlWingLeft} />
-          <div style={styles.heroOwlWingRight} />
-          <div style={styles.heroOwlBadge}>🦅</div>
-          <div style={styles.heroOwlFeet} />
-        </div>
-        <span style={styles.heroSparkles} aria-hidden="true">✨</span>
-      </div>
+      {/* 캐릭터 일러스트 제거로 더 담백한 히어로 유지 */}
     </section>
   );
 
@@ -706,6 +692,14 @@ const MockExamPage = () => {
                     )}
                     {explanation?.text && (
                       <div style={styles.explanationBox}>
+                        <button
+                          type="button"
+                          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                          style={{ alignSelf: 'flex-end', padding: '8px 12px', borderRadius: 999, border: '1px solid var(--surface-border)', background: 'var(--surface-card)', cursor: 'pointer', fontWeight: 700 }}
+                          title="맨 위로 가기"
+                        >
+                          ↑ 맨 위로
+                        </button>
                         {explanation.text.split('\n').map((line, idx) => (
                           <p key={idx} style={styles.explanationLine}>{line}</p>
                         ))}

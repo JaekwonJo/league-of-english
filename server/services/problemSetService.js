@@ -347,10 +347,18 @@ async function handleAiBackedType({
   }
 
   try {
-    const generatedBatch = await withTimeout(
-      aiService[generatorName](documentId, remaining),
-      AI_TIME_BUDGET_MS
-    );
+    let generatedBatch;
+    if (generatorName === 'generateBlank') {
+      generatedBatch = await withTimeout(
+        aiService.generateBlank(documentId, remaining, { passages: context.passages }),
+        AI_TIME_BUDGET_MS
+      );
+    } else {
+      generatedBatch = await withTimeout(
+        aiService[generatorName](documentId, remaining),
+        AI_TIME_BUDGET_MS
+      );
+    }
     const savedBatch = await aiService.saveProblems(documentId, type, generatedBatch, {
       docTitle,
       documentCode
@@ -578,15 +586,18 @@ async function generateCsatSet({
   const appendProblems = (list) => {
     let added = 0;
     if (!Array.isArray(list)) return added;
+    // Deduplicate by id and by content signature (question + mainText) to avoid duplicates from AI
+    if (!appendProblems._sig) appendProblems._sig = new Set();
 
     for (const entry of list) {
       if (!entry || typeof entry !== 'object') continue;
       const identifier = entry.id || entry.originalId || entry.problemId || null;
       const key = identifier !== null && identifier !== undefined ? String(identifier) : null;
-      if (key) {
-        if (usedProblemIds.has(key)) continue;
-        usedProblemIds.add(key);
-      }
+      if (key && usedProblemIds.has(key)) continue;
+      const q = (entry.question || '').trim();
+      const m = (entry.mainText || entry.passage || '').trim();
+      const sig = `${q}|${m}`.replace(/\s+/g, ' ').toLowerCase();
+      if (appendProblems._sig.has(sig)) continue;
 
       const sequence = aggregated.length + added + 1;
       const sourceContextTitle = docTitle || entry.metadata?.documentTitle || entry.sourceLabel || documentCode;
@@ -611,6 +622,8 @@ async function generateCsatSet({
 
       aggregated.push(normalized);
       added += 1;
+      if (key) usedProblemIds.add(key);
+      appendProblems._sig.add(sig);
     }
 
     return added;

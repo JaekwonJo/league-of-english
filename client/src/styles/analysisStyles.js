@@ -3,8 +3,7 @@ export const analysisStyles = {
     padding: '28px 20px 72px',
     maxWidth: '1080px',
     margin: '0 auto',
-    fontFamily: "'Noto Sans KR', sans-serif",
-    background: 'linear-gradient(180deg, rgba(99, 102, 241, 0.06) 0%, rgba(255, 255, 255, 0) 48%)'
+    fontFamily: "'Noto Sans KR', sans-serif"
   },
   header: {
     marginBottom: '28px',

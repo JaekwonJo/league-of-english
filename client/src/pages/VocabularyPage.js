@@ -1851,13 +1851,16 @@ const styles = {
     fontSize: '1.1rem',
     fontWeight: 600,
     marginBottom: '8px',
-    color: 'var(--tone-hero)'
+    color: 'var(--tone-hero)',
+    wordBreak: 'keep-all',
+    lineHeight: 1.4
   },
   setMeta: {
     display: 'block',
     color: 'var(--text-primary)',
     fontSize: '0.9rem',
-    marginBottom: '4px'
+    marginBottom: '4px',
+    wordBreak: 'keep-all'
   },
   previewWords: {
     marginTop: '12px',

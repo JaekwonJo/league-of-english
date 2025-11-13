@@ -277,8 +277,14 @@ class AIProblemService {
     return { document: doc, passages, parsedContent };
   }
 
-  async generateBlank(documentId, count = 5) {
-    const { document, passages } = await this.getPassages(documentId);
+  async generateBlank(documentId, count = 5, options = {}) {
+    // Allow caller to pass pre-fetched passages or selection
+    let passages = Array.isArray(options.passages) ? options.passages.filter(Boolean) : null;
+    if (!passages || !passages.length) {
+      const { passages: fetched } = await this.getPassages(documentId, options.passageNumbers ? { passageNumbers: options.passageNumbers } : {});
+      passages = fetched || [];
+    }
+    const { document } = await this.getPassages(documentId);
     const documentCode = document?.code || document?.slug || document?.external_id || null;
     const docTitle = document?.title || documentCode || `Document ${documentId}`;
 
