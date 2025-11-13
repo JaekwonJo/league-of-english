@@ -180,7 +180,6 @@ const MainLayout = ({ children, currentPath }) => {
             title={isMobile ? '메뉴 닫기' : undefined}
           >
             <img src="/assets/brand/eagle-crest.svg" alt="LoE" style={{ width: 22, height: 22 }} />
-            <span style={styles.logoEmoji} aria-hidden>🦅</span>
             {sidebarOpen && (
               <span style={{ ...styles.logoText, ...(brandActive ? styles.logoTextActive : {}) }}>
                 League of English

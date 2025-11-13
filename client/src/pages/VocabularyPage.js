@@ -953,7 +953,7 @@ const getTimeLimitSeconds = useCallback(() => {
                                   type="button"
                                   data-testid="vocab-set-card"
                                   data-set-id={set.id}
-                                  className="ui-pressable ui-elevate"
+                                  className="ui-pressable ui-elevate tilt-hover"
                                   style={{
                                     ...styles.setCard,
                                     borderColor: isActive ? 'var(--color-blue-500)' : 'transparent',
@@ -996,7 +996,7 @@ const getTimeLimitSeconds = useCallback(() => {
                         key={day.key}
                         data-testid="vocab-day-card"
                         data-day-key={day.key}
-                        className={`ui-pressable ui-elevate anim-fadeInUp delay-${Math.min(idx, 3)}`}
+                        className={`ui-pressable ui-elevate tilt-hover anim-fadeInUp delay-${Math.min(idx, 3)}`}
                         style={{
                           ...styles.dayCard,
                           ...(selected ? styles.dayCardSelected : {}),
@@ -1881,7 +1881,7 @@ const styles = {
     gap: '16px'
   },
   setCard: {
-    background: 'var(--surface-card)',
+    background: 'linear-gradient(150deg, rgba(15,23,42,0.92), rgba(30,64,175,0.7))',
     borderRadius: '18px',
     padding: '20px',
     textAlign: 'left',
@@ -1889,8 +1889,10 @@ const styles = {
     transition: 'all 0.25s ease',
     border: '2px solid transparent',
     cursor: 'pointer',
-    boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)',
-    color: 'var(--text-primary)'
+    boxShadow: '0 8px 24px rgba(15, 23, 42, 0.18)',
+    color: '#e2e8f0',
+    backgroundSize: '200% 200%',
+    animation: 'slowGradient 24s ease-in-out infinite'
   },
   setTitle: {
     display: 'block',
@@ -1942,13 +1944,13 @@ const styles = {
     fontSize: '0.95rem'
   },
   dayCard: {
-    background: 'linear-gradient(135deg, rgba(255,255,255,0.95), rgba(236,233,254,0.9))',
+    background: 'linear-gradient(135deg, rgba(238,242,255,0.92), rgba(219,234,254,0.9))',
     borderRadius: '16px',
     padding: '18px',
     cursor: 'pointer',
     border: '1px solid rgba(255,255,255,0.6)',
     transition: 'all 0.2s ease',
-    boxShadow: '0 18px 36px rgba(15, 23, 42, 0.15)',
+    boxShadow: '0 18px 36px rgba(15, 23, 42, 0.12)',
     position: 'relative',
     color: '#1f2a5a'
   },
