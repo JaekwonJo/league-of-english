@@ -183,6 +183,12 @@ const VocabularyPage = () => {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [setQuery, setSetQuery] = useState('');
+  // 하단 포인터 화살표 부드러운 점프 애니메이션
+  const [pointerUp, setPointerUp] = useState(false);
+  useEffect(() => {
+    const id = setInterval(() => setPointerUp((v) => !v), 700);
+    return () => clearInterval(id);
+  }, []);
 
   const getTierStep = useCallback(() => {
     const tierName = String(user?.tier?.name || user?.tierInfo?.name || user?.tier || '').toLowerCase();
@@ -820,7 +826,16 @@ const getTimeLimitSeconds = useCallback(() => {
       <div style={styles.pointerBanner}>
         <span role="img" aria-label="eagle">🦅</span>
         <span style={{ margin: '0 8px' }}>아래에서 단어장을 골라요!</span>
-        <span className="pointer-bounce" aria-hidden="true">👇</span>
+        <span
+          aria-hidden="true"
+          style={{
+            display: 'inline-block',
+            transform: pointerUp ? 'translateY(-3px)' : 'translateY(1px)',
+            transition: 'transform 300ms ease'
+          }}
+        >
+          👇
+        </span>
       </div>
 
       <div style={styles.stepper}>
