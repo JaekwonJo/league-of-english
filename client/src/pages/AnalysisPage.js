@@ -750,8 +750,11 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
                         const palette = calmPalette;
                         const isHovered = hoveredDocumentId === doc.id;
                         const description = doc.description || '지문을 선택해 전문 분석을 살펴보세요.';
+                        const brandName = 'league of english';
+                        const normalizedSchool = String(doc.school || '').trim();
+                        const showSchool = normalizedSchool && normalizedSchool.toLowerCase() !== brandName ? normalizedSchool : null;
                         const docMetaItems = [
-                          doc.school || null,
+                          showSchool,
                           doc.grade ? `고${doc.grade}` : null
                         ].filter(Boolean);
                         return (
@@ -776,7 +779,7 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
                           >
                             <div style={analysisStyles.documentCardBadgeRow}>
                               <span style={analysisStyles.documentCardBadge}>{doc.category || '분류 미지정'}</span>
-                              {doc.school && <span style={analysisStyles.documentCardMeta}>{doc.school}</span>}
+                              {showSchool && <span style={analysisStyles.documentCardMeta}>{showSchool}</span>}
                             </div>
                             <div style={analysisStyles.documentCardHeader}>
                               <h3 style={analysisStyles.documentCardTitle}>{section.icon} {doc.title}</h3>

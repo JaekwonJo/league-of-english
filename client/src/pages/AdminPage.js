@@ -31,7 +31,7 @@ const initialUploadForm = {
   file: null
 };
 
-const DEFAULT_EXAM_ID = process.env.REACT_APP_MOCK_EXAM_ID || '2025-10';
+  const DEFAULT_EXAM_ID = process.env.REACT_APP_MOCK_EXAM_ID || '2025-10';
 
 const toastStyles = {
   container: {
@@ -494,17 +494,17 @@ const AdminPage = () => {
               <EagleGuideChip text="문제지와 해설을 반드시 동시에 올려 주세요" variant="warning" />
             </div>
 
-            <div style={responsive(adminStyles.mockExamForm, adminStyles.mockExamFormMobile)}>
+              <div style={responsive(adminStyles.mockExamForm, adminStyles.mockExamFormMobile)}>
               <div style={adminStyles.mockExamField}>
-                <label style={adminStyles.mockExamLabel}>시험 ID</label>
+                <label style={adminStyles.mockExamLabel}>시험 이름</label>
                 <input
                   type="text"
                   value={mockExamForm.examId}
                   onChange={(event) => handleMockExamFieldChange('examId', event.target.value)}
                   style={adminStyles.mockExamInput}
-                  readOnly
+                  placeholder="예: 2-25-10"
                 />
-                <span style={adminStyles.mockExamHint}>현재는 2025-10 회차로 고정되어 있습니다.</span>
+                <span style={adminStyles.mockExamHint}>원하는 이름을 자유롭게 입력해 주세요 (예: 1-25-10, 2-25-10).</span>
               </div>
 
               <div style={adminStyles.mockExamField}>
