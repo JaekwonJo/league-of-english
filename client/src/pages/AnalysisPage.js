@@ -776,14 +776,19 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
                             onBlur={() => setHoveredDocumentId(null)}
                             onClick={() => handleDocumentClick(doc)}
                           >
-                            <div style={analysisStyles.documentCardBadgeRow}>
-                              <span style={analysisStyles.documentCardBadge}>{doc.category || '분류 미지정'}</span>
-                              {showSchool && <span style={analysisStyles.documentCardMeta}>{showSchool}</span>}
+                            <div style={analysisStyles.docGlassHeader}>
+                              <div className="shimmer" aria-hidden />
+                              <div style={analysisStyles.docBadgeRow}>
+                                <span style={analysisStyles.docBadge}>전문 분석</span>
+                                {doc.code && (<span style={analysisStyles.docCodePill}>📝 {doc.code}</span>)}
+                                {doc.grade && (<span style={analysisStyles.docGradePill}>고{doc.grade}</span>)}
+                                {showSchool && (<span style={analysisStyles.documentCardMeta}>{showSchool}</span>)}
+                              </div>
+                              <div style={analysisStyles.documentCardHeader}>
+                                <h3 style={analysisStyles.documentCardTitle}>{section.icon} {doc.title}</h3>
+                              </div>
+                              <p style={analysisStyles.docGlassSub}>{description}</p>
                             </div>
-                            <div style={analysisStyles.documentCardHeader}>
-                              <h3 style={analysisStyles.documentCardTitle}>{section.icon} {doc.title}</h3>
-                            </div>
-                            <p style={analysisStyles.documentCardDescription}>{description}</p>
                             {docMetaItems.length > 0 && (
                               <div style={analysisStyles.documentCardMetaRow}>
                                 {docMetaItems.map((item) => (
@@ -793,7 +798,7 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
                             )}
                             <div style={analysisStyles.documentCardFooter}>
                               <span style={analysisStyles.documentCardHint}>✨ 탭하면 지문 목록이 펼쳐져요</span>
-                              <span style={analysisStyles.documentCardPill}>전문 분석</span>
+                              <span style={analysisStyles.documentCardPill}>지문 펼치기 →</span>
                             </div>
                           </button>
                         );

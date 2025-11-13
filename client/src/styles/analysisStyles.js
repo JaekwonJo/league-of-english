@@ -218,6 +218,60 @@ export const analysisStyles = {
     textAlign: 'left',
     transition: 'transform 0.2s ease, box-shadow 0.2s ease'
   },
+  docGlassHeader: {
+    position: 'relative',
+    background: 'linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.06))',
+    border: '1px solid rgba(255,255,255,0.28)',
+    borderRadius: '18px',
+    padding: '16px',
+    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.25), 0 14px 28px rgba(15,23,42,0.25)'
+  },
+  docBadgeRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    marginBottom: '8px',
+    flexWrap: 'wrap'
+  },
+  docBadge: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    padding: '6px 10px',
+    borderRadius: '999px',
+    background: 'rgba(15,23,42,0.5)',
+    color: '#e0e7ff',
+    fontWeight: 700,
+    fontSize: '0.78rem',
+    border: '1px solid rgba(255,255,255,0.25)'
+  },
+  docCodePill: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    padding: '6px 10px',
+    borderRadius: '999px',
+    background: 'rgba(14,165,233,0.18)',
+    color: '#bae6fd',
+    fontWeight: 700,
+    fontSize: '0.78rem',
+    border: '1px solid rgba(14,165,233,0.35)'
+  },
+  docGradePill: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    padding: '6px 10px',
+    borderRadius: '999px',
+    background: 'rgba(129,140,248,0.18)',
+    color: '#c7d2fe',
+    fontWeight: 700,
+    fontSize: '0.78rem',
+    border: '1px solid rgba(129,140,248,0.35)'
+  },
+  docGlassSub: {
+    margin: 0,
+    color: 'rgba(248,250,252,0.92)',
+    fontSize: '0.95rem',
+    lineHeight: 1.6
+  },
   documentCardHeader: {
     display: 'flex',
     justifyContent: 'space-between',
