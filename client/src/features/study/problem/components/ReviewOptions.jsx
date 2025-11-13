@@ -48,7 +48,7 @@ const ReviewOptions = ({
 
   const explanationBlock = explanationText ? (
     <div style={reviewStyles.explanation}>
-      <div style={reviewStyles.explanationTitle}>해설</div>
+      <div style={reviewStyles.explanationTitle}>💡 쉬운 해설</div>
       {renderWithUnderline(explanationText)}
     </div>
   ) : null;
