@@ -6,6 +6,7 @@ import PassagePickerGrid from '../components/shared/PassagePickerGrid';
 import PassagePreviewModal from '../components/shared/PassagePreviewModal';
 import FriendlyError from '../components/common/FriendlyError';
 import EagleGuideChip from '../components/common/EagleGuideChip';
+import CommonHero from '../components/common/CommonHero';
 
 const MAX_VARIANTS_PER_PASSAGE = 2;
 const MAX_PASSAGE_LABEL_LENGTH = 40;
@@ -671,45 +672,41 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
 
     return (
       <div style={analysisStyles.container}>
-        <section style={analysisStyles.docHero}>
-          <div style={analysisStyles.docHeroGlow} />
-          <div style={analysisStyles.docHeroContent}>
-            <span style={analysisStyles.docHeroBadge}>전문 분석 라운지</span>
-            <h1 style={analysisStyles.docHeroHeadline}>📖 문서 분석 자료</h1>
-            <p style={analysisStyles.docHeroSub}>
-              모의고사와 자체 제작 교재를 한곳에서 정리하고, 필요한 지문만 골라 전문 분석을 바로 받아 보세요. 정돈된 학습 환경이 분석 여정을 끝까지 책임집니다.
-            </p>
-            <EagleGuideChip text="지문을 탭하면 분석본을 바로 펼쳐 줍니다" variant="accent" />
-            <div style={analysisStyles.docHeroSearchRow}>
-              <input
-                ref={searchInputRef}
-                type="search"
-                value={documentSearch}
-                onChange={(event) => setDocumentSearch(event.target.value)}
-                placeholder="문서 제목이나 코드(예: 1-25-10)를 입력해 보세요"
-                style={analysisStyles.docSearchInput}
-              />
-              {documentSearch ? (
-                <button type="button" style={analysisStyles.docSearchClear} onClick={() => setDocumentSearch('')}>
-                  검색 초기화
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  style={analysisStyles.docSearchButton}
-                  onClick={() => searchInputRef.current?.focus?.()}
-                >
-                  인기 지문 살펴보기
-                </button>
-              )}
-            </div>
-            <p style={analysisStyles.docHeroNote}>Tip: 코드(예: 2-25-10)나 교재명을 입력하면 원하는 문서를 바로 찾을 수 있어요.</p>
-            <div style={analysisStyles.docHeroStatPill}>
-              <span>📚 등록된 문서</span>
-              <strong>{totalDocuments ? `${totalDocuments.toLocaleString()}개` : '준비 중'}</strong>
-            </div>
+        <CommonHero
+          badge="Analysis Lounge"
+          title="문서 분석 자료"
+          subtitle="모의고사/교재를 한곳에 정리해, 필요한 지문만 골라 전문 분석을 받아보세요."
+        >
+          <EagleGuideChip text="지문을 탭하면 분석본을 바로 펼쳐 줍니다" variant="accent" />
+          <div style={analysisStyles.docHeroSearchRow}>
+            <input
+              ref={searchInputRef}
+              type="search"
+              value={documentSearch}
+              onChange={(event) => setDocumentSearch(event.target.value)}
+              placeholder="문서 제목이나 코드(예: 1-25-10)를 입력해 보세요"
+              style={analysisStyles.docSearchInput}
+            />
+            {documentSearch ? (
+              <button type="button" style={analysisStyles.docSearchClear} onClick={() => setDocumentSearch('')}>
+                검색 초기화
+              </button>
+            ) : (
+              <button
+                type="button"
+                style={analysisStyles.docSearchButton}
+                onClick={() => searchInputRef.current?.focus?.()}
+              >
+                인기 지문 살펴보기
+              </button>
+            )}
           </div>
-        </section>
+          <p style={analysisStyles.docHeroNote}>Tip: 코드(예: 2-25-10)나 교재명을 입력하면 원하는 문서를 바로 찾을 수 있어요.</p>
+          <div style={analysisStyles.docHeroStatPill}>
+            <span>📚 등록된 문서</span>
+            <strong>{totalDocuments ? `${totalDocuments.toLocaleString()}개` : '준비 중'}</strong>
+          </div>
+        </CommonHero>
 
         {loading ? (
           <div style={analysisStyles.loadingContainer}>

@@ -160,6 +160,7 @@ const PassagePickerGrid = ({
                 if (!disableSelection && onToggle) onToggle(number);
               }}
             >
+              <div className="tilt-hover" style={{ position: 'absolute', inset: 0, borderRadius: '22px', pointerEvents: 'none' }} aria-hidden />
               {checked && (
                 <span style={gridStyles.checkBadge} aria-label="선택됨">✓ 선택됨</span>
               )}
