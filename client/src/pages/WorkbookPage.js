@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api.service';
 import FriendlyError from '../components/common/FriendlyError';
 import EagleGuideChip from '../components/common/EagleGuideChip';
+import CommonHero from '../components/common/CommonHero';
 
 const STORAGE_KEY = 'loe.workbook.completedSteps.v2';
 
@@ -2578,8 +2579,12 @@ const WorkbookPage = () => {
 
     return (
       <div style={responsiveStyle(styles.container, styles.containerMobile)}>
-        <section style={responsiveStyle(styles.hero, styles.heroMobile)}>
-          <h1 style={responsiveStyle(styles.heroTitle, styles.heroTitleMobile)}>워크북 만들기</h1>
+        <CommonHero
+          badge="Workbook"
+          title="분석에서 학습까지, 한 호흡으로 정리"
+          subtitle="분석이 끝난 지문을 선택해 워크북을 만들면, 10단계 미션으로 자연스럽게 복습할 수 있어요."
+        />
+        <div style={{ marginTop: 12, display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
           {canCreateWorkbooks && (
             <button
               type="button"
@@ -2591,7 +2596,7 @@ const WorkbookPage = () => {
             </button>
           )}
           <EagleGuideChip text="분석이 끝난 지문을 골라 워크북을 만들면 돼요" variant="accent" />
-        </section>
+        </div>
 
         {showGenerator && canCreateWorkbooks && (
           <section style={responsiveStyle(styles.wizardContainer, styles.wizardContainerMobile)}>
