@@ -1877,6 +1877,7 @@ const WorkbookPage = () => {
         <button
           key={step.step}
           type="button"
+          className="tilt-hover"
           style={{
             ...responsiveStyle(styles.stepButton, styles.stepButtonMobile),
             ...(isActive ? styles.stepButtonActive : {})
@@ -2641,6 +2642,7 @@ const WorkbookPage = () => {
                           key={doc.id}
                           type="button"
                           data-testid="workbook-document-card"
+                          className="tilt-hover"
                           style={{
                             ...styles.generatorDocCard,
                             ...(isActive ? styles.generatorDocCardActive : {})
@@ -2687,6 +2689,7 @@ const WorkbookPage = () => {
                           key={`passage-${item.passageNumber}`}
                           type="button"
                           data-testid="workbook-passage-card"
+                          className="tilt-hover"
                           style={{
                             ...styles.generatorPassageCard,
                             ...(isActive ? styles.generatorPassageCardActive : {})
@@ -2862,7 +2865,7 @@ const WorkbookPage = () => {
                             const workbookKey = String(workbook.id);
                             const isDeleting = deletingIds.has(workbookKey);
                             return (
-                              <div key={workbook.id} style={responsiveStyle(styles.workbookListItem, styles.workbookListItemMobile)}>
+                              <div key={workbook.id} className="tilt-hover" style={responsiveStyle(styles.workbookListItem, styles.workbookListItemMobile)}>
                                 <div style={responsiveStyle(styles.workbookListItemHeader, styles.workbookListItemHeaderMobile)}>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                                     <span style={styles.workbookIndexBadge}>{index + 1}</span>
@@ -2982,7 +2985,7 @@ const WorkbookPage = () => {
           {selectedWorkbook.description || '지문의 핵심을 8단계로 정리했어요.'}
         </p>
         <div style={styles.testSubmitRow}>
-          <button type="button" style={responsiveStyle(styles.primaryButton, styles.primaryButtonMobile)} onClick={handleStartTest}>
+          <button type="button" className="tilt-hover" style={responsiveStyle(styles.primaryButton, styles.primaryButtonMobile)} onClick={handleStartTest}>
             워크북 TEST 시작하기
           </button>
         </div>
