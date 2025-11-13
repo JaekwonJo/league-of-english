@@ -462,7 +462,9 @@ export const api = {
     getExam: (examId) => apiService.get(`/mock-exam/${examId}`),
     submit: (examId, payload) => apiService.post(`/mock-exam/${examId}/submit`, payload),
     explanation: (examId, payload) => apiService.post(`/mock-exam/${examId}/explanations`, payload),
-    upload: (formData) => apiService.uploadFormData('/mock-exam/upload', formData, 60000)
+    upload: (formData) => apiService.uploadFormData('/mock-exam/upload', formData, 60000),
+    rename: (oldId, newId) => apiService.post('/mock-exam/rename', { oldId, newId }),
+    delete: (examId) => apiService.delete(`/mock-exam/${examId}`)
   },
 
   video: {

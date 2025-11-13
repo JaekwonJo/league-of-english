@@ -15,6 +15,7 @@ import StudyModeView from "../features/study/components/StudyModeView";
 import ReviewModeView from "../features/study/components/ReviewModeView";
 import { pickFlashcards } from "../features/study/utils/flashcards";
 import EagleGuideChip from "../components/common/EagleGuideChip";
+import CommonHero from "../components/common/CommonHero";
 
 
 
@@ -310,7 +311,14 @@ const StudyPage = () => {
           onDiscardSavedSession={() => clearSavedSession('discarded')}
           headerSlot={(
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <EagleGuideChip text="맞춤 학습 세트를 생성할 준비가 되었습니다" />
+              <CommonHero
+                badge="Study Studio"
+                title="필요한 지문만 골라, 정확하게 학습해요"
+                subtitle="유형을 고르고 지문을 선택하면, 시험지 형식으로 깔끔하게 준비해 드려요."
+              />
+              <div>
+                <EagleGuideChip text="맞춤 학습 세트를 생성할 준비가 되었습니다" />
+              </div>
               <ReviewCallout
                 total={reviewPreview.total}
                 problems={reviewPreview.problems}

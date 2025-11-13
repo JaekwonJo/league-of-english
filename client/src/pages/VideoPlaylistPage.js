@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api.service';
+import CommonHero from '../components/common/CommonHero';
 
 const DEFAULT_PLAYLIST_URL = 'https://www.youtube.com/playlist?list=PLQu64YmMxERTi0K-K8QAihxfUkS4nYfHr';
 const SELECTED_PLAYLIST_KEY = 'loe:video-selected-playlist';
@@ -247,10 +248,11 @@ const VideoPlaylistPage = () => {
 
   return (
     <div style={styles.container}>
-      <header style={styles.header}>
-        <h1 style={styles.title}>🎬 동영상 강의</h1>
-        <p style={styles.subtitle}>유튜브 재생목록을 붙여넣으면 이곳에서 바로 강의를 시청할 수 있어요.</p>
-      </header>
+      <CommonHero
+        badge="Video Lessons"
+        title="집중해서 듣는, 한눈에 정리되는 강의"
+        subtitle="즐겨찾는 재생목록을 선택해 바로 이어서 보세요. 필요하면 관리자에서 재생목록을 관리할 수 있어요."
+      />
 
       <section style={styles.section}>
         <div style={styles.sectionHeaderRow}>

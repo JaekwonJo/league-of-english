@@ -37,6 +37,57 @@ const upload = multer({
   }
 });
 
+// Rename an existing examId folder (admin only)
+router.post('/rename', verifyToken, requireAdmin, async (req, res) => {
+  try {
+    const oldId = String(req.body?.oldId || '').trim();
+    const newId = String(req.body?.newId || '').trim();
+    if (!oldId || !newId) {
+      return res.status(400).json({ success: false, message: 'oldId와 newId를 모두 입력해 주세요.' });
+    }
+    if (oldId === newId) {
+      return res.status(400).json({ success: false, message: '새 이름이 이전 이름과 동일합니다.' });
+    }
+    const oldDir = path.join(STORAGE_ROOT, oldId);
+    const newDir = path.join(STORAGE_ROOT, newId);
+    if (!fs.existsSync(oldDir)) {
+      return res.status(404).json({ success: false, message: '지정한 시험을 찾을 수 없습니다.' });
+    }
+    if (fs.existsSync(newDir)) {
+      return res.status(409).json({ success: false, message: '같은 이름의 시험이 이미 존재합니다.' });
+    }
+    fs.renameSync(oldDir, newDir);
+    if (typeof mockExamService.resetCache === 'function') {
+      try { mockExamService.resetCache(oldId); } catch {}
+      try { mockExamService.resetCache(newId); } catch {}
+    }
+    return res.json({ success: true, message: '시험 이름을 변경했어요.', data: { oldId, newId } });
+  } catch (error) {
+    console.error('[mockExam] rename failed:', error);
+    return res.status(500).json({ success: false, message: error.message || '시험 이름을 변경하지 못했습니다.' });
+  }
+});
+
+// Delete an uploaded exam (admin only)
+router.delete('/:examId', verifyToken, requireAdmin, async (req, res) => {
+  try {
+    const examId = String(req.params.examId || '').trim();
+    if (!examId) return res.status(400).json({ success: false, message: 'examId가 필요합니다.' });
+    const targetDir = path.join(STORAGE_ROOT, examId);
+    if (!fs.existsSync(targetDir)) {
+      return res.status(404).json({ success: false, message: '삭제할 시험을 찾을 수 없습니다.' });
+    }
+    fs.rmSync(targetDir, { recursive: true, force: true });
+    if (typeof mockExamService.resetCache === 'function') {
+      try { mockExamService.resetCache(examId); } catch {}
+    }
+    return res.json({ success: true, message: '시험을 삭제했어요.' });
+  } catch (error) {
+    console.error('[mockExam] delete failed:', error);
+    return res.status(500).json({ success: false, message: error.message || '시험을 삭제하지 못했습니다.' });
+  }
+});
+
 router.get('/', verifyToken, async (req, res) => {
   try {
     const list = await mockExamService.listAvailableExams();

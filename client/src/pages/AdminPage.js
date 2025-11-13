@@ -136,6 +136,10 @@ const AdminPage = () => {
     answerFile: null
   });
   const [mockExamUploading, setMockExamUploading] = useState(false);
+  const [examList, setExamList] = useState([]);
+  const [examListLoading, setExamListLoading] = useState(false);
+  const [examListError, setExamListError] = useState('');
+  const [renameDrafts, setRenameDrafts] = useState({});
 
   const pushToast = useCallback((message, tone = 'info') => {
     const id = Date.now() + Math.random();
@@ -164,6 +168,19 @@ const AdminPage = () => {
     fetchFeedbackReports();
     fetchProblemReports();
     fetchNotifications();
+    // 모의고사 회차 목록
+    (async () => {
+      try {
+        setExamListLoading(true);
+        setExamListError('');
+        const resp = await api.mockExam.list();
+        setExamList(Array.isArray(resp?.data) ? resp.data : []);
+      } catch (error) {
+        setExamListError(error?.message || '모의고사 목록을 불러오지 못했습니다.');
+      } finally {
+        setExamListLoading(false);
+      }
+    })();
   }, [fetchDocuments, fetchFeedbackReports, fetchProblemReports, fetchNotifications]);
 
   const handleUploadFormChange = (field, value) => {
@@ -231,11 +248,50 @@ const AdminPage = () => {
         questionFile: null,
         answerFile: null
       });
+      try {
+        const listResp = await api.mockExam.list();
+        setExamList(Array.isArray(listResp?.data) ? listResp.data : []);
+      } catch {}
     } catch (error) {
       console.error('Mock exam upload failed:', error);
       pushToast(error?.message || '모의고사 PDF를 업로드하지 못했습니다.', 'error');
     } finally {
       setMockExamUploading(false);
+    }
+  };
+
+  const handleExamRename = async (oldId) => {
+    const nextName = String(renameDrafts[oldId] || '').trim();
+    if (!nextName) {
+      pushToast('새 시험 이름을 입력해 주세요.', 'warning');
+      return;
+    }
+    if (nextName === oldId) {
+      pushToast('같은 이름으로는 변경할 수 없어요.', 'warning');
+      return;
+    }
+    try {
+      const resp = await api.mockExam.rename(oldId, nextName);
+      if (!resp?.success) throw new Error(resp?.message || '이름을 변경하지 못했습니다.');
+      pushToast('시험 이름을 변경했어요.', 'success');
+      const listResp = await api.mockExam.list();
+      setExamList(Array.isArray(listResp?.data) ? listResp.data : []);
+      setRenameDrafts((prev) => ({ ...prev, [oldId]: '' }));
+    } catch (error) {
+      pushToast(error?.message || '시험 이름을 변경하지 못했습니다.', 'error');
+    }
+  };
+
+  const handleExamDelete = async (examId) => {
+    if (!window.confirm('해당 시험을 정말 삭제할까요? (폴더 전체가 지워집니다)')) return;
+    try {
+      const resp = await api.mockExam.delete(examId);
+      if (!resp?.success) throw new Error(resp?.message || '삭제하지 못했습니다.');
+      pushToast('시험을 삭제했어요.', 'success');
+      const listResp = await api.mockExam.list();
+      setExamList(Array.isArray(listResp?.data) ? listResp.data : []);
+    } catch (error) {
+      pushToast(error?.message || '시험을 삭제하지 못했습니다.', 'error');
     }
   };
 
@@ -546,6 +602,72 @@ const AdminPage = () => {
               </button>
               <p style={adminStyles.mockExamTip}>※ PDF는 10MB 이하가 권장되며, 업로드 직후 학생 화면에서 새로운 시험이 제공됩니다.</p>
             </div>
+          </div>
+        </section>
+      )}
+
+      {isAdmin && (
+        <section style={responsive(adminStyles.mockExamCard, adminStyles.mockExamCardMobile)}>
+          <div style={adminStyles.mockExamGlow} />
+          <div style={adminStyles.mockExamContent}>
+            <div style={adminStyles.mockExamHeader}>
+              <h2 style={adminStyles.mockExamTitle}>🗂️ 업로드된 회차 관리</h2>
+              <p style={adminStyles.mockExamDescription}>등록된 시험 이름을 바꾸거나 삭제할 수 있어요.</p>
+              <EagleGuideChip text="이름 변경 후 학생 화면 목록에도 즉시 반영됩니다" variant="accent" />
+            </div>
+
+            {examListLoading ? (
+              <div style={adminStyles.notice}>목록을 불러오는 중입니다…</div>
+            ) : examListError ? (
+              <div style={{ ...adminStyles.notice, color: 'var(--danger-strong)' }}>{examListError}</div>
+            ) : examList.length === 0 ? (
+              <div style={adminStyles.notice}>아직 업로드된 회차가 없어요. 위에서 먼저 올려 보세요.</div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px' }}>
+                {examList.map((exam) => (
+                  <div key={exam.id} style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'minmax(140px, 1fr) minmax(220px, 2fr) auto auto',
+                    gap: '10px',
+                    alignItems: 'center',
+                    background: 'var(--surface-card)',
+                    border: '1px solid var(--surface-border)',
+                    borderRadius: '12px',
+                    padding: '12px 14px'
+                  }}>
+                    <div style={{ fontWeight: 700 }}>{exam.id}</div>
+                    <div style={{ color: 'var(--tone-strong)' }}>{exam.title || '제목 없음'}</div>
+                    <input
+                      type="text"
+                      placeholder="새 시험 이름"
+                      value={renameDrafts[exam.id] || ''}
+                      onChange={(e) => setRenameDrafts((prev) => ({ ...prev, [exam.id]: e.target.value }))}
+                      style={{
+                        border: '1px solid var(--surface-border)',
+                        borderRadius: '8px',
+                        padding: '8px 10px'
+                      }}
+                    />
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        type="button"
+                        style={adminStyles.secondaryButton}
+                        onClick={() => handleExamRename(exam.id)}
+                      >
+                        이름 변경
+                      </button>
+                      <button
+                        type="button"
+                        style={adminStyles.dangerButton || adminStyles.secondaryButton}
+                        onClick={() => handleExamDelete(exam.id)}
+                      >
+                        삭제
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </section>
       )}
