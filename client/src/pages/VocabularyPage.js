@@ -4,6 +4,7 @@ import AppButton from '../components/common/AppButton';
 import { api } from '../services/api.service';
 import { useAuth } from '../contexts/AuthContext';
 import EagleGuideChip from '../components/common/EagleGuideChip';
+import CommonHero from '../components/common/CommonHero';
 
 const DEFAULT_QUIZ_SIZE = 30;
 const tierOrder = ['Iron', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond', 'Master', 'Challenger'];
@@ -805,22 +806,16 @@ const getTimeLimitSeconds = useCallback(() => {
 
   return (
     <div style={styles.container}>
-      <section style={styles.heroSection}>
-        <div style={styles.heroBackground} />
-        <div style={styles.heroRow}>
-          <div style={styles.heroContent}>
-            <span style={styles.heroBadge}>Daily Vocab Studio</span>
-            <h1 style={styles.heroTitle}>핵심 어휘를 정확하게 훈련합니다</h1>
-            <p style={styles.heroSubtitle}>핵심 단어를 시험 또는 연습 모드로 곧바로 학습 할 수 있습니다</p>
-            {/* 단어장 개수/통계 표시는 제거 */}
-            <div style={styles.heroButtons}>
-              <AppButton variant="primary" size="lg" onClick={handleScrollToSets}>
-                <LucideIcons.Search size={18} /> 단어장 살펴보기
-              </AppButton>
-            </div>
-          </div>
-        </div>
-      </section>
+      <CommonHero
+        badge="Vocabulary Studio"
+        title="어휘를 가장 효과적으로, 감각적으로"
+        subtitle="단어장을 고르고 Day를 선택하면, 고급스럽고 깔끔한 화면에서 바로 훈련할 수 있어요."
+        right={(
+          <AppButton variant="primary" size="lg" onClick={handleScrollToSets}>
+            <LucideIcons.Search size={18} /> 단어장 살펴보기
+          </AppButton>
+        )}
+      />
 
       {/* 아래로 이동한 포인터 배너: 마스코트 대신 하단에서 목록을 가리킵니다 */}
       <div style={styles.pointerBanner}>

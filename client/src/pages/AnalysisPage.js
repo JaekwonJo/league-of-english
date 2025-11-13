@@ -731,6 +731,7 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
                 <section key={section.key} style={analysisStyles.docCategorySection}>
                   <button
                     type="button"
+                    className="tilt-hover"
                     style={{
                       ...analysisStyles.docCategoryHeaderButton,
                       ...(isCollapsed ? analysisStyles.docCategoryHeaderButtonCollapsed : {})
@@ -761,6 +762,7 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
                           <button
                             key={doc.id}
                             type="button"
+                            className="tilt-hover"
                             style={{
                               ...analysisStyles.documentCard,
                               background: `linear-gradient(150deg, ${palette.from}, ${palette.to})`,
