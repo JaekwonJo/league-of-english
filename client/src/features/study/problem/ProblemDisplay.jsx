@@ -437,11 +437,43 @@ const ProblemDisplay = ({
         </div>
       )}
 
-      {displayPassageText && (
-        <div style={{ ...orderStyles.orderGivenText, marginBottom: '20px', whiteSpace: 'pre-wrap' }}>
-          {isBlank ? renderBlankSegments(displayPassageText, `passage-${problemIndex}`) : renderWithUnderline(displayPassageText)}
-        </div>
-      )}
+      {displayPassageText && (() => {
+        const renderPassageBlock = (text) => {
+          const raw = String(text || '').replace(/\r/g, '');
+          const paragraphs = raw.split(/\n{2,}/);
+          return (
+            <div style={{ ...orderStyles.orderGivenText, marginBottom: '20px' }}>
+              {paragraphs.map((para, idx) => {
+                const normalized = para.replace(/\n+/g, ' ').trim();
+                if (!normalized) return null;
+                return (
+                  <p key={`para-${idx}`} style={{ margin: '0 0 10px', lineHeight: 1.8, textAlign: 'justify', whiteSpace: 'normal', wordBreak: 'keep-all', overflowWrap: 'break-word' }}>
+                    {renderWithUnderline(normalized)}
+                  </p>
+                );
+              })}
+            </div>
+          );
+        };
+        const renderBlankBlock = (text) => {
+          const raw = String(text || '').replace(/\r/g, '');
+          const paragraphs = raw.split(/\n{2,}/);
+          return (
+            <div style={{ ...orderStyles.orderGivenText, marginBottom: '20px' }}>
+              {paragraphs.map((para, idx) => {
+                const normalized = para.replace(/\n+/g, ' ').trim();
+                if (!normalized) return null;
+                return (
+                  <p key={`para-blank-${idx}`} style={{ margin: '0 0 10px', lineHeight: 1.8, textAlign: 'justify', whiteSpace: 'normal', wordBreak: 'keep-all', overflowWrap: 'break-word' }}>
+                    {renderBlankSegments(normalized, `passage-${problemIndex}-${idx}`)}
+                  </p>
+                );
+              })}
+            </div>
+          );
+        };
+        return isBlank ? renderBlankBlock(displayPassageText) : renderPassageBlock(displayPassageText);
+      })()}
 
       <div style={orderStyles.orderInstruction}>
         Q{totalProblems > 0 ? `.${problemIndex + 1}` : '.'}{' '}
