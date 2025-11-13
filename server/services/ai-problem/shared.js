@@ -16,6 +16,28 @@ function normalizeWhitespace(text = '') {
   return String(text).replace(/\s+/g, ' ').trim();
 }
 
+// Preserve paragraph breaks for passage rendering.
+// - Collapse Windows CRs
+// - Reduce runs of spaces/tabs
+// - Convert single newlines to spaces (soft wrap)
+// - Keep double newlines as true paragraph separators ("\n\n")
+function normalizeForPassage(text = '') {
+  let s = String(text || '').replace(/\r/g, '');
+  // First, collapse spaces and tabs; keep newlines for now
+  s = s.replace(/[\t ]+/g, ' ');
+  // Reduce 3+ newlines to exactly two
+  s = s.replace(/\n{3,}/g, '\n\n');
+  // For any single newline between non-newline chars, replace with a space
+  s = s.replace(/([^\n])\n([^\n])/g, '$1 $2');
+  // Trim lines around paragraph breaks
+  s = s
+    .split(/\n\n/)
+    .map((para) => para.replace(/\s+/g, ' ').trim())
+    .filter((para) => para.length > 0)
+    .join('\n\n');
+  return s.trim();
+}
+
 function escapeRegex(text = '') {
   return String(text).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -257,6 +279,7 @@ module.exports = {
   containsHangul,
   stripTags,
   normalizeWhitespace,
+  normalizeForPassage,
   escapeRegex,
   stripJsonFences,
   clipText,

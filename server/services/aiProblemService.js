@@ -92,6 +92,7 @@ try {
 // Configurable OpenAI models (fallbacks preserved)
 const PRIMARY_MODEL = process.env.LOE_OPENAI_PRIMARY_MODEL || 'gpt-4o';
 const SECONDARY_MODEL = process.env.LOE_OPENAI_SECONDARY_MODEL || 'gpt-4o-mini';
+const PREMIUM_MODEL = process.env.LOE_OPENAI_PREMIUM_MODEL || '';
 
 const TOPIC_QUESTION = "\ub2e4\uc74c \uae00\uc758 \uc8fc\uc81c\ub85c \uac00\uc7a5 \uc801\uc808\ud55c \uac83\uc744 \uace0\ub974\uc2dc\uc624.";
 const IMPLICIT_QUESTION = "\ub2e4\uc74c \uae00\uc5d0\uc11c \ubc11\uc904 \uce5c \ubd80\ubd84\uc774 \uc758\ubbf8\ud558\ub294 \ubc14\ub85c \uac00\uc7a5 \uc801\uc808\ud55c \uac83\uc740?";
@@ -308,13 +309,20 @@ class AIProblemService {
         });
 
         try {
-          const highTier = attempt >= Math.max(2, Math.floor(MAX_RETRIES / 2));
+          // Model tier selection: start with secondary, escalate to primary, and finally premium if configured
+          let tier = 'standard';
+          if (attempt >= Math.max(2, Math.floor(MAX_RETRIES / 2))) tier = 'primary';
+          if (!normalized && attempt >= (MAX_RETRIES - 1) && PREMIUM_MODEL) tier = 'premium';
+          const selectedModel = tier === 'premium' && PREMIUM_MODEL
+            ? PREMIUM_MODEL
+            : (tier === 'primary' ? PRIMARY_MODEL : SECONDARY_MODEL);
+
           const response = await this.callChatCompletion({
-            model: highTier ? PRIMARY_MODEL : SECONDARY_MODEL,
+            model: selectedModel,
             temperature: highTier ? 0.18 : 0.28,
             max_tokens: highTier ? 1300 : 900,
             messages: [{ role: 'user', content: prompt }]
-          }, { label: 'blank', tier: highTier ? 'primary' : 'standard' });
+          }, { label: 'blank', tier });
 
           rawContent = response.choices?.[0]?.message?.content || '';
           const payload = JSON.parse(stripJsonFences(rawContent));

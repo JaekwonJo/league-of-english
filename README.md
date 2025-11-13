@@ -43,6 +43,11 @@ npm run lint
  - `LOE_ENFORCE_AI_ONLY=1` → 캐시 다음 단계에서 Golden Set/폴백을 모두 비활성화하고, 반드시 OpenAI로만 생성합니다. OpenAI 미가용·부분생성 시 5xx 에러로 알려줍니다.
  - `LOE_AIGEN_BUDGET_MS=30000` → AI 생성 시간 예산(기본 12000ms)을 조정합니다.
  - `LOE_AIGEN_MAX_RETRIES=8` → 각 문항 생성의 재시도 횟수(기본 6)를 조정합니다.
+ - 문제 출제 모델 계층(권장)
+   - `LOE_OPENAI_SECONDARY_MODEL=gpt-4o-mini` (속도/비용 우선)
+   - `LOE_OPENAI_PRIMARY_MODEL=gpt-4o` (품질 우선 1차 상향)
+   - `LOE_OPENAI_PREMIUM_MODEL=gpt-4.1` (마지막 시도만 사용; 비용 주의)
+   - 동작: 1~2회차는 secondary, 중간은 primary, 마지막 시도에서만 premium으로 자동 승격합니다.
 
 예시 인덱스 파일:
 ```

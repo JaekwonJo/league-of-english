@@ -382,7 +382,8 @@ function normalizeBlankPayload(payload, context = {}) {
     throw new Error('blank text missing placeholder');
   }
 
-  const normalizedText = normalizeWhitespace(text);
+  const { normalizeForPassage } = require('./shared');
+  const normalizedText = normalizeForPassage(text);
 
   const optionsInfo = normalizeBlankOptions(payload.options || []);
   let answerNumber = Number(payload.correctAnswer || payload.answer);
@@ -508,7 +509,7 @@ function normalizeBlankPayload(payload, context = {}) {
   }
 
   const originalPassageRaw = context && context.passage ? String(context.passage) : '';
-  const normalizedOriginalPassage = originalPassageRaw ? normalizeWhitespace(originalPassageRaw) : '';
+  const normalizedOriginalPassage = originalPassageRaw ? normalizeForPassage(originalPassageRaw) : '';
   if (normalizedText.length < MIN_BLANK_TEXT_LENGTH) {
     throw new Error('blank text too short');
   }
