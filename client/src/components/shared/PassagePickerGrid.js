@@ -27,6 +27,8 @@ const gridStyles = {
     gap: '16px'
   },
   card: {
+    position: 'relative',
+    overflow: 'hidden',
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'space-between',
@@ -35,19 +37,21 @@ const gridStyles = {
     border: '1px solid rgba(255,255,255,0.18)',
     minHeight: '150px',
     transition: 'transform 0.25s ease, box-shadow 0.25s ease',
-    color: '#f8fafc'
+    color: '#f8fafc',
+    backgroundSize: '200% 200%',
+    animation: 'slowGradient 24s ease-in-out infinite'
   },
   checkBadge: {
     position: 'absolute',
     top: '10px',
     right: '10px',
-    background: 'rgba(16,185,129,0.95)',
+    background: 'linear-gradient(135deg, rgba(16,185,129,0.95), rgba(59,130,246,0.85))',
     color: '#0b1324',
     borderRadius: '999px',
     padding: '6px 8px',
     fontWeight: 900,
     fontSize: '12px',
-    boxShadow: '0 8px 18px rgba(16,185,129,0.35)'
+    boxShadow: '0 12px 24px rgba(16,185,129,0.35), 0 12px 24px rgba(59,130,246,0.25)'
   },
   cardSelected: {
     borderColor: 'rgba(79, 70, 229, 0.55)',
@@ -71,8 +75,8 @@ const gridStyles = {
     marginTop: '16px'
   },
   previewButton: {
-    background: 'rgba(255,255,255,0.12)',
-    border: '1px solid rgba(255,255,255,0.35)',
+    background: 'linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06))',
+    border: '1px solid rgba(255,255,255,0.28)',
     color: '#e0e7ff',
     borderRadius: '999px',
     padding: '10px 16px',
@@ -80,7 +84,7 @@ const gridStyles = {
     fontSize: '0.85rem',
     fontWeight: 700,
     transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-    boxShadow: '0 12px 20px rgba(15, 23, 42, 0.35)'
+    boxShadow: '0 14px 26px rgba(15, 23, 42, 0.38)'
   },
   previewButtonDisabled: {
     opacity: 0.4,
@@ -160,6 +164,7 @@ const PassagePickerGrid = ({
                 if (!disableSelection && onToggle) onToggle(number);
               }}
             >
+              <div className="shimmer" aria-hidden />
               <div className="tilt-hover" style={{ position: 'absolute', inset: 0, borderRadius: '22px', pointerEvents: 'none' }} aria-hidden />
               {checked && (
                 <span style={gridStyles.checkBadge} aria-label="선택됨">✓ 선택됨</span>
