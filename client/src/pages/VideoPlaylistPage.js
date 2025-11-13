@@ -306,6 +306,7 @@ const VideoPlaylistPage = () => {
                     ...(active ? styles.playlistCardActive : {})
                   }}
                 >
+                  <div className="shimmer" aria-hidden />
                   <div style={styles.playlistCardHeader}>
                     <div style={styles.playlistNameRow}>
                       <span style={styles.playlistIcon}>🎧</span>
@@ -491,14 +492,20 @@ const styles = {
     gap: '16px'
   },
   playlistCard: {
-    borderRadius: '16px',
-    border: '1px solid var(--border-subtle)',
-    background: 'var(--surface-soft)',
+    position: 'relative',
+    overflow: 'hidden',
+    borderRadius: '22px',
+    border: '1px solid rgba(148,163,184,0.28)',
+    background: 'linear-gradient(145deg, rgba(15,23,42,0.92), rgba(30,64,175,0.65))',
     padding: '18px',
     display: 'flex',
     flexDirection: 'column',
     gap: '12px',
-    transition: 'border 0.2s ease, box-shadow 0.2s ease'
+    transition: 'border 0.2s ease, box-shadow 0.2s ease',
+    boxShadow: '0 22px 42px rgba(15, 23, 42, 0.28)',
+    color: '#e2e8f0',
+    backgroundSize: '200% 200%',
+    animation: 'slowGradient 24s ease-in-out infinite'
   },
   playlistCardActive: {
     border: '1px solid var(--indigo)',
@@ -519,8 +526,8 @@ const styles = {
     fontSize: '1.2rem'
   },
   playlistName: {
-    fontWeight: 700,
-    color: 'var(--text-primary)'
+    fontWeight: 800,
+    color: '#f8fafc'
   },
   playlistActions: {
     display: 'flex',
@@ -531,27 +538,27 @@ const styles = {
   selectButton: {
     flex: '0 0 auto',
     padding: '10px 16px',
-    borderRadius: '12px',
-    border: '1px solid var(--border-subtle)',
-    background: 'var(--surface-card)',
-    color: 'var(--text-primary)',
+    borderRadius: '999px',
+    border: '1px solid rgba(255,255,255,0.18)',
+    background: 'linear-gradient(135deg, rgba(99,102,241,1), rgba(14,165,233,1))',
+    color: '#f8fafc',
     cursor: 'pointer',
-    fontWeight: 600
+    fontWeight: 800,
+    boxShadow: '0 14px 26px rgba(15,23,42,0.28)'
   },
   selectButtonActive: {
-    border: '1px solid var(--indigo)',
-    background: 'rgba(99,102,241,0.15)',
-    color: 'var(--indigo-strong)'
+    background: 'linear-gradient(135deg, rgba(16,185,129,1), rgba(99,102,241,1))'
   },
   watchOnYoutube: {
     flex: '0 0 auto',
     padding: '10px 16px',
     borderRadius: '999px',
-    border: 'none',
-    background: 'var(--surface-card)',
-    color: 'var(--tone-hero)',
-    fontWeight: 600,
-    textDecoration: 'none'
+    border: '1px solid rgba(255,255,255,0.25)',
+    background: 'linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06))',
+    color: '#e0e7ff',
+    fontWeight: 700,
+    textDecoration: 'none',
+    boxShadow: '0 14px 26px rgba(15,23,42,0.28)'
   },
   playlistEmpty: {
     padding: '20px',
