@@ -22,7 +22,8 @@ const pageComponents = {
   AnalysisPage: lazy(() => import('../pages/AnalysisPage')),
   MockExamPage: lazy(() => import('../pages/MockExamPage')),
   VideoPlaylistPage: lazy(() => import('../pages/VideoPlaylistPage')),
-  LoginPage: lazy(() => import('../pages/LoginPage'))
+  LoginPage: lazy(() => import('../pages/LoginPage')),
+  StudyHistoryPage: lazy(() => import('../pages/StudyHistoryPage'))
 };
 
 const AppRouter = () => {

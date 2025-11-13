@@ -9,6 +9,14 @@
       "roles": ["student", "teacher", "admin"]
     },
     {
+      "path": "/study/history",
+      "name": "문제 보관함",
+      "icon": "Archive",
+      "component": "StudyHistoryPage",
+      "requiresAuth": true,
+      "roles": ["student", "teacher", "admin"]
+    },
+    {
       "path": "/vocabulary",
       "name": "어휘 훈련",
       "icon": "Languages",

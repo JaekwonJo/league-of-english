@@ -292,6 +292,33 @@ router.post('/problems/review-session', verifyToken, async (req, res) => {
   }
 });
 
+// Problem history for current user (복습 보관함 조회)
+router.get('/problems/history', verifyToken, async (req, res) => {
+  try {
+    const order = (String(req.query.order || 'desc').toLowerCase() === 'asc') ? 'ASC' : 'DESC';
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 50, 1), 200);
+    const offset = Math.max(parseInt(req.query.offset, 10) || 0, 0);
+    const db = require('../models/database');
+
+    const rows = await db.all(
+      `SELECT sr.problem_id AS problemId, sr.is_correct AS isCorrect, sr.user_answer AS userAnswer, sr.time_spent AS timeSpent,
+              sr.created_at AS answeredAt,
+              p.type AS type, p.question AS question, p.main_text AS mainText, p.source_label AS sourceLabel
+         FROM study_records sr
+         JOIN problems p ON p.id = sr.problem_id
+        WHERE sr.user_id = ?
+        ORDER BY sr.created_at ${order}
+        LIMIT ? OFFSET ?`,
+      [req.user.id, limit, offset]
+    );
+
+    res.json({ success: true, data: rows, order, limit, offset });
+  } catch (error) {
+    console.error('[problems/history] error:', error);
+    res.status(500).json({ success: false, message: error?.message || '문제 풀이 이력을 불러오지 못했습니다.' });
+  }
+});
+
 router.post('/problems/:id/feedback', verifyToken, async (req, res) => {
   const problemId = Number(req.params.id);
   try {
