@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { api } from '../services/api.service';
 import EagleGuideChip from '../components/common/EagleGuideChip';
+import CommonHero from '../components/common/CommonHero';
 import {
   ResponsiveContainer,
   PieChart, Pie, Cell,
@@ -240,13 +241,13 @@ const StatsPage = () => {
 
   return (
     <div style={styles.container}>
-      <header style={styles.header}>
-        <div>
-          <h1 style={styles.title}>📊 학습 통계</h1>
-          <p style={styles.subtitle}>최근 문제 풀이와 단어 훈련 데이터를 기반으로 자동 집계돼요.</p>
-          <EagleGuideChip text="오늘 학습량을 한눈에 볼 수 있게 정리했어요" variant="accent" />
-        </div>
-      </header>
+      <CommonHero
+        badge="Study Insights"
+        title="학습 통계, 보기 쉽게 정리했어요"
+        subtitle="최근 문제 학습과 단어 훈련 결과를 자동 집계해 한눈에 보여 드려요."
+      >
+        <EagleGuideChip text="오늘 학습량을 한눈에 볼 수 있게 정리했어요" variant="accent" />
+      </CommonHero>
 
       {loading && (
         <div style={styles.pendingCard}>

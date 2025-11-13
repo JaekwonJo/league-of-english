@@ -317,6 +317,7 @@ class AIProblemService {
             ? PREMIUM_MODEL
             : (tier === 'primary' ? PRIMARY_MODEL : SECONDARY_MODEL);
 
+          const highTier = (tier === 'primary' || tier === 'premium');
           const response = await this.callChatCompletion({
             model: selectedModel,
             temperature: highTier ? 0.18 : 0.28,

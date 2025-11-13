@@ -9,6 +9,7 @@ import tierConfig from '../config/tierConfig.json';
 import { api } from '../services/api.service';
 import logger from '../utils/logger';
 import EagleGuideChip from '../components/common/EagleGuideChip';
+import CommonHero from '../components/common/CommonHero';
 
 const TIER_EMBLEMS = {
   iron: '🪨',
@@ -167,8 +168,14 @@ const RankingPage = () => {
 
   return (
     <div style={styles.container}>
-      <h1 style={styles.title}>🏆 랭킹</h1>
-      <EagleGuideChip text="실시간 LP 순위를 자동으로 모으고 있어요" variant="accent" />
+      <CommonHero
+        badge="Ranking Arena"
+        title="실시간 랭킹, 오늘의 주인공은 누구?"
+        subtitle="LP를 모아 티어를 올려요. 상위권 카드에는 고급 연출을 살짝 더했어요."
+      />
+      <div style={{ marginTop: '6px' }}>
+        <EagleGuideChip text="실시간 LP 순위를 자동으로 모으고 있어요" variant="accent" />
+      </div>
 
       {error && (
         <div style={styles.errorBanner}>

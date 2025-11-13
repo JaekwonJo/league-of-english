@@ -789,3 +789,9 @@ NODE` 로 5문항 생성 결과 (가족/전략 태그·한글 해설·단일 빈
 - Fix: 공통 히어로(CommonHero) 컴포넌트 도입 후 Study/Video 상단에 적용(과하지 않은 그라데이션+글로우). Workbook은 다음 패스 확대 예정. 모델 3단계 계층(secondary→primary→premium) 자동 승격 추가(`LOE_OPENAI_PREMIUM_MODEL`). 빈칸 본문 정규화 시 문단 개행(`\n\n`) 보존하도록 서버 정규화 변경.
 - Files: client/src/components/common/CommonHero.js, client/src/pages/StudyPage.js, client/src/pages/VideoPlaylistPage.js, server/services/aiProblemService.js, server/services/ai-problem/{shared.js,blank.js}, README.md.
 - Verification: Study/Video 상단 톤 통일 확인. 빈칸 본문이 문단 단위로 렌더(줄간격 1.8/양쪽 정렬). 모델 승격: 실패 시 마지막 시도에만 premium 사용(환경 변수로 제어).
+## 2025-11-14 (UI 통일 + 생성기 안정화)
+- Issue: 랭킹/통계 페이지가 홈/어휘/분석과 톤이 달라 보였고, 빈칸 생성 로직에서 정의되지 않은 변수 `highTier` 참조로 재시도 중단 가능성이 있었습니다. .env 예시에 모델/재시도/예산 설정이 누락되어 초기 세팅이 혼란스러웠습니다.
+- Cause: 공통 히어로(CommonHero) 미적용 페이지가 일부 남아 있었고, 리팩터링 과정에서 `highTier` 변수를 선언하지 않고 사용했습니다. 환경 템플릿 최신화 미흡.
+- Fix: Ranking/Stats에 CommonHero 적용, 안내칩 보강으로 톤 통일. `aiProblemService.generateBlank`에서 `highTier`를 tier 기반 불리언으로 정의해 참조 오류 제거. `.env.example`에 `LOE_AIGEN_MAX_RETRIES/LOE_AIGEN_BUDGET_MS/LOE_OPENAI_*`를 추가해 운영 가이드 명확화.
+- Files: server/services/aiProblemService.js, client/src/pages/RankingPage.js, client/src/pages/StatsPage.js, .env.example, PROJECT_STATE.md.
+- Verification: 로컬 빌드 후(프런트) CommonHero 헤더가 랭킹/통계에 표시되는지 확인, 빈칸 생성 경로에서 예외 로그에 `highTier` 미등장 확인. 환경 템플릿에 신규 키 존재 확인.
