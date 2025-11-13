@@ -21,6 +21,7 @@ const DocumentList = ({
   if (loading) {
     return (
       <div style={responsive(adminStyles.card, adminStyles.cardMobile)}>
+        <div className="shimmer" aria-hidden />
         <h2 style={responsive(adminStyles.cardTitle, adminStyles.cardTitleMobile)}>📚 문서 목록</h2>
         <div style={adminStyles.loading}>로딩 중...</div>
       </div>
@@ -29,6 +30,7 @@ const DocumentList = ({
 
   return (
     <div style={responsive(adminStyles.card, adminStyles.cardMobile)}>
+      <div className="shimmer" aria-hidden />
       <h2 style={responsive(adminStyles.cardTitle, adminStyles.cardTitleMobile)}>{title}</h2>
       
       <div style={responsive(adminStyles.documentsGrid, adminStyles.documentsGridMobile)}>
@@ -58,7 +60,8 @@ const DocumentCard = ({ document: doc, onEdit, onDelete, onAnalyze, onPassageAna
   const responsive = (base, mobileOverrides = {}) => (isMobile ? { ...base, ...(mobileOverrides || {}) } : base);
   const isVocabulary = String(doc.type || '').toLowerCase() === 'vocabulary';
   return (
-    <div style={responsive(adminStyles.documentCard, adminStyles.documentCardMobile)}>
+    <div className="tilt-hover" style={responsive(adminStyles.documentCard, adminStyles.documentCardMobile)}>
+      <div className="shimmer" aria-hidden />
       <div style={responsive(adminStyles.documentHeader, adminStyles.documentHeaderMobile)}>
         <h3 style={responsive(adminStyles.documentTitle, adminStyles.documentTitleMobile)}>{doc.title}</h3>
         <div style={responsive(adminStyles.documentActions, adminStyles.documentActionsMobile)}>

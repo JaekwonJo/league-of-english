@@ -65,10 +65,16 @@ export const adminStyles = {
     transition: 'all 0.3s'
   },
   card: {
-    background: 'var(--surface-card)',
-    borderRadius: '20px',
-    padding: '30px',
-    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)'
+    position: 'relative',
+    overflow: 'hidden',
+    background: 'linear-gradient(145deg, rgba(15,23,42,0.92), rgba(30,64,175,0.65))',
+    borderRadius: '22px',
+    padding: '28px',
+    boxShadow: '0 22px 42px rgba(15,23,42,0.28)',
+    border: '1px solid rgba(148,163,184,0.28)',
+    color: '#e2e8f0',
+    backgroundSize: '200% 200%',
+    animation: 'slowGradient 24s ease-in-out infinite'
   },
   cardMobile: {
     padding: '22px'
@@ -237,11 +243,16 @@ export const adminStyles = {
     gap: '16px'
   },
   documentCard: {
-    background: 'var(--surface-soft-solid)',
-    borderRadius: '15px',
+    position: 'relative',
+    overflow: 'hidden',
+    background: 'linear-gradient(145deg, rgba(15,23,42,0.92), rgba(30,64,175,0.65))',
+    borderRadius: '18px',
     padding: '20px',
-    border: '1px solid var(--border-subtle)',
-    transition: 'all 0.3s'
+    border: '1px solid rgba(148,163,184,0.28)',
+    transition: 'all 0.3s',
+    color: '#e2e8f0',
+    backgroundSize: '200% 200%',
+    animation: 'slowGradient 24s ease-in-out infinite'
   },
   documentCardMobile: {
     padding: '18px'
