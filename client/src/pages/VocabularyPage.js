@@ -875,6 +875,7 @@ const getTimeLimitSeconds = useCallback(() => {
                           type="button"
                           data-testid="vocab-category-toggle"
                           data-category-key={section.key}
+                          className="tilt-hover"
                           style={{
                             ...styles.categoryHeaderButton,
                             ...(isCollapsed ? styles.categoryHeaderButtonCollapsed : {})
@@ -882,6 +883,7 @@ const getTimeLimitSeconds = useCallback(() => {
                           onClick={() => toggleSectionCollapsed(section.key)}
                           aria-expanded={!isCollapsed}
                         >
+                          <div className="shimmer" aria-hidden />
                           <div style={styles.categoryHeaderText}>
                             <span style={styles.categoryTitle}>{sectionLabel}</span>
                             {section.description && (
@@ -890,9 +892,7 @@ const getTimeLimitSeconds = useCallback(() => {
                           </div>
                           <span style={styles.categoryToggle}>{isCollapsed ? '열기' : '접기'}</span>
                         </button>
-                        {isCollapsed ? (
-                          <div style={styles.categoryCollapsedHint}>클릭하면 단어장 목록이 펼쳐져요</div>
-                        ) : (
+                        {!isCollapsed && (
                           <div style={styles.setGrid}>
                             {items.map((set) => {
                               const isActive = selectedSet?.id === set.id;
@@ -915,6 +915,7 @@ const getTimeLimitSeconds = useCallback(() => {
                                   }}
                                   onClick={() => handleSelectSet(set)}
                                 >
+                                  <div className="shimmer" aria-hidden />
                                   <span style={styles.setTitle}>{set.title}</span>
                                   <span style={styles.setMeta}>분류: {categoryDisplayText}</span>
                                   <span style={styles.setMeta}>총 {set.totalDays} Day / {set.totalWords} 단어</span>
@@ -936,9 +937,7 @@ const getTimeLimitSeconds = useCallback(() => {
             <section style={styles.section} id="vocab-step-2">
               <div style={styles.sectionHeadingRow}>
                 <h2 style={styles.sectionTitle}>2️⃣ 범위 선택하기</h2>
-                <EagleGuideChip text="여러 Day를 고르면 다양한 단어가 섞여요" />
               </div>
-              <p style={styles.sectionHint}>원하는 Day를 탭하면 즉시 선택돼요. 여러 Day를 고르면 단어 개수만큼 시험이 만들어집니다.</p>
               {daysLoading ? (
                 <div style={styles.notice}>Day 정보를 불러오는 중이에요...</div>
               ) : (
@@ -1760,49 +1759,51 @@ const styles = {
     gap: '12px'
   },
   categoryHeaderButton: {
+    position: 'relative',
+    overflow: 'hidden',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     gap: '12px',
     width: '100%',
-    borderRadius: '16px',
-    border: '1px solid var(--surface-border)',
-    background: 'var(--surface-card)',
-    padding: '14px 16px',
+    borderRadius: '18px',
+    border: '1px solid rgba(148,163,184,0.28)',
+    background: 'linear-gradient(135deg, rgba(15,23,42,0.92), rgba(30,64,175,0.6))',
+    padding: '16px 18px',
     cursor: 'pointer',
-    boxShadow: '0 12px 24px rgba(15, 23, 42, 0.08)',
-    color: 'var(--text-primary)'
+    boxShadow: '0 18px 36px rgba(15, 23, 42, 0.28)',
+    color: '#e2e8f0',
+    backgroundSize: '200% 200%',
+    animation: 'slowGradient 24s ease-in-out infinite'
   },
   categoryHeaderButtonCollapsed: {
-    background: 'var(--surface-soft)',
-    boxShadow: 'none'
+    background: 'linear-gradient(135deg, rgba(30,41,59,0.8), rgba(15,23,42,0.85))',
+    boxShadow: '0 8px 18px rgba(15, 23, 42, 0.25)'
   },
   categoryHeaderText: {
     display: 'flex',
     flexDirection: 'column',
     gap: '4px',
     alignItems: 'flex-start',
-    color: 'var(--text-primary)'
+    color: '#f8fafc'
   },
   categoryTitle: {
     fontSize: '1.08rem',
     fontWeight: 900,
     letterSpacing: '-0.01em',
-    color: 'var(--tone-hero)'
+    color: '#f8fafc'
   },
   categoryDescription: {
     fontSize: '0.9rem',
-    color: 'var(--text-primary)'
+    color: 'rgba(226,232,240,0.85)'
   },
   categoryToggle: {
     fontSize: '0.85rem',
-    color: 'var(--tone-hero)',
+    color: '#cbd5f5',
     fontWeight: 600
   },
   categoryCollapsedHint: {
-    marginTop: '6px',
-    fontSize: '0.85rem',
-    color: 'var(--text-primary)'
+    display: 'none'
   },
   searchRow: {
     display: 'flex',
@@ -1836,14 +1837,14 @@ const styles = {
   },
   setCard: {
     background: 'linear-gradient(150deg, rgba(15,23,42,0.92), rgba(30,64,175,0.7))',
-    borderRadius: '18px',
-    padding: '20px',
+    borderRadius: '22px',
+    padding: '22px',
     textAlign: 'left',
     position: 'relative',
     transition: 'all 0.25s ease',
-    border: '2px solid transparent',
+    border: '1px solid rgba(148,163,184,0.28)',
     cursor: 'pointer',
-    boxShadow: '0 8px 24px rgba(15, 23, 42, 0.18)',
+    boxShadow: '0 24px 42px rgba(15, 23, 42, 0.28)',
     color: '#e2e8f0',
     backgroundSize: '200% 200%',
     animation: 'slowGradient 24s ease-in-out infinite'
