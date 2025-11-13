@@ -112,8 +112,7 @@ const VocabularyPage = () => {
   const [selectedDayKeys, setSelectedDayKeys] = useState([]);
   // recently-clicked items to show a brief selection flash
   const [flashKeys, setFlashKeys] = useState(() => new Set());
-  const [blink, setBlink] = useState(false);
-  const [wingUp, setWingUp] = useState(false);
+  // 제거: 페이지 내 캐릭터 애니메이션(문구/마스코트) 비활성화
   const [quizMode, setQuizMode] = useState('mixed'); // 'mixed' | 'term_to_meaning' | 'meaning_to_term'
   const [orderPolicy, setOrderPolicy] = useState('random'); // 'random' | 'sequential'
   const [collapsedSections, setCollapsedSections] = useState(() => (
@@ -138,24 +137,7 @@ const VocabularyPage = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Eagle animations: eye blink (~5-7s) & gentle wing flap
-  useEffect(() => {
-    let blinkTimer;
-    const scheduleBlink = () => {
-      blinkTimer = setTimeout(() => {
-        setBlink(true);
-        setTimeout(() => setBlink(false), 140);
-        scheduleBlink();
-      }, 5000 + Math.round(Math.random() * 2000));
-    };
-    scheduleBlink();
-    return () => clearTimeout(blinkTimer);
-  }, []);
-
-  useEffect(() => {
-    const wingTimer = setInterval(() => setWingUp((v) => !v), 900);
-    return () => clearInterval(wingTimer);
-  }, []);
+  // (애니메이션 관련 로직 제거)
 
   const [quizState, setQuizState] = useState({
     active: false,
@@ -184,12 +166,7 @@ const VocabularyPage = () => {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [setQuery, setSetQuery] = useState('');
-  // 하단 포인터 화살표 부드러운 점프 애니메이션
-  const [pointerUp, setPointerUp] = useState(false);
-  useEffect(() => {
-    const id = setInterval(() => setPointerUp((v) => !v), 700);
-    return () => clearInterval(id);
-  }, []);
+  // (포인터 배너/애니메이션 제거)
 
   const getTierStep = useCallback(() => {
     const tierName = String(user?.tier?.name || user?.tierInfo?.name || user?.tier || '').toLowerCase();
@@ -817,21 +794,7 @@ const getTimeLimitSeconds = useCallback(() => {
         )}
       />
 
-      {/* 아래로 이동한 포인터 배너: 마스코트 대신 하단에서 목록을 가리킵니다 */}
-      <div style={styles.pointerBanner}>
-        <span role="img" aria-label="eagle">🦅</span>
-        <span style={{ margin: '0 8px' }}>아래에서 단어장을 골라요!</span>
-        <span
-          aria-hidden="true"
-          style={{
-            display: 'inline-block',
-            transform: pointerUp ? 'translateY(-3px)' : 'translateY(1px)',
-            transition: 'transform 300ms ease'
-          }}
-        >
-          👇
-        </span>
-      </div>
+      {/* 안내 문구·포인터 배너 제거 */}
 
       <div style={styles.stepper}>
         {stepDescriptors.map((descriptor, index) => {
@@ -871,12 +834,8 @@ const getTimeLimitSeconds = useCallback(() => {
               <div style={{ ...styles.notice, color: 'var(--danger)' }}>{setsError}</div>
             ) : (
               <section ref={setsSectionRef} style={styles.section}>
-                <div style={{ textAlign: 'center', marginTop: '-6px', marginBottom: '8px', color: 'var(--tone-hero)', fontWeight: 700 }}>
-                  🦅 이쪽이예요! 아래 카드에서 단어장을 선택해요 👇
-                </div>
                 <div style={styles.sectionHeadingRow}>
                   <h2 style={styles.sectionTitle}>1️⃣ 단어장 고르기</h2>
-                  <EagleGuideChip text="카테고리를 펼쳐서 원하는 Day를 찾아보세요" />
                 </div>
                 <div style={styles.searchRow}>
                   <input
