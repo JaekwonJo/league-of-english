@@ -245,7 +245,7 @@ const getTimeLimitSeconds = useCallback(() => {
     setSelectedDayKey('');
     setSelectedDayKeys([]);
     navigateToStep(STEPS.SELECT_SET);
-    setMessage('원하는 단어장을 다시 골라볼까요?');
+    setMessage('단어장을 다시 선택하세요.');
     setError('');
   }, [resetQuizState, navigateToStep]);
 
@@ -259,7 +259,7 @@ const getTimeLimitSeconds = useCallback(() => {
       setSelectedDayKey(selectedDayKeys[0]);
     }
     setError('');
-    setMessage('아래에서 시험 유형을 골라 시작해 보세요!');
+    setMessage('유형과 출제 순서를 선택한 뒤 시작하세요.');
     navigateToStep(STEPS.CONFIGURE);
   }, [selectedDayKey, selectedDayKeys, navigateToStep]);
 
@@ -786,7 +786,7 @@ const getTimeLimitSeconds = useCallback(() => {
       <CommonHero
         badge="Vocabulary Studio"
         title="어휘를 가장 효과적으로, 감각적으로"
-        subtitle="단어장을 고르고 Day를 선택하면, 고급스럽고 깔끔한 화면에서 바로 훈련할 수 있어요."
+        subtitle="Day를 고르면 ‘연습’으로 빠르게 확인하고, ‘시험’에서 실전처럼 풉니다. 모르는 단어는 다시 보기 큐로 모여 반복됩니다."
         right={(
           <AppButton variant="primary" size="lg" onClick={handleScrollToSets}>
             <LucideIcons.Search size={18} /> 단어장 살펴보기
@@ -1017,10 +1017,10 @@ const getTimeLimitSeconds = useCallback(() => {
                 <button
                   type="button"
                   style={styles.scrollHintButton}
-                  aria-label="아래로 이동해서 시험 준비 구역 보기"
+                  aria-label="시험 설정으로 이동"
                   onClick={() => stepSummaryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
                 >
-                  아래로 이동해서 시험 준비하기 ⬇️
+                  시험 설정으로 이동
                 </button>
               )}
 
@@ -1048,8 +1048,8 @@ const getTimeLimitSeconds = useCallback(() => {
                   </h3>
                   <p style={styles.stepSummaryHint}>
                     {selectedDayLabels.length
-                      ? '다음 단계에서 시험 유형과 출제 방식을 고른 뒤 바로 시작해 볼까요?'
-                      : '위에서 Day를 최소 1개 선택해야 다음 단계로 이동할 수 있어요!'}
+                      ? '다음 단계에서 유형·출제 방식을 정한 뒤 시작합니다.'
+                      : '위에서 Day를 최소 1개 선택해야 다음 단계로 이동할 수 있어요.'}
                   </p>
                   <button
                     type="button"
@@ -1073,10 +1073,10 @@ const getTimeLimitSeconds = useCallback(() => {
           <div style={styles.configureHeader}>
             <div>
               <div style={styles.sectionHeadingRow}>
-                <h2 style={styles.sectionTitle}>3️⃣ 시험 준비하기</h2>
+                <h2 style={styles.sectionTitle}>3️⃣ 시험 설정</h2>
                     <EagleGuideChip text="시간 제한과 순서를 자유롭게 조절하세요" variant="accent" />
                   </div>
-                  <p style={styles.configureSubtitle}>유형과 출제 순서를 고르고, 연습 또는 시험을 바로 시작해 보세요!</p>
+                  <p style={styles.configureSubtitle}>유형과 출제 순서를 정한 뒤, 연습 또는 시험을 시작합니다.</p>
                 </div>
                 <button type="button" style={styles.stepLinkButton} onClick={() => navigateToStep(STEPS.SELECT_DAY)}>
                   ← Day 다시 선택
