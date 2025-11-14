@@ -435,9 +435,27 @@ function createProblemRepository(database) {
 
     await ensureProblemExposureColumns();
     const rows = await database.all(query, params);
-    const mapped = rows
+    let mapped = rows
       .map((row) => mapDbProblem(row))
       .filter((problem) => acceptCachedProblem(type, problem));
+
+    // If specific passages are requested, keep only problems that match those passages
+    if (Array.isArray(options.passages) && options.passages.length) {
+      const normalize = (t) => String(t || '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toLowerCase();
+      const fingerprints = options.passages
+        .map((p) => normalize(p).slice(0, 80))
+        .filter((fp) => fp.length > 0);
+      if (fingerprints.length) {
+        mapped = mapped.filter((p) => {
+          const main = normalize(p.mainText || p.text || (p.metadata && p.metadata.originalPassage) || '');
+          if (!main) return false;
+          return fingerprints.some((fp) => main.includes(fp));
+        });
+      }
+    }
 
     if (!mapped.length) {
       return [];

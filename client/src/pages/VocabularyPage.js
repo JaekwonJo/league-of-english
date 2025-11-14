@@ -920,8 +920,14 @@ const getTimeLimitSeconds = useCallback(() => {
                                     ...styles.setTitle,
                                     ...(isMobile ? { wordBreak: 'break-word', lineHeight: 1.35 } : {})
                                   }}>{set.title}</span>
-                                  <span style={styles.setMeta}>분류: {categoryDisplayText}</span>
-                                  <span style={styles.setMeta}>총 {set.totalDays} Day / {set.totalWords} 단어</span>
+                                  <span style={{
+                                    ...styles.setMeta,
+                                    ...(isMobile ? { wordBreak: 'break-word', overflowWrap: 'anywhere', lineHeight: 1.5 } : {})
+                                  }}>분류: {categoryDisplayText}</span>
+                                  <span style={{
+                                    ...styles.setMeta,
+                                    ...(isMobile ? { wordBreak: 'break-word', overflowWrap: 'anywhere', lineHeight: 1.5 } : {})
+                                  }}>총 {set.totalDays} Day / {set.totalWords} 단어</span>
                                 </button>
                               );
                             })}
@@ -992,7 +998,10 @@ const getTimeLimitSeconds = useCallback(() => {
                       >
                         <div className="shimmer" aria-hidden />
                         <div style={styles.dayHeader}>
-                          <strong style={styles.dayLabel}>{day.label}</strong>
+                          <strong style={{
+                            ...styles.dayLabel,
+                            ...(isMobile ? { wordBreak: 'break-word', overflowWrap: 'anywhere' } : {})
+                          }}>{day.label}</strong>
                           <span style={styles.dayCount}>{day.count} 단어</span>
                         </div>
                         {selected && (

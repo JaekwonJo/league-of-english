@@ -277,7 +277,8 @@ async function handleAiBackedType({
   let delivered = 0;
   const cache = await aiService.fetchCached(documentId, type, amount, {
     excludeIds: Array.from(usedProblemIds),
-    userId
+    userId,
+    passages: context.passages
   });
   delivered += appendProblems(cache);
   pushProgress('cache_fetch', type, {
@@ -290,7 +291,7 @@ async function handleAiBackedType({
     try {
       if (delivered < amount) {
         const { getGoldenProblems } = require('./goldenSetService');
-        const golden = getGoldenProblems(context?.document, type, amount - delivered);
+        const golden = getGoldenProblems(context?.document, type, amount - delivered, { passages: context.passages });
         if (Array.isArray(golden) && golden.length) {
           const added = appendProblems(golden.map((p, idx) => ({
             ...p,
