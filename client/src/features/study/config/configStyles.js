@@ -188,32 +188,37 @@ const styles = {
     paddingRight: '6px',
   },
   documentButton: {
+    position: 'relative',
+    overflow: 'hidden',
     textAlign: 'left',
-    padding: '16px',
-    borderRadius: '14px',
-    border: '2px solid transparent',
-    background: 'var(--surface-soft)',
-    color: 'var(--text-primary)',
+    padding: '18px',
+    borderRadius: '18px',
+    border: '1px solid rgba(148,163,184,0.28)',
+    background: 'linear-gradient(145deg, rgba(15,23,42,0.92), rgba(30,64,175,0.65))',
+    color: '#e2e8f0',
     cursor: 'pointer',
-    transition: 'border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease',
-    boxShadow: '0 8px 20px rgba(15, 23, 42, 0.12)',
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
+    boxShadow: '0 18px 36px rgba(15, 23, 42, 0.28)',
+    backgroundSize: '200% 200%',
+    animation: 'slowGradient 36s ease-in-out infinite',
   },
   documentButtonActive: {
-    borderColor: 'var(--accent-primary)',
-    boxShadow: '0 12px 28px rgba(59, 130, 246, 0.25)',
+    borderColor: 'rgba(59,130,246,0.6)',
+    boxShadow: '0 22px 44px rgba(59, 130, 246, 0.28)',
     transform: 'translateY(-2px)',
-    color: 'var(--tone-hero)'
+    color: '#f8fafc'
   },
   documentTitle: {
-    fontWeight: 700,
-    fontSize: '1rem',
+    fontWeight: 800,
+    fontSize: '1.02rem',
     marginBottom: '6px',
-    color: 'var(--tone-hero)'
+    color: '#f8fafc',
+    lineHeight: 1.35
   },
   documentMeta: {
     display: 'block',
     fontSize: '0.85rem',
-    color: 'var(--text-primary)',
+    color: 'rgba(226,232,240,0.9)',
     marginBottom: '4px',
   },
   emptyDocumentList: {

@@ -1188,8 +1188,13 @@ const normalizedMain = normalizeWhitespace(stripTags(mainText));
     return normalizeBlankPayload(payload, context);
   }
 
-  async generateVocab(documentId, count = 5) {
-    const { document, passages } = await this.getPassages(documentId);
+  async generateVocab(documentId, count = 5, options = {}) {
+    let passages = Array.isArray(options.passages) ? options.passages.filter(Boolean) : null;
+    if (!passages || !passages.length) {
+      const fetched = await this.getPassages(documentId, options.passageNumbers ? { passageNumbers: options.passageNumbers } : {});
+      passages = fetched.passages || [];
+    }
+    const { document } = await this.getPassages(documentId);
     const documentCode = document?.code || document?.slug || document?.external_id || null;
     const docTitle = document?.title || documentCode || `Document ${documentId}`;
     const results = [];
@@ -1394,8 +1399,13 @@ ${clipText(passage, 1600)}`,
     return results;
   }
 
-  async generateTitle(documentId, count = 5) {
-    const { document, passages } = await this.getPassages(documentId);
+  async generateTitle(documentId, count = 5, options = {}) {
+    let passages = Array.isArray(options.passages) ? options.passages.filter(Boolean) : null;
+    if (!passages || !passages.length) {
+      const fetched = await this.getPassages(documentId, options.passageNumbers ? { passageNumbers: options.passageNumbers } : {});
+      passages = fetched.passages || [];
+    }
+    const { document } = await this.getPassages(documentId);
     const docTitle = document?.title || `Document ${documentId}`;
     const manualExcerpt = readTitleManual(2000);
     const results = [];
@@ -1454,8 +1464,13 @@ ${clipText(passage, 1600)}`,
     return results;
   }
 
-  async generateTheme(documentId, count = 5) {
-    const { document, passages } = await this.getPassages(documentId);
+  async generateTheme(documentId, count = 5, options = {}) {
+    let passages = Array.isArray(options.passages) ? options.passages.filter(Boolean) : null;
+    if (!passages || !passages.length) {
+      const fetched = await this.getPassages(documentId, options.passageNumbers ? { passageNumbers: options.passageNumbers } : {});
+      passages = fetched.passages || [];
+    }
+    const { document } = await this.getPassages(documentId);
     const docTitle = document?.title || `Document ${documentId}`;
     const manualExcerpt = readTopicManual(1800);
     const results = [];
@@ -1513,12 +1528,17 @@ ${clipText(passage, 1600)}`,
     return results;
   }
 
-  async generateTopic(documentId, count = 5) {
-    return this.generateTheme(documentId, count);
+  async generateTopic(documentId, count = 5, options = {}) {
+    return this.generateTheme(documentId, count, options);
   }
 
-  async generateImplicit(documentId, count = 5) {
-    const { document, passages } = await this.getPassages(documentId);
+  async generateImplicit(documentId, count = 5, options = {}) {
+    let passages = Array.isArray(options.passages) ? options.passages.filter(Boolean) : null;
+    if (!passages || !passages.length) {
+      const fetched = await this.getPassages(documentId, options.passageNumbers ? { passageNumbers: options.passageNumbers } : {});
+      passages = fetched.passages || [];
+    }
+    const { document } = await this.getPassages(documentId);
     const docTitle = document?.title || `Document ${documentId}`;
     const results = [];
     const manualExcerpt = readImplicitManual(1800);
@@ -1766,8 +1786,13 @@ ${clipText(passage, 1600)}`,
     return results;
   }
 
-  async generateSummary(documentId, count = 5) {
-    const { document, passages } = await this.getPassages(documentId);
+  async generateSummary(documentId, count = 5, options = {}) {
+    let passages = Array.isArray(options.passages) ? options.passages.filter(Boolean) : null;
+    if (!passages || !passages.length) {
+      const fetched = await this.getPassages(documentId, options.passageNumbers ? { passageNumbers: options.passageNumbers } : {});
+      passages = fetched.passages || [];
+    }
+    const { document } = await this.getPassages(documentId);
     if (!this.getOpenAI()) throw new Error("AI generator unavailable for summary problems");
     const manualExcerpt = getSummaryManualExcerpt(3200);
     const documentCode = document?.code || document?.slug || document?.external_id || null;
@@ -1841,8 +1866,13 @@ ${clipText(passage, 1600)}`,
     }
   }
 
-  async generateGrammar(documentId, count = 5) {
-    const { document, passages } = await this.getPassages(documentId);
+  async generateGrammar(documentId, count = 5, options = {}) {
+    let passages = Array.isArray(options.passages) ? options.passages.filter(Boolean) : null;
+    if (!passages || !passages.length) {
+      const fetched = await this.getPassages(documentId, options.passageNumbers ? { passageNumbers: options.passageNumbers } : {});
+      passages = fetched.passages || [];
+    }
+    const { document } = await this.getPassages(documentId);
     if (!this.getOpenAI()) throw new Error("AI generator unavailable for grammar problems");
 
     const manualExcerpt = readGrammarManual(2400);

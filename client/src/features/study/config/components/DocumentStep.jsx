@@ -69,12 +69,14 @@ const DocumentStep = ({
               <button
                 key={doc.id}
                 type="button"
+                className="tilt-hover"
                 style={{
                   ...styles.documentButton,
                   ...(isActive ? styles.documentButtonActive : {}),
                 }}
                 onClick={() => handleSelect(doc.id)}
               >
+                <div className="shimmer" aria-hidden />
                 <span style={styles.documentTitle}>{doc.title || `자료 ${doc.id}`}</span>
                 {category && (
                   <span style={styles.documentMeta}>분류: {category}</span>

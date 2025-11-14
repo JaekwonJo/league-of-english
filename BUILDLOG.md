@@ -807,3 +807,10 @@ NODE` 로 5문항 생성 결과 (가족/전략 태그·한글 해설·단일 빈
 - Fix: routes.config.json에서 "문제 보관함"을 마지막으로 이동. Vocabulary 세트 제목은 모바일에서 `break-word`로 강제 개행. slowGradient를 36s로 통일하고 분석은 카드 내부로만 제한. 워크북 하단 고정 네비 버튼 대비/음영 강화. ReviewOptions/MockExam 해설에 ‘↑ 맨 위로’ 버튼 추가. StatsPage 섹션 순서를 ‘단어→유형별→워크북→모의고사’로 재배치하고 워크북 카드 신설.
 - Files: client/src/config/routes.config.json, client/src/pages/{VocabularyPage,WorkbookPage,AnalysisPage,StatsPage,VideoPlaylistPage,RankingPage,ProfilePage}.js, client/src/styles/analysisStyles.js, client/src/features/study/problem/components/ReviewOptions.jsx.
 - Verification: 로컬 빌드 후 모바일 폭(375px)에서 어휘 제목 줄바꿈 정상, 분석 목록 카드만 은은한 애니메이션, 워크북 하단 ‘이전/다음’ 대비/위치 확인, 해설 하단 ‘↑ 맨 위로’ 동작 확인, 통계 섹션 순서/워크북 카드 노출 확인.
+
+## 2025-11-14 (Study 문서 카드 프리미엄화 + 전 유형 원문 고정)
+- Issue: 학습 설정 1단계(자료 선택) 카드가 다른 화면 톤과 달라 퀄리티가 떨어져 보였고, “어휘 문제도 원문 아닌 지문으로 출제” 사례가 있었습니다.
+- Cause: DocumentStep 카드가 기본 카드 스타일이었고, AI 생성기 중 빈칸만 선택된 지문 목록을 받도록 특례 처리되어 있었습니다.
+- Fix: DocumentStep 카드에 그라데이션/틸트/은은한 애니메이션(36s) 적용. problemSetService가 모든 AI 생성기에 선택 지문을 전달하고, aiProblemService의 generate{Vocab,Title,Theme,Topic,Implicit,Summary,Grammar}가 options.passages를 최우선 사용하도록 통일.
+- Files: client/src/features/study/config/{components/DocumentStep.jsx,configStyles.js}, server/services/{problemSetService.js,aiProblemService.js}.
+- Verification: 선택한 지문 번호만 포함된 passages가 모든 생성기로 전달되는지 로컬 로그 확인, 동일 문서 내에서만 문제 생성됨을 수동 검증.

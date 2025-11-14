@@ -348,17 +348,12 @@ async function handleAiBackedType({
 
   try {
     let generatedBatch;
-    if (generatorName === 'generateBlank') {
-      generatedBatch = await withTimeout(
-        aiService.generateBlank(documentId, remaining, { passages: context.passages }),
-        AI_TIME_BUDGET_MS
-      );
-    } else {
-      generatedBatch = await withTimeout(
-        aiService[generatorName](documentId, remaining),
-        AI_TIME_BUDGET_MS
-      );
-    }
+    // 모든 AI 생성기에 선택된 지문을 전달해, 반드시 해당 원문만 사용하도록 통일
+    const genOptions = { passages: context.passages };
+    generatedBatch = await withTimeout(
+      aiService[generatorName](documentId, remaining, genOptions),
+      AI_TIME_BUDGET_MS
+    );
     const savedBatch = await aiService.saveProblems(documentId, type, generatedBatch, {
       docTitle,
       documentCode
