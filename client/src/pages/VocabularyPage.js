@@ -996,7 +996,6 @@ const getTimeLimitSeconds = useCallback(() => {
                           });
                         }}
                       >
-                        <div className="shimmer" aria-hidden />
                         <div style={styles.dayHeader}>
                           <strong style={{
                             ...styles.dayLabel,
@@ -1913,16 +1912,14 @@ const styles = {
   dayCard: {
     position: 'relative',
     overflow: 'hidden',
-    background: 'linear-gradient(135deg, rgba(15,23,42,0.92), rgba(30,64,175,0.65))',
+    background: 'var(--surface-card)',
     borderRadius: '18px',
     padding: '18px',
     cursor: 'pointer',
-    border: '1px solid rgba(148,163,184,0.28)',
+    border: '1px solid var(--surface-border)',
     transition: 'all 0.2s ease',
-    boxShadow: '0 22px 42px rgba(15, 23, 42, 0.28)',
-    color: '#e2e8f0',
-    backgroundSize: '200% 200%',
-    animation: 'slowGradient 36s ease-in-out infinite'
+    boxShadow: '0 10px 22px rgba(15, 23, 42, 0.10)',
+    color: 'var(--text-primary)'
   },
   dayCardSelected: {
     borderColor: 'rgba(34,197,94,0.6)',
@@ -1952,18 +1949,18 @@ const styles = {
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: '10px',
-    color: '#f8fafc'
+    color: 'var(--text-primary)'
   },
   daySelectedBadge: {
     display: 'none'
   },
   dayLabel: {
-    fontWeight: 700,
-    color: '#f8fafc'
+    fontWeight: 800,
+    color: 'var(--text-primary)'
   },
   dayCount: {
-    fontWeight: 600,
-    color: '#e0e7ff'
+    fontWeight: 700,
+    color: 'var(--tone-strong)'
   },
   daySummary: {
     display: 'none'
