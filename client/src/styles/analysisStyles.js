@@ -405,9 +405,9 @@ export const analysisStyles = {
     padding: '10px 18px',
     background: 'var(--indigo)',
     color: 'var(--text-on-accent)',
-    fontWeight: 800,
+    fontWeight: 700,
     cursor: 'pointer',
-    boxShadow: '0 12px 26px rgba(15, 23, 42, 0.22)',
+    boxShadow: '0 8px 18px rgba(15, 23, 42, 0.16)',
     width: '100%'
   },
   passageMetaDisabled: {
