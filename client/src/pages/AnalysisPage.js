@@ -745,7 +745,6 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
                   {!isCollapsed && (
                     <div style={analysisStyles.docCategoryGrid}>
                       {docs.map((doc) => {
-                        const palette = calmPalette;
                         const isHovered = hoveredDocumentId === doc.id;
                         const description = doc.description || '지문을 선택해 전문 분석을 살펴보세요.';
                         const brandName = 'league of english';
@@ -762,13 +761,11 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
                             className="tilt-hover"
                             style={{
                               ...analysisStyles.documentCard,
-                              background: `linear-gradient(150deg, ${palette.from}, ${palette.to})`,
-                              backgroundSize: '200% 200%',
-                              // 더 은은하게: 느린 주기 + 덜 강한 그림자
-                              animation: 'slowGradient 36s ease-in-out infinite',
+                              background: 'var(--surface-card)',
+                              border: '1px solid var(--surface-border)',
                               boxShadow: isHovered
-                                ? `0 22px 36px ${palette.shadow}`
-                                : `0 14px 26px ${palette.shadow}`,
+                                ? '0 14px 28px rgba(15,23,42,0.20)'
+                                : '0 8px 18px rgba(15,23,42,0.12)',
                               transform: isHovered ? 'translateY(-4px)' : 'translateY(0)'
                             }}
                             onFocus={() => setHoveredDocumentId(doc.id)}
@@ -1009,7 +1006,7 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
           <div style={analysisStyles.passageMetaButtons}>
             <button
               type="button"
-              style={analysisStyles.passageMetaGhost}
+              style={analysisStyles.passageMetaPrimary}
               onClick={() => handlePassageClick(entry)}
             >
               분석 보기
@@ -1017,7 +1014,7 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
             <button
               type="button"
               style={{
-                ...analysisStyles.passageMetaPrimary,
+                ...analysisStyles.passageMetaGhost,
                 ...(disabled ? analysisStyles.passageMetaDisabled : {})
               }}
               onClick={() => openGenerationPrompt(entry)}

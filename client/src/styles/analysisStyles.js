@@ -157,11 +157,11 @@ export const analysisStyles = {
     marginTop: '30px'
   },
   docCategorySection: {
-    background: 'linear-gradient(145deg, rgba(15,23,42,0.92), rgba(30,64,175,0.6))',
+    background: 'var(--surface-card)',
     borderRadius: '26px',
     padding: '20px',
-    border: '1px solid rgba(148, 163, 184, 0.35)',
-    boxShadow: '0 32px 60px rgba(15, 23, 42, 0.45)'
+    border: '1px solid var(--surface-border)',
+    boxShadow: '0 18px 36px rgba(15, 23, 42, 0.16)'
   },
   docCategoryHeaderButton: {
     width: '100%',
@@ -391,9 +391,9 @@ export const analysisStyles = {
   },
   passageMetaGhost: {
     borderRadius: '999px',
-    border: '1px solid rgba(255,255,255,0.35)',
-    background: 'rgba(255,255,255,0.1)',
-    color: '#e0f2fe',
+    border: '1px solid var(--surface-border)',
+    background: 'var(--surface-soft)',
+    color: 'var(--text-primary)',
     fontWeight: 700,
     padding: '10px 18px',
     cursor: 'pointer',
@@ -401,13 +401,13 @@ export const analysisStyles = {
   },
   passageMetaPrimary: {
     borderRadius: '999px',
-    border: 'none',
+    border: '1px solid transparent',
     padding: '10px 18px',
-    background: 'linear-gradient(135deg, rgba(79,70,229,1) 0%, rgba(14,165,233,1) 100%)',
+    background: 'var(--indigo)',
     color: 'var(--text-on-accent)',
-    fontWeight: 700,
+    fontWeight: 800,
     cursor: 'pointer',
-    boxShadow: '0 18px 32px rgba(79,70,229,0.32)',
+    boxShadow: '0 12px 26px rgba(15, 23, 42, 0.22)',
     width: '100%'
   },
   passageMetaDisabled: {

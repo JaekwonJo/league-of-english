@@ -1,11 +1,6 @@
 import React from 'react';
 
-const gradientPalette = [
-  { from: 'rgba(15,23,42,0.95)', to: 'rgba(30,64,175,0.75)', shadow: 'rgba(14,165,233,0.28)' },
-  { from: 'rgba(49,46,129,0.95)', to: 'rgba(126,34,206,0.75)', shadow: 'rgba(129,140,248,0.3)' },
-  { from: 'rgba(13,44,84,0.95)', to: 'rgba(14,165,233,0.75)', shadow: 'rgba(14,165,233,0.28)' },
-  { from: 'rgba(45,55,72,0.95)', to: 'rgba(79,70,229,0.75)', shadow: 'rgba(99,102,241,0.3)' }
-];
+const gradientPalette = [];
 
 const gridStyles = {
   wrapper: {
@@ -34,24 +29,23 @@ const gridStyles = {
     justifyContent: 'space-between',
     padding: '16px',
     borderRadius: '22px',
-    border: '1px solid rgba(255,255,255,0.18)',
+    border: '1px solid var(--surface-border)',
     minHeight: '150px',
     transition: 'transform 0.25s ease, box-shadow 0.25s ease',
-    color: '#f8fafc',
-    backgroundSize: '200% 200%',
-    animation: 'slowGradient 36s ease-in-out infinite'
+    color: 'var(--text-primary)',
+    background: 'var(--surface-card)'
   },
   checkBadge: {
     position: 'absolute',
     top: '10px',
     right: '10px',
-    background: 'linear-gradient(135deg, rgba(16,185,129,0.95), rgba(59,130,246,0.85))',
-    color: '#0b1324',
+    background: 'rgba(16,185,129,0.18)',
+    color: 'var(--color-green-700, #15803d)',
     borderRadius: '999px',
     padding: '6px 8px',
     fontWeight: 900,
     fontSize: '12px',
-    boxShadow: '0 12px 24px rgba(16,185,129,0.35), 0 12px 24px rgba(59,130,246,0.25)'
+    boxShadow: 'none'
   },
   cardSelected: {
     borderColor: 'rgba(79, 70, 229, 0.55)',
@@ -60,13 +54,14 @@ const gridStyles = {
   },
   badge: {
     fontSize: '1.2rem',
-    fontWeight: 900,
-    letterSpacing: '0.04em'
+    fontWeight: 800,
+    letterSpacing: '-0.01em',
+    color: 'var(--tone-hero)'
   },
   helper: {
     margin: '8px 0 0',
     fontSize: '0.85rem',
-    color: 'rgba(248,250,252,0.82)'
+    color: 'var(--tone-strong)'
   },
   footer: {
     display: 'flex',
@@ -75,16 +70,16 @@ const gridStyles = {
     marginTop: '16px'
   },
   previewButton: {
-    background: 'linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06))',
-    border: '1px solid rgba(255,255,255,0.28)',
-    color: '#e0e7ff',
+    background: 'var(--surface-soft)',
+    border: '1px solid var(--surface-border)',
+    color: 'var(--text-primary)',
     borderRadius: '999px',
     padding: '10px 16px',
     cursor: 'pointer',
     fontSize: '0.85rem',
     fontWeight: 700,
     transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-    boxShadow: '0 14px 26px rgba(15, 23, 42, 0.38)'
+    boxShadow: '0 8px 18px rgba(15, 23, 42, 0.12)'
   },
   previewButtonDisabled: {
     opacity: 0.4,
