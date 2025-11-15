@@ -541,6 +541,7 @@ class Database {
         `ALTER TABLE problem_feedback ADD COLUMN resolved_at DATETIME`,
         `ALTER TABLE admin_notifications ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP`,
         `ALTER TABLE problem_feedback_events ADD COLUMN detail TEXT`
+        ,`ALTER TABLE users ADD COLUMN membership_started_at DATETIME`
       ];
 
       let errors = 0;

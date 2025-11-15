@@ -6,6 +6,7 @@
 import React, { lazy } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import MainLayout from '../components/layout/MainLayout';
+import MembershipPromotion from '../components/common/MembershipPromotion';
 import routesConfig from '../config/routes.config.json';
 import logger from '../utils/logger';
 
@@ -81,6 +82,7 @@ const AppRouter = () => {
 
   return (
     <MainLayout currentPath={currentPath}>
+      <MembershipPromotion />
       <PageComponent />
     </MainLayout>
   );

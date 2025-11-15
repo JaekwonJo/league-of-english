@@ -51,6 +51,7 @@ function buildSummary(user) {
   return {
     type: user.membership || 'free',
     expiresAt: user.membershipExpiresAt || null,
+    startedAt: user.membership_started_at || user.membershipStartedAt || null,
     dailyLimit: user.dailyLimit,
     usedToday: user.usedToday,
     remainingToday: user.dailyLimit < 0 ? -1 : Math.max(0, (user.dailyLimit || 0) - (user.usedToday || 0))
@@ -133,7 +134,7 @@ router.post('/redeem', verifyToken, async (req, res) => {
       : currentUser.dailyLimit;
 
     await database.run(
-      'UPDATE users SET membership = ?, membership_expires_at = ?, daily_limit = ? WHERE id = ?',
+      'UPDATE users SET membership = ?, membership_expires_at = ?, membership_started_at = COALESCE(membership_started_at, CURRENT_TIMESTAMP), daily_limit = ? WHERE id = ?',
       [membershipType, newExpiry, nextDailyLimit, req.user.id]
     );
 
