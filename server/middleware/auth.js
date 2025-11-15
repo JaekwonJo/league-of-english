@@ -81,6 +81,22 @@ const requirePaidMembership = async (req, res, next) => {
   }
 };
 
+// Pro 이상 멤버십 확인(프로/VIP) 또는 교사/관리자 허용
+const requireProMembership = async (req, res, next) => {
+  try {
+    const database = require('../models/database');
+    const row = await database.get('SELECT role, membership FROM users WHERE id = ?', [req.user.id]);
+    const role = String(row?.role || '').toLowerCase();
+    const membership = String(row?.membership || '').toLowerCase();
+    const isProTier = membership === 'pro' || membership === 'vip';
+    if (role === 'admin' || role === 'teacher' || isProTier) return next();
+    return res.status(403).json({ message: 'Pro 등급 이상에서만 사용할 수 있는 기능입니다.' });
+  } catch (error) {
+    console.error('[auth] requireProMembership error:', error?.message || error);
+    return res.status(500).json({ message: '서버 오류' });
+  }
+};
+
 // 일일 제한 확인 미들웨어
 const checkDailyLimit = async (req, res, next) => {
   const database = require('../models/database');
@@ -168,6 +184,7 @@ module.exports = {
   requireAdmin,
   requireTeacherOrAdmin,
   requirePaidMembership,
+  requireProMembership,
   hashPassword,
   verifyPassword,
   checkDailyLimit,

@@ -784,6 +784,13 @@ NODE` 로 5문항 생성 결과 (가족/전략 태그·한글 해설·단일 빈
 - Files: scripts/import-grammar-b4.js
 - Verification: `DB_FILE=server/tmp/b4-step11-test.db node scripts/import-grammar-b4.js ./B4어법자료`로 테스트 DB에 6개 워크북을 생성한 뒤, `workbook_sets.steps_json`을 조회해 각 워크북이 Step 11 하나와 어법 카드 N개(앞면 지문, 뒷면에 예: `정답: ⑤ to ask ⑦ who ⑧ are`)를 가지는지 확인했습니다. 이어 `workbookService.listWorkbooks/getWorkbook`으로 서비스 계층에서 동일 구조가 그대로 노출되는지 점검했습니다.
 
+## 2025-11-15 (워크북 권한 Pro 상향 + 문제 생성 지문 고정)
+- Issue: 워크북 학습 메뉴를 프리미엄/프로 모두가 사용할 수 있어 비용 관리가 어렵고, 학습 문제 생성 시 선택 지문과 다른 본문이 섞여 나오는 사례가 있었습니다. 상향 알림은 여러 번 뜨는 느낌이 들었습니다.
+- Cause: 워크북 라우트는 단순 `verifyToken`으로만 보호되고, 클라이언트에서도 `isPremiumOrHigher`로 프리미엄을 포함해 허용하고 있었습니다. 문제 생성 쪽에서는 `UltraSimpleProblemService`가 AI 생성기를 호출할 때 `options.passageNumbers`를 AI 서비스에 전달하지 않아, `aiProblemService.getPassages`가 문서 전체를 대상으로 문제를 만드는 경로가 남아 있었습니다. 멤버십 상향 안내는 세션 단위 `sessionStorage`를 사용했습니다.
+- Fix: 서버에 `requireProMembership` 미들웨어를 추가해 워크북 목록/상세/TEST/제출 라우트에서 Pro/VIP 또는 교사/관리자만 통과하도록 조정하고, 클라이언트에서도 `isProOrHigher`(Pro/VIP+교사/관리자)만 워크북 생성/학습 버튼이 노출되도록 변경했습니다. `UltraSimpleProblemService`에서 빈칸/어휘/제목/주제/요약/함축에 모두 `options`를 그대로 넘겨, 선택 지문 번호가 `aiProblemService.getPassages(documentId, { passageNumbers })`까지 전달되도록 통일했습니다. 멤버십 상향 오버레이는 `localStorage` 키(`loe_membership_promo_<userId>_<tier>_<expiresAt>`)로 1회만 노출되고, 오버레이 배경이나 카드 자체를 탭하면 닫히도록 개선했습니다.
+- Files: server/middleware/auth.js, server/routes/workbook.routes.js, client/src/pages/WorkbookPage.js, server/services/ultraSimpleProblemService.js, client/src/components/common/MembershipPromotion.js, PROJECT_STATE.md.
+- Verification: 로컬에서 Pro/프리미엄/무료 계정 시나리오를 가정해 워크북 라우트 미들웨어 조합을 점검(무료/프리미엄은 403, Pro/교사/관리자는 통과)하고, `problemSetService` 단위에서 `context.passages`와 `options.passageNumbers`가 일치하는지 확인했습니다. 프런트에서는 Study 페이지에서 특정 지문만 선택해 문제 생성을 호출했을 때, progressLog의 문서/지문 정보가 선택값과 일치하는지와, 멤버십 상향 오버레이가 각 사용자/기기에서 최초 1회만 뜨는지 확인했습니다.
+
 ## 2025-11-14 (모의고사 다회차 + 지문선택/해설/형식 점검)
 - Issue: 모의고사 회차가 고정처럼 보이고, 시험지 텍스트가 뒤섞이거나(이상한 문자열), 문제 학습에서 선택 지문이 아닌 본문이 섞여 나오며, 해설 톤이 딱딱하고 본문 줄바꿈이 어수선함.
 - Cause: 업로드/선택 UI가 단일 회차 전제로 보였고, PDF 파싱 노이즈, 학습 요청에 passageNumbers 누락/확인 필요, 프롬프트/리뷰 타이틀 톤 미흡, 본문 렌더 스타일 부족.

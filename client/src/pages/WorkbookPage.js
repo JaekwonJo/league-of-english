@@ -1194,11 +1194,11 @@ const saveCompletedToStorage = (value) => {
 };
 
 const isTeacherOrAdmin = (role) => ['teacher', 'admin'].includes(String(role || '').toLowerCase());
-const isPremiumOrHigher = (role, membership) => {
+const isProOrHigher = (role, membership) => {
   const r = String(role || '').toLowerCase();
   const m = String(membership || '').toLowerCase();
   if (r === 'admin' || r === 'teacher') return true;
-  return ['premium', 'pro', 'vip'].includes(m);
+  return ['pro', 'vip'].includes(m);
 };
 
 const WordOrderPuzzle = ({ card, reveal, compact = false }) => {
@@ -1633,7 +1633,7 @@ const TestWordOrderInputQuestion = ({ question, value = '', onChange }) => {
 const WorkbookPage = () => {
   const { user, updateUser } = useAuth();
   const canManageWorkbooks = isTeacherOrAdmin(user?.role);
-  const canCreateWorkbooks = isPremiumOrHigher(user?.role, user?.membership);
+  const canCreateWorkbooks = isProOrHigher(user?.role, user?.membership);
 
   const [isMobile, setIsMobile] = useState(false);
   const [workbooks, setWorkbooks] = useState([]);

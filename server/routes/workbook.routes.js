@@ -2,9 +2,9 @@ const express = require('express');
 const router = express.Router();
 
 const workbookService = require('../services/workbookService');
-const { verifyToken, requireTeacherOrAdmin, requirePaidMembership } = require('../middleware/auth');
+const { verifyToken, requireTeacherOrAdmin, requirePaidMembership, requireProMembership } = require('../middleware/auth');
 
-router.get('/workbooks', verifyToken, async (req, res) => {
+router.get('/workbooks', verifyToken, requireProMembership, async (req, res) => {
   try {
     const { documentId } = req.query || {};
     const list = await workbookService.listWorkbooks({ documentId });
@@ -15,7 +15,7 @@ router.get('/workbooks', verifyToken, async (req, res) => {
   }
 });
 
-router.get('/workbooks/:id', verifyToken, async (req, res) => {
+router.get('/workbooks/:id', verifyToken, requireProMembership, async (req, res) => {
   try {
     const workbook = await workbookService.getWorkbook(req.params.id);
     res.json({ success: true, data: workbook });
@@ -69,7 +69,7 @@ router.delete('/workbooks/:id', verifyToken, requireTeacherOrAdmin, async (req, 
   }
 });
 
-router.get('/workbooks/:id/test', verifyToken, async (req, res) => {
+router.get('/workbooks/:id/test', verifyToken, requireProMembership, async (req, res) => {
   try {
     const data = await workbookService.getWorkbookTest(req.params.id);
     res.json({ success: true, data });
@@ -79,7 +79,7 @@ router.get('/workbooks/:id/test', verifyToken, async (req, res) => {
   }
 });
 
-router.post('/workbooks/:id/test/submit', verifyToken, async (req, res) => {
+router.post('/workbooks/:id/test/submit', verifyToken, requireProMembership, async (req, res) => {
   try {
     const { answers } = req.body || {};
     if (!Array.isArray(answers) || answers.length === 0) {
