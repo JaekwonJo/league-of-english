@@ -814,3 +814,9 @@ NODE` 로 5문항 생성 결과 (가족/전략 태그·한글 해설·단일 빈
 - Fix: DocumentStep 카드에 그라데이션/틸트/은은한 애니메이션(36s) 적용. problemSetService가 모든 AI 생성기에 선택 지문을 전달하고, aiProblemService의 generate{Vocab,Title,Theme,Topic,Implicit,Summary,Grammar}가 options.passages를 최우선 사용하도록 통일.
 - Files: client/src/features/study/config/{components/DocumentStep.jsx,configStyles.js}, server/services/{problemSetService.js,aiProblemService.js}.
 - Verification: 선택한 지문 번호만 포함된 passages가 모든 생성기로 전달되는지 로컬 로그 확인, 동일 문서 내에서만 문제 생성됨을 수동 검증.
+## 2025-11-15 (hero wrap + vocab mobile + analysis mono + time budget)
+- Issue: 모바일에서 Hero 제목/부제가 세로로 찢어져 보이고, 우측 CTA가 텍스트를 밀어 레이아웃이 깨짐. 어휘 Day 카드 글씨 대비/배치가 낮아 가독성 저하. 분석 목록은 과한 그라데이션으로 피로감. 문제 출제/분석은 간헐적 타임아웃.
+- Cause: Hero가 모바일에서도 가로 정렬 고정 + 우측 CTA 겹침, Day 카드가 어두운 배경과 shimmer로 텍스트가 묻힘, 분석 카드가 다중 그라데이션, AI 시간 예산이 짧아 로드 변동에 취약.
+- Fix: CommonHero 모바일 세로(column) 전환 + 버튼(모바일 숨김), Day 2열 그리드 + 중립 카드 톤 + shimmer 제거, 분석은 모노톤 카드로 통일하고 ‘분석 보기’만 강조, AI 기본 예산 30s로 상향. 캐시 조회에도 선택 지문 본문 일치 필터 적용.
+- Files: client/src/components/common/CommonHero.js, client/src/pages/VocabularyPage.js, client/src/pages/AnalysisPage.js, client/src/components/shared/PassagePickerGrid.js, client/src/styles/analysisStyles.js, server/services/problemSetService.js, server/services/ai-problem/internal/problemRepository.js.
+- Verification: 모바일 강력 새로고침 후 Hero 줄바꿈 정상/CTA 비표시, Day 카드 2열·밝은 배경·진한 텍스트, 분석 목록 모노톤+‘분석 보기’ 강조 확인. 동일 지문 재생성 시 캐시가 본문 일치 항목만 반환됨을 수동 점검. 타임아웃 재현 빈도 감소.
