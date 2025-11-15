@@ -286,7 +286,7 @@ const AnalysisPage = () => {
     createdAt: entry.createdAt || null
   });
 
-const updatePassageVariantsState = (passageNumber, variants, originalPassage) => {
+  const updatePassageVariantsState = (passageNumber, variants, originalPassage) => {
     setPassageList((prev) => prev.map((item) => {
       if (item.passageNumber !== passageNumber) return item;
       return {
@@ -545,6 +545,22 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
       }
     } catch (err) {
       const message = err?.message || '분석을 불러오는 중 오류가 발생했습니다.';
+      if (message.includes('아직 저장된 분석본')) {
+        const fallbackOriginal = passage.originalPassage || passage.text || passage.excerpt || '';
+        updatePassageVariantsState(passage.passageNumber, [], fallbackOriginal);
+        setSelectedPassage(normalizePassage({
+          passageNumber: passage.passageNumber,
+          displayLabel: passage.displayLabel || passage.label || null,
+          originalPassage: fallbackOriginal,
+          variants: []
+        }));
+        setActiveVariantIndex(0);
+        setFeedbackMessage(null);
+        setReportModal({ open: false, variantIndex: null, reason: '' });
+        navigateToStep(STEPS.ANALYSIS);
+        setError(null);
+        return;
+      }
       if (message.includes('하루 10개의 분석본')) {
         setAnalysisLimitError(message);
       } else {
@@ -1341,6 +1357,9 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
     const totalVariants = variants.length;
     const allSelected = totalVariants > 0 && selectedVariantIndexes.length === totalVariants;
     const passageTitle = selectedPassage?.displayLabel || `지문 ${selectedPassage?.passageNumber || ''}`;
+    const passageEntry = passageList.find((item) => item.passageNumber === selectedPassage?.passageNumber) || null;
+    const slots = passageEntry ? remainingSlots(passageEntry) : remainingSlots(selectedPassage);
+    const canRequestGeneration = slots > 0;
 
     return (
     <div style={analysisStyles.container}>
@@ -1471,7 +1490,32 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
             </>
           ) : (
             <div style={analysisStyles.emptyVariant}>
-              아직 저장된 분석본이 없어요. 지문 목록으로 돌아가 “분석본 추가하기” 버튼을 눌러보세요!
+              <div style={analysisStyles.emptyVariantAnimationRow} aria-hidden>
+                <span className="analysis-floating-emoji" style={analysisStyles.emptyVariantEmoji}>📘</span>
+                <span className="analysis-floating-emoji" style={analysisStyles.emptyVariantEmoji}>✨</span>
+                <span className="analysis-floating-emoji" style={analysisStyles.emptyVariantEmoji}>📗</span>
+              </div>
+              <p style={analysisStyles.emptyVariantBanner}>===== 아직 분석본이 없으니 생성해주세요 =====</p>
+              <p style={analysisStyles.emptyVariantMessage}>
+                분석본 생성은 30초 정도 소요됩니다. 아래 버튼을 눌러 AI에게 부탁해 보세요!
+              </p>
+              <p style={analysisStyles.emptyVariantHint}>생성이 끝나면 자동으로 새 분석본이 펼쳐집니다. 조금만 기다려 주세요 😊</p>
+              <div style={analysisStyles.emptyVariantProgress}>
+                <span className="analysis-progress-bar" />
+              </div>
+              <div style={analysisStyles.emptyVariantActions}>
+                <button
+                  type="button"
+                  style={{
+                    ...analysisStyles.emptyVariantButton,
+                    ...(canRequestGeneration ? {} : analysisStyles.emptyVariantButtonDisabled)
+                  }}
+                  onClick={() => openGenerationPrompt(passageEntry || selectedPassage)}
+                  disabled={!canRequestGeneration}
+                >
+                  {canRequestGeneration ? '새 분석 생성 요청하기' : '이미 두 개의 분석본이 준비되어 있어요'}
+                </button>
+              </div>
             </div>
           )}
           {renderReportModal()}
