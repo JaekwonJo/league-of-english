@@ -8,7 +8,7 @@ import FriendlyError from '../components/common/FriendlyError';
 import EagleGuideChip from '../components/common/EagleGuideChip';
 import CommonHero from '../components/common/CommonHero';
 
-const MAX_VARIANTS_PER_PASSAGE = 2;
+const MAX_VARIANTS_PER_PASSAGE = 1;
 const MAX_PASSAGE_LABEL_LENGTH = 40;
 
 const GENERATION_WORDS = [

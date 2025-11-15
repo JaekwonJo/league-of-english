@@ -25,15 +25,16 @@ const MembershipPromotion = () => {
         const t = String(res.data?.type || '').toLowerCase();
         const end = res.data?.expiresAt;
         const start = res.data?.startedAt || res.user?.membership_started_at || res.user?.membershipStartedAt;
+        const userId = res.user?.id ? String(res.user.id) : 'anonymous';
         if ((t === 'premium' || t === 'pro') && end) {
-          const key = `promo_shown_until_${end}`;
-          const already = sessionStorage.getItem(key);
+          const key = `loe_membership_promo_${userId}_${t}_${end}`;
+          const already = window.localStorage.getItem(key);
           if (!already) {
             const range = formatRange(start, end);
             const tierLabel = t === 'pro' ? '프로' : '프리미엄';
             setMessage(`${range} ${tierLabel} 등급으로 상향되었습니다!`);
             setVisible(true);
-            sessionStorage.setItem(key, '1');
+            window.localStorage.setItem(key, '1');
           }
         }
       } catch (e) {
@@ -45,12 +46,21 @@ const MembershipPromotion = () => {
 
   if (!visible || !message) return null;
 
+  const handleClose = () => setVisible(false);
+
   return (
-    <div style={styles.overlay} onClick={() => setVisible(false)}>
-      <div style={styles.card} className="challenger-login-burst" onClick={(e) => e.stopPropagation()}>
+    <div style={styles.overlay} onClick={handleClose}>
+      <div
+        style={styles.card}
+        className="challenger-login-burst"
+        onClick={(e) => {
+          e.stopPropagation();
+          handleClose();
+        }}
+      >
         <div style={styles.badge}>🎉 멤버십 안내</div>
         <h3 style={styles.title}>{message}</h3>
-        <p style={styles.note}>즐거운 학습 되세요! (클릭하면 닫혀요)</p>
+        <p style={styles.note}>즐거운 학습 되세요! (카드를 탭하면 닫혀요)</p>
       </div>
     </div>
   );
@@ -100,4 +110,3 @@ const styles = {
 };
 
 export default MembershipPromotion;
-

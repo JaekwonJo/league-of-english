@@ -115,7 +115,7 @@ const VOCAB_OVERRIDES = [
   }
 ];
 
-const MAX_VARIANTS_PER_PASSAGE = 2;
+const MAX_VARIANTS_PER_PASSAGE = 1;
 const ANALYSIS_MANUAL_SNIPPET = readAnalysisManual(2600);
 
 const KEYWORD_STOPWORDS = new Set([

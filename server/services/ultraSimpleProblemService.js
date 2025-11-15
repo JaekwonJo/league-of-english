@@ -64,22 +64,22 @@ class UltraSimpleProblemService {
         }));
         out.push(...arr);
       } else if (t === 'blank') {
-        const arr = await AI.generateBlank(documentId, c);
+        const arr = await AI.generateBlank(documentId, c, options);
         out.push(...arr);
       } else if (t === 'vocabulary' || t === 'vocab') {
-        const arr = await AI.generateVocab(documentId, c);
+        const arr = await AI.generateVocab(documentId, c, options);
         out.push(...arr.map(p => ({ ...p, type: 'vocabulary' })));
       } else if (t === 'title') {
-        const arr = await AI.generateTitle(documentId, c);
+        const arr = await AI.generateTitle(documentId, c, options);
         out.push(...arr);
       } else if (t === 'theme' || t === 'topic') {
-        const arr = await AI.generateTopic(documentId, c);
+        const arr = await AI.generateTopic(documentId, c, options);
         out.push(...arr.map(p => ({ ...p, type: 'theme' })));
       } else if (t === 'summary') {
-        const arr = await AI.generateSummary(documentId, c);
+        const arr = await AI.generateSummary(documentId, c, options);
         out.push(...arr);
       } else if (t === 'implicit') {
-        const arr = await AI.generateImplicit(documentId, c);
+        const arr = await AI.generateImplicit(documentId, c, options);
         out.push(...arr);
       }
     }
