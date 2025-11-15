@@ -902,7 +902,69 @@ export const analysisStyles = {
     padding: '28px',
     textAlign: 'center',
     color: 'var(--tone-strong)',
-    border: '1px dashed var(--border-muted)'
+    border: '1px dashed var(--border-muted)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '14px',
+    alignItems: 'center'
+  },
+  emptyVariantAnimationRow: {
+    display: 'flex',
+    gap: '16px',
+    justifyContent: 'center'
+  },
+  emptyVariantEmoji: {
+    fontSize: '2.2rem',
+    filter: 'drop-shadow(0 6px 14px rgba(15,23,42,0.15))'
+  },
+  emptyVariantBanner: {
+    fontWeight: 800,
+    letterSpacing: '0.08em',
+    color: 'var(--indigo)',
+    background: 'rgba(79, 70, 229, 0.12)',
+    padding: '10px 16px',
+    borderRadius: '12px',
+    width: '100%'
+  },
+  emptyVariantMessage: {
+    margin: 0,
+    fontSize: '1rem',
+    lineHeight: 1.7
+  },
+  emptyVariantHint: {
+    margin: 0,
+    fontSize: '0.95rem',
+    color: 'var(--tone-muted)'
+  },
+  emptyVariantProgress: {
+    width: '100%',
+    maxWidth: '320px',
+    height: '8px',
+    borderRadius: '999px',
+    background: 'rgba(79, 70, 229, 0.12)',
+    overflow: 'hidden'
+  },
+  emptyVariantActions: {
+    marginTop: '6px'
+  },
+  emptyVariantButton: {
+    border: 'none',
+    borderRadius: '14px',
+    padding: '12px 24px',
+    background: 'linear-gradient(135deg, rgba(79,70,229,1) 0%, rgba(56,189,248,1) 100%)',
+    color: 'var(--text-on-accent)',
+    fontWeight: 700,
+    fontSize: '1rem',
+    cursor: 'pointer',
+    boxShadow: '0 16px 32px rgba(59,130,246,0.28)',
+    transition: 'transform 0.2s ease'
+  },
+  emptyVariantButtonDisabled: {
+    cursor: 'not-allowed',
+    opacity: 0.6,
+    boxShadow: 'none',
+    background: 'var(--surface-soft-solid)',
+    color: 'var(--tone-muted)'
   },
   feedbackBar: {
     display: 'flex',

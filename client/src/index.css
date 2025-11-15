@@ -858,6 +858,57 @@ body {
 .ui-pressable:hover { transform: translateY(-2px); }
 .ui-pressable:active { transform: scale(0.98); filter: brightness(0.98); }
 
+.analysis-floating-emoji {
+  display: inline-flex;
+  transform-origin: center;
+  animation: analysis-bounce 2.4s ease-in-out infinite;
+}
+
+.analysis-floating-emoji:nth-child(2) {
+  animation-delay: 0.25s;
+}
+
+.analysis-floating-emoji:nth-child(3) {
+  animation-delay: 0.5s;
+}
+
+@keyframes analysis-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.analysis-progress-bar {
+  display: block;
+  height: 100%;
+  width: 24%;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #4f46e5 0%, #38bdf8 100%);
+  animation: analysis-progress 1.8s ease-in-out infinite;
+}
+
+@keyframes analysis-progress {
+  0% {
+    margin-left: 0%;
+    width: 18%;
+    opacity: 0.6;
+  }
+  50% {
+    margin-left: 42%;
+    width: 46%;
+    opacity: 1;
+  }
+  100% {
+    margin-left: 84%;
+    width: 18%;
+    opacity: 0.6;
+  }
+}
+
 .ui-elevate { box-shadow: 0 12px 28px rgba(15,23,42,0.12); }
 .ui-elevate:hover { box-shadow: 0 18px 36px rgba(15,23,42,0.18); }
 

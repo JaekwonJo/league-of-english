@@ -1,3 +1,10 @@
+## 2025-11-16 (분석 빈 상태 안내 + 404 제거)
+- Issue: 분석 페이지에서 아직 생성되지 않은 지문을 열면 404 오류 팝업만 떠서 “분석 보기” 버튼을 눌러도 아무것도 할 수 없었습니다.
+- Cause: `/analysis/:id/passage/:no` 404 응답을 프런트가 일반 오류로 처리해 PASSAGE 단계로 되돌리고, 안내 문구/생성 진입점이 없었습니다.
+- Fix: 404 메시지를 감지해 PASSAGE 단계로 돌려보내지 않고 빈 분석 상태를 직접 렌더링하도록 변경하고, 30초 안내/이퀄 배너/귀여운 애니메이션/생성 버튼을 추가했습니다. 목록 상태도 즉시 비워진 variants로 동기화합니다.
+- Files: client/src/pages/AnalysisPage.js, client/src/styles/analysisStyles.js, client/src/index.css, PROJECT_STATE.md, README.md.
+- Verification: 로컬에서 분석본이 없는 지문을 선택해 새 안내 카드/애니메이션/생성 버튼이 보이는지 확인하고, `npm test -- --watch=false`로 관련 컴포넌트 렌더 오류가 없는지 점검했습니다.
+
 ## 2025-11-09 (CI Playwright + label audit + mock-exam stats)
 - Issue: CI에서 E2E를 돌릴 수 없어 릴리스 전 회귀가 수동으로만 확인됐고, 지문 이름 편집이 prompt라 히스토리가 남지 않았으며 모의고사 결과가 학습 통계/랭킹에 반영되지 않았습니다.
 - Cause: GitHub Actions가 dev 서버를 띄우지 않아 Playwright 명령이 바로 실패했고, passage label 변경 테이블에는 audit 로그가 없었으며 모의고사 문제는 `problems` 테이블과 study 기록에 연결되어 있지 않았습니다.
