@@ -7,8 +7,8 @@ const { normalizeAll } = require('../utils/csatProblemNormalizer');
 const { buildFallbackProblems } = require('../utils/fallbackProblemFactory');
 const { ensureSourceLabel } = require('./ai-problem/shared');
 
-// Time budget (ms) for AI-backed generation before falling back
-const AI_TIME_BUDGET_MS = Number(process.env.LOE_AIGEN_BUDGET_MS || 12000);
+// Time budget (ms) for AI-backed generation before falling back (raise default for stability)
+const AI_TIME_BUDGET_MS = Number(process.env.LOE_AIGEN_BUDGET_MS || 30000);
 const ENFORCE_AI_ONLY = /^(1|true|yes)$/i.test(String(process.env.LOE_ENFORCE_AI_ONLY || ''));
 
 function withTimeout(promise, timeoutMs, onTimeout) {
