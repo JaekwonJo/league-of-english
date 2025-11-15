@@ -787,7 +787,7 @@ const getTimeLimitSeconds = useCallback(() => {
         badge="Vocabulary Studio"
         title="어휘를 가장 효과적으로, 감각적으로"
         subtitle="Day를 고르면 ‘연습’으로 빠르게 확인하고, ‘시험’에서 실전처럼 풉니다. 모르는 단어는 다시 보기 큐로 모여 반복됩니다."
-        right={(
+        right={isMobile ? null : (
           <AppButton variant="primary" size="lg" onClick={handleScrollToSets}>
             <LucideIcons.Search size={18} /> 단어장 살펴보기
           </AppButton>
