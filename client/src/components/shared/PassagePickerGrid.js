@@ -1,6 +1,6 @@
 import React from 'react';
 
-const gradientPalette = [];
+// Monotone palette: gradients removed for readability
 
 const gridStyles = {
   wrapper: {
@@ -136,7 +136,6 @@ const PassagePickerGrid = ({
           const number = passage.passageNumber;
           const checked = isSelected(number);
           const disableSelection = isSelectionDisabled(number);
-          const palette = gradientPalette[index % gradientPalette.length];
           const fallbackLabel = `#${number.toString().padStart(2, '0')}`;
           const displayLabel = passage.displayLabel || fallbackLabel;
           return (
@@ -146,10 +145,9 @@ const PassagePickerGrid = ({
               style={{
                 ...gridStyles.card,
                 position: 'relative',
-                background: `linear-gradient(155deg, ${palette.from}, ${palette.to})`,
                 boxShadow: checked
-                  ? `0 22px 34px ${palette.shadow}`
-                  : `0 14px 24px ${palette.shadow}`,
+                  ? '0 20px 36px rgba(15,23,42,0.20)'
+                  : '0 10px 22px rgba(15,23,42,0.12)',
                 transform: checked ? 'translateY(-6px)' : 'translateY(0)',
                 ...(disableSelection ? { opacity: 0.6 } : {})
               }}
@@ -159,8 +157,7 @@ const PassagePickerGrid = ({
                 if (!disableSelection && onToggle) onToggle(number);
               }}
             >
-              <div className="shimmer" aria-hidden />
-              <div className="tilt-hover" style={{ position: 'absolute', inset: 0, borderRadius: '22px', pointerEvents: 'none' }} aria-hidden />
+              {/* subtle only; shimmer/overlay removed for readability */}
               {checked && (
                 <span style={gridStyles.checkBadge} aria-label="선택됨">✓ 선택됨</span>
               )}
