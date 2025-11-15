@@ -950,7 +950,10 @@ const getTimeLimitSeconds = useCallback(() => {
               {daysLoading ? (
                 <div style={styles.notice}>Day 정보를 불러오는 중이에요...</div>
               ) : (
-                <div style={styles.dayGrid}>
+                <div style={{
+                  ...styles.dayGrid,
+                  ...(isMobile ? styles.dayGridMobile : {})
+                }}>
                   {selectedSet.days?.map((day, idx) => {
                     const selected = selectedDayKeys.includes(day.key) || day.key === selectedDayKey;
                     return (
@@ -961,6 +964,7 @@ const getTimeLimitSeconds = useCallback(() => {
                         className={`ui-pressable ui-elevate tilt-hover anim-fadeInUp delay-${Math.min(idx, 3)}`}
                         style={{
                           ...styles.dayCard,
+                          ...(isMobile ? styles.dayCardMobile : {}),
                           ...(selected ? styles.dayCardSelected : {}),
                           ...(flashKeys.has(day.key) ? styles.dayCardFlash : {})
                         }}
@@ -996,12 +1000,12 @@ const getTimeLimitSeconds = useCallback(() => {
                           });
                         }}
                       >
-                        <div style={styles.dayHeader}>
+                        <div style={{ ...styles.dayHeader, ...(isMobile ? styles.dayHeaderMobile : {}) }}>
                           <strong style={{
                             ...styles.dayLabel,
                             ...(isMobile ? { wordBreak: 'break-word', overflowWrap: 'anywhere' } : {})
                           }}>{day.label}</strong>
-                          <span style={styles.dayCount}>{day.count} 단어</span>
+                          <span style={{ ...styles.dayCount, ...(isMobile ? styles.dayCountMobile : {}) }}>{day.count} 단어</span>
                         </div>
                         {selected && (
                           <span style={styles.dayCheckOverlay} aria-hidden="true">✓</span>
@@ -1891,6 +1895,10 @@ const styles = {
     gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
     gap: '14px'
   },
+  dayGridMobile: {
+    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+    gap: '10px'
+  },
   scrollHintButton: {
     marginTop: '16px',
     width: '100%',
@@ -1951,6 +1959,9 @@ const styles = {
     marginBottom: '10px',
     color: 'var(--text-primary)'
   },
+  dayHeaderMobile: {
+    marginBottom: '8px'
+  },
   daySelectedBadge: {
     display: 'none'
   },
@@ -1961,6 +1972,16 @@ const styles = {
   dayCount: {
     fontWeight: 700,
     color: 'var(--tone-strong)'
+  },
+  dayCardMobile: {
+    padding: '14px',
+    borderRadius: '16px'
+  },
+  dayLabelMobile: {
+    fontSize: '0.98rem'
+  },
+  dayCountMobile: {
+    fontSize: '0.9rem'
   },
   daySummary: {
     display: 'none'
