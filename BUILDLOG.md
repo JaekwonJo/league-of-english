@@ -777,6 +777,13 @@ NODE` 로 5문항 생성 결과 (가족/전략 태그·한글 해설·단일 빈
 - Fix: 프로필에 학교명 분리(이름+접미사 고/여고) UI 추가+학년(1/2/3) 셀렉트. 어휘 히어로의 개수 문구 제거, 마스코트를 하단 포인터 배너로 이동. 문제 템플릿(빈칸/어법/어휘/제목/주제) 해설 규정에 쉬운 표현+이모지 포함. 폴백 blank를 2문장 이상 본문+구/절 정답으로 교체.
 - Files: client/src/pages/ProfilePage.js, client/src/pages/VocabularyPage.js, server/config/problem-templates.json, server/utils/fallbackProblemFactory.js.
 - Verification: 로컬 빌드/렌더 확인(프로필 저장 후 값 반영, 어휘 페이지 포인터 배너와 목록 이동), 지문 선택 카드에 ✓ ‘선택됨’ 표시 확인. 빈칸 폴백 생성 시 본문 2문장+구/절 답안 및 쉬운 해설 확인.
+## 2025-11-15 (B4 어법 Step 11 워크북 임포트 확정)
+- Issue: B4 어법 복습자료를 워크북 Step 11 카드로 옮길 때, 스크립트가 DB 연결 없이 실행되고 PDF 하단의 `정답` 블록을 사용하지 않아 카드에 정답이 비어 있는 상태였습니다.
+- Cause: `scripts/import-grammar-b4.js`에서 `database.connect()`/`close()`를 호출하지 않고, 각 문항 블록 안에서만 `정답` 텍스트를 찾도록 구현되어 B4 자료 형식(본문+하단 정답표)을 반영하지 못했어요.
+- Fix: 스크립트에 DB connect/close를 추가하고, PDF 전체에서 `정답` 섹션을 찾아 `문항번호 → 정답 문자열` 매핑을 만든 뒤, 번호별로 Step 11 카드 앞/뒷면을 구성하도록 수정했습니다. 폴더 유효성 체크와 에러 메시지도 보강했습니다.
+- Files: scripts/import-grammar-b4.js
+- Verification: `DB_FILE=server/tmp/b4-step11-test.db node scripts/import-grammar-b4.js ./B4어법자료`로 테스트 DB에 6개 워크북을 생성한 뒤, `workbook_sets.steps_json`을 조회해 각 워크북이 Step 11 하나와 어법 카드 N개(앞면 지문, 뒷면에 예: `정답: ⑤ to ask ⑦ who ⑧ are`)를 가지는지 확인했습니다. 이어 `workbookService.listWorkbooks/getWorkbook`으로 서비스 계층에서 동일 구조가 그대로 노출되는지 점검했습니다.
+
 ## 2025-11-14 (모의고사 다회차 + 지문선택/해설/형식 점검)
 - Issue: 모의고사 회차가 고정처럼 보이고, 시험지 텍스트가 뒤섞이거나(이상한 문자열), 문제 학습에서 선택 지문이 아닌 본문이 섞여 나오며, 해설 톤이 딱딱하고 본문 줄바꿈이 어수선함.
 - Cause: 업로드/선택 UI가 단일 회차 전제로 보였고, PDF 파싱 노이즈, 학습 요청에 passageNumbers 누락/확인 필요, 프롬프트/리뷰 타이틀 톤 미흡, 본문 렌더 스타일 부족.

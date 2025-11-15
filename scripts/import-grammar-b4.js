@@ -17,45 +17,87 @@ async function readPdf(filePath) {
 }
 
 function splitQuestions(raw) {
-  // 매우 단순한 분리: 번호로 시작하는 라인 기준 1) ~ 30)
+  // 번호로 시작하는 라인 기준 1) ~ 99) 단위로 문항을 묶습니다.
   const lines = raw.split('\n');
   const groups = [];
-  let cur = [];
+  let cur = null;
   const isStart = (line) => /^\s*(\d{1,3})[).]/.test(line);
+
   lines.forEach((line) => {
     if (isStart(line)) {
-      if (cur.length) groups.push(cur.join('\n'));
-      cur = [line];
-    } else {
-      cur.push(line);
+      const numMatch = line.match(/^\s*(\d{1,3})[).]/);
+      const number = numMatch ? Number(numMatch[1]) : null;
+      if (cur && cur.lines.length) {
+        groups.push({
+          number: cur.number,
+          text: cur.lines.join('\n')
+        });
+      }
+      cur = {
+        number,
+        lines: [line]
+      };
+    } else if (cur) {
+      cur.lines.push(line);
     }
   });
-  if (cur.length) groups.push(cur.join('\n'));
+
+  if (cur && cur.lines.length) {
+    groups.push({
+      number: cur.number,
+      text: cur.lines.join('\n')
+    });
+  }
+
   return groups;
 }
 
-function extractAnswer(block) {
-  // 정답 표기 패턴: 정답: ③ / [정답] 3 / 정답 3 등
-  const m = block.match(/정답\s*[:：]?\s*([①-⑤1-5])/);
-  if (!m) return null;
-  const token = m[1];
-  const map = { '①':1,'②':2,'③':3,'④':4,'⑤':5 };
-  return map[token] || Number(token);
+function extractAnswerMap(raw) {
+  // PDF 하단의 "정답" 블록에서 `문항번호) 해설` 라인을 전부 모읍니다.
+  const lines = raw.split('\n');
+  const index = lines.findIndex((line) => line.includes('정답'));
+  if (index === -1) return {};
+
+  const map = {};
+  for (let i = index + 1; i < lines.length; i += 1) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    const m = line.match(/^(\d{1,3})\)\s*(.+)$/);
+    if (!m) continue;
+    const number = Number(m[1]);
+    const answerText = m[2].trim();
+    if (!Number.isNaN(number) && answerText) {
+      map[number] = answerText;
+    }
+  }
+  return map;
 }
 
 function sanitize(text){
   return String(text||'').replace(/\s+/g,' ').trim();
 }
 
-function buildStep11Cards(questionBlocks) {
+function buildStep11Cards(questionBlocks, answerMap = {}) {
   const cards = [];
   questionBlocks.forEach((block, idx) => {
-    const answer = extractAnswer(block);
-    const stem = sanitize(block.replace(/정답[\s\S]*/,'').replace(/\(\s*\d\s*\)/g,''));
+    const number = block?.number || (idx + 1);
+    const rawText = block?.text || '';
+    const answerText = answerMap[number] || '';
+    const stem = sanitize(
+      String(rawText)
+        .replace(/정답[\s\S]*/, '')
+        .replace(/\(\s*\d+\s*\)/g, '')
+    );
     const label = `[어법 틀린 것 찾기 ${idx+1}]`;
     const front = `${label}\n${stem}`;
-    const back = `정답: ${answer ? answer : '확인 필요'}\n쉬운 해설: 원문 문장 중 오답인 부분(형태/일치/시제 등)을 근거 문장과 함께 설명해 보세요.`;
-    cards.push({ type: 'grammar-review', front, back, answer: String(answer||'') });
+    const backAnswerLine = answerText || '확인 필요';
+    const back = `정답: ${backAnswerLine}\n쉬운 해설: 원문 문장 중 오답인 부분(형태/일치/시제 등)을 근거 문장과 함께 설명해 보세요.`;
+    cards.push({
+      type: 'grammar-review',
+      front,
+      back,
+      answer: backAnswerLine
+    });
   });
   return cards;
 }
@@ -63,6 +105,7 @@ function buildStep11Cards(questionBlocks) {
 async function upsertWorkbookFromPdf(filePath) {
   const title = path.basename(filePath);
   const content = await readPdf(filePath);
+  const answerMap = extractAnswerMap(content);
   const questions = splitQuestions(content);
   if (!questions.length) {
     console.log('[SKIP] 문항을 찾지 못함:', title);
@@ -76,7 +119,7 @@ async function upsertWorkbookFromPdf(filePath) {
   const documentId = insertDoc.id;
   const passageNumber = 1;
   const steps = [];
-  const cards = buildStep11Cards(questions);
+  const cards = buildStep11Cards(questions, answerMap);
   steps.push({
     step: 11,
     label: 'STEP 11 - 어법 틀린 것 찾기',
@@ -104,22 +147,42 @@ async function main() {
     console.error('사용법: node scripts/import-grammar-b4.js "/path/to/B4어법자료"');
     process.exit(1);
   }
+
+  if (!fs.existsSync(folder) || !fs.statSync(folder).isDirectory()) {
+    console.error('폴더를 찾을 수 없습니다:', folder);
+    process.exit(1);
+  }
+
   const files = fs.readdirSync(folder)
     .filter((f) => f.toLowerCase().endsWith('.pdf'))
     .map((f) => path.join(folder, f));
+
   if (!files.length) {
     console.error('PDF 파일이 없습니다:', folder);
     process.exit(1);
   }
-  for (const file of files) {
+
+  await database.connect();
+
+  try {
+    for (const file of files) {
+      try {
+        await upsertWorkbookFromPdf(file);
+      } catch (e) {
+        console.warn('[WARN] 처리 실패:', path.basename(file), e.message || e);
+      }
+    }
+    console.log('완료. 관리자에서 워크북 목록을 확인하세요.');
+  } finally {
     try {
-      await upsertWorkbookFromPdf(file);
-    } catch (e) {
-      console.warn('[WARN] 처리 실패:', path.basename(file), e.message || e);
+      await database.close();
+    } catch (_) {
+      // ignore
     }
   }
-  console.log('완료. 관리자에서 워크북 목록을 확인하세요.');
 }
 
-main();
-
+main().catch((error) => {
+  console.error('B4 어법 임포트 실패:', error?.message || error);
+  process.exit(1);
+});
