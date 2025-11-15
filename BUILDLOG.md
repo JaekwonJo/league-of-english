@@ -815,6 +815,13 @@ NODE` 로 5문항 생성 결과 (가족/전략 태그·한글 해설·단일 빈
 - Files: client/src/features/study/config/{components/DocumentStep.jsx,configStyles.js}, server/services/{problemSetService.js,aiProblemService.js}.
 - Verification: 선택한 지문 번호만 포함된 passages가 모든 생성기로 전달되는지 로컬 로그 확인, 동일 문서 내에서만 문제 생성됨을 수동 검증.
 ## 2025-11-15 (hero wrap + vocab mobile + analysis mono + time budget)
+
+## 2025-11-15 (membership promotion + importer)
+- Issue: 프리미엄/프로 상향을 학생이 알아보기 어려움, B4 어법 복습자료를 손으로 워크북에 옮기는 과정이 번거로움.
+- Cause: 로그인 시 등급/기간 안내 UI 없음, PDF→워크북 변환 자동화가 부재.
+- Fix: 로그인 시 기간 알림 오버레이(프리미엄/프로)를 추가하고, REACT_APP_MAINTENANCE=1 점검 배너를 도입. B4 어법자료 임포트 스크립트로 Step 11 카드 일괄 등록(정답 포함), 해설은 AI 패스에서 생성 예정.
+- Files: client/src/components/common/MembershipPromotion.js, client/src/routes/AppRouter.js, client/src/components/common/MaintenanceBanner.js, scripts/import-grammar-b4.js, server/routes/membership.routes.js, server/models/database.js.
+- Verification: 상향 계정 로그인 시 기간 문구 노출(세션당 1회), 스크립트 실행 후 워크북 목록에서 Step 11 카드 확인.
 - Issue: 모바일에서 Hero 제목/부제가 세로로 찢어져 보이고, 우측 CTA가 텍스트를 밀어 레이아웃이 깨짐. 어휘 Day 카드 글씨 대비/배치가 낮아 가독성 저하. 분석 목록은 과한 그라데이션으로 피로감. 문제 출제/분석은 간헐적 타임아웃.
 - Cause: Hero가 모바일에서도 가로 정렬 고정 + 우측 CTA 겹침, Day 카드가 어두운 배경과 shimmer로 텍스트가 묻힘, 분석 카드가 다중 그라데이션, AI 시간 예산이 짧아 로드 변동에 취약.
 - Fix: CommonHero 모바일 세로(column) 전환 + 버튼(모바일 숨김), Day 2열 그리드 + 중립 카드 톤 + shimmer 제거, 분석은 모노톤 카드로 통일하고 ‘분석 보기’만 강조, AI 기본 예산 30s로 상향. 캐시 조회에도 선택 지문 본문 일치 필터 적용.
