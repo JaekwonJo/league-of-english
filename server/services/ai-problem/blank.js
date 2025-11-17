@@ -383,7 +383,7 @@ function normalizeBlankPayload(payload, context = {}) {
   }
 
   const { normalizeForPassage } = require('./shared');
-  const normalizedText = normalizeForPassage(text);
+  let normalizedText = normalizeForPassage(text);
 
   const optionsInfo = normalizeBlankOptions(payload.options || []);
   let answerNumber = Number(payload.correctAnswer || payload.answer);
@@ -503,13 +503,56 @@ function normalizeBlankPayload(payload, context = {}) {
     }
   }
 
-  const placeholderMatches = text.match(BLANK_PLACEHOLDER_REGEX) || [];
+  // Rebuild the normalized view whenever the raw passage was altered.
+  normalizedText = normalizeForPassage(text);
+
+  const placeholderMatches = normalizedText.match(BLANK_PLACEHOLDER_REGEX) || [];
   if (placeholderMatches.length !== 1) {
     throw new Error('blank text missing placeholder');
   }
+  const placeholderToken = placeholderMatches[0];
+  const placeholderIndex = typeof placeholderMatches.index === 'number'
+    ? placeholderMatches.index
+    : normalizedText.indexOf(placeholderToken);
+  const blankPrefix = placeholderIndex > 0 ? normalizedText.slice(0, placeholderIndex) : '';
+  const blankSuffix = normalizedText.slice(placeholderIndex + placeholderToken.length);
 
   const originalPassageRaw = context && context.passage ? String(context.passage) : '';
   const normalizedOriginalPassage = originalPassageRaw ? normalizeForPassage(originalPassageRaw) : '';
+  let normalizedTargetSpan = null;
+  if (normalizedOriginalPassage) {
+    if ((blankPrefix.length + blankSuffix.length) > normalizedOriginalPassage.length) {
+      throw new Error('blank passage deviates from original except blank');
+    }
+    if (!normalizedOriginalPassage.startsWith(blankPrefix) || !normalizedOriginalPassage.endsWith(blankSuffix)) {
+      throw new Error('blank passage deviates from original except blank');
+    }
+    const derivedTarget = normalizedOriginalPassage.slice(
+      blankPrefix.length,
+      normalizedOriginalPassage.length - blankSuffix.length
+    );
+    if (!derivedTarget || !derivedTarget.trim()) {
+      throw new Error('blank derived target missing');
+    }
+    const normalizedDerived = normalizeWhitespace(derivedTarget).toLowerCase();
+    const normalizedOption = normalizeWhitespace(optionsInfo.texts[answerIndex] || '').toLowerCase();
+    if (normalizedOption && normalizedOption !== normalizedDerived) {
+      throw new Error('blank correct option must match removed expression');
+    }
+    if (targetExpression) {
+      const normalizedTargetExpression = normalizeWhitespace(targetExpression).toLowerCase();
+      if (normalizedTargetExpression !== normalizedDerived) {
+        throw new Error('blank target expression mismatch original passage');
+      }
+    }
+    targetExpression = derivedTarget;
+    normalizedTargetSpan = {
+      start: blankPrefix.length,
+      end: blankPrefix.length + derivedTarget.length
+    };
+    normalizedText = `${blankPrefix}____${blankSuffix}`;
+  }
+
   if (normalizedText.length < MIN_BLANK_TEXT_LENGTH) {
     throw new Error('blank text too short');
   }
@@ -578,7 +621,8 @@ function normalizeBlankPayload(payload, context = {}) {
     originalSentenceCount: normalizedOriginalPassage ? countSentences(normalizedOriginalPassage) : undefined,
     fallacies: optionsInfo.fallacies,
     distractorReasons,
-    rawQuestion
+    rawQuestion,
+    targetSpan: normalizedTargetSpan
   };
 
   return {

@@ -1,3 +1,10 @@
+## 2025-11-17 (Blank generator source enforcement)
+- Issue: 2-23-11 빈칸 문제에서 원문과 전혀 다른 짧은 지문/선지가 출제되어 QA에서 바로 사용 불가 판정이 났어요.
+- Cause: DB에서 passage 배열이 비어 있으면 OpenAI에 빈 문자열이 전달되어 임의 텍스트가 생성됐고, normalize 단계가 원문과 대조하지 않아 잘못된 본문도 그대로 저장됐습니다.
+- Fix: 빈 passage는 즉시 422로 차단하고 150자 이상 본문만 후보로 사용하며, normalize가 원문 prefix/suffix를 비교해 targetExpression·정답·본문이 완전히 일치하지 않으면 재시도하도록 했어요.
+- Files: server/services/aiProblemService.js, server/services/ai-problem/blank.js, PROJECT_STATE.md, README.md, BUILDLOG.md.
+- Verification: 문제학습 > 빈칸 유형을 동일 문서로 3회 재생성해 원문 길이와 정답 구절이 일치하는지 로그로 확인(수동 QA), 자동 테스트는 영향 없음.
+
 ## 2025-11-09 (CI Playwright + label audit + mock-exam stats)
 - Issue: CI에서 E2E를 돌릴 수 없어 릴리스 전 회귀가 수동으로만 확인됐고, 지문 이름 편집이 prompt라 히스토리가 남지 않았으며 모의고사 결과가 학습 통계/랭킹에 반영되지 않았습니다.
 - Cause: GitHub Actions가 dev 서버를 띄우지 않아 Playwright 명령이 바로 실패했고, passage label 변경 테이블에는 audit 로그가 없었으며 모의고사 문제는 `problems` 테이블과 study 기록에 연결되어 있지 않았습니다.

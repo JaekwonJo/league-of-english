@@ -152,14 +152,14 @@ const BLANK_ORIGINAL_PASSAGE = [
   'If they have motivational problems, for example, falling into denial about the fact that there is no demand for their products, markets reveal to them, sometimes in quite brutal ways, that they better accept this market verdict.'
 ].join(' ');
 
-const BLANK_TARGET = 'market verdict';
+const BLANK_TARGET = 'this market verdict';
 
 const BLANK_OPTIONS = [
   { label: '①', text: 'stubborn devotion to outdated plans' },
   { label: '②', text: 'unrestrained price expansions' },
   { label: '③', text: 'complete disregard for buyer signals' },
   { label: '④', text: 'habitual downplaying of misfit evidence' },
-  { label: '⑤', text: 'full acceptance of the market verdict' }
+  { label: '⑤', text: 'this market verdict' }
 ];
 
 const BLANK_EXPLANATION = [

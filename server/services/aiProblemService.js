@@ -284,6 +284,16 @@ class AIProblemService {
       const { passages: fetched } = await this.getPassages(documentId, options.passageNumbers ? { passageNumbers: options.passageNumbers } : {});
       passages = fetched || [];
     }
+    const minPassageLength = Math.max(Number(blank.MIN_BLANK_TEXT_LENGTH) || 0, 120);
+    passages = passages
+      .map((chunk) => (typeof chunk === 'string' ? chunk.trim() : ''))
+      .filter((chunk) => chunk && chunk.replace(/\s+/g, ' ').trim().length >= minPassageLength);
+    if (!passages.length) {
+      const err = new Error('blank_passage_missing');
+      err.statusCode = 422;
+      err.details = '선택한 문서에서 빈칸 문제를 만들 만한 원문을 찾지 못했어요.';
+      throw err;
+    }
     const { document } = await this.getPassages(documentId);
     const documentCode = document?.code || document?.slug || document?.external_id || null;
     const docTitle = document?.title || documentCode || `Document ${documentId}`;
