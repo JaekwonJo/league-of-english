@@ -100,6 +100,41 @@ class WorkbookService {
       throw new Error('워크북을 찾을 수 없습니다.');
     }
 
+    // Auto-upgrade: Check if Step 11 exists, if not, generate and save it.
+    let steps = this._safeParseJSON(row.steps_json, []);
+    const hasStep11 = steps.some(s => s.step === 11);
+
+    if (!hasStep11 && steps.length >= 10) {
+      try {
+        // Fetch grammar problems
+        const grammarProblems = await aiProblemService.generateGrammar(row.document_id, 3, { passageNumbers: [row.passage_number] });
+        const grammarErrorCards = this._buildAiGrammarCards(grammarProblems);
+        
+        if (grammarErrorCards.length > 0) {
+          const step11 = {
+            step: 11,
+            label: 'STEP 11 - 어법 틀린 것 찾기',
+            title: '어법 틀린 것 찾기',
+            mood: '🔎',
+            intro: '문법적으로 틀린 부분을 찾아 고쳐보세요.',
+            mission: 'AI가 만든 문제에 도전해보세요!',
+            cards: this._assignCardIds(11, grammarErrorCards),
+            takeaways: ['밑줄 친 부분의 문법 규칙 생각하기', '고친 후 문장 전체를 다시 읽어보기']
+          };
+          steps.push(step11);
+          
+          // Save updated steps to DB
+          await database.run(
+            'UPDATE workbook_sets SET steps_json = ? WHERE id = ?',
+            [JSON.stringify(steps), id]
+          );
+          row.steps_json = JSON.stringify(steps); // Update row for immediate return
+        }
+      } catch (e) {
+        console.warn('[workbook] Auto-upgrade Step 11 failed:', e.message);
+      }
+    }
+
     return this._formatRow(row, { includeSteps: true });
   }
 
