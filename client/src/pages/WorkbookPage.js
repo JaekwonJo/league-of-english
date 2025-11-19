@@ -3243,7 +3243,7 @@ const WorkbookPage = () => {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 };
 
