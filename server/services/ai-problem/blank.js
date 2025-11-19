@@ -240,7 +240,24 @@ function buildBlankPrompt({ passage, manualExcerpt, extraDirectives = [] }) {
   return promptSections.join('\n');
 }
 
-// ... (deriveBlankDirectives remains similar) ...
+function deriveBlankDirectives(lastFailure = '') {
+  const message = String(lastFailure || '').toLowerCase();
+  if (!message) return [];
+  const directives = [];
+  if (message.includes('placeholder')) {
+    directives.push('- Ensure the passage contains exactly one blank represented as "____" and nothing else.');
+  }
+  if (message.includes('numeral') || message.includes('digit')) {
+    directives.push('- Spell out any numbers in the options and avoid numerals or time abbreviations.');
+  }
+  if (message.includes('english phrase') || message.includes('alphabetic')) {
+    directives.push('- Options must be natural English phrases (letters, spaces, and punctuation only).');
+  }
+  if (message.includes('text too short') || message.includes('more sentences')) {
+    directives.push(`- Keep at least two full sentences around the blank and ensure the passage excerpt stays over ${MIN_BLANK_TEXT_LENGTH} characters.`);
+  }
+  return directives;
+}
 
 function normalizeBlankPayload(payload, context = {}) {
   if (!payload || typeof payload !== 'object') throw new Error('blank payload missing');
