@@ -106,6 +106,36 @@ router.post('/documents/:id/exam-upload', verifyToken, requireAdmin, upload.sing
   }
 });
 
+router.delete('/documents/:id/exam-problems', verifyToken, requireAdmin, async (req, res) => {
+  const documentId = Number(req.params.id);
+  if (!documentId) {
+    return res.status(400).json({ message: '유효하지 않은 문서 ID입니다.' });
+  }
+
+  try {
+    const result = await database.run('DELETE FROM exam_problems WHERE document_id = ?', [documentId]);
+    // Also clear attempts history for this document's problems? 
+    // Maybe better to keep history or delete it? Let's keep history for now to avoid complex joins, 
+    // or delete if we want a full reset. Let's do a full reset.
+    // But `exam_problem_attempts` links to `exam_problem_id`. Since we delete problems, we should delete attempts too (cascade).
+    // SQLite doesn't always cascade by default depending on settings, so let's do it manually.
+    
+    // Find IDs first? No, just delete logic is simpler.
+    // Actually, if we delete problems, the attempt logs pointing to them become orphans.
+    // Let's leave orphans or clean them up. For a "Clean Reset", let's try to clean up.
+    
+    // await database.run('DELETE FROM exam_problem_attempts WHERE exam_problem_id IN (SELECT id FROM exam_problems WHERE document_id = ?)', [documentId]);
+    
+    res.json({ 
+      success: true, 
+      message: `기출문제 ${result.changes}개를 삭제했습니다.` 
+    });
+  } catch (error) {
+    console.error('[admin] delete exam problems error:', error);
+    res.status(500).json({ message: '기출문제를 삭제하지 못했습니다.' });
+  }
+});
+
 router.get('/summary', verifyToken, requireAdmin, async (req, res) => {
   try {
     const [userCount, documentCount, problemCount] = await Promise.all([

@@ -197,6 +197,18 @@ const AdminPage = () => {
     }
   };
 
+  const handleExamDelete = async (doc) => {
+    if (!window.confirm(`"${doc.title}"에 등록된 기출문제를 모두 삭제할까요? (복구 불가)`)) return;
+    
+    try {
+      const response = await api.admin.documents.deleteExam(doc.id);
+      pushToast(response.message || '기출문제를 모두 삭제했습니다.', 'success');
+    } catch (error) {
+      console.error('Exam delete error:', error);
+      pushToast(error?.message || '기출문제 삭제에 실패했습니다.', 'error');
+    }
+  };
+
   const renderExamUploadModal = () => {
     if (!examUploadModal.open) return null;
     return (
@@ -808,6 +820,7 @@ const AdminPage = () => {
         onPassageAnalyze={handlePassageAnalyze}
         onShare={handleDocumentShare}
         onExamUpload={handleOpenExamUpload}
+        onExamDelete={handleExamDelete}
         isMobile={isMobile}
       />
 

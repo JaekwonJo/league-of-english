@@ -376,7 +376,8 @@ export const api = {
       restore: (id, payload) => apiService.post(`/admin/problems/${id}/restore`, payload)
     },
     documents: {
-      uploadExam: (documentId, formData) => apiService.uploadFormData(`/admin/documents/${documentId}/exam-upload`, formData)
+      uploadExam: (documentId, formData) => apiService.uploadFormData(`/admin/documents/${documentId}/exam-upload`, formData),
+      deleteExam: (documentId) => apiService.delete(`/admin/documents/${documentId}/exam-problems`)
     },
     users: {
       list: (params) => apiService.get('/admin/users', params),

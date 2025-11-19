@@ -12,6 +12,7 @@ const DocumentList = ({
   onPassageAnalyze,
   onShare,
   onExamUpload,
+  onExamDelete,
   onVocabularyPreview,
   isMobile = false
 }) => {
@@ -49,6 +50,7 @@ const DocumentList = ({
               onPassageAnalyze={onPassageAnalyze}
               onShare={onShare}
               onExamUpload={onExamUpload}
+              onExamDelete={onExamDelete}
               onVocabularyPreview={onVocabularyPreview}
             />
           ))
@@ -58,7 +60,7 @@ const DocumentList = ({
   );
 };
 
-const DocumentCard = ({ document: doc, onEdit, onDelete, onAnalyze, onPassageAnalyze, onShare, onExamUpload, onVocabularyPreview, isMobile }) => {
+const DocumentCard = ({ document: doc, onEdit, onDelete, onAnalyze, onPassageAnalyze, onShare, onExamUpload, onExamDelete, onVocabularyPreview, isMobile }) => {
   const responsive = (base, mobileOverrides = {}) => (isMobile ? { ...base, ...(mobileOverrides || {}) } : base);
   const isVocabulary = String(doc.type || '').toLowerCase() === 'vocabulary';
   return (
@@ -88,6 +90,24 @@ const DocumentCard = ({ document: doc, onEdit, onDelete, onAnalyze, onPassageAna
             )
           ) : (
             <>
+              {onAnalyze && (
+                <button 
+                  style={adminStyles.analyzeButton}
+                  onClick={() => onAnalyze(doc)}
+                  title="종합 분석"
+                >
+                  📊
+                </button>
+              )}
+              {onPassageAnalyze && (
+                <button 
+                  style={{...adminStyles.analyzeButton, background: 'var(--success)'}}
+                  onClick={() => onPassageAnalyze(doc)}
+                  title="개별 지문 분석"
+                >
+                  📝
+                </button>
+              )}
               {onExamUpload && (
                 <button 
                   style={{...adminStyles.analyzeButton, background: '#ec4899'}}
@@ -95,6 +115,15 @@ const DocumentCard = ({ document: doc, onEdit, onDelete, onAnalyze, onPassageAna
                   title="기출문제 업로드"
                 >
                   🎓
+                </button>
+              )}
+              {onExamDelete && (
+                <button 
+                  style={{...adminStyles.analyzeButton, background: 'var(--danger)'}}
+                  onClick={() => onExamDelete(doc)}
+                  title="기출문제 초기화"
+                >
+                  🗑️
                 </button>
               )}
             </>
