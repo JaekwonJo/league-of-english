@@ -39,6 +39,25 @@ router.post('/documents/:id/exam-upload', verifyToken, requireAdmin, upload.sing
   const examTitle = req.file.originalname.replace('.pdf', '');
 
   try {
+    // Safety check: Ensure table exists
+    await database.run(`
+      CREATE TABLE IF NOT EXISTS exam_problems (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        document_id INTEGER NOT NULL,
+        exam_title TEXT,
+        question_number INTEGER,
+        question_type TEXT,
+        question_text TEXT,
+        passage TEXT,
+        options_json TEXT,
+        answer TEXT,
+        explanation TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    // Note: Index creation might fail if locked, so skip or try-catch it, 
+    // but usually IF NOT EXISTS works for tables.
+
     const dataBuffer = fs.readFileSync(filePath);
     const pdfData = await pdf(dataBuffer);
     const fullText = String(pdfData.text || '').replace(/\r/g, '');
