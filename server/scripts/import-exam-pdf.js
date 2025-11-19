@@ -16,12 +16,9 @@ function cleanText(text) {
 // Helper to fix common mojibake patterns if pdf-parse messed up encoding
 function repairText(text) {
   if (!text) return '';
-  // Common UTF-8 interpreted as Latin-1 patterns
-  // 'ë' often maps to Korean characters
-  // We can try to reverse it: Latin1 -> Buffer -> UTF8
   try {
     // Check if it looks like mojibake (contains lots of ë, ì, etc)
-    if (/[\u00C0-\u00FF]{3,}/.test(text)) {
+    if (/[À-ÿ]{3,}/.test(text)) {
         const buffer = Buffer.from(text, 'binary');
         const decoded = buffer.toString('utf8');
         // If decoded looks like Korean, return it
@@ -32,20 +29,15 @@ function repairText(text) {
 }
 
 function parseQuestions(fullText) {
-  // 0. Repair Encoding (Try to fix global mojibake first)
   let cleanedText = repairText(fullText);
 
-  // 1. Remove Noise (Page Headers/Footers)
-  // Remove lines that are just numbers "- 1 -"
+  // 1. Remove Page Headers/Footers (Aggressive)
   cleanedText = cleanedText.replace(/^\s*-\s*\d+\s*-\s*$/gm, '');
-  // Remove repeating headers
   cleanedText = cleanedText.replace(/^\s*2024년도.*?모의고사\s*$/gm, '');
   cleanedText = cleanedText.replace(/^\s*진진영어\s*$/gm, '');
-  // Remove floating numbers that look like question numbers but are not headers (e.g. "97.")
-  // Be careful not to remove option numbers.
-  // Let's handle that inside the loop.
+  cleanedText = cleanedText.replace(/^\d+\.\s*$/gm, ''); // Remove isolated numbers like "2." "3."
 
-  // 2. Identify Answer Section
+  // 2. Separate Answers (if present)
   let answerSectionIndex = cleanedText.search(/\d+\s*번\s*-\s*[①-⑤1-5]/);
   if (answerSectionIndex === -1) answerSectionIndex = cleanedText.length;
 
@@ -54,79 +46,63 @@ function parseQuestions(fullText) {
 
   const questions = [];
   
-  // 3. Find Question Headers
-  // Pattern: "Question Text... [18]"
-  // We look for the [Number] at end of line or block
-  const questionHeaderRegex = /^(.*?)\[\s*(\d{1,3})\s*\]\s*$/gm;
-  
-  let match;
+  // 3. Split by Question Header "[Number]"
+  // We assume the question ends with [18], [19], etc.
+  const headerRegex = /^(.*?)[\[\s*(\d{1,3})\s*\]\s*$/gm;
   const headers = [];
-  
-  while ((match = questionHeaderRegex.exec(problemText)) !== null) {
+  let match;
+  while ((match = headerRegex.exec(problemText)) !== null) {
     headers.push({
-      fullMatch: match[0],
+      index: match.index,
+      end: match.index + match[0].length,
       prompt: match[1].trim(),
-      number: parseInt(match[2], 10),
-      start: match.index,
-      end: match.index + match[0].length
+      number: parseInt(match[2], 10)
     });
   }
 
-  // 4. Extract Content per Question
+  headers.sort((a, b) => a.index - b.index);
+
   for (let i = 0; i < headers.length; i++) {
     const current = headers[i];
     const next = headers[i+1];
     
     const contentStart = current.end;
-    const contentEnd = next ? next.start : problemText.length;
+    const contentEnd = next ? next.index : problemText.length;
     
     let rawContent = problemText.slice(contentStart, contentEnd).trim();
     
-    // Extract Options (① or (1))
-    // Find the FIRST occurrence of an option marker
-    // Be careful: text might contain numbers like "1mm", "2027" etc.
-    // We look for ①, ②... or (1), (2)... followed by text
-    
+    let passage = '';
     const options = [];
-    let passage = rawContent;
     
-    // Regex for option markers
-    const markerRegex = /([①②③④⑤]|\(\s*[1-5]\s*\))/g;
-    const firstMarker = rawContent.search(markerRegex);
+    // Find first option marker
+    const markerRegex = /([①②③④⑤]|\(\s*[1-5]\s*\))/;
+    const matchOption = rawContent.match(markerRegex);
     
-    if (firstMarker !== -1) {
-        passage = rawContent.slice(0, firstMarker).trim();
-        const optionsBlock = rawContent.slice(firstMarker);
+    if (matchOption) {
+        passage = rawContent.slice(0, matchOption.index).trim();
+        const optionsBlock = rawContent.slice(matchOption.index);
         
-        // Split by markers
-        const parts = optionsBlock.split(markerRegex);
-        // parts[0] is empty or garbage before first marker
+        const parts = optionsBlock.split(/([①②③④⑤]|\(\s*[1-5]\s*\))/);
         for (let k = 1; k < parts.length; k += 2) {
             const marker = parts[k];
             const text = (parts[k+1] || '').trim();
             if (text) {
-                const symbolMap = { 
-                    '(1)': '①', '(2)': '②', '(3)': '③', '(4)': '④', '(5)': '⑤',
-                    '1': '①', '2': '②', '3': '③', '4': '④', '5': '⑤' 
-                };
-                // Clean marker (remove spaces inside parens)
-                const cleanMarker = marker.replace(/\s+/g, '');
-                const displayMarker = symbolMap[cleanMarker] || cleanMarker;
-                options.push(`${displayMarker} ${text}`);
+                const m = marker.replace(/[\(\)\s]/g, '')
+                                .replace('1', '①').replace('2', '②').replace('3', '③').replace('4', '④').replace('5', '⑤');
+                options.push(`${m} ${text}`);
             }
         }
     } else {
-       // If no standard markers, maybe it's a unique format or parse failed.
-       // Keep passage as is.
+        passage = rawContent;
     }
-
-    // Final cleanup of passage (remove trailing numbers like "97.")
-    passage = passage.replace(/\n\d+\.\s*$/g, '');
+    
+    // Auto-underline logic
+    passage = autoUnderline(passage, options);
 
     questions.push({
         number: current.number,
         type: current.prompt,
-        passage: autoUnderline(passage, options),
+        passage: passage,
         options: options
     });
   }
@@ -136,75 +112,35 @@ function parseQuestions(fullText) {
 
 function autoUnderline(passage, options) {
   if (!passage || !options || !options.length) return passage;
-  
   let underlinedPassage = passage;
   
-  // Options are like ["① requires", "② apparently", ...]
-  // Passage contains markers like "that ① requires immediate..."
-  
   options.forEach(opt => {
-    // Extract marker and text
-    const match = opt.match(/^([①②③④⑤]|\(\d\))\s*(.*)/);
+    const match = opt.match(/^([①②③④⑤])\s*(.*)/);
     if (!match) return;
-    
     const marker = match[1];
     const content = match[2].trim();
-    
     if (!content) return;
-    
-    // We want to find `marker` in passage and underline `content` after it.
-    // BUT, the text in passage might slightly differ (spacing, punctuation).
-    // So we rely on the MARKER's position.
-    
-    // Find marker in passage
+
+    // 1. Try to find "Marker" in passage
     const markerIdx = underlinedPassage.indexOf(marker);
-    if (markerIdx === -1) return;
-    
-    // Extract text after marker to see if it matches content
-    // Heuristic: Underline the next N words that match content, OR just underline until next punctuation/space if content is short.
-    // Better: Create a regex that looks for `marker` + whitespace + `content words`.
-    
-    // Escape content for regex
-    const escapedContent = content.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s*');
-    
-    // Regex: Marker + whitespace + (Group: Content)
-    const regex = new RegExp(`(${marker})\\s*(${escapedContent})`, 'i'); // case-insensitive just in case
-    
-    if (regex.test(underlinedPassage)) {
-        // Replace with Marker + <u>Content</u>
-        underlinedPassage = underlinedPassage.replace(regex, '$1 <u>$2</u>');
-    } else {
-        // Fallback: If exact match fail, maybe just underline the first word after marker?
-        // Risks: "① requires immediate consideration" -> option is "requires", passage is "requires immediate"
-        // If option text is subset of passage text?
-        
-        // Let's try to match the first word of option at least.
-        const firstWord = content.split(/\s+/)[0];
-        if (firstWord && firstWord.length > 1) {
-             const regexShort = new RegExp(`(${marker})\\s*(${firstWord}[^\\s]*)`, 'i');
-             underlinedPassage = underlinedPassage.replace(regexShort, '$1 <u>$2</u>');
-        }
+    if (markerIdx !== -1) {
+        // Just wrap the marker and the immediate following word
+        const simpleRegex = new RegExp(`(${marker})\s*([^\s]+)`, 'i');
+        underlinedPassage = underlinedPassage.replace(simpleRegex, '$1 <u>$2</u>');
     }
   });
-  
   return underlinedPassage;
 }
 
 function parseAnswers(text) {
-    const answers = {}; // { 18: { answer: '3', explanation: '...' } } 
-    
-    // Pattern: "93 번 - ②   해설..."
-    // Allow loose spacing
+    const answers = {}; 
     const regex = /(\d+)\s*번\s*-\s*([①-⑤])\s*([\s\S]*?)(?=(\d+\s*번\s*-)|$)/g;
     let match;
     while ((match = regex.exec(text)) !== null) {
         const num = parseInt(match[1], 10);
         const ansSymbol = match[2];
         const explanation = match[3].trim();
-        
-        // Convert symbol to number string
         const ansMap = { '①': '1', '②': '2', '③': '3', '④': '4', '⑤': '5' };
-        
         answers[num] = {
             answer: ansMap[ansSymbol] || ansSymbol,
             explanation: explanation
@@ -214,8 +150,8 @@ function parseAnswers(text) {
 }
 
 async function main() {
-  const filePath = process.argv[2]; // PDF file path
-  const documentId = process.argv[3]; // Target document ID
+  const filePath = process.argv[2];
+  const documentId = process.argv[3];
 
   if (!filePath || !documentId) {
     console.error('Usage: node import-exam-pdf.js <pdf_path> <document_id>');
@@ -223,17 +159,11 @@ async function main() {
   }
 
   const fullText = await readPdf(filePath);
-  
-  // 1. Parse Questions
   const { questions, answerText } = parseQuestions(fullText);
-  
-  // 2. Parse Answers
   const answerMap = parseAnswers(answerText);
   
-  // 3. Merge and Insert
   await database.connect();
   
-  // Ensure table exists
   await database.run(`
       CREATE TABLE IF NOT EXISTS exam_problems (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -256,13 +186,10 @@ async function main() {
 
   for (const q of questions) {
       const ansData = answerMap[q.number] || {};
-      
-      // Skip if no answer found? Or allow partial? Let's allow partial.
-      
       await database.run(
           `INSERT INTO exam_problems 
            (document_id, exam_title, question_number, question_type, passage, options_json, answer, explanation)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, 
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
           [
               documentId,
               examTitle,
@@ -278,7 +205,6 @@ async function main() {
   }
   
   console.log(`Successfully imported ${importedCount} questions from ${examTitle}.`);
-  // await database.close(); // Keep connection handling simple
 }
 
 if (require.main === module) {
