@@ -15,27 +15,14 @@ function cleanText(text) {
 
 function parseQuestions(fullText) {
   // Split by question number pattern: e.g., "다음 ... [18]"
-  // But since the [18] is at the END of the question line, we need a regex that finds the start of a question block.
-  // The pattern seems to be: Some question text... [Number]
-  // Let's try to split by the "Question Header".
-  // Actually, splitting by the [Number] might be easier, but [Number] is the END of the header.
-  
-  // Better approach: Identify where each question block starts.
-  // A question usually ends with options.
-  // Let's find all occurrences of `[Number]` which signify the Question Title.
-  
-  const questionMatches = [...fullText.matchAll(/ \[(\d{1,3})\]/g)];
+  // Use a flexible regex to catch [18], [ 18 ], etc.
+  const questionMatches = [...fullText.matchAll(/\[\s*(\d{1,3})\s*\]/g)];
   const questions = [];
 
   // Also find the start of the "Answers" section
   // Looking for patterns like "93 번 - ②" or similar logic at the end of file.
-  // Usually exam papers have a clear separation.
-  // Let's assume the answer section starts when we see "번 -" pattern frequent. 
-  
-  // Find where answer section likely starts
   let answerSectionIndex = fullText.search(/\d+\s*번\s*-\s*[①-⑤]/);
   if (answerSectionIndex === -1) {
-    // Try alternate format? Maybe just "18. ①"
     answerSectionIndex = fullText.length;
   }
 
@@ -43,64 +30,56 @@ function parseQuestions(fullText) {
   const answerText = fullText.slice(answerSectionIndex);
 
   for (let i = 0; i < questionMatches.length; i++) {
-    const match = questionMatches[i];
-    const qNum = parseInt(match[1], 10);
-    const nextMatch = questionMatches[i+1];
-    
-    // Find start of this question. It's roughly after the previous question's options.
-    // But the regex `[18]` marks the END of the question prompt line.
-    // e.g. "다음 ... 틀린 것은? [18]"
-    // So the text BEFORE this match (up to a newline) is the question prompt.
-    
-    // Let's look backwards from `match.index` to find the start of the line.
-    const headerEnd = match.index + match[0].length;
-    let lineStart = problemText.lastIndexOf('\n', match.index);
-    if (lineStart === -1) lineStart = 0;
-    
-    const questionPrompt = problemText.slice(lineStart, match.index).trim();
-    
-    // The content body starts after the header
-    const contentStart = headerEnd;
-    const contentEnd = nextMatch ? nextMatch.index : problemText.length; // Rough cut
-    
-    // We need to look backwards from nextMatch to find the start of the next question's prompt line
-    let nextQuestionStart = contentEnd;
-    if (nextMatch) {
-        const nextLineStart = problemText.lastIndexOf('\n', nextMatch.index);
-        if (nextLineStart > contentStart) nextQuestionStart = nextLineStart;
-    }
+    try {
+      const match = questionMatches[i];
+      const qNum = parseInt(match[1], 10);
+      const nextMatch = questionMatches[i+1];
+      
+      const headerEnd = match.index + match[0].length;
+      let lineStart = problemText.lastIndexOf('\n', match.index);
+      if (lineStart === -1) lineStart = 0;
+      
+      const questionPrompt = problemText.slice(lineStart, match.index).trim();
+      
+      const contentStart = headerEnd;
+      const contentEnd = nextMatch ? nextMatch.index : problemText.length;
+      
+      // We need to look backwards from nextMatch to find the start of the next question's prompt line
+      let nextQuestionStart = contentEnd;
+      if (nextMatch) {
+          const nextLineStart = problemText.lastIndexOf('\n', nextMatch.index);
+          if (nextLineStart > contentStart) nextQuestionStart = nextLineStart;
+      }
 
-    let rawContent = problemText.slice(contentStart, nextQuestionStart).trim();
-    
-    // Extract Options (①...)
-    const options = [];
-    const optionMatches = [...rawContent.matchAll(/([①-⑤])\s*([^①-⑤\n]+)/g)];
-    
-    // If regex didn't catch them well (e.g. multiline options), try a split approach
-    // Or simplistic: find first ①
-    const firstOptionIdx = rawContent.search(/[①-⑤]/);
-    let passage = rawContent;
-    
-    if (firstOptionIdx !== -1) {
-        passage = rawContent.slice(0, firstOptionIdx).trim();
-        const optionsBlock = rawContent.slice(firstOptionIdx);
-        
-        // Naive option split
-        const parts = optionsBlock.split(/([①-⑤])/).filter(s => s.trim());
-        // parts: ["①", "Text", "②", "Text"...]
-        for (let k=0; k<parts.length; k+=2) {
-            if (parts[k] && parts[k+1]) {
-                options.push(parts[k] + " " + parts[k+1].trim());
-            }
-        }
-    }
+      let rawContent = problemText.slice(contentStart, nextQuestionStart).trim();
+      
+      // Extract Options (①...)
+      const options = [];
+      // Try naive split first as it's more robust for multiline options
+      const firstOptionIdx = rawContent.search(/[①-⑤]/);
+      let passage = rawContent;
+      
+      if (firstOptionIdx !== -1) {
+          passage = rawContent.slice(0, firstOptionIdx).trim();
+          const optionsBlock = rawContent.slice(firstOptionIdx);
+          
+          const parts = optionsBlock.split(/([①-⑤])/).filter(s => s.trim());
+          for (let k=0; k<parts.length; k+=2) {
+              if (parts[k] && parts[k+1]) {
+                  options.push(parts[k] + " " + parts[k+1].trim());
+              }
+          }
+      }
 
-    questions.push({
-        number: qNum,
-        type: questionPrompt, // e.g. "다음 글의 제목으로..."
-        passage: passage,
-        options: options
-    });
+      questions.push({
+          number: qNum,
+          type: questionPrompt,
+          passage: passage,
+          options: options
+      });
+    } catch (err) {
+      console.warn(`Skipping question index ${i} due to parse error:`, err.message);
+    }
   }
   
   return { questions, answerText };

@@ -78,9 +78,12 @@ router.post('/documents/:id/exam-upload', verifyToken, requireAdmin, upload.sing
 
   } catch (error) {
     console.error('[admin] exam upload error:', error);
+    console.error('[admin] stack:', error.stack); // Detailed stack trace
     // Try to clean up file if exists
-    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    res.status(500).json({ message: '기출문제를 처리하는 중 오류가 발생했습니다.' });
+    if (fs.existsSync(filePath)) {
+        try { fs.unlinkSync(filePath); } catch(e) {}
+    }
+    res.status(500).json({ message: '기출문제를 처리하는 중 오류가 발생했습니다: ' + error.message });
   }
 });
 
