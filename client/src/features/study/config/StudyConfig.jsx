@@ -5,6 +5,7 @@ import useStudyConfig from './hooks/useStudyConfig';
 import DocumentStep from './components/DocumentStep';
 import PassageStep from './components/PassageStep';
 import ProblemTypeStep from './components/ProblemTypeStep';
+import ExamConfigStep from './components/ExamConfigStep';
 import ProblemPreviewModal from '../components/ProblemPreviewModal';
 import { sampleProblems } from '../sampleProblems';
 
@@ -138,6 +139,14 @@ const StudyConfig = ({
         );
       case 3:
       default:
+        if (selectedType === 'exam') {
+          return (
+            <ExamConfigStep 
+              onStart={(examConfig) => handleStart(examConfig)} 
+              onBack={() => goToStep(2)} 
+            />
+          );
+        }
         return (
           <PassageStep
             passages={passages}

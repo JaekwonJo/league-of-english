@@ -343,7 +343,22 @@ const useStudyConfig = ({ onStart, initialFocusType }) => {
     setStep(3);
   }, [resetTypes]);
 
-  const handleStart = useCallback(() => {
+  const handleStart = useCallback((overrideConfig) => {
+    // 🎓 Special Handling for Exam Type
+    if (overrideConfig && overrideConfig.type === 'exam') {
+      const count = Number(overrideConfig.count) || 20;
+      logger.info('Starting Exam Mode:', { documentId: config.documentId, count });
+      
+      onStart({
+        documentId: config.documentId,
+        types: { exam: count },
+        passageNumbers: [], // Not needed for exam mode
+        orderMode: 'random',
+        totalCount: count
+      });
+      return;
+    }
+
     const activeTypes = Object.entries(config.types || {})
       .filter(([, value]) => Number(value || 0) > 0)
       .map(([key]) => key);

@@ -157,7 +157,7 @@
     "exam": {
       "id": "exam",
       "name": "기출문제 풀이",
-      "description": "등록된 기출문제 100제 풀이 (New!)",
+      "description": "등록된 기출문제 풀이",
       "points": 3,
       "difficulty": {
         "basic": 2,
