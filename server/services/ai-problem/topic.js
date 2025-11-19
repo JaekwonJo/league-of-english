@@ -262,11 +262,10 @@ function normalizeTopicPayload(payload, context = {}) {
     metadata.optionDefects = optionDefects;
   }
 
-  const passage = String(context.passage || payload.text || payload.passage || '')
-    .replace(/\r\n/g, '\n')
-    .trim();
-  if (!passage) {
-    throw new Error('topic passage missing');
+  // STRICT MODE: Force original passage
+  const originalPassage = context.passage ? String(context.passage).replace(/\r\n/g, '\n').trim() : '';
+  if (!originalPassage) {
+    throw new Error('Topic generation requires original passage context');
   }
 
   const correctAnswer = String(answerIndex + 1);
@@ -281,8 +280,8 @@ function normalizeTopicPayload(payload, context = {}) {
     explanation,
     sourceLabel,
     difficulty: 'advanced',
-    mainText: passage,
-    text: passage,
+    mainText: originalPassage, // STRICT
+    text: originalPassage,     // STRICT
     metadata
   };
 

@@ -186,6 +186,13 @@ function buildSourceLabel(rawSource, context) {
 
 function coerceSummaryProblem(raw, context) {
   if (!raw || typeof raw !== 'object') return null;
+  
+  // STRICT MODE: Always use original passage from context
+  const originalPassage = context.passage ? String(context.passage).trim() : '';
+  if (!originalPassage) {
+    throw new Error('Summary generation requires original passage context');
+  }
+
   const summarySentence = String(
     raw.summarySentence || raw.summary || raw.summaryText || raw.answerSentence || ""
   ).trim();
@@ -232,7 +239,8 @@ function coerceSummaryProblem(raw, context) {
     id: raw.id || `summary_ai_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
     type: 'summary',
     question: SUMMARY_QUESTION,
-    mainText: String(raw.passage || context.passage || '').trim(),
+    mainText: originalPassage, // STRICT: Force original passage
+    text: originalPassage,     // STRICT: Force original passage
     summarySentence,
     options,
     answer: String(correct),
