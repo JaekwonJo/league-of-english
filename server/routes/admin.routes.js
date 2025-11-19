@@ -106,6 +106,70 @@ router.post('/documents/:id/exam-upload', verifyToken, requireAdmin, upload.sing
   }
 });
 
+router.post('/documents/:id/exam-text', verifyToken, requireAdmin, async (req, res) => {
+  const documentId = Number(req.params.id);
+  const { text, title } = req.body || {};
+
+  if (!documentId || !text) {
+    return res.status(400).json({ message: '문서 ID와 텍스트 내용이 필요합니다.' });
+  }
+
+  try {
+    // Safety check: Ensure table exists
+    await database.run(`
+      CREATE TABLE IF NOT EXISTS exam_problems (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        document_id INTEGER NOT NULL,
+        exam_title TEXT,
+        question_number INTEGER,
+        question_type TEXT,
+        question_text TEXT,
+        passage TEXT,
+        options_json TEXT,
+        answer TEXT,
+        explanation TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    await database.run(`CREATE INDEX IF NOT EXISTS idx_exam_problems_doc_id ON exam_problems(document_id)`);
+
+    const { questions, answerText } = parseQuestions(text);
+    const answerMap = parseAnswers(answerText);
+    const examTitle = title || `직접입력_${Date.now()}`;
+
+    let importedCount = 0;
+    for (const q of questions) {
+        const ansData = answerMap[q.number] || {};
+        await database.run(
+            `INSERT INTO exam_problems 
+             (document_id, exam_title, question_number, question_type, passage, options_json, answer, explanation)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, 
+            [
+                documentId,
+                examTitle,
+                q.number,
+                q.type,
+                q.passage,
+                JSON.stringify(q.options),
+                ansData.answer || '',
+                ansData.explanation || ''
+            ]
+        );
+        importedCount++;
+    }
+
+    res.json({ 
+      success: true, 
+      message: `${importedCount}개의 기출문제가 성공적으로 등록되었습니다! (텍스트 입력)`,
+      count: importedCount 
+    });
+
+  } catch (error) {
+    console.error('[admin] exam text upload error:', error);
+    res.status(500).json({ message: '기출문제 텍스트를 처리하는 중 오류가 발생했습니다: ' + error.message });
+  }
+});
+
 router.delete('/documents/:id/exam-problems', verifyToken, requireAdmin, async (req, res) => {
   const documentId = Number(req.params.id);
   if (!documentId) {

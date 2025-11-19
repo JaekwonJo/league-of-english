@@ -377,6 +377,7 @@ export const api = {
     },
     documents: {
       uploadExam: (documentId, formData) => apiService.uploadFormData(`/admin/documents/${documentId}/exam-upload`, formData),
+      uploadExamText: (documentId, payload) => apiService.post(`/admin/documents/${documentId}/exam-text`, payload),
       deleteExam: (documentId) => apiService.delete(`/admin/documents/${documentId}/exam-problems`)
     },
     users: {

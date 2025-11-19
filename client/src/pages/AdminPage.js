@@ -146,7 +146,10 @@ const AdminPage = () => {
     open: false,
     document: null,
     file: null,
-    loading: false
+    loading: false,
+    mode: 'file', // 'file' | 'text'
+    textInput: '',
+    examTitle: ''
   });
 
   const pushToast = useCallback((message, tone = 'info') => {
@@ -164,7 +167,10 @@ const AdminPage = () => {
       open: true,
       document: doc,
       file: null,
-      loading: false
+      loading: false,
+      mode: 'file',
+      textInput: '',
+      examTitle: ''
     });
   };
 
@@ -174,22 +180,32 @@ const AdminPage = () => {
   };
 
   const handleExamUploadSubmit = async () => {
-    if (!examUploadModal.document || !examUploadModal.file) {
+    if (examUploadModal.mode === 'file' && !examUploadModal.file) {
       pushToast('기출문제 PDF 파일을 선택해 주세요.', 'warning');
+      return;
+    }
+    if (examUploadModal.mode === 'text' && !examUploadModal.textInput.trim()) {
+      pushToast('문제 텍스트를 입력해 주세요.', 'warning');
       return;
     }
 
     setExamUploadModal(prev => ({ ...prev, loading: true }));
     
     try {
-      const formData = new FormData();
-      formData.append('file', examUploadModal.file);
-      
-      // Use the new endpoint
-      const response = await api.admin.documents.uploadExam(examUploadModal.document.id, formData);
+      let response;
+      if (examUploadModal.mode === 'file') {
+        const formData = new FormData();
+        formData.append('file', examUploadModal.file);
+        response = await api.admin.documents.uploadExam(examUploadModal.document.id, formData);
+      } else {
+        response = await api.admin.documents.uploadExamText(examUploadModal.document.id, {
+          text: examUploadModal.textInput,
+          title: examUploadModal.examTitle || '직접 입력 기출'
+        });
+      }
       
       pushToast(response.message || '기출문제가 성공적으로 등록되었습니다!', 'success');
-      setExamUploadModal({ open: false, document: null, file: null, loading: false });
+      setExamUploadModal({ open: false, document: null, file: null, loading: false, mode: 'file', textInput: '', examTitle: '' });
     } catch (error) {
       console.error('Exam upload error:', error);
       pushToast(error?.message || '기출문제 등록에 실패했습니다.', 'error');
@@ -211,6 +227,8 @@ const AdminPage = () => {
 
   const renderExamUploadModal = () => {
     if (!examUploadModal.open) return null;
+    const isFile = examUploadModal.mode === 'file';
+    
     return (
       <div style={adminStyles.modalOverlay}>
         <div style={adminStyles.modalContent}>
@@ -218,23 +236,93 @@ const AdminPage = () => {
           <p style={{ marginBottom: '16px', color: 'var(--tone-strong)' }}>
             선택한 문서: <strong>{examUploadModal.document?.title}</strong>
           </p>
-          <div style={adminStyles.formGroup}>
-            <label style={adminStyles.label}>기출문제 PDF 파일 (문제+정답)</label>
-            <input 
-              type="file" 
-              accept="application/pdf" 
-              onChange={handleExamFileChange} 
-              style={adminStyles.input}
-            />
-            <p style={adminStyles.hint}>
-              * 텍스트 복사가 가능한 PDF여야 파싱이 가능합니다.<br/>
-              * 문제 번호([18])와 정답/해설(18번 - ①) 패턴이 있어야 합니다.
-            </p>
+
+          {/* Tabs */}
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+            <button
+              type="button"
+              style={{
+                padding: '10px 16px',
+                borderRadius: '10px',
+                border: 'none',
+                fontWeight: 700,
+                cursor: 'pointer',
+                background: isFile ? 'var(--indigo)' : 'var(--surface-soft)',
+                color: isFile ? '#fff' : 'var(--text-secondary)'
+              }}
+              onClick={() => setExamUploadModal(prev => ({ ...prev, mode: 'file' }))}
+            >
+              📂 PDF 파일
+            </button>
+            <button
+              type="button"
+              style={{
+                padding: '10px 16px',
+                borderRadius: '10px',
+                border: 'none',
+                fontWeight: 700,
+                cursor: 'pointer',
+                background: !isFile ? 'var(--indigo)' : 'var(--surface-soft)',
+                color: !isFile ? '#fff' : 'var(--text-secondary)'
+              }}
+              onClick={() => setExamUploadModal(prev => ({ ...prev, mode: 'text' }))}
+            >
+              📝 텍스트 직접 입력
+            </button>
           </div>
+
+          {isFile ? (
+            <div style={adminStyles.formGroup}>
+              <label style={adminStyles.label}>기출문제 PDF 파일 (문제+정답)</label>
+              <input 
+                type="file" 
+                accept="application/pdf" 
+                onChange={handleExamFileChange} 
+                style={adminStyles.input}
+              />
+              <p style={adminStyles.hint}>
+                * 텍스트 복사가 가능한 PDF여야 파싱이 가능합니다.<br/>
+                * 문제 번호([18])와 정답/해설(18번 - ①) 패턴이 있어야 합니다.
+              </p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={adminStyles.formGroup}>
+                <label style={adminStyles.label}>시험 제목 (선택)</label>
+                <input 
+                  type="text"
+                  value={examUploadModal.examTitle}
+                  onChange={(e) => setExamUploadModal(prev => ({ ...prev, examTitle: e.target.value }))}
+                  placeholder="예: 2024년 10월 고2 영어"
+                  style={adminStyles.input}
+                />
+              </div>
+              <div style={adminStyles.formGroup}>
+                <label style={adminStyles.label}>문제 텍스트 붙여넣기</label>
+                <textarea
+                  value={examUploadModal.textInput}
+                  onChange={(e) => setExamUploadModal(prev => ({ ...prev, textInput: e.target.value }))}
+                  placeholder={`다음 글의 목적으로... [18]\nDear Mr. Jones...\n① ...\n② ...\n\n[정답 및 해설]\n18번 - ① 해설...`}
+                  style={{ 
+                    ...adminStyles.input, 
+                    minHeight: '300px', 
+                    fontFamily: 'monospace', 
+                    lineHeight: 1.5,
+                    resize: 'vertical'
+                  }}
+                />
+                <p style={adminStyles.hint}>
+                  * PDF 뷰어에서 전체 선택(Ctrl+A) -> 복사(Ctrl+C) 후 여기에 붙여넣으세요.<br/>
+                  * 텍스트가 깨지지 않고 정확하게 입력됩니다.
+                </p>
+              </div>
+            </div>
+          )}
+
           <div style={adminStyles.modalActions}>
             <button 
               style={adminStyles.secondaryButton} 
-              onClick={() => setExamUploadModal({ open: false, document: null, file: null, loading: false })}
+              onClick={() => setExamUploadModal({ open: false, document: null, file: null, loading: false, mode: 'file', textInput: '', examTitle: '' })}
               disabled={examUploadModal.loading}
             >
               취소
@@ -244,7 +332,7 @@ const AdminPage = () => {
               onClick={handleExamUploadSubmit}
               disabled={examUploadModal.loading}
             >
-              {examUploadModal.loading ? '업로드 및 파싱 중... ⏳' : '등록하기'}
+              {examUploadModal.loading ? '등록 중... ⏳' : '등록하기'}
             </button>
           </div>
         </div>
