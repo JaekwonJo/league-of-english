@@ -375,6 +375,9 @@ export const api = {
       deactivate: (id, payload) => apiService.post(`/admin/problems/${id}/deactivate`, payload),
       restore: (id, payload) => apiService.post(`/admin/problems/${id}/restore`, payload)
     },
+    documents: {
+      uploadExam: (documentId, formData) => apiService.uploadFormData(`/admin/documents/${documentId}/exam-upload`, formData)
+    },
     users: {
       list: (params) => apiService.get('/admin/users', params),
       suspend: (id) => apiService.post(`/admin/users/${id}/suspend`),

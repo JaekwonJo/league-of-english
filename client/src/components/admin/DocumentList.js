@@ -11,6 +11,7 @@ const DocumentList = ({
   onAnalyze,
   onPassageAnalyze,
   onShare,
+  onExamUpload,
   onVocabularyPreview,
   isMobile = false
 }) => {
@@ -47,6 +48,7 @@ const DocumentList = ({
               onAnalyze={onAnalyze}
               onPassageAnalyze={onPassageAnalyze}
               onShare={onShare}
+              onExamUpload={onExamUpload}
               onVocabularyPreview={onVocabularyPreview}
             />
           ))
@@ -56,7 +58,7 @@ const DocumentList = ({
   );
 };
 
-const DocumentCard = ({ document: doc, onEdit, onDelete, onAnalyze, onPassageAnalyze, onShare, onVocabularyPreview, isMobile }) => {
+const DocumentCard = ({ document: doc, onEdit, onDelete, onAnalyze, onPassageAnalyze, onShare, onExamUpload, onVocabularyPreview, isMobile }) => {
   const responsive = (base, mobileOverrides = {}) => (isMobile ? { ...base, ...(mobileOverrides || {}) } : base);
   const isVocabulary = String(doc.type || '').toLowerCase() === 'vocabulary';
   return (
@@ -102,6 +104,15 @@ const DocumentCard = ({ document: doc, onEdit, onDelete, onAnalyze, onPassageAna
                   title="개별 지문 분석"
                 >
                   📝
+                </button>
+              )}
+              {onExamUpload && (
+                <button 
+                  style={{...adminStyles.analyzeButton, background: '#ec4899'}}
+                  onClick={() => onExamUpload(doc)}
+                  title="기출문제 업로드"
+                >
+                  🎓
                 </button>
               )}
             </>

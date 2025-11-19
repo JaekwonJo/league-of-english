@@ -2,6 +2,17 @@
 const router = express.Router();
 const database = require('../models/database');
 const { verifyToken, requireAdmin } = require('../middleware/auth');
+const multer = require('multer');
+const fs = require('fs');
+const path = require('path');
+const pdf = require('pdf-parse');
+// Import parser logic from the script (ensure the path is correct)
+// If the script is not exported properly, we might need to inline it or fix the script.
+// Assuming import-exam-pdf.js exports parseQuestions and parseAnswers.
+const { parseQuestions, parseAnswers } = require('../scripts/import-exam-pdf'); 
+
+const upload = multer({ dest: 'tmp/uploads/' });
+
 const {
   listProblemReports,
   updateProblemReportStatus
@@ -13,6 +24,65 @@ async function singleValue(query, params = []) {
   const row = await database.get(query, params);
   return row ? Object.values(row)[0] : 0;
 }
+
+router.post('/documents/:id/exam-upload', verifyToken, requireAdmin, upload.single('file'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ message: 'PDF 파일을 선택해 주세요.' });
+  }
+
+  const documentId = Number(req.params.id);
+  if (!documentId) {
+    return res.status(400).json({ message: '유효하지 않은 문서 ID입니다.' });
+  }
+
+  const filePath = req.file.path;
+  const examTitle = req.file.originalname.replace('.pdf', '');
+
+  try {
+    const dataBuffer = fs.readFileSync(filePath);
+    const pdfData = await pdf(dataBuffer);
+    const fullText = String(pdfData.text || '').replace(/\r/g, '');
+
+    const { questions, answerText } = parseQuestions(fullText);
+    const answerMap = parseAnswers(answerText);
+
+    let importedCount = 0;
+    for (const q of questions) {
+        const ansData = answerMap[q.number] || {};
+        await database.run(
+            `INSERT INTO exam_problems 
+             (document_id, exam_title, question_number, question_type, passage, options_json, answer, explanation)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                documentId,
+                examTitle,
+                q.number,
+                q.type,
+                q.passage,
+                JSON.stringify(q.options),
+                ansData.answer || '',
+                ansData.explanation || ''
+            ]
+        );
+        importedCount++;
+    }
+
+    // Clean up uploaded file
+    fs.unlinkSync(filePath);
+
+    res.json({ 
+      success: true, 
+      message: `${importedCount}개의 기출문제가 성공적으로 등록되었습니다!`,
+      count: importedCount 
+    });
+
+  } catch (error) {
+    console.error('[admin] exam upload error:', error);
+    // Try to clean up file if exists
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    res.status(500).json({ message: '기출문제를 처리하는 중 오류가 발생했습니다.' });
+  }
+});
 
 router.get('/summary', verifyToken, requireAdmin, async (req, res) => {
   try {

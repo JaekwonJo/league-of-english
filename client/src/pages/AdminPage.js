@@ -140,6 +140,14 @@ const AdminPage = () => {
   const [examListLoading, setExamListLoading] = useState(false);
   const [examListError, setExamListError] = useState('');
   const [renameDrafts, setRenameDrafts] = useState({});
+  
+  // Exam Upload Modal State
+  const [examUploadModal, setExamUploadModal] = useState({
+    open: false,
+    document: null,
+    file: null,
+    loading: false
+  });
 
   const pushToast = useCallback((message, tone = 'info') => {
     const id = Date.now() + Math.random();
@@ -148,6 +156,91 @@ const AdminPage = () => {
       setToasts((prev) => prev.filter((toast) => toast.id !== id));
     }, 3200);
   }, []);
+
+  // ... (existing useEffects) ...
+
+  const handleOpenExamUpload = (doc) => {
+    setExamUploadModal({
+      open: true,
+      document: doc,
+      file: null,
+      loading: false
+    });
+  };
+
+  const handleExamFileChange = (e) => {
+    const file = e.target.files[0];
+    setExamUploadModal(prev => ({ ...prev, file }));
+  };
+
+  const handleExamUploadSubmit = async () => {
+    if (!examUploadModal.document || !examUploadModal.file) {
+      pushToast('기출문제 PDF 파일을 선택해 주세요.', 'warning');
+      return;
+    }
+
+    setExamUploadModal(prev => ({ ...prev, loading: true }));
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', examUploadModal.file);
+      
+      // Use the new endpoint
+      const response = await api.admin.documents.uploadExam(examUploadModal.document.id, formData);
+      
+      pushToast(response.message || '기출문제가 성공적으로 등록되었습니다!', 'success');
+      setExamUploadModal({ open: false, document: null, file: null, loading: false });
+    } catch (error) {
+      console.error('Exam upload error:', error);
+      pushToast(error?.message || '기출문제 등록에 실패했습니다.', 'error');
+      setExamUploadModal(prev => ({ ...prev, loading: false }));
+    }
+  };
+
+  const renderExamUploadModal = () => {
+    if (!examUploadModal.open) return null;
+    return (
+      <div style={adminStyles.modalOverlay}>
+        <div style={adminStyles.modalContent}>
+          <h2 style={adminStyles.modalTitle}>🎓 기출문제 등록</h2>
+          <p style={{ marginBottom: '16px', color: 'var(--tone-strong)' }}>
+            선택한 문서: <strong>{examUploadModal.document?.title}</strong>
+          </p>
+          <div style={adminStyles.formGroup}>
+            <label style={adminStyles.label}>기출문제 PDF 파일 (문제+정답)</label>
+            <input 
+              type="file" 
+              accept="application/pdf" 
+              onChange={handleExamFileChange} 
+              style={adminStyles.input}
+            />
+            <p style={adminStyles.hint}>
+              * 텍스트 복사가 가능한 PDF여야 파싱이 가능합니다.<br/>
+              * 문제 번호([18])와 정답/해설(18번 - ①) 패턴이 있어야 합니다.
+            </p>
+          </div>
+          <div style={adminStyles.modalActions}>
+            <button 
+              style={adminStyles.secondaryButton} 
+              onClick={() => setExamUploadModal({ open: false, document: null, file: null, loading: false })}
+              disabled={examUploadModal.loading}
+            >
+              취소
+            </button>
+            <button 
+              style={adminStyles.primaryButton} 
+              onClick={handleExamUploadSubmit}
+              disabled={examUploadModal.loading}
+            >
+              {examUploadModal.loading ? '업로드 및 파싱 중... ⏳' : '등록하기'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // ... (existing render logic) ...
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
@@ -714,6 +807,7 @@ const AdminPage = () => {
         onAnalyze={handleDocumentAnalyze}
         onPassageAnalyze={handlePassageAnalyze}
         onShare={handleDocumentShare}
+        onExamUpload={handleOpenExamUpload}
         isMobile={isMobile}
       />
 
@@ -730,6 +824,10 @@ const AdminPage = () => {
       />
 
       <ProblemLibrary documents={documents} />
+
+      {/* ... feedback section ... */}
+
+      {renderExamUploadModal()}
 
       <div style={responsive(adminStyles.feedbackSection, adminStyles.feedbackSectionMobile)}>
         <div style={responsive(adminStyles.feedbackHeader, adminStyles.feedbackHeaderMobile)}>
