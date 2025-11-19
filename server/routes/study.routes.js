@@ -8,18 +8,34 @@ const {
   clearSession
 } = require('../services/studySessionService');
 
+const database = require('../models/database'); // Ensure database is imported
+
 router.get('/exam-problems', verifyToken, async (req, res) => {
   try {
     const documentId = req.query.documentId;
     const orderMode = req.query.orderMode || 'random';
+    const limit = parseInt(req.query.limit || '20', 10);
     if (!documentId) {
       return res.status(400).json({ message: 'documentId is required' });
     }
-    const problems = await examProblemService.getUnsolvedProblems(documentId, req.user.id, 20, orderMode);
+
+    // Safety check: Ensure attempts table exists
+    await database.run(`
+      CREATE TABLE IF NOT EXISTS exam_problem_attempts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        exam_problem_id INTEGER,
+        is_correct BOOLEAN,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    await database.run(`CREATE INDEX IF NOT EXISTS idx_exam_attempts_user ON exam_problem_attempts(user_id)`);
+
+    const problems = await examProblemService.getUnsolvedProblems(documentId, req.user.id, limit, orderMode);
     res.json({ problems });
   } catch (error) {
     console.error('[study/exam-problems] error:', error);
-    res.status(500).json({ message: '기출문제를 불러오지 못했어요.' });
+    res.status(500).json({ message: '기출문제를 불러오지 못했어요: ' + error.message });
   }
 });
 
