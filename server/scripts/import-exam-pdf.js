@@ -14,74 +14,95 @@ function cleanText(text) {
 }
 
 function parseQuestions(fullText) {
-  // Split by question number pattern: e.g., "다음 ... [18]"
-  // Use a flexible regex to catch [18], [ 18 ], etc.
-  const questionMatches = [...fullText.matchAll(/\[\s*(\d{1,3})\s*\]/g)];
-  const questions = [];
-
-  // Also find the start of the "Answers" section
-  // Looking for patterns like "93 번 - ②" or similar logic at the end of file.
-  let answerSectionIndex = fullText.search(/\d+\s*번\s*-\s*[①-⑤]/);
-  if (answerSectionIndex === -1) {
-    answerSectionIndex = fullText.length;
-  }
+  // 1. Separate Questions and Answers
+  // Look for the boundary where answers start. Often characterized by "정 답 및 해 설" or a sequence of "18번 - "
+  // Or simply assume the last part of the file with frequent "number - number" pattern is answers.
+  
+  let answerSectionIndex = fullText.search(/\d+\s*번\s*-\s*[①-⑤1-5]/);
+  if (answerSectionIndex === -1) answerSectionIndex = fullText.length;
 
   const problemText = fullText.slice(0, answerSectionIndex);
   const answerText = fullText.slice(answerSectionIndex);
 
-  for (let i = 0; i < questionMatches.length; i++) {
-    try {
-      const match = questionMatches[i];
-      const qNum = parseInt(match[1], 10);
-      const nextMatch = questionMatches[i+1];
-      
-      const headerEnd = match.index + match[0].length;
-      let lineStart = problemText.lastIndexOf('\n', match.index);
-      if (lineStart === -1) lineStart = 0;
-      
-      const questionPrompt = problemText.slice(lineStart, match.index).trim();
-      
-      const contentStart = headerEnd;
-      const contentEnd = nextMatch ? nextMatch.index : problemText.length;
-      
-      // We need to look backwards from nextMatch to find the start of the next question's prompt line
-      let nextQuestionStart = contentEnd;
-      if (nextMatch) {
-          const nextLineStart = problemText.lastIndexOf('\n', nextMatch.index);
-          if (nextLineStart > contentStart) nextQuestionStart = nextLineStart;
-      }
-
-      let rawContent = problemText.slice(contentStart, nextQuestionStart).trim();
-      
-      // Extract Options (①...)
-      const options = [];
-      // Try naive split first as it's more robust for multiline options
-      const firstOptionIdx = rawContent.search(/[①-⑤]/);
-      let passage = rawContent;
-      
-      if (firstOptionIdx !== -1) {
-          passage = rawContent.slice(0, firstOptionIdx).trim();
-          const optionsBlock = rawContent.slice(firstOptionIdx);
-          
-          const parts = optionsBlock.split(/([①-⑤])/).filter(s => s.trim());
-          for (let k=0; k<parts.length; k+=2) {
-              if (parts[k] && parts[k+1]) {
-                  options.push(parts[k] + " " + parts[k+1].trim());
-              }
-          }
-      }
-
-      questions.push({
-          number: qNum,
-          type: questionPrompt,
-          passage: passage,
-          options: options
-      });
-    } catch (err) {
-      console.warn(`Skipping question index ${i} due to parse error:`, err.message);
-    }
-  }
+  const questions = [];
   
+  // Regex to find question headers: "Question Text... [18]"
+  // We capture the text BEFORE the [18] as the prompt, and the number 18.
+  // Using `gm` multiline flag.
+  const questionHeaderRegex = /^(.*?)\[\s*(\d{1,3})\s*\]\s*$/gm;
+  
+  let match;
+  let lastIndex = 0;
+  const headers = [];
+  
+  // Pass 1: Find all question headers and their positions
+  while ((match = questionHeaderRegex.exec(problemText)) !== null) {
+    headers.push({
+      fullMatch: match[0],
+      prompt: match[1].trim(),
+      number: parseInt(match[2], 10),
+      start: match.index,
+      end: match.index + match[0].length
+    });
+  }
+
+  // Pass 2: Extract content between headers
+  for (let i = 0; i < headers.length; i++) {
+    const current = headers[i];
+    const next = headers[i+1];
+    
+    const contentStart = current.end;
+    const contentEnd = next ? next.start : problemText.length;
+    
+    let rawContent = problemText.slice(contentStart, contentEnd).trim();
+    
+    // Check for garbage at the end (like page numbers "- 1 -")
+    // Remove lines that look like page footers/headers
+    rawContent = rawContent.replace(/^\s*-\s*\d+\s*-\s*$/gm, '');
+    rawContent = rawContent.replace(/^\s*2024년도.*?모의고사\s*$/gm, '');
+    rawContent = rawContent.replace(/^\s*진진영어\s*$/gm, '');
+
+    // Split Passage vs Options
+    // Look for the first occurrence of ① (or (1) if used)
+    let passage = '';
+    const options = [];
+    
+    const optionStartMatch = rawContent.match(/[①\(1\)]/);
+    
+    if (optionStartMatch) {
+        passage = rawContent.slice(0, optionStartMatch.index).trim();
+        const optionsBlock = rawContent.slice(optionStartMatch.index);
+        
+        // Regex to split options: ① text ② text ...
+        // We split by the markers, capturing the marker to know where it starts
+        const parts = optionsBlock.split(/([①②③④⑤\(1\)\(2\)\(3\)\(4\)\(5\)])/);
+        
+        // parts[0] is empty (before first marker)
+        // parts[1] = ①, parts[2] = text, parts[3] = ②, parts[4] = text ...
+        for (let k = 1; k < parts.length; k += 2) {
+            const marker = parts[k];
+            const text = (parts[k+1] || '').trim();
+            if (text) {
+                // Normalise marker to ①
+                const symbolMap = { '(1)': '①', '(2)': '②', '(3)': '③', '(4)': '④', '(5)': '⑤' };
+                const displayMarker = symbolMap[marker] || marker;
+                options.push(`${displayMarker} ${text}`);
+            }
+        }
+    } else {
+        // No options found? Maybe it's not a multiple choice or parse failed.
+        // Treat whole content as passage.
+        passage = rawContent;
+    }
+
+    questions.push({
+        number: current.number,
+        type: current.prompt, // e.g. "다음 빈칸에 들어갈..."
+        passage: passage,
+        options: options
+    });
+  }
+
   return { questions, answerText };
 }
 

@@ -14,6 +14,7 @@ import {
   CIRCLED_DIGITS,
 } from './utils/textFormatters';
 import { api } from '../../../services/api.service';
+import { fixMojibake } from '../../../utils/textUtils';
 
 const escapeRegExp = (value) => String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -86,7 +87,7 @@ const ProblemDisplay = ({
     ...orderStyles.orderProblemCard
   };
 
-  const rawSourceLabel = effectiveProblem.sourceLabel || effectiveProblem.source || metadata.sourceLabel || metadata.documentTitle;
+  const rawSourceLabel = fixMojibake(effectiveProblem.sourceLabel || effectiveProblem.source || metadata.sourceLabel || metadata.documentTitle);
   const sourceLabel = (() => {
     if (!rawSourceLabel) return '';
     const trimmed = String(rawSourceLabel).trim();
