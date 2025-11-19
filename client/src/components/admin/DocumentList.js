@@ -88,24 +88,6 @@ const DocumentCard = ({ document: doc, onEdit, onDelete, onAnalyze, onPassageAna
             )
           ) : (
             <>
-              {onAnalyze && (
-                <button 
-                  style={adminStyles.analyzeButton}
-                  onClick={() => onAnalyze(doc)}
-                  title="종합 분석"
-                >
-                  📊
-                </button>
-              )}
-              {onPassageAnalyze && (
-                <button 
-                  style={{...adminStyles.analyzeButton, background: 'var(--success)'}}
-                  onClick={() => onPassageAnalyze(doc)}
-                  title="개별 지문 분석"
-                >
-                  📝
-                </button>
-              )}
               {onExamUpload && (
                 <button 
                   style={{...adminStyles.analyzeButton, background: '#ec4899'}}

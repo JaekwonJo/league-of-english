@@ -355,26 +355,31 @@ export const adminStyles = {
     color: 'var(--text-muted)',
     fontSize: '12px'
   },
-  modal: {
+  modalOverlay: {
     position: 'fixed',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    background: 'var(--dialog-scrim)',
+    background: 'rgba(0, 0, 0, 0.6)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 1000
+    zIndex: 9999,
+    backdropFilter: 'blur(4px)'
   },
   modalContent: {
     background: 'var(--surface-card)',
-    borderRadius: '20px',
-    padding: '30px',
+    borderRadius: '24px',
+    padding: '32px',
     width: '90%',
     maxWidth: '500px',
-    maxHeight: '90vh',
-    overflow: 'auto'
+    maxHeight: '85vh',
+    overflowY: 'auto',
+    position: 'relative',
+    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+    border: '1px solid var(--surface-border)',
+    animation: 'fadeInUp 0.3s ease-out'
   },
   modalHeader: {
     display: 'flex',
