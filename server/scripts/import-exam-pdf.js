@@ -126,12 +126,68 @@ function parseQuestions(fullText) {
     questions.push({
         number: current.number,
         type: current.prompt,
-        passage: passage,
+        passage: autoUnderline(passage, options),
         options: options
     });
   }
 
   return { questions, answerText: repairText(answerText) };
+}
+
+function autoUnderline(passage, options) {
+  if (!passage || !options || !options.length) return passage;
+  
+  let underlinedPassage = passage;
+  
+  // Options are like ["① requires", "② apparently", ...]
+  // Passage contains markers like "that ① requires immediate..."
+  
+  options.forEach(opt => {
+    // Extract marker and text
+    const match = opt.match(/^([①②③④⑤]|\(\d\))\s*(.*)/);
+    if (!match) return;
+    
+    const marker = match[1];
+    const content = match[2].trim();
+    
+    if (!content) return;
+    
+    // We want to find `marker` in passage and underline `content` after it.
+    // BUT, the text in passage might slightly differ (spacing, punctuation).
+    // So we rely on the MARKER's position.
+    
+    // Find marker in passage
+    const markerIdx = underlinedPassage.indexOf(marker);
+    if (markerIdx === -1) return;
+    
+    // Extract text after marker to see if it matches content
+    // Heuristic: Underline the next N words that match content, OR just underline until next punctuation/space if content is short.
+    // Better: Create a regex that looks for `marker` + whitespace + `content words`.
+    
+    // Escape content for regex
+    const escapedContent = content.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s*');
+    
+    // Regex: Marker + whitespace + (Group: Content)
+    const regex = new RegExp(`(${marker})\\s*(${escapedContent})`, 'i'); // case-insensitive just in case
+    
+    if (regex.test(underlinedPassage)) {
+        // Replace with Marker + <u>Content</u>
+        underlinedPassage = underlinedPassage.replace(regex, '$1 <u>$2</u>');
+    } else {
+        // Fallback: If exact match fail, maybe just underline the first word after marker?
+        // Risks: "① requires immediate consideration" -> option is "requires", passage is "requires immediate"
+        // If option text is subset of passage text?
+        
+        // Let's try to match the first word of option at least.
+        const firstWord = content.split(/\s+/)[0];
+        if (firstWord && firstWord.length > 1) {
+             const regexShort = new RegExp(`(${marker})\\s*(${firstWord}[^\\s]*)`, 'i');
+             underlinedPassage = underlinedPassage.replace(regexShort, '$1 <u>$2</u>');
+        }
+    }
+  });
+  
+  return underlinedPassage;
 }
 
 function parseAnswers(text) {
