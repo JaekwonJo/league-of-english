@@ -11,10 +11,11 @@ const {
 router.get('/exam-problems', verifyToken, async (req, res) => {
   try {
     const documentId = req.query.documentId;
+    const orderMode = req.query.orderMode || 'random';
     if (!documentId) {
       return res.status(400).json({ message: 'documentId is required' });
     }
-    const problems = await examProblemService.getUnsolvedProblems(documentId, req.user.id, 20);
+    const problems = await examProblemService.getUnsolvedProblems(documentId, req.user.id, 20, orderMode);
     res.json({ problems });
   } catch (error) {
     console.error('[study/exam-problems] error:', error);

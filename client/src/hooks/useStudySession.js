@@ -404,7 +404,8 @@ const useStudySession = (user, onUserUpdate = () => {}) => {
 
       // Handle Exam Problems (Pre-generated)
       if (studyConfig.types && studyConfig.types.exam > 0) {
-        const response = await apiService.get(`/study/exam-problems?documentId=${studyConfig.documentId}`);
+        const orderMode = studyConfig.orderMode || 'random';
+        const response = await apiService.get(`/study/exam-problems?documentId=${studyConfig.documentId}&orderMode=${orderMode}`);
         const examProblems = response.problems || [];
         
         if (!examProblems.length) {

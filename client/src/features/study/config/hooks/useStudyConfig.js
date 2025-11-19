@@ -353,7 +353,7 @@ const useStudyConfig = ({ onStart, initialFocusType }) => {
         documentId: config.documentId,
         types: { exam: count },
         passageNumbers: [], // Not needed for exam mode
-        orderMode: 'random',
+        orderMode: config.orderMode, // Pass user preference
         totalCount: count
       });
       return;
