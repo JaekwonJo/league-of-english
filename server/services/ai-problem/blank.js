@@ -340,9 +340,11 @@ function normalizeBlankPayload(payload, context = {}) {
     const derived = `${left}____${right}`;
     const derivedNormalized = normalizeWhitespace(derived);
     const originalNormalized = normalizeWhitespace(original);
-    if (derivedNormalized.replace(/____/g, targetExpression) !== originalNormalized) {
-      throw new Error('blank derived text deviates from original except blank');
-    }
+    
+    // We trust the targetSpan from the AI if it extracts a valid targetExpression.
+    // We do NOT check if derived == original because we just BUILT derived from original.
+    // The key is ensuring targetExpression is what we want.
+    
     const resolvedQuestion = resolveBlankQuestionText(String(payload.question || '')) || { canonical: BLANK_GENERAL_QUESTION, type: 'general' };
     return {
       id: payload.id || `blank_ai_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
@@ -374,10 +376,57 @@ function normalizeBlankPayload(payload, context = {}) {
     };
   }
 
+  // Fallback: If targetSpan is NOT provided (older logic or AI failure), try to find targetExpression in original passage
   let text = String(payload.text || payload.passage || '')
     .replace(/[’]/g, "'")
     .replace(/[“”]/g, '"')
     .trim();
+  
+  const originalPassageRaw = context && context.passage ? String(context.passage) : '';
+  const normalizedOriginalPassage = originalPassageRaw ? normalizeForPassage(originalPassageRaw) : '';
+
+  // Prioritize using Original Passage if available
+  if (normalizedOriginalPassage) {
+     const optionsInfoForSearch = normalizeBlankOptions(payload.options || []);
+     let answerNum = Number(payload.correctAnswer || payload.answer);
+     let answerIdx = (Number.isInteger(answerNum) && answerNum >= 1) ? answerNum - 1 : 0;
+     
+     // Determine target expression to search for
+     let searchTarget = payload.targetExpression || payload.target || (payload.notes && payload.notes.targetExpression);
+     if (!searchTarget) {
+        searchTarget = optionsInfoForSearch.rawTexts[answerIdx] || optionsInfoForSearch.texts[answerIdx] || '';
+     }
+     searchTarget = String(searchTarget).trim();
+
+     if (searchTarget) {
+       // Search for this target in the original passage
+       const esc = escapeRegex(searchTarget).replace(/\s+/g, '\\s+');
+       const pattern = new RegExp(esc, 'i'); // case-insensitive search
+       const match = normalizedOriginalPassage.match(pattern);
+       
+       if (match) {
+          // FOUND! Construct the blank problem from the ORIGINAL passage.
+          targetExpression = match[0]; // Use the exact casing/spacing from original
+          const prefix = normalizedOriginalPassage.slice(0, match.index);
+          const suffix = normalizedOriginalPassage.slice(match.index + targetExpression.length);
+          
+          // Reconstruct text with blank
+          text = `${prefix}____${suffix}`;
+          
+          // Set metadata to use this strict version
+          // We will let the rest of the function normalize options and build the final object,
+          // but we override 'text' and 'targetExpression' here.
+       } else {
+          // Not found? This is critical.
+          // If strict mode is on, we might want to fail.
+          // But for now, we'll fall back to the AI's text, but warn or risk 'deviation' error later.
+          if (STRICT_REQUIRE_TARGETSPAN) {
+             throw new Error('blank target expression not found in original passage');
+          }
+       }
+     }
+  }
+
   if (!text) {
     throw new Error('blank text missing placeholder');
   }

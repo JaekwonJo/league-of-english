@@ -208,10 +208,10 @@ const HomePage = () => {
         <span className="shimmer" style={{ animationDelay: '0s' }} aria-hidden />
         <span className="shimmer" style={{ animationDelay: '1.6s' }} aria-hidden />
         <div style={isMobile ? { ...styles.heroTextBlock, ...styles.heroTextBlockMobile } : styles.heroTextBlock}>
-          <span style={styles.heroTag}>League of English</span>
-          <h1 style={styles.heroTitle}>안녕하세요, {user?.name || '학습자'}님! 👋</h1>
+          <span style={styles.heroTag}>🎄 Winter Edition</span>
+          <h1 style={styles.heroTitle}>Merry Christmas, {user?.name || '학습자'}님! 🎅</h1>
           <p style={styles.heroSubtitle}>
-            하루 30분만 투자해도 단어·분석·모의고사를 한 번에 관리할 수 있습니다. 대시보드가 오늘의 학습 흐름을 명확하게 안내합니다.
+            따뜻한 연말, 하루 30분만 투자해도 단어·분석·모의고사를 한 번에 관리할 수 있습니다. 대시보드가 오늘의 학습 흐름을 명확하게 안내합니다.
           </p>
           <div style={isMobile ? { ...styles.heroCTAGroup, ...styles.heroCTAGroupMobile } : styles.heroCTAGroup}>
             <AppButton variant="primary" size="lg" onClick={() => (window.location.href = '/vocabulary')}>
@@ -452,9 +452,10 @@ const styles = {
     gap: '32px',
     padding: '32px',
     borderRadius: '32px',
-    background: 'linear-gradient(130deg, #0F172A 0%, #1D3A6D 55%, #F4C95D 120%)',
+    // Christmas Theme: Deep Green -> Festive Red -> Gold
+    background: 'linear-gradient(130deg, #1a472a 0%, #2d5a27 40%, #c41e3a 100%)',
     color: '#F8FAFC',
-    boxShadow: '0 35px 70px rgba(3, 7, 18, 0.55)',
+    boxShadow: '0 35px 70px rgba(20, 83, 45, 0.55)',
     marginBottom: '32px',
     position: 'relative',
     overflow: 'hidden'
@@ -485,8 +486,8 @@ const styles = {
     gap: '6px',
     padding: '6px 12px',
     borderRadius: '999px',
-    border: '1px solid rgba(244, 201, 93, 0.6)',
-    background: 'rgba(15,23,42,0.45)',
+    border: '1px solid rgba(255, 215, 0, 0.6)',
+    background: 'rgba(196, 30, 58, 0.45)',
     fontSize: '0.85rem',
     letterSpacing: '0.08em',
     textTransform: 'uppercase'
@@ -521,11 +522,12 @@ const styles = {
     gap: '10px',
     padding: '10px 18px',
     borderRadius: '16px',
-    background: 'rgba(244, 201, 93, 0.35)',
-    border: '1px solid rgba(244, 201, 93, 0.65)',
-    color: '#1C1917',
+    background: 'rgba(255, 215, 0, 0.35)',
+    border: '1px solid rgba(255, 215, 0, 0.65)',
+    color: '#fff',
     fontWeight: 700,
-    boxShadow: '0 16px 32px rgba(251, 191, 36, 0.35)'
+    boxShadow: '0 16px 32px rgba(255, 215, 0, 0.35)',
+    textShadow: '0 1px 2px rgba(0,0,0,0.3)'
   },
   streakFlameIcon: {
     fontSize: '1.2rem',
@@ -535,7 +537,7 @@ const styles = {
     position: 'absolute',
     inset: '-6px',
     borderRadius: '999px',
-    background: 'radial-gradient(circle, rgba(251, 191, 36, 0.35), transparent 60%)',
+    background: 'radial-gradient(circle, rgba(255, 215, 0, 0.35), transparent 60%)',
     filter: 'blur(2px)',
     zIndex: -1,
     animation: 'streakGlow 2.6s ease-in-out infinite'
@@ -544,18 +546,18 @@ const styles = {
     padding: '14px 24px',
     borderRadius: '16px',
     border: 'none',
-    background: 'linear-gradient(135deg, #F7C948, #D97706)',
-    color: '#1F1300',
+    background: 'linear-gradient(135deg, #D42424, #A61B1B)',
+    color: '#fff',
     fontWeight: 700,
     fontSize: '1rem',
     cursor: 'pointer',
-    boxShadow: '0 20px 45px rgba(247, 201, 72, 0.45)'
+    boxShadow: '0 20px 45px rgba(212, 36, 36, 0.45)'
   },
   heroSecondaryButton: {
     padding: '14px 22px',
     borderRadius: '16px',
     border: '1px solid rgba(248,250,252,0.4)',
-    background: 'rgba(15,23,42,0.35)',
+    background: 'rgba(255,255,255,0.15)',
     color: '#E2E8F0',
     fontWeight: 700,
     cursor: 'pointer'
@@ -567,7 +569,7 @@ const styles = {
   heroAura: {
     position: 'absolute',
     inset: 0,
-    background: 'radial-gradient(circle at 20% 20%, rgba(15,23,42,0.6), transparent 55%), radial-gradient(circle at 80% 10%, rgba(244,201,93,0.35), transparent 50%)',
+    background: 'radial-gradient(circle at 20% 20%, rgba(255,0,0,0.15), transparent 55%), radial-gradient(circle at 80% 10%, rgba(0,255,0,0.15), transparent 50%)',
     pointerEvents: 'none',
     zIndex: 0
   },
@@ -576,7 +578,7 @@ const styles = {
     width: '220px',
     height: '220px',
     borderRadius: '50%',
-    background: 'rgba(244,201,93,0.28)',
+    background: 'rgba(255, 215, 0, 0.2)',
     top: '-60px',
     right: '-40px',
     filter: 'blur(10px)',
@@ -587,7 +589,7 @@ const styles = {
     width: '160px',
     height: '160px',
     borderRadius: '50%',
-    background: 'rgba(15,23,42,0.35)',
+    background: 'rgba(255, 0, 0, 0.15)',
     bottom: '-40px',
     left: '-30px',
     filter: 'blur(12px)',

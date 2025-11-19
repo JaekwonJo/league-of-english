@@ -541,6 +541,26 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
           guestViewedPassagesRef.current.add(passage.passageNumber);
         }
       } else {
+        // 404 Not Found case: Try to auto-generate
+        console.log('Analysis not found, attempting auto-generation...');
+        setFeedbackMessage('분석 데이터가 준비되지 않아 새로 생성하고 있어요... 🤖');
+        
+        // Attempt generation
+        const genSuccess = await handleGenerateVariants(passage.passageNumber, 1);
+        if (genSuccess) {
+           // Retry fetch
+           const retryResponse = await api.analysis.getPassage(selectedDocument.id, passage.passageNumber);
+           if (retryResponse.success) {
+              const normalized = normalizePassage(retryResponse.data || {});
+              updatePassageVariantsState(passage.passageNumber, normalized.variants, normalized.originalPassage);
+              setSelectedPassage(normalized);
+              setActiveVariantIndex(0);
+              navigateToStep(STEPS.ANALYSIS);
+              setFeedbackMessage('새 분석본이 완성됐어요! 🎉');
+              return; 
+           }
+        }
+        
         raiseError('해당 지문의 분석을 불러오지 못했습니다.', response.message || 'success: false');
       }
     } catch (err) {

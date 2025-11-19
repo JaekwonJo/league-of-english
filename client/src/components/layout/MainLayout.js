@@ -211,6 +211,7 @@ const MainLayout = ({ children, currentPath }) => {
                 {sidebarOpen && (
                   <span style={styles.navItemLabel}>
                     {route.name}
+                    {isActive && <span style={{ marginLeft: 'auto', fontSize: '12px' }}>🎄</span>}
                     {isLockedForGuest && <span style={styles.navItemBadge}>체험</span>}
                   </span>
                 )}
@@ -414,8 +415,9 @@ const styles = {
     width: '100%'
   },
   navItemActive: {
-    background: 'var(--sidebar-active-bg)',
-    color: 'var(--sidebar-active-text)'
+    background: 'linear-gradient(90deg, rgba(22, 101, 52, 0.15), rgba(185, 28, 28, 0.1))',
+    color: '#15803d',
+    borderLeft: '3px solid #c41e3a'
   },
   navItemLocked: {
     opacity: 0.75
