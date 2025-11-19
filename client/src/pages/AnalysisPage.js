@@ -565,6 +565,32 @@ const updatePassageVariantsState = (passageNumber, variants, originalPassage) =>
       }
     } catch (err) {
       const message = err?.message || '분석을 불러오는 중 오류가 발생했습니다.';
+      
+      // Handle 404 (Analysis not found) by attempting generation
+      if (message.includes('404') || (err?.response?.status === 404)) {
+        console.log('Analysis not found (404), attempting auto-generation...');
+        setFeedbackMessage('아직 분석본이 없네요! AI가 지금 바로 새로 만들고 있어요... 🤖✨');
+        
+        const genSuccess = await handleGenerateVariants(passage.passageNumber, 1);
+        if (genSuccess) {
+           // Retry fetch after generation
+           try {
+             const retryResponse = await api.analysis.getPassage(selectedDocument.id, passage.passageNumber);
+             if (retryResponse.success) {
+                const normalized = normalizePassage(retryResponse.data || {});
+                updatePassageVariantsState(passage.passageNumber, normalized.variants, normalized.originalPassage);
+                setSelectedPassage(normalized);
+                setActiveVariantIndex(0);
+                navigateToStep(STEPS.ANALYSIS);
+                setFeedbackMessage('짜잔! 새 분석본이 완성됐어요! 🎉');
+                return;
+             }
+           } catch (retryErr) {
+             // If retry fails, fall through to error
+           }
+        }
+      }
+
       if (message.includes('하루 10개의 분석본')) {
         setAnalysisLimitError(message);
       } else {

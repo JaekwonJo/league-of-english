@@ -208,7 +208,7 @@ function buildTopicPrompt({ passage, manualExcerpt, docTitle, variantTag, failur
     '- Provide exactly five English options (sentences or noun phrases) 6-14 words long, no numbering.',
     '- Each distractorTags entry must describe the flaw for that choice (e.g., narrow, broad, detail, counter-claim, role-swap, metaphor-literal, scope error, half-truth).',
     '- Keep tone academic and neutral; avoid numerals, exclamation marks, or rhetorical questions.',
-    '- Explanation must be Korean (minimum two sentences, ≥75 characters) and cite why the correct option captures thesis + scope while naming at least one distractor defect.',
+    '- Explanation must be in friendly, easy Korean (use emojis like 💡/✨) with at least two sentences (≥75 characters). Cite why the correct option fits and name at least one distractor defect.',
     "- sourceLabel must begin with '출처│'.",
     '- Respond with JSON only.'
   ]

@@ -691,7 +691,7 @@ class AIProblemService {
         ? '- Set correctAnswers to the index of the single correct underline and mark its status as "correct"; all other options must be "incorrect".'
         : `- List all ${correctCount} correct underline indices in correctAnswers and mark their status as "correct"; the remaining options must be "incorrect".`,
       '- Provide a concise Korean reason sentence for every option that names the relevant grammar rule.',
-      '- Write the explanation entirely in Korean with at least three sentences covering 지문 요약, 정답 근거, 그리고 두 개 이상의 오답 오류.',
+      '- Write the explanation in friendly Korean (use emojis 💡/✨) with at least three sentences covering 지문 요약, 정답 근거, 그리고 두 개 이상의 오답 오류.',
       '- Ensure every option status aligns with the correctAnswers set.',
       '- Ensure the sourceLabel begins with 출처│ and references the provided document title.'
     ];
@@ -777,7 +777,7 @@ class AIProblemService {
         : `- 변형된 ${incorrectCount}개의 밑줄을 "incorrect"로 표시하고 나머지 ${correctCount}개의 표현은 원문과 동일하게 남겨 주세요.`,
       '- Include correction.replacement + reason for the 비자연스러운 표현이 무엇인지 명확하게 설명합니다.',
       '- Provide optionReasons in Korean (정답 포함) explaining 왜 어색하거나 자연스러운지.',
-      '- Keep the explanation 두 문장 이상 한국어로 작성해 주세요.',
+      '- Keep the explanation 두 문장 이상 친절한 한국어(이모지 💡 포함)로 작성해 주세요.',
       '- Ensure the sourceLabel begins with 출처│ and references the document title or code.'
     ];
 
@@ -1300,7 +1300,7 @@ ${clipText(passage, 1600)}`,
             buildVocabularyAnswerInstruction(variant),
             '- Provide correction.replacement + reason for every 오류 표현을 교정할 수 있도록 기록합니다.',
             '- Supply optionReasons in Korean for at least three options(정답 포함) with 핵심 근거를 명확히 서술하세요.',
-            '- Keep the explanation 최소 세 문장 이상 한국어로 작성(정답 근거 + 두 개 이상 오답의 결함 포함)하고, 수능 정답지 톤을 유지하세요.',
+            '- Keep the explanation 최소 세 문장 이상 친절한 한국어로 작성(이모지 💡, ❌ 사용)하고, 학생에게 설명하듯 쉬운 말투(해요체)를 사용하세요.',
             '- Preserve any footnotes (lines starting with *).',
             '- Respond with raw JSON only (no Markdown fences).'
           ];
@@ -1658,7 +1658,7 @@ ${clipText(passage, 1600)}`,
             "- Options must be academic or neutral English sentences/phrases (6-18 words, no numerals).",
             "- Exactly one option must match the passage's implicit message, polarity, and scope.",
             "- Each distractor must embody a distinct defect from {focus-shift, polarity-flip, scope-shift, fact-error, relation-flip, definition-trivial}.",
-            "- Explanation must be Korean and cite the discourse cues plus at least one distractor defect.",
+            "- Explanation must be in friendly Korean (use emojis 💡/✨) and cite the discourse cues plus at least one distractor defect.",
             "- sourceLabel must start with '출처│'.",
             "- Respond with JSON only (no Markdown fences)."
           ].filter(Boolean).join("\n");

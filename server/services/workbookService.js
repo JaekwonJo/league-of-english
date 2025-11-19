@@ -2,6 +2,7 @@ const crypto = require('crypto');
 
 const database = require('../models/database');
 const analysisService = require('./analysisService');
+const aiProblemService = require('./aiProblemService'); // Import AI service
 const { getUserStats, getUserRank } = require('./studyService');
 const studyService = require('./studyService');
 const { getTierInfo, getNextTier, calculateProgress } = require('../utils/tierUtils');
@@ -288,11 +289,20 @@ class WorkbookService {
       throw new Error('워크북을 만들 분석 데이터를 준비하지 못했습니다.');
     }
 
+    // Generate Step 11 Grammar Problems (Dynamic AI)
+    let grammarProblems = [];
+    try {
+      grammarProblems = await aiProblemService.generateGrammar(document.id, 3, { passageNumbers: [numericPassage] });
+    } catch (e) {
+      console.warn('[workbook] Failed to generate grammar step:', e.message);
+    }
+
     const payload = this._buildWorkbookFromVariant({
       document,
       passageNumber: numericPassage,
       variant,
-      passageText
+      passageText,
+      grammarProblems // Pass to builder
     });
 
     return { payload, variant, passageText };
@@ -395,7 +405,7 @@ class WorkbookService {
     return Array.isArray(parsed) ? parsed.length : 0;
   }
 
-  _buildWorkbookFromVariant({ document, passageNumber, variant, passageText }) {
+  _buildWorkbookFromVariant({ document, passageNumber, variant, passageText, grammarProblems = [] }) {
     const meta = variant?.meta || {};
     const sentences = Array.isArray(variant?.sentenceAnalysis) ? variant.sentenceAnalysis : [];
     const englishTitles = Array.isArray(meta?.englishTitles) ? meta.englishTitles : [];
@@ -423,7 +433,8 @@ class WorkbookService {
       koreanMainIdea,
       authorsClaim,
       deepDive,
-      modernApps
+      modernApps,
+      grammarProblems
     });
 
     return {
@@ -459,7 +470,8 @@ class WorkbookService {
     koreanMainIdea,
     authorsClaim,
     deepDive,
-    modernApps
+    modernApps,
+    grammarProblems = []
   }) {
     const readingCardsRaw = this._buildReadingPracticeCards(sentences, englishTitles, englishSummaryKo);
     const blankKoCardsRaw = this._buildBlankPracticeCards(sentences, vocabularyPool, { hintType: 'korean', maxCards: 8 });
@@ -471,6 +483,7 @@ class WorkbookService {
     const writingPuzzleCardsRaw = this._buildWritingPuzzleCards(sentences, englishSummary, englishSummaryKo, modernApps);
     const quadBlankCardsRaw = this._buildMultiBlankCards(sentences, vocabularyPool, { blanks: 4, maxCards: 3 });
     const titleWritingCardsRaw = this._buildTitleWritingCards(englishTitles, englishSummaryKo || koreanMainIdea || englishSummary);
+    const grammarErrorCardsRaw = this._buildAiGrammarCards(grammarProblems);
 
     const readingCards = this._ensureCards(
       readingCardsRaw,
@@ -519,6 +532,10 @@ class WorkbookService {
       titleWritingCardsRaw,
       '제목 후보 정보가 부족합니다. 요약을 스스로 작성해 본 뒤 제목을 지어 보세요.'
     );
+    const grammarErrorCards = this._ensureCards(
+      grammarErrorCardsRaw,
+      'AI가 어법 문제를 만들지 못했습니다. 잠시 후 다시 시도해 주세요.'
+    );
 
     return [
       this._createStep(1, '해석 연습', '📖', '원문을 한 문장씩 읽고 우리말로 자연스럽게 정리해 보세요.', '각 문장을 소리 내어 읽고, 모르는 표현은 표시해 두세요.', readingCards, [
@@ -560,8 +577,35 @@ class WorkbookService {
       this._createStep(10, '제목 쓰기', '📝', '지문에 어울리는 제목을 직접 지어 보세요.', '한글·영문 제목을 각각 1개 이상 작성해 보세요.', titleWritingCards, [
         '핵심 메시지를 8~12단어 이내로 축약',
         '중복 표현 없이 간결하게'
+      ]),
+      this._createStep(11, '어법 틀린 것 찾기', '🔎', '문법적으로 틀린 부분을 찾아 고쳐보세요.', 'AI가 만든 문제에 도전해보세요!', grammarErrorCards, [
+        '밑줄 친 부분의 문법 규칙 생각하기',
+        '고친 후 문장 전체를 다시 읽어보기'
       ])
     ];
+  }
+
+  _buildAiGrammarCards(problems = []) {
+    if (!Array.isArray(problems) || !problems.length) return [];
+    return problems.map((prob, idx) => {
+      // B4 스타일: 본문에 밑줄 ①~⑤가 있고, 틀린 것을 고르는 형태
+      const questionText = prob.passage || prob.mainText;
+      const answerIndex = Number(prob.correctAnswer) || 0; // 1-based
+      const options = prob.options || [];
+      const answerOption = options[answerIndex - 1] || '';
+      
+      // 보기에서 정답(오류 표현)의 순수한 텍스트 추출 (예: "③ which" -> "which")
+      const wrongText = answerOption.replace(/^[\u2460-\u2469]\s*/, '').replace(/<[^>]+>/g, '').trim();
+      
+      // 해설에서 "수정된 표현"이나 "이유"를 추출하면 좋겠지만, 일단 통으로 보여줌
+      // aiProblemService가 'explanation'에 친절한 해설을 담아줌.
+      
+      return {
+        type: 'grammar-review', // 프론트엔드에서 이 타입을 지원해야 함 (없으면 flashcard로 fallback)
+        front: `[어법 문제 ${idx + 1}]\n다음 글에서 어법상 틀린 부분을 찾으세요.\n\n${questionText}`,
+        back: `정답: ${prob.correctAnswer}번 (${wrongText})\n\n${prob.explanation}`
+      };
+    });
   }
 
   _buildTitleWritingCards(englishTitles = [], summaryKo = '') {

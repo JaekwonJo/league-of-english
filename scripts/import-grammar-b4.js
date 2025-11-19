@@ -5,10 +5,16 @@
  *          "/mnt/c/Users/jaekw/Documents/웹앱/league-of-english/B4어법자료"
  */
 
+require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 const fs = require('fs');
 const path = require('path');
 const pdf = require('pdf-parse');
+const OpenAI = require('openai');
 const database = require('../server/models/database');
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 async function readPdf(filePath) {
   const dataBuffer = fs.readFileSync(filePath);
@@ -27,16 +33,22 @@ function splitQuestions(raw) {
     if (isStart(line)) {
       const numMatch = line.match(/^\s*(\d{1,3})[).]/);
       const number = numMatch ? Number(numMatch[1]) : null;
-      if (cur && cur.lines.length) {
-        groups.push({
-          number: cur.number,
-          text: cur.lines.join('\n')
-        });
+      
+      // 같은 번호가 연속되면(예: '20.' 다음 '20)') 같은 그룹으로 취급
+      if (cur && cur.number === number) {
+        cur.lines.push(line);
+      } else {
+        if (cur && cur.lines.length) {
+          groups.push({
+            number: cur.number,
+            text: cur.lines.join('\n')
+          });
+        }
+        cur = {
+          number,
+          lines: [line]
+        };
       }
-      cur = {
-        number,
-        lines: [line]
-      };
     } else if (cur) {
       cur.lines.push(line);
     }
@@ -74,31 +86,83 @@ function extractAnswerMap(raw) {
 }
 
 function sanitize(text){
-  return String(text||'').replace(/\s+/g,' ').trim();
+  return String(text||'')
+    .replace(/^\s*\d+[).]\s*$/gm, '') // 번호만 있는 라인 제거 (예: "20.")
+    .replace(/\s+/g,' ').trim();
 }
 
-function buildStep11Cards(questionBlocks, answerMap = {}) {
+async function fetchAiExplanation(stem, answerText) {
+  try {
+    const prompt = `
+Role: 친절하고 명랑한 영어 과외 선생님 (이모지 사용 😊)
+Task: 다음 어법 문제의 '틀린 부분'을 설명해주세요.
+Question: "${stem}"
+Answer Info: "${answerText}"
+
+Format (JSON):
+{
+  "corrected": "올바르게 고친 전체 문장",
+  "explanation": "왜 틀렸는지 초등학생도 이해하게 아주 쉽고 친절하게 설명 (1~2문장)",
+  "point": "핵심 문법 포인트 (예: 수 일치, 관계대명사)"
+}
+JSON만 출력하세요.
+`;
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.3,
+      response_format: { type: "json_object" }
+    });
+
+    const content = completion.choices[0].message.content;
+    return JSON.parse(content);
+  } catch (e) {
+    console.warn('AI 해설 생성 실패:', e.message);
+    return null;
+  }
+}
+
+async function buildStep11Cards(questionBlocks, answerMap = {}) {
   const cards = [];
-  questionBlocks.forEach((block, idx) => {
-    const number = block?.number || (idx + 1);
+  console.log(`총 ${questionBlocks.length}개 문항에 대해 AI 해설 생성을 시작합니다... (잠시만 기다려주세요 ☕)`);
+
+  // 순차 처리 (Rate Limit 방지 및 진행상황 표시)
+  for (let i = 0; i < questionBlocks.length; i++) {
+    const block = questionBlocks[i];
+    const number = block?.number || (i + 1);
     const rawText = block?.text || '';
     const answerText = answerMap[number] || '';
+    
     const stem = sanitize(
       String(rawText)
         .replace(/정답[\s\S]*/, '')
         .replace(/\(\s*\d+\s*\)/g, '')
     );
-    const label = `[어법 틀린 것 찾기 ${idx+1}]`;
+
+    let aiData = null;
+    if (answerText) {
+      process.stdout.write(`[${i + 1}/${questionBlocks.length}] 문항 분석 중... 🤖\r`);
+      aiData = await fetchAiExplanation(stem, answerText);
+    }
+
+    const label = `[어법 틀린 것 찾기 ${i+1}]`;
     const front = `${label}\n${stem}`;
-    const backAnswerLine = answerText || '확인 필요';
-    const back = `정답: ${backAnswerLine}\n쉬운 해설: 원문 문장 중 오답인 부분(형태/일치/시제 등)을 근거 문장과 함께 설명해 보세요.`;
+    
+    let back = '';
+    if (aiData) {
+      back = `정답: ${aiData.corrected}\n\n💡 쉬운 해설: ${aiData.explanation}\n🔑 핵심: ${aiData.point}`;
+    } else {
+      back = `정답: ${answerText || '확인 필요'}\n쉬운 해설: (AI 연결 실패 - 원문 참조)`;
+    }
+
     cards.push({
       type: 'grammar-review',
       front,
       back,
-      answer: backAnswerLine
+      answer: aiData ? aiData.corrected : answerText
     });
-  });
+  }
+  console.log('\n모든 문항 분석 완료! 🎉');
   return cards;
 }
 
@@ -118,15 +182,18 @@ async function upsertWorkbookFromPdf(filePath) {
   );
   const documentId = insertDoc.id;
   const passageNumber = 1;
+  
+  // AI 해설 생성 포함 빌드
+  const cards = await buildStep11Cards(questions, answerMap);
+  
   const steps = [];
-  const cards = buildStep11Cards(questions, answerMap);
   steps.push({
     step: 11,
     label: 'STEP 11 - 어법 틀린 것 찾기',
     title: '어법 틀린 것 찾기',
     mood: 'focus',
-    intro: '문장을 읽고 틀린 부분을 찾으세요. 근거 문장을 표시하고 올바른 형태로 고쳐봅시다.',
-    mission: '규칙을 떠올리며 오답 이유를 한 줄로 적어 보세요.',
+    intro: '문장을 읽고 틀린 부분을 찾으세요. AI 선생님이 친절하게 해설해 드립니다! 👨‍🏫',
+    mission: '틀린 이유를 생각하고 정답과 비교해 보세요.',
     cards,
     takeaways: ['근거 문장을 확인', '규칙명/형태를 정확히']
   });
@@ -136,7 +203,7 @@ async function upsertWorkbookFromPdf(filePath) {
   await database.run(
     `INSERT INTO workbook_sets (document_id, passage_number, title, description, cover_emoji, steps_json, meta_json, status, created_by)
      VALUES (?, ?, ?, ?, ?, ?, ?, 'ready', ?)`,
-    [documentId, passageNumber, `Workbook · ${title}`, 'B4 복습자료 자동 등록', '📘', stepsJson, metaJson, 1]
+    [documentId, passageNumber, `Workbook · ${title}`, 'B4 복습자료 (AI 해설 포함)', '📘', stepsJson, metaJson, 1]
   );
   console.log('[OK] 워크북 등록:', title);
 }

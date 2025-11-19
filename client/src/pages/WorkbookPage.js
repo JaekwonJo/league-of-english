@@ -1577,6 +1577,22 @@ const TestWordOrderQuestion = ({ question, value = [], onChange }) => {
   );
 };
 
+const GrammarReviewCard = ({ card, reveal }) => {
+  const frontText = typeof card?.front === 'string' ? card.front : '';
+  const backText = typeof card?.back === 'string' ? card.back : '';
+
+  return (
+    <div style={styles.flashcardCenter}>
+      <div style={styles.flashcardFrontInteractive}>{frontText}</div>
+      {reveal && (
+        <div style={{ ...styles.flashcardBack, marginTop: '16px', borderTop: '1px dashed var(--border-strong)', paddingTop: '16px' }}>
+          {backText}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const TestWordOrderInputQuestion = ({ question, value = '', onChange }) => {
   const [inputValue, setInputValue] = useState(value || '');
 
@@ -2968,6 +2984,9 @@ const WorkbookPage = () => {
     }
     if (currentCard.type === 'sentence-insert') {
       return <SentenceInsertInteractive card={currentCard} reveal={showBack} />;
+    }
+    if (currentCard.type === 'grammar-review') {
+      return <GrammarReviewCard card={currentCard} reveal={showBack} />;
     }
     return currentCard.front;
   };

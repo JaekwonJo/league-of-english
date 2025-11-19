@@ -78,7 +78,7 @@ function buildPrompt({ passage, docTitle, manualExcerpt, variantTag, extraDirect
     "- Each phrase must be a lowercase, 1-4 word verb or noun phrase that reads naturally in the sentence (no leading capital letters or full clauses).",
     "- Avoid reusing the same words that already appear immediately before or after (A) and (B); paraphrase with fresh vocabulary.",
     "- Exactly one option must satisfy the passage's logic and polarity; the other four must contain distinct defects (narrow, broad, detail, counter-claim, metaphor-literal, role-swap, collocation break, definition).",
-    "- Write the explanation in friendly, plain Korean summarising why (A)-(B) is correct and naming the main defect of at least one distractor. 쉬운 단어 사용, 단계별 불릿 허용, 마지막에 격려 이모지 1개까지 허용(예: 😊).",
+    "- Write the explanation in friendly, plain Korean summarising why (A)-(B) is correct. Use emojis (e.g., 💡, ✨) frequently. 말투는 친절한 존댓말(해요체).",
     "- sourceLabel must start with '출처│'.",
     "- Respond with JSON only (no Markdown fences).",
     directives.length ? "" : null,

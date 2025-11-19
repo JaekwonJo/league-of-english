@@ -208,13 +208,12 @@ function normalizeBlankOptions(rawOptions = []) {
 
 function buildBlankPrompt({ passage, manualExcerpt, extraDirectives = [] }) {
   const requirements = [
-    '- Preserve the original passage sentences and replace exactly one expression with "____".',
-    '- Return the full passage verbatim (no sentence deletion or summarising) except for the blanked expression.',
-    '- Output the indices of the blanked expression as `targetSpan: { start, end }` (0-based, end exclusive). Do not modify the passage; the server will replace that slice with "____".',
+    '- Preserve the original passage sentences VERBATIM. Do not add, delete, or reorder any words.',
+    '- Output the indices of the blanked expression as `targetSpan: { start, end }` (0-based, end exclusive). DO NOT return the modified text with "____" yourself; the system will handle it.',
     '- Select a family C-1, C-2, C-3, or C-4. Use the definition-style Korean prompt only for C-2.',
     '- Provide five English answer choices labelled ①-⑤. Each option must be a natural noun phrase of 3-18 words (e.g., "a swift round of tax cuts"), without numerals or Korean text. Do not start with gerunds or infinitives.',
     '- Include the original removed wording in "targetExpression" and specify the strategy used (paraphrasing, compression, generalization, minimal-change).',
-    '- Explain in friendly, plain Korean with at least three sentences: (1) 핵심 메시지 요약, (2) 정답 근거, (3) 두 개 이상 오답 결함. 쉬운 단어로 단계별로 써 주세요(불릿 허용), 마무리에 격려 이모지 1개 정도 허용(예: 😊).',
+    '- Explain in friendly, easy Korean with at least three sentences: (1) 핵심 메시지 요약, (2) 정답 근거, (3) 두 개 이상 오답 결함. Use emojis (e.g., 💡, ✨, ❌) to make it engaging. 말투는 친절한 존댓말(해요체)을 사용하세요.',
     '- Provide `distractorReasons` covering every incorrect option with one-sentence Korean rationales.'
   ];
 
@@ -318,8 +317,8 @@ function normalizeBlankPayload(payload, context = {}) {
     strategy = 'paraphrasing';
   }
 
-  const STRICT_REQUIRE_TARGETSPAN = String(process.env.LOE_STRICT_BLANK || '').trim().toLowerCase() === '1'
-    || String(process.env.LOE_STRICT_BLANK || '').trim().toLowerCase() === 'true';
+  // FORCE STRICT MODE: Always require targetSpan to ensure verbatim original passage usage
+  const STRICT_REQUIRE_TARGETSPAN = true;
 
   // If strict mode is on, targetSpan must be present to guarantee exact blanking on original passage
   if (STRICT_REQUIRE_TARGETSPAN && (!payload.targetSpan

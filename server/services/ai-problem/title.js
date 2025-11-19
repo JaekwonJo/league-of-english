@@ -211,7 +211,7 @@ function buildTitlePrompt({ passage, manualExcerpt, docTitle, variantTag, failur
     '- Provide exactly five English title options, each 6-12 words, no numbering or circled digits.',
     '- Avoid numerals, exclamation marks, or question marks in the titles. Tone must be academic and neutral.',
     '- Each distractorTags entry must describe a distinct flaw (e.g., narrow, broad, detail, counter-claim, scope error, metaphor-literal, role-swap, definition, clickbait).',
-    '- The explanation must be written in Korean (minimum two sentences, ≥70 characters) and mention why the correct option fits as well as at least one distractor defect.',
+    '- The explanation must be written in friendly, easy Korean (use emojis like 💡/✨) with at least two sentences (≥70 characters). Mention why the correct option fits and identify at least one distractor defect.',
     "- sourceLabel must begin with '출처│'.",
     '- Respond with JSON only.'
   ]
