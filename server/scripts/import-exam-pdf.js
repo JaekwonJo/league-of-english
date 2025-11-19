@@ -13,29 +13,55 @@ function cleanText(text) {
   return String(text || '').trim();
 }
 
-function parseQuestions(fullText) {
-  // 1. Separate Questions and Answers
-  // Look for the boundary where answers start. Often characterized by "정 답 및 해 설" or a sequence of "18번 - "
-  // Or simply assume the last part of the file with frequent "number - number" pattern is answers.
-  
-  let answerSectionIndex = fullText.search(/\d+\s*번\s*-\s*[①-⑤1-5]/);
-  if (answerSectionIndex === -1) answerSectionIndex = fullText.length;
+// Helper to fix common mojibake patterns if pdf-parse messed up encoding
+function repairText(text) {
+  if (!text) return '';
+  // Common UTF-8 interpreted as Latin-1 patterns
+  // 'ë' often maps to Korean characters
+  // We can try to reverse it: Latin1 -> Buffer -> UTF8
+  try {
+    // Check if it looks like mojibake (contains lots of ë, ì, etc)
+    if (/[\u00C0-\u00FF]{3,}/.test(text)) {
+        const buffer = Buffer.from(text, 'binary');
+        const decoded = buffer.toString('utf8');
+        // If decoded looks like Korean, return it
+        if (/[가-힣]/.test(decoded)) return decoded;
+    }
+  } catch (e) {}
+  return text;
+}
 
-  const problemText = fullText.slice(0, answerSectionIndex);
-  const answerText = fullText.slice(answerSectionIndex);
+function parseQuestions(fullText) {
+  // 0. Repair Encoding (Try to fix global mojibake first)
+  let cleanedText = repairText(fullText);
+
+  // 1. Remove Noise (Page Headers/Footers)
+  // Remove lines that are just numbers "- 1 -"
+  cleanedText = cleanedText.replace(/^\s*-\s*\d+\s*-\s*$/gm, '');
+  // Remove repeating headers
+  cleanedText = cleanedText.replace(/^\s*2024년도.*?모의고사\s*$/gm, '');
+  cleanedText = cleanedText.replace(/^\s*진진영어\s*$/gm, '');
+  // Remove floating numbers that look like question numbers but are not headers (e.g. "97.")
+  // Be careful not to remove option numbers.
+  // Let's handle that inside the loop.
+
+  // 2. Identify Answer Section
+  let answerSectionIndex = cleanedText.search(/\d+\s*번\s*-\s*[①-⑤1-5]/);
+  if (answerSectionIndex === -1) answerSectionIndex = cleanedText.length;
+
+  const problemText = cleanedText.slice(0, answerSectionIndex);
+  const answerText = cleanedText.slice(answerSectionIndex);
 
   const questions = [];
   
-  // Regex to find question headers: "Question Text... [18]"
-  // We capture the text BEFORE the [18] as the prompt, and the number 18.
-  // Using `gm` multiline flag.
+  // 3. Find Question Headers
+  // Pattern: "Question Text... [18]"
+  // We look for the [Number] at end of line or block
   const questionHeaderRegex = /^(.*?)\[\s*(\d{1,3})\s*\]\s*$/gm;
   
   let match;
-  let lastIndex = 0;
   const headers = [];
   
-  // Pass 1: Find all question headers and their positions
   while ((match = questionHeaderRegex.exec(problemText)) !== null) {
     headers.push({
       fullMatch: match[0],
@@ -46,7 +72,7 @@ function parseQuestions(fullText) {
     });
   }
 
-  // Pass 2: Extract content between headers
+  // 4. Extract Content per Question
   for (let i = 0; i < headers.length; i++) {
     const current = headers[i];
     const next = headers[i+1];
@@ -56,54 +82,56 @@ function parseQuestions(fullText) {
     
     let rawContent = problemText.slice(contentStart, contentEnd).trim();
     
-    // Check for garbage at the end (like page numbers "- 1 -")
-    // Remove lines that look like page footers/headers
-    rawContent = rawContent.replace(/^\s*-\s*\d+\s*-\s*$/gm, '');
-    rawContent = rawContent.replace(/^\s*2024년도.*?모의고사\s*$/gm, '');
-    rawContent = rawContent.replace(/^\s*진진영어\s*$/gm, '');
-
-    // Split Passage vs Options
-    // Look for the first occurrence of ① (or (1) if used)
-    let passage = '';
+    // Extract Options (① or (1))
+    // Find the FIRST occurrence of an option marker
+    // Be careful: text might contain numbers like "1mm", "2027" etc.
+    // We look for ①, ②... or (1), (2)... followed by text
+    
     const options = [];
+    let passage = rawContent;
     
-    const optionStartMatch = rawContent.match(/[①\(1\)]/);
+    // Regex for option markers
+    const markerRegex = /([①②③④⑤]|\(\s*[1-5]\s*\))/g;
+    const firstMarker = rawContent.search(markerRegex);
     
-    if (optionStartMatch) {
-        passage = rawContent.slice(0, optionStartMatch.index).trim();
-        const optionsBlock = rawContent.slice(optionStartMatch.index);
+    if (firstMarker !== -1) {
+        passage = rawContent.slice(0, firstMarker).trim();
+        const optionsBlock = rawContent.slice(firstMarker);
         
-        // Regex to split options: ① text ② text ...
-        // We split by the markers, capturing the marker to know where it starts
-        const parts = optionsBlock.split(/([①②③④⑤\(1\)\(2\)\(3\)\(4\)\(5\)])/);
-        
-        // parts[0] is empty (before first marker)
-        // parts[1] = ①, parts[2] = text, parts[3] = ②, parts[4] = text ...
+        // Split by markers
+        const parts = optionsBlock.split(markerRegex);
+        // parts[0] is empty or garbage before first marker
         for (let k = 1; k < parts.length; k += 2) {
             const marker = parts[k];
             const text = (parts[k+1] || '').trim();
             if (text) {
-                // Normalise marker to ①
-                const symbolMap = { '(1)': '①', '(2)': '②', '(3)': '③', '(4)': '④', '(5)': '⑤' };
-                const displayMarker = symbolMap[marker] || marker;
+                const symbolMap = { 
+                    '(1)': '①', '(2)': '②', '(3)': '③', '(4)': '④', '(5)': '⑤',
+                    '1': '①', '2': '②', '3': '③', '4': '④', '5': '⑤' 
+                };
+                // Clean marker (remove spaces inside parens)
+                const cleanMarker = marker.replace(/\s+/g, '');
+                const displayMarker = symbolMap[cleanMarker] || cleanMarker;
                 options.push(`${displayMarker} ${text}`);
             }
         }
     } else {
-        // No options found? Maybe it's not a multiple choice or parse failed.
-        // Treat whole content as passage.
-        passage = rawContent;
+       // If no standard markers, maybe it's a unique format or parse failed.
+       // Keep passage as is.
     }
+
+    // Final cleanup of passage (remove trailing numbers like "97.")
+    passage = passage.replace(/\n\d+\.\s*$/g, '');
 
     questions.push({
         number: current.number,
-        type: current.prompt, // e.g. "다음 빈칸에 들어갈..."
+        type: current.prompt,
         passage: passage,
         options: options
     });
   }
 
-  return { questions, answerText };
+  return { questions, answerText: repairText(answerText) };
 }
 
 function parseAnswers(text) {
