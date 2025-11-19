@@ -129,7 +129,7 @@ const AdminUsersPanel = () => {
   const [status, setStatus] = useState('all');
   const [users, setUsers] = useState([]);
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(50);
+  const [limit, setLimit] = useState(10);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
