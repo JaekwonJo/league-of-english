@@ -206,6 +206,14 @@ const registerDefaultHandlers = () => {
     displayType: 'choice',
     showFullText: true
   }));
+
+  // 기출문제 (Exam)
+  registry.registerHandler('exam', (data) => ({
+    ...data,
+    question: stripLeadingQ(data.question || data.question_text),
+    displayType: 'choice',
+    showFullText: true
+  }));
 };
 
 // 기본 검증기 등록

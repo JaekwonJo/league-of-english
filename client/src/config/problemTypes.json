@@ -153,6 +153,21 @@
       "icon": "💡",
       "color": "var(--accent-primary-strong)",
       "instruction": "주요 단서를 바탕으로 글쓴이가 암묵적으로 전달하는 메시지를 추론하세요."
+    },
+    "exam": {
+      "id": "exam",
+      "name": "기출문제 풀이",
+      "description": "등록된 기출문제 100제 풀이 (New!)",
+      "points": 3,
+      "difficulty": {
+        "basic": 2,
+        "medium": 3,
+        "advanced": 3
+      },
+      "aiGenerated": false,
+      "icon": "🎓",
+      "color": "#ec4899",
+      "instruction": "다음 문제를 읽고 알맞은 정답을 고르세요."
     }
   },
   "defaultCounts": {

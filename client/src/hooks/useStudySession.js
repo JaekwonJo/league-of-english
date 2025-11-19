@@ -402,6 +402,39 @@ const useStudySession = (user, onUserUpdate = () => {}) => {
       setLoadingProgress(totalCount ? 5 : 3);
       setLoadingStageIndex(0);
 
+      // Handle Exam Problems (Pre-generated)
+      if (studyConfig.types && studyConfig.types.exam > 0) {
+        const response = await apiService.get(`/study/exam-problems?documentId=${studyConfig.documentId}`);
+        const examProblems = response.problems || [];
+        
+        if (!examProblems.length) {
+          throw new Error("아직 등록된 기출문제가 없어요. 관리자에게 문의해주세요.");
+        }
+
+        // Map exam problems to unified format
+        const processed = examProblems.map(p => ({
+          id: p.id,
+          type: 'exam', // treat as generic exam type or map to specific types if available
+          question: p.question_text || p.question_type || '다음 문제를 읽고 정답을 고르세요.',
+          passage: p.passage,
+          options: JSON.parse(p.options_json || '[]'),
+          answer: p.answer,
+          explanation: p.explanation,
+          sourceLabel: `기출 ${p.exam_title} #${p.question_number}`,
+          difficulty: 'real-exam'
+        })).map(p => problemRegistry.executeHandler(p.type, p) || p);
+
+        setLoadingProgress(100);
+        setTimeout(() => {
+          setLoadingContext(null);
+          setLoadingStageIndex(0);
+        }, 600);
+
+        beginSession(processed);
+        logger.info(`Loaded ${processed.length} exam problems`);
+        return;
+      }
+
       const payload = {
         documentId: studyConfig.documentId,
         counts: studyConfig.types,
