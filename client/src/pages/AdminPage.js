@@ -197,7 +197,7 @@ const AdminPage = () => {
     }
   };
 
-  const handleExamDelete = async (doc) => {
+  const handleExamProblemsDelete = async (doc) => {
     if (!window.confirm(`"${doc.title}"에 등록된 기출문제를 모두 삭제할까요? (복구 불가)`)) return;
     
     try {
@@ -820,7 +820,7 @@ const AdminPage = () => {
         onPassageAnalyze={handlePassageAnalyze}
         onShare={handleDocumentShare}
         onExamUpload={handleOpenExamUpload}
-        onExamDelete={handleExamDelete}
+        onExamDelete={handleExamProblemsDelete}
         isMobile={isMobile}
       />
 
