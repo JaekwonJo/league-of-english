@@ -1681,6 +1681,9 @@ const WorkbookPage = () => {
   const [generatorError, setGeneratorError] = useState('');
   const [activeDocumentId, setActiveDocumentId] = useState('');
   const [deletingIds, setDeletingIds] = useState(() => new Set());
+  
+  // Passage Preview Modal State
+  const [previewPassageText, setPreviewPassageText] = useState(null);
 
   const [isTestMode, setIsTestMode] = useState(false);
   const [testLoading, setTestLoading] = useState(false);
@@ -2723,7 +2726,30 @@ const WorkbookPage = () => {
                           onClick={() => setSelectedPassage(String(item.passageNumber))}
                         >
                           <div className="shimmer" aria-hidden />
-                          <strong>지문 {item.passageNumber}</strong>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <strong>지문 {item.passageNumber}</strong>
+                            <button
+                              type="button"
+                              style={{
+                                padding: '4px 10px',
+                                borderRadius: '99px',
+                                border: '1px solid rgba(255,255,255,0.2)',
+                                background: 'rgba(255,255,255,0.1)',
+                                color: '#fff',
+                                fontSize: '12px',
+                                cursor: 'pointer'
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setPreviewPassageText({
+                                  title: `지문 ${item.passageNumber}`,
+                                  text: item.originalPassage || item.text || item.excerpt || '본문 내용을 불러올 수 없습니다.'
+                                });
+                              }}
+                            >
+                              🔍 미리보기
+                            </button>
+                          </div>
                           <div style={styles.generatorPassageExcerpt}>
                             {item.excerpt || '지문 미리보기를 준비했어요.'}
                           </div>
@@ -3167,7 +3193,57 @@ const WorkbookPage = () => {
           </button>
         </div>
       </div>
-    </div>
+      {previewPassageText && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: "rgba(0,0,0,0.7)",
+          backdropFilter: "blur(4px)",
+          zIndex: 9999,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "20px"
+        }} onClick={() => setPreviewPassageText(null)}>
+          <div style={{
+            background: "var(--surface-card)",
+            padding: "24px",
+            borderRadius: "20px",
+            maxWidth: "600px",
+            width: "100%",
+            maxHeight: "80vh",
+            overflowY: "auto",
+            boxShadow: "0 20px 50px rgba(0,0,0,0.5)",
+            border: "1px solid var(--surface-border)",
+            position: "relative"
+          }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ marginTop: 0, color: "var(--text-primary)" }}>{previewPassageText.title}</h3>
+            <div style={{ 
+              whiteSpace: "pre-wrap", 
+              lineHeight: 1.6, 
+              color: "var(--text-primary)",
+              fontSize: "16px",
+              background: "var(--surface-soft)",
+              padding: "16px",
+              borderRadius: "12px",
+              marginBottom: "20px"
+            }}>
+              {previewPassageText.text}
+            </div>
+            <button 
+              type="button" 
+              style={styles.primaryButton}
+              onClick={() => setPreviewPassageText(null)}
+            >
+              닫기
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
