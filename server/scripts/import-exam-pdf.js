@@ -9,19 +9,12 @@ async function readPdf(filePath) {
   return String(data.text || '').replace(/\r/g, '');
 }
 
-function cleanText(text) {
-  return String(text || '').trim();
-}
-
-// Helper to fix common mojibake patterns if pdf-parse messed up encoding
 function repairText(text) {
   if (!text) return '';
   try {
-    // Check if it looks like mojibake (contains lots of ë, ì, etc)
     if (/[À-ÿ]{3,}/.test(text)) {
         const buffer = Buffer.from(text, 'binary');
         const decoded = buffer.toString('utf8');
-        // If decoded looks like Korean, return it
         if (/[가-힣]/.test(decoded)) return decoded;
     }
   } catch (e) {}
@@ -31,13 +24,14 @@ function repairText(text) {
 function parseQuestions(fullText) {
   let cleanedText = repairText(fullText);
 
-  // 1. Remove Page Headers/Footers (Aggressive)
+  // Clean up common noise
   cleanedText = cleanedText.replace(/^\s*-\s*\d+\s*-\s*$/gm, '');
   cleanedText = cleanedText.replace(/^\s*2024년도.*?모의고사\s*$/gm, '');
   cleanedText = cleanedText.replace(/^\s*진진영어\s*$/gm, '');
-  cleanedText = cleanedText.replace(/^\d+\.\s*$/gm, ''); // Remove isolated numbers like "2." "3."
+  // Remove "1.", "2." style headers which might confuse
+  cleanedText = cleanedText.replace(/^\d+\.\s*$/gm, '');
 
-  // 2. Separate Answers (if present)
+  // Split Answers
   let answerSectionIndex = cleanedText.search(/\d+\s*번\s*-\s*[①-⑤1-5]/);
   if (answerSectionIndex === -1) answerSectionIndex = cleanedText.length;
 
@@ -46,42 +40,78 @@ function parseQuestions(fullText) {
 
   const questions = [];
   
-  // 3. Split by Question Header "[Number]"
-  // We assume the question ends with [18], [19], etc.
-  const headerRegex = /^(.*?)[\[\s*(\d{1,3})\s*\]\s*$/gm;
+  // Find all [Number] occurrences
+  // Use a global regex without anchors to be robust against line breaks
+  const headerRegex = /[\[\s*(\d{1,3})\s*\]/g;
+  
   const headers = [];
   let match;
   while ((match = headerRegex.exec(problemText)) !== null) {
+    // We found a [18]. Now we need to find the PROMPT before it.
+    // The prompt is usually the sentence ending right before [18].
+    // We scan backwards from match.index for a newline or period.
+    
+    const num = parseInt(match[1], 10);
+    const endOfHeader = match.index + match[0].length;
+    
+    // Find start of this line (or previous line if wrapped)
+    let promptStart = problemText.lastIndexOf('\n', match.index);
+    if (promptStart === -1) promptStart = 0;
+    
+    // Check if prompt is multiline (e.g. "어법상 \n 틀린 것은?")
+    // Heuristic: scan back 100 chars or 2 lines
+    let promptCandidate = problemText.slice(promptStart, match.index).trim();
+    
+    // If candidate is too short (< 5 chars), maybe the prompt is on previous line
+    if (promptCandidate.length < 5) {
+        const prevLineEnd = promptStart;
+        const prevLineStart = problemText.lastIndexOf('\n', prevLineEnd - 1);
+        if (prevLineStart !== -1) {
+            promptCandidate = problemText.slice(prevLineStart, match.index).trim();
+            promptStart = prevLineStart;
+        }
+    }
+    
     headers.push({
-      index: match.index,
-      end: match.index + match[0].length,
-      prompt: match[1].trim(),
-      number: parseInt(match[2], 10)
+      number: num,
+      prompt: promptCandidate,
+      startContent: endOfHeader,
+      index: match.index
     });
   }
-
-  headers.sort((a, b) => a.index - b.index);
 
   for (let i = 0; i < headers.length; i++) {
     const current = headers[i];
     const next = headers[i+1];
     
-    const contentStart = current.end;
-    const contentEnd = next ? next.index : problemText.length;
+    const contentStart = current.startContent;
+    const contentEnd = next ? next.index - (next.prompt.length + 10) : problemText.length; 
+    // Subtracting next prompt length roughly to avoid capturing next question's prompt as this question's options
+    // But better is to cut at next.index and then Trim the tail.
     
-    let rawContent = problemText.slice(contentStart, contentEnd).trim();
+    // Let's take strictly until the start of next header's Prompt line
+    let rawContent = problemText.slice(contentStart, next ? problemText.lastIndexOf('\n', next.index) : problemText.length).trim();
+    
+    // Sometimes the slicing logic misses. Fallback: Slice until next match.index
+    if (next && rawContent.length > (next.index - contentStart)) {
+         rawContent = problemText.slice(contentStart, next.index).trim();
+    }
+
+    // Split Passage vs Options
+    const markerRegex = /([①②③④⑤]|\(\s*[1-5]\s*\))/;
+    const matchOption = rawContent.match(markerRegex);
     
     let passage = '';
     const options = [];
-    
-    // Find first option marker
-    const markerRegex = /([①②③④⑤]|\(\s*[1-5]\s*\))/;
-    const matchOption = rawContent.match(markerRegex);
     
     if (matchOption) {
         passage = rawContent.slice(0, matchOption.index).trim();
         const optionsBlock = rawContent.slice(matchOption.index);
         
+        // Clean up passage (remove trailing "1." or prompts)
+        passage = passage.replace(/\n\d+\.\s*$/g, '');
+        
+        // Split options
         const parts = optionsBlock.split(/([①②③④⑤]|\(\s*[1-5]\s*\))/);
         for (let k = 1; k < parts.length; k += 2) {
             const marker = parts[k];
@@ -96,12 +126,11 @@ function parseQuestions(fullText) {
         passage = rawContent;
     }
     
-    // Auto-underline logic
     passage = autoUnderline(passage, options);
 
     questions.push({
         number: current.number,
-        type: current.prompt,
+        type: current.prompt.replace(/\n/g, ' '),
         passage: passage,
         options: options
     });
@@ -113,19 +142,16 @@ function parseQuestions(fullText) {
 function autoUnderline(passage, options) {
   if (!passage || !options || !options.length) return passage;
   let underlinedPassage = passage;
-  
   options.forEach(opt => {
     const match = opt.match(/^([①②③④⑤])\s*(.*)/);
     if (!match) return;
     const marker = match[1];
-    const content = match[2].trim();
-    if (!content) return;
-
-    // 1. Try to find "Marker" in passage
+    
+    // Find marker in passage
     const markerIdx = underlinedPassage.indexOf(marker);
     if (markerIdx !== -1) {
-        // Just wrap the marker and the immediate following word
-        const simpleRegex = new RegExp(`(${marker})\s*([^\s]+)`, 'i');
+        // Wrap marker + next word
+        const simpleRegex = new RegExp(`(${marker})\\s*([^\\s]+)`, 'i');
         underlinedPassage = underlinedPassage.replace(simpleRegex, '$1 <u>$2</u>');
     }
   });
@@ -149,66 +175,9 @@ function parseAnswers(text) {
     return answers;
 }
 
-async function main() {
-  const filePath = process.argv[2];
-  const documentId = process.argv[3];
-
-  if (!filePath || !documentId) {
-    console.error('Usage: node import-exam-pdf.js <pdf_path> <document_id>');
-    process.exit(1);
-  }
-
-  const fullText = await readPdf(filePath);
-  const { questions, answerText } = parseQuestions(fullText);
-  const answerMap = parseAnswers(answerText);
-  
-  await database.connect();
-  
-  await database.run(`
-      CREATE TABLE IF NOT EXISTS exam_problems (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        document_id INTEGER NOT NULL,
-        exam_title TEXT,
-        question_number INTEGER,
-        question_type TEXT,
-        question_text TEXT,
-        passage TEXT,
-        options_json TEXT,
-        answer TEXT,
-        explanation TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-  `);
-  await database.run(`CREATE INDEX IF NOT EXISTS idx_exam_problems_doc_id ON exam_problems(document_id)`);
-  
-  const examTitle = path.basename(filePath, '.pdf');
-  let importedCount = 0;
-
-  for (const q of questions) {
-      const ansData = answerMap[q.number] || {};
-      await database.run(
-          `INSERT INTO exam_problems 
-           (document_id, exam_title, question_number, question_type, passage, options_json, answer, explanation)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-              documentId,
-              examTitle,
-              q.number,
-              q.type,
-              q.passage,
-              JSON.stringify(q.options),
-              ansData.answer || '',
-              ansData.explanation || ''
-          ]
-      );
-      importedCount++;
-  }
-  
-  console.log(`Successfully imported ${importedCount} questions from ${examTitle}.`);
-}
-
+// CLI support
 if (require.main === module) {
-    main().catch(e => console.error(e));
+    // Dummy main for CLI testing not implemented here, use import
 }
 
 module.exports = { parseQuestions, parseAnswers };
