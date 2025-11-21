@@ -75,7 +75,8 @@ const BLANK_JSON_BLUEPRINT = `{
 
 function shuffleIndices(size) {
   const indices = Array.from({ length: size }, (_, i) => i);
-  for (let i = size - 1; i > 0; i -= 1) {
+  // Fisher-Yates Shuffle
+  for (let i = size - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [indices[i], indices[j]] = [indices[j], indices[i]];
   }
@@ -336,9 +337,11 @@ function normalizeBlankPayload(payload, context = {}) {
   const finalAnswerSymbol = CIRCLED_DIGITS[newAnswerNum - 1];
   let finalExplanation = String(payload.explanation || '').trim();
   
-  // Replace "정답은 O입니다" patterns
+  // Replace "정답은 O입니다" patterns to match the new answer
+  // Regex covers: "정답은 ③입니다", "정답은 3번입니다", "따라서 ③번이"
   finalExplanation = finalExplanation.replace(/정답은\s*[①②③④⑤\d]+\s*(번?)\s*입니다/g, `정답은 ${finalAnswerSymbol}$1입니다`);
   finalExplanation = finalExplanation.replace(/따라서\s*[①②③④⑤\d]+\s*(번?)\s*이/g, `따라서 ${finalAnswerSymbol}$1이`);
+  finalExplanation = finalExplanation.replace(/답은\s*[①②③④⑤\d]+\s*(번?)\s*입니다/g, `답은 ${finalAnswerSymbol}$1입니다`);
 
   const explanation = finalExplanation;
   if (!explanation || !containsHangul(explanation)) {

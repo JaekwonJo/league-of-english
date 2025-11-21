@@ -87,7 +87,7 @@ export const studyModeStyles = {
     borderRadius: '50%',
     border: 'none',
     background: 'var(--scroll-top-bg)',
-    color: 'var(--scroll-top-text)',
+    color: '#ffffff',
     fontSize: '22px',
     fontWeight: 700,
     cursor: 'pointer',
