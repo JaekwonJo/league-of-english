@@ -42,7 +42,7 @@ const BLANK_OPTION_MAX_WORDS = 18;
 const MIN_BLANK_TEXT_LENGTH = 150;
 const MIN_BLANK_SENTENCE_COUNT = 2;
 const MIN_BLANK_OPTION_LENGTH = 3;
-const BLANK_PLACEHOLDER_REGEX = /_{2,}|\[\s*\]|\(\s*\)|\bblank\b/i;
+const BLANK_PLACEHOLDER_REGEX = /_{2,}|\(\s*\)|\[\s*\]|\bblank\b/i;
 
 const BLANK_JSON_BLUEPRINT = `{ 
   "questionFamily": "C-1",
@@ -271,31 +271,28 @@ function normalizeBlankPayload(payload, context = {}) {
   const normalizedOriginal = normalizeForPassage(originalPassageRaw);
 
   // 2. Extract Target
-  // The AI must give us the EXACT string it wants to remove.
   let target = String(payload.targetExpression || payload.target || '').trim();
   
-  // If AI failed to give a target, try to guess from the correct answer option
   const optionsInfo = normalizeBlankOptions(payload.options || []);
-  const ansNum = Number(payload.correctAnswer || payload.answer) || 1;
-  const ansIdx = ansNum - 1;
+  let answerNumber = Number(payload.correctAnswer || payload.answer);
+  if (!Number.isInteger(answerNumber) || answerNumber < 1 || answerNumber > CIRCLED_DIGITS.length) {
+    answerNumber = 1; 
+  }
+  let answerIndex = answerNumber - 1;
   
   if (!target) {
-    // Fallback: assume the correct option IS the target
-    target = optionsInfo.rawTexts[ansIdx] || optionsInfo.texts[ansIdx] || '';
+    target = optionsInfo.rawTexts[answerIndex] || optionsInfo.texts[answerIndex] || '';
   }
 
   // 3. Locate Target in Original Passage (Strict Search)
   if (!target) throw new Error('No target expression identified.');
   
-  // Escape regex and allow flexible whitespace
   const esc = escapeRegex(target).replace(/\s+/g, '\\s+');
-  const pattern = new RegExp(esc, 'i'); // Case-insensitive
+  const pattern = new RegExp(esc, 'i');
   const match = normalizedOriginal.match(pattern);
 
   if (!match) {
-    // AI likely paraphrased the target. This is a failure in "Strict Mode".
-    // We will try ONE fuzzy fallback: look for the answer option text in the passage.
-    const altTarget = optionsInfo.rawTexts[ansIdx];
+    const altTarget = optionsInfo.rawTexts[answerIndex];
     const altEsc = escapeRegex(altTarget).replace(/\s+/g, '\\s+');
     const altMatch = normalizedOriginal.match(new RegExp(altEsc, 'i'));
     
@@ -305,40 +302,33 @@ function normalizeBlankPayload(payload, context = {}) {
       throw new Error(`Target "${target}" not found verbatim in original passage. AI hallucinations prevented.`);
     }
   } else {
-    target = match[0]; // Use the exact casing from the passage
+    target = match[0];
   }
 
   // 4. Construct the Problem using ORIGINAL passage
-  // We do NOT use payload.text from AI. We build it ourselves.
   const prefix = normalizedOriginal.slice(0, match ? match.index : normalizedOriginal.indexOf(target));
   const suffix = normalizedOriginal.slice((match ? match.index : normalizedOriginal.indexOf(target)) + target.length);
   const finalPassage = `${prefix}____${suffix}`;
 
-  // ... (Rest of logic: shuffle, metadata, etc.) ...
-  
   // Recalculate options shuffle
   const shuffleOrder = shuffleIndices(CIRCLED_DIGITS.length);
   const originalToNewIndex = Array.from({ length: CIRCLED_DIGITS.length }, (_, i) => i);
-  // (Shuffle implementation omitted for brevity - assume standard shuffle logic) 
-  
-  // Apply shuffle to options
+  shuffleOrder.forEach((fromIdx, newIdx) => {
+    originalToNewIndex[fromIdx] = newIdx;
+  });
   const reorderedTexts = shuffleOrder.map(i => optionsInfo.texts[i]);
   const formattedOptions = shuffleOrder.map((oldIdx, newIdx) => `${CIRCLED_DIGITS[newIdx]} ${optionsInfo.texts[oldIdx]}`);
-  const newAnswerNum = shuffleOrder.indexOf(ansIdx) + 1;
+  const newAnswerNum = shuffleOrder.indexOf(answerIndex) + 1;
 
-  // Final integrity check (optional, but good)
   // Ensure normalizedText actually contains "____"
   if (!BLANK_PLACEHOLDER_REGEX.test(finalPassage)) {
-     // Fallback: force insert if something went weird with regex replacement
-     // But above logic guarantees it.
+     // Fallback logic if needed
   }
 
   // --- Explanation Fix Logic ---
   const finalAnswerSymbol = CIRCLED_DIGITS[newAnswerNum - 1];
   let finalExplanation = String(payload.explanation || '').trim();
   
-  // Replace "정답은 O입니다" patterns to match the new answer
-  // Regex covers: "정답은 ③입니다", "정답은 3번입니다", "따라서 ③번이"
   finalExplanation = finalExplanation.replace(/정답은\s*[①②③④⑤\d]+\s*(번?)\s*입니다/g, `정답은 ${finalAnswerSymbol}$1입니다`);
   finalExplanation = finalExplanation.replace(/따라서\s*[①②③④⑤\d]+\s*(번?)\s*이/g, `따라서 ${finalAnswerSymbol}$1이`);
   finalExplanation = finalExplanation.replace(/답은\s*[①②③④⑤\d]+\s*(번?)\s*입니다/g, `답은 ${finalAnswerSymbol}$1입니다`);
@@ -348,7 +338,6 @@ function normalizeBlankPayload(payload, context = {}) {
     throw new Error('blank explanation must be Korean');
   }
   
-  // ... (Rest of logic: sourceLabel, distractorReasons, metadata) ...
   const rawSourceLabel = payload.sourceLabel || payload.source || (payload.notes && payload.notes.sourceLabel);
   const sourceLabel = ensureSourceLabel(rawSourceLabel, {
     docTitle: context.docTitle,
@@ -402,8 +391,8 @@ function normalizeBlankPayload(payload, context = {}) {
     questionFamily: family,
     strategy,
     targetExpression,
-    text: finalPassage,       // STRICTLY derived from original
-    passage: finalPassage,    // STRICTLY derived from original
+    text: finalPassage,
+    passage: finalPassage,
     originalPassage: normalizedOriginal,
     targetExpression: target,
     options: formattedOptions,
