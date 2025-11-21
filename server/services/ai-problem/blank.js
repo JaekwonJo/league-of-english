@@ -211,7 +211,7 @@ function buildBlankPrompt({ passage, manualExcerpt, extraDirectives = [] }) {
     '- DO NOT rewrite or summarize the passage. DO NOT return the "text" or "passage" field in JSON.',
     '- Identify ONE key expression to blank out. It MUST be a contiguous span of text found VERBATIM in the passage.',
     '- Return `targetExpression`: The exact string to be removed.',
-    '- Provide five options (①-⑤). The correct answer (e.g., ③) must be a paraphrase or the exact target.',
+    '- Provide five options (①-⑤). The correct answer (e.g., ③) MUST be a paraphrase or synonym of the target expression, NOT the exact same word.',
     '- Explain in friendly, easy Korean (use emojis 💡, ❌) why the answer fits and distractors fail.'
   ];
 
