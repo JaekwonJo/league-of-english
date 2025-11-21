@@ -4,18 +4,28 @@ import { api } from '../services/api.service';
 import tierConfig from '../config/tierConfig.json';
 import CommonHero from '../components/common/CommonHero';
 
-// 🎄 3D Christmas Tree Component
+// 🎄 3D Christmas Tree Component (Enhanced)
 const ChristmasTree3D = () => (
-  <div className="christmas-tree-3d" aria-hidden="true">
-    <div className="tree-star">⭐</div>
-    <div className="tree-layer"></div>
-    <div className="tree-layer"></div>
-    <div className="tree-layer"></div>
-    <div className="tree-layer"></div>
+  <div className="christmas-tree-wrapper" aria-hidden="true" style={{
+    position: 'absolute',
+    right: '-50px',
+    bottom: '-40px',
+    transform: 'scale(1.5)', // Make it bigger!
+    opacity: 0.9,
+    pointerEvents: 'none',
+    zIndex: 0
+  }}>
+    <div className="christmas-tree-3d">
+      <div className="tree-star">⭐</div>
+      <div className="tree-layer"></div>
+      <div className="tree-layer"></div>
+      <div className="tree-layer"></div>
+      <div className="tree-layer"></div>
+    </div>
   </div>
 );
 
-// ✨ Gemini Style Glass Card
+// ✨ Gemini Style Glass Card (Dark & Gold Theme)
 const GeminiCard = ({ icon, title, subtitle, onClick, color }) => {
   return (
     <button
@@ -29,41 +39,54 @@ const GeminiCard = ({ icon, title, subtitle, onClick, color }) => {
         justifyContent: 'center',
         padding: '24px',
         borderRadius: '24px',
-        border: '1px solid rgba(255, 255, 255, 0.6)',
-        background: 'linear-gradient(145deg, rgba(255,255,255,0.8) 0%, rgba(240,249,255,0.6) 100%)',
-        boxShadow: '0 10px 30px rgba(0,0,0,0.05), inset 0 0 20px rgba(255,255,255,0.8)',
+        // Dark Glassmorphism
+        background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.85) 0%, rgba(15, 23, 42, 0.95) 100%)',
+        border: '1px solid rgba(255, 215, 0, 0.2)', // Subtle Gold Border
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
         backdropFilter: 'blur(12px)',
         cursor: 'pointer',
         textAlign: 'left',
         transition: 'all 0.3s ease',
         overflow: 'hidden',
-        minHeight: '160px'
+        minHeight: '160px',
+        color: '#fff'
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = 'rgba(255, 215, 0, 0.6)'; // Bright Gold on Hover
+        e.currentTarget.style.transform = 'translateY(-5px)';
+        e.currentTarget.style.boxShadow = `0 15px 40px ${color}40`;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = 'rgba(255, 215, 0, 0.2)';
+        e.currentTarget.style.transform = 'translateY(0)';
+        e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.3)';
       }}
     >
       <div
         style={{
-          fontSize: '3rem',
+          fontSize: '3.2rem',
           marginBottom: '16px',
-          filter: `drop-shadow(0 8px 16px ${color}40)`
+          filter: `drop-shadow(0 0 15px ${color}80)`, // Neon Glow
+          transition: 'transform 0.3s ease'
         }}
       >
         {icon}
       </div>
-      <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '4px' }}>
+      <div style={{ fontSize: '1.35rem', fontWeight: 800, color: '#F8FAFC', marginBottom: '6px', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
         {title}
       </div>
-      <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', opacity: 0.8 }}>
+      <div style={{ fontSize: '0.95rem', color: '#CBD5E1', opacity: 0.9, fontWeight: 500 }}>
         {subtitle}
       </div>
-      {/* Glow effect */}
+      {/* Background Gradient Effect */}
       <div
         style={{
           position: 'absolute',
-          top: '-50%',
-          left: '-50%',
-          width: '200%',
-          height: '200%',
-          background: `radial-gradient(circle at 50% 50%, ${color}15, transparent 60%)`,
+          top: 0,
+          right: 0,
+          width: '100px',
+          height: '100px',
+          background: `radial-gradient(circle at top right, ${color}30, transparent 70%)`,
           pointerEvents: 'none',
           zIndex: 0
         }}
