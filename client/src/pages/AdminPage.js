@@ -145,11 +145,12 @@ const AdminPage = () => {
   const [examUploadModal, setExamUploadModal] = useState({
     open: false,
     document: null,
-    file: null,
+    files: [], // Changed from single file to array
     loading: false,
-    mode: 'file', // 'file' | 'text'
+    mode: 'file',
     textInput: '',
-    examTitle: ''
+    examTitle: '',
+    progress: '' // To show "Processing 1/10..."
   });
 
   const pushToast = useCallback((message, tone = 'info') => {
@@ -166,21 +167,22 @@ const AdminPage = () => {
     setExamUploadModal({
       open: true,
       document: doc,
-      file: null,
+      files: [],
       loading: false,
       mode: 'file',
       textInput: '',
-      examTitle: ''
+      examTitle: '',
+      progress: ''
     });
   };
 
   const handleExamFileChange = (e) => {
-    const file = e.target.files[0];
-    setExamUploadModal(prev => ({ ...prev, file }));
+    const files = Array.from(e.target.files); // Convert FileList to Array
+    setExamUploadModal(prev => ({ ...prev, files }));
   };
 
   const handleExamUploadSubmit = async () => {
-    if (examUploadModal.mode === 'file' && !examUploadModal.file) {
+    if (examUploadModal.mode === 'file' && examUploadModal.files.length === 0) {
       pushToast('기출문제 PDF 파일을 선택해 주세요.', 'warning');
       return;
     }
@@ -189,27 +191,41 @@ const AdminPage = () => {
       return;
     }
 
-    setExamUploadModal(prev => ({ ...prev, loading: true }));
+    setExamUploadModal(prev => ({ ...prev, loading: true, progress: '' }));
     
     try {
-      let response;
       if (examUploadModal.mode === 'file') {
-        const formData = new FormData();
-        formData.append('file', examUploadModal.file);
-        response = await api.admin.documents.uploadExam(examUploadModal.document.id, formData);
+        // Sort files by name to ensure part1, part2 order
+        const sortedFiles = [...examUploadModal.files].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+        
+        let successCount = 0;
+        for (let i = 0; i < sortedFiles.length; i++) {
+          const file = sortedFiles[i];
+          setExamUploadModal(prev => ({ ...prev, progress: `파일 ${i + 1} / ${sortedFiles.length} 처리 중... (${file.name})` }));
+          
+          const formData = new FormData();
+          formData.append('file', file);
+          
+          await api.admin.documents.uploadExam(examUploadModal.document.id, formData);
+          successCount++;
+        }
+        
+        pushToast(`총 ${successCount}개 파일이 성공적으로 등록되었습니다!`, 'success');
+      
       } else {
-        response = await api.admin.documents.uploadExamText(examUploadModal.document.id, {
+        setExamUploadModal(prev => ({ ...prev, progress: '텍스트 처리 중...' }));
+        const response = await api.admin.documents.uploadExamText(examUploadModal.document.id, {
           text: examUploadModal.textInput,
           title: examUploadModal.examTitle || '직접 입력 기출'
         });
+        pushToast(response.message || '기출문제가 성공적으로 등록되었습니다!', 'success');
       }
       
-      pushToast(response.message || '기출문제가 성공적으로 등록되었습니다!', 'success');
-      setExamUploadModal({ open: false, document: null, file: null, loading: false, mode: 'file', textInput: '', examTitle: '' });
+      setExamUploadModal({ open: false, document: null, files: [], loading: false, mode: 'file', textInput: '', examTitle: '', progress: '' });
     } catch (error) {
       console.error('Exam upload error:', error);
-      pushToast(error?.message || '기출문제 등록에 실패했습니다.', 'error');
-      setExamUploadModal(prev => ({ ...prev, loading: false }));
+      pushToast(error?.message || '기출문제 등록 중 오류가 발생했습니다.', 'error');
+      setExamUploadModal(prev => ({ ...prev, loading: false, progress: '' }));
     }
   };
 
@@ -279,11 +295,18 @@ const AdminPage = () => {
                 accept="application/pdf" 
                 onChange={handleExamFileChange} 
                 style={adminStyles.input}
+                multiple // Allow multiple files
               />
               <p style={adminStyles.hint}>
                 * 텍스트 복사가 가능한 PDF여야 파싱이 가능합니다.<br/>
-                * 문제 번호([18])와 정답/해설(18번 - ①) 패턴이 있어야 합니다.
+                * 문제 번호([18])와 정답/해설(18번 - ①) 패턴이 있어야 합니다.<br/>
+                * <strong>여러 파일을 선택하면 순서대로 업로드됩니다.</strong> (파일명을 part1, part2...로 하면 순서 보장)
               </p>
+              {examUploadModal.files.length > 0 && (
+                <p style={{ fontSize: '13px', color: 'var(--indigo-strong)' }}>
+                  선택된 파일: {examUploadModal.files.length}개 ({examUploadModal.files.map(f => f.name).join(', ')})
+                </p>
+              )}
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -319,10 +342,16 @@ const AdminPage = () => {
             </div>
           )}
 
+          {examUploadModal.loading && examUploadModal.progress && (
+            <div style={{ margin: '10px 0', padding: '10px', background: 'var(--surface-soft)', borderRadius: '8px', textAlign: 'center', color: 'var(--indigo-strong)', fontWeight: 'bold' }}>
+              {examUploadModal.progress}
+            </div>
+          )}
+
           <div style={adminStyles.modalActions}>
             <button 
               style={adminStyles.secondaryButton} 
-              onClick={() => setExamUploadModal({ open: false, document: null, file: null, loading: false, mode: 'file', textInput: '', examTitle: '' })}
+              onClick={() => setExamUploadModal({ open: false, document: null, files: [], loading: false, mode: 'file', textInput: '', examTitle: '', progress: '' })}
               disabled={examUploadModal.loading}
             >
               취소
@@ -332,7 +361,7 @@ const AdminPage = () => {
               onClick={handleExamUploadSubmit}
               disabled={examUploadModal.loading}
             >
-              {examUploadModal.loading ? '등록 중... ⏳' : '등록하기'}
+              {examUploadModal.loading ? '처리 중...' : '등록하기'}
             </button>
           </div>
         </div>
