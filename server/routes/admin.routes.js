@@ -62,7 +62,8 @@ router.post('/documents/:id/exam-upload', verifyToken, requireAdmin, upload.sing
     const pdfData = await pdf(dataBuffer);
     const fullText = String(pdfData.text || '').replace(/\r/g, '');
 
-    const { questions, answerText } = parseQuestions(fullText);
+    // Use AI Parser (Async)
+    const { questions, answerText } = await parseQuestions(fullText);
     const answerMap = parseAnswers(answerText);
 
     let importedCount = 0;
@@ -133,7 +134,8 @@ router.post('/documents/:id/exam-text', verifyToken, requireAdmin, async (req, r
     `);
     await database.run(`CREATE INDEX IF NOT EXISTS idx_exam_problems_doc_id ON exam_problems(document_id)`);
 
-    const { questions, answerText } = parseQuestions(text);
+    // Use AI Parser (Async)
+    const { questions, answerText } = await parseQuestions(text);
     const answerMap = parseAnswers(answerText);
     const examTitle = title || `직접입력_${Date.now()}`;
 
