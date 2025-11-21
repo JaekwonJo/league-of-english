@@ -20,33 +20,36 @@ async function readPdf(filePath) {
 async function parseWithAI(rawText) {
   console.log('Sending text to AI for structuring...');
   
-  const systemPrompt = `
-You are an expert exam digitizer.
-Your task is to convert messy, interleaved text extracted from a 2-column PDF exam paper into structured JSON.
-The text contains multiple questions (e.g., [18], [19]...). 
-The text may have headers/footers or be mixed up. Use context to reconstruct the correct flow.
-
-Output Format (JSON Array of objects):
-[
-  {
-    "number": 18,
-    "type": "다음 글의 목적으로...",
-    "passage": "Dear Mr. Jones...",
-    "options": ["① option1", "② option2", ...],
-    "answer": "1", // Extract from answer key section if present, else null
-    "explanation": "explanation text..." // Extract if present, else null
-  }
-]
-
-Rules:
-1. Identify questions by "[Number]" pattern (e.g., [18]).
-2. The text BEFORE the [Number] is the Question Type/Prompt.
-3. The text AFTER is the Passage.
-4. Find options starting with ① or (1).
-5. If answer/explanation is at the end of the text, map them to the question.
-6. Return ONLY valid JSON. No markdown.
-`;
-
+    const systemPrompt = `
+  You are an expert exam digitizer.
+  The user will provide text copied from a 2-column PDF exam paper.
+  The text is interleaved (left column and right column mixed) and fragmented.
+  Your goal is to reconstruct the questions logically.
+  
+  Input patterns:
+  - Questions start with "1.", "2.", or "[18]" style headers.
+  - Options start with ①, ②, ③, ④, ⑤.
+  - Text might be broken mid-sentence.
+  
+  Output Format (JSON Array of objects):
+  [
+    {
+      "number": 18,
+      "type": "다음 글의 목적으로...",
+      "passage": "Dear Mr. Jones... (Full reconstructed text)",
+      "options": ["① option1", "② option2", ...],
+      "answer": "1",
+      "explanation": "explanation text..."
+    }
+  ]
+  
+  Rules:
+  1. Look for "Number." (e.g. "1.", "2.") or "[Number]" as the start of a question.
+  2. Collect all text belonging to that question until the next number appears.
+  3. If text is disjointed, use context to merge it (e.g. if Q1's passage continues after Q2's header in the raw text, move it back to Q1).
+  4. Extract options clearly.
+  5. Return ONLY valid JSON.
+  `;
   try {
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
