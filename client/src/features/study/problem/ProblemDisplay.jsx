@@ -445,10 +445,10 @@ const ProblemDisplay = ({
           return (
             <div style={{ ...orderStyles.orderGivenText, marginBottom: '20px' }}>
               {paragraphs.map((para, idx) => {
-                const normalized = para.replace(/\n+/g, ' ').trim();
+                const normalized = para.replace(/\n+/g, '\n').trim();
                 if (!normalized) return null;
                 return (
-                  <p key={`para-${idx}`} style={{ margin: '0 0 10px', lineHeight: 1.8, textAlign: 'justify', whiteSpace: 'normal', wordBreak: 'keep-all', overflowWrap: 'break-word' }}>
+                  <p key={`para-${idx}`} style={{ margin: '0 0 10px', lineHeight: 1.8, textAlign: 'justify', whiteSpace: 'pre-wrap', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                     {renderWithUnderline(normalized)}
                   </p>
                 );
@@ -462,10 +462,10 @@ const ProblemDisplay = ({
           return (
             <div style={{ ...orderStyles.orderGivenText, marginBottom: '20px' }}>
               {paragraphs.map((para, idx) => {
-                const normalized = para.replace(/\n+/g, ' ').trim();
+                const normalized = para.replace(/\n+/g, '\n').trim();
                 if (!normalized) return null;
                 return (
-                  <p key={`para-blank-${idx}`} style={{ margin: '0 0 10px', lineHeight: 1.8, textAlign: 'justify', whiteSpace: 'normal', wordBreak: 'keep-all', overflowWrap: 'break-word' }}>
+                  <p key={`para-blank-${idx}`} style={{ margin: '0 0 10px', lineHeight: 1.8, textAlign: 'justify', whiteSpace: 'pre-wrap', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                     {renderBlankSegments(normalized, `passage-${problemIndex}-${idx}`)}
                   </p>
                 );

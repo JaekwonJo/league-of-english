@@ -264,10 +264,25 @@ function ensureSourceLabel(raw, context = {}) {
     baseTitle = 'LoE 자료';
   }
 
-  let sequence = context.sequence ?? context.sequenceNo ?? context.sequenceIndex ?? null;
-  if (!Number.isInteger(sequence) || sequence <= 0) {
-    sequence = extractSequence(raw);
+  let sequence = context.sequence ?? context.sequenceNo ?? context.sequenceIndex ?? context.passageIndex ?? context.index ?? null;
+  // Fallback: try to extract from raw
+  if (!Number.isInteger(sequence)) {
+    const extracted = extractSequence(raw);
+    if (Number.isInteger(extracted)) {
+        sequence = extracted;
+    }
   }
+  
+  // If sequence is an index (0-based), convert to 1-based
+  if (Number.isInteger(sequence)) {
+      // Heuristic: if it's likely 0-based (e.g. context.index), add 1. 
+      // But if it's passageNumber (usually 1-based), keep it.
+      // Let's assume context.index is 0-based.
+      if (context.index !== undefined && sequence === context.index) {
+          sequence += 1;
+      }
+  }
+
   const suffix = Number.isInteger(sequence) && sequence > 0 ? ` no${sequence}` : '';
   return `출처│${baseTitle}${suffix}`;
 }

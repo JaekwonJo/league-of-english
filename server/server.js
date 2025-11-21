@@ -63,11 +63,15 @@ if (String(process.env.LOE_ASCII_LOG || '').toLowerCase() === '1') {
 
 // CORS: allow dynamic override via CORS_ORIGIN (comma-separated)
 const dynamicCors = (() => {
-  const origins = process.env.CORS_ORIGIN;
-  if (origins && origins.trim().length) {
-    return { origin: origins.split(',').map(s => s.trim()), credentials: true };
-  }
-  return config.server.corsOptions || {};
+  const origins = process.env.CORS_ORIGIN 
+    ? process.env.CORS_ORIGIN.split(',').map(s => s.trim())
+    : [
+        'http://localhost:3000',
+        'https://league-of-english.com',
+        'https://www.league-of-english.com',
+        /\.vercel\.app$/
+      ];
+  return { origin: origins, credentials: true };
 })();
 app.use(cors(dynamicCors));
 app.use(express.json({ limit: config.server.jsonLimit }));

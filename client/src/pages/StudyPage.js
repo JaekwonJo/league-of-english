@@ -345,7 +345,13 @@ const StudyPage = () => {
           elapsedSeconds={elapsedSeconds}
           onAnswer={handleAnswer}
           onFinish={finishStudy}
-          onRestart={restart}
+          onRestart={() => {
+            restart();
+            // Preserve document selection by jumping to step 2
+            const url = new URL(window.location.href);
+            url.searchParams.set('studyStep', '2');
+            window.history.replaceState({}, '', url.toString());
+          }}
           generationLog={generationLog}
         />
       );
@@ -354,7 +360,12 @@ const StudyPage = () => {
       return <ReviewModeView results={results} onBack={exitReview} onRestart={restart} />;
 
     case "result":
-      return <StudyResult results={results} onRestart={restart} onReview={enterReview} onHome={() => (window.location.href = "/")} />;
+      return <StudyResult results={results} onRestart={() => {
+        restart();
+        const url = new URL(window.location.href);
+        url.searchParams.set('studyStep', '2');
+        window.history.replaceState({}, '', url.toString());
+      }} onReview={enterReview} onHome={() => (window.location.href = "/")} />;
 
     default:
       return null;

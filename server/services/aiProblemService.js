@@ -146,12 +146,12 @@ function buildPassageQueue(passages, count) {
 
 function buildVocabularyVariantDirective(variant) {
   if (variant.answerMode === 'correct') {
-    return 'Produce exactly ONE five-option problem where 네 개 표현은 문맥상 어색하도록 변형하고, 단 하나만 원문과 동일하게 유지하세요.';
+    return 'Produce exactly ONE five-option problem where 네 개 표현은 문맥상 어색하도록 변형(반의어 등)하고, 단 하나만 원문과 동일하게 유지하세요.';
   }
   if (variant.targetIncorrectCount === 1) {
-    return 'Produce exactly ONE five-option problem where only one underlined expression is contextually incorrect for the passage.';
+    return 'Produce exactly ONE five-option problem where only one underlined expression is replaced with an antonym or contextually incorrect word (Must NOT be the original word). The other four must remain identical to the source.';
   }
-  return `Produce exactly ONE five-option problem where ${variant.targetIncorrectCount} underlined expressions are contextually incorrect and the remaining ${5 - variant.targetIncorrectCount} stay identical to the source.`;
+  return `Produce exactly ONE five-option problem where ${variant.targetIncorrectCount} underlined expressions are contextually incorrect (replaced with antonyms) and the remaining ${5 - variant.targetIncorrectCount} stay identical to the source.`;
 }
 
 function buildVocabularyAnswerInstruction(variant) {

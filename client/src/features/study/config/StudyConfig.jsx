@@ -172,9 +172,8 @@ const StudyConfig = ({
 
   return (
     <div style={styles.container}>
-      <h1 style={styles.title}>학습 설정</h1>
-
-      {/* 안내 섹션 제거: 바로 선택 화면만 보이게 */}
+      {headerSlot && <div style={styles.headerSlot}>{headerSlot}</div>}
+      {!headerSlot && <h1 style={styles.title}>학습 설정</h1>}
 
       {resumeAvailable && (
         <div style={styles.savedSessionCard}>
