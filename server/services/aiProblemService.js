@@ -325,9 +325,10 @@ class AIProblemService {
         });
 
         try {
-          // Model tier selection: start with secondary, escalate to primary, and finally premium if configured
-          let tier = 'standard';
-          if (attempt >= Math.max(2, Math.floor(MAX_RETRIES / 2))) tier = 'primary';
+          // Model tier selection: Always prefer Primary (gpt-4o) for SOTA quality
+          let tier = 'primary'; 
+          // if (attempt >= Math.max(2, Math.floor(MAX_RETRIES / 2))) tier = 'primary'; // Old logic
+          
           if (!normalized && attempt >= (MAX_RETRIES - 1) && PREMIUM_MODEL) tier = 'premium';
           const selectedModel = tier === 'premium' && PREMIUM_MODEL
             ? PREMIUM_MODEL
@@ -1312,10 +1313,11 @@ ${clipText(passage, 1600)}`,
 
           const prompt = promptSections.filter(Boolean).join('\n\n');
 
-          const useHighTierModel = attempt >= 3;
+          // SOTA Upgrade: Always use High Tier (gpt-4o) for best quality from the start!
+          const useHighTierModel = true; // Was: attempt >= 3;
           const response = await this.callChatCompletion({
             model: useHighTierModel ? PRIMARY_MODEL : SECONDARY_MODEL,
-            temperature: useHighTierModel ? 0.24 : 0.3,
+            temperature: useHighTierModel ? 0.2 : 0.3,
             max_tokens: useHighTierModel ? 1050 : 900,
             messages: [{ role: 'user', content: prompt }]
           }, { label: 'vocabulary', tier: useHighTierModel ? 'primary' : 'standard' });
