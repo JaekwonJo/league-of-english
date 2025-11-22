@@ -1,16 +1,20 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api.service';
 import CommonHero from '../components/common/CommonHero';
 import FriendlyError from '../components/common/FriendlyError';
-import PassagePickerGrid from '../components/shared/PassagePickerGrid';
 import PassageAnalysis from '../components/admin/PassageAnalysis';
 import { analysisStyles as styles } from '../styles/analysisStyles';
 
 const AnalysisPage = () => {
-  const { documentId } = useParams();
-  const navigate = useNavigate();
+  // URL 파싱 (Custom Router 호환)
+  const parts = window.location.pathname.split('/');
+  const documentId = parts.length > 2 && parts[1] === 'analysis' ? parts[2] : null;
+
+  const navigate = (path) => {
+    window.location.href = path;
+  };
+
   const { user } = useAuth();
   const isProMember = ['pro', 'vip', 'admin', 'teacher'].includes(user?.role) || ['pro', 'vip'].includes(user?.membership);
 
