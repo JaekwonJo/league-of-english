@@ -209,7 +209,8 @@ function normalizeBlankOptions(rawOptions = []) {
 
 function buildBlankPrompt({ passage, manualExcerpt, extraDirectives = [] }) {
   const requirements = [
-    '- DO NOT rewrite or summarize the passage. DO NOT return the "text" or "passage" field in JSON.',
+    '- DO NOT rewrite or summarize the passage. The goal is to create a blank from the EXACT source text.',
+    '- DO NOT return the "text" or "passage" field in JSON. We will reconstruct it programmatically.',
     '- Identify ONE key expression to blank out. It MUST be a contiguous span of text found VERBATIM in the passage.',
     '- Return `targetExpression`: The exact string to be removed.',
     '- Provide five options (①-⑤). The correct answer (e.g., ③) MUST be a paraphrase or synonym of the target expression, NOT the exact same word.',
@@ -228,6 +229,7 @@ function buildBlankPrompt({ passage, manualExcerpt, extraDirectives = [] }) {
   "type": "blank",
   "question": "${BLANK_GENERAL_QUESTION}",
   "targetExpression": "exact phrase from text",
+  "strategy": "paraphrasing",
   "options": ["① ...", "② ...", "③ ...", "④ ...", "⑤ ..."],
   "correctAnswer": 3,
   "explanation": "friendly Korean explanation",
@@ -235,7 +237,8 @@ function buildBlankPrompt({ passage, manualExcerpt, extraDirectives = [] }) {
 }`,
     '',
     'Requirements:',
-    ...requirements
+    ...requirements,
+    ...extraDirectives
   ];
 
   return promptSections.join('\n');
@@ -256,6 +259,9 @@ function deriveBlankDirectives(lastFailure = '') {
   }
   if (message.includes('text too short') || message.includes('more sentences')) {
     directives.push(`- Keep at least two full sentences around the blank and ensure the passage excerpt stays over ${MIN_BLANK_TEXT_LENGTH} characters.`);
+  }
+  if (message.includes('verbatim') || message.includes('target not found')) {
+    directives.push('- The `targetExpression` MUST be a substring found exactly in the Original Passage.');
   }
   return directives;
 }
@@ -299,6 +305,7 @@ function normalizeBlankPayload(payload, context = {}) {
     if (altMatch) {
       target = altMatch[0];
     } else {
+      // Fallback: Try to find a fuzzy match or substring if exact match fails
       throw new Error(`Target "${target}" not found verbatim in original passage. AI hallucinations prevented.`);
     }
   } else {
@@ -316,7 +323,7 @@ function normalizeBlankPayload(payload, context = {}) {
   shuffleOrder.forEach((fromIdx, newIdx) => {
     originalToNewIndex[fromIdx] = newIdx;
   });
-  const reorderedTexts = shuffleOrder.map(i => optionsInfo.texts[i]);
+  // const reorderedTexts = shuffleOrder.map(i => optionsInfo.texts[i]); // Unused
   const formattedOptions = shuffleOrder.map((oldIdx, newIdx) => `${CIRCLED_DIGITS[newIdx]} ${optionsInfo.texts[oldIdx]}`);
   const newAnswerNum = shuffleOrder.indexOf(answerIndex) + 1;
 
@@ -368,33 +375,33 @@ function normalizeBlankPayload(payload, context = {}) {
 
   const resolvedQuestion = resolveBlankQuestionText(String(payload.question || '')) || { canonical: BLANK_GENERAL_QUESTION, type: 'general' };
   const family = BLANK_FAMILY_TO_QUESTION[resolvedQuestion.type] === 'definition' ? 'C-2' : 'C-1';
+  const strategy = payload.strategy || 'paraphrasing';
 
   const metadata = {
     blankFamily: family,
     blankStrategy: strategy,
     family,
     strategy,
-    targetExpression,
-    normalizedOriginalPassage: normalizedOriginalPassage,
-    originalPassageLength: normalizedOriginalPassage.length,
-    originalSentenceCount: countSentences(normalizedOriginalPassage),
+    targetExpression: target,
+    normalizedOriginalPassage: normalizedOriginal,
+    originalPassageLength: normalizedOriginal.length,
+    originalSentenceCount: countSentences(normalizedOriginal),
     fallacies: optionsInfo.fallacies,
     distractorReasons,
-    rawQuestion,
-    targetSpan: normalizedTargetSpan
+    rawQuestion: String(payload.question || ''),
+    targetSpan: target
   };
 
   return {
     id: payload.id || `blank_ai_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
     type: 'blank',
-    question: questionInfo.canonical,
+    question: resolvedQuestion.canonical,
     questionFamily: family,
     strategy,
-    targetExpression,
+    targetExpression: target,
     text: finalPassage,
     passage: finalPassage,
     originalPassage: normalizedOriginal,
-    targetExpression: target,
     options: formattedOptions,
     correctAnswer: newAnswerNum,
     answer: newAnswerNum,
