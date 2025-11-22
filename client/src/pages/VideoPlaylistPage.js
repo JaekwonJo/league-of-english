@@ -442,9 +442,10 @@ const styles = {
   section: {
     marginBottom: '32px',
     background: 'var(--surface-card)',
-    borderRadius: '18px',
-    padding: '24px',
-    boxShadow: '0 18px 32px rgba(15, 23, 42, 0.08)'
+    borderRadius: '24px',
+    padding: '28px',
+    boxShadow: '0 18px 36px rgba(15, 23, 42, 0.08)',
+    border: '1px solid var(--glass-border)'
   },
   sectionHeaderRow: {
     display: 'flex',
@@ -454,165 +455,180 @@ const styles = {
     flexWrap: 'wrap'
   },
   sectionTitle: {
-    fontSize: '1.3rem',
+    fontSize: '1.4rem',
     fontWeight: 700,
     marginBottom: '16px',
     color: 'var(--text-primary)'
   },
   selectorIntro: {
-    margin: '0 0 16px',
-    fontSize: '0.95rem',
-    color: 'var(--tone-strong)'
+    margin: '0 0 20px',
+    fontSize: '1rem',
+    color: 'var(--text-secondary)',
+    lineHeight: 1.6
   },
   selectorSearchRow: {
     display: 'flex',
     alignItems: 'center',
     gap: '12px',
-    marginBottom: '18px'
+    marginBottom: '24px'
   },
   selectorSearchInput: {
     flex: 1,
-    padding: '12px',
-    borderRadius: '12px',
-    border: '1px solid var(--border-subtle)',
-    background: 'var(--surface-soft)',
-    color: 'var(--text-primary)'
-  },
-  selectorClearButton: {
-    padding: '10px 16px',
-    borderRadius: '12px',
-    border: '1px solid var(--border-subtle)',
+    padding: '14px 18px',
+    borderRadius: '14px',
+    border: '1px solid var(--border-light)',
     background: 'var(--surface-soft)',
     color: 'var(--text-primary)',
-    cursor: 'pointer'
+    fontSize: '1rem',
+    transition: 'all 0.2s ease'
+  },
+  selectorClearButton: {
+    padding: '12px 18px',
+    borderRadius: '14px',
+    border: '1px solid var(--border-light)',
+    background: 'var(--surface-soft)',
+    color: 'var(--text-secondary)',
+    cursor: 'pointer',
+    fontWeight: 600
   },
   playlistGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-    gap: '16px'
+    gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+    gap: '20px'
   },
   playlistCard: {
     position: 'relative',
     overflow: 'hidden',
-    borderRadius: '22px',
-    border: '1px solid rgba(148,163,184,0.28)',
-    background: 'linear-gradient(145deg, rgba(15,23,42,0.92), rgba(30,64,175,0.65))',
-    padding: '18px',
+    borderRadius: '20px',
+    border: '1px solid rgba(255,255,255,0.1)',
+    background: 'linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%)',
+    backdropFilter: 'blur(12px)',
+    padding: '20px',
     display: 'flex',
     flexDirection: 'column',
-    gap: '12px',
-    transition: 'border 0.2s ease, box-shadow 0.2s ease',
-    boxShadow: '0 22px 42px rgba(15, 23, 42, 0.28)',
-    color: '#e2e8f0',
-    backgroundSize: '200% 200%',
-    animation: 'slowGradient 36s ease-in-out infinite'
+    gap: '14px',
+    transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
+    boxShadow: '0 8px 24px rgba(0,0,0,0.06)',
+    color: 'var(--text-primary)'
   },
   playlistCardActive: {
-    border: '1px solid var(--indigo)',
-    boxShadow: '0 14px 28px rgba(79,70,229,0.28)'
+    borderColor: 'var(--accent)',
+    boxShadow: '0 12px 32px var(--accent-shadow)',
+    background: 'linear-gradient(145deg, var(--accent-soft) 0%, rgba(255,255,255,0.02) 100%)'
   },
   playlistCardHeader: {
     display: 'flex',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: '8px'
   },
   playlistNameRow: {
     display: 'flex',
-    gap: '8px',
+    gap: '10px',
     alignItems: 'center'
   },
   playlistIcon: {
-    fontSize: '1.2rem'
+    fontSize: '1.4rem',
+    filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
   },
   playlistName: {
-    fontWeight: 800,
-    color: '#f8fafc'
+    fontWeight: 700,
+    fontSize: '1.05rem',
+    lineHeight: 1.4,
+    color: 'var(--text-primary)'
   },
   playlistActions: {
     display: 'flex',
     gap: '10px',
     alignItems: 'center',
-    flexWrap: 'wrap'
+    flexWrap: 'wrap',
+    marginTop: 'auto'
   },
   selectButton: {
-    flex: '0 0 auto',
+    flex: '1 1 auto',
     padding: '10px 16px',
-    borderRadius: '999px',
-    border: '1px solid rgba(255,255,255,0.18)',
-    background: 'linear-gradient(135deg, rgba(99,102,241,1), rgba(14,165,233,1))',
-    color: '#f8fafc',
+    borderRadius: '12px',
+    border: 'none',
+    background: 'var(--indigo-gradient)',
+    color: 'var(--text-on-accent)',
     cursor: 'pointer',
-    fontWeight: 800,
-    boxShadow: '0 14px 26px rgba(15,23,42,0.28)'
+    fontWeight: 700,
+    boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)',
+    fontSize: '0.9rem',
+    transition: 'transform 0.2s'
   },
   selectButtonActive: {
-    background: 'linear-gradient(135deg, rgba(16,185,129,1), rgba(99,102,241,1))'
+    background: 'var(--success-gradient)',
+    boxShadow: '0 4px 12px var(--success-shadow)'
   },
   watchOnYoutube: {
     flex: '0 0 auto',
-    padding: '10px 16px',
-    borderRadius: '999px',
-    border: '1px solid rgba(255,255,255,0.25)',
-    background: 'linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06))',
-    color: '#e0e7ff',
-    fontWeight: 700,
+    padding: '10px 14px',
+    borderRadius: '12px',
+    border: '1px solid var(--border-subtle)',
+    background: 'var(--surface-soft)',
+    color: 'var(--text-secondary)',
+    fontWeight: 600,
     textDecoration: 'none',
-    boxShadow: '0 14px 26px rgba(15,23,42,0.28)'
+    fontSize: '0.85rem',
+    transition: 'background 0.2s'
   },
   playlistEmpty: {
-    padding: '20px',
-    borderRadius: '14px',
-    border: '1px dashed var(--border-subtle)',
+    padding: '40px',
+    borderRadius: '18px',
+    border: '1px dashed var(--border-light)',
     textAlign: 'center',
-    color: 'var(--tone-strong)'
+    color: 'var(--text-muted)',
+    fontSize: '1rem'
   },
   managerCard: {
-    marginTop: '24px',
-    padding: '20px',
-    borderRadius: '16px',
-    border: '1px solid rgba(148,163,184,0.35)',
-    background: 'var(--surface-soft)'
+    marginTop: '32px',
+    padding: '24px',
+    borderRadius: '18px',
+    border: '1px solid var(--border-light)',
+    background: 'var(--surface-soft-solid)'
   },
   managerTitle: {
-    margin: '0 0 16px',
+    margin: '0 0 20px',
     fontWeight: 700,
-    color: 'var(--text-primary)'
+    color: 'var(--text-primary)',
+    fontSize: '1.1rem'
   },
   managerForm: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '12px'
+    gap: '16px'
   },
   managerLabel: {
-    fontSize: '0.85rem',
-    color: 'var(--tone-muted)'
+    fontSize: '0.9rem',
+    color: 'var(--text-secondary)',
+    fontWeight: 600
   },
   managerInput: {
     padding: '12px',
-    borderRadius: '12px',
-    border: '1px solid var(--border-subtle)',
+    borderRadius: '10px',
+    border: '1px solid var(--border-light)',
     background: 'var(--surface-card)',
     color: 'var(--text-primary)'
   },
   managerButtonRow: {
     display: 'flex',
     flexWrap: 'wrap',
-    gap: '10px',
-    marginTop: '8px'
+    gap: '12px',
+    marginTop: '12px'
   },
   managerPrimary: {
-    padding: '10px 18px',
-    borderRadius: '12px',
+    padding: '10px 20px',
+    borderRadius: '10px',
     border: 'none',
-    background: 'linear-gradient(135deg, var(--indigo) 0%, var(--indigo-strong) 100%)',
+    background: 'var(--accent-primary)',
     color: 'var(--text-on-accent)',
     fontWeight: 700,
     cursor: 'pointer'
   },
   managerSecondary: {
-    padding: '10px 18px',
-    borderRadius: '12px',
+    padding: '10px 20px',
+    borderRadius: '10px',
     border: '1px solid var(--border-subtle)',
     background: 'var(--surface-card)',
     color: 'var(--text-primary)',
@@ -620,31 +636,32 @@ const styles = {
     cursor: 'pointer'
   },
   managerDanger: {
-    padding: '10px 18px',
-    borderRadius: '12px',
-    border: '1px solid rgba(248,113,113,0.45)',
-    background: 'rgba(248,113,113,0.15)',
-    color: 'rgb(220,38,38)',
+    padding: '10px 20px',
+    borderRadius: '10px',
+    border: '1px solid var(--danger-border)',
+    background: 'var(--danger-surface)',
+    color: 'var(--danger-text)',
     fontWeight: 600,
     cursor: 'pointer'
   },
   managerHelper: {
     marginTop: '8px',
     fontSize: '0.85rem',
-    color: 'var(--tone-muted)'
+    color: 'var(--text-muted)'
   },
   playerCard: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '18px'
+    gap: '20px'
   },
   playerWrapper: {
     position: 'relative',
     paddingBottom: '56.25%',
     height: 0,
-    borderRadius: '18px',
+    borderRadius: '20px',
     overflow: 'hidden',
-    boxShadow: '0 20px 40px rgba(15, 23, 42, 0.18)'
+    boxShadow: '0 20px 50px rgba(0,0,0,0.2)',
+    background: '#000'
   },
   iframe: {
     position: 'absolute',
@@ -658,37 +675,42 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: '240px',
-    borderRadius: '16px',
-    border: '1px dashed var(--border-subtle)',
+    minHeight: '300px',
+    borderRadius: '20px',
+    border: '2px dashed var(--border-light)',
     background: 'var(--surface-soft)',
     textAlign: 'center',
-    padding: '24px'
+    padding: '32px'
   },
   placeholderText: {
-    color: 'var(--tone-strong)',
-    fontSize: '1rem'
+    color: 'var(--text-muted)',
+    fontSize: '1.1rem',
+    fontWeight: 500
   },
   playerActions: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '12px'
+    gap: '14px'
   },
   openButton: {
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: '12px 20px',
-    borderRadius: '999px',
-    background: 'linear-gradient(135deg, #6366f1 0%, #0ea5e9 100%)',
-    color: 'var(--text-on-accent)',
-    fontWeight: 600,
+    padding: '14px 24px',
+    borderRadius: '14px',
+    background: 'var(--accent-hero-gradient)',
+    color: '#fff',
+    fontWeight: 700,
     textDecoration: 'none',
-    border: 'none'
+    border: 'none',
+    fontSize: '1rem',
+    boxShadow: '0 8px 20px var(--accent-shadow)',
+    transition: 'transform 0.2s'
   },
   tipText: {
-    color: 'var(--tone-muted)',
-    fontSize: '0.9rem'
+    color: 'var(--text-secondary)',
+    fontSize: '0.9rem',
+    textAlign: 'center'
   },
   tipList: {
     listStyle: 'none',
@@ -696,64 +718,74 @@ const styles = {
     margin: 0,
     display: 'flex',
     flexDirection: 'column',
-    gap: '10px'
+    gap: '12px'
   },
   tipItem: {
-    padding: '12px 14px',
-    borderRadius: '12px',
+    padding: '16px',
+    borderRadius: '14px',
     background: 'var(--surface-soft)',
-    color: 'var(--tone-strong)',
-    border: '1px solid var(--border-subtle)'
+    color: 'var(--text-secondary)',
+    border: '1px solid var(--border-subtle)',
+    fontSize: '0.95rem',
+    lineHeight: 1.5
   },
   feedbackBanner: {
-    padding: '12px',
+    padding: '14px',
     borderRadius: '12px',
-    background: 'rgba(34,197,94,0.15)',
-    color: 'var(--success-strong)',
-    fontWeight: 600
+    background: 'var(--success-surface)',
+    color: 'var(--success-deep)',
+    fontWeight: 600,
+    textAlign: 'center'
   },
   errorText: {
-    margin: '0 0 12px',
-    color: 'rgb(220,38,38)',
-    fontWeight: 600
+    margin: '0 0 16px',
+    color: 'var(--danger)',
+    fontWeight: 600,
+    textAlign: 'center'
   },
   adminToggle: {
-    padding: '10px 16px',
-    borderRadius: '12px',
+    padding: '8px 14px',
+    borderRadius: '8px',
     border: '1px solid var(--border-subtle)',
     background: 'var(--surface-card)',
-    color: 'var(--text-primary)',
+    color: 'var(--text-secondary)',
     fontWeight: 600,
-    cursor: 'pointer'
+    cursor: 'pointer',
+    fontSize: '0.85rem'
   },
   adminToggleActive: {
-    border: '1px solid var(--indigo)',
-    color: 'var(--indigo-strong)'
+    borderColor: 'var(--accent)',
+    color: 'var(--accent)',
+    background: 'var(--accent-soft)'
   },
   selectedBadge: {
-    padding: '4px 8px',
+    padding: '4px 10px',
     borderRadius: '999px',
-    background: 'rgba(59,130,246,0.16)',
-    color: 'var(--indigo-strong)',
+    background: 'var(--accent)',
+    color: '#fff',
     fontSize: '0.75rem',
-    fontWeight: 700
+    fontWeight: 700,
+    boxShadow: '0 2px 8px var(--accent-shadow)'
   },
   gateContainer: {
     maxWidth: '560px',
     margin: '0 auto',
-    padding: '48px 24px',
+    padding: '60px 24px',
     textAlign: 'center'
   },
   gateCard: {
-    marginTop: '24px',
-    padding: '24px',
-    borderRadius: '16px',
-    border: '1px solid rgba(148,163,184,0.35)',
-    background: 'var(--surface-card)'
+    marginTop: '32px',
+    padding: '40px',
+    borderRadius: '24px',
+    border: '1px solid var(--border-light)',
+    background: 'var(--surface-card)',
+    boxShadow: '0 20px 40px rgba(0,0,0,0.08)'
   },
   gateText: {
-    margin: '0 0 12px',
-    color: 'var(--tone-strong)'
+    margin: '0 0 16px',
+    color: 'var(--text-secondary)',
+    fontSize: '1.1rem',
+    lineHeight: 1.6
   }
 };
 

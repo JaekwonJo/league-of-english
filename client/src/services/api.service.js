@@ -12,8 +12,8 @@ class ApiService {
     console.log('API URL:', this.baseURL); // 디버깅용
   }
 
-  // 내부: fetch 타임아웃 지원 (기본 15초)
-  async _fetchWithTimeout(url, options = {}, timeoutMs = 15000, context = '') {
+  // 내부: fetch 타임아웃 지원 (기본 60초)
+  async _fetchWithTimeout(url, options = {}, timeoutMs = 60000, context = '') {
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), Math.max(1000, timeoutMs));
     try {
@@ -167,16 +167,18 @@ class ApiService {
   /**
    * POST 요청
    */
-  async post(endpoint, data = {}) {
+  async post(endpoint, data = {}, customTimeoutMs = null) {
     try {
       // Long-running endpoints need longer timeouts
-      let timeoutMs = 20000;
-      if (/\/generate\/csat-set$/.test(endpoint)) timeoutMs = 60000;
-      if (/\/analysis\//.test(endpoint)) timeoutMs = Math.max(timeoutMs, 600000);
-      if (endpoint === '/workbooks/generate-all') timeoutMs = Math.max(timeoutMs, 600000);
-      if (/\/vocabulary\/sets\/.+\/quiz$/.test(endpoint)) timeoutMs = Math.max(timeoutMs, 30000);
-      if (/\/problems\/export\/pdf$/.test(endpoint)) timeoutMs = Math.max(timeoutMs, 60000);
-      if (/^\/mock-exam\/.+\/(submit|explanations)$/.test(endpoint)) timeoutMs = Math.max(timeoutMs, 60000);
+      let timeoutMs = customTimeoutMs || 20000;
+      if (!customTimeoutMs) {
+        if (/\/generate\/csat-set$/.test(endpoint)) timeoutMs = 60000;
+        if (/\/analysis\//.test(endpoint)) timeoutMs = Math.max(timeoutMs, 600000);
+        if (endpoint === '/workbooks/generate-all') timeoutMs = Math.max(timeoutMs, 600000);
+        if (/\/vocabulary\/sets\/.+\/quiz$/.test(endpoint)) timeoutMs = Math.max(timeoutMs, 30000);
+        if (/\/problems\/export\/pdf$/.test(endpoint)) timeoutMs = Math.max(timeoutMs, 60000);
+        if (/^\/mock-exam\/.+\/(submit|explanations)$/.test(endpoint)) timeoutMs = Math.max(timeoutMs, 60000);
+      }
 
       const response = await this._fetchWithTimeout(`${this.baseURL}${endpoint}`, {
         method: 'POST',
@@ -376,8 +378,8 @@ export const api = {
       restore: (id, payload) => apiService.post(`/admin/problems/${id}/restore`, payload)
     },
     documents: {
-      uploadExam: (documentId, formData) => apiService.uploadFormData(`/admin/documents/${documentId}/exam-upload`, formData),
-      uploadExamText: (documentId, payload) => apiService.post(`/admin/documents/${documentId}/exam-text`, payload),
+      uploadExam: (documentId, formData) => apiService.uploadFormData(`/admin/documents/${documentId}/exam-upload`, formData, 300000),
+      uploadExamText: (documentId, payload) => apiService.post(`/admin/documents/${documentId}/exam-text`, payload, 300000),
       deleteExam: (documentId) => apiService.delete(`/admin/documents/${documentId}/exam-problems`)
     },
     users: {

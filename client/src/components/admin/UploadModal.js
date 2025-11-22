@@ -45,7 +45,7 @@ const UploadModal = ({
   };
 
   return (
-    <div style={adminStyles.modal}>
+    <div style={adminStyles.modalOverlay}>
       <div style={adminStyles.modalContent}>
         <h3 style={adminStyles.modalTitle}>📄 문서 업로드</h3>
         <form onSubmit={handleSubmit} style={adminStyles.form}>
