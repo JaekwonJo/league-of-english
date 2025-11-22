@@ -51,6 +51,7 @@ class Database {
           email VARCHAR(100) UNIQUE NOT NULL,
           name VARCHAR(100) NOT NULL,
           school VARCHAR(100) NOT NULL,
+          school_level VARCHAR(20) DEFAULT 'high',
           grade INTEGER NOT NULL CHECK (grade IN (1, 2, 3)),
           role VARCHAR(20) DEFAULT 'student',
           membership VARCHAR(20) DEFAULT 'free',
@@ -540,8 +541,9 @@ class Database {
         `ALTER TABLE problem_feedback ADD COLUMN resolved_by INTEGER`,
         `ALTER TABLE problem_feedback ADD COLUMN resolved_at DATETIME`,
         `ALTER TABLE admin_notifications ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP`,
-        `ALTER TABLE problem_feedback_events ADD COLUMN detail TEXT`
-        ,`ALTER TABLE users ADD COLUMN membership_started_at DATETIME`
+        `ALTER TABLE problem_feedback_events ADD COLUMN detail TEXT`,
+        `ALTER TABLE users ADD COLUMN membership_started_at DATETIME`,
+        `ALTER TABLE users ADD COLUMN school_level VARCHAR(20) DEFAULT 'high'`
       ];
 
       let errors = 0;

@@ -206,7 +206,9 @@ const ProfilePage = () => {
             <div style={styles.cardIcon}>📚</div>
             <div style={styles.cardContent}>
               <div style={styles.cardLabel}>학년</div>
-              <div style={styles.cardValue}>고{user?.grade || '?'}</div>
+              <div style={styles.cardValue}>
+                {user?.school_level === 'middle' ? '중' : '고'}{user?.grade || '?'}
+              </div>
             </div>
           </div>
 
@@ -351,29 +353,52 @@ const ProfilePage = () => {
 
 const ProfileEditCard = () => {
   const { user, setUser } = useAuth();
-  // 학교명은 "이름" + 접미사(고/여고)로 분리 입력하도록 구성
+  
   const detectSuffix = (full = '') => {
     const trimmed = String(full || '').trim();
     if (trimmed.endsWith('여고')) return { base: trimmed.slice(0, -2), suffix: '여고' };
+    if (trimmed.endsWith('예고')) return { base: trimmed.slice(0, -2), suffix: '예고' };
+    if (trimmed.endsWith('체고')) return { base: trimmed.slice(0, -2), suffix: '체고' };
+    if (trimmed.endsWith('외고')) return { base: trimmed.slice(0, -2), suffix: '외고' };
     if (trimmed.endsWith('고')) return { base: trimmed.slice(0, -1), suffix: '고' };
+    if (trimmed.endsWith('여중')) return { base: trimmed.slice(0, -2), suffix: '여중' };
+    if (trimmed.endsWith('중')) return { base: trimmed.slice(0, -1), suffix: '중' };
     return { base: trimmed, suffix: '고' };
   };
+
   const detected = detectSuffix(user?.school || '');
   const [schoolBase, setSchoolBase] = useState(detected.base || '');
   const [schoolSuffix, setSchoolSuffix] = useState(detected.suffix || '고');
+  const [schoolLevel, setSchoolLevel] = useState(user?.school_level || (detected.suffix.includes('중') ? 'middle' : 'high'));
   const [grade, setGrade] = useState(user?.grade ? String(user.grade) : '1');
   const [name, setName] = useState(user?.name || '');
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
+
+  // 학교급이 바뀌면 접미사 기본값도 변경
+  useEffect(() => {
+    if (schoolLevel === 'middle' && !schoolSuffix.includes('중')) {
+      setSchoolSuffix('중');
+    } else if (schoolLevel === 'high' && schoolSuffix.includes('중')) {
+      setSchoolSuffix('고');
+    }
+  }, [schoolLevel, schoolSuffix]);
 
   const handleSave = async () => {
     try {
       setSaving(true);
       setMsg('');
       const base = String(schoolBase || '').trim();
-      const suffix = String(schoolSuffix || '고').trim();
+      const suffix = String(schoolSuffix || (schoolLevel === 'middle' ? '중' : '고')).trim();
       const composedSchool = base ? `${base}${suffix}` : '';
-      const payload = { school: composedSchool, grade: parseInt(grade, 10), name: String(name || '').trim() };
+      
+      const payload = { 
+        school: composedSchool, 
+        grade: parseInt(grade, 10), 
+        name: String(name || '').trim(),
+        school_level: schoolLevel
+      };
+      
       const res = await api.users.updateProfile(payload);
       if (res?.user) {
         setUser(res.user);
@@ -392,6 +417,25 @@ const ProfileEditCard = () => {
     <div style={styles.editCard}>
       <h3 style={styles.editTitle}>프로필 수정</h3>
       <div style={styles.editRow}>
+        <div style={{display: 'flex', gap: '8px', gridColumn: '1 / -1', marginBottom: '10px'}}>
+           <label style={{display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--text-primary)', fontWeight: 600}}>
+             <input 
+               type="radio" 
+               name="schoolLevel" 
+               checked={schoolLevel === 'high'} 
+               onChange={() => setSchoolLevel('high')} 
+             /> 고등학교
+           </label>
+           <label style={{display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--text-primary)', fontWeight: 600}}>
+             <input 
+               type="radio" 
+               name="schoolLevel" 
+               checked={schoolLevel === 'middle'} 
+               onChange={() => setSchoolLevel('middle')} 
+             /> 중학교
+           </label>
+        </div>
+
         <input style={styles.editInput} value={name} onChange={(e) => setName(e.target.value)} placeholder="이름" />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px', gap: '8px' }}>
           <input
@@ -401,14 +445,26 @@ const ProfileEditCard = () => {
             placeholder="학교 이름 (예: OO)"
           />
           <select style={styles.editInput} value={schoolSuffix} onChange={(e) => setSchoolSuffix(e.target.value)}>
-            <option value="고">고</option>
-            <option value="여고">여고</option>
+            {schoolLevel === 'high' ? (
+              <>
+                <option value="고">고</option>
+                <option value="여고">여고</option>
+                <option value="예고">예고</option>
+                <option value="체고">체고</option>
+                <option value="외고">외고</option>
+              </>
+            ) : (
+              <>
+                <option value="중">중</option>
+                <option value="여중">여중</option>
+              </>
+            )}
           </select>
         </div>
         <select style={styles.editInput} value={grade} onChange={(e) => setGrade(e.target.value)}>
-          <option value="1">고1</option>
-          <option value="2">고2</option>
-          <option value="3">고3</option>
+          <option value="1">{schoolLevel === 'middle' ? '중1' : '고1'}</option>
+          <option value="2">{schoolLevel === 'middle' ? '중2' : '고2'}</option>
+          <option value="3">{schoolLevel === 'middle' ? '중3' : '고3'}</option>
         </select>
       </div>
       {msg && <p style={styles.editMsg}>{msg}</p>}
