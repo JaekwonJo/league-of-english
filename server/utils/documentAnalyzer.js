@@ -235,11 +235,12 @@ const guidance = [
   '출력은 하나의 JSON 객체여야 하며, 추가 설명·마크다운·코드 블록은 절대 포함하지 마세요.',
   'sentenceAnalysis 배열의 각 항목에는 english, isTopicSentence, korean, breakdown, vocabulary.words 필드를 반드시 포함합니다.',
   'english 필드에는 원문 문장을 그대로 적고, 주제문(isTopicSentence=true)은 **굵게** 표시하세요.',
-  'korean은 "📘 한글 해석:"으로 시작하고 2~3문장으로 자연스럽게 번역하며, 학생에게 말하듯 따뜻한 표현과 이모지를 곁들이세요.',
-  'breakdown은 "🧠 문장 분석:"으로 시작하고, 문장의 역할·수능 포인트·주의 어법을 2~3문장으로 강의식으로 설명하세요. 질문을 던지지 말고, 핵심 메시지·예시·주의점을 차분하게 정리해 주세요.',
+  'korean은 "📘 한글 해석:" 같은 라벨 없이, 순수한 번역 문장만 작성하세요. (라벨은 시스템이 붙입니다)',
+  'breakdown은 "🧠 문장 분석:" 같은 라벨 없이, 순수한 분석 내용만 작성하세요.',
+  '주의: 동사를 주어로 착각하는 번역 오류(예: "Measures groups" -> "측정 그룹" (X) -> "조치들이 그룹을..." (O))를 범하지 않도록 문맥을 철저히 파악하세요.',
   'vocabulary.words 배열에는 term·meaning·synonyms·antonyms를 모두 채워 넣고, meaning은 쉬운 한국어로 1문장 이상 설명하세요.',
   '각 vocabulary 항목의 synonyms와 antonyms는 각각 정확히 3개씩 제공하세요. 부족하다면 의미가 가까운 표현을 창의적으로 제시하세요.',
-  'meta.englishTitles에는 영어 제목 2개를 넣되, 둘 중 하나는 의문문이어야 합니다. title과 isQuestion 필드를 제공하세요.',
+  'meta.englishTitles에는 영어 제목 2개를 넣되, 반드시 korean 번역 필드를 포함하세요. (예: { "title": "Title", "korean": "제목 번역", "isQuestion": false })',
   'meta.authorClaims에는 한글 문장 2개를 넣어 작가의 주장을 정리하고, meta.relatedExamples에는 현실 사례나 시험형 예시를 2~3개 제시하세요.',
   'meta.englishSummary에는 짧고 또렷한 영어 요약 1문장을, meta.englishSummaryKorean에는 그 번역을 담으세요.',
   'meta.modernApplications에는 학습자가 스스로 점검할 질문이나 실천 팁을 2~3개 작성하세요.',
@@ -257,8 +258,8 @@ const formatBlueprint = `출력 JSON 예시:
     {
       "english": "**Students embrace steady challenges.**",
       "isTopicSentence": true,
-      "korean": "📘 한글 해석: 학생들은 꾸준한 도전을 받아들이며 자신감을 키워요!",
-      "breakdown": "🧠 문장 분석: 이 문장은 글의 주제를 선언하며, 꾸준한 연습이 성장을 만든다는 메시지를 강조해요.",
+      "korean": "학생들은 꾸준한 도전을 받아들이며 자신감을 키워요!",
+      "breakdown": "이 문장은 글의 주제를 선언하며, 꾸준한 연습이 성장을 만든다는 메시지를 강조해요.",
       "vocabulary": {
         "words": [
           {
@@ -273,8 +274,8 @@ const formatBlueprint = `출력 JSON 예시:
   ],
   "meta": {
     "englishTitles": [
-      { "title": "Embracing Daily Challenges", "isQuestion": false },
-      { "title": "How Do Challenges Shape Us?", "isQuestion": true }
+      { "title": "Embracing Daily Challenges", "korean": "매일의 도전을 받아들이기", "isQuestion": false },
+      { "title": "How Do Challenges Shape Us?", "korean": "도전은 우리를 어떻게 형성하는가?", "isQuestion": true }
     ],
     "authorClaims": [
       "꾸준한 도전은 학생의 자신감과 실력을 동시에 키워 줍니다.",

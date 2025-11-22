@@ -202,8 +202,47 @@ const PassageAnalysis = ({ document, onClose }) => {
                 } />
               )}
 
-              {analysis.comprehensive && (
-                <Section title="⑤ 종합 메타" content={
+              {analysis.meta && (
+                <>
+                  <Section title="⑤ 종합 메타 (Titles & Summary)" content={
+                    <div style={styles.comprehensiveBox}>
+                      <div style={{marginBottom: 16}}>
+                        <strong>📝 영어 제목:</strong>
+                        <ul style={{margin: '8px 0 0 20px', padding: 0}}>
+                          {(analysis.meta.englishTitles || []).map((t, idx) => (
+                            <li key={idx} style={{marginBottom: 4}}>
+                              {idx + 1}. {t.title} {t.isQuestion ? '❓' : ''}
+                              {t.korean && <span style={{opacity: 0.8, fontSize: '0.9em', marginLeft: 8}}>({t.korean})</span>}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div style={{marginBottom: 12}}><strong>💡 작가의 주장:</strong> {analysis.meta.authorsClaim}</div>
+                      <div style={{marginBottom: 12}}>
+                        <strong>🎯 한 줄 요약:</strong>
+                        <div style={{marginTop: 4, paddingLeft: 10, borderLeft: '2px solid rgba(255,255,255,0.3)'}}>
+                          <div>영어: {analysis.meta.englishSummary}</div>
+                          <div style={{marginTop: 4}}>한국어: {analysis.meta.englishSummaryKorean}</div>
+                        </div>
+                      </div>
+                    </div>
+                  } />
+
+                  {analysis.meta.modernApplications && analysis.meta.modernApplications.length > 0 && (
+                    <Section title="⑥ 실생활 적용 & 심화 질문" content={
+                      <ul style={{paddingLeft: 20, margin: 0}}>
+                        {analysis.meta.modernApplications.map((app, idx) => (
+                          <li key={idx} style={{marginBottom: 6}}>{app}</li>
+                        ))}
+                      </ul>
+                    } />
+                  )}
+                </>
+              )}
+
+              {/* Legacy Fallback for old analysis format */}
+              {!analysis.meta && analysis.comprehensive && (
+                <Section title="⑤ 종합 메타 (Legacy)" content={
                   <div style={styles.comprehensiveBox}>
                     <div><strong>영어 제목:</strong> {analysis.comprehensive.englishTitle}</div>
                     <div><strong>한글 요지:</strong> {analysis.comprehensive.koreanSummary}</div>
