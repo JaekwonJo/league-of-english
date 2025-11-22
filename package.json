@@ -11,7 +11,7 @@
     "client": "cd client && npm start",
     "client:alt": "cd client && set PORT=3001 && npm start",
     "install-all": "npm install && cd client && npm install && cd ..",
-    "build": "cd client && npm run build",
+    "build": "cd client && npm install && npm run build",
     "client:build": "cd client && npm run build",
     "migrate-users": "node server/scripts/migrate-users-password-hash.js",
     "migrate-users-drop-legacy": "node server/scripts/migrate-users-drop-legacy.js",
