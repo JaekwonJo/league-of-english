@@ -9,7 +9,6 @@ const studyService = require('./studyService');
 const CHOICES = ['①', '②', '③', '④', '⑤'];
 const CHOICE_TO_INDEX = CHOICES.reduce((acc, mark, idx) => ({ ...acc, [mark]: idx }), {});
 
-// ... (Keep existing constants) ...
 const DEFAULT_EXAM_ID = process.env.MOCK_EXAM_ID || '2025-10';
 const STORAGE_ROOT = path.resolve(__dirname, '..', '..', 'mock-exams');
 const LEGACY_DIR_CANDIDATES = [
@@ -71,8 +70,8 @@ class MockExamService {
     for (let i = 1; i <= 5; i += 1) {
       const circ = markers[i - 1];
       const patterns = [
-        new RegExp(`\\(${i}\\)`, 'g'),
-        new RegExp(`(?<=\n|\s)${i}[\u0029\u002E]`, 'g'), // 1) or 1.
+        new RegExp(`\(${i}\)`, 'g'),
+        new RegExp(`(?<=\n|\s)${i}[\u0029\u002E]`, 'g'), // 1) or 1. 
       ];
       patterns.forEach((re) => {
         text = text.replace(re, circ);
@@ -83,39 +82,37 @@ class MockExamService {
     return text;
   }
 
-  // NEW: AI Parsing for robustness
+  // AI Parsing Logic (gpt-4o-mini)
   async _parseWithAI(text) {
     const openai = this._getOpenAI();
     if (!openai) throw new Error("OpenAI required for AI parsing");
 
     const systemPrompt = `
-You are an expert exam digitizer.
-Your task is to convert messy, interleaved text extracted from a 2-column PDF exam paper into structured JSON.
-The text contains multiple questions (e.g., 18, 19...).
-The text may have headers/footers or be mixed up due to column layout. Use context to reconstruct the correct flow.
+    You are an expert exam digitizer.
+    Your task is to convert messy, interleaved text extracted from a 2-column PDF exam paper into structured JSON.
+    The text contains multiple questions (e.g., 18, 19...). 
+    The text may have headers/footers or be mixed up due to column layout. Use context to reconstruct the correct flow.
 
-Output Format (JSON Array of objects):
-[
-  {
-    "number": 18,
-    "prompt": "Passage text...",
-    "choices": [
-      { "mark": "①", "text": "option1" },
-      ...
+    Output Format (JSON Array of objects):
+    [
+      {
+        "number": 18,
+        "prompt": "Passage text...",
+        "choices": [
+          { "mark": "①", "text": "option1" },
+          ...
+        ]
+      }
     ]
-  }
-]
 
-Rules:
-1. Identify questions by Number (18~45).
-2. Extract the full prompt (passage + question text).
-3. Extract 5 choices.
-4. Return ONLY valid JSON.
-`;
+    Rules:
+    1. Identify questions by Number (18~45).
+    2. Extract the full prompt (passage + question text).
+    3. Extract 5 choices.
+    4. Return ONLY valid JSON.
+    `;
 
     try {
-      // Split text into chunks if too large (100k chars limit for safety)
-      // But mock exam text is usually small enough for gpt-4o-mini context.
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
@@ -130,13 +127,12 @@ Rules:
       const parsed = JSON.parse(content);
       const questions = Array.isArray(parsed) ? parsed : (parsed.questions || []);
       
-      // Normalize structure
       return questions.map(q => ({
         number: Number(q.number),
         prompt: q.prompt,
         promptLines: (q.prompt || '').split('\n'),
         choices: q.choices || []
-      })).filter(q => q.number >= 18 && q.number <= 45); // Filter listening questions if any
+      })).filter(q => q.number >= 18 && q.number <= 45);
 
     } catch (e) {
       console.error('AI Mock Parsing Failed:', e);
@@ -150,7 +146,6 @@ Rules:
   }
 
   async listAvailableExams() {
-    // ... (Keep existing logic) ...
     const list = [];
     try {
       if (!fs.existsSync(STORAGE_ROOT)) {
@@ -164,9 +159,7 @@ Rules:
         const hasAnswers = fs.existsSync(path.join(STORAGE_ROOT, examId, 'answers.pdf'));
         if (!hasQuestions || !hasAnswers) continue;
         try {
-          // Lightweight load (don't parse PDF if possible)
-          // We should cache metadata.json for title/count
-          list.push({ id: examId, title: this._buildExamTitle(examId), questionCount: 28 }); // Approximate count
+          list.push({ id: examId, title: this._buildExamTitle(examId), questionCount: 28 });
         } catch (error) {
           console.warn('[mockExam] skip exam listing', examId, error?.message || error);
         }
@@ -177,7 +170,201 @@ Rules:
     return list;
   }
 
-  // ... (Keep existing getExam, getAnswerKey, gradeExam, getExplanation, _getOpenAI) ...
+  async getExam(examId = DEFAULT_EXAM_ID) {
+    if (!this.examCache.has(examId)) {
+      this.examCache.set(examId, await this._loadExam(examId));
+    }
+    return this.examCache.get(examId);
+  }
+
+  async getAnswerKey(examId = DEFAULT_EXAM_ID) {
+    if (!this.answerCache.has(examId)) {
+      this.answerCache.set(examId, await this._loadAnswerKey(examId));
+    }
+    return this.answerCache.get(examId);
+  }
+
+  async gradeExam(answerPayload = {}, userId = null, examId = DEFAULT_EXAM_ID) {
+    const exam = await this.getExam(examId);
+    const answerKey = await this.getAnswerKey(examId);
+
+    const normalizedAnswers = {};
+    Object.entries(answerPayload || {}).forEach(([key, value]) => {
+      const number = Number(key);
+      if (!Number.isInteger(number)) return;
+      if (!answerKey[number]) return;
+      let choiceIndex = null;
+      if (Number.isInteger(value)) {
+        choiceIndex = value;
+      } else if (typeof value === 'string' && value.trim()) {
+        const trimmed = value.trim();
+        if (CHOICE_TO_INDEX[trimmed] !== undefined) {
+          choiceIndex = CHOICE_TO_INDEX[trimmed];
+        } else {
+          const numeric = Number(trimmed);
+          if (Number.isInteger(numeric)) {
+            choiceIndex = numeric;
+          }
+        }
+      }
+      if (choiceIndex !== null && choiceIndex >= 0 && choiceIndex < CHOICES.length) {
+        normalizedAnswers[number] = choiceIndex;
+      }
+    });
+
+    const detail = exam.questions.map((question) => {
+      const correctIndex = answerKey[question.number];
+      const userIndex = normalizedAnswers[question.number];
+      const isAnswered = typeof userIndex === 'number';
+      const isCorrect = isAnswered && userIndex === correctIndex;
+      return {
+        number: question.number,
+        prompt: question.prompt,
+        promptLines: question.promptLines || question.prompt.split('\n'),
+        choices: question.choices,
+        correctIndex,
+        userIndex: isAnswered ? userIndex : null,
+        isAnswered,
+        isCorrect,
+        correctChoice: question.choices[correctIndex] || null,
+        userChoice: typeof userIndex === 'number' ? question.choices[userIndex] || null : null
+      };
+    });
+
+    const correctCount = detail.filter((item) => item.isCorrect).length;
+    const incorrectCount = detail.filter((item) => item.isAnswered && !item.isCorrect).length;
+    const unansweredCount = detail.filter((item) => !item.isAnswered).length;
+    const total = detail.length;
+
+    let studyOutcome = null;
+    if (userId) {
+      try {
+        const problemMap = await this.ensureMockProblems(exam, answerKey, examId);
+        studyOutcome = await this._recordStudyResults(userId, detail, problemMap);
+      } catch (error) {
+        console.warn('[mockExam] failed to record study session:', error?.message || error);
+      }
+    }
+
+    return {
+      examId: exam.examId,
+      title: exam.title,
+      total,
+      correctCount,
+      incorrectCount,
+      unansweredCount,
+      accuracy: total > 0 ? Math.round((correctCount / total) * 100) : 0,
+      detail,
+      stats: studyOutcome?.stats || null,
+      rank: studyOutcome?.rank || null,
+      updatedUser: studyOutcome?.updatedUser || null,
+      studySummary: studyOutcome?.summary || null
+    };
+  }
+
+  async getExplanation(questionNumber, examId = DEFAULT_EXAM_ID) {
+    const exam = await this.getExam(examId);
+    const answerKey = await this.getAnswerKey(examId);
+    const number = Number(questionNumber);
+
+    if (!Number.isInteger(number)) {
+      throw new Error('유효한 문항 번호가 아닙니다.');
+    }
+
+    const question = exam.questions.find((item) => item.number === number);
+    if (!question) {
+      throw new Error('해당 문항을 찾을 수 없습니다.');
+    }
+
+    if (!Number.isInteger(answerKey[number])) {
+      throw new Error('정답 정보를 찾을 수 없습니다.');
+    }
+
+    const cacheKey = `${examId}-${number}`;
+    if (this.explanationCache.has(cacheKey)) {
+      return {
+        questionNumber: number,
+        explanation: this.explanationCache.get(cacheKey),
+        cached: true
+      };
+    }
+
+    const openai = this._getOpenAI();
+    if (!openai) {
+      throw new Error('OpenAI API 키가 설정되지 않았습니다. 관리자에게 문의해주세요.');
+    }
+
+    const correctIndex = answerKey[number];
+    const correctLabel = CHOICES[correctIndex];
+    const promptLines = question.prompt.split('\n').map((line) => line.trim()).filter(Boolean);
+    const promptText = promptLines.join('\n');
+
+    const choiceLines = question.choices
+      .map((choice, idx) => `${CHOICES[idx]} ${choice.text}`)
+      .join('\n');
+
+    const messages = [
+      {
+        role: 'system',
+        content: '당신은 수능 영어를 지도하는 전문 튜터입니다. 설명은 한국어로 하되, 따뜻하고 격려하는 선생님 톤을 유지하세요.'
+      },
+      {
+        role: 'user',
+        content: [
+          `문항 번호: ${number}`,
+          '',
+          '[지문]',
+          promptText,
+          '',
+          '[선택지]',
+          choiceLines,
+          '',
+          `정답: ${correctLabel}`,
+          '',
+          '위 문항에 대해 학생이 정답을 맞히지 못했습니다. 정답이 옳은 이유와 나머지 선택지가 틀린 이유를 단계적으로 설명해 주세요.',
+          '설명은 한국어로, 다음 형식을 지켜 주세요:',
+          '1) 핵심 정답 이유 (간결하게)',
+          '2) 각 오답 선택지에 대한 피드백 (①~⑤ 순서, bullet 형식)',
+          '3) 마무리 응원의 한 마디'
+        ].join('\n')
+      }
+    ];
+
+    // Force High Quality Model for Explanation (gpt-4o)
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o', 
+      temperature: 0.5,
+      max_tokens: 1000,
+      messages
+    });
+
+    const explanation = response?.choices?.[0]?.message?.content?.trim();
+    if (!explanation) {
+      throw new Error('해설 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+    }
+
+    this.explanationCache.set(cacheKey, explanation);
+
+    return {
+      questionNumber: number,
+      explanation,
+      cached: false
+    };
+  }
+
+  _getOpenAI() {
+    if (this.openai || !process.env.OPENAI_API_KEY) {
+      return this.openai;
+    }
+    try {
+      const OpenAI = require('openai');
+      this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    } catch (error) {
+      console.error('[mockExam] OpenAI 초기화 실패:', error?.message || error);
+      this.openai = null;
+    }
+    return this.openai;
+  }
 
   async _loadExam(examId = DEFAULT_EXAM_ID) {
     const cacheFile = path.join(STORAGE_ROOT, examId, 'parsed_questions.json');
@@ -201,7 +388,7 @@ Rules:
         const parsed = await pdfParse(buffer);
         const text = this._normalizePdfText(parsed.text);
         
-        // Use AI Parser
+        // 2. Use AI Parser (gpt-4o-mini)
         let questions = [];
         try {
             questions = await this._parseWithAI(text);
@@ -218,7 +405,7 @@ Rules:
           questions
         };
         
-        // Save Cache
+        // 3. Save Cache for future speed
         try {
             fs.mkdirSync(path.dirname(cacheFile), { recursive: true });
             fs.writeFileSync(cacheFile, JSON.stringify(result, null, 2));
@@ -237,8 +424,6 @@ Rules:
     fallback.questionCount = fallback.questionCount || (fallback.questions ? fallback.questions.length : 0);
     return fallback;
   }
-
-  // ... (Rest of the file) ...
 
   async _loadAnswerKey(examId = DEFAULT_EXAM_ID) {
     const answerPath = getAnswerPath(examId);
@@ -279,7 +464,6 @@ Rules:
   }
 
   _extractQuestions(text) {
-    // Locate first question (18~45). Support "18.", "18)", "18 번" patterns.
     const startMatch = text.match(/\b(1[8-9]|[2-3]\d|4[0-5])[\.\)]?\s*(?:번)?\s/);
     if (!startMatch) {
       throw new Error('문항 18을 찾을 수 없습니다. PDF 구조가 변경된 것 같습니다.');
@@ -297,7 +481,6 @@ Rules:
         blocks.push(parsed);
       }
     }
-
     return blocks;
   }
 
