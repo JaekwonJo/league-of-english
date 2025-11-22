@@ -62,22 +62,22 @@ function buildPrompt({ passage, docTitle, manualExcerpt, variantTag, extraDirect
     `  \"question\": \"${SUMMARY_QUESTION}\",`,
     "  \"summarySentence\": \"... (A) ... (B) ....\",",
     "  \"options\": [",
-    "    \"\\u2460 phrase_A \\u2013 phrase_B\",",
-    "    \"\\u2461 ...\",",
-    "    \"\\u2462 ...\",",
-    "    \"\\u2463 ...\",",
-    "    \"\\u2464 ...\"",
+    "    \"(Correct) phrase_A \\u2013 phrase_B\",",
+    "    \"(Distractor) ...\",",
+    "    \"(Distractor) ...\",",
+    "    \"(Distractor) ...\",",
+    "    \"(Distractor) ...\"",
     "  ],",
-    "  \"correctAnswer\": 3,",
     "  \"explanation\": \"한국어 해설\",",
     "  \"sourceLabel\": \"\\ucd9c\\ucc98\u2502기관 연도 회차 문항 (pXX)\"",
     "}",
     "Rules:",
     "- SummarySentence must be a single English sentence (18-35 words) ending with a period and containing (A) and (B) exactly once.",
-    "- Provide five options labelled with circled digits (\\u2460-\\u2464). Each option is an English pair 'phrase_A \\u2013 phrase_B'.",
+    "- Provide exactly five options.",
+    "- IMPORTANT: Option Index 0 MUST be the Correct Answer. The other 4 options MUST be Distractors.",
+    "- Each option is an English pair 'phrase_A \\u2013 phrase_B'.",
     "- Each phrase must be a lowercase, 1-4 word verb or noun phrase that reads naturally in the sentence (no leading capital letters or full clauses).",
     "- Avoid reusing the same words that already appear immediately before or after (A) and (B); paraphrase with fresh vocabulary.",
-    "- Exactly one option must satisfy the passage's logic and polarity; the other four must contain distinct defects (narrow, broad, detail, counter-claim, metaphor-literal, role-swap, collocation break, definition).",
     "- Write the explanation in friendly, plain Korean summarising why (A)-(B) is correct. Use emojis (e.g., 💡, ✨) frequently. 말투는 친절한 존댓말(해요체).",
     "- sourceLabel must start with '출처│'.",
     "- Respond with JSON only (no Markdown fences).",
@@ -85,6 +85,15 @@ function buildPrompt({ passage, docTitle, manualExcerpt, variantTag, extraDirect
     directives.length ? "Adjustments based on previous validation errors:" : null,
     ...directives
   ].filter(Boolean).join('\n');
+}
+
+function shuffleArray(array) {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
 }
 
 function normalizeOptions(options) {
@@ -126,15 +135,20 @@ function normalizeOptions(options) {
 
   if (flat.length < CIRCLED_DIGITS.length) return null;
 
+  return flat.slice(0, CIRCLED_DIGITS.length);
+}
+
+function formatOptions(rawOptions) {
   const sanitized = [];
   for (let index = 0; index < CIRCLED_DIGITS.length; index += 1) {
-    const base = flat[index];
+    const base = rawOptions[index];
     if (!base) return null;
     let textValue = String(base).trim();
 
     textValue = textValue.replace(/^[\u2460-\u2468]\s*/, '');
     textValue = textValue.replace(/^([A-E])([.)-])(?=\S)/i, (_, letter) => letter.toUpperCase());
     textValue = textValue.replace(/^[0-9]+[.)]?\s*/, '');
+    textValue = textValue.replace(/(\(Correct\)|\(Distractor\))/gi, '').trim(); // Remove hints
     textValue = textValue.replace(/^([A-E])(?:[.)-]\s*|\s+)/i, '');
     textValue = textValue.trim();
 
@@ -155,24 +169,17 @@ function normalizeOptions(options) {
 
     sanitized.push(`${CIRCLED_DIGITS[index]} ${textValue}`);
   }
-
   return sanitized;
 }
 
 function parseAnswer(value, optionCount) {
+  // Legacy support
   if (value === null || value === undefined) return null;
-  const tokens = Array.isArray(value)
-    ? value
-    : String(value)
-        .replace(/[\[\]{}]/g, '')
-        .split(/[\s,;]+/);
-
+  const tokens = Array.isArray(value) ? value : String(value).replace(/[\[\]{}]/g, '').split(/[\s,;]+/);
   for (const token of tokens) {
     if (token === null || token === undefined) continue;
     const num = parseInt(String(token).trim(), 10);
-    if (Number.isFinite(num) && num >= 1 && num <= optionCount) {
-      return num;
-    }
+    if (Number.isFinite(num) && num >= 1 && num <= optionCount) return num;
   }
   return null;
 }
@@ -200,14 +207,21 @@ function coerceSummaryProblem(raw, context) {
     return null;
   }
 
-  const options = normalizeOptions(raw.options || raw.choices || raw.pairs || []);
-  if (!options || options.length !== CIRCLED_DIGITS.length) return null;
+  const rawOptions = normalizeOptions(raw.options || raw.choices || raw.pairs || []);
+  if (!rawOptions || rawOptions.length !== CIRCLED_DIGITS.length) return null;
 
-  const correct = parseAnswer(
-    raw.correctAnswer ?? raw.answer ?? raw.correctAnswers ?? raw.answers,
-    options.length
-  );
-  if (!correct) return null;
+  // Shuffle Options Logic
+  // We assume Index 0 is Correct (from prompt instruction).
+  const indices = [0, 1, 2, 3, 4];
+  const shuffledIndices = shuffleArray(indices);
+  
+  const shuffledOptions = shuffledIndices.map(i => rawOptions[i]);
+  const correctIndex = shuffledIndices.indexOf(0); // Find where the correct answer (index 0) went
+  
+  const formattedOptions = formatOptions(shuffledOptions);
+  if (!formattedOptions) return null;
+
+  const correct = correctIndex + 1; // 1-based
 
   const explanation = String(raw.explanation || raw.rationale || "").trim();
   if (!explanation) return null;
@@ -242,7 +256,7 @@ function coerceSummaryProblem(raw, context) {
     mainText: originalPassage, // STRICT: Force original passage
     text: originalPassage,     // STRICT: Force original passage
     summarySentence,
-    options,
+    options: formattedOptions,
     answer: String(correct),
     correctAnswer: String(correct),
     explanation,

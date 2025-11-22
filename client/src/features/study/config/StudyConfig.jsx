@@ -199,7 +199,6 @@ const StudyConfig = ({
 
       {error && <div style={styles.errorBox}>❗️ {error}</div>}
       {content}
-      {headerSlot && <div style={styles.headerSlot}>{headerSlot}</div>}
       <PassagePreviewModal
         open={Boolean(previewPassage)}
         passage={previewPassage}
