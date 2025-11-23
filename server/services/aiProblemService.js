@@ -214,7 +214,12 @@ class AIProblemService {
   getGemini() {
     if (!process.env.GEMINI_API_KEY) return null;
     if (!this._gemini && GoogleGenerativeAI) {
-      this._gemini = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+      try {
+        this._gemini = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+      } catch (e) {
+        console.warn("[AI] Gemini init failed:", e);
+        return null;
+      }
     }
     return this._gemini;
   }
