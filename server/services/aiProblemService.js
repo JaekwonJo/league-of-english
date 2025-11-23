@@ -83,10 +83,17 @@ const {
 } = topic;
 
 let OpenAI = null;
+let GoogleGenerativeAI = null;
 try {
   OpenAI = require("openai");
 } catch (error) {
   console.warn("[aiProblemService] OpenAI SDK unavailable:", error?.message || error);
+}
+try {
+  const pkg = require("@google/generative-ai");
+  GoogleGenerativeAI = pkg.GoogleGenerativeAI;
+} catch (error) {
+  console.warn("[aiProblemService] Gemini SDK unavailable:", error?.message || error);
 }
 
 // Configurable OpenAI models (fallbacks preserved)
@@ -172,6 +179,7 @@ class AIProblemService {
     this._openai = null;
     this.queue = new OpenAIQueue(() => this.getOpenAI());
     this.repository = createProblemRepository(database);
+    this._gemini = null;
     this._grammarVariantQueue = [];
     this._grammarVariantSignature = '';
     this._vocabularyVariantQueue = [];
@@ -203,8 +211,91 @@ class AIProblemService {
     }
   }
 
+  getGemini() {
+    if (!process.env.GEMINI_API_KEY) return null;
+    if (!this._gemini && GoogleGenerativeAI) {
+      this._gemini = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    }
+    return this._gemini;
+  }
+
+  async _callGemini(config) {
+    const genAI = this.getGemini();
+    if (!genAI) throw new Error("Gemini client not initialized");
+
+    // Map OpenAI models to Gemini models
+    let modelName = "gemini-1.5-pro"; // Default SOTA
+    const requestedModel = String(config.model || "").toLowerCase();
+    if (requestedModel.includes("mini") || requestedModel.includes("3.5")) {
+      modelName = "gemini-1.5-flash";
+    }
+    
+    let systemInstruction = undefined;
+    const contents = [];
+    
+    // Convert messages
+    if (Array.isArray(config.messages)) {
+      for (const msg of config.messages) {
+        if (msg.role === "system") {
+          systemInstruction = msg.content;
+        } else if (msg.role === "user") {
+          contents.push({ role: "user", parts: [{ text: msg.content }] });
+        } else if (msg.role === "assistant") {
+          contents.push({ role: "model", parts: [{ text: msg.content }] });
+        }
+      }
+    }
+
+    const generationConfig = {
+      temperature: config.temperature,
+      maxOutputTokens: config.max_tokens,
+    };
+    // Force JSON if prompt implies it (simple heuristic or explicit config)
+    if (config.response_format?.type === "json_object" || String(systemInstruction || "").includes("JSON")) {
+       generationConfig.responseMimeType = "application/json";
+    }
+
+    const model = genAI.getGenerativeModel({ 
+      model: modelName,
+      systemInstruction,
+      generationConfig
+    });
+
+    const result = await model.generateContent({ contents });
+    const responseText = result.response.text();
+
+    return {
+      choices: [
+        {
+          message: {
+            content: responseText,
+            role: "assistant"
+          }
+        }
+      ]
+    };
+  }
+
   callChatCompletion(config, options = {}) {
-    return this.queue.callChatCompletion(config, options);
+    return this.queue.enqueue(async (openaiClient) => {
+      // 1. Try Gemini if configured
+      if (process.env.GEMINI_API_KEY) {
+        try {
+          return await this._callGemini(config);
+        } catch (geminiError) {
+          // Fallback only if it's a transient error? No, better to fail or fallback if key is invalid.
+          // For now, let's log and try OpenAI if available as backup
+          console.warn("[AI] Gemini failed, trying OpenAI fallback:", geminiError.message);
+          if (!openaiClient) throw geminiError;
+        }
+      }
+      
+      // 2. Use OpenAI
+      if (!openaiClient) {
+        throw new Error("No AI client available (OpenAI or Gemini)");
+      }
+      return openaiClient.chat.completions.create(config);
+    }, options);
   }
 
   async markExposures(userId, problemIds = []) {
