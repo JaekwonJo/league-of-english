@@ -18,11 +18,11 @@ const HomePage = () => {
         // Simulate API delay
         await new Promise(resolve => setTimeout(resolve, 600));
         setMission({
-          type: 'vocabulary',
-          title: '오늘의 단어 학습',
-          subtitle: '하루 30단어, 꾸준함이 실력입니다.',
-          action: 'start_vocab',
-          progress: 0 // 0% started
+          type: 'tutor',
+          title: 'AI 문법 튜터',
+          subtitle: '제미나이 선생님과 대화하며 문법 완전 정복!',
+          action: 'start_tutor',
+          progress: 0
         });
       } catch (err) {
         console.error(err);
@@ -34,9 +34,8 @@ const HomePage = () => {
   }, []);
 
   const handleMissionStart = () => {
-    if (mission?.action === 'start_vocab') {
-      window.location.href = '/vocabulary';
-    }
+    // Phase 2: Link to AI Tutor
+    window.location.href = '/grammar-tutor';
   };
 
   const menuItems = [

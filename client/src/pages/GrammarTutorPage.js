@@ -1,0 +1,265 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { GRAMMAR_CHAPTERS } from '../config/grammarChapters';
+import { api } from '../services/api.service';
+import CommonHero from '../components/common/CommonHero';
+
+const GrammarTutorPage = () => {
+  const [activeTopic, setActiveTopic] = useState(null);
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const messagesEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [history, loading]);
+
+  const startSession = async (chapter) => {
+    setActiveTopic(chapter);
+    setHistory([]);
+    await sendMessage(chapter.title + ": " + chapter.subtitle, []);
+  };
+
+  const sendMessage = async (topic, currentHistory, userAction = null) => {
+    setLoading(true);
+    
+    // Optimistically add user choice bubble if it exists
+    let newHistory = [...currentHistory];
+    if (userAction) {
+      newHistory.push({ role: 'user', text: userAction.label });
+    }
+    setHistory(newHistory);
+
+    try {
+      // Call backend API
+      const response = await api.post('/study/tutor/chat', {
+        topic: typeof topic === 'string' ? topic : topic.title,
+        history: newHistory.map(h => ({ role: h.role, text: h.text })) // Sanitize
+      });
+
+      setHistory(prev => [
+        ...prev, 
+        { 
+          role: 'ai', 
+          text: response.message, 
+          options: response.options 
+        }
+      ]);
+    } catch (error) {
+      setHistory(prev => [
+        ...prev, 
+        { 
+          role: 'ai', 
+          text: "잠시 연결이 불안정해요. 다시 시도해볼까요?", 
+          options: [{ label: "다시 시도", action: "retry" }] 
+        }
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOptionClick = (option) => {
+    if (loading) return;
+    sendMessage(activeTopic, history, option);
+  };
+
+  // 1. Chapter Selection View
+  if (!activeTopic) {
+    return (
+      <div style={styles.container}>
+        <CommonHero 
+          title="AI 문법 튜터 🤖" 
+          subtitle="제미나이 선생님과 함께 대화하며 문법을 정복해보세요." 
+        />
+        <div style={styles.grid}>
+          {GRAMMAR_CHAPTERS.map(chapter => (
+            <button 
+              key={chapter.id} 
+              style={styles.card}
+              onClick={() => startSession(chapter)}
+              className="tilt-hover"
+            >
+              <div style={styles.icon}>{chapter.icon}</div>
+              <div style={styles.cardContent}>
+                <div style={styles.cardTitle}>{chapter.title}</div>
+                <div style={styles.cardSub}>{chapter.subtitle}</div>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // 2. Chat Interface
+  return (
+    <div style={styles.chatContainer}>
+      <div style={styles.chatHeader}>
+        <button onClick={() => setActiveTopic(null)} style={styles.backButton}>← 나가기</button>
+        <h2 style={styles.chatTitle}>{activeTopic.title}</h2>
+      </div>
+
+      <div style={styles.messageList}>
+        {history.map((msg, idx) => (
+          <div key={idx} style={msg.role === 'user' ? styles.userMsgWrapper : styles.aiMsgWrapper}>
+            <div style={msg.role === 'user' ? styles.userBubble : styles.aiBubble}>
+              {msg.text}
+            </div>
+            {msg.role === 'ai' && msg.options && (
+              <div style={styles.optionsGrid}>
+                {msg.options.map((opt, optIdx) => (
+                  <button 
+                    key={optIdx} 
+                    style={styles.optionChip}
+                    onClick={() => handleOptionClick(opt)}
+                    disabled={idx !== history.length - 1} // Disable old options
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+        {loading && (
+          <div style={styles.aiMsgWrapper}>
+            <div style={styles.aiBubble}>
+              <span className="typing-dot">.</span>
+              <span className="typing-dot">.</span>
+              <span className="typing-dot">.</span>
+            </div>
+          </div>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+    </div>
+  );
+};
+
+const styles = {
+  container: {
+    maxWidth: '1000px',
+    margin: '0 auto',
+    padding: '20px',
+  },
+  grid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+    gap: '16px',
+    marginTop: '30px'
+  },
+  card: {
+    display: 'flex',
+    alignItems: 'center',
+    padding: '20px',
+    background: 'rgba(30, 41, 59, 0.6)',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    borderRadius: '16px',
+    color: 'white',
+    cursor: 'pointer',
+    textAlign: 'left',
+    transition: 'all 0.2s'
+  },
+  icon: {
+    fontSize: '32px',
+    marginRight: '16px'
+  },
+  cardTitle: {
+    fontWeight: 'bold',
+    fontSize: '16px',
+    marginBottom: '4px'
+  },
+  cardSub: {
+    fontSize: '13px',
+    color: '#94a3b8'
+  },
+  // Chat Styles
+  chatContainer: {
+    maxWidth: '600px',
+    margin: '0 auto',
+    height: '90vh',
+    display: 'flex',
+    flexDirection: 'column',
+    background: '#0f172a'
+  },
+  chatHeader: {
+    padding: '16px',
+    borderBottom: '1px solid #334155',
+    display: 'flex',
+    alignItems: 'center',
+    background: 'rgba(15, 23, 42, 0.9)',
+    backdropFilter: 'blur(10px)',
+    position: 'sticky',
+    top: 0,
+    zIndex: 10
+  },
+  backButton: {
+    background: 'none',
+    border: 'none',
+    color: '#94a3b8',
+    cursor: 'pointer',
+    marginRight: '16px',
+    fontSize: '14px'
+  },
+  chatTitle: {
+    margin: 0,
+    fontSize: '18px',
+    color: 'white'
+  },
+  messageList: {
+    flex: 1,
+    overflowY: 'auto',
+    padding: '20px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '20px'
+  },
+  userMsgWrapper: {
+    alignSelf: 'flex-end',
+    maxWidth: '80%'
+  },
+  aiMsgWrapper: {
+    alignSelf: 'flex-start',
+    maxWidth: '90%'
+  },
+  userBubble: {
+    background: '#3b82f6',
+    color: 'white',
+    padding: '12px 16px',
+    borderRadius: '16px 16px 0 16px',
+    fontSize: '15px'
+  },
+  aiBubble: {
+    background: '#1e293b',
+    color: '#e2e8f0',
+    padding: '16px',
+    borderRadius: '16px 16px 16px 0',
+    fontSize: '15px',
+    lineHeight: '1.5',
+    whiteSpace: 'pre-wrap',
+    border: '1px solid #334155'
+  },
+  optionsGrid: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '8px',
+    marginTop: '12px'
+  },
+  optionChip: {
+    background: 'rgba(59, 130, 246, 0.1)',
+    border: '1px solid #3b82f6',
+    color: '#60a5fa',
+    padding: '8px 14px',
+    borderRadius: '20px',
+    fontSize: '14px',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    fontWeight: '600'
+  },
+};
+
+export default GrammarTutorPage;

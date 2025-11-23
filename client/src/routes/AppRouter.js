@@ -25,7 +25,8 @@ const pageComponents = {
   MockExamPage: lazy(() => import('../pages/MockExamPage')),
   VideoPlaylistPage: lazy(() => import('../pages/VideoPlaylistPage')),
   LoginPage: lazy(() => import('../pages/LoginPage')),
-  StudyHistoryPage: lazy(() => import('../pages/StudyHistoryPage'))
+  StudyHistoryPage: lazy(() => import('../pages/StudyHistoryPage')),
+  GrammarTutorPage: lazy(() => import('../pages/GrammarTutorPage'))
 };
 
 const AppRouter = () => {

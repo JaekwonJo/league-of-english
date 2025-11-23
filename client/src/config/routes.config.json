@@ -82,6 +82,14 @@
       "roles": ["student", "teacher", "admin"]
     },
     {
+      "path": "/grammar-tutor",
+      "name": "문법 튜터",
+      "icon": "MessageCircle",
+      "component": "GrammarTutorPage",
+      "requiresAuth": true,
+      "roles": ["student", "teacher", "admin"]
+    },
+    {
       "path": "/study/history",
       "name": "문제 보관함",
       "icon": "Archive",

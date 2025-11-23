@@ -71,4 +71,67 @@ router.delete('/session', verifyToken, async (req, res) => {
   }
 });
 
+const aiProblemService = require('../services/aiProblemService');
+
+router.post('/tutor/chat', verifyToken, async (req, res) => {
+  try {
+    // payload: { topic, history: [{ role, text }] }
+    const { topic, history } = req.body;
+    
+    // Use Gemini via AIProblemService
+    const genAI = aiProblemService.getGemini();
+    if (!genAI) {
+      return res.status(503).json({ message: 'AI 튜터가 잠시 휴식 중이에요. (API Key Missing)' });
+    }
+
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-1.5-pro",
+      generationConfig: { responseMimeType: "application/json" }
+    });
+
+    const systemPrompt = `
+      You are a friendly, encouraging Middle School English Grammar Tutor named "Gemini Teacher".
+      
+      **Core Rules:**
+      1. **Interaction Style:** NEVER ask open-ended questions. ALWAYS provide specific, clickable choices in the \`options\` array.
+      2. **Persona:** Use emojis (✨, 💡, 🚀), be concise (max 3-4 sentences per bubble), and be super supportive.
+      3. **Goal:** Explain the grammar concept '${topic}' step-by-step.
+      4. **Response Format:** Return ONLY JSON.
+      
+      **JSON Structure:**
+      {
+        "message": "Here is the explanation text...",
+        "options": [
+          { "label": "Button Text 1", "action": "next_step_id" },
+          { "label": "Button Text 2", "action": "explain_simpler" }
+        ]
+      }
+
+      **Context:**
+      The user is a student who just clicked a button.
+      Current Topic: ${topic}
+      Conversation History: ${JSON.stringify(history || [])}
+      
+      **Instructions:**
+      - If history is empty, introduce the topic briefly and ask if they want a "Core Concept" or "Example Sentences".
+      - If user asked for "Problem", generate a simple multiple-choice question in the \`message\` and put the answers in \`options\` (action="submit_answer_1", etc).
+      - If user answered correctly, praise them and ask to move to the next chapter or try a harder one.
+      - If user answered incorrectly, explain why kindly and offer to try again.
+    `;
+
+    const result = await model.generateContent(systemPrompt);
+    const text = result.response.text();
+    const jsonResponse = JSON.parse(text);
+
+    res.json(jsonResponse);
+
+  } catch (error) {
+    console.error('[Tutor] Error:', error);
+    res.status(500).json({ 
+      message: '튜터가 생각을 정리하는 중 오류가 났어요.',
+      options: [{ label: '다시 시도하기', action: 'retry' }] 
+    });
+  }
+});
+
 module.exports = router;

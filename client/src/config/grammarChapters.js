@@ -1,0 +1,20 @@
+export const GRAMMAR_CHAPTERS = [
+  { id: 1, title: "Chapter 1", subtitle: "문장의 기초와 5형식 동사", icon: "🏗️" },
+  { id: 2, title: "Chapter 2", subtitle: "시제 (현재, 과거, 미래, 완료)", icon: "⏳" },
+  { id: 3, title: "Chapter 3", subtitle: "조동사 (Can, Will, Must...)", icon: "💪" },
+  { id: 4, title: "Chapter 4", subtitle: "수동태 (Be + p.p)", icon: "🔄" },
+  { id: 5, title: "Chapter 5", subtitle: "명사와 관사", icon: "🍎" },
+  { id: 6, title: "Chapter 6", subtitle: "대명사", icon: "👉" },
+  { id: 7, title: "Chapter 7", subtitle: "부정사 (To 부정사)", icon: "🚀" },
+  { id: 8, title: "Chapter 8", subtitle: "동명사 (Verb-ing)", icon: "🏃" },
+  { id: 9, title: "Chapter 9", subtitle: "분사 (현재분사, 과거분사)", icon: "🍂" },
+  { id: 10, title: "Chapter 10", subtitle: "형용사", icon: "✨" },
+  { id: 11, title: "Chapter 11", subtitle: "부사", icon: "💨" },
+  { id: 12, title: "Chapter 12", subtitle: "가정법 (If I were...)", icon: "💭" },
+  { id: 13, title: "Chapter 13", subtitle: "비교구문 (er, more, as...as)", icon: "⚖️" },
+  { id: 14, title: "Chapter 14", subtitle: "관계사 (Who, Which, That)", icon: "🔗" },
+  { id: 15, title: "Chapter 15", subtitle: "접속사 (And, But, Because)", icon: "🌉" },
+  { id: 16, title: "Chapter 16", subtitle: "전치사 (In, On, At)", icon: "📍" },
+  { id: 17, title: "Chapter 17", subtitle: "일치와 화법", icon: "🗣️" },
+  { id: 18, title: "Chapter 18", subtitle: "특수구문 & 속담", icon: "🧩" }
+];
