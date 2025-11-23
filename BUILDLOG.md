@@ -1,3 +1,10 @@
+## 2025-11-23 (Restore server test runner)
+- Issue: `npm test`가 `server/tests` 폴더를 모듈로 잘못 해석해 즉시 실패하며 서버 QA 흐름이 중단됐습니다.
+- Cause: Node 22 환경에서 `node --test`에 디렉터리만 넘기면 모듈 해석을 시도해 `MODULE_NOT_FOUND`가 발생했습니다.
+- Fix: 테스트 스크립트를 `server/tests/*.test.js` 패턴으로 명시해 모든 단위 테스트 파일을 확실히 로드하도록 수정했습니다.
+- Files: package.json, PROJECT_STATE.md, README.md, BUILDLOG.md.
+- Verification: `npm test`로 테스트 러너가 정상 실행됨을 확인했습니다. (기존 데이터/프롬프트 단위 테스트 4건은 여전히 조정 필요)
+
 ## 2025-11-22 (Exam AI Parser, Problem Logic Fixes, UI Refresh)
 - Issue: 기출 PDF 파싱 실패(2단 편집), 어휘 문제 정답 오류(원문 동일), 빈칸 해설 불일치, 요약 문제 논리 오류, 홈 디자인 개선 필요.
 - Fix: `import-exam-pdf.js`를 `gpt-4o-mini` 기반으로 전면 교체하여 텍스트 구조화 성능 극대화. `vocabulary.js`/`blank.js`/`summaryTemplate.js`의 생성/검증 로직을 대수술하여 정답/해설 무결성 확보. `HomePage.js` 및 `index.css`에 3D 트리/Glassmorphism 적용.
