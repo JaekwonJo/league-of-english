@@ -84,9 +84,9 @@ router.post('/tutor/chat', verifyToken, async (req, res) => {
       return res.status(503).json({ message: 'AI 튜터가 잠시 휴식 중이에요. (API Key Missing)' });
     }
 
+    // Fallback: Use text generation if JSON mode fails or is not supported
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-pro",
-      generationConfig: { responseMimeType: "application/json" }
+      model: "gemini-1.5-flash", // Switch to flash for speed/stability
     });
 
     const systemPrompt = `
@@ -96,7 +96,7 @@ router.post('/tutor/chat', verifyToken, async (req, res) => {
       1. **Interaction Style:** NEVER ask open-ended questions. ALWAYS provide specific, clickable choices in the \`options\` array.
       2. **Persona:** Use emojis (✨, 💡, 🚀), be concise (max 3-4 sentences per bubble), and be super supportive.
       3. **Goal:** Explain the grammar concept '${topic}' step-by-step.
-      4. **Response Format:** Return ONLY JSON.
+      4. **Response Format:** Return ONLY raw JSON. No Markdown fences.
       
       **JSON Structure:**
       {
@@ -121,7 +121,10 @@ router.post('/tutor/chat', verifyToken, async (req, res) => {
 
     const result = await model.generateContent(systemPrompt);
     const text = result.response.text();
-    const jsonResponse = JSON.parse(text);
+    
+    // Clean up markdown fences if present
+    const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    const jsonResponse = JSON.parse(cleanText);
 
     res.json(jsonResponse);
 
