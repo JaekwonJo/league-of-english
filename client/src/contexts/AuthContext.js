@@ -18,22 +18,44 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // 초기 로드시 localStorage에서 유저 정보 확인
+  // 초기 로드시 토큰 검증
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
-    
-    if (token && userData) {
-      try {
-        const parsedUser = JSON.parse(userData);
-        setUser(parsedUser);
-      } catch (error) {
-        console.error('Failed to parse user data:', error);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+    const initAuth = async () => {
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        setLoading(false);
+        return;
       }
-    }
-    setLoading(false);
+
+      // 1. 낙관적 UI 업데이트 (localStorage 데이터 우선 사용)
+      const cachedUser = localStorage.getItem('user');
+      if (cachedUser) {
+        try {
+          setUser(JSON.parse(cachedUser));
+        } catch (e) { /* ignore */ }
+      }
+
+      // 2. 서버 검증
+      try {
+        const response = await api.auth.me();
+        if (response && response.user) {
+          setUser(response.user);
+          localStorage.setItem('user', JSON.stringify(response.user));
+        } else {
+          throw new Error('Invalid session');
+        }
+      } catch (error) {
+        console.warn('[Auth] Session expired or invalid:', error);
+        apiService.clearToken();
+        localStorage.removeItem('user');
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initAuth();
   }, []);
 
   // 로그인 함수
