@@ -1,165 +1,43 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api.service';
-import tierConfig from '../config/tierConfig.json';
 import CommonHero from '../components/common/CommonHero';
-
-// 🎄 3D Christmas Tree Component (Enhanced)
-const ChristmasTree3D = () => (
-  <div className="christmas-tree-wrapper" aria-hidden="true" style={{
-    position: 'absolute',
-    right: '-50px',
-    bottom: '-40px',
-    transform: 'scale(1.5)', // Make it bigger!
-    opacity: 0.9,
-    pointerEvents: 'none',
-    zIndex: 0
-  }}>
-    <div className="christmas-tree-3d">
-      <div className="tree-star">⭐</div>
-      <div className="tree-layer"></div>
-      <div className="tree-layer"></div>
-      <div className="tree-layer"></div>
-      <div className="tree-layer"></div>
-    </div>
-  </div>
-);
-
-// ✨ Gemini Style Glass Card (Dark & Gold Theme)
-const GeminiCard = ({ icon, title, subtitle, onClick, color }) => {
-  return (
-    <button
-      className="tilt-hover"
-      onClick={onClick}
-      style={{
-        position: 'relative',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'flex-start',
-        justifyContent: 'center',
-        padding: '24px',
-        borderRadius: '24px',
-        // Dark Glassmorphism
-        background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.85) 0%, rgba(15, 23, 42, 0.95) 100%)',
-        border: '1px solid rgba(255, 215, 0, 0.2)', // Subtle Gold Border
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-        backdropFilter: 'blur(12px)',
-        cursor: 'pointer',
-        textAlign: 'left',
-        transition: 'all 0.3s ease',
-        overflow: 'hidden',
-        minHeight: '160px',
-        color: '#fff'
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = 'rgba(255, 215, 0, 0.6)'; // Bright Gold on Hover
-        e.currentTarget.style.transform = 'translateY(-5px)';
-        e.currentTarget.style.boxShadow = `0 15px 40px ${color}40`;
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = 'rgba(255, 215, 0, 0.2)';
-        e.currentTarget.style.transform = 'translateY(0)';
-        e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.3)';
-      }}
-    >
-      <div
-        style={{
-          fontSize: '3.2rem',
-          marginBottom: '16px',
-          filter: `drop-shadow(0 0 15px ${color}80)`, // Neon Glow
-          transition: 'transform 0.3s ease'
-        }}
-      >
-        {icon}
-      </div>
-      <div style={{ fontSize: '1.35rem', fontWeight: 800, color: '#F8FAFC', marginBottom: '6px', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
-        {title}
-      </div>
-      <div style={{ fontSize: '0.95rem', color: '#CBD5E1', opacity: 0.9, fontWeight: 500 }}>
-        {subtitle}
-      </div>
-      {/* Background Gradient Effect */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          right: 0,
-          width: '100px',
-          height: '100px',
-          background: `radial-gradient(circle at top right, ${color}30, transparent 70%)`,
-          pointerEvents: 'none',
-          zIndex: 0
-        }}
-      />
-    </button>
-  );
-};
 
 const HomePage = () => {
   const { user } = useAuth();
-  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [reviewQueue, setReviewQueue] = useState({ total: 0, problems: [] });
-  const [isMobile, setIsMobile] = useState(() => (typeof window !== 'undefined' ? window.innerWidth <= 768 : false));
+  const [mission, setMission] = useState(null);
+  const [showAllMenu, setShowAllMenu] = useState(false);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return undefined;
-    const handleResize = () => setIsMobile(window.innerWidth <= 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  useEffect(() => {
-    const fetchData = async () => {
+    // Mock mission logic for Phase 1
+    // In real Phase 2/3, this will come from the backend based on study history
+    const loadMission = async () => {
+      setLoading(true);
       try {
-        setLoading(true);
-        const [statsData, reviewData] = await Promise.all([
-          api.problems.stats(),
-          api.problems.reviewQueue({ limit: 3 })
-        ]);
-        setStats(statsData);
-        setReviewQueue({
-          total: Number(reviewData?.total) || 0,
-          problems: Array.isArray(reviewData?.problems) ? reviewData.problems.slice(0, 3) : []
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 600));
+        setMission({
+          type: 'vocabulary',
+          title: '오늘의 단어 학습',
+          subtitle: '하루 30단어, 꾸준함이 실력입니다.',
+          action: 'start_vocab',
+          progress: 0 // 0% started
         });
-      } catch (error) {
-        console.error('데이터 로드 실패:', error);
+      } catch (err) {
+        console.error(err);
       } finally {
         setLoading(false);
       }
     };
-    fetchData();
+    loadMission();
   }, []);
 
-  const currentTier = useMemo(() => {
-    const points = user?.points || 0;
-    return (
-      tierConfig.tiers.find(
-        (tier) => points >= tier.minLP && (tier.maxLP === -1 || points <= tier.maxLP)
-      ) || tierConfig.tiers[0]
-    );
-  }, [user]);
-
-  const nextTier = useMemo(() => {
-    const index = tierConfig.tiers.findIndex((tier) => tier.id === currentTier.id);
-    return tierConfig.tiers[index + 1] || null;
-  }, [currentTier]);
-
-  const progress = useMemo(() => {
-    if (!nextTier) return 100;
-    const points = user?.points || 0;
-    const range = nextTier.minLP - currentTier.minLP;
-    const progressValue = points - currentTier.minLP;
-    return Math.min(100, Math.max(0, (progressValue / range) * 100));
-  }, [currentTier, nextTier, user]);
-
-  const statCards = [
-    { label: '총 학습 세션', value: stats?.totalSessions ?? 0, suffix: '회' },
-    { label: '정답률', value: stats?.accuracy ?? 0, suffix: '%', isPercent: true },
-    { label: '누적 문제 수', value: stats?.totalProblems ?? 0, suffix: '문' },
-    { label: '누적 정답 수', value: stats?.totalCorrect ?? 0, suffix: '문' },
-    { label: '지난 7일 학습', value: stats?.weeklySessions ?? 0, suffix: '회' }
-  ];
+  const handleMissionStart = () => {
+    if (mission?.action === 'start_vocab') {
+      window.location.href = '/vocabulary';
+    }
+  };
 
   const menuItems = [
     { icon: '🧠', title: '어휘 훈련', subtitle: '핵심 단어 마스터하기', color: '#8B5CF6', link: '/vocabulary' },
@@ -183,124 +61,225 @@ const HomePage = () => {
 
   return (
     <div style={styles.container}>
-      {/* Hero Section with 3D Tree */}
-      <CommonHero
-        badge="Winter Edition"
-        title={`Merry Christmas,\n${user?.name || '관리자'}님! 🎅`}
-        subtitle="따뜻한 연말, 하루 30분 투자로 완벽한 학습 루틴을 만들어보세요."
-        right={<ChristmasTree3D />}
-      >
-        {/* No additional children needed here */}
-      </CommonHero>
+      {/* Greeting Section */}
+      <header style={styles.header}>
+        <h1 style={styles.greeting}>
+          반갑습니다, <span style={styles.nameAccent}>{user?.name || '사용자'}</span>님! 👋
+        </h1>
+        <p style={styles.subGreeting}>오늘도 목표를 향해 한 걸음 더 나아가볼까요?</p>
+      </header>
 
-      {/* 3x3 Menu Grid */}
-      <section style={styles.menuGrid}>
-        {menuItems.map((item) => (
-          <GeminiCard
-            key={item.title}
-            icon={item.icon}
-            title={item.title}
-            subtitle={item.subtitle}
-            color={item.color}
-            onClick={() => (window.location.href = item.link)}
-          />
-        ))}
-      </section>
-
-      {/* Tier & Stats Dashboard */}
-      <section style={styles.dashboardSection}>
-        <div style={styles.tierCard}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '24px' }}>
-            <div style={{ fontSize: '4rem' }}>{currentTier.icon}</div>
-            <div>
-              <h2 style={{ fontSize: '2rem', fontWeight: 900, margin: 0, color: currentTier.color }}>{currentTier.name}</h2>
-              <p style={{ fontSize: '1.2rem', margin: '4px 0 0', color: 'var(--text-secondary)' }}>
-                {(user?.points || 0).toLocaleString()} LP
-              </p>
+      {/* Main Mission Card (Toss-style Single CTA) */}
+      <main style={styles.mainSection}>
+        <div 
+          className="tilt-hover" 
+          style={styles.missionCard} 
+          onClick={handleMissionStart}
+          role="button"
+          tabIndex={0}
+        >
+          <div style={styles.missionBadge}>추천 학습</div>
+          <div style={styles.missionContent}>
+            <div style={styles.missionIcon}>📚</div>
+            <div style={styles.missionText}>
+              <h2 style={styles.missionTitle}>{mission?.title}</h2>
+              <p style={styles.missionSubtitle}>{mission?.subtitle}</p>
             </div>
+            <div style={styles.arrowIcon}>➜</div>
           </div>
-          
-          {nextTier ? (
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                <span>다음 티어: {nextTier.name}</span>
-                <span>{Math.max(0, nextTier.minLP - (user?.points || 0))} LP 남음</span>
-              </div>
-              <div style={{ width: '100%', height: '12px', background: 'var(--surface-border)', borderRadius: '6px', overflow: 'hidden' }}>
-                <div style={{ width: `${progress}%`, height: '100%', background: currentTier.color, transition: 'width 1s ease' }} />
-              </div>
-            </div>
-          ) : (
-            <p style={{ fontWeight: 700, color: 'var(--accent-primary)' }}>최고 등급 달성! 축하합니다! 🎉</p>
-          )}
-        </div>
-
-        <div style={styles.statsCard}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, margin: 0 }}>오늘의 요약 🦅</h3>
-            <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>페이스 체크</span>
-          </div>
-          <div style={styles.miniStatGrid}>
-            {statCards.map((stat) => (
-              <div key={stat.label} style={styles.miniStatItem}>
-                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>{stat.label}</div>
-                <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                  {stat.isPercent ? stat.value.toFixed(1) : stat.value.toLocaleString()}
-                  <span style={{ fontSize: '0.9rem', fontWeight: 600, marginLeft: '2px' }}>{stat.suffix}</span>
-                </div>
-              </div>
-            ))}
+          <div style={styles.missionProgress}>
+            <div style={styles.progressBar}><div style={{width: '5%', height: '100%', background: 'var(--accent-primary)'}}></div></div>
+            <span style={styles.progressText}>시작 전</span>
           </div>
         </div>
-      </section>
+      </main>
+
+      {/* Secondary Toggle for All Menus */}
+      <div style={styles.menuToggleSection}>
+        <button 
+          style={styles.menuToggleButton} 
+          onClick={() => setShowAllMenu(!showAllMenu)}
+        >
+          {showAllMenu ? '전체 메뉴 접기 ▲' : '다른 학습 메뉴 보기 ▼'}
+        </button>
+      </div>
+
+      {/* Grid Menu (Hidden by default) */}
+      {showAllMenu && (
+        <section style={styles.menuGrid} className="fade-in-up">
+          {menuItems.map((item) => (
+            <div 
+              key={item.title} 
+              style={{...styles.menuItem, borderColor: item.color}}
+              onClick={() => window.location.href = item.link}
+            >
+              <span style={{fontSize: '24px', marginRight: '12px'}}>{item.icon}</span>
+              <div>
+                <div style={styles.menuItemTitle}>{item.title}</div>
+                <div style={styles.menuItemSub}>{item.subtitle}</div>
+              </div>
+            </div>
+          ))}
+        </section>
+      )}
     </div>
   );
 };
 
 const styles = {
   container: {
-    maxWidth: '1000px',
+    maxWidth: '600px', // Mobile-first narrow width like an app
     margin: '0 auto',
-    padding: '20px',
+    padding: '40px 20px',
+    minHeight: '90vh',
     display: 'flex',
     flexDirection: 'column',
-    gap: '40px'
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+  },
+  header: {
+    marginBottom: '40px',
+    textAlign: 'left',
+  },
+  greeting: {
+    fontSize: '28px',
+    fontWeight: '800',
+    color: 'var(--text-primary)',
+    margin: '0 0 8px 0',
+    letterSpacing: '-0.5px',
+  },
+  nameAccent: {
+    background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+  },
+  subGreeting: {
+    fontSize: '16px',
+    color: 'var(--text-secondary)',
+    fontWeight: '500',
+    margin: 0,
+  },
+  mainSection: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center', // Center vertically if space allows
+    marginBottom: '40px',
+  },
+  missionCard: {
+    background: 'rgba(30, 41, 59, 0.7)', // Dark glass
+    backdropFilter: 'blur(16px)',
+    borderRadius: '24px',
+    padding: '32px',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    boxShadow: '0 20px 40px rgba(0, 0, 0, 0.2)',
+    cursor: 'pointer',
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  missionBadge: {
+    position: 'absolute',
+    top: '20px',
+    right: '20px',
+    background: 'rgba(99, 102, 241, 0.2)',
+    color: '#818CF8',
+    fontSize: '12px',
+    fontWeight: '700',
+    padding: '4px 10px',
+    borderRadius: '20px',
+  },
+  missionContent: {
+    display: 'flex',
+    alignItems: 'center',
+    marginBottom: '24px',
+  },
+  missionIcon: {
+    fontSize: '48px',
+    marginRight: '20px',
+    background: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: '50%',
+    width: '80px',
+    height: '80px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  missionText: {
+    flex: 1,
+  },
+  missionTitle: {
+    fontSize: '24px',
+    fontWeight: '700',
+    color: '#F8FAFC',
+    margin: '0 0 6px 0',
+  },
+  missionSubtitle: {
+    fontSize: '15px',
+    color: '#94A3B8',
+    margin: 0,
+    lineHeight: '1.4',
+  },
+  arrowIcon: {
+    fontSize: '24px',
+    color: '#64748B',
+    fontWeight: 'bold',
+  },
+  missionProgress: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+  },
+  progressBar: {
+    flex: 1,
+    height: '6px',
+    background: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: '3px',
+    overflow: 'hidden',
+  },
+  progressText: {
+    fontSize: '13px',
+    color: '#64748B',
+    fontWeight: '600',
+  },
+  menuToggleSection: {
+    textAlign: 'center',
+    marginBottom: '20px',
+  },
+  menuToggleButton: {
+    background: 'transparent',
+    border: 'none',
+    color: 'var(--text-secondary)',
+    fontSize: '14px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    padding: '10px',
+    transition: 'color 0.2s',
   },
   menuGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', // Responsive grid
-    gap: '20px',
-    marginTop: '20px'
+    gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
+    gap: '12px',
+    paddingBottom: '40px',
   },
-  dashboardSection: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
-    gap: '24px'
-  },
-  tierCard: {
+  menuItem: {
     background: 'var(--surface-card)',
-    borderRadius: '24px',
-    padding: '32px',
-    border: '1px solid var(--surface-border)',
-    boxShadow: '0 12px 36px rgba(0,0,0,0.05)'
-  },
-  statsCard: {
-    background: 'var(--surface-card)',
-    borderRadius: '24px',
-    padding: '32px',
-    border: '1px solid var(--surface-border)',
-    boxShadow: '0 12px 36px rgba(0,0,0,0.05)'
-  },
-  miniStatGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(2, 1fr)',
-    gap: '20px'
-  },
-  miniStatItem: {
-    padding: '16px',
     borderRadius: '16px',
-    background: 'var(--surface-soft)',
-    border: '1px solid var(--surface-border)'
+    padding: '16px',
+    border: '1px solid var(--surface-border)',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    transition: 'background 0.2s',
+  },
+  menuItemTitle: {
+    fontSize: '15px',
+    fontWeight: '700',
+    color: 'var(--text-primary)',
+    marginBottom: '2px',
+  },
+  menuItemSub: {
+    fontSize: '11px',
+    color: 'var(--text-secondary)',
   }
 };
 
