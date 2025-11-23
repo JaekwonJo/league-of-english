@@ -436,15 +436,20 @@ const ProfileEditCard = () => {
            </label>
         </div>
 
-        <input style={styles.editInput} value={name} onChange={(e) => setName(e.target.value)} placeholder="이름" />
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px', gap: '8px' }}>
+        <input 
+          style={{...styles.editInput, flex: '1 1 100%'}} 
+          value={name} 
+          onChange={(e) => setName(e.target.value)} 
+          placeholder="이름" 
+        />
+        <div style={{ display: 'flex', gap: '8px', flex: '2 1 200px' }}>
           <input
-            style={styles.editInput}
+            style={{...styles.editInput, flex: 1}}
             value={schoolBase}
             onChange={(e) => setSchoolBase(e.target.value)}
-            placeholder="학교 이름 (예: OO)"
+            placeholder="학교 이름"
           />
-          <select style={styles.editInput} value={schoolSuffix} onChange={(e) => setSchoolSuffix(e.target.value)}>
+          <select style={{...styles.editInput, width: '80px'}} value={schoolSuffix} onChange={(e) => setSchoolSuffix(e.target.value)}>
             {schoolLevel === 'high' ? (
               <>
                 <option value="고">고</option>
@@ -461,7 +466,7 @@ const ProfileEditCard = () => {
             )}
           </select>
         </div>
-        <select style={styles.editInput} value={grade} onChange={(e) => setGrade(e.target.value)}>
+        <select style={{...styles.editInput, flex: '1 1 80px'}} value={grade} onChange={(e) => setGrade(e.target.value)}>
           <option value="1">{schoolLevel === 'middle' ? '중1' : '고1'}</option>
           <option value="2">{schoolLevel === 'middle' ? '중2' : '고2'}</option>
           <option value="3">{schoolLevel === 'middle' ? '중3' : '고3'}</option>
@@ -671,8 +676,8 @@ const styles = {
     fontWeight: 800
   },
   editRow: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr 100px',
+    display: 'flex',
+    flexWrap: 'wrap',
     gap: '10px'
   },
   editInput: {

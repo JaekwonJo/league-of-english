@@ -8,8 +8,12 @@ const { verifyToken } = require('../middleware/auth');
 // 내 프로필 조회
 router.get('/users/profile', verifyToken, async (req, res) => {
   try {
-    const user = await database.get('SELECT id, username, email, name, school, school_level, grade, role, membership, points, last_login_at, created_at, updated_at FROM users WHERE id = ?', [req.user.id]);
+    const user = await database.get('SELECT * FROM users WHERE id = ?', [req.user.id]);
     if (!user) return res.status(404).json({ message: '사용자를 찾을 수 없습니다.' });
+    
+    // Remove sensitive data
+    delete user.password_hash;
+    
     res.json({ user });
   } catch (error) {
     res.status(500).json({ message: error?.message || '프로필을 불러오지 못했습니다.' });
