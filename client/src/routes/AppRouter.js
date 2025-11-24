@@ -28,7 +28,10 @@ const pageComponents = {
   VideoPlaylistPage: lazy(() => import('../pages/VideoPlaylistPage')),
   LoginPage: lazy(() => import('../pages/LoginPage')),
   StudyHistoryPage: lazy(() => import('../pages/StudyHistoryPage')),
-  GrammarTutorPage: lazy(() => import('../pages/GrammarTutorPage'))
+  GrammarTutorPage: lazy(() => import('../pages/GrammarTutorPage')),
+  AITutorHubPage: lazy(() => import('../pages/AITutorHubPage')),
+  ReadingTutorSelectPage: lazy(() => import('../pages/ReadingTutorSelectPage')),
+  ReadingTutorPage: lazy(() => import('../pages/ReadingTutorPage'))
 };
 
 const AppRouter = () => {
