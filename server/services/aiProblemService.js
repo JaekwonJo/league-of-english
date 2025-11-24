@@ -317,8 +317,17 @@ class AIProblemService {
 
   // Remove getOpenAI as we strictly use Gemini now
   getGemini() {
-
-  async getPassages(documentId, options = {}) {
+    if (!process.env.GEMINI_API_KEY) return null;
+    if (!this._gemini && GoogleGenerativeAI) {
+      try {
+        this._gemini = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+      } catch (e) {
+        console.warn("[AI] Gemini init failed:", e);
+        return null;
+      }
+    }
+    return this._gemini;
+  }
     const doc = await database.get("SELECT * FROM documents WHERE id = ?", [documentId]);
     if (!doc) throw new Error("Document not found");
     let passages = [];
