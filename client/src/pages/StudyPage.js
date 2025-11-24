@@ -337,41 +337,42 @@ const StudyPage = () => {
 
     case "study":
       return (
-        <StudyModeView
-          problems={problems}
-          answers={answers}
-          allAnswered={allAnswered}
-          progressPercent={progressPercent}
-          timeLeft={timeLeft}
-          initialTimeLeft={initialTimeLeft}
-          elapsedSeconds={elapsedSeconds}
-          onAnswer={handleAnswer}
-          onFinish={finishStudy}
-          onRestart={() => {
-            restart();
-            // Preserve document selection by jumping to step 2
-            const url = new URL(window.location.href);
-            url.searchParams.set('studyStep', '2');
-            window.history.replaceState({}, '', url.toString());
-          }}
-          onGeminiAsk={(problem) => setActiveChatProblem(problem)}
-          generationLog={generationLog}
-        />
-        {activeChatProblem && (
-          <GeminiChatModal
-            isOpen={!!activeChatProblem}
-            onClose={() => setActiveChatProblem(null)}
-            initialTopic={activeChatProblem.type === 'grammar' ? '문법 심층 설명' : '문제 해설'}
-            context={{
-              problem: activeChatProblem,
-              question: activeChatProblem.question,
-              passage: activeChatProblem.passage || activeChatProblem.mainText,
-              answer: activeChatProblem.answer,
-              explanation: activeChatProblem.explanation
+        <>
+          <StudyModeView
+            problems={problems}
+            answers={answers}
+            allAnswered={allAnswered}
+            progressPercent={progressPercent}
+            timeLeft={timeLeft}
+            initialTimeLeft={initialTimeLeft}
+            elapsedSeconds={elapsedSeconds}
+            onAnswer={handleAnswer}
+            onFinish={finishStudy}
+            onRestart={() => {
+              restart();
+              // Preserve document selection by jumping to step 2
+              const url = new URL(window.location.href);
+              url.searchParams.set('studyStep', '2');
+              window.history.replaceState({}, '', url.toString());
             }}
+            onGeminiAsk={(problem) => setActiveChatProblem(problem)}
+            generationLog={generationLog}
           />
-        )}
-      </>
+          {activeChatProblem && (
+            <GeminiChatModal
+              isOpen={!!activeChatProblem}
+              onClose={() => setActiveChatProblem(null)}
+              initialTopic={activeChatProblem.type === 'grammar' ? '문법 심층 설명' : '문제 해설'}
+              context={{
+                problem: activeChatProblem,
+                question: activeChatProblem.question,
+                passage: activeChatProblem.passage || activeChatProblem.mainText,
+                answer: activeChatProblem.answer,
+                explanation: activeChatProblem.explanation
+              }}
+            />
+          )}
+        </>
       );
 
     case "review":
