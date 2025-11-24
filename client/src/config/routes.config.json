@@ -106,6 +106,14 @@
       "roles": ["student", "teacher", "admin"]
     },
     {
+      "path": "/ai-tutor-history",
+      "name": "수업 기록",
+      "icon": "Clock",
+      "component": "AITutorHistoryPage",
+      "requiresAuth": true,
+      "roles": ["student", "teacher", "admin"]
+    },
+    {
       "path": "/study/history",
       "name": "관리자",
       "icon": "Settings",

@@ -1,19 +1,23 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { api } from '../../services/api.service';
 
-const GeminiChatModal = ({ isOpen, onClose, initialTopic, context }) => {
+const GeminiChatModal = ({ isOpen, onClose, initialTopic, context, historyOverride }) => {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
     if (isOpen) {
-      setHistory([]);
-      // Start conversation with context
-      const startMsg = `이 문제에 대해 궁금한 점이 있나요? (${initialTopic})`;
-      sendMessage(initialTopic, [], null, true); 
+      if (historyOverride) {
+        setHistory(historyOverride);
+      } else {
+        setHistory([]);
+        // Start conversation with context
+        const startMsg = `이 문제에 대해 궁금한 점이 있나요? (${initialTopic})`;
+        sendMessage(initialTopic, [], null, true); 
+      }
     }
-  }, [isOpen, initialTopic]);
+  }, [isOpen, initialTopic, historyOverride]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

@@ -31,6 +31,15 @@ const AITutorHubPage = () => {
           </div>
           <div style={styles.arrow}>➜</div>
         </div>
+
+        <div className="tilt-hover" style={styles.card} onClick={() => navigate('/ai-tutor-history')}>
+          <div style={{...styles.iconWrapper, background: 'rgba(245, 158, 11, 0.15)'}}>📜</div>
+          <div style={styles.textWrapper}>
+            <h3 style={styles.cardTitle}>내 수업 기록</h3>
+            <p style={styles.cardDesc}>제미나이 선생님과 나눴던 대화를 다시 봐요.</p>
+          </div>
+          <div style={styles.arrow}>➜</div>
+        </div>
       </div>
     </div>
   );

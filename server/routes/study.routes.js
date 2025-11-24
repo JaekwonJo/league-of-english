@@ -73,6 +73,70 @@ router.delete('/session', verifyToken, async (req, res) => {
 
 const aiProblemService = require('../services/aiProblemService');
 
+// AI Tutor History Endpoints
+router.post('/tutor/save', verifyToken, async (req, res) => {
+  try {
+    const { topic, history } = req.body;
+    if (!topic || !Array.isArray(history) || history.length === 0) {
+      return res.status(400).json({ message: '저장할 대화 내용이 없어요.' });
+    }
+    
+    const result = await database.run(
+      `INSERT INTO study_chat_sessions (user_id, topic, history, last_message_at) 
+       VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
+      [req.user.id, topic, JSON.stringify(history)]
+    );
+    
+    res.json({ success: true, sessionId: result.id, message: '학습 기록이 안전하게 저장되었어요! 💾' });
+  } catch (error) {
+    console.error('[Tutor Save] Error:', error);
+    res.status(500).json({ message: '학습 기록을 저장하지 못했어요.' });
+  }
+});
+
+router.get('/tutor/history', verifyToken, async (req, res) => {
+  try {
+    const rows = await database.all(
+      `SELECT id, topic, last_message_at, created_at 
+       FROM study_chat_sessions 
+       WHERE user_id = ? 
+       ORDER BY last_message_at DESC 
+       LIMIT 50`,
+      [req.user.id]
+    );
+    res.json({ sessions: rows });
+  } catch (error) {
+    console.error('[Tutor History] Error:', error);
+    res.status(500).json({ message: '학습 기록을 불러오지 못했어요.' });
+  }
+});
+
+router.get('/tutor/history/:id', verifyToken, async (req, res) => {
+  try {
+    const row = await database.get(
+      `SELECT * FROM study_chat_sessions WHERE id = ? AND user_id = ?`,
+      [req.params.id, req.user.id]
+    );
+    
+    if (!row) {
+      return res.status(404).json({ message: '찾을 수 없는 기록이에요.' });
+    }
+    
+    // Parse history JSON
+    let history = [];
+    try {
+      history = JSON.parse(row.history);
+    } catch (e) {
+      history = [];
+    }
+    
+    res.json({ session: { ...row, history } });
+  } catch (error) {
+    console.error('[Tutor Detail] Error:', error);
+    res.status(500).json({ message: '상세 내용을 불러오지 못했어요.' });
+  }
+});
+
 router.post('/tutor/chat', verifyToken, async (req, res) => {
   try {
     // payload: { topic, history: [{ role, text }] }

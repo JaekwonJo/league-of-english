@@ -31,7 +31,8 @@ const pageComponents = {
   GrammarTutorPage: lazy(() => import('../pages/GrammarTutorPage')),
   AITutorHubPage: lazy(() => import('../pages/AITutorHubPage')),
   ReadingTutorSelectPage: lazy(() => import('../pages/ReadingTutorSelectPage')),
-  ReadingTutorPage: lazy(() => import('../pages/ReadingTutorPage'))
+  ReadingTutorPage: lazy(() => import('../pages/ReadingTutorPage')),
+  AITutorHistoryPage: lazy(() => import('../pages/AITutorHistoryPage'))
 };
 
 const AppRouter = () => {
