@@ -5,8 +5,27 @@ import CommonHero from '../components/common/CommonHero';
 import {
   ResponsiveContainer,
   PieChart, Pie, Cell,
-  BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip
+  BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, AreaChart, Area
 } from 'recharts';
+
+const CountUp = ({ end, duration = 2000 }) => {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    let start = 0;
+    const increment = end / (duration / 16);
+    const timer = setInterval(() => {
+      start += increment;
+      if (start >= end) {
+        setCount(end);
+        clearInterval(timer);
+      } else {
+        setCount(Math.ceil(start));
+      }
+    }, 16);
+    return () => clearInterval(timer);
+  }, [end, duration]);
+  return <>{new Intl.NumberFormat('ko-KR').format(count)}</>;
+};
 
 const formatPercent = (value) => {
   if (value === null || value === undefined || Number.isNaN(value)) return '0%';
@@ -147,9 +166,49 @@ const StatsPage = () => {
     { label: '진행한 세션', value: `${formatNumber(stats?.totalSessions ?? 0)}회`, helper: `지난 7일 ${formatNumber(stats?.weeklySessions ?? 0)}회` }
   ];
 
-  const mockExamAccuracy = mockExamStats
-    ? Math.min(100, Math.max(0, Number(mockExamStats.accuracy) || 0))
-    : 0;
+  const renderHeatmap = () => {
+    // Mock data for heatmap (since real daily data might be sparse)
+    // In production, use stats.dailyActivity
+    const today = new Date();
+    const heatmapData = Array.from({ length: 28 }, (_, i) => {
+      const d = new Date();
+      d.setDate(today.getDate() - (27 - i));
+      return {
+        day: d.getDate(),
+        value: Math.floor(Math.random() * 5), // 0-4 intensity
+        date: d.toLocaleDateString()
+      };
+    });
+
+    return (
+      <div style={styles.heatmapCard}>
+        <h3 style={styles.heatmapTitle}>🔥 학습 열정 (최근 4주)</h3>
+        <div style={styles.heatmapGrid}>
+          {heatmapData.map((d, i) => (
+            <div 
+              key={i} 
+              title={`${d.date}: ${d.value > 0 ? '학습함' : '미학습'}`}
+              style={{
+                ...styles.heatmapCell,
+                background: d.value === 0 ? 'var(--surface-soft)' 
+                  : d.value < 3 ? 'rgba(52, 211, 153, 0.4)' 
+                  : 'var(--success)'
+              }}
+            />
+          ))}
+        </div>
+        <div style={styles.heatmapLegend}>
+          <span>Less</span>
+          <div style={{display:'flex', gap:4}}>
+            <div style={{width:10, height:10, background:'var(--surface-soft)', borderRadius:2}}></div>
+            <div style={{width:10, height:10, background:'rgba(52, 211, 153, 0.4)', borderRadius:2}}></div>
+            <div style={{width:10, height:10, background:'var(--success)', borderRadius:2}}></div>
+          </div>
+          <span>More</span>
+        </div>
+      </div>
+    );
+  };
 
   const comingSoonItems = useMemo(() => ([
     {
@@ -271,6 +330,7 @@ const StatsPage = () => {
               <EagleGuideChip text="숫자로 학습 페이스를 확인해요" />
             </div>
             {renderSummaryCards()}
+            {renderHeatmap()}
           </section>
 
           <section style={styles.section}>
@@ -468,13 +528,23 @@ const WorkbookStats = ({ stats, isMobile }) => {
   );
 };
 
-const StatCard = ({ label, value, helper }) => (
-  <div style={styles.statCard} className="ui-pressable ui-elevate">
-    <span style={styles.statLabel}>{label}</span>
-    <strong style={styles.statValue}>{value}</strong>
-    {helper && <span style={styles.statHelper}>{helper}</span>}
-  </div>
-);
+const StatCard = ({ label, value, helper }) => {
+  // Extract number if possible for animation
+  const num = typeof value === 'string' ? parseInt(value.replace(/[^0-9]/g, ''), 10) : value;
+  const isAnimatable = !Number.isNaN(num) && typeof num === 'number';
+  const suffix = typeof value === 'string' ? value.replace(/[0-9.,]/g, '') : '';
+
+  return (
+    <div style={styles.statCard} className="ui-pressable ui-elevate">
+      <span style={styles.statLabel}>{label}</span>
+      <strong style={styles.statValue}>
+        {isAnimatable ? <CountUp end={num} /> : value}
+        {suffix}
+      </strong>
+      {helper && <span style={styles.statHelper}>{helper}</span>}
+    </div>
+  );
+};
 
 const TypeAccuracyRow = ({ entry }) => {
   const accuracy = Number(entry.accuracy || 0);
@@ -583,6 +653,39 @@ const styles = {
     fontSize: '0.9rem',
     color: 'var(--tone-strong)',
     fontWeight: 600
+  },
+  heatmapCard: {
+    background: 'var(--surface-card)',
+    borderRadius: '20px',
+    padding: '24px',
+    border: '1px solid var(--surface-border)',
+    marginTop: '20px'
+  },
+  heatmapTitle: {
+    fontSize: '1.1rem',
+    fontWeight: 700,
+    marginBottom: '16px',
+    color: 'var(--text-primary)'
+  },
+  heatmapGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(7, 1fr)',
+    gap: '6px'
+  },
+  heatmapCell: {
+    aspectRatio: '1',
+    borderRadius: '6px',
+    transition: 'transform 0.2s',
+    cursor: 'pointer'
+  },
+  heatmapLegend: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    gap: '8px',
+    marginTop: '12px',
+    fontSize: '12px',
+    color: 'var(--text-muted)'
   },
   statValue: {
     fontSize: '1.6rem',
