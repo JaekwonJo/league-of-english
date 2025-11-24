@@ -111,7 +111,7 @@ router.post('/tutor/chat', verifyToken, async (req, res) => {
         "message": "설명 내용... (반드시 영어 예문 + 한글 해석 포함)",
         "options": [
           { "label": "핵심 개념 알아보기", "action": "next_step_id" },
-          { "label": "예문 더 보기", "action": "show_more_examples" }
+          { "label": "영어 예문 보기", "action": "show_english_examples" }
         ]
       }
 
@@ -121,7 +121,8 @@ router.post('/tutor/chat', verifyToken, async (req, res) => {
       Conversation History: ${JSON.stringify(history || [])}
       
       **Instructions:**
-      - If history is empty, introduce the topic briefly in Korean and ask if they want a "핵심 개념" or "예문".
+      - If history is empty, introduce the topic briefly in Korean and ask if they want a "핵심 개념" or "영어 예문".
+      - **Always provide a button labeled '영어 예문 보기' in the options unless the user is already viewing examples.**
       - If user asked for "Problem", generate a simple multiple-choice question in the \`message\` and put the answers in \`options\`.
       - If user answered correctly, praise them in Korean and ask to move on.
       - If user answered incorrectly, explain why kindly in Korean.
