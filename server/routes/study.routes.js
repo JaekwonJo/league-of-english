@@ -86,7 +86,7 @@ router.post('/tutor/chat', verifyToken, async (req, res) => {
 
     // Fallback: Use text generation if JSON mode fails or is not supported
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash", // Switch to flash for speed/stability
+      model: "gemini-pro", // Use standard stable model
     });
 
     const systemPrompt = `
