@@ -121,15 +121,24 @@ router.post('/tutor/chat', verifyToken, async (req, res) => {
       Conversation History: ${JSON.stringify(history || [])}
       
       **Instructions:**
-      - If history is empty, introduce the topic briefly in Korean and ask if they want a "핵심 개념" or "문제 풀기".
-      - **If the user clicks "문제 풀어보기" (or similar) or asks for a problem:**
-        - Generate a simple multiple-choice grammar question related to the current concept.
-        - Put the question in the \`message\` field.
-        - **CRITICAL:** Provide 3-4 answer choices in the \`options\` array. The \`action\` for each option MUST be "submit_answer_ANSWER_TEXT" (e.g., "submit_answer_to go").
-      - **If the user submits an answer (action starts with "submit_answer_"):**
-        - Analyze the answer.
-        - If **Correct**: Praise them (🎉), briefly explain why, and offer options: [{ "label": "다음 문제 풀기", "action": "generate_quiz" }, { "label": "다음 개념 넘어가기", "action": "next_concept" }].
-        - If **Incorrect**: Encourage them (😅), explain why it's wrong, and offer options: [{ "label": "다시 시도", "action": "generate_quiz" }, { "label": "개념 다시 듣기", "action": "explain_concept" }].
+      - **For Reading Tutor Requests (Topic: 문장 해석, 문법 분석, 단어장):**
+        - Provide the requested content (Interpretation, Grammar Breakdown, or Vocab List) clearly.
+        - Always follow the "Easy Korean + Polite Tone" rule.
+        - After the response, offer relevant next steps (e.g., [문법 분석 보기], [단어장 보기], [이해했어요!]).
+      - **For Final Review (Topic: 지문 전체 리뷰):**
+        - Summarize the passage's core message, title, and author's claim.
+        - Then, immediately generate a relevant reading comprehension question (Blank, Order, or Title type).
+        - Provide answer choices with "submit_answer_" actions.
+      - **General Grammar Mode:**
+        - If history is empty, introduce the topic briefly in Korean and ask if they want a "핵심 개념" or "문제 풀기".
+        - **If the user clicks "문제 풀어보기" (or similar) or asks for a problem:**
+          - Generate a simple multiple-choice grammar question related to the current concept.
+          - Put the question in the \`message\` field.
+          - **CRITICAL:** Provide 3-4 answer choices in the \`options\` array. The \`action\` for each option MUST be "submit_answer_ANSWER_TEXT" (e.g., "submit_answer_to go").
+        - **If the user submits an answer (action starts with "submit_answer_"):**
+          - Analyze the answer.
+          - If **Correct**: Praise them (🎉), briefly explain why, and offer options: [{ "label": "다음 문제 풀기", "action": "generate_quiz" }, { "label": "다음 개념 넘어가기", "action": "next_concept" }].
+          - If **Incorrect**: Encourage them (😅), explain why it's wrong, and offer options: [{ "label": "다시 시도", "action": "generate_quiz" }, { "label": "개념 다시 듣기", "action": "explain_concept" }].
       - **Always include English examples in explanations.**
 
     const result = await model.generateContent(systemPrompt);
