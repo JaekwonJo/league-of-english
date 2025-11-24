@@ -82,13 +82,7 @@ const {
   validateTopicProblem
 } = topic;
 
-let OpenAI = null;
 let GoogleGenerativeAI = null;
-try {
-  OpenAI = require("openai");
-} catch (error) {
-  console.warn("[aiProblemService] OpenAI SDK unavailable:", error?.message || error);
-}
 try {
   const pkg = require("@google/generative-ai");
   GoogleGenerativeAI = pkg.GoogleGenerativeAI;
@@ -96,8 +90,8 @@ try {
   console.warn("[aiProblemService] Gemini SDK unavailable:", error?.message || error);
 }
 
-// Configurable OpenAI models (fallbacks preserved)
-const PRIMARY_MODEL = process.env.LOE_OPENAI_PRIMARY_MODEL || 'gpt-4o';
+// Configurable models
+const PRIMARY_MODEL = process.env.LOE_OPENAI_PRIMARY_MODEL || 'gemini-2.0-flash-exp';
 const SECONDARY_MODEL = process.env.LOE_OPENAI_SECONDARY_MODEL || 'gpt-4o-mini';
 const PREMIUM_MODEL = process.env.LOE_OPENAI_PREMIUM_MODEL || '';
 
@@ -176,8 +170,7 @@ function buildVocabularyAnswerInstruction(variant) {
 
 class AIProblemService {
   constructor() {
-    this._openai = null;
-    this.queue = new OpenAIQueue(() => this.getOpenAI());
+    this.queue = new OpenAIQueue(() => this.getGemini()); // Renamed logically, but kept class name for now
     this.repository = createProblemRepository(database);
     this._gemini = null;
     this._grammarVariantQueue = [];
@@ -282,24 +275,8 @@ class AIProblemService {
   }
 
   callChatCompletion(config, options = {}) {
-    return this.queue.enqueue(async (openaiClient) => {
-      // 1. Try Gemini if configured
-      if (process.env.GEMINI_API_KEY) {
-        try {
-          return await this._callGemini(config);
-        } catch (geminiError) {
-          // Fallback only if it's a transient error? No, better to fail or fallback if key is invalid.
-          // For now, let's log and try OpenAI if available as backup
-          console.warn("[AI] Gemini failed, trying OpenAI fallback:", geminiError.message);
-          if (!openaiClient) throw geminiError;
-        }
-      }
-      
-      // 2. Use OpenAI
-      if (!openaiClient) {
-        throw new Error("No AI client available (OpenAI or Gemini)");
-      }
-      return openaiClient.chat.completions.create(config);
+    return this.queue.enqueue(async () => {
+      return await this._callGemini(config);
     }, options);
   }
 
@@ -307,13 +284,8 @@ class AIProblemService {
     return this.repository.markExposures(userId, problemIds);
   }
 
-  getOpenAI() {
-    if (!OpenAI || !process.env.OPENAI_API_KEY) return null;
-    if (!this._openai) {
-      this._openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    }
-    return this._openai;
-  }
+  // Remove getOpenAI as we strictly use Gemini now
+  getGemini() {
 
   async getPassages(documentId, options = {}) {
     const doc = await database.get("SELECT * FROM documents WHERE id = ?", [documentId]);
@@ -394,8 +366,8 @@ class AIProblemService {
     const documentCode = document?.code || document?.slug || document?.external_id || null;
     const docTitle = document?.title || documentCode || `Document ${documentId}`;
 
-    if (!this.getOpenAI()) {
-      throw new Error("AI generator unavailable for blank problems");
+    if (!this.getGemini()) {
+      throw new Error("AI generator (Gemini) unavailable for blank problems");
     }
 
     const manualExcerpt = readBlankManual(2400);
@@ -487,7 +459,7 @@ class AIProblemService {
   async _repairBlankOutput({ rawContent, failureMessage = '', passage, docTitle, manualExcerpt } = {}) {
     const invalidJson = String(rawContent || '').trim();
     if (!invalidJson) throw new Error('repair requires original JSON content');
-    if (!this.getOpenAI()) throw new Error('AI repair unavailable');
+    if (!this.getGemini()) throw new Error('AI repair (Gemini) unavailable');
 
     const manualNote = manualExcerpt ? clipText(manualExcerpt, 900) : '';
     const requirementList = [
@@ -515,7 +487,7 @@ class AIProblemService {
     ].filter(Boolean).join('\n\n');
 
     const response = await this.callChatCompletion({
-      model: PRIMARY_MODEL,
+      model: 'gemini-2.0-flash-exp',
       temperature: 0.18,
       max_tokens: 1200,
       messages: [
@@ -731,8 +703,8 @@ class AIProblemService {
     if (!invalidJson) {
       throw new Error('repair requires original JSON content');
     }
-    if (!this.getOpenAI()) {
-      throw new Error('AI repair unavailable');
+    if (!this.getGemini()) {
+      throw new Error('AI repair (Gemini) unavailable');
     }
 
     const manualNote = manualExcerpt ? clipText(manualExcerpt, 900) : '';
@@ -822,7 +794,7 @@ class AIProblemService {
     const prompt = promptParts.filter(Boolean).join('\n\n');
 
     const response = await this.callChatCompletion({
-      model: PRIMARY_MODEL,
+      model: 'gemini-2.0-flash-exp',
       temperature: 0.18,
       max_tokens: 1200,
       messages: [
@@ -852,8 +824,8 @@ class AIProblemService {
     if (!invalidJson) {
       throw new Error('repair requires original JSON content');
     }
-    if (!this.getOpenAI()) {
-      throw new Error('AI repair unavailable');
+    if (!this.getGemini()) {
+      throw new Error('AI repair (Gemini) unavailable');
     }
 
     const manualNote = manualExcerpt ? clipText(manualExcerpt, 900) : '';
@@ -907,7 +879,7 @@ ${clipText(passage, 1800)}` : '',
     const prompt = promptParts.filter(Boolean).join('\n\n');
 
     const response = await this.callChatCompletion({
-      model: 'gpt-4o',
+      model: 'gemini-2.0-flash-exp',
       temperature: 0.2,
       max_tokens: 1100,
       messages: [
@@ -1306,8 +1278,8 @@ const normalizedMain = normalizeWhitespace(stripTags(mainText));
     const docTitle = document?.title || documentCode || `Document ${documentId}`;
     const results = [];
 
-    if (!this.getOpenAI()) {
-      throw new Error("AI generator unavailable for vocabulary problems");
+    if (!this.getGemini()) {
+      throw new Error("AI generator (Gemini) unavailable for vocabulary problems");
     }
     const manualExcerpt = readVocabularyManual(2400);
     const passageQueue = buildPassageQueue(passages, count);
@@ -1409,10 +1381,10 @@ ${clipText(passage, 1600)}`,
 
           const prompt = promptSections.filter(Boolean).join('\n\n');
 
-          // SOTA Upgrade: Always use High Tier (gpt-4o) for best quality from the start!
-          const useHighTierModel = true; // Was: attempt >= 3;
+          // SOTA Upgrade: Always use High Tier (gemini-2.0-flash-exp) for best quality from the start!
+          const useHighTierModel = true; 
           const response = await this.callChatCompletion({
-            model: useHighTierModel ? PRIMARY_MODEL : SECONDARY_MODEL,
+            model: useHighTierModel ? 'gemini-2.0-flash-exp' : 'gemini-2.0-flash-exp',
             temperature: useHighTierModel ? 0.2 : 0.3,
             max_tokens: useHighTierModel ? 1050 : 900,
             messages: [{ role: 'user', content: prompt }]
@@ -1519,8 +1491,8 @@ ${clipText(passage, 1600)}`,
     const results = [];
     const passageQueue = buildPassageQueue(passages, count);
 
-    if (!this.getOpenAI()) {
-      throw new Error("AI generator unavailable for title problems");
+    if (!this.getGemini()) {
+      throw new Error("AI generator (Gemini) unavailable for title problems");
     }
 
     for (let i = 0; i < count; i += 1) {
@@ -1542,7 +1514,7 @@ ${clipText(passage, 1600)}`,
             failureReason: lastFailure
           });
           const response = await this.callChatCompletion({
-            model: "gpt-4o-mini",
+            model: "gemini-2.0-flash-exp",
             temperature: 0.35,
             max_tokens: 720,
             messages: [{ role: "user", content: prompt }]
@@ -1584,8 +1556,8 @@ ${clipText(passage, 1600)}`,
     const results = [];
     const passageQueue = buildPassageQueue(passages, count);
 
-    if (!this.getOpenAI()) {
-      throw new Error("AI generator unavailable for theme problems");
+    if (!this.getGemini()) {
+      throw new Error("AI generator (Gemini) unavailable for theme problems");
     }
 
     for (let i = 0; i < count; i += 1) {
@@ -1607,7 +1579,7 @@ ${clipText(passage, 1600)}`,
             failureReason: lastFailure
           });
           const response = await this.callChatCompletion({
-            model: "gpt-4o-mini",
+            model: "gemini-2.0-flash-exp",
             temperature: 0.32,
             max_tokens: 720,
             messages: [{ role: "user", content: prompt }]
@@ -1652,8 +1624,8 @@ ${clipText(passage, 1600)}`,
     const manualExcerpt = readImplicitManual(1800);
     const passageQueue = buildPassageQueue(passages, count);
 
-    if (!this.getOpenAI()) {
-      throw new Error("AI generator unavailable for implicit problems");
+    if (!this.getGemini()) {
+      throw new Error("AI generator (Gemini) unavailable for implicit problems");
     }
 
     const validateUnderline = (text) => {
@@ -1770,7 +1742,7 @@ ${clipText(passage, 1600)}`,
           });
 
           const response = await this.callChatCompletion({
-            model: "gpt-4o-mini",
+            model: "gemini-2.0-flash-exp",
             temperature: 0.4,
             max_tokens: 540,
             messages: [{ role: "user", content: prompt }]
@@ -1901,7 +1873,7 @@ ${clipText(passage, 1600)}`,
       passages = fetched.passages || [];
     }
     const { document } = await this.getPassages(documentId);
-    if (!this.getOpenAI()) throw new Error("AI generator unavailable for summary problems");
+    if (!this.getGemini()) throw new Error("AI generator (Gemini) unavailable for summary problems");
     const manualExcerpt = getSummaryManualExcerpt(3200);
     const documentCode = document?.code || document?.slug || document?.external_id || null;
     const docTitle = document?.title || documentCode || `Document ${documentId}`;
@@ -1926,7 +1898,7 @@ ${clipText(passage, 1600)}`,
             extraDirectives: deriveSummaryDirectives(lastFailure)
           });
           const response = await this.callChatCompletion({
-            model: "gpt-4o-mini",
+            model: "gemini-2.0-flash-exp",
             temperature: 0.35,
             max_tokens: 720,
             messages: [{ role: "user", content: prompt }]
@@ -1981,7 +1953,7 @@ ${clipText(passage, 1600)}`,
       passages = fetched.passages || [];
     }
     const { document } = await this.getPassages(documentId);
-    if (!this.getOpenAI()) throw new Error("AI generator unavailable for grammar problems");
+    if (!this.getGemini()) throw new Error("AI generator (Gemini) unavailable for grammar problems");
 
     const manualExcerpt = readGrammarManual(2400);
     const documentCode = document?.code || document?.slug || document?.external_id || null;
