@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api as API } from '../../services/api.service';
+import GeminiChatModal from '../common/GeminiChatModal';
 
 const PassageAnalysis = ({ document, onClose }) => {
   const [currentPassage, setCurrentPassage] = useState(1);
@@ -8,6 +9,7 @@ const PassageAnalysis = ({ document, onClose }) => {
   const [error, setError] = useState(null);
   const [totalPassages, setTotalPassages] = useState(0);
   const [analyzedPassages, setAnalyzedPassages] = useState(new Set());
+  const [activeChat, setActiveChat] = useState(null);
 
   useEffect(() => {
     if (!document) return;
@@ -153,6 +155,23 @@ const PassageAnalysis = ({ document, onClose }) => {
                         <div style={styles.sentenceMeaning}><strong>의미해석:</strong> {s.meaning}</div>
                         {s.example && (<div style={styles.sentenceMeaning}><strong>예시:</strong> {s.example}</div>)}
                         {s.note && (<div style={styles.sentenceMeaning}><strong>설명/배경:</strong> {s.note}</div>)}
+                        <div style={{ marginTop: '10px', textAlign: 'right' }}>
+                          <button
+                            style={styles.chatButton}
+                            onClick={() => setActiveChat({
+                              topic: '문장 분석 요청',
+                              context: {
+                                problem: { type: 'analysis' },
+                                question: '이 문장을 더 자세히 설명해주세요.',
+                                passage: s.english,
+                                answer: s.translation,
+                                explanation: s.meaning
+                              }
+                            })}
+                          >
+                            🤖 이해가 안 돼요, 더 설명해주세요!
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -261,6 +280,15 @@ const PassageAnalysis = ({ document, onClose }) => {
           <button style={styles.nextButton} onClick={() => handleSelect(Math.min(totalPassages, currentPassage + 1))} disabled={currentPassage === totalPassages}>다음 지문</button>
         </div>
       </div>
+      
+      {activeChat && (
+        <GeminiChatModal
+          isOpen={!!activeChat}
+          onClose={() => setActiveChat(null)}
+          initialTopic={activeChat.topic}
+          context={activeChat.context}
+        />
+      )}
     </div>
   );
 };
@@ -312,7 +340,8 @@ const styles = {
   footer: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 30px', borderTop: '1px solid var(--border-subtle)' },
   prevButton: { background: 'var(--color-slate-500)', color: 'var(--text-on-accent)', border: 'none', borderRadius: 10, padding: '10px 20px', cursor: 'pointer' },
   nextButton: { background: 'var(--accent-primary)', color: 'var(--text-on-accent)', border: 'none', borderRadius: 10, padding: '10px 20px', cursor: 'pointer' },
-  pageInfo: { color: 'var(--text-secondary)', fontSize: 14 }
+  pageInfo: { color: 'var(--text-secondary)', fontSize: 14 },
+  chatButton: { background: 'linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%)', color: 'white', border: 'none', borderRadius: 20, padding: '6px 12px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', boxShadow: '0 2px 8px rgba(139, 92, 246, 0.3)' }
 };
 
 // inject keyframes
