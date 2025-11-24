@@ -263,6 +263,53 @@ function buildQuizQuestions(day, allDays, count) {
   return orderPolicy !== 'sequential' ? shuffle(questions) : questions;
 }
 
+router.post('/vocabulary/my/save', verifyToken, async (req, res) => {
+  try {
+    const { term, meaning } = req.body;
+    if (!term || !meaning) {
+      return res.status(400).json({ success: false, message: '단어와 뜻을 모두 입력해주세요.' });
+    }
+
+    // Create 'my_vocabulary' table if not exists
+    await database.run(`
+      CREATE TABLE IF NOT EXISTS my_vocabulary (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        term TEXT NOT NULL,
+        meaning TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(user_id, term)
+      )
+    `);
+
+    await database.run(
+      `INSERT OR IGNORE INTO my_vocabulary (user_id, term, meaning) VALUES (?, ?, ?)`,
+      [req.user.id, term, meaning]
+    );
+
+    res.json({ success: true, message: `단어장에 '${term}'을(를) 저장했어요! 📝` });
+  } catch (error) {
+    console.error('[My Vocab] Save Error:', error);
+    res.status(500).json({ success: false, message: '단어장에 저장하지 못했어요.' });
+  }
+});
+
+router.get('/vocabulary/my', verifyToken, async (req, res) => {
+  try {
+    const rows = await database.all(
+      `SELECT term, meaning, created_at FROM my_vocabulary WHERE user_id = ? ORDER BY created_at DESC`,
+      [req.user.id]
+    );
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    // Table might not exist yet if user hasn't saved anything
+    if (String(error).includes('no such table')) {
+      return res.json({ success: true, data: [] });
+    }
+    res.status(500).json({ success: false, message: '나만의 단어장을 불러오지 못했어요.' });
+  }
+});
+
 router.get('/vocabulary/sets', verifyToken, async (req, res) => {
   try {
     const rows = await database.all(

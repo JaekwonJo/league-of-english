@@ -101,7 +101,16 @@ const GeminiChatModal = ({ isOpen, onClose, initialTopic, context, historyOverri
                     <button 
                       key={i} 
                       style={styles.optionBtn}
-                      onClick={() => sendMessage(null, history, opt)}
+                      onClick={() => {
+                        if (opt.action.startsWith('save_vocab_')) {
+                          const [_, term, meaning] = opt.action.split('_vocab_')[1].split('_');
+                          api.post('/vocabulary/my/save', { term, meaning })
+                            .then(() => alert(`'${term}' 저장 완료!`))
+                            .catch(() => alert('저장 실패'));
+                        } else {
+                          sendMessage(null, history, opt);
+                        }
+                      }}
                       disabled={idx !== history.length - 1}
                     >
                       {opt.label}

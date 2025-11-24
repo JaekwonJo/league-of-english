@@ -188,7 +188,10 @@ router.post('/tutor/chat', verifyToken, async (req, res) => {
       - **For Reading Tutor Requests (Topic: 문장 해석, 문법 분석, 단어장):**
         - Provide the requested content (Interpretation, Grammar Breakdown, or Vocab List) clearly.
         - Always follow the "Easy Korean + Polite Tone" rule.
-        - After the response, offer relevant next steps (e.g., [문법 분석 보기], [단어장 보기], [이해했어요!]).
+        - **If topic is '단어장 요청' or user asks about words:**
+          - List key words with meanings.
+          - **CRITICAL:** For each word, provide an option to save it: { "label": "💾 'apple' 저장하기", "action": "save_vocab_apple_사과" }.
+        - After the response, offer relevant next steps.
       - **For Final Review (Topic: 지문 전체 리뷰):**
         - Summarize the passage's core message, title, and author's claim.
         - Then, immediately generate a relevant reading comprehension question (Blank, Order, or Title type).
