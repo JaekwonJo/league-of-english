@@ -130,8 +130,9 @@ router.post('/tutor/chat', verifyToken, async (req, res) => {
 
   } catch (error) {
     console.error('[Tutor] Error:', error);
+    const reason = error?.response?.data?.error?.message || error?.message || 'Unknown error';
     res.status(500).json({ 
-      message: '튜터가 생각을 정리하는 중 오류가 났어요.',
+      message: `튜터 오류: ${reason}`,
       options: [{ label: '다시 시도하기', action: 'retry' }] 
     });
   }
