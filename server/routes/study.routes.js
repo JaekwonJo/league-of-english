@@ -111,7 +111,7 @@ router.post('/tutor/chat', verifyToken, async (req, res) => {
         "message": "설명 내용... (반드시 영어 예문 + 한글 해석 포함)",
         "options": [
           { "label": "핵심 개념 알아보기", "action": "next_step_id" },
-          { "label": "영어 예문 보기", "action": "show_english_examples" }
+          { "label": "문제 풀어보기", "action": "generate_quiz" }
         ]
       }
 
@@ -121,11 +121,15 @@ router.post('/tutor/chat', verifyToken, async (req, res) => {
       Conversation History: ${JSON.stringify(history || [])}
       
       **Instructions:**
-      - If history is empty, introduce the topic briefly in Korean and ask if they want a "핵심 개념" or "영어 예문".
-      - **Always provide a button labeled '영어 예문 보기' in the options unless the user is already viewing examples.**
-      - If user asked for "Problem", generate a simple multiple-choice question in the \`message\` and put the answers in \`options\`.
-      - If user answered correctly, praise them in Korean and ask to move on.
-      - If user answered incorrectly, explain why kindly in Korean.
+      - If history is empty, introduce the topic briefly in Korean and ask if they want a "핵심 개념" or "문제 풀기".
+      - **If the user clicks "문제 풀어보기" (or similar) or asks for a problem:**
+        - Generate a simple multiple-choice grammar question related to the current concept.
+        - Put the question in the \`message\` field.
+        - **CRITICAL:** Provide 3-4 answer choices in the \`options\` array. The \`action\` for each option MUST be "submit_answer_ANSWER_TEXT" (e.g., "submit_answer_to go").
+      - **If the user submits an answer (action starts with "submit_answer_"):**
+        - Analyze the answer.
+        - If **Correct**: Praise them (🎉), briefly explain why, and offer options: [{ "label": "다음 문제 풀기", "action": "generate_quiz" }, { "label": "다음 개념 넘어가기", "action": "next_concept" }].
+        - If **Incorrect**: Encourage them (😅), explain why it's wrong, and offer options: [{ "label": "다시 시도", "action": "generate_quiz" }, { "label": "개념 다시 듣기", "action": "explain_concept" }].
       - **Always include English examples in explanations.**
 
     const result = await model.generateContent(systemPrompt);
