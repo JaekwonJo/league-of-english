@@ -82,39 +82,15 @@
       "roles": ["student", "teacher", "admin"]
     },
     {
-      "path": "/profile",
-      "name": "문제 보관함",
-      "icon": "Archive",
-      "component": "StudyHistoryPage",
-      "requiresAuth": true,
-      "roles": ["student", "teacher", "admin"]
-    },
-    {
-      "path": "/reading-tutor-select",
-      "name": "독해 튜터 선택",
-      "icon": "FileText",
-      "component": "ReadingTutorSelectPage",
-      "requiresAuth": true,
-      "roles": ["student", "teacher", "admin"]
-    },
-    {
-      "path": "/reading-tutor",
-      "name": "독해 튜터",
-      "icon": "Book",
-      "component": "ReadingTutorPage",
-      "requiresAuth": true,
-      "roles": ["student", "teacher", "admin"]
-    },
-    {
       "path": "/ai-tutor-history",
-      "name": "수업 기록",
-      "icon": "Clock",
+      "name": "기록소",
+      "icon": "Archive",
       "component": "AITutorHistoryPage",
       "requiresAuth": true,
       "roles": ["student", "teacher", "admin"]
     },
     {
-      "path": "/study/history",
+      "path": "/admin",
       "name": "관리자",
       "icon": "Settings",
       "component": "AdminPage",

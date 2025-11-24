@@ -39,9 +39,14 @@ const AITutorHistoryPage = () => {
   return (
     <div style={styles.container}>
       <CommonHero
-        title="내 수업 기록 📜"
-        subtitle="제미나이 선생님과 함께 공부했던 내용을 복습해보세요."
+        title="기록소 📜"
+        subtitle="나의 모든 학습 여정과 AI 대화 기록을 모아두었어요."
       />
+
+      <div style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
+        <button style={styles.tabActive}>💬 AI 수업 기록</button>
+        <button style={styles.tabInactive} onClick={() => window.location.href = '/study/history'}>📝 문제 풀이 기록</button>
+      </div>
 
       {loading ? (
         <div style={styles.empty}>기록을 불러오는 중...</div>
@@ -126,6 +131,24 @@ const styles = {
     textAlign: 'center',
     padding: '40px',
     color: 'var(--text-secondary)'
+  },
+  tabActive: {
+    padding: '10px 20px',
+    borderRadius: '20px',
+    background: 'var(--accent-primary)',
+    color: 'white',
+    border: 'none',
+    fontWeight: 'bold',
+    cursor: 'pointer'
+  },
+  tabInactive: {
+    padding: '10px 20px',
+    borderRadius: '20px',
+    background: 'var(--surface-soft)',
+    color: 'var(--text-secondary)',
+    border: '1px solid var(--border-subtle)',
+    fontWeight: 'bold',
+    cursor: 'pointer'
   }
 };
 
