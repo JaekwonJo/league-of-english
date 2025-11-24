@@ -322,7 +322,7 @@ const ProblemDisplay = ({
         : false
   ), [correctIndices, optionRecords, reviewMeta?.isCorrect, userAnswerIndices]);
 
-  const renderOptionsSection = ({ normalHeading, reviewHeading }) => (
+  const renderOptionsSection = ({ normalHeading, reviewHeading, onSelect }) => (
     <div>
       <div style={orderStyles.sentencesLabel}>{isReviewMode ? reviewHeading : normalHeading}</div>
       {isPreviewMode ? (
@@ -356,7 +356,7 @@ const ProblemDisplay = ({
         <ChoiceButtons
           optionRecords={optionRecords}
           selectedAnswer={selectedAnswer}
-          onSelect={isReviewMode ? noopHandleSelect : handleSelect}
+          onSelect={onSelect}
           showOnlyMarkers={false}
           disabled={isPreviewMode || isReviewMode}
         />
@@ -430,7 +430,8 @@ const ProblemDisplay = ({
 
       {renderOptionsSection({
         normalHeading: 'Choose the correct answer',
-        reviewHeading: 'Review the options & explanation'
+        reviewHeading: 'Review the options & explanation',
+        onSelect: isReviewMode ? noopHandleSelect : handleSelect
       })}
       {isReviewMode && onGeminiAsk && (
         <div style={{ marginTop: '12px', textAlign: 'right' }}>
@@ -517,7 +518,8 @@ const ProblemDisplay = ({
 
       {renderOptionsSection({
         normalHeading: isPreviewMode ? '선택지' : '정답을 선택하세요',
-        reviewHeading: '선택지와 해설을 확인하세요'
+        reviewHeading: '선택지와 해설을 확인하세요',
+        onSelect: isReviewMode ? noopHandleSelect : handleSelect
       })}
       {isReviewMode && onGeminiAsk && (
         <div style={{ marginTop: '12px', textAlign: 'right' }}>
@@ -701,7 +703,8 @@ const ProblemDisplay = ({
 
           {renderOptionsSection({
             normalHeading: '보기',
-            reviewHeading: '보기'
+            reviewHeading: '보기',
+            onSelect: noopHandleSelect
           })}
 
           {explanationText && (
