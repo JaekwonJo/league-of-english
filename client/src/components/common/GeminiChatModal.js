@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { api } from '../../services/api.service';
 
-const GeminiChatModal = ({ isOpen, onClose, initialTopic, context, historyOverride }) => {
+const GeminiChatModal = ({ isOpen, onClose, initialTopic, context, historyOverride, onAction }) => {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
@@ -102,6 +102,7 @@ const GeminiChatModal = ({ isOpen, onClose, initialTopic, context, historyOverri
                       key={i} 
                       style={styles.optionBtn}
                       onClick={() => {
+                        if (onAction && onAction(opt)) return;
                         if (opt.action.startsWith('save_vocab_')) {
                           const [_, term, meaning] = opt.action.split('_vocab_')[1].split('_');
                           api.post('/vocabulary/my/save', { term, meaning })
