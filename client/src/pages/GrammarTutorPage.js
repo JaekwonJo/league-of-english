@@ -4,6 +4,7 @@ import { api } from '../services/api.service';
 import CommonHero from '../components/common/CommonHero';
 
 const GrammarTutorPage = () => {
+  const [activeChapter, setActiveChapter] = useState(null);
   const [activeTopic, setActiveTopic] = useState(null);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -17,13 +18,17 @@ const GrammarTutorPage = () => {
     scrollToBottom();
   }, [history, loading]);
 
-  const startSession = async (chapter) => {
-    setActiveTopic(chapter);
-    setHistory([]);
-    await sendMessage(chapter.title + ": " + chapter.subtitle, []);
+  const handleChapterClick = (chapter) => {
+    setActiveChapter(chapter);
   };
 
-  const sendMessage = async (topic, currentHistory, userAction = null) => {
+  const handleTopicClick = async (topic) => {
+    setActiveTopic(topic);
+    setHistory([]);
+    await sendMessage(`${activeChapter.title}: ${activeChapter.subtitle} - ${topic}`, [], null, true);
+  };
+
+  const sendMessage = async (topic, currentHistory, userAction = null, isInit = false) => {
     setLoading(true);
     
     let newHistory = [...currentHistory];
@@ -34,8 +39,8 @@ const GrammarTutorPage = () => {
 
     try {
       const response = await api.post('/study/tutor/chat', {
-        topic: typeof topic === 'string' ? topic : topic.title,
-        history: newHistory.map(h => ({ role: h.role, text: h.text })) 
+        topic: topic,
+        history: newHistory.map(h => ({ role: h.role, text: h.text }))
       });
 
       setHistory(prev => [
@@ -73,7 +78,7 @@ const GrammarTutorPage = () => {
   };
 
   // 1. Chapter Selection View
-  if (!activeTopic) {
+  if (!activeChapter) {
     if (!GRAMMAR_CHAPTERS || GRAMMAR_CHAPTERS.length === 0) {
       return <div style={{ padding: 40, color: 'white' }}>챕터 데이터를 불러오지 못했습니다.</div>;
     }
@@ -89,7 +94,7 @@ const GrammarTutorPage = () => {
             <button 
               key={chapter.id} 
               style={styles.card}
-              onClick={() => startSession(chapter)}
+              onClick={() => handleChapterClick(chapter)}
               className="tilt-hover"
             >
               <div style={styles.icon}>{chapter.icon}</div>
@@ -104,12 +109,41 @@ const GrammarTutorPage = () => {
     );
   }
 
-  // 2. Chat Interface
+  // 2. Topic Selection View
+  if (!activeTopic) {
+    return (
+      <div style={styles.container}>
+        <div style={{marginBottom: 20}}>
+          <button onClick={() => setActiveChapter(null)} style={styles.backButton}>← 챕터 목록으로</button>
+        </div>
+        <CommonHero 
+          title={activeChapter.title} 
+          subtitle={activeChapter.subtitle}
+        />
+        <h3 style={{color: 'white', marginTop: 30, marginBottom: 15}}>공부할 주제를 선택하세요 👇</h3>
+        <div style={styles.topicGrid}>
+          {activeChapter.topics && activeChapter.topics.map((topic, idx) => (
+            <button 
+              key={idx} 
+              style={styles.topicCard}
+              onClick={() => handleTopicClick(topic)}
+              className="tilt-hover"
+            >
+              <span style={{marginRight: 10}}>📌</span>
+              {topic}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // 3. Chat Interface
   return (
     <div style={styles.chatContainer}>
       <div style={styles.chatHeader}>
-        <button onClick={() => setActiveTopic(null)} style={styles.backButton}>← 나가기</button>
-        <h2 style={styles.chatTitle}>{activeTopic.title}</h2>
+        <button onClick={() => setActiveTopic(null)} style={styles.backButton}>← 주제 목록으로</button>
+        <h2 style={styles.chatTitle}>{activeTopic}</h2>
       </div>
 
       <div style={styles.messageList}>
@@ -287,6 +321,24 @@ const styles = {
     transition: 'all 0.2s',
     fontWeight: '600'
   },
+  topicGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+    gap: '12px'
+  },
+  topicCard: {
+    background: 'rgba(30, 41, 59, 0.4)',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    borderRadius: '12px',
+    padding: '16px',
+    color: '#e2e8f0',
+    cursor: 'pointer',
+    textAlign: 'left',
+    fontSize: '15px',
+    fontWeight: '500',
+    display: 'flex',
+    alignItems: 'center'
+  }
 };
 
 export default GrammarTutorPage;
