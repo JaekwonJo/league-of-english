@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom'; // or window.location parse
 import { api } from '../services/api.service';
 import GeminiChatModal from '../components/common/GeminiChatModal';
 
@@ -35,7 +34,26 @@ const ReadingTutorPage = () => {
     loadDoc();
   }, [documentId]);
 
+  const handleNext = () => {
+    if (currentStep < sentences.length - 1) {
+      setCurrentStep(p => p + 1);
+    } else {
+      // Final Review Phase
+      setActiveChat({
+        topic: '지문 전체 리뷰 및 문제 풀이',
+        context: {
+          problem: { type: 'reading_review' },
+          question: '이 지문의 핵심 내용과 문제를 알려주세요.',
+          passage: sentences.join(' '),
+          answer: '',
+          explanation: ''
+        }
+      });
+    }
+  };
+
   const currentSentence = sentences[currentStep] || "End of Document";
+  const isLastStep = currentStep >= sentences.length - 1;
   const progress = Math.min(100, ((currentStep + 1) / sentences.length) * 100);
 
   if (loading) return <div style={{padding:40, textAlign:'center'}}>로딩 중...</div>;
@@ -100,9 +118,9 @@ const ReadingTutorPage = () => {
           </button>
           <button 
             style={{...styles.navBtn, background: 'var(--accent-primary)', color: 'white', border: 'none'}} 
-            onClick={() => setCurrentStep(p => Math.min(sentences.length - 1, p + 1))}
+            onClick={handleNext}
           >
-            다음 문장
+            {isLastStep ? '전체 리뷰 & 문제 풀기 🚀' : '다음 문장'}
           </button>
         </div>
       </div>

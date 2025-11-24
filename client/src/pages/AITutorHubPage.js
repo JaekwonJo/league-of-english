@@ -1,5 +1,4 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom'; // Use customized navigation if standard
 import CommonHero from '../components/common/CommonHero';
 
 const AITutorHubPage = () => {
