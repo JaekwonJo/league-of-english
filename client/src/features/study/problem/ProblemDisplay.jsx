@@ -342,9 +342,9 @@ const ProblemDisplay = ({
         <ChoiceButtons
           optionRecords={optionRecords}
           selectedAnswer={selectedAnswer}
-          onSelect={handleSelect}
+          onSelect={isReviewMode ? undefined : handleSelect}
           showOnlyMarkers={false}
-          disabled={isPreviewMode}
+          disabled={isPreviewMode || isReviewMode}
         />
       )}
     </div>
@@ -609,7 +609,7 @@ const ProblemDisplay = ({
       {isGrammar && (
         <GrammarProblemDisplay
           problem={problem}
-          onAnswer={handleSelect}
+          onAnswer={isReviewMode ? undefined : handleSelect}
           userAnswer={selectedAnswer}
           showResult={isReviewMode}
         />
