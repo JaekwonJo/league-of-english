@@ -181,8 +181,8 @@ const HomePage = () => {
   const menuItems = [
     { icon: '🤖', title: 'AI 튜터 센터', subtitle: '제미나이 선생님과 1:1 과외', color: '#ec4899', link: '/ai-tutor', isNew: true },
     { icon: '🧠', title: '어휘 훈련', subtitle: '핵심 단어 마스터하기', color: '#8B5CF6', link: '/vocabulary' },
-    { icon: '📘', title: '워크북', subtitle: '단계별 학습 코스', color: '#10B981', link: '/workbook' },
     { icon: '📝', title: '문제 풀이', subtitle: 'AI & 기출 믹스', color: '#F59E0B', link: '/study' },
+    { icon: '📘', title: '워크북', subtitle: '단계별 학습 코스', color: '#10B981', link: '/workbook' },
     { icon: '🎓', title: '모의고사', subtitle: '실전 감각 익히기', color: '#EC4899', link: '/mock-exam' },
     { icon: '📺', title: '동영상', subtitle: '강의 영상 모음', color: '#EF4444', link: '/video' },
     { icon: '🏆', title: '랭킹', subtitle: '명예의 전당', color: '#FBBF24', link: '/ranking' },
