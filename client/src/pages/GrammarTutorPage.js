@@ -26,7 +26,6 @@ const GrammarTutorPage = () => {
   const sendMessage = async (topic, currentHistory, userAction = null) => {
     setLoading(true);
     
-    // Optimistically add user choice bubble if it exists
     let newHistory = [...currentHistory];
     if (userAction) {
       newHistory.push({ role: 'user', text: userAction.label });
@@ -34,10 +33,9 @@ const GrammarTutorPage = () => {
     setHistory(newHistory);
 
     try {
-      // Call backend API
       const response = await api.post('/study/tutor/chat', {
         topic: typeof topic === 'string' ? topic : topic.title,
-        history: newHistory.map(h => ({ role: h.role, text: h.text })) // Sanitize
+        history: newHistory.map(h => ({ role: h.role, text: h.text })) 
       });
 
       setHistory(prev => [
@@ -76,6 +74,10 @@ const GrammarTutorPage = () => {
 
   // 1. Chapter Selection View
   if (!activeTopic) {
+    if (!GRAMMAR_CHAPTERS || GRAMMAR_CHAPTERS.length === 0) {
+      return <div style={{ padding: 40, color: 'white' }}>챕터 데이터를 불러오지 못했습니다.</div>;
+    }
+
     return (
       <div style={styles.container}>
         <CommonHero 
@@ -124,7 +126,7 @@ const GrammarTutorPage = () => {
                     fontSize: '12px', cursor: 'pointer'
                   }}
                   onClick={() => {
-                    const utterance = new SpeechSynthesisUtterance(msg.text.replace(/[가-힣]+/g, '')); // Read English parts
+                    const utterance = new SpeechSynthesisUtterance(msg.text.replace(/[가-힣]+/g, '')); 
                     utterance.lang = 'en-US';
                     utterance.rate = 0.9;
                     window.speechSynthesis.speak(utterance);
@@ -141,7 +143,7 @@ const GrammarTutorPage = () => {
                     key={optIdx} 
                     style={styles.optionChip}
                     onClick={() => handleOptionClick(opt)}
-                    disabled={idx !== history.length - 1} // Disable old options
+                    disabled={idx !== history.length - 1} 
                   >
                     {opt.label}
                   </button>
