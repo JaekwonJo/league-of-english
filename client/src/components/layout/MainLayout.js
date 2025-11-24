@@ -73,6 +73,7 @@ const MainLayout = ({ children, currentPath }) => {
   const isGuest = userMembership === 'guest';
   const guestLockedRoutes = React.useMemo(() => new Set(['/ranking']), []);
   const visibleRoutes = routesConfig.routes.filter((route) => {
+    if (route.hidden) return false;
     if (!route.roles || !route.roles.includes(userRole)) return false;
     if (!route.memberships || route.memberships.length === 0) return true;
     if (isGuest) return true;
@@ -80,6 +81,30 @@ const MainLayout = ({ children, currentPath }) => {
     const allowed = route.memberships.map((item) => String(item).toLowerCase());
     return allowed.includes(userMembership);
   });
+
+  // Grouping Logic
+  const routeGroups = {
+    '메인': ['/', '/ai-tutor'],
+    '학습실': ['/vocabulary', '/study', '/workbook', '/mock-exam', '/videos'],
+    '리포트': ['/ranking', '/stats'],
+    '마이페이지': ['/profile', '/admin']
+  };
+
+  const getGroupForRoute = (path) => {
+    for (const [group, paths] of Object.entries(routeGroups)) {
+      if (paths.includes(path)) return group;
+    }
+    return '기타';
+  };
+
+  const groupedRoutes = visibleRoutes.reduce((acc, route) => {
+    const group = getGroupForRoute(route.path);
+    if (!acc[group]) acc[group] = [];
+    acc[group].push(route);
+    return acc;
+  }, {});
+
+  const groupOrder = ['메인', '학습실', '리포트', '마이페이지', '기타'];
 
   const basePath = React.useMemo(() => {
     if (!currentPath) return '/';
@@ -189,33 +214,54 @@ const MainLayout = ({ children, currentPath }) => {
         )}
 
         <nav style={styles.nav}>
-          {visibleRoutes.map((route) => {
-            const Icon = LucideIcons[route.icon] || LucideIcons.Circle;
-            const normalizedPath = route.path === '/' ? '/' : `${route.path}`;
-            const isActive = currentPath === normalizedPath
-              || (normalizedPath !== '/' && currentPath.startsWith(`${normalizedPath}/`));
-            const isLockedForGuest = isGuest && guestLockedRoutes.has(route.path);
-
+          {groupOrder.map(group => {
+            const routes = groupedRoutes[group];
+            if (!routes || routes.length === 0) return null;
+            
             return (
-              <button
-                key={route.path}
-                style={{
-                  ...styles.navItem,
-                  ...(isActive ? styles.navItemActive : {}),
-                  ...(isLockedForGuest ? styles.navItemLocked : {})
-                }}
-                onClick={() => navigate(route.path)}
-                title={isLockedForGuest ? '회원가입 후 이용 가능' : route.name}
-              >
-                <Icon size={20} />
-                {sidebarOpen && (
-                  <span style={styles.navItemLabel}>
-                    {route.name}
-                    {isActive && <span style={{ marginLeft: 'auto', fontSize: '12px' }}>🎄</span>}
-                    {isLockedForGuest && <span style={styles.navItemBadge}>체험</span>}
-                  </span>
+              <div key={group} style={{marginBottom: '12px'}}>
+                {sidebarOpen && group !== '메인' && (
+                  <div style={{
+                    fontSize: '11px', 
+                    fontWeight: '700', 
+                    color: 'var(--sidebar-text-muted)', 
+                    padding: '0 12px 6px', 
+                    opacity: 0.6,
+                    textTransform: 'uppercase'
+                  }}>
+                    {group}
+                  </div>
                 )}
-              </button>
+                {routes.map((route) => {
+                  const Icon = LucideIcons[route.icon] || LucideIcons.Circle;
+                  const normalizedPath = route.path === '/' ? '/' : `${route.path}`;
+                  const isActive = currentPath === normalizedPath
+                    || (normalizedPath !== '/' && currentPath.startsWith(`${normalizedPath}/`));
+                  const isLockedForGuest = isGuest && guestLockedRoutes.has(route.path);
+
+                  return (
+                    <button
+                      key={route.path}
+                      style={{
+                        ...styles.navItem,
+                        ...(isActive ? styles.navItemActive : {}),
+                        ...(isLockedForGuest ? styles.navItemLocked : {})
+                      }}
+                      onClick={() => navigate(route.path)}
+                      title={isLockedForGuest ? '회원가입 후 이용 가능' : route.name}
+                    >
+                      <Icon size={20} />
+                      {sidebarOpen && (
+                        <span style={styles.navItemLabel}>
+                          {route.name}
+                          {isActive && <span style={{ marginLeft: 'auto', fontSize: '12px' }}>✨</span>}
+                          {isLockedForGuest && <span style={styles.navItemBadge}>체험</span>}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             );
           })}
           <div style={styles.navDivider} />
