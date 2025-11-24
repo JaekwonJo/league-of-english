@@ -207,6 +207,7 @@ router.post('/tutor/chat', verifyToken, async (req, res) => {
           - If **Correct**: Praise them (🎉), briefly explain why, and offer options: [{ "label": "다음 문제 풀기", "action": "generate_quiz" }, { "label": "다음 개념 넘어가기", "action": "next_concept" }].
           - If **Incorrect**: Encourage them (😅), explain why it's wrong, and offer options: [{ "label": "다시 시도", "action": "generate_quiz" }, { "label": "개념 다시 듣기", "action": "explain_concept" }].
       - **Always include English examples in explanations.**
+    `;
 
     const result = await model.generateContent(systemPrompt);
     const text = result.response.text();
