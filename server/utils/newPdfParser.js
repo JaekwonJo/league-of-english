@@ -9,7 +9,9 @@ const BANNER_REGEXES = [
   /^-\s*\d+\s*-$/
 ];
 
-const PROBLEM_HEADING_REGEX = /^\d+\.\s*p[\w~-]+(?:-?no\.?\d+)?/i;
+const PROBLEM_HEADING_REGEX = /^\d+\.\s*p[\w~-]+(?:-?no\.?\s*\d+)?/i;
+const STRICT_LABEL_REGEX = /^\d+\.\s*p\d+-.*$/i; // Strict pattern for "1. p2-no.19"
+const ANALYSIS_LABEL_REGEX = /^\d+\.\s*p\d+-(?:수능|Analysis|수능 대비|.*ANALYSIS).*/i; // For "1. p8-수능 대비 ANALYSIS"
 const DAY_REGEX = /^Day\s+\d+/i;
 const WINDOW_SIZE = 5;
 const MIN_SENTENCES_REQUIRED = 5;
@@ -88,7 +90,23 @@ class NewPDFParser {
       const passageText = currentLines.join(' ').replace(/\s+/g, ' ').trim();
       if (passageText) {
         passages.push(passageText);
-        sources.push(currentHeading);
+        // Clean up the source label: "1. p2-no.19" -> "No.19" or "Analysis"
+        let cleanSource = currentHeading;
+        
+        // Try extracting "no.XX" or specific analysis title
+        const noMatch = currentHeading.match(/no\.?\s*(\d+)/i);
+        const analysisMatch = currentHeading.match(/-(?:수능\s*대비\s*)?([A-Za-z]+\s*ANALYSIS|Analysis|수능특강|.*분석.*)/i);
+        
+        if (noMatch) {
+          cleanSource = `No.${noMatch[1]}`;
+        } else if (analysisMatch) {
+          cleanSource = analysisMatch[1].trim();
+        } else {
+          // Fallback: keep original but strip "1. " prefix
+          cleanSource = currentHeading.replace(/^\d+\.\s*/, '').trim();
+        }
+
+        sources.push(cleanSource);
         sentenceMap.push(this.splitSentences(passageText));
       }
 
@@ -103,7 +121,7 @@ class NewPDFParser {
         continue;
       }
 
-      if (PROBLEM_HEADING_REGEX.test(line)) {
+      if (PROBLEM_HEADING_REGEX.test(line) || ANALYSIS_LABEL_REGEX.test(line)) {
         flushCurrent();
         currentHeading = line;
         continue;
@@ -182,7 +200,7 @@ class NewPDFParser {
   }
 
   isHeading(line) {
-    return PROBLEM_HEADING_REGEX.test(line);
+    return PROBLEM_HEADING_REGEX.test(line) || ANALYSIS_LABEL_REGEX.test(line);
   }
 
   shouldSkipLine(line) {
