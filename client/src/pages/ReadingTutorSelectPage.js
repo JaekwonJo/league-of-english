@@ -5,12 +5,15 @@ import CommonHero from '../components/common/CommonHero';
 const ReadingTutorSelectPage = () => {
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedTab, setSelectedTab] = useState('모의고사');
+
+  const TABS = ['모의고사', '교과서', '부교재', 'EBS 연계'];
 
   useEffect(() => {
     const loadDocs = async () => {
       try {
         setLoading(true);
-        const res = await api.documents.list({ limit: 50 });
+        const res = await api.documents.list({ limit: 100 });
         if (res?.documents) {
           setDocuments(res.documents);
         }
@@ -27,20 +30,42 @@ const ReadingTutorSelectPage = () => {
     window.location.href = `/reading-tutor/${docId}`;
   };
 
+  const filteredDocs = documents.filter(doc => {
+    // Fallback to '기타' if category is unknown, or match tab
+    const cat = doc.category || '기타';
+    if (selectedTab === '모의고사') return cat === '모의고사' || cat === '기타';
+    return cat === selectedTab;
+  });
+
   return (
     <div style={styles.container}>
       <CommonHero
         title="독해 튜터 - 지문 선택 📖"
         subtitle="AI와 함께 분석할 지문을 선택해주세요."
       />
+
+      <div style={styles.tabs}>
+        {TABS.map(tab => (
+          <button
+            key={tab}
+            style={{
+              ...styles.tab,
+              ...(selectedTab === tab ? styles.tabActive : {})
+            }}
+            onClick={() => setSelectedTab(tab)}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
       
       <div style={styles.list}>
         {loading ? (
-          <div style={{textAlign:'center', padding: 40}}>목록을 불러오고 있어요...</div>
-        ) : documents.length === 0 ? (
-          <div style={{textAlign:'center', padding: 40}}>등록된 지문이 없어요.</div>
+          <div style={styles.empty}>목록을 불러오는 중이에요...</div>
+        ) : filteredDocs.length === 0 ? (
+          <div style={styles.empty}>'{selectedTab}' 카테고리에 등록된 지문이 없어요.</div>
         ) : (
-          documents.map(doc => (
+          filteredDocs.map(doc => (
             <div key={doc.id} className="tilt-hover" style={styles.item} onClick={() => handleSelect(doc.id)}>
               <div style={styles.docIcon}>📄</div>
               <div style={styles.docInfo}>
@@ -62,8 +87,30 @@ const styles = {
     margin: '0 auto',
     padding: '20px'
   },
+  tabs: {
+    display: 'flex',
+    gap: '10px',
+    overflowX: 'auto',
+    paddingBottom: '10px',
+    marginBottom: '20px',
+    scrollbarWidth: 'none'
+  },
+  tab: {
+    padding: '8px 16px',
+    borderRadius: '20px',
+    background: 'var(--surface-soft)',
+    color: 'var(--text-secondary)',
+    border: '1px solid var(--border-subtle)',
+    cursor: 'pointer',
+    whiteSpace: 'nowrap',
+    fontWeight: '600'
+  },
+  tabActive: {
+    background: 'var(--accent-primary)',
+    color: 'white',
+    borderColor: 'var(--accent-primary)'
+  },
   list: {
-    marginTop: '20px',
     display: 'flex',
     flexDirection: 'column',
     gap: '12px'
@@ -104,6 +151,11 @@ const styles = {
     fontSize: '13px',
     fontWeight: 'bold',
     cursor: 'pointer'
+  },
+  empty: {
+    textAlign: 'center',
+    padding: '40px',
+    color: 'var(--text-secondary)'
   }
 };
 

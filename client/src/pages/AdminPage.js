@@ -117,7 +117,7 @@ const AdminPage = () => {
   const isTeacherOnly = user?.role === 'teacher';
   const [isMobile, setIsMobile] = useState(() => (typeof window !== 'undefined' ? window.innerWidth < 880 : false));
 
-  const [categories, setCategories] = useState(['교과서', '모의고사', '부교재', '단어', '기타']);
+  const [categories, setCategories] = useState(['모의고사', '교과서', '부교재', 'EBS 연계', '단어', '기타']);
   const [loading, setLoading] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
