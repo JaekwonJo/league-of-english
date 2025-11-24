@@ -328,6 +328,8 @@ class AIProblemService {
     }
     return this._gemini;
   }
+
+  async getPassages(documentId, options = {}) {
     const doc = await database.get("SELECT * FROM documents WHERE id = ?", [documentId]);
     if (!doc) throw new Error("Document not found");
     let passages = [];
