@@ -40,6 +40,12 @@ const CATEGORY_SECTIONS = [
     description: '테마/암기용 단어장입니다.'
   },
   {
+    key: 'my_vocab',
+    title: '나만의 단어장',
+    icon: '⭐',
+    description: 'AI 튜터와 공부하며 저장한 단어들을 복습해요.'
+  },
+  {
     key: 'other',
     title: '기타',
     icon: '🔖',
@@ -50,6 +56,7 @@ const CATEGORY_SECTIONS = [
 const normalizeCategoryKey = (value) => {
   const raw = String(value || '').trim().toLowerCase();
   if (!raw) return 'other';
+  if (raw === 'my_vocab') return 'my_vocab';
   if (raw.includes('교과') || raw.includes('내신') || raw.includes('수업')) return 'textbook';
   if (raw.includes('모의') || raw.includes('수능') || raw.includes('평가') || raw.includes('기출')) return 'mock';
   if (raw.includes('부교') || raw.includes('보충') || raw.includes('특강') || raw.includes('워크북')) return 'supplement';
@@ -185,13 +192,46 @@ const getTimeLimitSeconds = useCallback(() => {
       setSetsLoading(true);
       setSetsError('');
       try {
-        const response = await api.vocabulary.list();
-        setSets(Array.isArray(response?.data) ? response.data : []);
-        if (!response?.data?.length) {
+        const [response, myVocabResponse] = await Promise.all([
+          api.vocabulary.list(),
+          api.get('/vocabulary/my') // New API for My Vocab
+        ]);
+        
+        const standardSets = Array.isArray(response?.data) ? response.data : [];
+        
+        // Transform My Vocab into a standard set structure if it has items
+        const myVocabData = Array.isArray(myVocabResponse?.data) ? myVocabResponse.data : [];
+        if (myVocabData.length > 0) {
+          // Create a virtual set for My Vocab
+          const mySet = {
+            id: 'my-vocab-set', // Special ID
+            title: '나만의 단어장',
+            category: 'my_vocab',
+            totalDays: 1,
+            totalWords: myVocabData.length,
+            groupKey: 'my_vocab',
+            days: [{
+              key: 'my_day_all',
+              label: '전체 단어',
+              count: myVocabData.length,
+              entries: myVocabData // entries must have {term, meaning}
+            }]
+          };
+          standardSets.unshift(mySet); // Add to top
+        }
+
+        setSets(standardSets);
+        if (!standardSets.length) {
           setMessage('아직 업로드된 단어장이 없어요. 관리자 페이지에서 PDF 단어장을 업로드하면 여기서 바로 시험을 볼 수 있어요!');
         }
       } catch (err) {
-        setSetsError(err?.message || '단어 세트를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
+        // Fallback if My Vocab API fails or just standard list fails
+        try {
+           const response = await api.vocabulary.list();
+           setSets(Array.isArray(response?.data) ? response.data : []);
+        } catch (e) {
+           setSetsError(err?.message || '단어 세트를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
+        }
       } finally {
         setSetsLoading(false);
       }
@@ -279,6 +319,18 @@ const getTimeLimitSeconds = useCallback(() => {
       navigateToStep(STEPS.SELECT_DAY);
       return;
     }
+    
+    // Special handling for My Vocab (data is already embedded)
+    if (setInfo.id === 'my-vocab-set') {
+      setSelectedSet(setInfo);
+      setSelectedDayKey('');
+      setSelectedDayKeys([]);
+      const sectionKey = 'my_vocab';
+      setCollapsedSections((prev) => ({ ...prev, [sectionKey]: false }));
+      navigateToStep(STEPS.SELECT_DAY);
+      return;
+    }
+
     setDaysLoading(true);
     setError('');
     setMessage('');
