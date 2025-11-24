@@ -33,7 +33,7 @@ const buildReviewItems = (results) => {
     .filter((item) => item.problem && Object.keys(item.problem).length > 0);
 };
 
-const ReviewModeView = ({ results, onBack, onRestart }) => {
+const ReviewModeView = ({ results, onBack, onRestart, onGeminiAsk }) => {
   const reviewItems = useMemo(() => buildReviewItems(results), [results]);
   const [showScrollTop, setShowScrollTop] = useState(false);
 
@@ -104,6 +104,7 @@ const ReviewModeView = ({ results, onBack, onRestart }) => {
               totalProblems={reviewItems.length}
               userAnswer={item.userAnswer}
               displayMode="review"
+              onGeminiAsk={onGeminiAsk}
               reviewMeta={{
                 isCorrect: item.isCorrect,
                 timeSpent: item.timeSpent,

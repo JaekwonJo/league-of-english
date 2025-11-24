@@ -16,6 +16,7 @@ const StudyModeView = ({
   onAnswer,
   onFinish,
   onRestart,
+  onGeminiAsk,
   generationLog,
 }) => {
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -45,6 +46,7 @@ const StudyModeView = ({
         totalProblems={problems.length}
         userAnswer={answers[index]}
         onAnswer={onAnswer}
+        onGeminiAsk={onGeminiAsk}
         displayMode="list"
       />
     ));

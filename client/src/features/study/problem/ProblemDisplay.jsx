@@ -35,6 +35,7 @@ const ProblemDisplay = ({
   timeElapsed = 0,
   timeLeft,
   displayMode = 'single',
+  onGeminiAsk, // New prop
   reviewMeta = {}
 }) => {
   const [selectedAnswer, setSelectedAnswer] = useState(userAnswer ?? '');
@@ -422,6 +423,26 @@ const ProblemDisplay = ({
         normalHeading: 'Choose the correct answer',
         reviewHeading: 'Review the options & explanation'
       })}
+      {isReviewMode && onGeminiAsk && (
+        <div style={{ marginTop: '12px', textAlign: 'right' }}>
+          <button 
+            onClick={() => onGeminiAsk(effectiveProblem)}
+            style={{
+              background: 'linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%)',
+              color: 'white',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '20px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)'
+            }}
+          >
+            🤖 이해가 안 돼요, 더 설명해주세요!
+          </button>
+        </div>
+      )}
     </>
   );
 
@@ -489,6 +510,26 @@ const ProblemDisplay = ({
         normalHeading: isPreviewMode ? '선택지' : '정답을 선택하세요',
         reviewHeading: '선택지와 해설을 확인하세요'
       })}
+      {isReviewMode && onGeminiAsk && (
+        <div style={{ marginTop: '12px', textAlign: 'right' }}>
+          <button 
+            onClick={() => onGeminiAsk(effectiveProblem)}
+            style={{
+              background: 'linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%)',
+              color: 'white',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '20px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)'
+            }}
+          >
+            🤖 이해가 안 돼요, 더 설명해주세요!
+          </button>
+        </div>
+      )}
     </>
   );
 

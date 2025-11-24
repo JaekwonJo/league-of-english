@@ -16,6 +16,7 @@ import ReviewModeView from "../features/study/components/ReviewModeView";
 import { pickFlashcards } from "../features/study/utils/flashcards";
 import EagleGuideChip from "../components/common/EagleGuideChip";
 import CommonHero from "../components/common/CommonHero";
+import GeminiChatModal from "../components/common/GeminiChatModal";
 
 
 
@@ -33,6 +34,7 @@ const StudyPage = () => {
   const [loadingFlashcards, setLoadingFlashcards] = useState([]);
   const [reviewPreview, setReviewPreview] = useState({ total: 0, problems: [] });
   const [reviewPreviewLoading, setReviewPreviewLoading] = useState(false);
+  const [activeChatProblem, setActiveChatProblem] = useState(null); // For Gemini tutor modal
   const [reviewPreviewFetched, setReviewPreviewFetched] = useState(false);
   const [reviewLoading, setReviewLoading] = useState(false);
   const [reviewError, setReviewError] = useState('');
@@ -352,12 +354,51 @@ const StudyPage = () => {
             url.searchParams.set('studyStep', '2');
             window.history.replaceState({}, '', url.toString());
           }}
+          onGeminiAsk={(problem) => setActiveChatProblem(problem)}
           generationLog={generationLog}
         />
+        {activeChatProblem && (
+          <GeminiChatModal
+            isOpen={!!activeChatProblem}
+            onClose={() => setActiveChatProblem(null)}
+            initialTopic={activeChatProblem.type === 'grammar' ? '문법 심층 설명' : '문제 해설'}
+            context={{
+              problem: activeChatProblem,
+              question: activeChatProblem.question,
+              passage: activeChatProblem.passage || activeChatProblem.mainText,
+              answer: activeChatProblem.answer,
+              explanation: activeChatProblem.explanation
+            }}
+          />
+        )}
+      </>
       );
 
     case "review":
-      return <ReviewModeView results={results} onBack={exitReview} onRestart={restart} />;
+      return (
+        <>
+          <ReviewModeView 
+            results={results} 
+            onBack={exitReview} 
+            onRestart={restart}
+            onGeminiAsk={(problem) => setActiveChatProblem(problem)} 
+          />
+          {activeChatProblem && (
+            <GeminiChatModal
+              isOpen={!!activeChatProblem}
+              onClose={() => setActiveChatProblem(null)}
+              initialTopic="오답 노트 해설"
+              context={{
+                problem: activeChatProblem,
+                question: activeChatProblem.question,
+                passage: activeChatProblem.passage || activeChatProblem.mainText,
+                answer: activeChatProblem.answer,
+                explanation: activeChatProblem.explanation
+              }}
+            />
+          )}
+        </>
+      );
 
     case "result":
       return <StudyResult results={results} onRestart={() => {
