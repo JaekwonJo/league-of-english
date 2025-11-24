@@ -131,6 +131,16 @@ const ReadingTutorPage = () => {
           onClose={() => setActiveChat(null)}
           initialTopic={activeChat.topic}
           context={activeChat.context}
+          onAction={(option) => {
+            if (option.action && option.action.startsWith('save_vocab_')) {
+              const [_, term, meaning] = option.action.split('_vocab_')[1].split('_');
+              api.post('/vocabulary/my/save', { term, meaning })
+                .then(() => alert(`'${term}' 단어장에 저장 완료! 📝`))
+                .catch(() => alert('저장 실패'));
+              return true; // Handled
+            }
+            return false;
+          }}
         />
       )}
     </div>
