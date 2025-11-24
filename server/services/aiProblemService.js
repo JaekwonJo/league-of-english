@@ -274,9 +274,40 @@ class AIProblemService {
     };
   }
 
-  callChatCompletion(config, options = {}) {
+  async callChatCompletion(config, options = {}) {
     return this.queue.enqueue(async () => {
-      return await this._callGemini(config);
+      // 1. Check Cache
+      const promptText = JSON.stringify(config.messages);
+      const modelName = config.model || 'unknown';
+      
+      // Simple hash for cache key
+      const crypto = require('crypto');
+      const hash = crypto.createHash('sha256').update(promptText + modelName).digest('hex');
+
+      try {
+        const cachedRow = await database.get('SELECT response FROM ai_response_cache WHERE hash = ?', [hash]);
+        if (cachedRow && cachedRow.response) {
+          console.log(`[AI] Cache HIT for hash ${hash.slice(0, 8)}`);
+          return JSON.parse(cachedRow.response);
+        }
+      } catch (e) {
+        console.warn('[AI] Cache read failed:', e);
+      }
+
+      // 2. Call API
+      const result = await this._callGemini(config);
+
+      // 3. Save to Cache
+      try {
+        await database.run(
+          'INSERT OR REPLACE INTO ai_response_cache (hash, prompt, response, model) VALUES (?, ?, ?, ?)',
+          [hash, promptText, JSON.stringify(result), modelName]
+        );
+      } catch (e) {
+        console.warn('[AI] Cache write failed:', e);
+      }
+
+      return result;
     }, options);
   }
 

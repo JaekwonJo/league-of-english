@@ -499,6 +499,26 @@ class Database {
           action TEXT DEFAULT 'view',
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (user_id) REFERENCES users(id)
+        )`,
+
+        // study_chat_sessions (대화 저장)
+        `CREATE TABLE IF NOT EXISTS study_chat_sessions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL,
+          topic TEXT,
+          history TEXT,
+          last_message_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id)
+        )`,
+
+        // ai_response_cache (스마트 캐싱)
+        `CREATE TABLE IF NOT EXISTS ai_response_cache (
+          hash TEXT PRIMARY KEY,
+          prompt TEXT,
+          response TEXT,
+          model TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`
       ];
 
