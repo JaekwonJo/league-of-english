@@ -70,6 +70,20 @@ const ProblemDisplay = ({
   const isPreviewMode = displayMode === 'preview';
   const shouldShowFeedback = !isReviewMode && !isPreviewMode && Number.isInteger(problemId) && problemId > 0;
 
+  const handleSelect = (answer) => {
+    if (isPreviewMode) return;
+    setSelectedAnswer(answer);
+    if (typeof onAnswer === 'function') {
+      if (onAnswer.length >= 2) {
+        onAnswer(problemIndex, answer);
+      } else {
+        onAnswer(answer);
+      }
+    }
+  };
+
+  const noopHandleSelect = () => {};
+
   // ProblemDisplay is used in contexts where it might not be the scroll container.
   // The top-level View (ReviewModeView) usually handles the scroll-to-top button.
   // But since the user asked to fix the button inside ProblemDisplay if present, or generally fix "scroll to top":
@@ -342,7 +356,7 @@ const ProblemDisplay = ({
         <ChoiceButtons
           optionRecords={optionRecords}
           selectedAnswer={selectedAnswer}
-          onSelect={isReviewMode ? undefined : handleSelect}
+          onSelect={isReviewMode ? noopHandleSelect : handleSelect}
           showOnlyMarkers={false}
           disabled={isPreviewMode || isReviewMode}
         />
@@ -593,7 +607,7 @@ const ProblemDisplay = ({
         <OrderProblemDisplay
           problem={problem}
           parsedOrderData={null}
-          onAnswer={isReviewMode ? undefined : handleSelect}
+          onAnswer={isReviewMode ? noopHandleSelect : handleSelect}
           userAnswer={selectedAnswer}
         />
       )}
@@ -601,7 +615,7 @@ const ProblemDisplay = ({
       {isInsertion && (
         <InsertionProblemDisplay
           problem={problem}
-          onAnswer={isReviewMode ? undefined : handleSelect}
+          onAnswer={isReviewMode ? noopHandleSelect : handleSelect}
           userAnswer={selectedAnswer}
         />
       )}
@@ -609,7 +623,7 @@ const ProblemDisplay = ({
       {isGrammar && (
         <GrammarProblemDisplay
           problem={problem}
-          onAnswer={isReviewMode ? undefined : handleSelect}
+          onAnswer={isReviewMode ? noopHandleSelect : handleSelect}
           userAnswer={selectedAnswer}
           showResult={isReviewMode}
         />
