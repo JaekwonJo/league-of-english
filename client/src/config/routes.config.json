@@ -49,7 +49,23 @@
       "roles": ["student", "teacher", "admin"]
     },
     {
-      "path": "/study/history",
+      "path": "/reading-tutor-select",
+      "name": "독해 튜터 선택",
+      "icon": "FileText",
+      "component": "ReadingTutorSelectPage",
+      "requiresAuth": true,
+      "roles": ["student", "teacher", "admin"]
+    },
+    {
+      "path": "/reading-tutor",
+      "name": "독해 튜터",
+      "icon": "Book",
+      "component": "ReadingTutorPage",
+      "requiresAuth": true,
+      "roles": ["student", "teacher", "admin"]
+    },
+    {
+      "path": "/mock-exam",
       "name": "모의고사 풀이",
       "icon": "ClipboardList",
       "component": "MockExamPage",
