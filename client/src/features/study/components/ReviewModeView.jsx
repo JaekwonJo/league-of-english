@@ -119,7 +119,13 @@ const ReviewModeView = ({ results, onBack, onRestart, onGeminiAsk }) => {
         <button
           type="button"
           aria-label="맨 위로 이동"
-          style={studyModeStyles.scrollTopButton}
+          style={{
+            ...studyModeStyles.scrollTopButton,
+            color: '#ffffff',
+            background: 'rgba(99, 102, 241, 0.9)',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+            zIndex: 1000
+          }}
           onClick={handleScrollTop}
           onMouseEnter={(event) => {
             event.currentTarget.style.transform = 'translateY(-4px)';
@@ -128,7 +134,7 @@ const ReviewModeView = ({ results, onBack, onRestart, onGeminiAsk }) => {
             event.currentTarget.style.transform = 'translateY(0)';
           }}
         >
-          🔝
+          ↑
         </button>
       ) : null}
     </div>
