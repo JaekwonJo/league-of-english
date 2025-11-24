@@ -15,7 +15,9 @@ const ReadingTutorSelectPage = () => {
         setLoading(true);
         const res = await api.documents.list({ limit: 100 });
         if (res?.documents) {
-          setDocuments(res.documents);
+          // Filter out vocabulary documents
+          const readingDocs = res.documents.filter(d => d.type !== 'vocabulary');
+          setDocuments(readingDocs);
         }
       } catch (e) {
         console.error(e);
