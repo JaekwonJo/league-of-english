@@ -23,6 +23,17 @@ const GeminiChatModal = ({ isOpen, onClose, initialTopic, context, historyOverri
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [history, loading]);
 
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (history.length > 0 && !historyOverride) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [history, historyOverride]);
+
   const sendMessage = async (topic, currentHistory, userAction = null, isInit = false) => {
     setLoading(true);
     
@@ -86,7 +97,22 @@ const GeminiChatModal = ({ isOpen, onClose, initialTopic, context, historyOverri
       <div style={styles.modal}>
         <div style={styles.header}>
           <h3 style={styles.title}>🤖 제미나이 선생님</h3>
-          <button onClick={onClose} style={styles.closeButton}>×</button>
+          <div style={{display: 'flex', gap: '10px'}}>
+            {!historyOverride && (
+              <button
+                onClick={() => {
+                  const title = initialTopic.length > 20 ? initialTopic.slice(0, 20) + '...' : initialTopic;
+                  api.post('/study/tutor/save', { topic: title, history })
+                    .then(() => alert('대화 내용이 기록소에 저장되었습니다! 💾'))
+                    .catch(() => alert('저장 실패'));
+                }}
+                style={styles.saveButton}
+              >
+                저장
+              </button>
+            )}
+            <button onClick={onClose} style={styles.closeButton}>×</button>
+          </div>
         </div>
         
         <div style={styles.body}>
@@ -172,6 +198,16 @@ const styles = {
     border: 'none',
     color: '#94a3b8',
     fontSize: '24px',
+    cursor: 'pointer'
+  },
+  saveButton: {
+    background: 'rgba(16, 185, 129, 0.2)',
+    color: '#34d399',
+    border: '1px solid rgba(16, 185, 129, 0.5)',
+    borderRadius: '8px',
+    padding: '4px 12px',
+    fontSize: '13px',
+    fontWeight: 'bold',
     cursor: 'pointer'
   },
   body: {
