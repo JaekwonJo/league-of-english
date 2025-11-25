@@ -24,6 +24,17 @@ const GeminiChatModal = ({ isOpen, onClose, initialTopic, context, historyOverri
   }, [history, loading]);
 
   useEffect(() => {
+    // Auto-save on unmount if history exists and wasn't overridden (view-only mode)
+    return () => {
+      if (history.length >= 4 && !historyOverride) {
+        const title = initialTopic.length > 20 ? initialTopic.slice(0, 20) + '...' : initialTopic;
+        // Fire and forget auto-save
+        api.post('/study/tutor/save', { topic: `(자동저장) ${title}`, history }).catch(() => {});
+      }
+    };
+  }, [history, historyOverride, initialTopic]);
+
+  useEffect(() => {
     const handleBeforeUnload = (e) => {
       if (history.length > 0 && !historyOverride) {
         e.preventDefault();
