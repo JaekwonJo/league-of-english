@@ -124,7 +124,8 @@ const VocabularyPage = () => {
   const [orderPolicy, setOrderPolicy] = useState('random'); // 'random' | 'sequential'
   const [collapsedSections, setCollapsedSections] = useState(() => (
     CATEGORY_SECTIONS.reduce((acc, section) => {
-      acc[section.key] = true;
+      // My Vocab is expanded by default, others collapsed
+      acc[section.key] = section.key !== 'my_vocab';
       return acc;
     }, {})
   ));
@@ -218,6 +219,11 @@ const getTimeLimitSeconds = useCallback(() => {
             }]
           };
           standardSets.unshift(mySet); // Add to top
+        }
+
+        // Auto-expand My Vocab if it exists
+        if (myVocabData.length > 0) {
+          setCollapsedSections(prev => ({ ...prev, my_vocab: false }));
         }
 
         setSets(standardSets);
