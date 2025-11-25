@@ -122,7 +122,7 @@ const GrammarTutorPage = () => {
         />
         <h3 style={{color: 'white', marginTop: 30, marginBottom: 15}}>공부할 주제를 선택하세요 👇</h3>
         <div style={styles.topicGrid}>
-          {activeChapter.topics && activeChapter.topics.map((topic, idx) => (
+          {(activeChapter.topics || []).map((topic, idx) => (
             <button 
               key={idx} 
               style={styles.topicCard}
