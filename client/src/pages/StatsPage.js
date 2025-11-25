@@ -166,6 +166,10 @@ const StatsPage = () => {
     { label: '진행한 세션', value: `${formatNumber(stats?.totalSessions ?? 0)}회`, helper: `지난 7일 ${formatNumber(stats?.weeklySessions ?? 0)}회` }
   ];
 
+  const mockExamAccuracy = mockExamStats
+    ? Math.min(100, Math.max(0, Number(mockExamStats.accuracy) || 0))
+    : 0;
+
   const renderHeatmap = () => {
     // Mock data for heatmap (since real daily data might be sparse)
     // In production, use stats.dailyActivity
