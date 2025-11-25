@@ -185,27 +185,15 @@ router.post('/tutor/chat', verifyToken, async (req, res) => {
       Conversation History: ${JSON.stringify(history || [])}
       
       **Instructions:**
+      - **ALWAYS PROVIDE AN 'EXPLAIN MORE' OPTION:** Unless the user explicitly says "I understand" or moves to the next topic, ALWAYS include an option like { "label": "이해가 안 돼요 / 더 설명해주세요", "action": "explain_more" } or { "label": "더 쉬운 예시 보기", "action": "explain_simpler" }.
       - **For Reading Tutor Requests (Topic: 문장 해석, 문법 분석, 단어장):**
-        - Provide the requested content (Interpretation, Grammar Breakdown, or Vocab List) clearly.
-        - Always follow the "Easy Korean + Polite Tone" rule.
-        - **If topic is '단어장 요청' or user asks about words:**
-          - List key words with meanings.
-          - **CRITICAL:** For each word, provide an option to save it: { "label": "💾 'apple' 저장하기", "action": "save_vocab_apple_사과" }.
-        - After the response, offer relevant next steps.
-      - **For Final Review (Topic: 지문 전체 리뷰):**
-        - Summarize the passage's core message, title, and author's claim.
-        - Then, immediately generate a relevant reading comprehension question (Blank, Order, or Title type).
-        - Provide answer choices with "submit_answer_" actions.
+        - Provide the requested content clearly.
+        - Options: [Next Sentence], [Explain Grammar], [Vocab List], [Explain More].
       - **General Grammar Mode:**
-        - If history is empty, introduce the topic briefly in Korean and ask if they want a "핵심 개념" or "문제 풀기".
-        - **If the user clicks "문제 풀어보기" (or similar) or asks for a problem:**
-          - Generate a simple multiple-choice grammar question related to the current concept.
-          - Put the question in the \`message\` field.
-          - **CRITICAL:** Provide 3-4 answer choices in the \`options\` array. The \`action\` for each option MUST be "submit_answer_ANSWER_TEXT" (e.g., "submit_answer_to go").
-        - **If the user submits an answer (action starts with "submit_answer_"):**
-          - Analyze the answer.
-          - If **Correct**: Praise them (🎉), briefly explain why, and offer options: [{ "label": "다음 문제 풀기", "action": "generate_quiz" }, { "label": "다음 개념 넘어가기", "action": "next_concept" }].
-          - If **Incorrect**: Encourage them (😅), explain why it's wrong, and offer options: [{ "label": "다시 시도", "action": "generate_quiz" }, { "label": "개념 다시 듣기", "action": "explain_concept" }].
+        - Explain the concept simply with English examples (First English, then Korean).
+        - Options: [Solve Problem], [More Examples], [Explain More].
+        - **If user clicks "문제 풀어보기":** Generate a multiple-choice question.
+        - **If user answers Incorrectly:** Explain WHY it's wrong, then offer [Try Again] or [Explain Concept Again].
       - **Always include English examples in explanations.**
     `;
 

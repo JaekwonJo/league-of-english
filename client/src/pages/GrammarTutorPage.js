@@ -151,24 +151,6 @@ const GrammarTutorPage = () => {
           <div key={idx} style={msg.role === 'user' ? styles.userMsgWrapper : styles.aiMsgWrapper}>
             <div style={msg.role === 'user' ? styles.userBubble : styles.aiBubble}>
               {msg.text}
-              {msg.role === 'ai' && msg.text && /[a-zA-Z]{2,}/.test(msg.text) && (
-                <button 
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: '4px', 
-                    marginTop: '8px', padding: '4px 8px', borderRadius: '12px', 
-                    background: 'rgba(255,255,255,0.1)', border: 'none', color: '#cbd5e1', 
-                    fontSize: '12px', cursor: 'pointer'
-                  }}
-                  onClick={() => {
-                    const utterance = new SpeechSynthesisUtterance(msg.text.replace(/[가-힣]+/g, '')); 
-                    utterance.lang = 'en-US';
-                    utterance.rate = 0.9;
-                    window.speechSynthesis.speak(utterance);
-                  }}
-                >
-                  🔊 듣기
-                </button>
-              )}
             </div>
             {msg.role === 'ai' && msg.options && (
               <div style={styles.optionsGrid}>
