@@ -35,15 +35,26 @@ const ReadingTutorSelectPage = () => {
   const filteredDocs = documents.filter(doc => {
     if (selectedTab === '전체') return true;
     
-    const cat = String(doc.category || '기타').trim();
+    // Normalize category: remove spaces, lower case
+    const rawCat = String(doc.category || '기타');
+    const cat = rawCat.replace(/\s+/g, '').toLowerCase();
+    const tab = selectedTab.replace(/\s+/g, '').toLowerCase();
     
-    // '모의고사' tab shows '모의고사' AND unclassified items to prevent them from being hidden
-    if (selectedTab === '모의고사') {
-      return cat.includes('모의고사') || cat === '기타' || (!TABS.includes(cat) && !cat.includes('교과') && !cat.includes('부교') && !cat.includes('EBS'));
+    // Exact category matching logic
+    if (tab === '모의고사') {
+      return cat.includes('모의고사') || cat.includes('mock');
+    }
+    if (tab === '교과서') {
+      return cat.includes('교과서') || cat.includes('textbook');
+    }
+    if (tab === '부교재') {
+      return cat.includes('부교재') || cat.includes('supplement') || cat.includes('올림포스') || cat.includes('수능특강');
+    }
+    if (tab === 'ebs연계') {
+      return cat.includes('ebs');
     }
     
-    // Fuzzy match for others
-    return cat.includes(selectedTab);
+    return cat.includes(tab);
   });
 
   return (
