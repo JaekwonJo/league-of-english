@@ -33,10 +33,15 @@ const ReadingTutorSelectPage = () => {
   };
 
   const filteredDocs = documents.filter(doc => {
-    // Fallback to '기타' if category is unknown, or match tab
-    const cat = doc.category || '기타';
-    if (selectedTab === '모의고사') return cat === '모의고사' || cat === '기타';
-    return cat === selectedTab;
+    const cat = String(doc.category || '기타').trim();
+    
+    // '모의고사' tab shows '모의고사' AND unclassified items to prevent them from being hidden
+    if (selectedTab === '모의고사') {
+      return cat.includes('모의고사') || cat === '기타' || !TABS.includes(cat);
+    }
+    
+    // Exact or fuzzy match for other tabs
+    return cat.includes(selectedTab);
   });
 
   return (
