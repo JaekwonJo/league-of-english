@@ -218,6 +218,7 @@ const StatsPage = () => {
       </div>
     );
   };
+  const renderSummaryCards = () => {
     if (isMobile) {
       return (
         <div style={styles.sliderRow}>
