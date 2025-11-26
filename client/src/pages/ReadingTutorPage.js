@@ -3,9 +3,7 @@ import { api } from '../services/api.service';
 import GeminiChatModal from '../components/common/GeminiChatModal';
 
 const ReadingTutorPage = () => {
-  // Parse ID manually if router not fully integrated
-  const parts = window.location.pathname.split('/');
-  const documentId = parts[parts.length - 1];
+  const documentId = window.location.pathname.split('/').pop();
 
   const [passages, setPassages] = useState([]);
   const [currentStep, setCurrentStep] = useState(0); // 0 to n (sentences)
