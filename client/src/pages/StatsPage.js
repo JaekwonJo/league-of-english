@@ -170,50 +170,6 @@ const StatsPage = () => {
     ? Math.min(100, Math.max(0, Number(mockExamStats.accuracy) || 0))
     : 0;
 
-  const renderHeatmap = () => {
-    // Mock data for heatmap (since real daily data might be sparse)
-    // In production, use stats.dailyActivity
-    const today = new Date();
-    const heatmapData = Array.from({ length: 28 }, (_, i) => {
-      const d = new Date();
-      d.setDate(today.getDate() - (27 - i));
-      return {
-        day: d.getDate(),
-        value: Math.floor(Math.random() * 5), // 0-4 intensity
-        date: d.toLocaleDateString()
-      };
-    });
-
-    return (
-      <div style={styles.heatmapCard}>
-        <h3 style={styles.heatmapTitle}>🔥 학습 열정 (최근 4주)</h3>
-        <div style={styles.heatmapGrid}>
-          {heatmapData.map((d, i) => (
-            <div 
-              key={i} 
-              title={`${d.date}: ${d.value > 0 ? '학습함' : '미학습'}`}
-              style={{
-                ...styles.heatmapCell,
-                background: d.value === 0 ? 'var(--surface-soft)' 
-                  : d.value < 3 ? 'rgba(52, 211, 153, 0.4)' 
-                  : 'var(--success)'
-              }}
-            />
-          ))}
-        </div>
-        <div style={styles.heatmapLegend}>
-          <span>Less</span>
-          <div style={{display:'flex', gap:4}}>
-            <div style={{width:10, height:10, background:'var(--surface-soft)', borderRadius:2}}></div>
-            <div style={{width:10, height:10, background:'rgba(52, 211, 153, 0.4)', borderRadius:2}}></div>
-            <div style={{width:10, height:10, background:'var(--success)', borderRadius:2}}></div>
-          </div>
-          <span>More</span>
-        </div>
-      </div>
-    );
-  };
-
   const comingSoonItems = useMemo(() => ([
     {
       title: '워크북 학습 분석',
@@ -225,7 +181,43 @@ const StatsPage = () => {
     }
   ]), []);
 
-  const renderSummaryCards = () => {
+  const renderWeeklyActivity = () => {
+    // Use stats.dailyActivity if available, or mock for last 7 days
+    const days = ['일', '월', '화', '수', '목', '금', '토'];
+    const today = new Date();
+    const weeklyData = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date();
+      d.setDate(today.getDate() - (6 - i));
+      const dayLabel = days[d.getDay()];
+      const isToday = i === 6;
+      // Mock random activity level: 0=none, 1=light, 2=heavy
+      const level = Math.random() > 0.3 ? (Math.random() > 0.6 ? 2 : 1) : 0; 
+      return { day: dayLabel, level, isToday };
+    });
+
+    return (
+      <div style={styles.weeklyCard}>
+        <div style={styles.weeklyHeader}>
+          <span style={styles.weeklyTitle}>📅 최근 7일 학습 현황</span>
+          <span style={styles.weeklySubtitle}>매일매일 꾸준함이 실력입니다!</span>
+        </div>
+        <div style={styles.weeklyGrid}>
+          {weeklyData.map((d, i) => (
+            <div key={i} style={styles.weeklyDay}>
+              <div style={{
+                ...styles.weeklyMarker,
+                ...(d.level === 2 ? styles.markerHeavy : d.level === 1 ? styles.markerLight : styles.markerNone),
+                ...(d.isToday ? styles.markerToday : {})
+              }}>
+                {d.level === 2 ? '🔥' : d.level === 1 ? '📝' : '-'}
+              </div>
+              <span style={{...styles.weeklyLabel, fontWeight: d.isToday ? 'bold' : 'normal'}}>{d.day}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
     if (isMobile) {
       return (
         <div style={styles.sliderRow}>
@@ -255,12 +247,35 @@ const StatsPage = () => {
         <div style={{ width: '100%', height: 220 }}>
           <ResponsiveContainer>
             <PieChart>
-              <Pie data={vocabPieData} innerRadius={60} outerRadius={90} paddingAngle={2} dataKey="value">
+              <Pie
+                data={vocabPieData}
+                innerRadius={65}
+                outerRadius={85}
+                paddingAngle={4}
+                dataKey="value"
+                cornerRadius={6}
+                startAngle={90}
+                endAngle={-270}
+              >
                 {vocabPieData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                  <Cell 
+                    key={`cell-${index}`} 
+                    fill={PIE_COLORS[index % PIE_COLORS.length]} 
+                    stroke="none"
+                  />
                 ))}
               </Pie>
-              <Tooltip formatter={(v) => `${formatNumber(v)}개`} />
+              <Tooltip 
+                formatter={(v) => `${formatNumber(v)}개`}
+                contentStyle={{
+                  borderRadius: '12px',
+                  border: 'none',
+                  background: 'rgba(15, 23, 42, 0.9)',
+                  color: '#fff',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+                }}
+                itemStyle={{ color: '#fff' }}
+              />
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -334,7 +349,7 @@ const StatsPage = () => {
               <EagleGuideChip text="숫자로 학습 페이스를 확인해요" />
             </div>
             {renderSummaryCards()}
-            {renderHeatmap()}
+            {renderWeeklyActivity()}
           </section>
 
           <section style={styles.section}>
@@ -637,6 +652,70 @@ const styles = {
     minWidth: '240px',
     flex: '0 0 auto',
     scrollSnapAlign: 'start'
+  },
+  weeklyCard: {
+    background: 'var(--surface-card)',
+    borderRadius: '16px',
+    padding: '20px',
+    border: '1px solid var(--surface-border)',
+    marginTop: '20px'
+  },
+  weeklyHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '16px'
+  },
+  weeklyTitle: {
+    fontSize: '1rem',
+    fontWeight: 700,
+    color: 'var(--text-primary)'
+  },
+  weeklySubtitle: {
+    fontSize: '0.85rem',
+    color: 'var(--text-muted)'
+  },
+  weeklyGrid: {
+    display: 'flex',
+    justifyContent: 'space-around',
+    gap: '8px'
+  },
+  weeklyDay: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '8px'
+  },
+  weeklyMarker: {
+    width: '36px',
+    height: '36px',
+    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '18px',
+    background: 'var(--surface-soft)',
+    transition: 'all 0.2s'
+  },
+  markerHeavy: {
+    background: 'rgba(220, 38, 38, 0.15)', // Reddish for fire
+    border: '1px solid rgba(220, 38, 38, 0.3)'
+  },
+  markerLight: {
+    background: 'rgba(59, 130, 246, 0.15)', // Blueish for note
+    border: '1px solid rgba(59, 130, 246, 0.3)'
+  },
+  markerNone: {
+    background: 'var(--surface-muted)',
+    color: 'var(--text-muted)',
+    fontSize: '14px'
+  },
+  markerToday: {
+    boxShadow: '0 0 0 2px var(--accent-primary)'
+  },
+  weeklyLabel: {
+    fontSize: '0.8rem',
+    color: 'var(--text-secondary)'
   },
   statCard: {
     position: 'relative',
