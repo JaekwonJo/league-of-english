@@ -74,13 +74,15 @@ const UploadModal = ({
           </div>
 
           <div style={adminStyles.formGroup}>
-            <label style={adminStyles.label}>카테고리</label>
+            <label style={adminStyles.label}>카테고리 *</label>
             <div style={adminStyles.inlineInputRow}>
               <select
                 value={uploadForm.category}
                 onChange={(e) => onFormChange('category', e.target.value)}
                 style={{ ...adminStyles.input, flex: 1 }}
+                required
               >
+                <option value="" disabled>카테고리를 선택하세요</option>
                 {categories.map((cat) => (
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
