@@ -5,9 +5,9 @@ import CommonHero from '../components/common/CommonHero';
 const ReadingTutorSelectPage = () => {
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedTab, setSelectedTab] = useState('모의고사');
+  const [selectedTab, setSelectedTab] = useState('전체');
 
-  const TABS = ['모의고사', '교과서', '부교재', 'EBS 연계'];
+  const TABS = ['전체', '모의고사', '교과서', '부교재', 'EBS 연계'];
 
   useEffect(() => {
     const loadDocs = async () => {
@@ -33,14 +33,16 @@ const ReadingTutorSelectPage = () => {
   };
 
   const filteredDocs = documents.filter(doc => {
+    if (selectedTab === '전체') return true;
+    
     const cat = String(doc.category || '기타').trim();
     
     // '모의고사' tab shows '모의고사' AND unclassified items to prevent them from being hidden
     if (selectedTab === '모의고사') {
-      return cat.includes('모의고사') || cat === '기타' || !TABS.includes(cat);
+      return cat.includes('모의고사') || cat === '기타' || (!TABS.includes(cat) && !cat.includes('교과') && !cat.includes('부교') && !cat.includes('EBS'));
     }
     
-    // Exact or fuzzy match for other tabs
+    // Fuzzy match for others
     return cat.includes(selectedTab);
   });
 
