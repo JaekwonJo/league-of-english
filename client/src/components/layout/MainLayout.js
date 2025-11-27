@@ -73,7 +73,7 @@ const MainLayout = ({ children, currentPath }) => {
   const isGuest = userMembership === 'guest';
   const guestLockedRoutes = React.useMemo(() => new Set(['/ranking']), []);
   const visibleRoutes = routesConfig.routes.filter((route) => {
-    if (route.hidden) return false;
+    if (route.hidden === true) return false;
     if (!route.roles || !route.roles.includes(userRole)) return false;
     if (!route.memberships || route.memberships.length === 0) return true;
     if (isGuest) return true;
