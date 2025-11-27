@@ -15,8 +15,10 @@ const ReadingTutorSelectPage = () => {
         setLoading(true);
         const res = await api.documents.list({ limit: 100 });
         if (res?.documents) {
-          // Filter out vocabulary documents
+          // Relaxed filter: Show everything except explicit vocabulary
+          // If type is missing/null, show it.
           const readingDocs = res.documents.filter(d => d.type !== 'vocabulary');
+          console.log('Loaded docs:', res.documents); // Debug log
           setDocuments(readingDocs);
         }
       } catch (e) {
@@ -80,6 +82,11 @@ const ReadingTutorSelectPage = () => {
       </div>
       
       <div style={styles.list}>
+        {/* Debug Info: Remove after fixing */}
+        <div style={{padding: 10, fontSize: 12, color: '#666', display: 'none'}}>
+          Debug: Loaded {documents.length} docs. Filtered: {filteredDocs.length}.
+        </div>
+
         {loading ? (
           <div style={styles.empty}>목록을 불러오는 중이에요...</div>
         ) : filteredDocs.length === 0 ? (
