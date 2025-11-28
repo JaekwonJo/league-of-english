@@ -15,11 +15,9 @@ const ReadingTutorSelectPage = () => {
         setLoading(true);
         const res = await api.documents.list({ limit: 100 });
         if (res?.documents) {
-          // Relaxed filter: Show everything except explicit vocabulary
-          // If type is missing/null, show it.
-          const readingDocs = res.documents.filter(d => d.type !== 'vocabulary');
-          console.log('Loaded docs:', res.documents); // Debug log
-          setDocuments(readingDocs);
+          // DEBUG: SHOW EVERYTHING - No filtering at all
+          console.log('ReadingTutorSelectPage RAW documents:', res.documents);
+          setDocuments(res.documents);
         }
       } catch (e) {
         console.error(e);
