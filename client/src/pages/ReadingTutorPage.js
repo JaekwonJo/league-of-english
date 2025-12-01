@@ -71,6 +71,12 @@ const ReadingTutorPage = () => {
     const text = passage.text || passage.originalPassage || '';
     const split = text.match(/[^.!?]+[.!?]+/g) || [text];
     const cleanSentences = split.map((s) => s.trim()).filter((s) => s.length > 0);
+
+    // 지문 라벨: DB에 저장된 displayLabel 우선, 없으면 번호 기반
+    const baseLabel = passage.displayLabel && passage.displayLabel.trim()
+      ? passage.displayLabel.trim()
+      : `지문 ${passage.passageNumber}`;
+
     setSentences(cleanSentences);
     setSelectedPassage(passage);
     setCurrentStep(-1);
@@ -79,7 +85,7 @@ const ReadingTutorPage = () => {
     setHistory([
       {
         role: 'ai',
-        text: `안녕하세요! 오늘 공부할 지문은 "${doc.title}"의 지문 ${passage.passageNumber}번이에요. 총 ${cleanSentences.length}문장으로 이루어져 있어요. 차근차근 읽어볼까요?`,
+        text: `안녕하세요! 오늘 공부할 지문은 "${doc.title}"의 ${baseLabel}이에요. 총 ${cleanSentences.length}문장으로 이루어져 있어요. 차근차근 읽어볼까요?`,
         options: [{ label: '네, 시작해요! 🚀', action: 'start_reading' }]
       }
     ]);
@@ -224,7 +230,9 @@ const ReadingTutorPage = () => {
                 style={styles.passageCard}
                 onClick={() => startPassageSession(p)}
               >
-                <div style={styles.passageBadge}>지문 {p.passageNumber}</div>
+                <div style={styles.passageBadge}>
+                  {(p.displayLabel && p.displayLabel.trim()) || `지문 ${p.passageNumber}`}
+                </div>
                 <div style={styles.passageExcerpt}>{p.excerpt || (p.text || '').slice(0, 80) + '...'}</div>
                 <div style={styles.passageMeta}>
                   단어 {p.wordCount || 0}개 · 문자 {p.charCount || 0}자
@@ -260,7 +268,10 @@ const ReadingTutorPage = () => {
           ← 지문 선택으로
         </button>
         <h2 style={styles.chatTitle}>
-          독해 튜터 🤖{selectedPassage ? ` · 지문 ${selectedPassage.passageNumber}` : ''}
+          독해 튜터 🤖
+          {selectedPassage
+            ? ` · ${(selectedPassage.displayLabel && selectedPassage.displayLabel.trim()) || `지문 ${selectedPassage.passageNumber}`}`
+            : ''}
         </h2>
       </div>
 
