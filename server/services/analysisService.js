@@ -103,6 +103,17 @@ class AnalysisService {
       throw new Error('문서를 찾을 수 없습니다.');
     }
 
+    // 원본 JSON에 포함된 sources(예: "No.20", "p8-수능 대비 ANALYSIS")를 라벨 후보로 사용
+    let rawSources = [];
+    try {
+      const parsed = JSON.parse(document.content || '');
+      if (Array.isArray(parsed?.sources)) {
+        rawSources = parsed.sources.map((s) => String(s || '').trim());
+      }
+    } catch {
+      /* JSON이 아닐 수 있으므로 조용히 무시 */
+    }
+
     const passages = this.extractPassages(document.content);
     const existingRows = await database.all(
       'SELECT passage_number, variants, updated_at FROM passage_analyses WHERE document_id = ?',
@@ -140,6 +151,9 @@ class AnalysisService {
       const wordCount = clean.trim().length
         ? clean.trim().split(/\s+/).filter(Boolean).length
         : 0;
+      const sourceLabel = rawSources[index] || null;
+      const labelFromDb = labelMap.get(passageNumber) || null;
+
       return {
         passageNumber,
         excerpt: this._buildExcerpt(text),
@@ -150,7 +164,10 @@ class AnalysisService {
         variantCount: existing?.variantCount || 0,
         updatedAt: existing?.updatedAt || null,
         remainingSlots: Math.max(0, MAX_VARIANTS_PER_PASSAGE - (existing?.variantCount || 0)),
-        displayLabel: labelMap.get(passageNumber) || null
+        // 1순위: 교사/관리자가 직접 설정한 라벨
+        // 2순위: PDF 파서가 추출한 sources (예: "No.20", "p8-수능 대비 ANALYSIS")
+        // 3순위: 프런트에서 번호 기반 기본값("지문 1")을 사용
+        displayLabel: labelFromDb || sourceLabel || null
       };
     });
 
