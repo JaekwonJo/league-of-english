@@ -6,8 +6,10 @@ const ReadingTutorSelectPage = () => {
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedTab, setSelectedTab] = useState('전체');
+  const [search, setSearch] = useState('');
+  const [passageStats, setPassageStats] = useState({});
 
-  const TABS = ['전체', '모의고사', '교과서', '부교재', 'EBS 연계'];
+  const TABS = ['전체', '모의고사', '교과서', '부교재', '내신', 'EBS 연계'];
 
   useEffect(() => {
     const loadDocs = async () => {
@@ -21,9 +23,33 @@ const ReadingTutorSelectPage = () => {
             ? res.data
             : [];
 
+        // 독해 튜터에는 단어장(type === 'vocabulary' 또는 카테고리 '단어')는 노출하지 않음
+        const filtered = list.filter(doc => {
+          const type = String(doc.type || '').toLowerCase();
+          const category = String(doc.category || '').toLowerCase();
+          if (type === 'vocabulary') return false;
+          if (category.includes('단어')) return false;
+          return true;
+        });
+
         // DEBUG: SHOW EVERYTHING - No filtering at all
-        console.log('ReadingTutorSelectPage RAW documents:', list);
-        setDocuments(list);
+        console.log('ReadingTutorSelectPage RAW documents:', filtered);
+        setDocuments(filtered);
+
+        // 각 문서별 지문(문제) 개수 비동기 로딩
+        const statsEntries = await Promise.all(
+          filtered.map(async (doc) => {
+            try {
+              const status = await api.analysis.status(doc.id);
+              const total = status?.data?.total ?? 0;
+              return [doc.id, { total, analyzed: status?.data?.analyzed ?? 0 }];
+            } catch (err) {
+              console.warn('Failed to load passage status for doc', doc.id, err);
+              return [doc.id, { total: 0, analyzed: 0 }];
+            }
+          })
+        );
+        setPassageStats(Object.fromEntries(statsEntries));
       } catch (e) {
         console.error(e);
       } finally {
@@ -37,30 +63,41 @@ const ReadingTutorSelectPage = () => {
     window.location.href = `/reading-tutor/${docId}`;
   };
 
-  const filteredDocs = documents.filter(doc => {
-    if (selectedTab === '전체') return true;
-    
-    // Normalize category: remove spaces, lower case
-    const rawCat = String(doc.category || '기타');
-    const cat = rawCat.replace(/\s+/g, '').toLowerCase();
-    const tab = selectedTab.replace(/\s+/g, '').toLowerCase();
-    
-    // Exact category matching logic
-    if (tab === '모의고사') {
-      return cat.includes('모의고사') || cat.includes('mock');
-    }
-    if (tab === '교과서') {
-      return cat.includes('교과서') || cat.includes('textbook');
-    }
-    if (tab === '부교재') {
-      return cat.includes('부교재') || cat.includes('supplement') || cat.includes('올림포스') || cat.includes('수능특강');
-    }
-    if (tab === 'ebs연계') {
-      return cat.includes('ebs');
-    }
-    
-    return cat.includes(tab);
-  });
+  const filteredDocs = documents
+    .filter(doc => {
+      if (selectedTab === '전체') return true;
+
+      // Normalize category: remove spaces, lower case
+      const rawCat = String(doc.category || '기타');
+      const cat = rawCat.replace(/\s+/g, '').toLowerCase();
+      const tab = selectedTab.replace(/\s+/g, '').toLowerCase();
+
+      // Exact category matching logic
+      if (tab === '모의고사') {
+        return cat.includes('모의고사') || cat.includes('mock');
+      }
+      if (tab === '교과서') {
+        return cat.includes('교과서') || cat.includes('textbook');
+      }
+      if (tab === '부교재') {
+        return cat.includes('부교재') || cat.includes('supplement') || cat.includes('올림포스') || cat.includes('수능특강');
+      }
+      if (tab === '내신') {
+        return cat.includes('내신');
+      }
+      if (tab === 'ebs연계') {
+        return cat.includes('ebs');
+      }
+
+      return cat.includes(tab);
+    })
+    .filter(doc => {
+      const term = search.trim().toLowerCase();
+      if (!term) return true;
+      const title = String(doc.title || '').toLowerCase();
+      const category = String(doc.category || '').toLowerCase();
+      return title.includes(term) || category.includes(term);
+    });
 
   return (
     <div style={styles.container}>
@@ -68,6 +105,16 @@ const ReadingTutorSelectPage = () => {
         title="독해 튜터 - 지문 선택 📖"
         subtitle="AI와 함께 분석할 지문을 선택해주세요."
       />
+
+      <div style={styles.searchRow}>
+        <input
+          type="text"
+          placeholder="문서 제목이나 학교/카테고리로 검색해 보세요."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={styles.searchInput}
+        />
+      </div>
 
       <div style={styles.tabs}>
         {TABS.map(tab => (
@@ -100,7 +147,22 @@ const ReadingTutorSelectPage = () => {
               <div style={styles.docIcon}>📄</div>
               <div style={styles.docInfo}>
                 <div style={styles.docTitle}>{doc.title}</div>
-                <div style={styles.docMeta}>{doc.category || '기본'} · {new Date(doc.createdAt).toLocaleDateString()}</div>
+                <div style={styles.docMeta}>
+                  {doc.category || '기본'} ·{' '}
+                  {(() => {
+                    const created = doc.createdAt || doc.created_at;
+                    if (!created) return '날짜 미상';
+                    const d = new Date(created);
+                    return Number.isNaN(d.getTime()) ? '날짜 미상' : d.toLocaleDateString();
+                  })()}
+                  {' · '}
+                  {(() => {
+                    const stat = passageStats[doc.id];
+                    if (!stat) return '지문 수 계산 중...';
+                    if (!stat.total) return '지문 0개';
+                    return `지문 ${stat.total}개`;
+                  })()}
+                </div>
               </div>
               <button style={styles.startBtn}>시작</button>
             </div>
@@ -116,6 +178,18 @@ const styles = {
     maxWidth: '800px',
     margin: '0 auto',
     padding: '20px'
+  },
+  searchRow: {
+    marginTop: '10px',
+    marginBottom: '10px'
+  },
+  searchInput: {
+    width: '100%',
+    padding: '10px 14px',
+    borderRadius: '12px',
+    border: '1px solid var(--surface-border)',
+    background: 'var(--surface-soft)',
+    fontSize: '14px'
   },
   tabs: {
     display: 'flex',

@@ -33,6 +33,13 @@
 - Files: client/src/pages/ReadingTutorSelectPage.js, client/src/services/api.service.js, PROJECT_STATE.md, README.md, BUILDLOG.md.
 - Verification: 코드 레벨에서 `/documents` 응답을 배열/래핑 객체 모두 안전하게 처리하도록 정리했으며, 독해 튜터/분석 페이지는 공통 `api.documents.get`을 통해 동일한 문서 객체를 받게 됩니다. (로컬에서는 `npm test`로 서버 단위 테스트를 실행해 회귀 여부를 확인하는 것을 권장합니다.)
 
+## 2025-12-01 (AI 독해 튜터 - 지문(문제) 단위 선택 플로우)
+- Issue: 독해 튜터에서 문서를 선택하면 곧바로 전체 본문을 문장 단위로만 쪼개어 대화가 시작되어, "이 문서가 몇 개 지문(문제)으로 나뉘는지", "지금 몇 번 지문을 보는지"를 직관적으로 알기 어려웠고, 단어장 형식 문서도 목록에 섞여 보였습니다. 문서가 많아질수록 단순 나열 방식이라 검색/분류도 불편했습니다.
+- Cause: `ReadingTutorSelectPage`가 `/documents` 결과를 그대로 나열만 하고, 분석용 API(`/analysis/status/:documentId`, `/analysis/:documentId/passage-list`)를 활용해 문서별 지문 개수를 계산하거나, 지문 단위 카드 UI를 보여주는 로직이 없었습니다. 또한 `type === 'vocabulary'`/카테고리 '단어' 문서를 별도 필터링하지 않았습니다.
+- Fix: `ReadingTutorSelectPage`에서 `type === 'vocabulary'` 또는 카테고리에 '단어'가 포함된 문서는 독해 튜터 목록에서 제외하고, 검색창과 카테고리 탭(모의고사/교과서/부교재/내신/EBS 연계)을 추가해 문서를 필터링할 수 있도록 했습니다. 동시에 `/analysis/status/:documentId`를 문서별로 호출해 **"지문 N개"** 형태로 문항 수를 함께 표시하도록 개선했습니다. `ReadingTutorPage`는 문서 진입 시 먼저 `/analysis/:documentId/passage-list`로 지문 목록을 불러와 `지문 1~N번` 카드 그리드를 보여주고, 선택한 지문의 본문만 문장 단위로 쪼개서 기존 AI 튜터 대화 플로우를 실행하는 2단계 구조로 리팩토링했습니다.
+- Files: client/src/pages/ReadingTutorSelectPage.js, client/src/pages/ReadingTutorPage.js, client/src/services/api.service.js, PROJECT_STATE.md.
+- Verification: 로컬에서 `npm test` 실행 시 기존 어휘/요약 관련 일부 테스트(이미 Known Issue로 존재)가 계속 실패하지만, 독해 튜터 관련 새로운 코드 경로에서 추가 오류는 발생하지 않았습니다. 실제 환경에서는 `/reading-tutor-select`에서 문서별 "지문 개수"가 표시되고, 문서를 클릭하면 지문(문제) 카드 목록 → 개별 지문 선택 후 AI 대화형 독해가 정상적으로 이어져야 합니다.
+
 ## 2025-11-09 (UI mobile polish: vocab range, mascot, mock-exam)
 - Issue: 어휘 Day 선택 효과가 약해 선택됨 상태가 모호했고, 스크롤 하단 CTA는 시야 밖으로 밀려 UX가 떨어졌습니다. 모의고사 문제 화면은 모바일에서 하단 주작동 버튼이 없어 조작성이 낮았습니다.
 - Cause: Day 카드 스타일이 테두리 중심이어서 대비가 낮고, CTA가 레이아웃 하단에 고정되어 있지 않았습니다. 모의고사 플레이어는 데스크톱 위주 버튼 배치였습니다.

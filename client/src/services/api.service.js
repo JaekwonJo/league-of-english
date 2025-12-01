@@ -490,7 +490,14 @@ export const api = {
     list: () => apiService.get('/analysis/list'),
     get: (documentId) => apiService.get(`/analysis/${documentId}`),
     getPassage: (documentId, passageNumber) => apiService.get(`/analysis/${documentId}/passage/${passageNumber}`),
-    listPassageSummaries: (documentId) => apiService.get(`/analysis/${documentId}/passage-list`),
+    // 지문 목록(원문 + 분석 여부 요약)
+    listPassageSummaries: async (documentId) => {
+      const res = await apiService.get(`/analysis/${documentId}/passage-list`);
+      // 서버는 { success, total, data: [...] } 형태로 응답
+      if (Array.isArray(res)) return res;
+      if (Array.isArray(res?.data)) return res.data;
+      return [];
+    },
     generate: (documentId, passageNumber, count = 1) => apiService.post(`/analysis/${documentId}/analyze-passage`, { passageNumber, count }),
     generateBatch: (documentId, passageNumbers = []) => apiService.post(`/analysis/${documentId}/analyze-passages`, { passageNumbers }),
     updatePassageLabel: (documentId, passageNumber, label) =>

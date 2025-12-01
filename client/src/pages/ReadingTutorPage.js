@@ -2,12 +2,20 @@ import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api.service';
 
 const ReadingTutorPage = () => {
-  const documentId = window.location.pathname.split('/').pop();
+  // URL: /reading-tutor/:documentId 또는 /reading-tutor/:documentId/:passageNumber
+  const parts = window.location.pathname.split('/').filter(Boolean);
+  const documentId = parts[1] || null;
+  const initialPassageNumber = parts[2] ? parseInt(parts[2], 10) || null : null;
+
+  const [documentInfo, setDocumentInfo] = useState(null);
+  const [passages, setPassages] = useState([]);
+  const [selectedPassage, setSelectedPassage] = useState(null);
   const [sentences, setSentences] = useState([]);
   const [loading, setLoading] = useState(true);
   const [history, setHistory] = useState([]);
   const [currentStep, setCurrentStep] = useState(-1); // -1: Intro, 0~n: Sentences
   const [aiLoading, setAiLoading] = useState(false);
+  const [viewMode, setViewMode] = useState('select'); // 'select' | 'chat'
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -18,32 +26,64 @@ const ReadingTutorPage = () => {
     scrollToBottom();
   }, [history, aiLoading]);
 
+  // 문서 정보 + 지문 목록 불러오기
   useEffect(() => {
-    const loadDoc = async () => {
+    if (!documentId) {
+      window.location.href = '/reading-tutor-select';
+      return;
+    }
+
+    const loadData = async () => {
       try {
         setLoading(true);
-        const res = await api.documents.get(documentId);
-        if (res) {
-          const text = res.content; 
-          const split = text.match(/[^.!?]+[.!?]+/g) || [text];
-          const cleanSentences = split.map(s => s.trim()).filter(s => s.length > 0);
-          setSentences(cleanSentences);
-          
-          // Initial Greeting
-          setHistory([{
-            role: 'ai',
-            text: `안녕하세요! 오늘 공부할 지문은 "${res.title}"입니다. 총 ${cleanSentences.length}문장으로 이루어져 있어요. 차근차근 읽어볼까요?`,
-            options: [{ label: "네, 시작해요! 🚀", action: "start_reading" }]
-          }]);
+        const [doc, passageListRaw] = await Promise.all([
+          api.documents.get(documentId),
+          api.analysis.listPassageSummaries(documentId)
+        ]);
+
+        setDocumentInfo(doc);
+        const list = Array.isArray(passageListRaw)
+          ? passageListRaw
+          : Array.isArray(passageListRaw?.data)
+            ? passageListRaw.data
+            : [];
+        setPassages(list);
+
+        // URL에 초기 지문 번호가 있는 경우 바로 해당 지문부터 시작
+        if (initialPassageNumber && list.length >= initialPassageNumber) {
+          const initial = list[initialPassageNumber - 1];
+          startPassageSession(initial, doc);
         }
       } catch (e) {
-        console.error(e);
+        console.error('Failed to load reading tutor data:', e);
       } finally {
         setLoading(false);
       }
     };
-    loadDoc();
+
+    loadData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [documentId]);
+
+  const startPassageSession = (passage, doc = documentInfo) => {
+    if (!passage || !doc) return;
+
+    const text = passage.text || passage.originalPassage || '';
+    const split = text.match(/[^.!?]+[.!?]+/g) || [text];
+    const cleanSentences = split.map((s) => s.trim()).filter((s) => s.length > 0);
+    setSentences(cleanSentences);
+    setSelectedPassage(passage);
+    setCurrentStep(-1);
+    setViewMode('chat');
+
+    setHistory([
+      {
+        role: 'ai',
+        text: `안녕하세요! 오늘 공부할 지문은 "${doc.title}"의 지문 ${passage.passageNumber}번이에요. 총 ${cleanSentences.length}문장으로 이루어져 있어요. 차근차근 읽어볼까요?`,
+        options: [{ label: '네, 시작해요! 🚀', action: 'start_reading' }]
+      }
+    ]);
+  };
 
   const handleOptionClick = async (option) => {
     if (aiLoading) return;
@@ -91,8 +131,8 @@ const ReadingTutorPage = () => {
     // Actions requiring API call (Translate, Grammar, Vocab, etc.)
     setAiLoading(true);
     try {
-      const lastAiMsg = history[history.length - 1];
-      const contextSentence = lastAiMsg.context?.sentence || sentences[currentStep];
+      const lastAiMsg = history[history.length - 1] || {};
+      const contextSentence = lastAiMsg.context?.sentence || sentences[currentStep] || '';
       
       // Prepare Topic based on Action
       let topic = '';
@@ -158,11 +198,70 @@ const ReadingTutorPage = () => {
 
   if (loading) return <div style={styles.loading}>로딩 중...</div>;
 
+  // 1단계: 지문(문제) 선택 화면
+  if (viewMode === 'select') {
+    return (
+      <div style={styles.chatContainer}>
+        <div style={styles.chatHeader}>
+          <button onClick={() => window.history.back()} style={styles.backButton}>
+            ← 나가기
+          </button>
+          <h2 style={styles.chatTitle}>독해 튜터 🤖</h2>
+        </div>
+
+        <div style={styles.passageList}>
+          <h3 style={styles.passageTitle}>
+            {documentInfo?.title || '문서를 불러오는 중이에요.'}
+          </h3>
+          <p style={styles.passageSubtitle}>
+            아래에서 공부할 지문(문제 번호)을 선택해 주세요.
+          </p>
+
+          <div style={styles.passageGrid}>
+            {passages.map((p) => (
+              <button
+                key={p.passageNumber}
+                style={styles.passageCard}
+                onClick={() => startPassageSession(p)}
+              >
+                <div style={styles.passageBadge}>지문 {p.passageNumber}</div>
+                <div style={styles.passageExcerpt}>{p.excerpt || (p.text || '').slice(0, 80) + '...'}</div>
+                <div style={styles.passageMeta}>
+                  단어 {p.wordCount || 0}개 · 문자 {p.charCount || 0}자
+                </div>
+              </button>
+            ))}
+            {passages.length === 0 && (
+              <div style={styles.empty}>
+                아직 이 문서에서 읽을 지문을 찾지 못했어요.<br />
+                업로드한 문서 형식을 한 번만 다시 확인해 주세요.
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 2단계: 선택한 지문에 대한 대화형 독해 튜터
   return (
     <div style={styles.chatContainer}>
       <div style={styles.chatHeader}>
-        <button onClick={() => window.history.back()} style={styles.backButton}>← 나가기</button>
-        <h2 style={styles.chatTitle}>독해 튜터 🤖</h2>
+        <button
+          onClick={() => {
+            setViewMode('select');
+            setSelectedPassage(null);
+            setSentences([]);
+            setHistory([]);
+            setCurrentStep(-1);
+          }}
+          style={styles.backButton}
+        >
+          ← 지문 선택으로
+        </button>
+        <h2 style={styles.chatTitle}>
+          독해 튜터 🤖{selectedPassage ? ` · 지문 ${selectedPassage.passageNumber}` : ''}
+        </h2>
       </div>
 
       <div style={styles.messageList}>
@@ -174,11 +273,11 @@ const ReadingTutorPage = () => {
             {msg.role === 'ai' && msg.options && (
               <div style={styles.optionsGrid}>
                 {msg.options.map((opt, optIdx) => (
-                  <button 
-                    key={optIdx} 
+                  <button
+                    key={optIdx}
                     style={styles.optionChip}
                     onClick={() => handleOptionClick(opt)}
-                    disabled={idx !== history.length - 1} 
+                    disabled={idx !== history.length - 1}
                   >
                     {opt.label}
                   </button>
@@ -210,6 +309,60 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     background: '#0f172a'
+  },
+  passageList: {
+    flex: 1,
+    overflowY: 'auto',
+    padding: '20px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px'
+  },
+  passageTitle: {
+    margin: 0,
+    fontSize: '18px',
+    color: '#e2e8f0',
+    fontWeight: 700
+  },
+  passageSubtitle: {
+    marginTop: '8px',
+    marginBottom: '8px',
+    fontSize: '14px',
+    color: '#94a3b8'
+  },
+  passageGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+    gap: '12px',
+    marginTop: '8px'
+  },
+  passageCard: {
+    textAlign: 'left',
+    background: 'linear-gradient(145deg, #111827, #020617)',
+    border: '1px solid #1e293b',
+    borderRadius: '16px',
+    padding: '14px',
+    color: '#e2e8f0',
+    cursor: 'pointer'
+  },
+  passageBadge: {
+    display: 'inline-block',
+    padding: '4px 10px',
+    borderRadius: '999px',
+    background: '#1d4ed8',
+    fontSize: '12px',
+    fontWeight: 600,
+    marginBottom: '8px'
+  },
+  passageExcerpt: {
+    fontSize: '13px',
+    lineHeight: 1.5,
+    marginBottom: '8px',
+    color: '#cbd5f5'
+  },
+  passageMeta: {
+    fontSize: '12px',
+    color: '#64748b'
   },
   chatHeader: {
     padding: '16px',
