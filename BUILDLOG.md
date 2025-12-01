@@ -40,6 +40,12 @@
 - Files: client/src/pages/ReadingTutorSelectPage.js, client/src/pages/ReadingTutorPage.js, client/src/services/api.service.js, PROJECT_STATE.md.
 - Verification: 로컬에서 `npm test` 실행 시 기존 어휘/요약 관련 일부 테스트(이미 Known Issue로 존재)가 계속 실패하지만, 독해 튜터 관련 새로운 코드 경로에서 추가 오류는 발생하지 않았습니다. 실제 환경에서는 `/reading-tutor-select`에서 문서별 "지문 개수"가 표시되고, 문서를 클릭하면 지문(문제) 카드 목록 → 개별 지문 선택 후 AI 대화형 독해가 정상적으로 이어져야 합니다.
 
+## 2025-12-01 (독해 튜터 UI 리파인 + 관리자 멀티 업로드/선택 삭제)
+- Issue: 독해 튜터의 문서/지문 선택 화면과 채팅창이 기능적으로는 동작하지만, 전체 서비스의 Aurora Dark + Glass 카드 테마에 비해 다소 심플한 느낌이었고, 관리자 문서 관리에서는 한 번에 여러 문서를 삭제/업로드할 수 없어 대량 정리가 번거로웠습니다.
+- Fix: `ReadingTutorSelectPage`와 `ReadingTutorPage`에 다크 슬레이트 그라디언트 배경, 반투명 Glass 카드, 부드러운 그림자와 hover(tilt-hover)를 적용해 지문 카드/채팅 말풍선 스타일을 고급스럽게 다듬고, 선택된 지문/버튼에만 선명한 인디고/시안 그라디언트를 사용하도록 통일했습니다. 관리자 `UploadModal`에는 파일 입력을 `multiple`로 확장해 한 번에 여러 PDF/TXT를 선택해 순차 업로드하도록 만들고, 제목 입력값을 공통 접두어로 사용해 자동으로 문서 제목을 생성합니다. 관리자 페이지에는 문서 목록 정렬 옵션(최신순/가나다순/연도별)과 카드 좌측 상단 선택 버튼, 상단 `🗑️ 선택 삭제` 버튼을 추가해 여러 문서를 한 번에 삭제할 수 있도록 했습니다.
+- Files: client/src/pages/ReadingTutorSelectPage.js, client/src/pages/ReadingTutorPage.js, client/src/components/admin/UploadModal.js, client/src/components/admin/DocumentList.js, client/src/pages/AdminPage.js, PROJECT_STATE.md.
+- Verification: `npm test` 실행 시 기존 Known Issue인 어휘/요약 관련 테스트 일부가 계속 실패하지만, 새로 추가/수정된 독해 튜터 UI 및 관리자 멀티 업로드/선택 삭제 로직에서 추가적인 서버 단위 테스트 실패는 발생하지 않았습니다. 실제 환경에서는 독해 튜터 진입 시 문서/지문 카드가 다크 글래스 카드 스타일로 표시되고, 관리자 문서 화면에서 여러 문서를 선택한 뒤 `선택 삭제` 버튼으로 한번에 삭제/정렬이 정상 동작해야 합니다.
+
 ## 2025-11-09 (UI mobile polish: vocab range, mascot, mock-exam)
 - Issue: 어휘 Day 선택 효과가 약해 선택됨 상태가 모호했고, 스크롤 하단 CTA는 시야 밖으로 밀려 UX가 떨어졌습니다. 모의고사 문제 화면은 모바일에서 하단 주작동 버튼이 없어 조작성이 낮았습니다.
 - Cause: Day 카드 스타일이 테두리 중심이어서 대비가 낮고, CTA가 레이아웃 하단에 고정되어 있지 않았습니다. 모의고사 플레이어는 데스크톱 위주 버튼 배치였습니다.

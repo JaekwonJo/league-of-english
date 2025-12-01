@@ -14,7 +14,10 @@ const DocumentList = ({
   onExamUpload,
   onExamDelete,
   onVocabularyPreview,
-  isMobile = false
+  isMobile = false,
+  selectable = false,
+  selectedIds = [],
+  onToggleSelect
 }) => {
   const responsive = (base, mobileOverrides = {}) => (isMobile ? { ...base, ...(mobileOverrides || {}) } : base);
 
@@ -52,6 +55,9 @@ const DocumentList = ({
               onExamUpload={onExamUpload}
               onExamDelete={onExamDelete}
               onVocabularyPreview={onVocabularyPreview}
+              selectable={selectable}
+              selected={Array.isArray(selectedIds) && selectedIds.includes(doc.id)}
+              onToggleSelect={onToggleSelect}
             />
           ))
         )}
@@ -60,15 +66,51 @@ const DocumentList = ({
   );
 };
 
-const DocumentCard = ({ document: doc, onEdit, onDelete, onAnalyze, onPassageAnalyze, onShare, onExamUpload, onExamDelete, onVocabularyPreview, isMobile }) => {
+const DocumentCard = ({
+  document: doc,
+  onEdit,
+  onDelete,
+  onAnalyze,
+  onPassageAnalyze,
+  onShare,
+  onExamUpload,
+  onExamDelete,
+  onVocabularyPreview,
+  isMobile,
+  selectable,
+  selected,
+  onToggleSelect
+}) => {
   const responsive = (base, mobileOverrides = {}) => (isMobile ? { ...base, ...(mobileOverrides || {}) } : base);
   const isVocabulary = String(doc.type || '').toLowerCase() === 'vocabulary';
   return (
-    <div className="tilt-hover" style={responsive(adminStyles.documentCard, adminStyles.documentCardMobile)}>
+    <div
+      className="tilt-hover"
+      style={{
+        ...responsive(adminStyles.documentCard, adminStyles.documentCardMobile),
+        boxShadow: selected
+          ? '0 24px 60px rgba(15,23,42,0.55)'
+          : adminStyles.documentCard.boxShadow
+      }}
+    >
       <div className="shimmer" aria-hidden />
       <div style={responsive(adminStyles.documentHeader, adminStyles.documentHeaderMobile)}>
         <h3 style={responsive(adminStyles.documentTitle, adminStyles.documentTitleMobile)}>{doc.title}</h3>
         <div style={responsive(adminStyles.documentActions, adminStyles.documentActionsMobile)}>
+          {selectable && (
+            <button
+              type="button"
+              style={{
+                ...adminStyles.analyzeButton,
+                background: selected ? 'var(--danger)' : 'var(--surface-soft)',
+                color: selected ? 'var(--text-on-accent)' : 'var(--text-secondary)'
+              }}
+              onClick={() => onToggleSelect && onToggleSelect(doc.id)}
+              title={selected ? '선택 해제' : '이 문서 선택'}
+            >
+              {selected ? '✓' : '＋'}
+            </button>
+          )}
           {onShare && (
             <button
               style={{ ...adminStyles.analyzeButton, background: 'var(--color-purple-500)' }}

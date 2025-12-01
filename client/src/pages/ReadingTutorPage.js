@@ -312,14 +312,14 @@ const ReadingTutorPage = () => {
   );
 };
 
-const styles = {
+  const styles = {
   chatContainer: {
-    maxWidth: '600px',
+    maxWidth: '640px',
     margin: '0 auto',
     height: '100vh',
     display: 'flex',
     flexDirection: 'column',
-    background: '#0f172a'
+    background: 'radial-gradient(circle at 0% 0%, rgba(59,130,246,0.18), transparent 55%), var(--slate-gradient)'
   },
   passageList: {
     flex: 1,
@@ -349,12 +349,13 @@ const styles = {
   },
   passageCard: {
     textAlign: 'left',
-    background: 'linear-gradient(145deg, #111827, #020617)',
-    border: '1px solid #1e293b',
+    background: 'linear-gradient(145deg, rgba(15,23,42,0.96), rgba(37,99,235,0.72))',
+    border: '1px solid rgba(148,163,184,0.35)',
     borderRadius: '16px',
     padding: '14px',
     color: '#e2e8f0',
-    cursor: 'pointer'
+    cursor: 'pointer',
+    boxShadow: '0 18px 40px rgba(15,23,42,0.5)'
   },
   passageBadge: {
     display: 'inline-block',
@@ -377,10 +378,10 @@ const styles = {
   },
   chatHeader: {
     padding: '16px',
-    borderBottom: '1px solid #334155',
+    borderBottom: '1px solid rgba(148,163,184,0.35)',
     display: 'flex',
     alignItems: 'center',
-    background: 'rgba(15, 23, 42, 0.9)',
+    background: 'rgba(15, 23, 42, 0.92)',
     backdropFilter: 'blur(10px)',
     position: 'sticky',
     top: 0,
@@ -402,7 +403,7 @@ const styles = {
   messageList: {
     flex: 1,
     overflowY: 'auto',
-    padding: '20px',
+    padding: '20px 20px 24px',
     display: 'flex',
     flexDirection: 'column',
     gap: '20px'
@@ -416,21 +417,22 @@ const styles = {
     maxWidth: '90%'
   },
   userBubble: {
-    background: '#3b82f6',
+    background: 'linear-gradient(135deg, #3B82F6, #6366F1)',
     color: 'white',
     padding: '12px 16px',
     borderRadius: '16px 16px 0 16px',
     fontSize: '15px'
   },
   aiBubble: {
-    background: '#1e293b',
+    background: 'rgba(15,23,42,0.9)',
     color: '#e2e8f0',
     padding: '16px',
     borderRadius: '16px 16px 16px 0',
     fontSize: '15px',
     lineHeight: '1.6',
     whiteSpace: 'pre-wrap',
-    border: '1px solid #334155'
+    border: '1px solid rgba(148,163,184,0.45)',
+    boxShadow: '0 14px 32px rgba(15,23,42,0.65)'
   },
   optionsGrid: {
     display: 'flex',
@@ -439,9 +441,9 @@ const styles = {
     marginTop: '12px'
   },
   optionChip: {
-    background: 'rgba(59, 130, 246, 0.1)',
-    border: '1px solid #3b82f6',
-    color: '#60a5fa',
+    background: 'rgba(37,99,235,0.16)',
+    border: '1px solid rgba(96,165,250,0.9)',
+    color: '#E0F2FE',
     padding: '8px 14px',
     borderRadius: '20px',
     fontSize: '14px',

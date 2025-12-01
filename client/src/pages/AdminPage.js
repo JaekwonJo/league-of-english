@@ -141,6 +141,7 @@ const AdminPage = () => {
   const [examListError, setExamListError] = useState('');
   const [renameDrafts, setRenameDrafts] = useState({});
   const [sortMode, setSortMode] = useState('recent'); // 'recent' | 'title-asc' | 'year-desc'
+  const [selectedDocumentIds, setSelectedDocumentIds] = useState([]);
   
   // Exam Upload Modal State
   const [examUploadModal, setExamUploadModal] = useState({
@@ -792,6 +793,45 @@ const AdminPage = () => {
     }
   };
 
+  const handleToggleDocumentSelect = (id) => {
+    setSelectedDocumentIds((prev) =>
+      prev.includes(id) ? prev.filter((docId) => docId !== id) : [...prev, id]
+    );
+  };
+
+  const handleBulkDelete = async () => {
+    if (!selectedDocumentIds.length) {
+      pushToast('삭제할 문서를 먼저 선택해 주세요.', 'warning');
+      return;
+    }
+    if (
+      !window.confirm(
+        `선택한 문서 ${selectedDocumentIds.length}개를 정말 삭제할까요? (복구 불가)`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      for (const id of selectedDocumentIds) {
+        try {
+          await deleteDocument(id);
+        } catch (error) {
+          console.error('문서 삭제 실패:', error);
+        }
+      }
+      pushToast(`총 ${selectedDocumentIds.length}개 문서를 삭제했어요.`, 'success');
+      setSelectedDocumentIds([]);
+      await fetchDocuments();
+    } catch (error) {
+      console.error('선택 삭제 실패:', error);
+      pushToast('선택한 문서를 삭제하는 중 문제가 발생했어요.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div style={responsive(adminStyles.container, adminStyles.containerMobile)}>
       {toasts.length > 0 && (
@@ -844,6 +884,18 @@ const AdminPage = () => {
           >
             🏷️ 카테고리 관리
           </button>
+          {selectedDocumentIds.length > 0 && (
+            <button
+              style={{
+                ...adminStyles.secondaryButton,
+                background: 'var(--danger)',
+                color: 'var(--text-on-accent)'
+              }}
+              onClick={handleBulkDelete}
+            >
+              🗑️ 선택 삭제 ({selectedDocumentIds.length})
+            </button>
+          )}
         </div>
       </div>
 
@@ -1026,6 +1078,9 @@ const AdminPage = () => {
         onExamUpload={handleOpenExamUpload}
         onExamDelete={handleExamProblemsDelete}
         isMobile={isMobile}
+        selectable
+        selectedIds={selectedDocumentIds}
+        onToggleSelect={handleToggleDocumentSelect}
       />
 
       <DocumentList
@@ -1038,6 +1093,9 @@ const AdminPage = () => {
         onShare={handleDocumentShare}
         onVocabularyPreview={handleVocabularyPreview}
         isMobile={isMobile}
+        selectable
+        selectedIds={selectedDocumentIds}
+        onToggleSelect={handleToggleDocumentSelect}
       />
 
       {/* 정렬 컨트롤 (문서 섹션 하단에 간단히 표시) */}

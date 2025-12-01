@@ -143,7 +143,12 @@ const ReadingTutorSelectPage = () => {
           <div style={styles.empty}>'{selectedTab}' 카테고리에 등록된 지문이 없어요.</div>
         ) : (
           filteredDocs.map(doc => (
-            <div key={doc.id} className="tilt-hover" style={styles.item} onClick={() => handleSelect(doc.id)}>
+            <div
+              key={doc.id}
+              className="tilt-hover"
+              style={styles.item}
+              onClick={() => handleSelect(doc.id)}
+            >
               <div style={styles.docIcon}>📄</div>
               <div style={styles.docInfo}>
                 <div style={styles.docTitle}>{doc.title}</div>
@@ -175,32 +180,34 @@ const ReadingTutorSelectPage = () => {
 
 const styles = {
   container: {
-    maxWidth: '800px',
+    maxWidth: '880px',
     margin: '0 auto',
-    padding: '20px'
+    padding: '24px 20px 32px',
+    position: 'relative'
   },
   searchRow: {
-    marginTop: '10px',
-    marginBottom: '10px'
+    marginTop: '16px',
+    marginBottom: '12px'
   },
   searchInput: {
     width: '100%',
-    padding: '10px 14px',
-    borderRadius: '12px',
+    padding: '11px 16px',
+    borderRadius: '999px',
     border: '1px solid var(--surface-border)',
-    background: 'var(--surface-soft)',
-    fontSize: '14px'
+    background: 'radial-gradient(circle at 0% 0%, rgba(148, 163, 184, 0.15), transparent 55%), var(--surface-soft)',
+    fontSize: '14px',
+    boxShadow: '0 10px 30px rgba(15,23,42,0.08)'
   },
   tabs: {
     display: 'flex',
     gap: '10px',
     overflowX: 'auto',
-    paddingBottom: '10px',
-    marginBottom: '20px',
+    paddingBottom: '8px',
+    marginBottom: '18px',
     scrollbarWidth: 'none'
   },
   tab: {
-    padding: '8px 16px',
+    padding: '8px 18px',
     borderRadius: '20px',
     background: 'var(--surface-soft)',
     color: 'var(--text-secondary)',
@@ -217,21 +224,24 @@ const styles = {
   list: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '12px'
+    gap: '14px'
   },
   item: {
-    background: 'var(--surface-card)',
-    borderRadius: '16px',
-    padding: '20px',
+    background: 'linear-gradient(135deg, rgba(15,23,42,0.96), rgba(30,64,175,0.85))',
+    borderRadius: '20px',
+    padding: '18px 20px',
     display: 'flex',
     alignItems: 'center',
     gap: '16px',
-    border: '1px solid var(--surface-border)',
-    cursor: 'pointer'
+    border: '1px solid rgba(148,163,184,0.4)',
+    cursor: 'pointer',
+    boxShadow: '0 18px 40px rgba(15,23,42,0.4)',
+    position: 'relative',
+    overflow: 'hidden'
   },
   docIcon: {
-    fontSize: '24px',
-    opacity: 0.8
+    fontSize: '26px',
+    opacity: 0.9
   },
   docInfo: {
     flex: 1
@@ -239,22 +249,23 @@ const styles = {
   docTitle: {
     fontSize: '16px',
     fontWeight: '700',
-    color: 'var(--text-primary)',
+    color: '#E5E7EB',
     marginBottom: '4px'
   },
   docMeta: {
     fontSize: '12px',
-    color: 'var(--text-secondary)'
+    color: '#CBD5F5'
   },
   startBtn: {
-    background: 'var(--accent-primary)',
-    color: 'white',
+    background: 'linear-gradient(135deg, #38BDF8, #6366F1)',
+    color: '#F9FAFB',
     border: 'none',
-    borderRadius: '20px',
-    padding: '8px 16px',
+    borderRadius: '999px',
+    padding: '9px 18px',
     fontSize: '13px',
     fontWeight: 'bold',
-    cursor: 'pointer'
+    cursor: 'pointer',
+    boxShadow: '0 10px 24px rgba(37,99,235,0.55)'
   },
   empty: {
     textAlign: 'center',
