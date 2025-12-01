@@ -1,3 +1,10 @@
+## 2025-11-22 (Vercel build: react-router-dom 누락)
+- Issue: Vercel 프로덕션 빌드에서 `Module not found: Can't resolve 'react-router-dom'` 오류가 발생해 배포가 실패했습니다.
+- Cause: `client/package.json`의 dependencies에 `react-router-dom`이 없는 상태로 main 브랜치에 푸시되어, 로컬에서는 설치되어 있었지만 Vercel 빌드 환경에서는 패키지가 없어 번들링 단계에서 모듈을 찾지 못했습니다.
+- Fix: `client/package.json`과 `client/package-lock.json`에 `react-router-dom` 의존성을 추가하고, 루트 `vercel.json`의 `buildCommand`가 `npm run vercel-build`로 설정되어 있음을 확인했습니다.
+- Files: client/package.json, client/package-lock.json, vercel.json.
+- Verification: 로컬에서 `npm run vercel-build` 실행 시 CRA 빌드가 성공(ESLint 경고만 존재)했으며, Vercel도 동일한 명령을 사용하므로 같은 오류가 재발하지 않아야 합니다.
+
 ## 2025-11-22 (Exam AI Parser, Problem Logic Fixes, UI Refresh)
 - Issue: 기출 PDF 파싱 실패(2단 편집), 어휘 문제 정답 오류(원문 동일), 빈칸 해설 불일치, 요약 문제 논리 오류, 홈 디자인 개선 필요.
 - Fix: `import-exam-pdf.js`를 `gpt-4o-mini` 기반으로 전면 교체하여 텍스트 구조화 성능 극대화. `vocabulary.js`/`blank.js`/`summaryTemplate.js`의 생성/검증 로직을 대수술하여 정답/해설 무결성 확보. `HomePage.js` 및 `index.css`에 3D 트리/Glassmorphism 적용.
@@ -18,6 +25,13 @@
 - Fix: 모의고사 문항을 `mock_exam_questions`로 problems 테이블에 매핑하고 제출 시 studyService를 호출해 학습 통계·랭킹·유형별 정확도에 `mock_exam` 데이터를 쌓도록 했습니다.
 - Files: scripts/e2e-server.js, playwright.config.js, tests/e2e/*.spec.js, .github/workflows/ci.yml, client/src/pages/{VocabularyPage,MockExamPage,HomePage,StatsPage}.js, server/{models/database.js,routes/mockExam.routes.js,services/mockExamService.js,services/analysisService.js}.
 - Verification: `npm test` (기존 fallback 분석 케이스 1건 제외), `PLAYWRIGHT_SKIP_WEBSERVER=1 npm run test:e2e` (로컬 캡처 확인).
+
+## 2025-12-01 (AI 독해 튜터 - 문서 목록 표시 오류)
+- Issue: `/reading-tutor-select` 화면에서 "전체" 탭 기준으로도 "등록된 지문이 없어요" 문구만 나오고, 관리자에서 업로드한 문서가 독해 튜터에서 선택할 수 없었습니다.
+- Cause: 백엔드 `/documents` API가 **배열(docs[])** 을 그대로 반환하는데, 프런트 `ReadingTutorSelectPage`가 `res.documents`라는 잘못된 필드를 참조해 항상 빈 배열로 처리되고 있었습니다. 또한 `/documents/:id` 응답이 `{ success, data }` 구조인데, 프런트의 문서 상세 조회(`api.documents.get`)가 이를 그대로 사용하지 않고 있어 새로 만든 독해/분석 화면과 응답 형식이 어긋나 있었습니다.
+- Fix: `ReadingTutorSelectPage`에서 문서 목록을 `Array.isArray(res) ? res : res.data` 패턴으로 통합 처리하도록 수정해, 기존 워크북 생성기와 동일한 방식으로 동작하도록 맞췄습니다. 동시에 `api.documents.get`이 `{ success, data }` 응답 구조를 자동으로 풀어서 **항상 "문서 객체"만 돌려주도록** 바꿔, 독해 튜터/분석 화면이 같은 형식으로 문서를 사용할 수 있게 정리했습니다.
+- Files: client/src/pages/ReadingTutorSelectPage.js, client/src/services/api.service.js, PROJECT_STATE.md, README.md, BUILDLOG.md.
+- Verification: 코드 레벨에서 `/documents` 응답을 배열/래핑 객체 모두 안전하게 처리하도록 정리했으며, 독해 튜터/분석 페이지는 공통 `api.documents.get`을 통해 동일한 문서 객체를 받게 됩니다. (로컬에서는 `npm test`로 서버 단위 테스트를 실행해 회귀 여부를 확인하는 것을 권장합니다.)
 
 ## 2025-11-09 (UI mobile polish: vocab range, mascot, mock-exam)
 - Issue: 어휘 Day 선택 효과가 약해 선택됨 상태가 모호했고, 스크롤 하단 CTA는 시야 밖으로 밀려 UX가 떨어졌습니다. 모의고사 문제 화면은 모바일에서 하단 주작동 버튼이 없어 조작성이 낮았습니다.

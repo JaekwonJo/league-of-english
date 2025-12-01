@@ -14,11 +14,16 @@ const ReadingTutorSelectPage = () => {
       try {
         setLoading(true);
         const res = await api.documents.list({ limit: 100 });
-        if (res?.documents) {
-          // DEBUG: SHOW EVERYTHING - No filtering at all
-          console.log('ReadingTutorSelectPage RAW documents:', res.documents);
-          setDocuments(res.documents);
-        }
+        // API 응답은 배열 또는 { data: [...] } 형태일 수 있음
+        const list = Array.isArray(res)
+          ? res
+          : Array.isArray(res?.data)
+            ? res.data
+            : [];
+
+        // DEBUG: SHOW EVERYTHING - No filtering at all
+        console.log('ReadingTutorSelectPage RAW documents:', list);
+        setDocuments(list);
       } catch (e) {
         console.error(e);
       } finally {

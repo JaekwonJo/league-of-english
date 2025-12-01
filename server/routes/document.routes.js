@@ -176,10 +176,14 @@ router.post(
         // get user's school
         const user = await database.get('SELECT school FROM users WHERE id = ?', [req.user.id]);
 
+        // Clean up metadata
+        const finalCategory = category ? String(category).trim() : '기타';
+        const finalType = resolvedType;
+
         const result = await database.run(
           `INSERT INTO documents (title, content, type, category, school, grade, created_by)
            VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [finalTitle, contentToStore, resolvedType, category, user?.school || '전체', grade || null, req.user.id]
+          [finalTitle, contentToStore, finalType, finalCategory, user?.school || '전체', grade || null, req.user.id]
         );
 
         const responsePayload = {

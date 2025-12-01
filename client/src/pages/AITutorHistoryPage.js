@@ -92,63 +92,91 @@ const styles = {
     padding: '20px'
   },
   list: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '12px',
-    marginTop: '20px'
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+    gap: '16px',
+    marginTop: '24px'
   },
   item: {
-    background: 'var(--surface-card)',
-    padding: '20px',
-    borderRadius: '16px',
+    background: 'linear-gradient(145deg, var(--surface-card) 0%, rgba(30, 41, 59, 0.8) 100%)',
+    backdropFilter: 'blur(12px)',
+    padding: '24px',
+    borderRadius: '20px',
     display: 'flex',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: '16px',
     border: '1px solid var(--surface-border)',
-    cursor: 'pointer'
+    cursor: 'pointer',
+    boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
+    transition: 'all 0.2s ease',
+    position: 'relative',
+    overflow: 'hidden'
   },
   icon: {
-    fontSize: '24px',
-    opacity: 0.7
+    fontSize: '28px',
+    background: 'rgba(99, 102, 241, 0.1)',
+    width: '50px',
+    height: '50px',
+    borderRadius: '14px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: 'var(--accent-primary)'
   },
   info: {
-    flex: 1
+    flex: 1,
+    minWidth: 0
   },
   topic: {
+    fontSize: '16px',
     fontWeight: '700',
     color: 'var(--text-primary)',
-    marginBottom: '4px'
+    marginBottom: '6px',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis'
   },
   date: {
     fontSize: '12px',
-    color: 'var(--text-secondary)'
+    color: 'var(--text-muted)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px'
   },
   arrow: {
-    color: 'var(--text-muted)',
-    fontWeight: 'bold'
+    color: 'var(--accent-primary)',
+    fontWeight: 'bold',
+    fontSize: '18px',
+    alignSelf: 'center'
   },
   empty: {
     textAlign: 'center',
-    padding: '40px',
-    color: 'var(--text-secondary)'
+    padding: '60px 20px',
+    color: 'var(--text-secondary)',
+    background: 'var(--surface-soft)',
+    borderRadius: '24px',
+    marginTop: '20px'
   },
   tabActive: {
-    padding: '10px 20px',
-    borderRadius: '20px',
-    background: 'var(--accent-primary)',
+    padding: '12px 24px',
+    borderRadius: '999px',
+    background: 'linear-gradient(135deg, var(--accent-primary) 0%, var(--violet) 100%)',
     color: 'white',
     border: 'none',
-    fontWeight: 'bold',
-    cursor: 'pointer'
+    fontWeight: '700',
+    cursor: 'pointer',
+    boxShadow: '0 8px 20px rgba(99, 102, 241, 0.3)',
+    transition: 'transform 0.2s'
   },
   tabInactive: {
-    padding: '10px 20px',
-    borderRadius: '20px',
-    background: 'var(--surface-soft)',
+    padding: '12px 24px',
+    borderRadius: '999px',
+    background: 'var(--surface-card)',
     color: 'var(--text-secondary)',
     border: '1px solid var(--border-subtle)',
-    fontWeight: 'bold',
-    cursor: 'pointer'
+    fontWeight: '600',
+    cursor: 'pointer',
+    transition: 'background 0.2s'
   }
 };
 

@@ -356,7 +356,11 @@ export const api = {
   // 문서
   documents: {
     list: (params) => apiService.get('/documents', params),
-    get: (id) => apiService.get(`/documents/${id}`),
+    get: async (id) => {
+      const res = await apiService.get(`/documents/${id}`);
+      // 서버가 { success, data } 형태로 줄 수도 있어 통합 처리
+      return res?.data || res;
+    },
     upload: (file, data) => apiService.uploadFile('/upload-document', file, data),
     update: (id, payload) => apiService.put(`/documents/${id}`, payload),
     delete: (id) => apiService.delete(`/documents/${id}`),

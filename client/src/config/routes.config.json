@@ -46,7 +46,8 @@
       "icon": "MessageCircle",
       "component": "GrammarTutorPage",
       "requiresAuth": true,
-      "roles": ["student", "teacher", "admin"]
+      "roles": ["student", "teacher", "admin"],
+      "hidden": true
     },
     {
       "path": "/reading-tutor-select",
@@ -54,7 +55,8 @@
       "icon": "FileText",
       "component": "ReadingTutorSelectPage",
       "requiresAuth": true,
-      "roles": ["student", "teacher", "admin"]
+      "roles": ["student", "teacher", "admin"],
+      "hidden": true
     },
     {
       "path": "/reading-tutor",
@@ -62,7 +64,8 @@
       "icon": "Book",
       "component": "ReadingTutorPage",
       "requiresAuth": true,
-      "roles": ["student", "teacher", "admin"]
+      "roles": ["student", "teacher", "admin"],
+      "hidden": true
     },
     {
       "path": "/mock-exam",
@@ -111,7 +114,8 @@
       "icon": "Archive",
       "component": "AITutorHistoryPage",
       "requiresAuth": true,
-      "roles": ["student", "teacher", "admin"]
+      "roles": ["student", "teacher", "admin"],
+      "hidden": true
     },
     {
       "path": "/admin",
