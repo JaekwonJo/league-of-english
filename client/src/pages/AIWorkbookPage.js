@@ -253,7 +253,8 @@ const styles = {
     height: '100vh',
     display: 'flex',
     flexDirection: 'column',
-    background: 'radial-gradient(circle at 0% 0%, rgba(96,165,250,0.22), transparent 55%), var(--slate-gradient)'
+    background:
+      'radial-gradient(circle at 0% 0%, rgba(56,189,248,0.18), transparent 55%), radial-gradient(circle at 100% 100%, rgba(129,140,248,0.22), transparent 60%), #020617'
   },
   chatHeader: {
     padding: '16px',

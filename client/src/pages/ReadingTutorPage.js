@@ -360,7 +360,8 @@ const ReadingTutorPage = () => {
     height: '100vh',
     display: 'flex',
     flexDirection: 'column',
-    background: 'radial-gradient(circle at 0% 0%, rgba(59,130,246,0.18), transparent 55%), var(--slate-gradient)'
+    background:
+      'radial-gradient(circle at 0% 0%, rgba(56,189,248,0.18), transparent 55%), radial-gradient(circle at 100% 100%, rgba(129,140,248,0.22), transparent 60%), #020617'
   },
   passageList: {
     flex: 1,
@@ -395,14 +396,15 @@ const ReadingTutorPage = () => {
   },
   passageCard: {
     textAlign: 'left',
-    background: 'linear-gradient(145deg, rgba(15,23,42,0.96), rgba(37,99,235,0.72))',
-    border: '1px solid rgba(148,163,184,0.35)',
-    borderRadius: '16px',
-    padding: '14px',
+    background: 'linear-gradient(145deg, rgba(15,23,42,0.94), rgba(30,64,175,0.78))',
+    border: '1px solid rgba(148,163,184,0.5)',
+    borderRadius: '18px',
+    padding: '16px',
     color: '#e2e8f0',
     cursor: 'pointer',
-    boxShadow: '0 18px 40px rgba(15,23,42,0.5)',
-    width: '100%'
+    boxShadow: '0 22px 50px rgba(15,23,42,0.75)',
+    width: '100%',
+    backdropFilter: 'blur(18px)'
   },
   passageBadge: {
     display: 'inline-block',
