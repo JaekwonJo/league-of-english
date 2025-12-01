@@ -140,6 +140,7 @@ const AdminPage = () => {
   const [examListLoading, setExamListLoading] = useState(false);
   const [examListError, setExamListError] = useState('');
   const [renameDrafts, setRenameDrafts] = useState({});
+  const [sortMode, setSortMode] = useState('recent'); // 'recent' | 'title-asc' | 'year-desc'
   
   // Exam Upload Modal State
   const [examUploadModal, setExamUploadModal] = useState({
@@ -382,8 +383,26 @@ const AdminPage = () => {
     isMobile ? { ...base, ...(mobileOverrides || {}) } : base
   ), [isMobile]);
 
-  const worksheetDocuments = documents.filter((doc) => String(doc.type || '').toLowerCase() !== 'vocabulary');
-  const vocabularyDocuments = documents.filter((doc) => String(doc.type || '').toLowerCase() === 'vocabulary');
+  // 정렬된 문서 목록 (worksheet / vocabulary 분리)
+  const sortedDocuments = React.useMemo(() => {
+    const items = Array.isArray(documents) ? [...documents] : [];
+    if (sortMode === 'title-asc') {
+      items.sort((a, b) => String(a.title || '').localeCompare(String(b.title || ''), 'ko', { sensitivity: 'base' }));
+    } else if (sortMode === 'year-desc') {
+      items.sort((a, b) => {
+        const aYear = (a.created_at || '').slice(0, 4);
+        const bYear = (b.created_at || '').slice(0, 4);
+        return String(bYear).localeCompare(String(aYear));
+      });
+    } else {
+      // recent: 최신 created_at 순
+      items.sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')));
+    }
+    return items;
+  }, [documents, sortMode]);
+
+  const worksheetDocuments = sortedDocuments.filter((doc) => String(doc.type || '').toLowerCase() !== 'vocabulary');
+  const vocabularyDocuments = sortedDocuments.filter((doc) => String(doc.type || '').toLowerCase() === 'vocabulary');
 
   useEffect(() => {
     fetchDocuments();
@@ -406,29 +425,46 @@ const AdminPage = () => {
   }, [fetchDocuments, fetchFeedbackReports, fetchProblemReports, fetchNotifications]);
 
   const handleUploadFormChange = (field, value) => {
-    setUploadForm({ ...uploadForm, [field]: value });
+    setUploadForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleFileChange = (file) => {
-    setUploadForm({ ...uploadForm, file });
+  const handleFileChange = (files) => {
+    setUploadForm((prev) => ({
+      ...prev,
+      files: Array.isArray(files) ? files : files ? [files] : []
+    }));
   };
 
   const handleUpload = async () => {
-    if (!uploadForm.file) {
+    if (!uploadForm.files || uploadForm.files.length === 0) {
       pushToast('업로드할 파일을 먼저 선택해 주세요.', 'warning');
       return;
     }
     try {
       setLoading(true);
-      await uploadDocument(uploadForm.file, {
-        title: uploadForm.title,
+      const payload = {
+        title: String(uploadForm.title || '').trim(),
         category: uploadForm.category,
-        school: uploadForm.school,
-        grade: uploadForm.grade,
-        type: uploadForm.type
-      });
+        school: uploadForm.school || null,
+        grade: uploadForm.grade || null,
+        type: uploadForm.type || 'worksheet'
+      };
 
-      pushToast('문서가 성공적으로 업로드되었습니다.', 'success');
+      const files = uploadForm.files;
+      const baseTitle = payload.title;
+      let successCount = 0;
+
+      for (let index = 0; index < files.length; index += 1) {
+        const file = files[index];
+        const autoTitle = baseTitle
+          ? `${baseTitle} (${index + 1})`
+          : file.name.replace(/\.(pdf|txt)$/i, '');
+
+        await uploadDocument(file, { ...payload, title: autoTitle });
+        successCount += 1;
+      }
+
+      pushToast(`총 ${successCount}개 문서를 업로드했습니다.`, 'success');
       setShowUploadModal(false);
       setUploadForm(initialUploadForm);
       await fetchDocuments();
@@ -619,6 +655,57 @@ const AdminPage = () => {
     setPassageAnalyzingDocument(document);
     setShowPassageAnalysisModal(true);
   };
+
+  const renderSortControls = () => (
+    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+      <span style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>정렬:</span>
+      <button
+        type="button"
+        style={{
+          padding: '6px 10px',
+          borderRadius: '999px',
+          border: sortMode === 'recent' ? '1px solid var(--accent-primary)' : '1px solid var(--border-subtle)',
+          background: sortMode === 'recent' ? 'var(--accent-primary-soft)' : 'var(--surface-soft)',
+          color: sortMode === 'recent' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+          fontSize: '12px',
+          cursor: 'pointer'
+        }}
+        onClick={() => setSortMode('recent')}
+      >
+        최신순
+      </button>
+      <button
+        type="button"
+        style={{
+          padding: '6px 10px',
+          borderRadius: '999px',
+          border: sortMode === 'title-asc' ? '1px solid var(--accent-primary)' : '1px solid var(--border-subtle)',
+          background: sortMode === 'title-asc' ? 'var(--accent-primary-soft)' : 'var(--surface-soft)',
+          color: sortMode === 'title-asc' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+          fontSize: '12px',
+          cursor: 'pointer'
+        }}
+        onClick={() => setSortMode('title-asc')}
+      >
+        가나다순
+      </button>
+      <button
+        type="button"
+        style={{
+          padding: '6px 10px',
+          borderRadius: '999px',
+          border: sortMode === 'year-desc' ? '1px solid var(--accent-primary)' : '1px solid var(--border-subtle)',
+          background: sortMode === 'year-desc' ? 'var(--accent-primary-soft)' : 'var(--surface-soft)',
+          color: sortMode === 'year-desc' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+          fontSize: '12px',
+          cursor: 'pointer'
+        }}
+        onClick={() => setSortMode('year-desc')}
+      >
+        연도별
+      </button>
+    </div>
+  );
 
   const handleVocabularyPreview = (document) => {
     window.alert(
@@ -952,6 +1039,11 @@ const AdminPage = () => {
         onVocabularyPreview={handleVocabularyPreview}
         isMobile={isMobile}
       />
+
+      {/* 정렬 컨트롤 (문서 섹션 하단에 간단히 표시) */}
+      <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end' }}>
+        {renderSortControls()}
+      </div>
 
       <ProblemLibrary documents={documents} />
 

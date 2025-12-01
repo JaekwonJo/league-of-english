@@ -15,29 +15,37 @@ const UploadModal = ({
   if (!show) return null;
 
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    const validFiles = [];
+    for (const file of files) {
       if (file.size > 10 * 1024 * 1024) {
-        alert('파일 크기는 10MB를 초과할 수 없습니다.');
-        e.target.value = '';
-        return;
+        alert(`"${file.name}" 파일 크기가 10MB를 초과합니다. 이 파일은 건너뛸게요.`);
+        continue;
       }
       
       if (!['application/pdf', 'text/plain'].includes(file.type)) {
-        alert('PDF 또는 TXT 파일만 업로드 가능합니다.');
-        e.target.value = '';
-        return;
+        alert(`"${file.name}"는 PDF/TXT 형식이 아니라서 건너뜁니다.`);
+        continue;
       }
 
-      onFileChange(file);
+      validFiles.push(file);
     }
+
+    if (!validFiles.length) {
+      e.target.value = '';
+      return;
+    }
+
+    onFileChange(validFiles);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    if (!uploadForm.file || !uploadForm.title.trim()) {
-      alert('제목과 파일을 모두 입력해주세요.');
+    if (!uploadForm.files || uploadForm.files.length === 0) {
+      alert('업로드할 파일을 최소 1개 이상 선택해 주세요.');
       return;
     }
 
@@ -56,8 +64,7 @@ const UploadModal = ({
               value={uploadForm.title}
               onChange={(e) => onFormChange('title', e.target.value)}
               style={adminStyles.input}
-              placeholder="문서 제목을 입력하세요"
-              required
+              placeholder="문서 제목(여러 개 업로드 시 공통 접두어로 사용)"
             />
           </div>
 
@@ -129,11 +136,16 @@ const UploadModal = ({
               accept=".pdf,.txt"
               onChange={handleFileChange}
               style={adminStyles.fileInput}
-              required
+              multiple
             />
             <small style={adminStyles.fileHelp}>
-              최대 10MB, PDF 또는 TXT 파일만 업로드 가능합니다.
+              최대 10MB, PDF 또는 TXT 파일만 업로드 가능합니다. 여러 파일을 선택하면 순서대로 업로드돼요.
             </small>
+            {Array.isArray(uploadForm.files) && uploadForm.files.length > 0 && (
+              <small style={adminStyles.fileHelp}>
+                선택된 파일: {uploadForm.files.length}개 ({uploadForm.files.map(f => f.name).join(', ')})
+              </small>
+            )}
           </div>
 
           <div style={adminStyles.modalButtons}>
