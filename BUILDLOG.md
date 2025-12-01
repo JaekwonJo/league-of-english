@@ -218,6 +218,14 @@
 - Tests: `analysisFallbackVariant.test.js`, `fallbackContent.test.js`를 추가해 fallback 해석/어휘가 빈칸 없이 채워지는지 자동으로 확인했어요.
 - Verification: `DB_FILE=server/tmp/beta-seed.db node scripts/seed-beta-data.js`, `npm test`, `npm run build` 모두 통과했습니다.
 
+## 2025-12-01 (AI 워크북 튜터 통합)
+- Issue: 기존 워크북 페이지가 카드 뒤집기·생성 마법사·테스트 모드 등으로 복잡해, 선생님이 원하는 \"AI 튜터식 말풍선 워크북\" 흐름과 맞지 않았어요.
+- Cause: 워크북 학습이 `/workbook` 카드형 UI와 새로 만든 AI 워크북 튜터가 동시에 존재해, 진입 경로와 사용 방식이 나뉘어 있었습니다.
+- Fix: `WorkbookPage`를 단순 안내 페이지로 바꾸고, 워크북 학습은 **독해 튜터에서 지문 선택 → 지문 카드 아래 `🤖 AI 워크북` 버튼 → STEP 1~10 말풍선 진행** 한 가지 흐름만 남겼습니다.
+- Fix: `/study/ai-workbook/chat`의 버튼 문구·완료 멘트를 정리하고, STEP 10까지 마친 뒤에는 \"이 지문 워크북 처음부터 다시 풀기\"로 재시작할 수 있게 했습니다.
+- Files: client/src/pages/WorkbookPage.js, client/src/pages/AIWorkbookPage.js, server/routes/study.routes.js, PROJECT_STATE.md, README.md.
+- Verification: `npm run client:build` (경고만 존재, 기존 Known Issues 범위 내).
+
 ## 2025-10-20 (analysis payload fill + admin UX sync)
 - Error: 분석 보기에서 해석/배경/예시가 비어 있고 안내 문장만 반복돼 실제 학습에 쓸 수 없었어요.
 - Cause: fallback normalizer가 번역 실패 시 템플릿 문구를 그대로 저장했고, UI도 빈 값을 필터링하지 않았어요.

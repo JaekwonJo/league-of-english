@@ -11,6 +11,7 @@ const AIWorkbookPage = () => {
   const [passageNumber] = useState(initialPassageNumber);
   const [history, setHistory] = useState([]);
   const [currentStep, setCurrentStep] = useState(1);
+  const [totalSteps, setTotalSteps] = useState(10);
   const [cardIndex, setCardIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [aiLoading, setAiLoading] = useState(false);
@@ -83,8 +84,10 @@ const AIWorkbookPage = () => {
       const nextCardIndex = Number(
         typeof response.cardIndex === 'number' ? response.cardIndex : payload.cardIndex || 0
       );
+      const totalStepsFromResponse = Number(response.totalSteps || totalSteps || 10);
 
       setCurrentStep(nextStep);
+      setTotalSteps(totalStepsFromResponse > 0 ? totalStepsFromResponse : 10);
       setCardIndex(nextCardIndex);
       setHistory((prev) => [
         ...baseHistory,
@@ -137,6 +140,7 @@ const AIWorkbookPage = () => {
         </button>
         <h2 style={styles.chatTitle}>
           AI 워크북 🤖 · 지문 {passageNumber}
+          {totalSteps ? ` · STEP ${currentStep}/${totalSteps}` : ''}
         </h2>
       </div>
 
@@ -274,4 +278,3 @@ const styles = {
 };
 
 export default AIWorkbookPage;
-

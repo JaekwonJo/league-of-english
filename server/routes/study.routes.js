@@ -141,7 +141,7 @@ router.get('/tutor/history/:id', verifyToken, async (req, res) => {
 router.post('/tutor/chat', verifyToken, async (req, res) => {
   try {
     // payload: { topic, history: [{ role, text }] }
-    const { topic, history } = req.body;
+    const { topic, history, context = {} } = req.body || {};
     
     // Use Gemini via AIProblemService
     const genAI = aiProblemService.getGemini();
@@ -184,10 +184,13 @@ router.post('/tutor/chat', verifyToken, async (req, res) => {
       The user is a student who just clicked a button.
       Current Topic: ${topic}
       Conversation History: ${JSON.stringify(history || [])}
+      Reading Tutor Sentence: ${context && context.sentence ? `"${context.sentence}"` : 'N/A'}
       
       **Instructions:**
       - **ALWAYS PROVIDE AN 'EXPLAIN MORE' OPTION:** Unless the user explicitly says "I understand" or moves to the next topic, ALWAYS include an option like { "label": "이해가 안 돼요 / 더 설명해주세요", "action": "explain_more" } or { "label": "더 쉬운 예시 보기", "action": "explain_simpler" }.
       - **For Reading Tutor Requests (Topic: 문장 해석, 문법 분석, 단어장):**
+        - Focus ONLY on the current sentence shown in **Reading Tutor Sentence** above.
+        - Do NOT change the topic to a general concept (예: "질문이란 무엇인가요?") unless the user explicitly asks.
         - Provide the requested content clearly.
         - Options: [Next Sentence], [Explain Grammar], [Vocab List], [Explain More].
       - **General Grammar Mode:**
@@ -267,6 +270,12 @@ router.post('/ai-workbook/chat', verifyToken, async (req, res) => {
         currentCardIndex = 0;
         mode = 'front';
         break;
+      case 'restart_workbook':
+        stepIndex = 0;
+        currentStepNumber = steps[0].step;
+        currentCardIndex = 0;
+        mode = 'front';
+        break;
       case 'show_back':
         mode = 'back';
         break;
@@ -312,20 +321,20 @@ router.post('/ai-workbook/chat', verifyToken, async (req, res) => {
 
     if (mode === 'finished') {
       message =
-        '모든 AI 워크북 10단계를 모두 끝냈어요! 🎉\n\n이제 다른 지문으로 넘어가거나, 마음에 걸리는 단계만 골라 다시 풀어볼 수 있어요.';
+        'AI 워크북 10단계(제목·주제·요지 정리)까지 모두 끝냈어요! 🎉\n\n이제 다른 지문으로 넘어가거나, 처음부터 가볍게 한 번 더 복습해도 좋아요.';
       options = [
         { label: '다른 지문으로 이동하기', action: 'back_to_select' },
-        { label: 'STEP 1부터 다시 풀기', action: 'repeat_step' }
+        { label: '이 지문 워크북 처음부터 다시 풀기', action: 'restart_workbook' }
       ];
     } else if (mode === 'step_complete') {
       const takeaways = Array.isArray(activeStep.takeaways) ? activeStep.takeaways : [];
       const bullet = takeaways.length ? `- ${takeaways.join('\n- ')}` : '';
       message = `✅ ${stepLabel}을(를) 모두 끝냈어요!\n\n${bullet || '이번 단계에서 헷갈렸던 부분이 있다면 한 번 더 복습해도 좋아요.'}`;
       options = [
-        { label: '이 단계 다시 풀기', action: 'repeat_step' },
+        { label: '이 단계 다시 풀기 🔁', action: 'repeat_step' },
         ...(hasNextStep
           ? [{ label: `다음 단계로 이동 (STEP ${nextStep})`, action: 'go_next_step' }]
-          : [{ label: 'AI 워크북 마치기', action: 'go_next_step' }])
+          : [{ label: 'AI 워크북 마치기 🎉', action: 'go_next_step' }])
       ];
     } else if (mode === 'back') {
       const front = String(card.front || '').trim();
@@ -333,11 +342,11 @@ router.post('/ai-workbook/chat', verifyToken, async (req, res) => {
       const combined = `${front}\n\n---\n${back || '정답/해설이 아직 준비되지 않았어요.'}`;
       message = `📘 ${stepLabel}\n\n${combined}`;
       options = [
-        { label: '이해 됐어요 / 다음 카드 👉', action: 'next_card' },
-        { label: '이 단계 처음부터 다시', action: 'repeat_step' },
+        { label: '다음 카드로 넘어가기 👉', action: 'next_card' },
+        { label: '이 단계 처음부터 다시 풀기 🔁', action: 'repeat_step' },
         ...(hasNextStep
           ? [{ label: `다음 단계로 이동 (STEP ${nextStep})`, action: 'go_next_step' }]
-          : [{ label: 'AI 워크북 마치기', action: 'go_next_step' }])
+          : [{ label: 'AI 워크북 마치기 🎉', action: 'go_next_step' }])
       ];
     } else {
       // front 모드
@@ -345,11 +354,11 @@ router.post('/ai-workbook/chat', verifyToken, async (req, res) => {
       message = `📘 ${stepLabel}\n\n${front}`;
       options = [
         { label: '정답/해설 보기 💡', action: 'show_back' },
-        { label: '이해 됐어요 / 다음 카드 👉', action: 'next_card' },
-        { label: '이 단계 처음부터 다시', action: 'repeat_step' },
+        { label: '다음 카드로 넘어가기 👉', action: 'next_card' },
+        { label: '이 단계 처음부터 다시 풀기 🔁', action: 'repeat_step' },
         ...(hasNextStep
           ? [{ label: `다음 단계로 이동 (STEP ${nextStep})`, action: 'go_next_step' }]
-          : [{ label: 'AI 워크북 마치기', action: 'go_next_step' }])
+          : [{ label: 'AI 워크북 마치기 🎉', action: 'go_next_step' }])
       ];
     }
 

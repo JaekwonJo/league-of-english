@@ -251,19 +251,34 @@ const ReadingTutorPage = () => {
 
           <div style={styles.passageGrid}>
             {passages.map((p) => (
-              <button
-                key={p.passageNumber}
-                style={styles.passageCard}
-                onClick={() => startPassageSession(p)}
-              >
-                <div style={styles.passageBadge}>
-                  {(p.displayLabel && p.displayLabel.trim()) || `지문 ${p.passageNumber}`}
-                </div>
-                <div style={styles.passageExcerpt}>{p.excerpt || (p.text || '').slice(0, 80) + '...'}</div>
-                <div style={styles.passageMeta}>
-                  단어 {p.wordCount || 0}개 · 문자 {p.charCount || 0}자
-                </div>
-              </button>
+              <div key={p.passageNumber} style={styles.passageCardWrapper}>
+                <button
+                  type="button"
+                  style={styles.passageCard}
+                  className="tilt-hover"
+                  onClick={() => startPassageSession(p)}
+                >
+                  <div style={styles.passageBadge}>
+                    {(p.displayLabel && p.displayLabel.trim()) || `지문 ${p.passageNumber}`}
+                  </div>
+                  <div style={styles.passageExcerpt}>
+                    {p.excerpt || (p.text || '').slice(0, 80) + '...'}
+                  </div>
+                  <div style={styles.passageMeta}>
+                    단어 {p.wordCount || 0}개 · 문자 {p.charCount || 0}자
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  style={styles.passageWorkbookButton}
+                  onClick={() => {
+                    const passageNo = p.passageNumber || 1;
+                    window.location.href = `/ai-workbook/${documentId}/${passageNo}`;
+                  }}
+                >
+                  🤖 AI 워크북
+                </button>
+              </div>
             ))}
             {passages.length === 0 && (
               <div style={styles.empty}>
@@ -373,6 +388,11 @@ const ReadingTutorPage = () => {
     gap: '12px',
     marginTop: '8px'
   },
+  passageCardWrapper: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px'
+  },
   passageCard: {
     textAlign: 'left',
     background: 'linear-gradient(145deg, rgba(15,23,42,0.96), rgba(37,99,235,0.72))',
@@ -381,7 +401,8 @@ const ReadingTutorPage = () => {
     padding: '14px',
     color: '#e2e8f0',
     cursor: 'pointer',
-    boxShadow: '0 18px 40px rgba(15,23,42,0.5)'
+    boxShadow: '0 18px 40px rgba(15,23,42,0.5)',
+    width: '100%'
   },
   passageBadge: {
     display: 'inline-block',
@@ -401,6 +422,16 @@ const ReadingTutorPage = () => {
   passageMeta: {
     fontSize: '12px',
     color: '#64748b'
+  },
+  passageWorkbookButton: {
+    alignSelf: 'flex-end',
+    padding: '4px 10px',
+    borderRadius: '999px',
+    border: '1px solid rgba(148,163,184,0.6)',
+    background: 'rgba(15,23,42,0.85)',
+    color: '#E0F2FE',
+    fontSize: '12px',
+    cursor: 'pointer'
   },
   chatHeader: {
     padding: '16px',
