@@ -2785,6 +2785,23 @@ const WorkbookPage = () => {
                   >
                     다음 단계
                   </button>
+                  {isReadyToGenerate && (
+                    <button
+                      type="button"
+                      style={{
+                        ...styles.wizardSecondaryButton,
+                        marginLeft: 'auto'
+                      }}
+                      onClick={() => {
+                        const docId = selectedDocumentId || (selectedDocument && selectedDocument.id);
+                        if (!docId) return;
+                        const passage = Number(selectedPassage) || 1;
+                        window.location.href = `/ai-workbook/${docId}/${passage}`;
+                      }}
+                    >
+                      🤖 AI 워크북 튜터로 시작
+                    </button>
+                  )}
                 </div>
               </div>
             )}

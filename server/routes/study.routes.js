@@ -9,6 +9,7 @@ const {
 } = require('../services/studySessionService');
 
 const database = require('../models/database'); // Ensure database is imported
+const workbookService = require('../services/workbookService');
 
 router.get('/exam-problems', verifyToken, async (req, res) => {
   try {
@@ -213,6 +214,157 @@ router.post('/tutor/chat', verifyToken, async (req, res) => {
       message: `튜터 오류: ${reason}`,
       options: [{ label: '다시 시도하기', action: 'retry' }] 
     });
+  }
+});
+
+// AI Workbook Tutor - 단계별 워크북 채팅
+router.post('/ai-workbook/chat', verifyToken, async (req, res) => {
+  try {
+    const { documentId, passageNumber = 1, step = 1, cardIndex = 0, action = 'start' } = req.body || {};
+
+    const numericDocId = Number(documentId);
+    const numericPassage = Number(passageNumber) || 1;
+    if (!Number.isInteger(numericDocId) || numericDocId <= 0) {
+      return res.status(400).json({ message: '유효한 documentId가 필요합니다.' });
+    }
+    if (!Number.isInteger(numericPassage) || numericPassage <= 0) {
+      return res.status(400).json({ message: '유효한 지문 번호가 필요합니다.' });
+    }
+
+    // 워크북이 없다면 새로 생성, 있으면 캐시 사용
+    const workbook = await workbookService.generateWorkbook({
+      documentId: numericDocId,
+      passageNumber: numericPassage,
+      userId: req.user.id,
+      regenerate: false
+    });
+
+    const steps = Array.isArray(workbook.steps)
+      ? workbook.steps.filter((s) => Number(s.step) >= 1 && Number(s.step) <= 10)
+      : [];
+
+    if (!steps.length) {
+      return res.status(400).json({ message: '워크북 단계가 준비되지 않았어요.' });
+    }
+
+    // 현재 단계/카드 계산
+    const requestedStep = Number(step) || 1;
+    let stepIndex = steps.findIndex((s) => Number(s.step) === requestedStep);
+    if (stepIndex === -1) stepIndex = 0;
+
+    // action에 따라 다음 단계/카드 결정
+    let mode = 'front'; // front | back | step_complete | finished
+    let currentStepNumber = steps[stepIndex].step;
+    let currentCardIndex = Math.max(0, Math.min(Number(cardIndex) || 0, (steps[stepIndex].cards || []).length - 1));
+
+    const isLastStep = stepIndex === steps.length - 1;
+    const hasNextStep = stepIndex < steps.length - 1;
+
+    switch (action) {
+      case 'start':
+        stepIndex = 0;
+        currentStepNumber = steps[0].step;
+        currentCardIndex = 0;
+        mode = 'front';
+        break;
+      case 'show_back':
+        mode = 'back';
+        break;
+      case 'next_card': {
+        const cards = steps[stepIndex].cards || [];
+        if (currentCardIndex + 1 < cards.length) {
+          currentCardIndex += 1;
+          mode = 'front';
+        } else {
+          mode = 'step_complete';
+        }
+        break;
+      }
+      case 'go_next_step':
+        if (hasNextStep) {
+          stepIndex += 1;
+          currentStepNumber = steps[stepIndex].step;
+          currentCardIndex = 0;
+          mode = 'front';
+        } else {
+          mode = 'finished';
+        }
+        break;
+      case 'repeat_step':
+        currentCardIndex = 0;
+        mode = 'front';
+        break;
+      default:
+        mode = 'front';
+        break;
+    }
+
+    const activeStep = steps[stepIndex];
+    const cards = Array.isArray(activeStep.cards) ? activeStep.cards : [];
+    const safeIndex = Math.max(0, Math.min(currentCardIndex, Math.max(0, cards.length - 1)));
+    const card = cards[safeIndex] || {};
+    const nextStep = hasNextStep ? steps[stepIndex + 1].step : null;
+
+    let message;
+    let options = [];
+
+    const stepLabel = activeStep.label || `STEP ${activeStep.step}`;
+
+    if (mode === 'finished') {
+      message =
+        '모든 AI 워크북 10단계를 모두 끝냈어요! 🎉\n\n이제 다른 지문으로 넘어가거나, 마음에 걸리는 단계만 골라 다시 풀어볼 수 있어요.';
+      options = [
+        { label: '다른 지문으로 이동하기', action: 'back_to_select' },
+        { label: 'STEP 1부터 다시 풀기', action: 'repeat_step' }
+      ];
+    } else if (mode === 'step_complete') {
+      const takeaways = Array.isArray(activeStep.takeaways) ? activeStep.takeaways : [];
+      const bullet = takeaways.length ? `- ${takeaways.join('\n- ')}` : '';
+      message = `✅ ${stepLabel}을(를) 모두 끝냈어요!\n\n${bullet || '이번 단계에서 헷갈렸던 부분이 있다면 한 번 더 복습해도 좋아요.'}`;
+      options = [
+        { label: '이 단계 다시 풀기', action: 'repeat_step' },
+        ...(hasNextStep
+          ? [{ label: `다음 단계로 이동 (STEP ${nextStep})`, action: 'go_next_step' }]
+          : [{ label: 'AI 워크북 마치기', action: 'go_next_step' }])
+      ];
+    } else if (mode === 'back') {
+      const front = String(card.front || '').trim();
+      const back = String(card.back || '').trim();
+      const combined = `${front}\n\n---\n${back || '정답/해설이 아직 준비되지 않았어요.'}`;
+      message = `📘 ${stepLabel}\n\n${combined}`;
+      options = [
+        { label: '이해 됐어요 / 다음 카드 👉', action: 'next_card' },
+        { label: '이 단계 처음부터 다시', action: 'repeat_step' },
+        ...(hasNextStep
+          ? [{ label: `다음 단계로 이동 (STEP ${nextStep})`, action: 'go_next_step' }]
+          : [{ label: 'AI 워크북 마치기', action: 'go_next_step' }])
+      ];
+    } else {
+      // front 모드
+      const front = String(card.front || '').trim() || '카드가 아직 준비되지 않았어요.';
+      message = `📘 ${stepLabel}\n\n${front}`;
+      options = [
+        { label: '정답/해설 보기 💡', action: 'show_back' },
+        { label: '이해 됐어요 / 다음 카드 👉', action: 'next_card' },
+        { label: '이 단계 처음부터 다시', action: 'repeat_step' },
+        ...(hasNextStep
+          ? [{ label: `다음 단계로 이동 (STEP ${nextStep})`, action: 'go_next_step' }]
+          : [{ label: 'AI 워크북 마치기', action: 'go_next_step' }])
+      ];
+    }
+
+    res.json({
+      success: true,
+      message,
+      options,
+      step: activeStep.step,
+      cardIndex: safeIndex,
+      totalSteps: steps.length,
+      totalCards: cards.length
+    });
+  } catch (error) {
+    console.error('[AI Workbook Tutor] Error:', error);
+    res.status(500).json({ message: error?.message || 'AI 워크북 대화 중 오류가 발생했습니다.' });
   }
 });
 

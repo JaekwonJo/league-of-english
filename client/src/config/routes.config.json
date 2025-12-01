@@ -9,6 +9,15 @@
       "roles": ["student", "teacher", "admin"]
     },
     {
+      "path": "/ai-workbook",
+      "name": "AI 워크북 튜터",
+      "icon": "BookOpenCheck",
+      "component": "AIWorkbookPage",
+      "requiresAuth": true,
+      "roles": ["student", "teacher", "admin"],
+      "hidden": true
+    },
+    {
       "path": "/vocabulary",
       "name": "어휘 훈련",
       "icon": "Languages",
