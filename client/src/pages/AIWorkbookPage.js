@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { api } from '../services/api.service';
+import GeminiChatModal from '../components/common/GeminiChatModal';
 
 const AIWorkbookPage = () => {
   const parts = window.location.pathname.split('/').filter(Boolean);
@@ -13,9 +14,12 @@ const AIWorkbookPage = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [totalSteps, setTotalSteps] = useState(10);
   const [cardIndex, setCardIndex] = useState(0);
+  const [workbookMode, setWorkbookMode] = useState('front');
+  const [cardContext, setCardContext] = useState(null);
   const [loading, setLoading] = useState(true);
   const [aiLoading, setAiLoading] = useState(false);
   const [autoSaved, setAutoSaved] = useState(false);
+  const [questionOpen, setQuestionOpen] = useState(false);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -89,6 +93,8 @@ const AIWorkbookPage = () => {
       setCurrentStep(nextStep);
       setTotalSteps(totalStepsFromResponse > 0 ? totalStepsFromResponse : 10);
       setCardIndex(nextCardIndex);
+      setWorkbookMode(response.mode || 'front');
+      setCardContext(response.cardContext || null);
       setHistory((prev) => [
         ...baseHistory,
         {
@@ -125,6 +131,16 @@ const AIWorkbookPage = () => {
     await sendAction(option.action, currentStep, cardIndex, newHistory);
   };
 
+  const handleStepSelect = async (stepNumber) => {
+    if (aiLoading) return;
+    await sendAction('start', stepNumber, 0, history);
+  };
+
+  const handleAskQuestion = () => {
+    if (!cardContext) return;
+    setQuestionOpen(true);
+  };
+
   if (loading || !documentInfo) {
     return <div style={styles.loading}>AI 워크북을 준비하고 있어요... ⏳</div>;
   }
@@ -144,8 +160,31 @@ const AIWorkbookPage = () => {
         </h2>
       </div>
 
+      <div style={styles.stepNav}>
+        {Array.from({ length: totalSteps || 10 }, (_, idx) => {
+          const stepNumber = idx + 1;
+          return (
+            <button
+              key={stepNumber}
+              type="button"
+              style={{
+                ...styles.stepChip,
+                ...(stepNumber === currentStep ? styles.stepChipActive : {})
+              }}
+              onClick={() => handleStepSelect(stepNumber)}
+              disabled={aiLoading}
+            >
+              STEP {stepNumber}
+            </button>
+          );
+        })}
+      </div>
+
       <div style={styles.messageList}>
-        {history.map((msg, idx) => (
+        {history.length > 0 && (() => {
+          const msg = history[history.length - 1];
+          const idx = history.length - 1;
+          return (
           <div
             key={idx}
             style={msg.role === 'user' ? styles.userMsgWrapper : styles.aiMsgWrapper}
@@ -160,15 +199,26 @@ const AIWorkbookPage = () => {
                     key={optIdx}
                     style={styles.optionChip}
                     onClick={() => handleOptionClick(opt, idx)}
-                    disabled={idx !== history.length - 1}
+                    disabled={aiLoading}
                   >
                     {opt.label}
                   </button>
                 ))}
+                {workbookMode !== 'finished' && (
+                  <button
+                    type="button"
+                    style={styles.optionChipSecondary}
+                    onClick={handleAskQuestion}
+                    disabled={aiLoading || !cardContext}
+                  >
+                    질문하기 ❓
+                  </button>
+                )}
               </div>
             )}
           </div>
-        ))}
+        )() }
+        )}
         {aiLoading && (
           <div style={styles.aiMsgWrapper}>
             <div style={styles.aiBubble}>
@@ -180,6 +230,18 @@ const AIWorkbookPage = () => {
         )}
         <div ref={messagesEndRef} />
       </div>
+      <GeminiChatModal
+        isOpen={questionOpen}
+        onClose={() => setQuestionOpen(false)}
+        initialTopic={`${documentInfo.title || '워크북'} · 지문 ${passageNumber} · STEP ${currentStep}`}
+        context={{
+          problem: { type: 'workbook-step', step: currentStep },
+          question: cardContext?.front || '',
+          passage: cardContext?.back || '',
+          answer: '',
+          explanation: cardContext?.back || ''
+        }}
+      />
     </div>
   );
 };
@@ -216,6 +278,27 @@ const styles = {
     margin: 0,
     fontSize: '18px',
     color: 'white'
+  },
+  stepNav: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '8px',
+    padding: '10px 16px 0'
+  },
+  stepChip: {
+    padding: '6px 10px',
+    borderRadius: '999px',
+    border: '1px solid rgba(148,163,184,0.6)',
+    background: 'rgba(15,23,42,0.9)',
+    color: '#E0F2FE',
+    fontSize: '12px',
+    cursor: 'pointer'
+  },
+  stepChipActive: {
+    background: 'linear-gradient(135deg, #4F46E5, #0EA5E9)',
+    borderColor: 'transparent',
+    color: 'white',
+    fontWeight: 700
   },
   messageList: {
     flex: 1,
@@ -266,6 +349,16 @@ const styles = {
     fontSize: '14px',
     cursor: 'pointer',
     transition: 'all 0.2s',
+    fontWeight: '600'
+  },
+  optionChipSecondary: {
+    background: 'rgba(148,163,184,0.18)',
+    border: '1px solid rgba(148,163,184,0.7)',
+    color: '#E5E7EB',
+    padding: '8px 14px',
+    borderRadius: '20px',
+    fontSize: '14px',
+    cursor: 'pointer',
     fontWeight: '600'
   },
   loading: {

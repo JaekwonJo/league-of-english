@@ -318,6 +318,12 @@ router.post('/ai-workbook/chat', verifyToken, async (req, res) => {
     let options = [];
 
     const stepLabel = activeStep.label || `STEP ${activeStep.step}`;
+    const cardContext = {
+      step: activeStep.step,
+      label: activeStep.label || '',
+      front: String(card.front || '').trim(),
+      back: String(card.back || '').trim()
+    };
 
     if (mode === 'finished') {
       message =
@@ -329,24 +335,15 @@ router.post('/ai-workbook/chat', verifyToken, async (req, res) => {
     } else if (mode === 'step_complete') {
       const takeaways = Array.isArray(activeStep.takeaways) ? activeStep.takeaways : [];
       const bullet = takeaways.length ? `- ${takeaways.join('\n- ')}` : '';
-      message = `✅ ${stepLabel}을(를) 모두 끝냈어요!\n\n${bullet || '이번 단계에서 헷갈렸던 부분이 있다면 한 번 더 복습해도 좋아요.'}`;
-      options = [
-        { label: '이 단계 다시 풀기 🔁', action: 'repeat_step' },
-        ...(hasNextStep
-          ? [{ label: `다음 단계로 이동 (STEP ${nextStep})`, action: 'go_next_step' }]
-          : [{ label: 'AI 워크북 마치기 🎉', action: 'go_next_step' }])
-      ];
+      message = `✅ ${stepLabel}을(를) 모두 끝냈어요!\n\n${bullet || '이번 단계에서 헷갈렸던 부분이 있다면 한 번 더 복습해도 좋아요.'}\n\n다음 단계로 넘어가고 싶다면, 위쪽에 있는 STEP 버튼에서 STEP ${hasNextStep ? nextStep : activeStep.step}을 눌러 주세요.`;
+      options = [];
     } else if (mode === 'back') {
       const front = String(card.front || '').trim();
       const back = String(card.back || '').trim();
       const combined = `${front}\n\n---\n${back || '정답/해설이 아직 준비되지 않았어요.'}`;
       message = `📘 ${stepLabel}\n\n${combined}`;
       options = [
-        { label: '다음 카드로 넘어가기 👉', action: 'next_card' },
-        { label: '이 단계 처음부터 다시 풀기 🔁', action: 'repeat_step' },
-        ...(hasNextStep
-          ? [{ label: `다음 단계로 이동 (STEP ${nextStep})`, action: 'go_next_step' }]
-          : [{ label: 'AI 워크북 마치기 🎉', action: 'go_next_step' }])
+        { label: '다음 카드로 넘어가기 👉', action: 'next_card' }
       ];
     } else {
       // front 모드
@@ -354,11 +351,7 @@ router.post('/ai-workbook/chat', verifyToken, async (req, res) => {
       message = `📘 ${stepLabel}\n\n${front}`;
       options = [
         { label: '정답/해설 보기 💡', action: 'show_back' },
-        { label: '다음 카드로 넘어가기 👉', action: 'next_card' },
-        { label: '이 단계 처음부터 다시 풀기 🔁', action: 'repeat_step' },
-        ...(hasNextStep
-          ? [{ label: `다음 단계로 이동 (STEP ${nextStep})`, action: 'go_next_step' }]
-          : [{ label: 'AI 워크북 마치기 🎉', action: 'go_next_step' }])
+        { label: '다음 카드로 넘어가기 👉', action: 'next_card' }
       ];
     }
 
@@ -369,7 +362,9 @@ router.post('/ai-workbook/chat', verifyToken, async (req, res) => {
       step: activeStep.step,
       cardIndex: safeIndex,
       totalSteps: steps.length,
-      totalCards: cards.length
+      totalCards: cards.length,
+      mode,
+      cardContext
     });
   } catch (error) {
     console.error('[AI Workbook Tutor] Error:', error);
