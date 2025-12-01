@@ -2387,7 +2387,11 @@ const WorkbookPage = () => {
     try {
       setPassagesLoading(true);
       const response = await api.analysis.listPassageSummaries(value);
-      const list = Array.isArray(response?.data) ? response.data : [];
+      const list = Array.isArray(response)
+        ? response
+        : Array.isArray(response?.data)
+          ? response.data
+          : [];
       setPassages(list);
       if (list.length > 0) {
         setSelectedPassage(String(list[0].passageNumber || 1));

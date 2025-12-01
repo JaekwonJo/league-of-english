@@ -208,7 +208,11 @@ const useStudyConfig = ({ onStart, initialFocusType }) => {
       setPassagesLoading(true);
       setError(null);
       const response = await api.analysis.listPassageSummaries(documentId);
-      const items = response?.data || [];
+      const items = Array.isArray(response)
+        ? response
+        : Array.isArray(response?.data)
+          ? response.data
+          : [];
       setPassages(items);
       setSelectedPassages((prev) => {
         const validNumbers = new Set(items.map((item) => item.passageNumber));

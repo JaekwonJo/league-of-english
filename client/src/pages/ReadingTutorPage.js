@@ -16,6 +16,7 @@ const ReadingTutorPage = () => {
   const [currentStep, setCurrentStep] = useState(-1); // -1: Intro, 0~n: Sentences
   const [aiLoading, setAiLoading] = useState(false);
   const [viewMode, setViewMode] = useState('select'); // 'select' | 'chat'
+  const [autoSaved, setAutoSaved] = useState(false);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -25,6 +26,27 @@ const ReadingTutorPage = () => {
   useEffect(() => {
     scrollToBottom();
   }, [history, aiLoading]);
+
+  // AI 튜터 대화 자동 저장 (독해 튜터 세션 전체를 기록소에 남김)
+  useEffect(() => {
+    if (!documentInfo) return;
+    if (!history || history.length < 6) return; // 어느 정도 대화가 쌓였을 때만 저장
+    if (autoSaved) return;
+
+    const topicBase = documentInfo.title || '독해 튜터';
+    const passageLabel =
+      selectedPassage && (selectedPassage.displayLabel?.trim() || `지문 ${selectedPassage.passageNumber}`);
+    const topic = passageLabel ? `독해 튜터: ${topicBase} (${passageLabel})` : `독해 튜터: ${topicBase}`;
+
+    api
+      .post('/study/tutor/save', { topic, history })
+      .then(() => {
+        setAutoSaved(true);
+      })
+      .catch(() => {
+        // 저장 실패 시에도 사용 경험을 방해하지 않기 위해 조용히 무시
+      });
+  }, [autoSaved, documentInfo, history, selectedPassage]);
 
   // 문서 정보 + 지문 목록 불러오기
   useEffect(() => {
