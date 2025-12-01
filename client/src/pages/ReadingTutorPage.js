@@ -187,16 +187,20 @@ const ReadingTutorPage = () => {
         setHistory(prev => [...prev, { role: 'ai', text: `'${term}' 단어장에 저장 완료! 💾`, options: lastAiMsg.options }]);
         setAiLoading(false);
         return;
+      } else if (option.action === 'explain_more' || option.action === 'explain_simpler') {
+        // 같은 문장을 더 쉽게/자세히 설명해 달라는 요청이므로, 주제를 문장 해석으로 고정
+        topic = '문장 해석';
+        prompt = `Explain this sentence again in an easier way for a middle school student. Focus on very simple Korean: "${contextSentence}"`;
       } else {
-        // General Chat
+        // General Chat (예: 학생이 직접 문장을 입력한 경우)
         topic = '질문';
         prompt = option.label;
       }
 
       const response = await api.post('/study/tutor/chat', {
-        topic: topic,
+        topic,
         history: newHistory.map(h => ({ role: h.role, text: h.text })),
-        // Pass context if needed
+        context: { sentence: contextSentence || '', passage: sentences.join(' ') }
       });
 
       setHistory(prev => [
