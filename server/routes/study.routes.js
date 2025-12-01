@@ -335,8 +335,13 @@ router.post('/ai-workbook/chat', verifyToken, async (req, res) => {
     } else if (mode === 'step_complete') {
       const takeaways = Array.isArray(activeStep.takeaways) ? activeStep.takeaways : [];
       const bullet = takeaways.length ? `- ${takeaways.join('\n- ')}` : '';
-      message = `✅ ${stepLabel}을(를) 모두 끝냈어요!\n\n${bullet || '이번 단계에서 헷갈렸던 부분이 있다면 한 번 더 복습해도 좋아요.'}\n\n다음 단계로 넘어가고 싶다면, 위쪽에 있는 STEP 버튼에서 STEP ${hasNextStep ? nextStep : activeStep.step}을 눌러 주세요.`;
-      options = [];
+      message = `✅ ${stepLabel}을(를) 모두 끝냈어요!\n\n${bullet || '이번 단계에서 헷갈렸던 부분이 있다면 한 번 더 복습해도 좋아요.'}`;
+      options = [
+        { label: '이 단계 다시 풀기 🔁', action: 'repeat_step' },
+        ...(hasNextStep
+          ? [{ label: `다음 단계로 가기 (STEP ${nextStep})`, action: 'go_next_step' }]
+          : [{ label: 'AI 워크북 마치기 🎉', action: 'go_next_step' }])
+      ];
     } else if (mode === 'back') {
       const front = String(card.front || '').trim();
       const back = String(card.back || '').trim();
