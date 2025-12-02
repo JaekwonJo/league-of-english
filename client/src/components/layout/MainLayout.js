@@ -84,10 +84,10 @@ const MainLayout = ({ children, currentPath }) => {
 
   // Grouping Logic
   const routeGroups = {
-    '메인': ['/', '/ai-tutor'],
-    '학습실': ['/vocabulary', '/study', '/workbook', '/mock-exam', '/videos'],
-    '리포트': ['/ranking', '/stats'],
-    '마이페이지': ['/profile', '/admin']
+    메인: ['/', '/ai-tutor'],
+    학습실: ['/reading-tutor-select', '/grammar-tutor', '/workbook', '/vocabulary', '/study', '/mock-exam', '/videos'],
+    리포트: ['/ranking', '/stats'],
+    마이페이지: ['/profile', '/admin']
   };
 
   const getGroupForRoute = (path) => {
@@ -120,7 +120,9 @@ const MainLayout = ({ children, currentPath }) => {
     const labelMap = {
       '/study': '문제 학습',
       '/analysis': '분석 자료',
-      '/workbook': '워크북 생성',
+      '/workbook': 'AI 워크북 튜터',
+      '/reading-tutor-select': 'AI 독해 튜터',
+      '/grammar-tutor': 'AI 문법 튜터',
       '/stats': '학습 통계',
       '/videos': '동영상 강의',
       '/profile': '프로필 관리',
