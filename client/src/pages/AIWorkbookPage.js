@@ -40,7 +40,13 @@ const AIWorkbookPage = () => {
         setLoading(true);
         const doc = await api.documents.get(documentId);
         setDocumentInfo(doc);
-        await sendAction('start', 1, 0, [], doc);
+        setHistory([
+          {
+            role: 'ai',
+            text: `"${doc.title}"의 지문 ${initialPassageNumber}을(를) 가지고 AI 워크북 10단계를 함께 풀어볼게요.\n\nSTEP 1부터 차근차근 시작해 볼까요?`,
+            options: [{ label: 'STEP 1 시작하기 🚀', action: 'start_workbook' }]
+          }
+        ]);
       } catch (error) {
         console.error('AIWorkbook: failed to load document', error);
       } finally {
@@ -125,6 +131,11 @@ const AIWorkbookPage = () => {
 
     if (option.action === 'back_to_select') {
       window.history.back();
+      return;
+    }
+
+    if (option.action === 'start_workbook') {
+      await sendAction('start', 1, 0, newHistory);
       return;
     }
 

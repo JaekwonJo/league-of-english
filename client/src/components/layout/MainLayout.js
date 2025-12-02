@@ -216,6 +216,11 @@ const MainLayout = ({ children, currentPath }) => {
         )}
 
         <nav style={styles.nav}>
+          {/** 워크북 플로우: /workbook, /reading-tutor*?mode=workbook, /ai-workbook* 모두 AI 워크북 메뉴를 활성화로 표시 */}
+          {(() => {
+            if (typeof window === 'undefined') return null;
+            return null;
+          })()}
           {groupOrder.map(group => {
             const routes = groupedRoutes[group];
             if (!routes || routes.length === 0) return null;
@@ -237,8 +242,22 @@ const MainLayout = ({ children, currentPath }) => {
                 {routes.map((route) => {
                   const Icon = LucideIcons[route.icon] || LucideIcons.Circle;
                   const normalizedPath = route.path === '/' ? '/' : `${route.path}`;
-                  const isActive = currentPath === normalizedPath
+                  const search = (typeof window !== 'undefined' && window.location.search) || '';
+                  const isWorkbookFlow =
+                    currentPath === '/workbook'
+                    || (currentPath.startsWith('/reading-tutor') && search.includes('mode=workbook'))
+                    || currentPath.startsWith('/ai-workbook');
+
+                  let isActive = currentPath === normalizedPath
                     || (normalizedPath !== '/' && currentPath.startsWith(`${normalizedPath}/`));
+
+                  if (route.path === '/workbook' && isWorkbookFlow) {
+                    isActive = true;
+                  }
+                  if (route.path === '/reading-tutor-select' && isWorkbookFlow) {
+                    isActive = false;
+                  }
+
                   const isLockedForGuest = isGuest && guestLockedRoutes.has(route.path);
 
                   return (
