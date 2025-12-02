@@ -7,6 +7,10 @@ const ReadingTutorPage = () => {
   const documentId = parts[1] || null;
   const initialPassageNumber = parts[2] ? parseInt(parts[2], 10) || null : null;
 
+  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search || '') : null;
+  const modeParam = searchParams ? searchParams.get('mode') : null;
+  const isWorkbookMode = modeParam === 'workbook';
+
   const [documentInfo, setDocumentInfo] = useState(null);
   const [passages, setPassages] = useState([]);
   const [selectedPassage, setSelectedPassage] = useState(null);
@@ -238,7 +242,7 @@ const ReadingTutorPage = () => {
           <button onClick={() => window.history.back()} style={styles.backButton}>
             ← 나가기
           </button>
-          <h2 style={styles.chatTitle}>독해 튜터 🤖</h2>
+          <h2 style={styles.chatTitle}>{isWorkbookMode ? 'AI 워크북 튜터 🤖' : '독해 튜터 🤖'}</h2>
         </div>
 
         <div style={styles.passageList}>
@@ -246,7 +250,9 @@ const ReadingTutorPage = () => {
             {documentInfo?.title || '문서를 불러오는 중이에요.'}
           </h3>
           <p style={styles.passageSubtitle}>
-            아래에서 공부할 지문(문제 번호)을 선택해 주세요.
+            {isWorkbookMode
+              ? '아래에서 워크북으로 학습할 지문(문제 번호)을 선택해 주세요.'
+              : '아래에서 공부할 지문(문제 번호)을 선택해 주세요.'}
           </p>
 
           <div style={styles.passageGrid}>
@@ -256,7 +262,14 @@ const ReadingTutorPage = () => {
                   type="button"
                   style={styles.passageCard}
                   className="tilt-hover"
-                  onClick={() => startPassageSession(p)}
+                  onClick={() => {
+                    if (isWorkbookMode) {
+                      const passageNo = p.passageNumber || 1;
+                      window.location.href = `/ai-workbook/${documentId}/${passageNo}`;
+                    } else {
+                      startPassageSession(p);
+                    }
+                  }}
                 >
                   <div style={styles.passageBadge}>
                     {(p.displayLabel && p.displayLabel.trim()) || `지문 ${p.passageNumber}`}
@@ -268,16 +281,18 @@ const ReadingTutorPage = () => {
                     단어 {p.wordCount || 0}개 · 문자 {p.charCount || 0}자
                   </div>
                 </button>
-                <button
-                  type="button"
-                  style={styles.passageWorkbookButton}
-                  onClick={() => {
-                    const passageNo = p.passageNumber || 1;
-                    window.location.href = `/ai-workbook/${documentId}/${passageNo}`;
-                  }}
-                >
-                  🤖 AI 워크북
-                </button>
+                {!isWorkbookMode && (
+                  <button
+                    type="button"
+                    style={styles.passageWorkbookButton}
+                    onClick={() => {
+                      const passageNo = p.passageNumber || 1;
+                      window.location.href = `/ai-workbook/${documentId}/${passageNo}`;
+                    }}
+                  >
+                    🤖 AI 워크북
+                  </button>
+                )}
               </div>
             ))}
             {passages.length === 0 && (

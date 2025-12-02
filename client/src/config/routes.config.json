@@ -66,6 +66,15 @@
       "hidden": true
     },
     {
+      "path": "/ai-workbook",
+      "name": "AI 워크북 세션",
+      "icon": "BookOpenCheck",
+      "component": "AIWorkbookPage",
+      "requiresAuth": true,
+      "roles": ["student", "teacher", "admin"],
+      "hidden": true
+    },
+    {
       "path": "/mock-exam",
       "name": "모의고사 풀이",
       "icon": "ClipboardList",

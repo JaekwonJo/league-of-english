@@ -9,6 +9,13 @@ const ReadingTutorSelectPage = () => {
   const [search, setSearch] = useState('');
   const [passageStats, setPassageStats] = useState({});
 
+  const [mode] = useState(() => {
+    if (typeof window === 'undefined') return 'reading';
+    const params = new URLSearchParams(window.location.search || '');
+    return params.get('mode') || 'reading';
+  });
+  const isWorkbookMode = mode === 'workbook';
+
   const TABS = ['전체', '모의고사', '교과서', '부교재', '내신', 'EBS 연계'];
 
   useEffect(() => {
@@ -60,7 +67,11 @@ const ReadingTutorSelectPage = () => {
   }, []);
 
   const handleSelect = (docId) => {
-    window.location.href = `/reading-tutor/${docId}`;
+    if (isWorkbookMode) {
+      window.location.href = `/reading-tutor/${docId}?mode=workbook`;
+    } else {
+      window.location.href = `/reading-tutor/${docId}`;
+    }
   };
 
   const filteredDocs = documents
@@ -102,8 +113,12 @@ const ReadingTutorSelectPage = () => {
   return (
     <div style={styles.container}>
       <CommonHero
-        title="독해 튜터 - 지문 선택 📖"
-        subtitle="AI와 함께 분석할 지문을 선택해주세요."
+        title={isWorkbookMode ? 'AI 워크북 튜터 - 지문 선택 📖' : '독해 튜터 - 지문 선택 📖'}
+        subtitle={
+          isWorkbookMode
+            ? 'AI 워크북으로 복습할 지문이 들어 있는 문서를 선택해 주세요.'
+            : 'AI와 함께 분석할 지문을 선택해주세요.'
+        }
       />
 
       <div style={styles.searchRow}>
