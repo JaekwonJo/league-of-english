@@ -192,44 +192,43 @@ const AIWorkbookPage = () => {
       </div>
 
       <div style={styles.messageList}>
-        {history.length > 0 && (() => {
-          const msg = history[history.length - 1];
-          const idx = history.length - 1;
+        {history.map((msg, idx) => {
+          const isLast = idx === history.length - 1;
           return (
-          <div
-            key={idx}
-            style={msg.role === 'user' ? styles.userMsgWrapper : styles.aiMsgWrapper}
-          >
-            <div style={msg.role === 'user' ? styles.userBubble : styles.aiBubble}>
-              {msg.text}
-            </div>
-            {msg.role === 'ai' && msg.options && (
-              <div style={styles.optionsGrid}>
-                {msg.options.map((opt, optIdx) => (
-                  <button
-                    key={optIdx}
-                    style={styles.optionChip}
-                    onClick={() => handleOptionClick(opt, idx)}
-                    disabled={aiLoading}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-                {workbookMode !== 'finished' && (
-                  <button
-                    type="button"
-                    style={styles.optionChipSecondary}
-                    onClick={handleAskQuestion}
-                    disabled={aiLoading || !cardContext}
-                  >
-                    질문하기 ❓
-                  </button>
-                )}
+            <div
+              key={idx}
+              style={msg.role === 'user' ? styles.userMsgWrapper : styles.aiMsgWrapper}
+            >
+              <div style={msg.role === 'user' ? styles.userBubble : styles.aiBubble}>
+                {msg.text}
               </div>
-            )}
-          </div>
-        )() }
-        )}
+              {msg.role === 'ai' && msg.options && isLast && (
+                <div style={styles.optionsGrid}>
+                  {msg.options.map((opt, optIdx) => (
+                    <button
+                      key={optIdx}
+                      style={styles.optionChip}
+                      onClick={() => handleOptionClick(opt, idx)}
+                      disabled={aiLoading}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                  {workbookMode !== 'finished' && (
+                    <button
+                      type="button"
+                      style={styles.optionChipSecondary}
+                      onClick={handleAskQuestion}
+                      disabled={aiLoading || !cardContext}
+                    >
+                      질문하기 ❓
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
         {aiLoading && (
           <div style={styles.aiMsgWrapper}>
             <div style={styles.aiBubble}>
