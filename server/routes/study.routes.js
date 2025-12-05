@@ -142,6 +142,12 @@ router.post('/tutor/chat', verifyToken, async (req, res) => {
   try {
     // payload: { topic, history: [{ role, text }] }
     const { topic, history, context = {} } = req.body || {};
+    const safeHistory = Array.isArray(history) ? history : [];
+    const safeContext = context && typeof context === 'object' ? context : {};
+    const isWorkbookStep = safeContext?.problem?.type === 'workbook-step';
+    const workbookQuestion = safeContext?.question || '';
+    const workbookPassage = safeContext?.passage || '';
+    const workbookExplanation = safeContext?.explanation || '';
     
     // Use Gemini via AIProblemService
     const genAI = aiProblemService.getGemini();
@@ -183,8 +189,11 @@ router.post('/tutor/chat', verifyToken, async (req, res) => {
       **Context:**
       The user is a student who just clicked a button.
       Current Topic: ${topic}
-      Conversation History: ${JSON.stringify(history || [])}
-      Reading Tutor Sentence: ${context && context.sentence ? `"${context.sentence}"` : 'N/A'}
+      Conversation History: ${JSON.stringify(safeHistory || [])}
+      Reading Tutor Sentence: ${safeContext && safeContext.sentence ? `"${safeContext.sentence}"` : 'N/A'}
+      Workbook Step: ${isWorkbookStep ? 'YES' : 'NO'}
+      Workbook Question (front): ${isWorkbookStep ? workbookQuestion : 'N/A'}
+      Workbook Passage / Explanation (back): ${isWorkbookStep ? workbookPassage || workbookExplanation : 'N/A'}
       
       **Instructions:**
       - **ALWAYS PROVIDE AN 'EXPLAIN MORE' OPTION:** Unless the user explicitly says "I understand" or moves to the next topic, ALWAYS include an option like { "label": "이해가 안 돼요 / 더 설명해주세요", "action": "explain_more" } or { "label": "더 쉬운 예시 보기", "action": "explain_simpler" }.
@@ -193,6 +202,16 @@ router.post('/tutor/chat', verifyToken, async (req, res) => {
         - Do NOT change the topic to a general concept (예: "질문이란 무엇인가요?") unless the user explicitly asks.
         - Provide the requested content clearly.
         - Options: [Next Sentence], [Explain Grammar], [Vocab List], [Explain More].
+      - **For Workbook Step Questions (Workbook Step: YES):**
+        - Treat this as a question about the specific workbook 카드 (front/back) shown above.
+        - **절대로** 새로운 문장 예시(Dogs are good pets 등)를 만들지 말고, **반드시 Workbook Question/Passage 안에 있는 문장과 표현만** 사용해서 설명하세요.
+        - 학생이 묻는 내용은 항상 **해당 지문/해당 문장**에 대한 이해, 해석, 문법, 표현 사용에 대한 것입니다.
+        - 답변은:
+          - 먼저 Workbook Question(영어 문장)을 다시 보여주고,
+          - 그 문장의 자연스러운 한국어 해석,
+          - 문법/어휘 포인트(있다면)를 간단히 짚어 주세요.
+        - Options는 간단하게 유지하세요:
+          - ["이해가 안 돼요 / 더 설명해주세요", "다른 표현으로 다시 설명해줘"] 정도로만 제한하고, 새로운 퀴즈나 전혀 다른 주제(예: 일반적인 Step 1 개념 설명)는 만들지 마세요.
       - **General Grammar Mode:**
         - Explain the concept simply with English examples (First English, then Korean).
         - Options: [Solve Problem], [More Examples], [Explain More].
